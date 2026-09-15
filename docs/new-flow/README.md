@@ -34,6 +34,8 @@ Module 1 below keeps its approved script document and its own test.
    `content/index.ts`. Data only — the engine (`script.ts`, `Pictures.tsx`, `Diagrams.tsx`, the player) is shared.
 2. **Answer key, independently.** Someone who has NOT written the module runs `node scripts/lesson-questions.mjs <moduleId>`
    (questions + pictures, no answers) and writes `src/__tests__/answerKeys/<moduleId>.ts`. A module without a key fails.
+   ⚠️ The solver's brief is part of what it sees: never give a format example that is a real answer in the module — the
+   integrator has read the lessons, so a "natural" example is very likely one (2026-09-15: three were, `110640` among them).
 3. **Gate:** `src/__tests__/lessonsAllModules.test.ts` — titles match curriculum.md, the 9-screen structure, well-formed
    answers whose last worked step states them, hints/Screen 9 that don't leak numbers, every picture renders, and the
    key agrees. Where lesson and key disagree, re-solve by hand; do not "fix" whichever is inconvenient.

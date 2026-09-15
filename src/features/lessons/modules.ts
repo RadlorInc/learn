@@ -14,7 +14,7 @@ const TITLES: Record<number, string[]> = {
   4: ['Place value for addition and subtraction', 'Place value for multiplication and division',
     'Multiplication and division of multi-digit numbers', 'Foundations for fraction operations',
     'Angle measurements and plane figures', 'Place value for decimal fractions'],
-  5: ['Place value for multiplication and division of whole numbers', 'Addition and subtraction with fractions',
+  5: ['Place value concepts for multiplication and division with whole numbers', 'Addition and subtraction with fractions',
     'Multiplication and division with fractions', 'Place value for decimal operations',
     'Addition and multiplication with area and volume', 'Foundations to geometry in the coordinate plane'],
   6: ['Ratios, rates and proportions', 'Operations with fractions and mixed numbers', 'Operations with decimals', 'Percentages',
