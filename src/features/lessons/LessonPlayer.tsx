@@ -6,8 +6,8 @@
  * Look: the founder's SampleUI template. Its red wrong-answer banners, locks, emoji and scores are deliberately NOT
  * carried over (a wrong answer is never marked wrong; difficulty and scores stay invisible).
  */
-import { useState, type CSSProperties, type ReactNode } from 'react'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer,
   type FlowState, type Lesson, type Screen,
@@ -25,14 +25,29 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   const [audio, setAudio] = useState(false)
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
 
-  const say = (text: string, on = audio) => { if (on) speak(text) }
+  // The beat clock. A teaching screen with `beats` reveals itself line by line — her words on the right, what she
+  // puts on the board on the left — so BOTH columns read `shown`, and it has to live above the early returns below.
+  const beats = s.mode === 'lesson' ? lesson.screens[s.screen].beats : undefined
+  const [shown, setShown] = useState(1)
+  useEffect(() => {
+    if (!beats) return
+    setShown(1)
+    // Her voice paces it when the child has audio on; when they don't, reading time does — a flat beat is far too
+    // fast for a long line. Either way the lines and the board move together.
+    if (audio) return speakSteps(beats.map(b => b.say), { onStep: i => setShown(i + 1) })
+    let t = 0
+    const ids = beats.map((b, i) => { const at = t; t += Math.min(6500, 1500 + b.say.length * 55); return setTimeout(() => setShown(i + 1), at) })
+    return () => ids.forEach(clearTimeout)
+  }, [beats, audio, replay])
+
+  const say = (text: string, on = audio) => { if (on && text) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
     if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false) }
     setS(n)
     if (spoken) say(spoken)
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
   }
-  const screenSay = (sc: Screen) => `${sc.title}. ${sc.text}`
+  const screenSay = (sc: Screen) => (sc.beats ? '' : `${sc.title}. ${sc.text}`)
 
   const problem = currentProblem(lesson, s)
   // The answer box's shape is the lesson's, never the problem's (see AnswerInput).
@@ -153,13 +168,30 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
     stack = sc.pictures.length > 0 && sc.pictures.every(p => p.kind === 'cards')
     crumb = `Screen ${s.screen + 1} of 9`; at = s.screen
     title = sc.title
+    // The board: a picture a beat draws waits for that beat; one no beat names is up from the start. Her written
+    // lines go up here too, under the drawing — the board is the left canvas, not a note beside her words.
+    // Built in beat order, so nothing already on the board moves when the next thing goes up.
+    const drawn = sc.beats?.flatMap(b => (b.pic === undefined ? [] : [b.pic])) ?? []
+    const onBoard = [
+      // On the board before she says anything: written on in turn, so the screen opens by being drawn, not by being there.
+      ...sc.pictures.flatMap((p, k) => (drawn.includes(k) ? [] : [<Written key={`p${k}`} after={k}><Pic p={p} /></Written>])),
+      ...(sc.beats?.slice(0, shown).flatMap((b, i) => [
+        ...(b.pic === undefined ? [] : [<Written key={`p${b.pic}`}><Pic p={sc.pictures[b.pic]} /></Written>]),
+        ...(b.write ? [<Written key={`w${i}`}><p style={board}>{b.write}</p></Written>] : []),
+      ]) ?? []),
+    ]
     picture = stack
-      ? <div key={`${s.screen}-${replay}`} style={{ flex: 1 }}>{sc.pictures.map((p, k) => <Pic key={k} p={p} />)}</div>
+      ? <div key={`${s.screen}-${replay}`} style={{ flex: 1 }}>{onBoard}</div>
       : <div key={`${s.screen}-${replay}`} style={sc.scene ? { ...stage, background: `center / cover url(/assets/lessons/${sc.scene}.webp)`, borderRadius: 20, padding: '24px 12px' } : stage}>
-        {sc.pictures.map((p, k) => <Pic key={k} p={p} />)}
+        {onBoard}
         {moving && <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => setReplay(r => r + 1)}>↻ Watch again</button>}
       </div>
-    words = <p style={bubble}>{ask ? ask[1] : sc.text}</p>
+    words = sc.beats
+      ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {sc.beats.slice(0, shown).map((b, i) =>
+            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{b.say}</p>)}
+        </div>
+      : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
     action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
       const n = next(s)
       go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? `Now you try. ${lesson.turn.text} ${lesson.turn.prompt}` : undefined)
@@ -198,4 +230,18 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
 
 const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', padding: '14px 22px', borderRadius: 20, background: '#ffd166', border: `4px solid ${INK}`,
   boxShadow: `5px 5px 0 ${INK}`, fontWeight: 800, fontSize: 20, color: INK, '--lp-tilt': '-2deg', transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' } as CSSProperties
+/** Puts one thing on the board the way a hand does: written on, left to right. `after` staggers the things
+ *  that are already up when a screen opens, so they arrive in order instead of all at once.
+ *  (Keyframes in ./Pictures; the global prefers-reduced-motion rule there turns this off for a child who asked.) */
+function Written({ children, after = 0 }: { children: ReactNode; after?: number }) {
+  // A real box, not `display: contents` — that generates no box, so the clip-path has nothing to clip and the
+  // whole thing silently appears instantly. It is a column so what is inside still centres itself as it did.
+  return <div style={{ display: 'flex', flexDirection: 'column', animation: `lp-write .55s ease-out ${after * 0.12}s both` }}>{children}</div>
+}
+
+const said: CSSProperties = { margin: 0, fontSize: 'clamp(19px, 2.4vw, 24px)', lineHeight: 1.35, color: INK, fontWeight: 600, transition: 'opacity .4s ease' }
+// What she writes on the board: it appears as she says the line and stays up, the way a real board does.
+const board: CSSProperties = { margin: 0, alignSelf: 'center', background: '#fff', border: `4px solid ${INK}`, borderRadius: 16, padding: '8px 20px',
+  boxShadow: `4px 4px 0 ${INK}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(22px, 3vw, 30px)', color: INK, animation: 'lp-pop .3s ease-out' }
+
 const askBtn: CSSProperties = { ...primary, flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '12px 22px', maxWidth: 440 }

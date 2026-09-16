@@ -58,6 +58,14 @@ describe.each(built.map(m => [m.id, m] as const))('%s', (id, m) => {
     expect(l.screens[2].text).toBe(l.bigIdea)
     expect(l.screens[6].title).toBe('One thing not to do')
     expect(l.screens.every(s => s.title && s.text && s.pictures.length > 0)).toBe(true)
+    // A beats screen says its `say` lines one at a time and `text` is what the whole screen says: they are ONE
+    // sentence set, so they cannot be edited apart. (`text` is what every other gate, the preview and speech read.)
+    for (const s of l.screens) if (s.beats) {
+      expect(s.beats.map(b => b.say).join(' '), `${l.id} "${s.title}" beats`).toBe(s.text)
+      // A `pic` past the end of `pictures` draws nothing and hides nothing, so the screen looks fine while the
+      // staging the author wrote simply does not happen — silent, and invisible from the screen.
+      for (const b of s.beats) if (b.pic !== undefined) expect(b.pic, `${l.id} "${s.title}" beat draws pictures[${b.pic}] of ${s.pictures.length}`).toBeLessThan(s.pictures.length)
+    }
     expect(l.screens.some(s => s.pictures.some(p => 'motion' in p && p.motion)), 'at least one step animates').toBe(true)
     expect(l.practice).toHaveLength(5)
     expect(l.practice.map(p => p.why)).toEqual([WHY_FIRST, WHY_SECOND, expect.stringMatching(/\S/), WHY_FOURTH, WHY_LAST])
