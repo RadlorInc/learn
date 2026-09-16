@@ -98,7 +98,13 @@ export interface Screen {
    * `write` a written line, `pic` the index in `pictures` she draws. A picture no beat names is on the board from
    * the start (so a screen can open with its diagram already up, the way a teacher opens with the picture drawn).
    */
-  beats?: { say: string; write?: string; pic?: number }[]
+  beats?: {
+    say: string
+    write?: string
+    pic?: number
+    /** How it arrives: swept on left to right like handwriting (default), traced like a drawing, or popped. */
+    effect?: 'write' | 'draw' | 'pop'
+  }[]
   pictures: Picture[]
   scene?: string          // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp); lessonScenes.test.ts checks the file exists
 }

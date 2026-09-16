@@ -6,7 +6,7 @@
  * Look: the founder's SampleUI template. Its red wrong-answer banners, locks, emoji and scores are deliberately NOT
  * carried over (a wrong answer is never marked wrong; difficulty and scores stay invisible).
  */
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer,
@@ -176,7 +176,8 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
       // On the board before she says anything: written on in turn, so the screen opens by being drawn, not by being there.
       ...sc.pictures.flatMap((p, k) => (drawn.includes(k) ? [] : [<Written key={`p${k}`} after={k}><Pic p={p} /></Written>])),
       ...(sc.beats?.slice(0, shown).flatMap((b, i) => [
-        ...(b.pic === undefined ? [] : [<Written key={`p${b.pic}`}><Pic p={sc.pictures[b.pic]} /></Written>]),
+        ...(b.pic === undefined ? [] : [<Written key={`p${b.pic}`} how={b.effect}><Pic p={sc.pictures[b.pic]} /></Written>]),
+        // A written line is always written on — `effect` chooses how she puts the PICTURE up.
         ...(b.write ? [<Written key={`w${i}`}><p style={board}>{b.write}</p></Written>] : []),
       ]) ?? []),
     ]
@@ -233,10 +234,42 @@ const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', paddi
 /** Puts one thing on the board the way a hand does: written on, left to right. `after` staggers the things
  *  that are already up when a screen opens, so they arrive in order instead of all at once.
  *  (Keyframes in ./Pictures; the global prefers-reduced-motion rule there turns this off for a child who asked.) */
-function Written({ children, after = 0 }: { children: ReactNode; after?: number }) {
+/** Traces every stroke inside, each over its OWN length, one just behind the last — a pen going round the
+ *  shape rather than the whole outline arriving at once. Web Animations, not CSS, for two reasons: the length
+ *  is per element and only the DOM knows it, and an `animate()` with the default fill leaves nothing behind,
+ *  so an authored dashed line (a symmetry line, a transformed shape) keeps its dashes when the trace ends. */
+function useTracedStrokes(on: boolean) {
+  const host = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!on || !host.current) return
+    // A child who asked for less motion gets none: the global CSS rule cannot reach a script-driven animation.
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const els = host.current.querySelectorAll<SVGGeometryElement>('svg :is(path, line, rect, circle, ellipse, polyline, polygon)')
+    els.forEach((el, i) => {
+      const len = el.getTotalLength?.() ?? 0
+      if (!len) return
+      el.animate(
+        [{ strokeDasharray: `${len}`, strokeDashoffset: `${len}` }, { strokeDasharray: `${len}`, strokeDashoffset: '0' }],
+        { duration: 700, delay: Math.min(i * 22, 600), easing: 'ease-out' },
+      )
+    })
+  }, [on])
+  return host
+}
+
+function Written({ children, after = 0, how = 'write' }: { children: ReactNode; after?: number; how?: 'write' | 'draw' | 'pop' }) {
   // A real box, not `display: contents` — that generates no box, so the clip-path has nothing to clip and the
   // whole thing silently appears instantly. It is a column so what is inside still centres itself as it did.
-  return <div style={{ display: 'flex', flexDirection: 'column', animation: `lp-write .55s ease-out ${after * 0.12}s both` }}>{children}</div>
+  const traced = useTracedStrokes(how === 'draw')
+  const box: CSSProperties = { display: 'flex', flexDirection: 'column' }
+  const delay = `${after * 0.12}s`
+  // `draw` animates the SVG's own strokes (class + keyframes in ./Pictures), so the wrapper must NOT also clip:
+  // a clip sweeping across a tracing outline reads as neither, and hides the half the tracing has reached.
+  // No `after` stagger here on purpose: animation-delay does not inherit, so setting it on this wrapper would
+  // do nothing to the strokes inside — an inert line that reads as a working one. Only the from-the-start
+  // pictures stagger, and those are written on.
+  if (how === 'draw') return <div ref={traced} className="lp-draw" style={box}>{children}</div>
+  return <div style={{ ...box, animation: `${how === 'pop' ? 'lp-pop .35s' : 'lp-write .55s'} ease-out ${delay} both` }}>{children}</div>
 }
 
 const said: CSSProperties = { margin: 0, fontSize: 'clamp(19px, 2.4vw, 24px)', lineHeight: 1.35, color: INK, fontWeight: 600, transition: 'opacity .4s ease' }

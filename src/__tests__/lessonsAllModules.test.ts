@@ -65,6 +65,15 @@ describe.each(built.map(m => [m.id, m] as const))('%s', (id, m) => {
       // A `pic` past the end of `pictures` draws nothing and hides nothing, so the screen looks fine while the
       // staging the author wrote simply does not happen — silent, and invisible from the screen.
       for (const b of s.beats) if (b.pic !== undefined) expect(b.pic, `${l.id} "${s.title}" beat draws pictures[${b.pic}] of ${s.pictures.length}`).toBeLessThan(s.pictures.length)
+      // `effect: 'draw'` traces the SVG's own strokes, so on a picture that is not SVG (a table, a plate of
+      // cookies) it is an inert setting: the author asked for a drawing and got an instant appearance, with
+      // nothing anywhere to say so. Asked of the real renderer rather than a list of kinds, which would drift.
+      for (const b of s.beats) {
+        if (b.effect !== 'draw') continue
+        expect(b.pic, `${l.id} "${s.title}": effect 'draw' with no picture to draw`).not.toBeUndefined()
+        const html = renderToStaticMarkup(createElement(Pic, { p: s.pictures[b.pic!] }))
+        expect(html.includes('<svg'), `${l.id} "${s.title}": effect 'draw' on a ${s.pictures[b.pic!].kind}, which draws no SVG — the effect would do nothing`).toBe(true)
+      }
     }
     expect(l.screens.some(s => s.pictures.some(p => 'motion' in p && p.motion)), 'at least one step animates').toBe(true)
     expect(l.practice).toHaveLength(5)
