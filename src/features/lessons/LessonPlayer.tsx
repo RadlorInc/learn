@@ -6,8 +6,8 @@
  * Look: the founder's SampleUI template. Its red wrong-answer banners, locks, emoji and scores are deliberately NOT
  * carried over (a wrong answer is never marked wrong; difficulty and scores stay invisible).
  */
-import { useState, type CSSProperties, type ReactNode } from 'react'
-import { speak, stopSpeech } from '@/infra/useMiloSpeaker'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
+import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer,
   type FlowState, type Lesson, type Screen,
@@ -25,14 +25,14 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   const [audio, setAudio] = useState(false)
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
 
-  const say = (text: string, on = audio) => { if (on) speak(text) }
+  const say = (text: string, on = audio) => { if (on && text) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
     if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false) }
     setS(n)
     if (spoken) say(spoken)
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
   }
-  const screenSay = (sc: Screen) => `${sc.title}. ${sc.text}`
+  const screenSay = (sc: Screen) => (sc.beats ? '' : `${sc.title}. ${sc.text}`)
 
   const problem = currentProblem(lesson, s)
   // The answer box's shape is the lesson's, never the problem's (see AnswerInput).
@@ -159,7 +159,9 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
         {sc.pictures.map((p, k) => <Pic key={k} p={p} />)}
         {moving && <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => setReplay(r => r + 1)}>↻ Watch again</button>}
       </div>
-    words = <p style={bubble}>{ask ? ask[1] : sc.text}</p>
+    words = sc.beats
+      ? <Beats key={`${s.screen}-${replay}`} beats={sc.beats} audio={audio} />
+      : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
     action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
       const n = next(s)
       go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? `Now you try. ${lesson.turn.text} ${lesson.turn.prompt}` : undefined)
@@ -198,4 +200,36 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
 
 const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', padding: '14px 22px', borderRadius: 20, background: '#ffd166', border: `4px solid ${INK}`,
   boxShadow: `5px 5px 0 ${INK}`, fontWeight: 800, fontSize: 20, color: INK, '--lp-tilt': '-2deg', transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' } as CSSProperties
+/**
+ * A teaching screen the teacher-flow way: one line is said, then what she writes goes up on the board,
+ * then the next line. Paced by the voice when the child has audio on, and by a timer when they don't —
+ * the lines and the board are the same either way, so a silent child sees the same lesson, just timed.
+ * Said lines dim once she has moved on; the board stays, the way a real board does.
+ */
+function Beats({ beats, audio }: { beats: NonNullable<Screen['beats']>; audio: boolean }) {
+  const [shown, setShown] = useState(1)
+  useEffect(() => {
+    setShown(1)
+    if (audio) return speakSteps(beats.map(b => b.say), { onStep: i => setShown(i + 1) })
+    // No voice: pace each line by how long it takes a Grade 3 reader to read it, not by a flat beat.
+    let t = 0
+    const ids = beats.map((b, i) => { const at = t; t += Math.min(6500, 1500 + b.say.length * 55); return setTimeout(() => setShown(i + 1), at) })
+    return () => ids.forEach(clearTimeout)
+  }, [beats, audio])
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {beats.slice(0, shown).map((b, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 10, animation: 'lp-pop .3s ease-out' }}>
+          <p style={{ ...said, opacity: i < shown - 1 ? 0.55 : 1 }}>{b.say}</p>
+          {b.write && <p style={board}>{b.write}</p>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const said: CSSProperties = { margin: 0, fontSize: 'clamp(19px, 2.4vw, 24px)', lineHeight: 1.35, color: INK, fontWeight: 600, transition: 'opacity .4s ease' }
+const board: CSSProperties = { margin: 0, alignSelf: 'flex-start', background: '#fff', border: `4px solid ${INK}`, borderRadius: 16, padding: '8px 18px',
+  boxShadow: `4px 4px 0 ${INK}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(22px, 3vw, 30px)', color: INK, animation: 'lp-pop .3s ease-out' }
+
 const askBtn: CSSProperties = { ...primary, flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '12px 22px', maxWidth: 440 }

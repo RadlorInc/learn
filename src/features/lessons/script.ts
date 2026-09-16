@@ -92,7 +92,9 @@ export interface YourTurn extends Problem {
 
 export interface Screen {
   title: string
-  text: string
+  text: string           // the whole line the screen says; with `beats` it must equal their `say`s joined by a space
+  /** Teacher flow: each line is said on its own, and `write` is what goes up on the board right after it. */
+  beats?: { say: string; write?: string }[]
   pictures: Picture[]
   scene?: string          // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp); lessonScenes.test.ts checks the file exists
 }
