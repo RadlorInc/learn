@@ -288,8 +288,11 @@ export const LESSON_KEYFRAMES = `
  * The INK (fills and lettering) fades in here; the strokes are traced in LessonPlayer's Written wrapper, because a
  * real trace needs each path's own length and CSS cannot ask for it. A single fixed dash long enough for the
  * longest path covers a short one completely — which is why the first version only faded small shapes in. */
-@keyframes lp-ink { from { fill-opacity: 0 } to { fill-opacity: 1 } }
-.lp-draw svg :is(path, line, rect, circle, ellipse, polyline, polygon, text) { animation: lp-ink .9s ease-out backwards }
+/* Named lp-FILL, not lp-ink: "lp-ink".includes("lp-in") is TRUE, and the code that walks up from a stroke
+ * looking for its part's lp-in fade matched this on the stroke itself and stopped at delay 0 — inert, and
+ * it read as working. Exact-matching fixed it; the rename means a substring test cannot bring it back. */
+@keyframes lp-fill { from { fill-opacity: 0 } to { fill-opacity: 1 } }
+.lp-draw svg :is(path, line, rect, circle, ellipse, polyline, polygon, text) { animation: lp-fill .9s ease-out backwards }
 button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #2a1c14 !important }
 button:disabled { opacity: .5; box-shadow: none !important; cursor: default }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-delay: 0ms !important } }

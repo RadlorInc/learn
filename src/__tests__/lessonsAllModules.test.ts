@@ -60,21 +60,6 @@ describe.each(built.map(m => [m.id, m] as const))('%s', (id, m) => {
     expect(l.screens.every(s => s.title && s.text && s.pictures.length > 0)).toBe(true)
     // A beats screen says its `say` lines one at a time and `text` is what the whole screen says: they are ONE
     // sentence set, so they cannot be edited apart. (`text` is what every other gate, the preview and speech read.)
-    for (const s of l.screens) if (s.beats) {
-      expect(s.beats.map(b => b.say).join(' '), `${l.id} "${s.title}" beats`).toBe(s.text)
-      // A `pic` past the end of `pictures` draws nothing and hides nothing, so the screen looks fine while the
-      // staging the author wrote simply does not happen — silent, and invisible from the screen.
-      for (const b of s.beats) if (b.pic !== undefined) expect(b.pic, `${l.id} "${s.title}" beat draws pictures[${b.pic}] of ${s.pictures.length}`).toBeLessThan(s.pictures.length)
-      // `effect: 'draw'` traces the SVG's own strokes, so on a picture that is not SVG (a table, a plate of
-      // cookies) it is an inert setting: the author asked for a drawing and got an instant appearance, with
-      // nothing anywhere to say so. Asked of the real renderer rather than a list of kinds, which would drift.
-      for (const b of s.beats) {
-        if (b.effect !== 'draw') continue
-        expect(b.pic, `${l.id} "${s.title}": effect 'draw' with no picture to draw`).not.toBeUndefined()
-        const html = renderToStaticMarkup(createElement(Pic, { p: s.pictures[b.pic!] }))
-        expect(html.includes('<svg'), `${l.id} "${s.title}": effect 'draw' on a ${s.pictures[b.pic!].kind}, which draws no SVG — the effect would do nothing`).toBe(true)
-      }
-    }
     expect(l.screens.some(s => s.pictures.some(p => 'motion' in p && p.motion)), 'at least one step animates').toBe(true)
     expect(l.practice).toHaveLength(5)
     expect(l.practice.map(p => p.why)).toEqual([WHY_FIRST, WHY_SECOND, expect.stringMatching(/\S/), WHY_FOURTH, WHY_LAST])
@@ -169,3 +154,38 @@ function validPicture(p: Picture, where: string) {
     case 'poly': expect(p.shapes.length + (p.segs?.length ?? 0) + (p.circles?.length ?? 0), w).toBeGreaterThan(0); break
   }
 }
+
+
+/**
+ * The teacher flow (`beats`), swept over EVERY module — `built` above excludes g3m1, and that exclusion is
+ * why the module with founder-APPROVED wording was the one module whose beats nothing checked. Its two
+ * own tests contain no reference to `beats` at all, so they were green and blind at the same time.
+ */
+describe.each(MODULES.filter(m => m.lessons.length > 0).map(m => [m.id, m] as const))('%s · teacher flow', (_id, m) => {
+  it.each(m.lessons.map(l => [l.id, l] as const))('%s: every teaching screen is a teacher, not a page', (_lid, l) => {
+    // Screen 1 is the exception BY DESIGN: a regex over its text splits the closing question into the button,
+    // so beats there would put the question in two places at once.
+    expect(l.screens[0].beats, `${l.id} screen 1 must have no beats — its question becomes the button`).toBeUndefined()
+    for (const [i, s] of l.screens.entries()) {
+      if (i === 0) continue
+      // ⚠️ THE RULE THAT STOPS A SILENT SKIP. Without it a module nobody converted reads exactly like a
+      // converted one: every other rule below only looks at screens that already HAVE beats.
+      expect(s.beats, `${l.id} screen ${i + 1} "${s.title}" has no beats — it still reads like a page`).toBeDefined()
+      const beats = s.beats!
+      // `text` stays the whole screen — speech, /lesson-preview and every other gate read it — so the lines
+      // and the text are one sentence set that cannot be edited apart.
+      expect(beats.map(b => b.say).join(' '), `${l.id} "${s.title}" beats`).toBe(s.text)
+      for (const b of beats) {
+        // A `pic` past the end draws nothing AND hides nothing: the screen looks right while the staging
+        // the author wrote simply does not happen.
+        if (b.pic !== undefined) expect(b.pic, `${l.id} "${s.title}" beat draws pictures[${b.pic}] of ${s.pictures.length}`).toBeLessThan(s.pictures.length)
+        if (b.effect !== 'draw') continue
+        expect(b.pic, `${l.id} "${s.title}": effect 'draw' with no picture to draw`).not.toBeUndefined()
+        // Asked of the real renderer, never of a list of kinds — a list drifts from Diagrams.tsx and then
+        // certifies a 'draw' that does nothing.
+        const html = renderToStaticMarkup(createElement(Pic, { p: s.pictures[b.pic!] }))
+        expect(html.includes('<svg'), `${l.id} "${s.title}": effect 'draw' on a ${s.pictures[b.pic!].kind}, which draws no SVG — the effect would do nothing`).toBe(true)
+      }
+    }
+  })
+})

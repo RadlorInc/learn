@@ -234,6 +234,26 @@ const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', paddi
 /** Puts one thing on the board the way a hand does: written on, left to right. `after` staggers the things
  *  that are already up when a screen opens, so they arrive in order instead of all at once.
  *  (Keyframes in ./Pictures; the global prefers-reduced-motion rule there turns this off for a child who asked.) */
+/**
+ * When does this stroke's own picture become visible? A `motion: true` picture reveals its parts on a stagger
+ * (`lp-in` with delays of 0, 0.7s, 1.4s…), and a trace that runs while its part is still at opacity 0 is spent
+ * on something nobody can see: the part then simply appears, fully drawn. Measured on g6m6-t1 — fades at
+ * 1.4s and 1.8s against a trace window ending ~1.3s, so two of the four parts traced invisibly.
+ * So a stroke waits for its own part to start fading in, and the two then run together.
+ */
+function fadesInAt(el: Element, stop: Element): number {
+  for (let n: Element | null = el; n && n !== stop; n = n.parentElement) {
+    const cs = getComputedStyle(n)
+    // ⚠️ MATCH THE NAME, NOT A SUBSTRING OF IT. The first version asked `includes('lp-in')` — and the
+    // stroke's own ink fade is called `lp-fill`, which contains `lp-in`, so every walk stopped on the
+    // element itself at delay 0 and the whole thing was inert while looking correct.
+    const names = cs.animationName.split(',').map(x => x.trim())
+    const at = names.indexOf('lp-in')
+    if (at >= 0) return parseFloat(cs.animationDelay.split(',')[at] ?? '0') * 1000 || 0
+  }
+  return 0
+}
+
 /** Traces every stroke inside, each over its OWN length, one just behind the last — a pen going round the
  *  shape rather than the whole outline arriving at once. Web Animations, not CSS, for two reasons: the length
  *  is per element and only the DOM knows it, and an `animate()` with the default fill leaves nothing behind,
@@ -250,7 +270,7 @@ function useTracedStrokes(on: boolean) {
       if (!len) return
       el.animate(
         [{ strokeDasharray: `${len}`, strokeDashoffset: `${len}` }, { strokeDasharray: `${len}`, strokeDashoffset: '0' }],
-        { duration: 700, delay: Math.min(i * 22, 600), easing: 'ease-out' },
+        { duration: 700, delay: Math.min(i * 22, 600) + fadesInAt(el, host.current!), easing: 'ease-out' },
       )
     })
   }, [on])
