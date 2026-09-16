@@ -38,7 +38,7 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'clock', h: 4, m: 15 }] },
       { title: 'The numbers are not the minutes', text: 'Look where the long hand is pointing. Right at the 3. Now, careful here. That does not mean 3 minutes. Those big numbers count the hours. They never count the minutes.',
         beats: [
-          { say: 'Look where the long hand is pointing. Right at the 3.', pic: 0 },
+          { say: 'Look where the long hand is pointing. Right at the 3.', pic: 0, effect: 'draw' },
           { say: 'Now, careful here. That does not mean 3 minutes.', write: 'not 3 minutes' },
           { say: 'Those big numbers count the hours. They never count the minutes.' },
         ],
@@ -47,14 +47,14 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'clock', h: 4, m: 15, fives: true }] },
       { title: 'Read the short hand first', text: "Let's start with the short hand. It is just past the 4, and it has not reached the 5 yet. So the hour is 4. I'll write that down.",
         beats: [
-          { say: "Let's start with the short hand.", pic: 0 },
+          { say: "Let's start with the short hand.", pic: 0, effect: 'draw' },
           { say: 'It is just past the 4, and it has not reached the 5 yet.' },
           { say: "So the hour is 4. I'll write that down.", write: 'Hour: 4' },
         ],
         pictures: [{ kind: 'clock', h: 4, m: 15 }] },
       { title: 'Count by 5s', text: 'Now the long hand. Start at the top and count by 5s. Five, ten, fifteen. Stop at the long hand. That is 15 minutes.',
         beats: [
-          { say: 'Now the long hand. Start at the top and count by 5s.', pic: 0 },
+          { say: 'Now the long hand. Start at the top and count by 5s.', pic: 0, effect: 'draw' },
           { say: 'Five, ten, fifteen. Stop at the long hand.', pic: 1 },
           { say: 'That is 15 minutes.', write: 'Minutes: 15' },
         ],
