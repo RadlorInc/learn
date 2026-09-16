@@ -12,6 +12,15 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   reporter: [['list']],
   use: {
+    /**
+     * ⚠️ THIS DEFAULT AND `.claude/launch.json` DISAGREE, AND THE DISAGREEMENT LOOKS LIKE 217 BROKEN
+     * CHAPTERS. Noticed 2026-09-16: `milo-dev` in launch.json runs on **3000**, this defaults to
+     * **3017**, so `npm run test:chapters` against a normally-started dev server dies
+     * `ERR_CONNECTION_REFUSED` on every navigation — a harness that could not look, reported in the
+     * same shape as a product that is broken. `E2E_BASE_URL=http://localhost:3000` is the
+     * workaround; the fix is to make one of the two numbers follow the other, which needs somebody
+     * to say which is canonical (other docs and runbooks name both).
+     */
     baseURL: process.env.E2E_BASE_URL || 'http://localhost:3017',
     headless: true,
     viewport: { width: 1280, height: 820 },
