@@ -281,6 +281,8 @@ export const LESSON_KEYFRAMES = `
 @keyframes lp-turn { to { transform: rotate(90deg) } }
 @keyframes lp-pop { from { transform: scale(.85) rotate(var(--lp-tilt, 0deg)); opacity: 0 } to { transform: scale(1) rotate(var(--lp-tilt, 0deg)); opacity: 1 } }
 @keyframes lp-nudge { 50% { transform: scale(1.06) } }
+/* Anything going up on the board is WRITTEN on, left to right, rather than just being there. */
+@keyframes lp-write { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 -6px 0 0) } }
 button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #2a1c14 !important }
 button:disabled { opacity: .5; box-shadow: none !important; cursor: default }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-delay: 0ms !important } }

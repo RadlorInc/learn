@@ -93,8 +93,12 @@ export interface YourTurn extends Problem {
 export interface Screen {
   title: string
   text: string           // the whole line the screen says; with `beats` it must equal their `say`s joined by a space
-  /** Teacher flow: each line is said on its own, and `write` is what goes up on the board right after it. */
-  beats?: { say: string; write?: string }[]
+  /**
+   * Teacher flow: each line is said on its own, and what she puts on the board with it goes up as she says it —
+   * `write` a written line, `pic` the index in `pictures` she draws. A picture no beat names is on the board from
+   * the start (so a screen can open with its diagram already up, the way a teacher opens with the picture drawn).
+   */
+  beats?: { say: string; write?: string; pic?: number }[]
   pictures: Picture[]
   scene?: string          // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp); lessonScenes.test.ts checks the file exists
 }
