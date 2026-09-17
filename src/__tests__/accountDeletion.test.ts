@@ -277,7 +277,7 @@ describe('deleting an account', () => {
 })
 
 /**
- * Child logins (2026-09-17, migration 20260917100000). A child's own login is an auth account linked to their learner
+ * Child logins (2026-09-17, migration 20260917090504). A child's own login is an auth account linked to their learner
  * with access_role 'self'. Closing the parent's account must remove it — and must reach ONLY such accounts: another
  * family's child login, an invited co-parent, and an adult who somehow holds a 'self' row all stay.
  */

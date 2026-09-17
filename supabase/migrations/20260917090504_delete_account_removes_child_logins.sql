@@ -1,5 +1,9 @@
 -- Closing an account now also removes the children's own logins (founder, 2026-09-17).
 --
+-- ✅ APPLIED TO PRODUCTION 2026-09-17 by hand (ledger 20260917090504; file renamed to match). Measured after:
+-- md5(prosrc) = 9ed5e910843d0573020593897583561d (8042 chars), identical to this file's body; prosecdef = true,
+-- search_path=public, EXECUTE = postgres/authenticated/service_role — all unchanged from before.
+--
 -- ⚠️⚠️ SECURITY CHANGE, CALLED OUT DELIBERATELY: this REDEFINES `delete_my_account`, a SECURITY DEFINER function.
 -- The definer status, `search_path`, signature and grants are UNCHANGED. The body is production's
 -- (md5(prosrc) = afa5cfcccf412559af196909e9364128 measured 2026-09-17, identical to 20260905160000) with exactly
