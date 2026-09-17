@@ -70,7 +70,8 @@ async function selfRows(e: Env, learnerIds: string[]) {
 }
 
 /** Common start: rate limit, configuration, caller, and (for one learner) ownership. */
-async function begin(req: Request, learnerId?: unknown) {
+type Begun = { res: NextResponse } | { e: Env; who: { id: string; token: string }; learner?: { id: string; display_name: string } }
+async function begin(req: Request, learnerId?: unknown): Promise<Begun> {
   if (overLimit(callerKey(req, 'child-login'), LIMIT, WINDOW_MS)) return { res: json({ ok: false, error: 'rate_limited' }, 429) }
   const e = env()
   if (!e) return { res: json({ ok: false, error: 'not_configured' }, 503) }
