@@ -38,6 +38,8 @@ function Lesson() {
     <LessonPlayer
       key={lesson.id}
       lesson={lesson}
+      learnerId={learnerId}
+      earlier={module.lessons.slice(0, module.lessons.indexOf(lesson)).map(l => l.id)}
       onFinish={() => markLessonDone(learnerId, lesson.id)}
       onExit={() => router.push(`/lesson?module=${module.id}`)}
     />

@@ -232,6 +232,50 @@ Read the two worked examples before writing: **`g5m1-t5`** (`content/g5m1.ts`, m
 checked against the script document word for word.** Its screens get beats by CUTTING the existing
 text only. Do not reword one syllable of it.
 
+## Practice is ADAPTIVE where a topic has a ladder (2026-09-17, Grade 5 · Module 1 first)
+
+Founder's call: **difficulty is not bigger numbers — a harder question is a different KIND of question.** A laddered topic's
+practice is generated, not the 5 written problems. Engine: `src/features/lessons/adaptive.ts`; ladders:
+`src/features/lessons/ladders/<module>.ts` (registered in `ladders/index.ts`); per-topic standing per device:
+`src/infra/storage/lessonStanding.ts`.
+
+- **A ladder** = 4–5 `Level`s, easiest first. Each has a `style` (authors only, never shown) and `make(r)`, which picks its
+  own numbers with the seeded rng and returns `{ text, picture, answer, steps }`. The answer and steps are computed from the
+  numbers, so they cannot disagree. Typical climb: with a scaffold/picture → bare numbers → pick the true one / spot the
+  mistake → missing number, work backwards → story → two-step story. Choose what fits the skill.
+- **The rules** (in `step`, never shown to the child): two first-try rights → up a level · right after a miss (or after
+  tapping Hint) → stay · worked steps → down a level · two first-try rights at the top → mastered, practice ends · or 12
+  problems. First visit starts one level up if Screen 8 was right first try; a return visit starts where the child left off.
+- **Topics come back.** The 3rd problem of a lesson's practice is from the weakest earlier topic of the module that the child
+  finished and has not mastered (its own big idea, worked steps, and a link to its lesson). Module practice is 10
+  problems, each from the weakest topic (a topic already asked counts two levels up, so two weak topics cannot take them all).
+- **The gate** (`src/__tests__/lessonLadders.test.ts`): every topic of a module in `LADDERED` has a ladder; no two levels ask
+  the same kind of question once every number is stripped (watched failing on a numbers-only ladder); 60 samples per level
+  are well formed, reach their answer in the last step, and do not show it in the picture (a table is read row-joined — a
+  place chart spells 1,100 as 1|1|0|0); and every sample agrees with an **independent solver**
+  (`src/__tests__/ladderKeys/<module>.ts`) written from `npx tsx scripts/ladder-questions.mts <module> [n] [topics]` alone,
+  never from `ladders/`. On g5m1 the solver found one real defect the writer's own checks missed: two correct choices when
+  the multiplier equalled an addend.
+- **Every built module is laddered (2026-09-17)** — 36 modules, 282 topics, `LADDERED` lists them all. One writer agent per
+  module, then one blind solver per module. When a solver disagrees, measure which side is wrong before fixing either.
+- **What the gate reads as "the picture shows the answer"** — learned by getting it wrong three times, keep it this way:
+  - a number the picture's own text LABELS print, with each list of strings also read joined (a place chart spells
+    1,100 as 1|1|0|0). Numbers the renderer draws from numeric data (a clock's 1–12, a jug's marks, a line's ends, a
+    needle) are SCALES, not reveals — reading a scale is the skill;
+  - a right choice matched as a whole word in a single label, or equal to a joined row (732|408 joined contains "324" by
+    accident; "unlikely" does not show "likely");
+  - `Level.dataShown: true` exempts a level whose picture IS the data the answer comes from (a median in its data set) —
+    only on chart/table/numline pictures.
+- ⚠️ **The gate cannot see a SIZE leak**: a "?" side, circle, tape cell or angle drawn at its answer's size lets a child
+  measure the answer. An audit on 2026-09-17 found 8 across the ladders and they were fixed (g3m5, g3m6, g4m5, g6m6,
+  g7m4 ×2), and two blind keys (g3m6, g6m6) were found REQUIRING the leak — their picture checks now reject it. Draw every
+  unknown at a neutral size. Typed-angle levels keep true sizes (nobody reads 115° by eye); CHOICE levels must not.
+- **The fraction answer box has a "−" key** when any answer in the lesson (ladder samples included) is a negative fraction
+  — it had none, and g8m2-t2's −3/4 could not be typed by anyone (`answerBoxCanExpress.test.ts`, watched red on it).
+- **To ladder a new module:** writer → blind solver → add the id to `LADDERED` → gate green.
+  The lesson's written `practice` stays in the data (the all-modules gate and answer keys still check it) but a laddered
+  lesson's player no longer asks it.
+
 ## A complete example (the shape to copy)
 
 ```ts

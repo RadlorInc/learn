@@ -44,13 +44,18 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
   }
 
   if (typeof answer === 'object' && 'frac' in answer) {
-    // value is "w n/d" or "n/d"; the boxes are kept apart so a half-typed fraction stays where the child put it.
-    const m = value.match(/^(?:(\S*) )?(\S*)\/(\S*)$/)
+    // value is "w n/d" or "n/d", with a leading "-" when the child pressed "−"; the boxes are kept apart so a
+    // half-typed fraction stays where the child put it.
+    const neg = value.startsWith('-')
+    const m = (neg ? value.slice(1) : value).match(/^(?:(\S*) )?(\S*)\/(\S*)$/)
     const w = m?.[1] ?? '', n = m?.[2] ?? '', d = m?.[3] ?? ''
-    const set = (nw: string, nn: string, nd: string) => onChange(nw || nn || nd ? `${mixed ? `${nw} ` : ''}${nn}/${nd}` : '')
+    const write = (sign: boolean, nw: string, nn: string, nd: string) =>
+      onChange(nw || nn || nd ? `${sign ? '-' : ''}${mixed ? `${nw} ` : ''}${nn}/${nd}` : sign ? '-/' : '')
+    const set = (nw: string, nn: string, nd: string) => write(neg, nw, nn, nd)
     const box: CSSProperties = { ...answerInput, width: 84, height: 54, fontSize: 26 }
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+        {signed && signKey(neg, () => write(!neg, w, n, d))}
         {mixed && <input aria-label="Whole number" inputMode="numeric" maxLength={3} value={w} style={{ ...box, height: 64 }}
           onChange={e => set(e.target.value.replace(/\D/g, ''), n, d)} />}
         <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
@@ -68,11 +73,7 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
   const digits = neg ? value.slice(1) : value
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      {signed && (
-        <button type="button" aria-label={neg ? 'Make it positive' : 'Make it negative'} aria-pressed={neg}
-          onClick={() => onChange(neg ? digits : `-${digits}`)}
-          style={{ ...choice, minWidth: 56, padding: '8px 0', fontSize: 28, background: neg ? TEAL : '#fff', color: neg ? '#fff' : INK }}>−</button>
-      )}
+      {signed && signKey(neg, () => onChange(neg ? digits : `-${digits}`))}
       <input aria-label="Your answer" inputMode="decimal" maxLength={12} value={digits}
         style={{ ...answerInput, width: 'min(180px, 44vw)' }}
         onChange={e => {
@@ -83,6 +84,11 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
   )
 }
 
+const signKey = (neg: boolean, flip: () => void) => (
+  <button type="button" aria-label={neg ? 'Make it positive' : 'Make it negative'} aria-pressed={neg} onClick={flip}
+    style={{ ...choice, minWidth: 56, padding: '8px 0', fontSize: 28, background: neg ? TEAL : '#fff', color: neg ? '#fff' : INK }}>−</button>
+)
+
 /** Is there enough to Check? A fraction needs both numbers, a time both boxes. */
 export function ready(answer: Answer, value: string): boolean {
   if (typeof answer === 'object' && 'frac' in answer) return /\d\/\d/.test(value)
@@ -91,7 +97,8 @@ export function ready(answer: Answer, value: string): boolean {
 }
 
 /** Does any problem in this set have a negative number answer / a mixed-number answer? Decides the box, per lesson. */
-export const needsSign = (answers: Answer[]) => answers.some(a => typeof a === 'number' && a < 0)
+export const needsSign = (answers: Answer[]) =>
+  answers.some(a => (typeof a === 'number' ? a < 0 : typeof a === 'object' && 'frac' in a && (a.frac[0] < 0 || (a.whole ?? 0) < 0)))
 export const needsWhole = (answers: Answer[]) => answers.some(a => typeof a === 'object' && 'frac' in a && a.whole !== undefined)
 
 const choice: CSSProperties = { minHeight: 56, padding: '10px 20px', borderRadius: 16, border: `4px solid ${INK}`, boxShadow: `3px 3px 0 ${INK}`,

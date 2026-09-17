@@ -6,24 +6,40 @@
  * Look: the founder's SampleUI template. Its red wrong-answer banners, locks, emoji and scores are deliberately NOT
  * carried over (a wrong answer is never marked wrong; difficulty and scores stay invisible).
  */
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import Link from 'next/link'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import {
-  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer,
+  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf,
   type FlowState, type Lesson, type Screen,
 } from './script'
+import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, type Run } from './adaptive'
+import { ladderOf, ladderAnswers } from './ladders'
+import { findLesson } from './modules'
+import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
+import { lessonDone } from '@/infra/storage/lessonProgress'
 import { Pic, tapCue, pill, INK } from './Pictures'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
 
-export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onFinish: () => void; onExit: () => void }) {
+/**
+ * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
+ * (see ./adaptive) asks generated problems that follow the child, and may bring back one earlier topic that is not mastered.
+ */
+export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish, onExit }: {
+  lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]; onFinish: () => void; onExit: () => void
+}) {
   const [s, setS] = useState<FlowState>(START)
   const [taps, setTaps] = useState(0)
   const [value, setValue] = useState('')
   const [replay, setReplay] = useState(0)
   const [audio, setAudio] = useState(false)
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
+  const ladder = ladderOf(lesson.id)
+  const [run, setRun] = useState<Run | null>(null)
+  const r = useRef(rng(freshSeed())).current
+  const firstTry = useRef(false)              // Screen 8 solved with no miss: adaptive practice starts one level up
 
   // The beat clock. A teaching screen with `beats` reveals itself line by line — her words on the right, what she
   // puts on the board on the left — so BOTH columns read `shown`, and it has to live above the early returns below.
@@ -49,9 +65,13 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
   }
   const screenSay = (sc: Screen) => (sc.beats ? '' : `${sc.title}. ${sc.text}`)
 
-  const problem = currentProblem(lesson, s)
-  // The answer box's shape is the lesson's, never the problem's (see AnswerInput).
-  const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf)
+  const problem = s.mode === 'practice' && run ? run.current.problem : currentProblem(lesson, s)
+  // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
+  const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? findLesson(run.current.from)?.lesson ?? null : null
+  const bigIdea = from?.bigIdea ?? lesson.bigIdea
+  // The answer box's shape is the lesson's, never the problem's (see AnswerInput). A ladder's answers are sampled.
+  const sampled = useMemo(() => (ladder ? ladderAnswers(ladder) : []), [ladder])
+  const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
   const box = problem && <AnswerInput answer={solutionOf(problem)} value={value} onChange={setValue} signed={needsSign(all)} mixed={needsWhole(all)} />
 
   const toggleAudio = () => {
@@ -67,12 +87,22 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
     const worked = s.feedback === 'worked', answering = s.feedback !== 'right' && !worked
     const submit = () => {
       if (!ready(solutionOf(problem), value)) return
-      const n = check(lesson, s, value)
-      go(n, n.feedback === 'idea' ? lesson.bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined)
+      const n = check(lesson, s, value, problem)
+      go(n, n.feedback === 'idea' ? bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined)
       if (n.feedback !== 'right') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
+    // Laddered: no "of 5" — how many problems depends on the child, and the count must not read as a score.
+    const nextProblem = () => {
+      if (!run || !ladder) return go(nextPractice(s))
+      const o = outcomeOf(s)
+      const moved = advance(run, lesson.id, ladderOf, asked && o === 'first' ? 'second' : o, r)
+      for (const [id, st] of moved.saved) saveStanding(learnerId, id, st)
+      setRun(moved.run)
+      go(moved.done ? { ...s, mode: 'finish', misses: 0, feedback: null } : { ...s, practice: s.practice + 1, misses: 0, feedback: null })
+    }
+    const of = ladder ? '' : ' of 5'
     return (
-      <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1} of 5`} title={`Problem ${s.practice + 1} of 5`}
+      <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
         onExit={() => { stopSpeech(); onExit() }} audio={{ on: audio, toggle: toggleAudio }} pad padKey={s.practice}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
@@ -86,20 +116,22 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
             {box}
           </form>
         )}
-        {(s.feedback === 'idea' || (asked && answering)) && <p style={idea}>{lesson.bigIdea}</p>}
+        {(s.feedback === 'idea' || (asked && answering)) && <p style={idea}>{bigIdea}</p>}
         {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {showAnswer(solutionOf(problem))}.</p>}
         {worked && <>
           <div style={hint}>
             <b>Here&apos;s how this one works:</b>
             <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
           </div>
-          <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>
+          {from
+            ? <Link href={`/lesson?id=${from.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Watch the lesson: {from.title}</Link>
+            : <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>}
         </>}
         <div className="pr-foot">
           {answering ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || s.feedback === 'idea'}>Hint</button> : <span />}
           {answering
             ? <button type="submit" form="lp-answer" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>
-            : <button type="button" style={primary} onClick={() => go(nextPractice(s))}>{s.practice === 4 ? 'Finish' : 'Next problem'}</button>}
+            : <button type="button" style={primary} onClick={nextProblem}>{!ladder && s.practice === 4 ? 'Finish' : 'Next problem'}</button>}
         </div>
       </PracticeLayout>
     )
@@ -113,6 +145,7 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
     const submit = () => {
       if (!ready(solutionOf(problem), value)) return
       const n = check(lesson, s, value)
+      if (n.mode === 'won') firstTry.current = !s.twin && s.misses === 0
       const fb = n.mode === 'won' ? wonFor(lesson, n).text
         : n.feedback === 'hint1' ? hintsFor(lesson, n)[0] : n.feedback === 'hint2' ? hintsFor(lesson, n)[1]
         : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
@@ -213,12 +246,21 @@ export function LessonPlayer({ lesson, onFinish, onExit }: { lesson: Lesson; onF
       </div>
     </div>
     words = <p style={bubble}>{w.text}</p>
-    action = <button type="button" style={primary} onClick={() => go(toPractice(s))}>Keep practicing</button>
+    action = <button type="button" style={primary} onClick={() => {
+      if (ladder) {
+        const standing = startLevel(loadStanding(learnerId, lesson.id), firstTry.current, ladder.length)
+        const review = reviewTopic(earlier, id => lessonDone(learnerId, id), id => loadStanding(learnerId, id), ladderOf)
+        setRun(beginRun(lesson.id, ladder, standing, r, review))
+      }
+      go(toPractice(s))
+    }}>Keep practicing</button>
   } else {
     crumb = 'Done!'; at = 8
     title = `${lesson.title}: done!`
     picture = <div style={stage}><p style={idea}>{lesson.bigIdea}</p></div>
-    words = <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>
+    words = <p style={bubble}>{run
+      ? run.standing.mastered ? 'You really know this one now. Nice work!' : `You worked through ${run.asked} practice problems. Nice work sticking with it!`
+      : 'You worked through all 5 practice problems. Nice work sticking with it!'}</p>
     action = <button type="button" style={primary} onClick={onExit}>Back to topics</button>
   }
 
