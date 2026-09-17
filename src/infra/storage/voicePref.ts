@@ -24,6 +24,13 @@ export const VOICES = [
  */
 export const BAND_VOICE: Partial<Record<string, string>> = { '3-5': 'XjGYkUkzth8BPs29fmcV' }
 
+/**
+ * The new-flow lessons' voice, by grade: Teddy reads Grades 3–5, Stevie 6–8. The SAME split
+ * scripts/lesson-voice-corpus.mts cuts the render corpus on — change one, change both, or the lesson asks a
+ * voice for clips that were rendered in the other.
+ */
+export const lessonVoice = (grade: number): string => (grade <= 5 ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT')
+
 export type VoiceId = (typeof VOICES)[number]['id'] | 'device'
 
 export function getVoicePref(): VoiceId {

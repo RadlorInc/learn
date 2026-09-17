@@ -126,6 +126,156 @@ See every one drawn with sample data at **`/lesson-preview`** (dev server). Coor
 Write multiplication as `×`, division as `÷`, minus as `−` in text that the child reads (`eq`, `cards`, screen text).
 Fractions in text are written `3/4` and mixed numbers `2 1/2`.
 
+## Teaching screens are a TEACHER, not a page — `beats` (2026-09-16)
+
+A screen used to show its whole paragraph and its whole picture at once, and it read like somebody
+reading a page out loud. It does not any more. **She says one line, puts something on the board, says
+the next line.** That is the format, and every teaching screen is written in it.
+
+```ts
+{ title: 'Smaller unit: multiply',
+  // `text` is the WHOLE screen, still — speech, /lesson-preview and every gate read it.
+  text: 'Meters are smaller, so it takes more of them to cover the same distance. Smaller unit, more of them. That means we multiply. 5 × 1,000 = 5,000. So the run is 5,000 m long.',
+  beats: [
+    { say: 'Meters are smaller, so it takes more of them to cover the same distance.', pic: 0, effect: 'draw' },
+    { say: 'Smaller unit, more of them. That means we multiply.', write: 'smaller unit → multiply' },
+    { say: '5 × 1,000 = 5,000. So the run is 5,000 m long.', pic: 1 },
+  ],
+  pictures: [twoWays(...), eq('5 × 1,000 = 5,000')] },
+```
+
+| field | what it is |
+|---|---|
+| `say` | one line she says. Short — one idea. 2–4 beats a screen. |
+| `write` | a line she writes on the board with that say. It stays up. |
+| `pic` | the index in `pictures` she puts up with that say. A picture **no beat names is up from the start**. |
+| `effect` | how the PICTURE arrives: `'write'` (default, swept on left to right), `'draw'` (the outline traces itself, ink behind it), `'pop'`. A `write` line is always written on. |
+
+### The rules (each one is gated, or is a defect you cannot see)
+
+1. **`beats.map(say).join(' ')` must equal `text`, exactly.** `text` stays the whole screen; it is
+   what speech, the preview and every other gate read. Write the beats by CUTTING the text at
+   sentence boundaries, then reword — and change both together. Gated.
+2. **`pic` must index a real picture.** A `pic` past the end draws nothing and hides nothing: the
+   screen looks right while the staging you wrote simply does not happen. Gated.
+3. **`effect: 'draw'` only on a picture that renders SVG.** On anything else it is inert: you asked
+   for a drawing, got an instant appearance, and nothing anywhere says so. Gated against the real
+   renderer. Measured 2026-09-16 by rendering one of every kind — the gate, not this list, is the
+   authority, but this is what it said:
+   - **SVG, `draw` allowed:** `bars` `tape` `numline` `clock` `measure` `blocks` `columns` `longdiv`
+     `grid` `area` `poly` `angle` `chart` `plot` `coord` `cubes` `solid` `chips` `balance` `spinner` `line`
+   - **DOM, `write`/`pop` only:** `table` `eq` `cards` `groups` `array` `share` `rings` `triangle` `scatter`
+4. **Screen 1 gets NO beats, and its `text` is not reworded either** — the split that makes its
+   closing question into the button is a regex over that text.
+   ⚠️ So screen 1 keeps the old written-page voice while the rest of the lesson is spoken. That is a
+   known seam, not an oversight; changing it means changing how the button is built. Its closing question is split out into the button ("How many…?
+   Let's see ▶"); with beats the question would be in both places.
+5. **The big idea screen (index 2) GETS BEATS like every other teaching screen** — cut `bigIdea` at
+   its sentence break and put the picture up on the first. Its `text` must still equal `bigIdea`
+   exactly, so do not reword it. **One beat per sentence** — so a single-sentence `bigIdea` gets ONE
+   beat, and a three-sentence one gets three. ⚠️ Never cut mid-sentence to reach some beat count: it
+   leaves a beat starting lowercase, which reads as a bug in the source even though it sounds fine.
+   One beat is a complete conversion for that screen.
+6. **Never write what the picture already is.** If the picture IS `4:15`, she draws it — she does not
+   also write `4:15` beside it. Use `pic`, not `write`. ⚠️ This includes a picture's own LABELS: a
+   `grid` carrying `left: '3 rows'`, a `tape` with a `brace`, a `numline`'s tick labels. Read the
+   picture's data, not just its kind, before writing a board line. ⚠️ And some kinds paint a value
+   the data does not name: an `angle` with `parts: [40, 50]` and no `partLabels` still draws `40°`
+   and `50°`, a `bars` prints its `label`, a `numline` prints its ticks. When in doubt, open
+   `/lesson-preview` or read the component in `Diagrams.tsx` — the data is not the whole picture.
+6b. **Name every picture in a beat**, unless you mean it to be up before she says anything. The one
+   that catches people is the second picture on a worked screen — the `eq` holding the result. Left
+   unnamed it is on the board from the moment the screen opens, and the screen gives away its own
+   answer. Not gated: nothing can tell a deliberate opening picture from a spoiled reveal.
+7. **Beat order is board order.** Everything is laid out in the order the beats fire, so a thing
+   already up never moves. Beats may name pictures in any order (`pic: 1` before `pic: 0`) when that
+   is the teaching order — the board follows the beats, not the array.
+
+### What she writes
+
+Two kinds of line go on the board, and no third:
+
+- **a rule in her words** — `smaller unit → multiply`, `more than → +`, `open dot = not included`,
+  `3n = 3 × n`. The one a child could carry to the next problem.
+- **a working note** — a result she records as she goes, the way `g3m2-t1` writes `Hour: 4` and then
+  `Minutes: 15` before putting them together. Fine, and often the honest thing on a worked screen.
+
+What is **never** a board line is the equation or value the picture already shows. That is rule 6,
+and it is the one this collides with: on most worked screens the `eq` picture IS the equation, so
+writing it again is duplication, not teaching. If neither a rule nor a working note fits a screen,
+she does not write on it — she talks and puts a picture up. That is normal; both worked examples
+have such screens.
+
+One beat may carry **both** `pic` and `write` — she draws a thing and writes the rule under it in one
+breath. Allowed, and right when the drawing and the rule are the same move; keep them separate when
+they are two moves, or the board crowds.
+
+### The voice
+
+US English, spoken, warm, to the child. Contractions where a teacher would use them. Cut a beat at
+the point she would stop to write. Some beats say nothing on the board at all — she is talking, and
+that is right.
+
+⚠️ **`text` is also what "Read it to me" speaks aloud**, so write lines that survive being spoken.
+An aside that looks warm on screen ("nope", "Same deal.") can land oddly in a synthetic voice — keep
+it warm, keep it a sentence.
+
+**Numbers are numerals** — `It is not 34.`, never `thirty-four`. This is a math screen and the digits
+are what the child is looking at. ⚠️ **The one exception is COUNTING ALOUD**, where she is making a
+rhythm rather than naming a value: `g3m2-t1` says *"Five, ten, fifteen."* and that is right — write
+the count the way she would say it, and the value she lands on as a numeral (`That is 15 minutes.`).
+
+Read the two worked examples before writing: **`g5m1-t5`** (`content/g5m1.ts`, metric units) and
+**`g3m2-t1`** (`content/g3m2.ts`, reading a clock). Match those.
+
+⚠️ **Grade 3 Module 1 (`grade3Module1.ts`) is the exception: its wording is founder-APPROVED and
+checked against the script document word for word.** Its screens get beats by CUTTING the existing
+text only. Do not reword one syllable of it.
+
+## Practice is ADAPTIVE where a topic has a ladder (2026-09-17, Grade 5 · Module 1 first)
+
+Founder's call: **difficulty is not bigger numbers — a harder question is a different KIND of question.** A laddered topic's
+practice is generated, not the 5 written problems. Engine: `src/features/lessons/adaptive.ts`; ladders:
+`src/features/lessons/ladders/<module>.ts` (registered in `ladders/index.ts`); per-topic standing per device:
+`src/infra/storage/lessonStanding.ts`.
+
+- **A ladder** = 4–5 `Level`s, easiest first. Each has a `style` (authors only, never shown) and `make(r)`, which picks its
+  own numbers with the seeded rng and returns `{ text, picture, answer, steps }`. The answer and steps are computed from the
+  numbers, so they cannot disagree. Typical climb: with a scaffold/picture → bare numbers → pick the true one / spot the
+  mistake → missing number, work backwards → story → two-step story. Choose what fits the skill.
+- **The rules** (in `step`, never shown to the child): two first-try rights → up a level · right after a miss (or after
+  tapping Hint) → stay · worked steps → down a level · two first-try rights at the top → mastered, practice ends · or 12
+  problems. First visit starts one level up if Screen 8 was right first try; a return visit starts where the child left off.
+- **Topics come back.** The 3rd problem of a lesson's practice is from the weakest earlier topic of the module that the child
+  finished and has not mastered (its own big idea, worked steps, and a link to its lesson). Module practice is 10
+  problems, each from the weakest topic (a topic already asked counts two levels up, so two weak topics cannot take them all).
+- **The gate** (`src/__tests__/lessonLadders.test.ts`): every topic of a module in `LADDERED` has a ladder; no two levels ask
+  the same kind of question once every number is stripped (watched failing on a numbers-only ladder); 60 samples per level
+  are well formed, reach their answer in the last step, and do not show it in the picture (a table is read row-joined — a
+  place chart spells 1,100 as 1|1|0|0); and every sample agrees with an **independent solver**
+  (`src/__tests__/ladderKeys/<module>.ts`) written from `npx tsx scripts/ladder-questions.mts <module> [n] [topics]` alone,
+  never from `ladders/`. On g5m1 the solver found one real defect the writer's own checks missed: two correct choices when
+  the multiplier equalled an addend.
+- **Every built module is laddered (2026-09-17)** — 36 modules, 282 topics, `LADDERED` lists them all. One writer agent per
+  module, then one blind solver per module. When a solver disagrees, measure which side is wrong before fixing either.
+- **What the gate reads as "the picture shows the answer"** — learned by getting it wrong three times, keep it this way:
+  - a number the picture's own text LABELS print, with each list of strings also read joined (a place chart spells
+    1,100 as 1|1|0|0). Numbers the renderer draws from numeric data (a clock's 1–12, a jug's marks, a line's ends, a
+    needle) are SCALES, not reveals — reading a scale is the skill;
+  - a right choice matched as a whole word in a single label, or equal to a joined row (732|408 joined contains "324" by
+    accident; "unlikely" does not show "likely");
+  - `Level.dataShown: true` exempts a level whose picture IS the data the answer comes from (a median in its data set) —
+    only on chart/table/numline pictures.
+- ⚠️ **The gate cannot see a SIZE leak**: a "?" side, circle, tape cell or angle drawn at its answer's size lets a child
+  measure the answer. An audit on 2026-09-17 found 8 across the ladders and they were fixed (g3m5, g3m6, g4m5, g6m6,
+  g7m4 ×2), and two blind keys (g3m6, g6m6) were found REQUIRING the leak — their picture checks now reject it. Draw every
+  unknown at a neutral size. Typed-angle levels keep true sizes (nobody reads 115° by eye); CHOICE levels must not.
+- **The fraction answer box has a "−" key** when any answer in the lesson (ladder samples included) is a negative fraction
+  — it had none, and g8m2-t2's −3/4 could not be typed by anyone (`answerBoxCanExpress.test.ts`, watched red on it).
+- **To ladder a new module:** writer → blind solver → add the id to `LADDERED` → gate green.
+  The lesson's written `practice` stays in the data (the all-modules gate and answer keys still check it) but a laddered
+  lesson's player no longer asks it.
+
 ## A complete example (the shape to copy)
 
 ```ts

@@ -33,6 +33,12 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 let _clipOnly = false
 export function setClipOnly(v: boolean): void { _clipOnly = v }
 
+// The voice a SCREEN speaks in, whatever the learner's band or the device pick — a new-flow lesson reads in its grade's
+// voice (lessonVoice), because that is the voice its clips were rendered in. Set while a lesson is mounted.
+// An explicit 'device' pick still wins: that means "no clips".
+let _sceneVoice: string | null = null
+export function setSceneVoice(v: string | null): void { _sceneVoice = v }
+
 let _keys: Set<string> | null = null
 let _loading: Promise<void> | null = null
 let _loadedFor: string | null = null
@@ -213,7 +219,7 @@ export function speakLine(text: string, opts: Opts): () => void {
   const pref = getVoicePref()
   if (pref === 'device') { fallback(); return cancel }
   // The learner's band may own a voice (3–5 → Teddy); otherwise the device pick stands.
-  const voice = BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref
+  const voice = _sceneVoice ?? BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref
 
   // A miss with a custom voice selected: stay silent (custom-voice-only) instead of the
   // free voice, unless clip-only is off — then fall back exactly as before.

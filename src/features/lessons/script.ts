@@ -238,6 +238,19 @@ export function hintsFor(l: Lesson, s: FlowState): [string, string] {
   }
 }
 
+/**
+ * Every fixed line the lesson player SPEAKS that is not a teaching beat — one definition, used by LessonPlayer and by
+ * scripts/lesson-voice-corpus.mts. A recorded clip is found by the exact text, so a line built in two places drifts
+ * and its clip silently stops playing; built here, the player and the render corpus cannot disagree.
+ */
+export const SAY = {
+  screen: (sc: Screen) => (sc.beats ? '' : `${sc.title}. ${sc.text}`),
+  turn: (l: Lesson) => `Now you try. ${l.turn.text} ${l.turn.prompt}`,
+  twin: (l: Lesson) => `Try a new one. ${l.turn.twin.text}`,
+  right: 'Right!',
+  worked: 'Here is how this one works.',
+}
+
 /** Screen 9 after a twin that was missed 3 times: the child did not get it, so it must not say so. */
 export const KEEP_GOING = {
   title: "Let's keep practicing",
@@ -285,8 +298,8 @@ export const currentProblem = (l: Lesson, s: FlowState): Problem | null =>
   : s.mode === 'practice' ? l.practice[s.practice].problem
   : null
 
-export function check(l: Lesson, s: FlowState, given: string | number): FlowState {
-  const p = currentProblem(l, s)
+/** `p` is the problem on screen: a laddered lesson's practice problem is generated, not in the lesson data (see ./adaptive). */
+export function check(l: Lesson, s: FlowState, given: string | number, p: Problem | null = currentProblem(l, s)): FlowState {
   if (!p || s.feedback === 'right') return s
   const ok = isCorrect(solutionOf(p), String(given))
   if (s.mode === 'turn') {
@@ -305,6 +318,10 @@ export const afterWorked = (s: FlowState): FlowState =>
   s.twin ? { ...s, mode: 'won', feedback: null } : { ...s, twin: true, misses: 0, feedback: null }
 
 export const toPractice = (s: FlowState): FlowState => ({ ...s, mode: 'practice', practice: 0, misses: 0, feedback: null })
+
+/** How a practice problem went, once it is over (right, or worked steps shown) — what moves an adaptive standing. */
+export const outcomeOf = (s: FlowState): 'first' | 'second' | 'worked' =>
+  s.feedback === 'worked' ? 'worked' : s.misses === 0 ? 'first' : 'second'
 
 export const nextPractice = (s: FlowState): FlowState =>
   s.practice >= 4 ? { ...s, mode: 'finish', misses: 0, feedback: null }

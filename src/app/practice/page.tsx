@@ -20,5 +20,5 @@ function Practice() {
   useEffect(() => { if (!picked) router.replace('/modules') }, [picked, router])
 
   if (!picked) return null
-  return <ModulePractice module={picked} onExit={() => router.push(`/modules?grade=${picked.grade}`)} />
+  return <ModulePractice module={picked} learnerId={getActiveLearner()?.id ?? null} onExit={() => router.push(`/modules?grade=${picked.grade}`)} />
 }
