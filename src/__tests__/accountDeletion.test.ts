@@ -100,6 +100,9 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.auth_events':              `public.auth_events where user_id = '${uid}'`,
     'public.billing_events':           `public.billing_events where account_id = '${uid}'`,
     'public.parent_pins':              `public.parent_pins where account_id = '${uid}'`,
+    'public.lesson_progress':          `public.lesson_progress where learner_id in (${ls})`,
+    'public.point_events':             `public.point_events where learner_id in (${ls})`,
+    'public.game_settings':            `public.game_settings where learner_id in (${ls})`,
   }
   const out: Record<string, number> = { 'auth.users': await count(db, `auth.users where id = '${uid}'`) }
   for (const t of tables) {
@@ -132,6 +135,9 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       -- find out the triggers are in the schema being tested.
       insert into public.learners (id, display_name, created_by, age_group) values ('${l}', 'Kid', '${uid}', '3-5');
       insert into public.learner_state (learner_id) values ('${l}');
+      insert into public.lesson_progress (learner_id, lesson_id, done) values ('${l}', 'g3m2-t1', true);
+      insert into public.point_events (learner_id, reason, lesson_id, points) values ('${l}', 'lesson_done', 'g3m2-t1', 10);
+      insert into public.game_settings (learner_id) values ('${l}');
       insert into public.learner_progress (learner_id, chapter, best_stars) values ('${l}', 'counting', 3);
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');

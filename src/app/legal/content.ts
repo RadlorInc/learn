@@ -206,6 +206,11 @@ you typed.
 - placement checks: which questions were asked, whether each was answered
   correctly, and the resulting suggested starting point and practice plan;
 - in-app items bought with earned coins;
+- which lesson topics were finished, and where practice stands on each (the level
+  reached and whether the topic is mastered);
+- **points**: each time points were earned, and each time they were spent on game
+  time, plus the game-time settings you choose (on or off, minutes per day, your
+  time zone);
 - **usage events** — that the app was opened, that a chapter was opened, that a
   practice run finished, and similar. These carry no free text and no
   identifying information beyond the profile they belong to.

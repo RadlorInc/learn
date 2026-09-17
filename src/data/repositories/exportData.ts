@@ -28,6 +28,9 @@ export interface ExportExtras {
   diagnosticPlans:    unknown[]
   diagnosticPlanProgress: unknown[]
   diagnosticRechecks: unknown[]
+  lessonProgress:    unknown[]
+  points:            unknown[]
+  gameSettings:      unknown
   /** Empty when everything came back whole. Anything in here is printed IN the file. */
   notes:             string[]
 }
@@ -55,6 +58,7 @@ const EVENTS_CAP = 5000
 const EMPTY: ExportExtras = {
   learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
   diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
+  lessonProgress: [], points: [], gameSettings: null,
   notes: ['We could not read part of this data. Nothing has been deleted — please try again, or write to us and we will send it.'],
 }
 
@@ -68,12 +72,15 @@ const EMPTY: ExportExtras = {
 export async function getLearnerExportExtras(learnerId: string): Promise<ExportExtras> {
   const supabase = db()
   try {
-    const [state, events, sessions, plans, rechecks] = await Promise.all([
+    const [state, events, sessions, plans, rechecks, lessons, points, game] = await Promise.all([
       supabase.from('learner_state').select('*').eq('learner_id', learnerId).maybeSingle(),
       supabase.from('learner_events').select('*').eq('learner_id', learnerId).order('created_at').limit(EVENTS_CAP),
       supabase.from('diagnostic_sessions').select('*').eq('learner_id', learnerId).order('started_at'),
       supabase.from('diagnostic_plans').select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.from('diagnostic_rechecks').select('*').eq('learner_id', learnerId).order('created_at'),
+      supabase.from('lesson_progress').select('*').eq('learner_id', learnerId).order('lesson_id'),
+      supabase.from('point_events').select('*').eq('learner_id', learnerId).order('created_at'),
+      supabase.from('game_settings').select('*').eq('learner_id', learnerId).maybeSingle(),
     ])
 
     const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
@@ -105,6 +112,9 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       diagnosticPlans:        plans.data ?? [],
       diagnosticPlanProgress: planProgress.data ?? [],
       diagnosticRechecks:     rechecks.data ?? [],
+      lessonProgress:         lessons.data ?? [],
+      points:                 points.data ?? [],
+      gameSettings:           game.data ?? null,
     }
   } catch {
     // A parent exercising a data right must still get a file. An empty section is visibly

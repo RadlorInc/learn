@@ -66,6 +66,11 @@
 --                                                  public/anon/authenticated; reached only by the four
 --                                                  parent-PIN DEFINER functions below, each keyed on auth.uid().
 --   learner_events             rls=t  policies=2
+--   lesson_progress            rls=t  policies=1   ⚠️ 2026-09-17 (20260917112109): SELECT only, for any learner_access
+--   point_events               rls=t  policies=1      row (owner/viewer/self). Every write privilege revoked; rows come
+--   game_settings              rls=t  policies=1      only from five DEFINER functions. game_settings is written only by
+--                                                  set_game_settings, which requires created_by or an 'owner' row —
+--                                                  the child's 'self' login cannot give itself game minutes.
 --   learner_invites            rls=t  policies=3   (sender INSERT now requires learner ownership — V1)
 --   learner_progress           rls=t  policies=1
 --   learner_state              rls=t  policies=1

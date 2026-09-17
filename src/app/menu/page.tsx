@@ -326,7 +326,6 @@ export default function MainMenu() {
           <span className="milo-chip tone-yellow" title="Wallet">
             👛 <span className="numeric">{profile.totalCoins}</span>&nbsp;Wallet
           </span>
-          <button className="milo-btn tone-blue size-sm" onClick={() => router.push('/profile')} aria-label="Profile">👤</button>
           <button className="milo-btn tone-yellow size-sm" onClick={() => router.push('/shop')} aria-label="Shop">🛍</button>
           <BackButton href='/parent' label='← Switch' size='sm' />
         </div>

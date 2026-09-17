@@ -7,6 +7,7 @@ import { findLesson, chosenModules } from '@/features/lessons/modules'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { LessonList } from '@/features/lessons/LessonList'
 import { markLessonDone } from '@/infra/storage/lessonProgress'
+import { syncLesson } from '@/infra/storage/lessonSync'
 
 const noSubscribe = () => () => {}
 
@@ -40,7 +41,7 @@ function Lesson() {
       lesson={lesson}
       learnerId={learnerId}
       earlier={module.lessons.slice(0, module.lessons.indexOf(lesson)).map(l => l.id)}
-      onFinish={() => markLessonDone(learnerId, lesson.id)}
+      onFinish={() => { markLessonDone(learnerId, lesson.id); syncLesson(learnerId, lesson.id) }}
       onExit={() => router.push(`/lesson?module=${module.id}`)}
     />
   )

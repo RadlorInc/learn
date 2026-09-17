@@ -17,6 +17,7 @@ import { solutionOf, stepsOf, showAnswer, isCorrect, type Problem, type Lesson }
 import { rng, freshSeed, draw, step, nextModuleTopic, FRESH, MODULE_PROBLEMS, type Outcome } from './adaptive'
 import { ladderOf, ladderAnswers } from './ladders'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
+import { syncLesson, syncModulePractice } from '@/infra/storage/lessonSync'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { Pic, tapCue, pill } from './Pictures'
 import { stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
@@ -68,7 +69,9 @@ export function ModulePractice({ module, learnerId = null, onExit }: { module: M
       const o: Outcome = feedback === 'worked' ? 'worked' : misses === 0 && !asked ? 'first' : 'second'
       const ladder = ladderOf(lesson.id)!
       saveStanding(learnerId, lesson.id, step(loadStanding(learnerId, lesson.id) ?? FRESH, ladder.length, o))
+      syncLesson(learnerId, lesson.id, o)
       if (i + 1 < total) setItems(drawFor(items))
+      else syncModulePractice(learnerId, module.id)
     }
     setI(i + 1); setMisses(0); setFeedback(null); setAsked(false); setValue(''); setTaps(0)
   }

@@ -20,6 +20,7 @@ import { ladderOf, ladderAnswers } from './ladders'
 import { findLesson } from './modules'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { lessonDone } from '@/infra/storage/lessonProgress'
+import { syncLesson } from '@/infra/storage/lessonSync'
 import { Pic, tapCue, pill, INK } from './Pictures'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
@@ -101,9 +102,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     // Laddered: no "of 5" — how many problems depends on the child, and the count must not read as a score.
     const nextProblem = () => {
       if (!run || !ladder) return go(nextPractice(s))
-      const o = outcomeOf(s)
-      const moved = advance(run, lesson.id, ladderOf, asked && o === 'first' ? 'second' : o, r)
-      for (const [id, st] of moved.saved) saveStanding(learnerId, id, st)
+      const o = outcomeOf(s), outcome = asked && o === 'first' ? 'second' : o
+      const moved = advance(run, lesson.id, ladderOf, outcome, r)
+      for (const [id, st] of moved.saved) { saveStanding(learnerId, id, st); syncLesson(learnerId, id, outcome) }
       setRun(moved.run)
       go(moved.done ? { ...s, mode: 'finish', misses: 0, feedback: null } : { ...s, practice: s.practice + 1, misses: 0, feedback: null })
     }

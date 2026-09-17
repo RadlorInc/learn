@@ -8,8 +8,9 @@ import {
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
-  getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
-  getMyRole, setMyRole, entitledChapters, setLearnerLessons, enterAsChild, getChildLogins, removeChildLogin,
+  getMyGrades, getLatestGap, getCheckupStatus, type GradeSummary,
+  getMyRole, setMyRole, setLearnerLessons, enterAsChild, getChildLogins, removeChildLogin,
+  getWallet, setGameSettings, type Wallet,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -22,18 +23,18 @@ import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSe
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
-import { CHAPTER_PARENT_LABELS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
+import { LEGACY_CHAPTERS_HIDDEN, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules } from '@/features/lessons/modules'
 import { LessonLibrary } from '@/features/lessons/LessonLibrary'
 import { lessonDone } from '@/infra/storage/lessonProgress'
+import { loadStanding } from '@/infra/storage/lessonStanding'
+import { pullLessonProgress } from '@/infra/storage/lessonSync'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
-const CH_LABELS: Record<string, string> = { ...CHAPTER_PARENT_LABELS }
-const LEVEL_NAMES = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
 /* The adult surface's palette, from globals.css. Same values the Stitch parent-suite designs use;
    this page previously mixed them with ad-hoc greys (#888 / #e5e7eb / #1a1a1a) that belong to no
@@ -95,8 +96,8 @@ export default function ParentDashboard() {
   const [inviteMsg,    setInviteMsg]    = useState<string | null>(null)
   const [actionMsg,    setActionMsg]    = useState<string | null>(null)
   const [confirming,   setConfirming]   = useState<string | null>(null) // learnerId being confirmed
-  const [activeChapterIds, setActiveChapterIds] = useState<ChapterType[]>([])
-  const [chapterLocks, setChapterLocks] = useState<Record<string, boolean | null>>({})
+  const [wallets, setWallets] = useState<Record<string, Wallet | 'unavailable' | null>>({})   // learnerId → points + game settings
+  const [, redraw] = useState(0)
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
   const [picked, setView] = useState<string | null>(null)             // null = that role's home
@@ -147,6 +148,14 @@ export default function ParentDashboard() {
       }
 
       setLearners(data)
+      // Progress follows the account: bring each child's topics onto this device, then their points. Not awaited —
+      // the dashboard shows at once and redraws when the account has answered.
+      const ids = chosenModules(null).flatMap(m => m.lessons.map(l => l.id))
+      for (const d of data) {
+        pullLessonProgress(d.learner.id, ids)
+          .then(ok => { if (ok) redraw(n => n + 1); return getWallet(d.learner.id) })
+          .then(w => setWallets(prev => ({ ...prev, [d.learner.id]: w })))
+      }
       setSelected(prev => {
         if (prev && data.find(d => d.learner.id === prev)) return prev
         return data[0].learner.id
@@ -252,40 +261,6 @@ export default function ParentDashboard() {
 
   const active = learners.find(d => d.learner.id === selected)
 
-  // Scope the chapter-progress list to what THIS learner actually sees: their
-  // grade's chapters when assigned, else all chapters in their age band.
-  useEffect(() => {
-    if (!active) { setActiveChapterIds([]); return }
-    const band     = active.learner.age_group ?? '3-5'
-    const fallback = chaptersForAge(band).map(c => c.id)
-    const gradeId  = active.learner.grade_id
-    if (!gradeId) { setActiveChapterIds(fallback); return }
-    let cancelled = false
-    getGradeChapterIds(gradeId)
-      .then(ids => { if (!cancelled) { const valid = ids.filter(id => fallback.includes(id)); setActiveChapterIds(valid.length ? valid : fallback) } })
-      .catch(() => { if (!cancelled) setActiveChapterIds(fallback) })
-    return () => { cancelled = true }
-  }, [active?.learner.id, active?.learner.grade_id, active?.learner.age_group])
-
-  /**
-   * ⚠️ WHICH OF THOSE CHAPTERS IS BEHIND THE PAYWALL — ASKED, NOT DERIVED. `is_chapter_entitled` is
-   * the single definition (the `sessions` policy, `learner_progress`'s WITH CHECK and `sync_session`
-   * all call it); working the answer out here from `is_free`, the plan and the seats would be a
-   * FOURTH copy of the rule, free to disagree with the other three. About a dozen calls, in
-   * parallel, on a page a parent opens rarely. Today they all answer `true`, because
-   * `billing_config.enforced` is false — so nothing renders and the whole surface is inert.
-   * ⚠️ `null` (could not find out) is NOT a lock: same fail-open rule as the child's gate.
-   */
-  useEffect(() => {
-    setChapterLocks({})
-    if (!active || activeChapterIds.length === 0) return
-    let cancelled = false
-    entitledChapters(active.learner.id, activeChapterIds)
-      .then(m => { if (!cancelled) setChapterLocks(m) })
-      .catch(() => { /* fail open — no locks shown */ })
-    return () => { cancelled = true }
-  }, [active?.learner.id, activeChapterIds])
-
   // Week-6 re-check nudge: surface the guarantee loop in-app when a re-check is due for this learner.
   useEffect(() => {
     setRecheckDue(null)
@@ -313,8 +288,7 @@ export default function ParentDashboard() {
     </div>
   )
 
-  // Home summary. ⚠️ Lesson progress is per-device (lessonProgress.ts), so that number is labelled
-  // "on this device" — on a parent's phone it reads 0 for a child who played on the tablet.
+  // Home summary, from the lesson progress pulled from the account in loadAll (lessonSync.ts).
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
   const rows = learners.map(d => {
@@ -322,10 +296,11 @@ export default function ParentDashboard() {
     const lessons = chosenModules(d.learner.lesson_ids).flatMap(m => m.lessons)
     const done = lessons.filter(l => lessonDone(d.learner.id, l.id)).length
     const next = lessons.find(l => !lessonDone(d.learner.id, l.id))
-    return { d, done, total: lessons.length, next }
+    const mastered = lessons.filter(l => loadStanding(d.learner.id, l.id)?.mastered).length
+    return { d, done, total: lessons.length, next, mastered }
   })
   const lessonsDone = rows.reduce((n, r) => n + r.done, 0)
-  const totalXp = learners.reduce((n, d) => n + (d.stats?.total_xp ?? 0), 0)
+  const topicsMastered = rows.reduce((n, r) => n + r.mastered, 0)
   const card = { background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:16, padding:16 } as const
   const btn = { background:P.accent, color:'#fff', border:'none', borderRadius:10, padding:'10px 14px', minHeight:44, fontSize:14, fontWeight:800, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' } as const
   const ghost = { ...btn, background:P.card, color:P.ink, border:`1.5px solid ${P.edge}` } as const
@@ -398,8 +373,8 @@ export default function ParentDashboard() {
             <div className="home-stats">
               {[
                 { num: learners.length, label: 'Learners' },
-                { num: lessonsDone,     label: 'Lessons finished · this device' },
-                { num: totalXp,         label: 'XP earned, all time' },
+                { num: lessonsDone,     label: 'Lessons finished' },
+                { num: topicsMastered,  label: 'Topics mastered' },
               ].map(s => (
                 <div key={s.label} style={card}>
                   <div style={{ fontSize:32, fontWeight:900, color:P.ink }}>{s.num}</div>
@@ -522,8 +497,6 @@ export default function ParentDashboard() {
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:20, fontWeight:800 }}>{active.learner.display_name}</div>
                     <div style={{ fontSize:13, opacity:0.85 }}>
-                      {LEVEL_NAMES[Math.min((active.stats?.current_level ?? 1) - 1, 7)]} · Level {active.stats?.current_level ?? 1}
-                      {' · '}
                       <span style={{ opacity:0.7, fontSize:11, textTransform:'uppercase', letterSpacing:0.5 }}>
                         {active.accessRole === 'owner' ? '👑 Owner' : '👁 Viewer'}
                       </span>
@@ -533,8 +506,8 @@ export default function ParentDashboard() {
 
                 <div style={{ display:'flex', gap:8, marginBottom:16 }}>
                   {[
-                    { label:'XP',     value: active.stats?.total_xp ?? 0 },
-                    { label:'Coins',  value: active.stats?.total_coins ?? 0 },
+                    { label:'Topics mastered', value: rows.find(r => r.d === active)?.mastered ?? 0 },
+                    { label:'Lessons finished', value: rows.find(r => r.d === active)?.done ?? 0 },
                   ].map(s => (
                     <div key={s.label} style={{ flex:1, background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 8px', textAlign:'center' }}>
                       <div style={{ fontSize:20, fontWeight:800 }}>{s.value}</div>
@@ -617,71 +590,37 @@ export default function ParentDashboard() {
 
           {active && (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            {/* Chapter progress */}
+            <GameTimeCard
+              name={active.learner.display_name}
+              wallet={wallets[active.learner.id]}
+              canEdit={active.accessRole === 'owner'}
+              onSave={async (enabled, minutes) => {
+                const ok = await setGameSettings(active.learner.id, enabled, minutes)
+                if (!ok) setActionMsg('Could not save the game time settings. Try again.')
+                const w = await getWallet(active.learner.id)
+                setWallets(prev => ({ ...prev, [active.learner.id]: w }))
+              }}
+            />
+
+            {/* Topics, per module, from the lesson progress synced to the account. */}
             <div style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
               <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'0 0 14px' }}>
-                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:P.ink }}>Chapter progress</h3>
-                {/* Findable without hitting a wall first — pricing is a thing a parent may want to
-                    read before anything is locked, and it lives on this side of the product only. */}
+                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:P.ink }}>Topics</h3>
                 <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:P.accent, cursor:'pointer' }}>Plan &amp; billing →</button>
               </div>
-              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                {activeChapterIds.map(ch => {
-                  const prog  = active.progress.find(p => p.chapter === ch)
-                  const stars = prog?.best_stars ?? 0
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {chosenModules(active.learner.lesson_ids).filter(m => m.lessons.length > 0).map(m => {
+                  const done = m.lessons.filter(l => lessonDone(active.learner.id, l.id)).length
+                  const mastered = m.lessons.filter(l => loadStanding(active.learner.id, l.id)?.mastered).length
                   return (
-                    <div key={ch} style={{ display:'flex', alignItems:'center', gap:10 }}>
-                      <div style={{ fontSize:13, fontWeight:600, flex:1, color:P.ink, opacity:stars > 0 ? 1 : 0.4 }}>
-                        {CH_LABELS[ch]}
-                      </div>
-                      <div style={{ fontSize:16 }}>
-                        {[1,2,3].map(i => <span key={i} style={{ opacity: i <= stars ? 1 : 0.2 }}>⭐</span>)}
-                      </div>
-                      {prog?.total_sessions ? (
-                        <div style={{ fontSize:11, color:P.ink3, fontWeight:600, minWidth:32, textAlign:'right' }}>{prog.total_sessions}x</div>
-                      ) : null}
-                      {/* ⚠️ THE PARENT SIDE IS THE ONLY SIDE THAT ROUTES TO CHECKOUT. The child's
-                          lock card carries no price and no way to pay; this one does, because a
-                          grown-up is reading it. `false` only — `null` means we could not find out
-                          and must not become a lock. */}
-                      {chapterLocks[ch] === false ? (
-                        <button
-                          onClick={() => router.push('/parent/plan')}
-                          style={{ background:'#FFF3EC', border:'1px solid #F26B2C', color:'#F26B2C', borderRadius:50, padding:'4px 10px', fontSize:11, fontWeight:800, cursor:'pointer' }}
-                        >🔓 Unlock</button>
-                      ) : null}
+                    <div key={m.id} style={{ display:'flex', alignItems:'center', gap:10, opacity: done || mastered ? 1 : 0.55 }}>
+                      <div style={{ fontSize:13, fontWeight:600, flex:1, color:P.ink }}>Grade {m.grade} · {m.title}</div>
+                      <div style={{ fontSize:12, color:P.ink3, fontWeight:700, whiteSpace:'nowrap' }}>{done} of {m.lessons.length} done · {mastered} mastered</div>
                     </div>
                   )
                 })}
               </div>
             </div>
-
-            {/* Recent sessions */}
-            {active.sessions.length > 0 && (
-              <div style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
-                <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 14px', color:P.ink }}>Recent activity</h3>
-                {active.sessions.length === 0 ? (
-                  <div style={{ textAlign:'center', padding:'20px 0', display:'flex', flexDirection:'column', alignItems:'center', gap:8 }}>
-                    <div style={{ fontSize:36 }}>🎮</div>
-                    <div style={{ fontSize:14, color:P.ink2, fontWeight:600 }}>No sessions yet — time to start playing!</div>
-                    <button onClick={() => launchGame(active)} style={{ marginTop:4, background:'#F26B2C', color:'#fff', border:'none', borderRadius:50, padding:'10px 20px', fontSize:13, fontWeight:700, cursor:'pointer' }}>▶ Start first session</button>
-                  </div>
-                ) : (
-                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-                    {active.sessions.map(s => (
-                      <div key={s.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 12px', background:P.page, borderRadius:12 }}>
-                        <div style={{ fontSize:24 }}>{s.stars_earned === 3 ? '🌟' : s.stars_earned === 2 ? '⭐' : '✨'}</div>
-                        <div style={{ flex:1 }}>
-                          <div style={{ fontSize:13, fontWeight:700, color:P.ink }}>{CH_LABELS[s.chapter] ?? s.chapter}</div>
-                          <div style={{ fontSize:11, color:P.ink3, marginTop:2 }}>{s.correct_count} correct · +{s.xp_earned} XP · {(a => a ? new Date(a).toLocaleDateString() : '—')(s.completed_at ?? s.started_at)}</div>
-                        </div>
-                        <div style={{ fontSize:12, fontWeight:700, color:'#16a34a' }}>+{s.coins_earned} 🪙</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
             </div>
           )}
         </div>
@@ -744,6 +683,49 @@ export default function ParentDashboard() {
  * i.e. never in any harness — and this repo's own note on that route is that layout is exactly
  * where the misses live.
  */
+/** Points and the parent's game-time rules for one child. Only the owning adult can change the rules (the database checks). */
+function GameTimeCard({ name, wallet, canEdit, onSave }: {
+  name: string; wallet: Wallet | 'unavailable' | null | undefined; canEdit: boolean; onSave: (enabled: boolean, minutes: number) => Promise<void>
+}) {
+  const [saving, setSaving] = useState(false)
+  const save = async (enabled: boolean, minutes: number) => { setSaving(true); await onSave(enabled, minutes); setSaving(false) }
+  const box = { background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' } as const
+  return (
+    <div style={box}>
+      <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 10px', color:P.ink }}>🎮 Game time</h3>
+      {wallet === undefined ? <p style={{ margin:0, fontSize:13, color:P.ink3 }}>Loading…</p>
+        : wallet === 'unavailable' ? <p style={{ margin:0, fontSize:13, color:P.ink3 }}>Points and game time are coming soon.</p>
+        : wallet === null ? <p style={{ margin:0, fontSize:13, color:P.ink3 }}>Could not load {name}&apos;s points. Refresh to try again.</p>
+        : <>
+          <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:12 }}>
+            <div><div style={{ fontSize:26, fontWeight:900, color:P.ink }}>{wallet.balance}</div><div style={{ fontSize:12, color:P.ink3, fontWeight:600 }}>points</div></div>
+            <div><div style={{ fontSize:26, fontWeight:900, color:P.ink }}>{wallet.minutes_used_today} / {wallet.minutes_per_day}</div><div style={{ fontSize:12, color:P.ink3, fontWeight:600 }}>minutes played today</div></div>
+          </div>
+          <p style={{ margin:'0 0 12px', fontSize:13, color:P.ink2, lineHeight:1.45 }}>
+            {name} earns points by practising and spends {wallet.points_per_minute} points for each minute of game.
+          </p>
+          {canEdit ? (
+            <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+              <button disabled={saving} onClick={() => save(!wallet.enabled, wallet.minutes_per_day)}
+                style={{ padding:'10px 14px', minHeight:44, borderRadius:10, border:`1.5px solid ${P.edge}`, background: wallet.enabled ? '#d9f7e6' : P.page, color:P.ink, fontSize:14, fontWeight:800, cursor:'pointer' }}>
+                Game time: {wallet.enabled ? 'On' : 'Off'}
+              </button>
+              <label style={{ fontSize:14, fontWeight:700, color:P.ink, display:'flex', alignItems:'center', gap:8 }}>
+                Most per day
+                <select disabled={saving} value={wallet.minutes_per_day} onChange={e => save(wallet.enabled, Number(e.target.value))}
+                  style={{ minHeight:44, borderRadius:10, border:`1.5px solid ${P.edge}`, padding:'0 10px', fontSize:14, fontWeight:700 }}>
+                  {[...new Set([10, 15, 20, 30, 45, 60, wallet.minutes_per_day])].sort((a, b) => a - b).map(m => <option key={m} value={m}>{m} minutes</option>)}
+                </select>
+              </label>
+            </div>
+          ) : (
+            <p style={{ margin:0, fontSize:13, color:P.ink3 }}>Game time is {wallet.enabled ? 'on' : 'off'}. The parent who added {name} can change it.</p>
+          )}
+        </>}
+    </div>
+  )
+}
+
 export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
   return (
     <div style={{

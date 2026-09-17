@@ -1,3 +1,49 @@
+> ⬆️ **MOVED OUT OF handoff.md 2026-09-17** — the 🔢 2026-09-15 block (Grade 5 · Module 1 re-split into 20 lessons, wide tables that fit a phone). Its ▶ OPEN was LIFTED into the 🔐 2026-09-17 block's ▶ OPEN, item 10.
+
+> 🔢 **2026-09-15 — GRADE 5 · MODULE 1 RE-SPLIT FROM 8 TOPICS TO THE 20 LESSONS OF THE TEXTBOOK CONTENTS PAGE THE FOUNDER PHOTOGRAPHED (lesson and part names only; every story, screen and number is ours), 12 NEW BACKDROPS, AND WIDE TABLES THAT NO LONGER RUN OFF A PHONE.** PR [#109](https://github.com/RadlorInc/learn/pull/109) merged `18693401` · **LIVE — as measured 2026-09-15:** Deploy run green (ci, rls-tests, promote), `release` = `18693401`, `sw.js` serves **v189**, `/lesson?id=g5m1-t20` shows its backdrop and story, `/lesson?id=g5m1-t2` at 375px fits its chart (zoom 0.89, 0 overflow), 0 console errors. Re-measure: `curl -s https://adaptivelearn.radlor.com/sw.js | head -1`. `tsc` 0 · vitest **106 files, 3052 passed**, 20 skipped · `next build` 0 · **sw v188 → v189** (art changed under the same file names, and assets are cache-first per VERSION — v189 must ship with it).
+
+## ① 📸 WHAT THE FOUNDER ASKED
+Two photos of a Grade 5 Module 1 contents page (Topics A–D, Lessons 1–20) plus `~/Downloads/grade-5-module-1.pdf` (Eureka Math 2015 student workbook, 16 decimal-heavy lessons): the PDF holds only ~5 of the photo's lessons. Then: *"build the photo's topics and lessons in our app — names only, content ours, same rules as the other modules, don't ask me anything."*
+
+## ② 🧩 WHAT CHANGED
+- **`docs/new-flow/curriculum.md`**: Grade 5 Module 1 is 20 topics, one per photo lesson, titles shortened to the app's style (the objectives run 60–90 characters and the topic path's labels are ~210px). Parts: A 1–6 place value · B 7–11 multiplication · C 12–16 division · D 17–20 multi-step. Module title → *Place value concepts for multiplication and division with whole numbers* (`modules.ts`).
+- **`content/g5m1.ts` 8 → 20 lessons.** Four writer agents wrote parts A–D in parallel from one plan (Screen 1 settings fixed so the art matches), then merged into one file (helpers suffixed A–D; the merge was checked deep-equal to the parts before they were deleted). Old t1 → t1, t3 → t2, t2 → t3, t4 → t4, t5 → t9, t7 → t15 were reused where they fit the new idea; t16 and t17 keep only their old stories (stickers, bags of fruit).
+- **Answer key** rewritten by two blind solvers from `lesson-questions.mjs` output: **140 of 140 agree** (watched red: a planted `26323` names t10's turn). ⚠️ **My brief to the solvers used three real answers as format examples** (`110640`, `3 × (4 + 5)`, `>`); both say they re-derived every answer independently. README step 2 now forbids it.
+- **Backdrops:** 8 old files renamed to their new topic (`git mv`: t2↔t3, t5→t9, t6→t16, t7→t15, t8→t17); 12 new (t5–t8, t10–t14, t18–t20). Nano Banana 2 at 1k with `table.webp` as the reference: **18 credits, 738.5 → 720.5**. I looked at all 12 and zoomed into three for stray lettering; none has text. `lessonScenes.test.ts` count 46 → 58, watched red both ways (a file removed names `g5m1-t20`; a scene removed names `g5m1-t12`).
+- **Pictures the solvers flagged, all changed:**
+  - t1 practice 3's chart showed Hundreds = 0 for "how many hundreds make 4,000"; it is now an `eq`.
+  - t6's "how many fit" tapes always drew one cup as 1/4, whatever the real share; they are now `eq`.
+  - The off-scale tapes in t18 practice 4 and t20 practice 5 are now `eq`.
+  - t18 practice 3 is drawn to scale.
+  - t17 practice 4's comparison is on one line.
+  - t18 practice 2 asks "in all".
+- **Engine, every module:**
+  - `Diagrams.tsx` `Table` zooms a table down to fit its box. It uses `useLayoutEffect` and refits on window resize and `document.fonts` `loadingdone`; it is not a ResizeObserver, because the zoom changes the box's height. Headings drop to 13px on phones.
+  - `Frame.tsx` `stage` gets `minWidth: 0`: in a row the stage grew to its widest picture and the shell cut the rest off.
+  - Measured at 375px: g5m1 t1/t2 and g4m1-t1 charts were cut off (t2 lost Tens and Ones, the digits the question is about). Now every screen through Screen 8 fits. The sweep was watched: zoom off gives 105px of overflow.
+  - At ≥1000px wide the table is identical (22px, 14px padding, no zoom). Below 1000px the cell side padding is `clamp(5px, 1.4vw, 14px)`.
+
+## ③ 🔎 NOT VERIFIED, AND WHAT TO KNOW
+- **The founder has read none of the 20 lessons.** Writers' pitch notes:
+  - t7 is Grade 4 review (a one-digit multiplier, the same idea as g4m3-t2).
+  - t10 practice 3–4 have six-digit answers.
+  - In t13 practice 2 (58 ÷ 29), the first guess is 1.
+  - In t18 the child never makes a story; they solve one or pick its expression.
+  - t17 is 5 picks out of 7.
+- **The part names A–D exist only in curriculum.md and file comments.** The child's path shows 20 stops with no part headings, and module practice is now 20 mixed problems.
+- **Progress is per-device and keyed by lesson id,** so a device that finished old g5m1-t1…t8 shows the NEW t1…t8 as done. Parent `lesson_ids` choices naming g5m1 topics now point at different lessons (0 learners had any choice on 2026-09-14; not re-measured).
+- **Tape diagrams are ~8px text on a 375px phone,** in every module (`Tape`'s viewBox is 648 wide). Not touched.
+
+## ▶ OPEN
+1. ✅ Deployed (see the first line).
+2. 🔴 **Founder read of g5m1** at `/lesson-preview?module=g5m1`, especially the shortened titles against the photo. To change a title, change `curriculum.md` and the lesson together.
+3. ⏭️ Tape diagram text size on phones, in every module.
+4. ⏭️ **LIFTED from 🧭 2026-09-13:**
+   - The landing heading/paragraph still describe the placement check, which is off (as of 2026-09-13; not re-checked).
+   - "Read it to me" is browser speech only.
+   - PR #95 (stop `main` previews) status unconfirmed.
+5. ⏭️ Carried: the 🧩, 📚 and 🎨 blocks' ▶ OPEN.
+
 > ⬆️ **MOVED OUT OF handoff.md 2026-09-17** — the 🧩 2026-09-14/15 block (the MathPath home, role menus and guards, Grade 5 backdrops, classroom parked). Its ▶ OPEN was LIFTED into the 🔐 2026-09-17 block's ▶ OPEN, item 9.
 
 > 🧩 **2026-09-14/15 — THE MATHPATH HOME PAGE WITH ROLE MENUS AND ROLE GUARDS, DRAWN BACKDROPS FOR ALL 46 GRADE 5 TOPICS, AND A TANGLED BRANCH SORTED OUT: THE CLASSROOM WORK PARKED, THIS FOLDER BACK ON `main`.** PRs [#107](https://github.com/RadlorInc/learn/pull/107) + [#108](https://github.com/RadlorInc/learn/pull/108) merged (`c66e78b4`, `20c12fc0`) · #106 closed as superseded · `tsc` 0 · vitest **106 files, 3004 passed** · `next build` OK · **sw v186 → v188** · **LIVE — as measured 2026-09-14:** Deploy run green, `release` = `20c12fc0`, `sw.js` serves **v188**, `/assets/lessons/g5m6-t1.webp` 200, `/lesson?id=g5m3-t1` shows its backdrop with 0 console errors, the live CSS carries `.home-nav`/`.home-app`. Re-measure: `curl -s https://adaptivelearn.radlor.com/sw.js | head -1`.
