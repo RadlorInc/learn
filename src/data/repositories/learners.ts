@@ -6,7 +6,8 @@ import { db } from '@/data/repositories/_shared'
 import type { Learner } from '@/data/supabase/types'
 import type { AgeGroup } from '@/core/chapters'
 
-export type LearnerWithRole = Learner & { accessRole: 'owner' | 'viewer' }
+/** 'self' = the child's own account (child logins, 2026-09-17). */
+export type LearnerWithRole = Learner & { accessRole: 'owner' | 'viewer' | 'self' }
 
 export async function getMyLearners(): Promise<LearnerWithRole[]> {
   const supabase = db()
@@ -27,7 +28,7 @@ export async function getMyLearners(): Promise<LearnerWithRole[]> {
   if (!access || access.length === 0) return []   // no learners — a true empty
 
   const roleById = new Map(
-    (access as { learner_id: string; access_role: 'owner' | 'viewer' }[])
+    (access as { learner_id: string; access_role: 'owner' | 'viewer' | 'self' }[])
       .map(a => [a.learner_id, a.access_role]),
   )
   const ids = [...roleById.keys()]

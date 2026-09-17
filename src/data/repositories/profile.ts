@@ -34,7 +34,7 @@ export async function setMyRole(role: UserRole): Promise<boolean> {
 
 /** Where a given role lands after login: teachers start on Grades, everyone else on the dashboard. */
 export const homeForRole = (role: UserRole | null): string =>
-  role === 'teacher' ? '/parent/grades' : '/parent'
+  role === 'teacher' ? '/parent/grades' : role === 'learner' ? '/modules' : '/parent'
 
 export async function signOut() {
   const supabase = db()

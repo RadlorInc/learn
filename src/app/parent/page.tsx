@@ -9,7 +9,7 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
-  getMyRole, setMyRole, entitledChapters, setLearnerLessons,
+  getMyRole, setMyRole, entitledChapters, setLearnerLessons, enterAsChild, getChildLogins, removeChildLogin,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -25,6 +25,7 @@ import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner
 import { CHAPTER_PARENT_LABELS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
+import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules } from '@/features/lessons/modules'
 import { LessonLibrary } from '@/features/lessons/LessonLibrary'
 import { lessonDone } from '@/infra/storage/lessonProgress'
@@ -78,7 +79,7 @@ interface LearnerData {
   stats:       LearnerStats | null
   progress:    LearnerProgress[]
   sessions:    Session[]
-  accessRole:  'owner' | 'viewer' | null
+  accessRole:  'owner' | 'viewer' | 'self' | null
 }
 
 export default function ParentDashboard() {
@@ -99,6 +100,8 @@ export default function ParentDashboard() {
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
   const [picked, setView] = useState<string | null>(null)             // null = that role's home
+  const [childLogins, setChildLogins] = useState<Record<string, string> | null>(null)   // learnerId → username; null = unknown
+  const [loginFor, setLoginFor] = useState<string | null>(null)       // learnerId whose login sheet is open
 
   async function loadAll() {
     setLoading(true)
@@ -117,8 +120,11 @@ export default function ParentDashboard() {
         getReceivedInvites(),
         getMyRole(),
       ])
+      // A child's own account never sees this dashboard: straight to their lessons.
+      if (myRole === 'learner') { router.replace(await enterAsChild()); return }
       setInvites(pendingInvites)
-      setRole(myRole)   // null → the render shows the one-time Teacher/Parent picker
+      setRole(myRole)
+      getChildLogins().then(setChildLogins)   // not awaited: the dashboard must not wait on the login lookup   // null → the render shows the one-time Teacher/Parent picker
 
       let data: LearnerData[]
       if (dash !== null) {
@@ -174,6 +180,13 @@ export default function ParentDashboard() {
   }
 
   async function handleDelete(learnerId: string) {
+    // The child's own account first: deleting the learner removes its access row but NOT the auth user,
+    // which would outlive the child as a login that signs in to nothing.
+    if (childLogins === null || childLogins[learnerId]) {
+      const r = await removeChildLogin(learnerId)
+      // not_configured = this server cannot have made a login, so there is none to outlive the learner.
+      if (!r.ok && r.error !== 'not_configured') { setActionMsg("Could not remove this learner's login, so nothing was deleted. Try again."); return }
+    }
     const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
       setActionMsg('Learner deleted.')
@@ -539,6 +552,12 @@ export default function ParentDashboard() {
                     📚 Choose topics{active.learner.lesson_ids?.length ? ` · ${active.learner.lesson_ids.length} chosen` : ' · every topic'}
                   </button>
                 )}
+                {active.accessRole === 'owner' && (
+                  <button onClick={() => setLoginFor(active.learner.id)} style={{ width:'100%', marginTop:10, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
+                    {/* null = the lookup failed; the sheet still works (the server updates an existing login in place). */}
+                    🔑 {childLogins === null ? 'Login' : childLogins[active.learner.id] ? `Login · ${childLogins[active.learner.id]}` : 'Set a login'}
+                  </button>
+                )}
                 {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
                   <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
                     🔍 Find starting point
@@ -689,6 +708,20 @@ export default function ParentDashboard() {
         </p>
       </div>
       </div>
+
+      {loginFor && (
+        <ChildLoginSheet
+          learnerId={loginFor}
+          name={learners.find(d => d.learner.id === loginFor)?.learner.display_name ?? ''}
+          current={childLogins?.[loginFor] ?? null}
+          onClose={() => setLoginFor(null)}
+          onChanged={u => setChildLogins(prev => {
+            const next = { ...(prev ?? {}) }
+            if (u) next[loginFor] = u; else delete next[loginFor]
+            return next
+          })}
+        />
+      )}
 
       {/* Add learner modal */}
       {showAddModal && (
