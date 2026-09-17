@@ -4,6 +4,7 @@
  * Portrait (phone): the path runs top to bottom. Landscape (tablet sideways, laptop): it runs left to right.
  * The first unfinished topic is "Next up"; nothing is locked (a child may replay or jump ahead).
  */
+import { showDay } from './progressReport'
 import Link from 'next/link'
 import { useSyncExternalStore, type CSSProperties } from 'react'
 import type { Module } from './modules'
@@ -24,7 +25,8 @@ const objOf = (l: Lesson): Obj | null => {
   return p && 'obj' in p ? p.obj : null
 }
 
-export function LessonList({ module, learnerId, back }: { module: Module; learnerId: string | null; back?: { href: string; label: string } }) {
+/** `due` = the parent's due date per assigned lesson (Assign lessons); shown on each topic not done yet. */
+export function LessonList({ module, learnerId, back, due }: { module: Module; learnerId: string | null; back?: { href: string; label: string }; due?: Record<string, string> | null }) {
   const lessons = module.lessons
   const across = useSyncExternalStore(subscribe, () => matchMedia(LANDSCAPE).matches, () => false)
   // Read during render: both callers mount this on the client only, after kv has hydrated.
@@ -90,6 +92,9 @@ export function LessonList({ module, learnerId, back }: { module: Module; learne
                       </Link>
                       <Link href={`/lesson?id=${l.id}`} tabIndex={-1} aria-hidden style={{ position: 'absolute', textDecoration: 'none', color: INK, ...label }}>
                         <b style={{ display: 'inline-block', fontFamily: 'var(--font-display)', fontSize: isNext ? 19 : 16, lineHeight: 1.2, background: '#fff', border: `3px solid ${INK}`, borderRadius: 14, padding: '6px 10px', boxShadow: `3px 3px 0 ${INK}` }}>{l.title}</b>
+                        {/* Never "late" to a child: the date is information, not a mark against them. */}
+                        {!isDone && due?.[l.id] && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 6,
+                          background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>Due {showDay(due[l.id])}</span>}
                         {isNext && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 8, marginBottom: across ? 8 : 0,
                           background: TEAL, color: '#fff', border: `3px solid ${INK}`, boxShadow: `3px 3px 0 ${INK}`, borderRadius: 12, padding: '6px 14px', fontWeight: 800, fontSize: 15 }}>Next up ▶</span>}
                       </Link>

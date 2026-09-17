@@ -31,7 +31,7 @@ function Lesson() {
     // The topic path shows only the topics the parent chose (all of them when no choice was made).
     const mods = chosenModules(learner?.lesson_ids)
     const module = mods.find(x => x.id === moduleId && x.lessons.length > 0) ?? mods.find(x => x.lessons.length > 0)!
-    return <LessonList module={module} learnerId={learnerId} back={{ href: `/modules?grade=${module.grade}`, label: '← Modules' }} />
+    return <LessonList module={module} learnerId={learnerId} due={learner?.lesson_due} back={{ href: `/modules?grade=${module.grade}`, label: '← Modules' }} />
   }
   const { lesson, module } = found
 

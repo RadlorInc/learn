@@ -93,8 +93,8 @@ export function LessonLibrary({ learners, onSave }: {
   )
 }
 
-const panel: CSSProperties = { background: 'var(--paper-soft)', border: '1.5px solid var(--card-border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }
-const field: CSSProperties = { padding: '10px 14px', fontSize: 15, minHeight: 44, border: '2px solid var(--card-border)', borderRadius: 12, width: '100%', boxSizing: 'border-box', color: 'var(--ink)', background: '#fff' }
-const btn: CSSProperties = { background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', minHeight: 44, fontSize: 14, fontWeight: 800, cursor: 'pointer' }
-const ghost: CSSProperties = { ...btn, background: 'var(--paper-soft)', color: 'var(--ink)', border: '1.5px solid var(--card-border)' }
-const chip: CSSProperties = { border: '1.5px solid var(--card-border)', borderRadius: 999, padding: '8px 14px', minHeight: 40, fontSize: 14, fontWeight: 800, cursor: 'pointer' }
+export const panel: CSSProperties = { background: 'var(--paper-soft)', border: '1.5px solid var(--card-border)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }
+export const field: CSSProperties = { padding: '10px 14px', fontSize: 15, minHeight: 44, border: '2px solid var(--card-border)', borderRadius: 12, width: '100%', boxSizing: 'border-box', color: 'var(--ink)', background: '#fff' }
+export const btn: CSSProperties = { background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', minHeight: 44, fontSize: 14, fontWeight: 800, cursor: 'pointer' }
+export const ghost: CSSProperties = { ...btn, background: 'var(--paper-soft)', color: 'var(--ink)', border: '1.5px solid var(--card-border)' }
+export const chip: CSSProperties = { border: '1.5px solid var(--card-border)', borderRadius: 999, padding: '8px 14px', minHeight: 40, fontSize: 14, fontWeight: 800, cursor: 'pointer' }

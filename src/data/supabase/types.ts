@@ -32,6 +32,8 @@ export interface Database {
           grade_id:      string | null
           /** New-flow lesson ids the parent chose; null/absent = every topic (absent until migration 20260914015455 is applied). */
           lesson_ids?:   string[] | null
+          /** Due date per assigned lesson, {"g3m2-t1": "2026-09-20"} (absent until migration 20260917114845 is applied). */
+          lesson_due?:   Record<string, string> | null
           created_by:    string
           created_at:    string
           updated_at:    string
