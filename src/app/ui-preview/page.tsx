@@ -23,6 +23,9 @@ import { Suspense } from 'react'
 import CheckDoor from '@/shared/ui/CheckDoor'
 import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
 import { planLine, swapCopy } from '@/core/planCopy'
+import { useState } from 'react'
+import { LessonLibrary, type LibraryLearner } from '@/features/lessons/LessonLibrary'
+import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 
 function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
@@ -71,6 +74,8 @@ function Surfaces() {
       {p === 'role'  && <div data-t="role" style={{ width: '100%' }}><RolePicker name="Sarah" onPick={() => {}} /></div>}
       {p === 'empty' && <div data-t="empty" className="adult-shell"><EmptyDashboard onAdd={() => {}} /></div>}
       {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
+      {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
+      {p === 'library' && <div data-t="library" className="adult-shell" style={{ width: '100%' }}><LibraryPreview /></div>}
 
       {/* The `.card-grid` used by the grade list, the invite lists and class triage. ⚠️ SAME NARROW
           CLAIM AS `?p=cols`: this is the CLASS with placeholder children, not those pages — it
@@ -107,4 +112,16 @@ function Surfaces() {
 export default function UiPreviewPage() {
   if (process.env.NODE_ENV === 'production') notFound()   // dev scaffolding — 404 in the shipped app
   return <Suspense><Surfaces /></Suspense>
+}
+
+/** The library with two placeholder children and an in-memory save — layout and the add/remove state, never the database. */
+function LibraryPreview() {
+  const [kids, setKids] = useState<LibraryLearner[]>([
+    { id: 'a', name: 'Sarah', lessonIds: null, canEdit: true },
+    { id: 'b', name: 'Omar', lessonIds: null, canEdit: false },
+  ])
+  return <LessonLibrary learners={kids} onSave={async (id, ids) => {
+    if (!kids.find(k => k.id === id)?.canEdit) return 'error'
+    setKids(ks => ks.map(k => k.id === id ? { ...k, lessonIds: ids } : k)); return 'ok'
+  }} />
 }

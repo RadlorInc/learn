@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
-import { getMyRole, homeForRole } from '@/data/repositories'
+import { getMyRole, homeForRole, enterAsChild } from '@/data/repositories'
+import { loginEmail } from '@/core/childLogin'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
@@ -47,7 +48,7 @@ export default function AuthPage() {
 
   async function handleEmailAuth() {
     if (!email.trim() || !password.trim()) {
-      setError('Please enter your email and password')
+      setError(mode === 'login' ? 'Please enter your email or username, and your password' : 'Please enter your email and password')
       return
     }
     if (password.length < 6) {
@@ -82,18 +83,21 @@ export default function AuthPage() {
           setSuccess('Check your email for a confirmation link!')
         }
       } else {
-        const { error } = await signInWithEmail(email.trim(), password)
+        // A child types a username; `loginEmail` turns it into their account's address (core/childLogin.ts).
+        const { error } = await signInWithEmail(loginEmail(email), password)
         if (error) {
           setError(
             error.message.includes('Invalid login')
-              ? 'Incorrect email or password'
+              ? 'Incorrect email, username or password'
               : error.message
           )
         } else {
           // On-page password sign-in does NOT round-trip through /auth/callback, so
           // nothing else navigates — redirect here or the user is stranded on /auth.
           // Role-aware: teachers land on Grades; a role-less account lands on /parent (picker).
-          router.replace(homeForRole(await getMyRole()))
+          // A child (profiles.role 'learner') goes to their own lessons, with their learner made active first.
+          const role = await getMyRole()
+          router.replace(role === 'learner' ? await enterAsChild() : homeForRole(role))
           return
         }
       }
@@ -125,6 +129,8 @@ export default function AuthPage() {
    */
   async function forgotPassword() {
     if (!email.trim()) { setError('Enter your email address first, then tap this again'); return }
+    // A child's account has no mailbox; only the adult who set their login can change the password.
+    if (!email.includes('@')) { setError('Children: ask your parent or teacher to set a new password for you.'); return }
     setLoading(true); reset()
     try {
       await sendPasswordReset(email.trim(), `${window.location.origin}/auth/set-password`)
@@ -251,16 +257,18 @@ export default function AuthPage() {
             {/* Email input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label htmlFor="auth-email" style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>
-                Email address
+                {mode === 'login' ? 'Email or username' : 'Email address'}
               </label>
               <input
                 id="auth-email"
-                type="email"
-                placeholder="you@example.com"
+                type={mode === 'login' ? 'text' : 'email'}
+                placeholder={mode === 'login' ? 'you@example.com or username' : 'you@example.com'}
+                autoCapitalize="none"
+                spellCheck={false}
                 value={email}
                 onChange={e => { setEmail(e.target.value); reset() }}
                 onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
-                autoComplete="email"
+                autoComplete={mode === 'login' ? 'username' : 'email'}
                 style={field}
                 onFocus={e => { e.target.style.borderColor = C.accent }}
                 onBlur={e => { e.target.style.borderColor = C.edge }}

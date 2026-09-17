@@ -5,11 +5,12 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentUser } from '@/data/auth'
 import {
-  getMyGrades, createGrade, updateGrade, deleteGrade, getGradeChapterIds,
-  type GradeSummary,
+  getMyGrades, createGrade, updateGrade, deleteGrade, getGradeChapterIds, getMyLearners, getChildLogins,
+  type GradeSummary, type LearnerWithRole,
 } from '@/data/repositories'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
+import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 
 /* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
 const P = {
@@ -33,13 +34,18 @@ function GradesInner() {
   const [loading,   setLoading]   = useState(true)
   const [editing,   setEditing]   = useState<GradeSummary | 'new' | null>(null)
   const [confirming, setConfirming] = useState<string | null>(null)
+  // Students this teacher added, and their logins (learnerId → username; null = lookup failed).
+  const [students,  setStudents]  = useState<LearnerWithRole[]>([])
+  const [logins,    setLogins]    = useState<Record<string, string> | null>(null)
 
   async function load() {
     setLoading(true)
     const user = await getCurrentUser()
     if (!user) { router.replace('/auth'); return }
     setGrades(await getMyGrades())
+    setStudents((await getMyLearners().catch(() => [])).filter(l => l.accessRole === 'owner'))
     setLoading(false)
+    getChildLogins().then(setLogins)
   }
 
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -117,7 +123,13 @@ function GradesInner() {
             })}
           </div>
         )}
+
+        <div style={{ marginTop:24 }}>
+          <ChildLoginsList title="Student logins" blurb="Give a student a username and password so they sign in on any device and go straight to their lessons."
+            learners={students.map(l => ({ id: l.id, name: l.display_name }))} logins={logins} onLogins={setLogins} />
+        </div>
       </div>
+
 
       {editing && (
         <GradeModal

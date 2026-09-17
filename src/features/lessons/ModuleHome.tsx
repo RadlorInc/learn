@@ -16,7 +16,7 @@ const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
 /** `lessonIds` = the topics the parent chose for this child (null = every topic); grades and modules with none are hidden. */
 export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }: {
-  learnerId: string | null; back?: { href: string; label: string }; grade?: number; lessonIds?: readonly string[] | null
+  learnerId: string | null; back?: { href: string; label: string } | { onClick: () => void; label: string }; grade?: number; lessonIds?: readonly string[] | null
 }) {
   const mods = chosenModules(lessonIds)
   const GRADES = [...new Set(mods.map(x => x.grade))]
@@ -38,7 +38,8 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }
 @media ${LANDSCAPE} { .mh-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start } }`}</style>
       <div style={{ ...shell, maxWidth: 1180, alignSelf: 'flex-start' }}>
         <div style={topBar}>
-          {back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link> : <span />}
+          {back && 'href' in back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link>
+            : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Grade {grade}</span>
           <span />
         </div>

@@ -9,7 +9,7 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getGradeChapterIds, getLatestGap, getCheckupStatus, type GradeSummary,
-  getMyRole, setMyRole, entitledChapters,
+  getMyRole, setMyRole, entitledChapters, setLearnerLessons, enterAsChild, getChildLogins, removeChildLogin,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -18,14 +18,16 @@ import { adoptDemoRun } from '@/infra/storage/demoRun'
 import { scoreChapter } from '@/core/scoring'
 import { track } from '@/infra/analytics'
 import { hasCheckup, markCheckupDone, checkupSkips } from '@/infra/storage/checkup'
-import { setActiveLearner } from '@/data/supabase/useLearnerSession'
+import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { CHAPTER_PARENT_LABELS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
-import { MODULES, chosenModules } from '@/features/lessons/modules'
+import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
+import { chosenModules } from '@/features/lessons/modules'
+import { LessonLibrary } from '@/features/lessons/LessonLibrary'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -77,7 +79,7 @@ interface LearnerData {
   stats:       LearnerStats | null
   progress:    LearnerProgress[]
   sessions:    Session[]
-  accessRole:  'owner' | 'viewer' | null
+  accessRole:  'owner' | 'viewer' | 'self' | null
 }
 
 export default function ParentDashboard() {
@@ -98,6 +100,8 @@ export default function ParentDashboard() {
   const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
   const [picked, setView] = useState<string | null>(null)             // null = that role's home
+  const [childLogins, setChildLogins] = useState<Record<string, string> | null>(null)   // learnerId → username; null = unknown
+  const [loginFor, setLoginFor] = useState<string | null>(null)       // learnerId whose login sheet is open
 
   async function loadAll() {
     setLoading(true)
@@ -116,8 +120,11 @@ export default function ParentDashboard() {
         getReceivedInvites(),
         getMyRole(),
       ])
+      // A child's own account never sees this dashboard: straight to their lessons.
+      if (myRole === 'learner') { router.replace(await enterAsChild()); return }
       setInvites(pendingInvites)
-      setRole(myRole)   // null → the render shows the one-time Teacher/Parent picker
+      setRole(myRole)
+      getChildLogins().then(setChildLogins)   // not awaited: the dashboard must not wait on the login lookup   // null → the render shows the one-time Teacher/Parent picker
 
       let data: LearnerData[]
       if (dash !== null) {
@@ -173,6 +180,13 @@ export default function ParentDashboard() {
   }
 
   async function handleDelete(learnerId: string) {
+    // The child's own account first: deleting the learner removes its access row but NOT the auth user,
+    // which would outlive the child as a login that signs in to nothing.
+    if (childLogins === null || childLogins[learnerId]) {
+      const r = await removeChildLogin(learnerId)
+      // not_configured = this server cannot have made a login, so there is none to outlive the learner.
+      if (!r.ok && r.error !== 'not_configured') { setActionMsg("Could not remove this learner's login, so nothing was deleted. Try again."); return }
+    }
     const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
       setActionMsg('Learner deleted.')
@@ -344,20 +358,19 @@ export default function ParentDashboard() {
       <div style={{ minWidth:0 }}>
       <div className="adult-shell">
         {view === 'library' ? (
-          <>
-            <h1 style={{ margin:'0 0 4px', fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>Lesson library</h1>
-            <p style={{ margin:'0 0 18px', color:P.ink2, fontSize:14 }}>Grades {MODULES[0].grade}–{MODULES[MODULES.length - 1].grade} · {MODULES.length} modules</p>
-            <div className="card-grid">
-              {MODULES.map(m => (
-                <div key={m.id} style={card}>
-                  <div style={{ fontSize:12, color:P.ink3, fontWeight:700 }}>Grade {m.grade} · Module {m.n}</div>
-                  <h3 style={{ margin:'4px 0', fontSize:17, color:P.ink }}>{m.title}</h3>
-                  <p style={{ margin:'0 0 12px', fontSize:14, color:P.ink2 }}>{m.lessons.length} topics</p>
-                  <button onClick={() => setView(tea ? 'tassign' : 'assign')} style={btn}>Assign</button>
-                </div>
-              ))}
-            </div>
-          </>
+          <LessonLibrary
+            learners={learners.map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, canEdit: d.accessRole === 'owner' }))}
+            onSave={async (id, ids) => {
+              const r = await setLearnerLessons(id, ids)
+              if (r === 'ok') {
+                setLearners(prev => prev.map(d => d.learner.id === id ? { ...d, learner: { ...d.learner, lesson_ids: ids } } : d))
+                // The child's screens read a copy saved when "Start learning" was tapped; keep it in step (as /parent/topics does).
+                const a = getActiveLearner()
+                if (a?.id === id) setActiveLearner({ ...a, lesson_ids: ids })
+              }
+              return r
+            }}
+          />
         ) : current?.soon ? (
           <>
             <h1 style={{ margin:'0 0 18px', fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{current.label}</h1>
@@ -421,10 +434,13 @@ export default function ParentDashboard() {
               <div style={{ ...card, display:'flex', flexDirection:'column', gap:10, alignItems:'flex-start' }}>
                 <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:P.ink }}>Quick actions</h3>
                 {active && <button onClick={() => launchGame(active)} style={btn}>▶ Start learning with {active.learner.display_name}</button>}
-                <button onClick={() => setShowAddModal(true)} style={ghost}>+ Add learner</button>
                 <Link href="/parent/invites" style={ghost}>✉️ Share access</Link>
               </div>
             </div>
+
+            <ChildLoginsList title="Child logins" blurb="Set a username and password for each child, so they can sign in on any device and go straight to their lessons."
+              learners={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
+              logins={childLogins} onLogins={setChildLogins} />
           </>
         )}
 
@@ -483,7 +499,6 @@ export default function ParentDashboard() {
             <div style={{ marginBottom:20 }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
                 <h2 style={{ fontSize:16, fontWeight:800, margin:0, color:P.ink }}>Your learners</h2>
-                <button onClick={() => setShowAddModal(true)} style={{ background:P.accent, color:'#fff', border:'none', borderRadius:50, padding:'10px 16px', minHeight:44, fontSize:13, fontWeight:700, cursor:'pointer', whiteSpace:'nowrap' }}>+ Add child</button>
               </div>
               <div className="chip-scroll">
                 {learners.map(({ learner }) => (
@@ -539,6 +554,12 @@ export default function ParentDashboard() {
                 {LEGACY_CHAPTERS_HIDDEN && active.accessRole === 'owner' && (
                   <button onClick={() => router.push(`/parent/topics?learner=${active.learner.id}`)} style={{ width:'100%', marginTop:10, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
                     📚 Choose topics{active.learner.lesson_ids?.length ? ` · ${active.learner.lesson_ids.length} chosen` : ' · every topic'}
+                  </button>
+                )}
+                {active.accessRole === 'owner' && (
+                  <button onClick={() => setLoginFor(active.learner.id)} style={{ width:'100%', marginTop:10, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
+                    {/* null = the lookup failed; the sheet still works (the server updates an existing login in place). */}
+                    🔑 {childLogins === null ? 'Login' : childLogins[active.learner.id] ? `Login · ${childLogins[active.learner.id]}` : 'Set a login'}
                   </button>
                 )}
                 {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
@@ -692,7 +713,21 @@ export default function ParentDashboard() {
       </div>
       </div>
 
-      {/* Add child modal */}
+      {loginFor && (
+        <ChildLoginSheet
+          learnerId={loginFor}
+          name={learners.find(d => d.learner.id === loginFor)?.learner.display_name ?? ''}
+          current={childLogins?.[loginFor] ?? null}
+          onClose={() => setLoginFor(null)}
+          onChanged={u => setChildLogins(prev => {
+            const next = { ...(prev ?? {}) }
+            if (u) next[loginFor] = u; else delete next[loginFor]
+            return next
+          })}
+        />
+      )}
+
+      {/* Add learner modal */}
       {showAddModal && (
         <AddLearnerModal
           onClose={() => setShowAddModal(false)}
