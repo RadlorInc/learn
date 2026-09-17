@@ -63,6 +63,7 @@ export function LessonLibrary({ learners, onSave }: {
             )}
           </div>
         )}
+        {child && !child.canEdit && <div style={{ fontSize: 14, color: 'var(--ink-soft)' }}>Only the parent who added {child.name} can change their lessons.</div>}
         {msg && <div role="status" style={{ fontSize: 14, fontWeight: 700, color: msg.ok ? '#157347' : '#B42318' }}>{msg.ok ? '✅ ' : ''}{msg.text}</div>}
       </div>
 
