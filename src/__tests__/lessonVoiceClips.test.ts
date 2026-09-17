@@ -43,5 +43,5 @@ it("every line a lesson speaks has a clip in its lesson's voice, or is queued to
   expect(lines).toBeGreaterThan(8000)   // positive control: the sweep is really reading the lessons
   expect(lost.slice(0, 10)).toEqual([])
   // Rendered but not yet merged. Lower this as zips are merged; it must never grow without a corpus change.
-  expect(waiting.size).toBeLessThanOrEqual(2527)
+  expect(waiting.size).toBeLessThanOrEqual(0)
 })
