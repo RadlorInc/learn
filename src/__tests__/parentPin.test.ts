@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * The parent PIN (migration 20260917160000), driven in the repo's real schema (baseline + every migration) as the
+ * The parent PIN (migration 20260917083255), driven in the repo's real schema (baseline + every migration) as the
  * roles a browser actually has. The properties are all in what a CALLER can and cannot do, so each is asserted by
  * doing it: read the table, guess the PIN, reset it, reach another account's PIN.
  */

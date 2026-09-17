@@ -2,7 +2,7 @@
 
 /**
  * The parent PIN that guards the dashboard on a shared device. All checking is server-side (migration
- * 20260917160000): the table is unreadable to the browser, and wrong tries lock it.
+ * 20260917083255): the table is unreadable to the browser, and wrong tries lock it.
  */
 import { db } from '@/data/repositories/_shared'
 

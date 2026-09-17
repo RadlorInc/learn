@@ -61,7 +61,7 @@
 --                                                  ⚠️ 2026-09-17 (20260917072319): access_role admits 'self' — a
 --                                                  child's own login, written ONLY by /api/child-login with the
 --                                                  service role. No policy changed; see that migration's header.
---   parent_pins                rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-17, 20260917160000),
+--   parent_pins                rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-17, 20260917083255),
 --                                                  same mechanism as admin_users: all privileges revoked from
 --                                                  public/anon/authenticated; reached only by the four
 --                                                  parent-PIN DEFINER functions below, each keyed on auth.uid().

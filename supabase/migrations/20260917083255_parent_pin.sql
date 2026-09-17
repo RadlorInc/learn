@@ -1,5 +1,11 @@
 -- Parent PIN: a 4-digit PIN the adult sets once and must enter every time the dashboard opens.
 --
+-- ✅ APPLIED TO PRODUCTION 2026-09-17 by hand (ledger version 20260917083255; file renamed to match). Measured after,
+-- in the catalog: parent_pins rls=t, 0 policies, ACL postgres + service_role only; the four functions prosecdef=t,
+-- search_path=public, EXECUTE = postgres/authenticated/service_role (no anon); parent_pin_hash has no client EXECUTE.
+-- And from OUTSIDE with production's anon key: all three RPCs and a table read answer 42501, identical to the two
+-- known-refused controls prune_error_events and delete_my_account.
+--
 -- WHY (founder, 2026-09-17): on a shared device a child reaches the parent dashboard without any password —
 -- "Sign in with Google" signs in whoever is already signed in to Google in that browser, a saved password
 -- autofills, or the parent simply left the session open. The PIN guards the dashboard however the session
