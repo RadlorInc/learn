@@ -9,7 +9,7 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
   getMyGrades, getLatestGap, getCheckupStatus, type GradeSummary,
-  getMyRole, setMyRole, setLearnerLessons, enterAsChild, getChildLogins, removeChildLogin,
+  getMyRole, setMyRole, setLearnerLessons, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
@@ -29,6 +29,8 @@ import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules } from '@/features/lessons/modules'
 import { LessonLibrary } from '@/features/lessons/LessonLibrary'
+import { AssignLessons } from '@/features/lessons/AssignLessons'
+import { Performance } from '@/features/lessons/Performance'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding } from '@/infra/storage/lessonStanding'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
@@ -58,8 +60,8 @@ const FAMILY_NAV: NavItem[] = [
   { label: 'Home', view: 'home' },
   { label: 'Learners', view: 'learners' },
   { label: 'Lesson library', view: 'library' },
-  { label: 'Assign lessons', view: 'assign', soon: { text: 'Pick a learner, a lesson and a due date. Until then, children choose from their own lesson list.' } },
-  { label: 'Performance', view: 'dash', soon: { text: 'Time practised, skills mastered and where each learner is stuck, per learner.' } },
+  { label: 'Assign lessons', view: 'assign' },
+  { label: 'Performance', view: 'dash' },
   { label: 'Plan & billing', href: '/parent/plan' },
   { label: 'Settings', view: 'settings', soon: { text: 'Your account name and preferences.', link: { href: '/parent/account', label: 'Close your account' } } },
   { label: 'Help', href: '/help' },
@@ -299,14 +301,14 @@ export default function ParentDashboard() {
     const mastered = lessons.filter(l => loadStanding(d.learner.id, l.id)?.mastered).length
     return { d, done, total: lessons.length, next, mastered }
   })
-  const lessonsDone = rows.reduce((n, r) => n + r.done, 0)
-  const topicsMastered = rows.reduce((n, r) => n + r.mastered, 0)
+  const activeRow = rows.find(r => r.d === active)
   const card = { background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:16, padding:16 } as const
   const btn = { background:P.accent, color:'#fff', border:'none', borderRadius:10, padding:'10px 14px', minHeight:44, fontSize:14, fontWeight:800, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' } as const
   const ghost = { ...btn, background:P.card, color:P.ink, border:`1.5px solid ${P.edge}` } as const
   function openLearner(id: string) {
     setSelected(id)
-    document.getElementById('learner-detail')?.scrollIntoView({ behavior:'smooth', block:'start' })
+    setView('learners')
+    window.scrollTo({ top: 0 })
   }
 
   // The menu is decided by the account's role alone — a teacher never sees the family menu, and back.
@@ -323,10 +325,7 @@ export default function ParentDashboard() {
         <span className="home-logo">🦊 AdaptiveLearn</span>
         {nav.map(i => i.href
           ? <Link key={i.label} href={i.href}>{i.label}</Link>
-          : <button key={i.label} className={view === i.view ? 'on' : ''} onClick={() => {
-              setView(i.view!)
-              if (i.label === 'Learners') setTimeout(() => document.getElementById('learner-detail')?.scrollIntoView({ behavior:'smooth' }))
-            }}>{i.label}</button>)}
+          : <button key={i.label} className={view === i.view ? 'on' : ''} onClick={() => setView(i.view!)}>{i.label}</button>)}
         <button onClick={signOut} className="home-nav-end">Sign out</button>
       </nav>
 
@@ -346,6 +345,26 @@ export default function ParentDashboard() {
               return r
             }}
           />
+        ) : view === 'assign' ? (
+          <AssignLessons
+            learners={learners.map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, due: d.learner.lesson_due ?? {}, canEdit: d.accessRole === 'owner' }))}
+            onSave={async (id, ids, due) => {
+              const r = await setLearnerAssignments(id, ids, due)
+              if (r === 'ok') {
+                const lesson_due = ids ? due : null
+                setLearners(prev => prev.map(d => d.learner.id === id ? { ...d, learner: { ...d.learner, lesson_ids: ids, lesson_due } } : d))
+                // The child's screens read a copy saved when "Start learning" was tapped; keep it in step.
+                const a = getActiveLearner()
+                if (a?.id === id) setActiveLearner({ ...a, lesson_ids: ids, lesson_due })
+              }
+              return r
+            }}
+          />
+        ) : view === 'dash' ? (
+          <Performance
+            learners={learners.map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, due: d.learner.lesson_due ?? {} }))}
+            onAssign={() => setView('assign')}
+          />
         ) : current?.soon ? (
           <>
             <h1 style={{ margin:'0 0 18px', fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{current.label}</h1>
@@ -359,22 +378,32 @@ export default function ParentDashboard() {
 
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:18 }}>
           <div>
-            <h1 style={{ margin:0, fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{greeting}, {parentName}</h1>
+            <h1 style={{ margin:0, fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{view === 'learners' ? 'Learners' : `${greeting}, ${parentName}`}</h1>
             <div style={{ color:P.ink2, fontSize:14, marginTop:2 }}>{learners.length} learner{learners.length === 1 ? '' : 's'}{invites.length > 0 ? ` · ${invites.length} invite${invites.length === 1 ? '' : 's'} waiting` : ''}</div>
           </div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
             <button onClick={() => setShowAddModal(true)} style={ghost}>+ Add learner</button>
-            {active && <button onClick={() => launchGame(active)} style={btn}>▶ Start learning</button>}
           </div>
         </div>
 
-        {learners.length > 0 && (
+        {view === 'home' && learners.length > 0 && (
           <>
+            {/* Lessons and topics are per child, never summed across children: pick whose. */}
+            {learners.length > 1 && (
+              <div className="chip-scroll" style={{ marginBottom:12 }} aria-label="Show counts for">
+                {learners.map(({ learner }) => (
+                  <button key={learner.id} onClick={() => setSelected(learner.id)} aria-pressed={selected === learner.id}
+                    style={{ padding:'8px 14px', minHeight:40, borderRadius:50, border:'2px solid', borderColor: selected === learner.id ? P.accent : P.edge, background: selected === learner.id ? 'var(--milo-orange-soft)' : P.card, cursor:'pointer', fontSize:14, fontWeight:700 }}>
+                    {learner.display_name}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="home-stats">
               {[
                 { num: learners.length, label: 'Learners' },
-                { num: lessonsDone,     label: 'Lessons finished' },
-                { num: topicsMastered,  label: 'Topics mastered' },
+                { num: activeRow?.done ?? 0,     label: `Lessons finished${active ? ` · ${active.learner.display_name}` : ''}` },
+                { num: activeRow?.mastered ?? 0, label: `Topics mastered${active ? ` · ${active.learner.display_name}` : ''}` },
               ].map(s => (
                 <div key={s.label} style={card}>
                   <div style={{ fontSize:32, fontWeight:900, color:P.ink }}>{s.num}</div>
@@ -408,7 +437,6 @@ export default function ParentDashboard() {
               </div>
               <div style={{ ...card, display:'flex', flexDirection:'column', gap:10, alignItems:'flex-start' }}>
                 <h3 style={{ margin:0, fontSize:16, fontWeight:800, color:P.ink }}>Quick actions</h3>
-                {active && <button onClick={() => launchGame(active)} style={btn}>▶ Start learning with {active.learner.display_name}</button>}
                 <Link href="/parent/invites" style={ghost}>✉️ Share access</Link>
               </div>
             </div>
@@ -466,14 +494,14 @@ export default function ParentDashboard() {
             holds WHO is being looked at (the picker, their stats, their data controls); the wide
             column holds WHAT they have done. `.dash-cols` is a plain CSS grid, so the single-column
             phone layout is the default and needs no JS to be correct. */}
-        <div className="dash-cols" id="learner-detail" style={{ scrollMarginTop:72 }}>
+        {view === 'learners' && <div className="dash-cols">
           <div className="dash-rail">
 
           {/* Learner selector */}
           {learners.length > 0 && (
             <div style={{ marginBottom:20 }}>
               <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-                <h2 style={{ fontSize:16, fontWeight:800, margin:0, color:P.ink }}>Your learners</h2>
+                <h2 style={{ fontSize:16, fontWeight:800, margin:0, color:P.ink }}>Pick a learner</h2>
               </div>
               <div className="chip-scroll">
                 {learners.map(({ learner }) => (
@@ -506,8 +534,8 @@ export default function ParentDashboard() {
 
                 <div style={{ display:'flex', gap:8, marginBottom:16 }}>
                   {[
-                    { label:'Topics mastered', value: rows.find(r => r.d === active)?.mastered ?? 0 },
-                    { label:'Lessons finished', value: rows.find(r => r.d === active)?.done ?? 0 },
+                    { label:'Topics mastered', value: activeRow?.mastered ?? 0 },
+                    { label:'Lessons finished', value: activeRow?.done ?? 0 },
                   ].map(s => (
                     <div key={s.label} style={{ flex:1, background:'rgba(255,255,255,0.15)', borderRadius:12, padding:'10px 8px', textAlign:'center' }}>
                       <div style={{ fontSize:20, fontWeight:800 }}>{s.value}</div>
@@ -604,10 +632,7 @@ export default function ParentDashboard() {
 
             {/* Topics, per module, from the lesson progress synced to the account. */}
             <div style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:20, padding:'18px 16px', boxShadow:'0 2px 12px rgba(61,37,22,0.05)' }}>
-              <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'0 0 14px' }}>
-                <h3 style={{ fontSize:15, fontWeight:800, margin:0, color:P.ink }}>Topics</h3>
-                <button onClick={() => router.push('/parent/plan')} style={{ background:'none', border:'none', padding:0, fontSize:12, fontWeight:700, color:P.accent, cursor:'pointer' }}>Plan &amp; billing →</button>
-              </div>
+              <h3 style={{ fontSize:15, fontWeight:800, margin:'0 0 14px', color:P.ink }}>Topics</h3>
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {chosenModules(active.learner.lesson_ids).filter(m => m.lessons.length > 0).map(m => {
                   const done = m.lessons.filter(l => lessonDone(active.learner.id, l.id)).length
@@ -623,7 +648,7 @@ export default function ParentDashboard() {
             </div>
             </div>
           )}
-        </div>
+        </div>}
         </>)}
       </div>
 

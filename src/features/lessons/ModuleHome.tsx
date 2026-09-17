@@ -9,6 +9,9 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { getWallet } from '@/data/repositories/points'
+import { getMyLearners } from '@/data/repositories/learners'
+import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSession'
+import { showDay } from './progressReport'
 import { Thing, INK, TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
 import { chosenModules, mixedPractice } from './modules'
@@ -17,9 +20,14 @@ import type { Obj } from './script'
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
 /** `lessonIds` = the topics the parent chose for this child (null = every topic); grades and modules with none are hidden. */
-export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }: {
+export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds }: {
   learnerId: string | null; back?: { href: string; label: string } | { onClick: () => void; label: string }; grade?: number; lessonIds?: readonly string[] | null
 }) {
+  // The assigned lessons as of the latest read: the copy saved at sign-in, replaced by the account's own on mount, so a
+  // lesson the parent assigns while the child is signed in reaches them the next time they open this screen.
+  const [fresh, setFresh] = useState<{ ids: string[] | null; due: Record<string, string> | null } | null>(null)
+  const lessonIds = fresh ? fresh.ids : savedIds
+  const due = fresh ? fresh.due : getActiveLearner()?.lesson_due ?? null
   const mods = chosenModules(lessonIds)
   const GRADES = [...new Set(mods.map(x => x.grade))]
   const modulesOf = (g: number) => mods.filter(x => x.grade === g)
@@ -30,6 +38,13 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }
   useEffect(() => {
     if (!learnerId) return
     let live = true
+    getMyLearners().then(all => {
+      const me = all.find(l => l.id === learnerId)
+      if (!live || !me) return
+      const active = getActiveLearner()
+      if (active?.id === me.id) setActiveLearner({ ...active, lesson_ids: me.lesson_ids ?? null, lesson_due: me.lesson_due ?? null })
+      setFresh({ ids: me.lesson_ids ?? null, due: me.lesson_due ?? null })
+    }).catch(() => { /* offline: the saved copy stands */ })
     // The wallet after the pull, so points earned by uploads it just sent are counted.
     pullLessonProgress(learnerId, chosenModules(null).flatMap(x => x.lessons.map(l => l.id)))
       .then(ok => { if (live && ok) redraw(n => n + 1); return getWallet(learnerId) })
@@ -88,6 +103,10 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }
               <div style={{ flex: 1 }}>
                 <strong style={cardTitle}>1. Learn</strong>
                 {done} of {m.lessons.length} topics done
+                {(() => {
+                  const next = m.lessons.filter(l => !lessonDone(learnerId, l.id) && due?.[l.id]).map(l => due![l.id]).sort()[0]
+                  return next ? <strong style={{ display: 'block', marginTop: 4 }}>Next due {showDay(next)}</strong> : null
+                })()}
               </div>
               <span aria-hidden style={{ display: 'flex', gap: 3, '--lp-u': '18px' } as CSSProperties}><Thing obj={firstObj} /><Thing obj={firstObj} /><Thing obj={firstObj} /></span>
               <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>

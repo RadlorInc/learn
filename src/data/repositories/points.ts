@@ -41,6 +41,16 @@ export async function getLessonRows(learnerId: string): Promise<LessonRow[] | nu
   } catch { return null }
 }
 
+/** The last `days` days of the points ledger, for the Performance screen. null = could not read. */
+export async function getRecentPoints(learnerId: string, days: number): Promise<{ lesson_id: string | null; reason: string; points: number; created_at: string }[] | null> {
+  try {
+    const since = new Date(Date.now() - days * 86_400_000).toISOString()
+    const { data, error } = await db().from('point_events').select('lesson_id, reason, points, created_at')
+      .eq('learner_id', learnerId).gte('created_at', since).order('created_at')
+    return error ? null : data
+  } catch { return null }
+}
+
 /** 'unavailable' = not migrated yet; null = could not read. */
 export async function getWallet(learnerId: string): Promise<Wallet | 'unavailable' | null> {
   try {

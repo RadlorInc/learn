@@ -107,6 +107,24 @@ export async function setLearnerLessons(learnerId: string, lessonIds: string[] |
   return data && data.length > 0 ? 'ok' : 'error'
 }
 
+/**
+ * Assign lessons: the child sees exactly `lessonIds` (null = every topic), each with its due date from `due`.
+ * Saved together so the list and its dates cannot disagree. Same owner-only rule and "not ready" answer as
+ * setLearnerLessons; `not_ready` here means the lesson_due column is not in the database yet.
+ */
+export async function setLearnerAssignments(learnerId: string, lessonIds: string[] | null, due: Record<string, string>): Promise<'ok' | 'not_ready' | 'error'> {
+  const { data, error } = await db()
+    .from('learners')
+    .update({ lesson_ids: lessonIds, lesson_due: lessonIds ? due : null } as never)
+    .eq('id', learnerId)
+    .select('id')
+  if (error) {
+    console.error('[setLearnerAssignments]', error.code, error.message)
+    return error.code === 'PGRST204' || /lesson_ids|lesson_due/.test(error.message) ? 'not_ready' : 'error'
+  }
+  return data && data.length > 0 ? 'ok' : 'error'
+}
+
 /** Move an existing learner into a grade (or clear it with null). */
 export async function setLearnerGrade(learnerId: string, gradeId: string | null): Promise<boolean> {
   const supabase = db()
