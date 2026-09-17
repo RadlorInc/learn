@@ -8,6 +8,13 @@ import { ModuleHome } from '@/features/lessons/ModuleHome'
 
 const noSubscribe = () => () => {}
 
+/**
+ * The account's role, remembered for this page load. Asking the server on every visit showed "← Switch" for a moment
+ * before it turned into "Sign out" for a child; now the corner stays empty until the role is known, and a second visit
+ * (back from a topic) is instant. Still re-asked each visit, so a different account signing in corrects it.
+ */
+let knownChild: boolean | undefined
+
 export default function ModulesPage() {
   // useSearchParams needs a Suspense boundary on a static page (next docs: use-search-params → Prerendering).
   return <Suspense fallback={null}><Modules /></Suspense>
@@ -17,11 +24,16 @@ function Modules() {
   const grade = Number(useSearchParams().get('grade')) || 3
   const router = useRouter()
   // A child signed in as themselves has no dashboard to switch back to — they get Sign out instead.
-  const [child, setChild] = useState(false)
-  useEffect(() => { getMyRole().then(r => setChild(r === 'learner')).catch(() => {}) }, [])
+  const [child, setChild] = useState(knownChild)
+  useEffect(() => {
+    getMyRole().then(r => r === 'learner').catch(() => false)   // cannot tell → the adult's button, as before
+      .then(c => { knownChild = c; setChild(c) })
+  }, [])
   // Client-only (progress lives in kv): null on the server, true once mounted.
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   if (!mounted) return null
   const learner = getActiveLearner()
-  return <ModuleHome key={grade} grade={grade} learnerId={learner?.id ?? null} lessonIds={learner?.lesson_ids} back={child ? { label: 'Sign out', onClick: async () => { await signOut(); router.replace('/auth') } } : { href: '/parent', label: '← Switch' }} />
+  return <ModuleHome key={grade} grade={grade} learnerId={learner?.id ?? null} lessonIds={learner?.lesson_ids} back={child === undefined ? undefined
+    : child ? { label: 'Sign out', onClick: async () => { knownChild = undefined; await signOut(); router.replace('/auth') } }
+    : { href: '/parent', label: '← Switch' }} />
 }
