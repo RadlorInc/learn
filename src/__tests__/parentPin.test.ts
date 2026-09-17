@@ -30,10 +30,10 @@ const rpc = async (uid: string, call: string) => (await as(uid, `select public.$
 
 describe('parent PIN', () => {
   it('the table is unreachable to a browser: no read, no write, for anon or a signed-in user', async () => {
-    expect((await as(A, `select count(*) from public.parent_pins`)).err).toMatch(/permission denied/)
-    expect((await as(A, `insert into public.parent_pins (account_id, salt, pin_hash) values ('${A}', 's', 'h')`)).err).toMatch(/permission denied/)
-    expect((await as(null, `select public.parent_pin_status()`, 'anon')).err).toMatch(/permission denied/)
-    expect((await as(null, `select public.verify_parent_pin('1234')`, 'anon')).err).toMatch(/permission denied/)
+    expect((await as(A, `select count(*) from public.parent_pins`)).err ?? 'ALLOWED').toMatch(/permission denied/)
+    expect((await as(A, `insert into public.parent_pins (account_id, salt, pin_hash) values ('${A}', 's', 'h')`)).err ?? 'ALLOWED').toMatch(/permission denied/)
+    expect((await as(null, `select public.parent_pin_status()`, 'anon')).err ?? 'ALLOWED').toMatch(/permission denied/)
+    expect((await as(null, `select public.verify_parent_pin('1234')`, 'anon')).err ?? 'ALLOWED').toMatch(/permission denied/)
     // Positive control: the same role CAN call the function, so the refusals above are about the table, not the harness.
     expect(await rpc(A, `parent_pin_status()`)).toEqual({ state: 'none' })
   })
