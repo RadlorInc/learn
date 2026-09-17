@@ -36,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
-        with: { version: latest }
+        with: { version: 2.117.0 }   # pinned: see ci.yml
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
 
       - name: Refuse to restore production onto itself

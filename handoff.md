@@ -309,7 +309,7 @@ One agent per module from the brief, two pilots first (`g3m4`, `g6m5`), ~6 at a 
 7. 🔴 **LIFTED from 🎨 2026-09-13 (evening):** finger-test the scratch pad on a real tablet (only a mouse has drawn on it).
 8. 🔴 **LIFTED — audio on by default?** The founder's answer arrived as the single word "the". Ask again.
 9. 🔴 **LIFTED — two probe rows in `diagnostic_leads`:** `select public.delete_lead_by_email('probe-lead-alive-20260909@example.invalid');` and the same for `probe-postfix-20260909@example.invalid`.
-10. ⏭️ **LIFTED:** pin the Supabase CLI in CI (`version: latest` made a deploy depend on a GitHub API rate limit — a red `rls-tests` there is NOT evidence about RLS) · /auth consent line 4.16:1 against a 4.5 floor, its link 3.04:1 · six Dependabot PRs · `backup.yml` does not call `scripts/assert-prod-ref.sh` · the cards screen has no "Don't add the 8s" sub-line (add to the scripts first if wanted).
+10. ⏭️ **LIFTED:** ~~pin the Supabase CLI in CI~~ ✅ pinned to 2.117.0 in all five `setup-cli` steps (2026-09-17, after `latest` hit a GitHub API rate limit and failed a real deploy) · /auth consent line 4.16:1 against a 4.5 floor, its link 3.04:1 · six Dependabot PRs · `backup.yml` does not call `scripts/assert-prod-ref.sh` · the cards screen has no "Don't add the 8s" sub-line (add to the scripts first if wanted).
 11. ⏭️ **LIFTED — the rollback rule:** moving `release` backwards deploys NOTHING (Vercel builds a commit, not a pointer); revert-and-push-forward works (~280s), and the sw VERSION goes FORWARD on a rollback. Commands in `docs/runbooks/launch-day.md`.
 12. ⏭️ Carried: the 🔢, 🧩 and 📚 blocks' ▶ OPEN.
 
