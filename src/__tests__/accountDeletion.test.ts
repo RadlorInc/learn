@@ -275,3 +275,43 @@ describe('deleting an account', () => {
     expect(await censusFor(db, TABLES, B, [LB])).toEqual(beforeB)
   })
 })
+
+/**
+ * Child logins (2026-09-17, migration 20260917100000). A child's own login is an auth account linked to their learner
+ * with access_role 'self'. Closing the parent's account must remove it — and must reach ONLY such accounts: another
+ * family's child login, an invited co-parent, and an adult who somehow holds a 'self' row all stay.
+ */
+describe('deleting an account removes its children\'s logins, and nothing else', () => {
+  const C1 = '0000c001-0000-4000-8000-000000000000'   // family A's child login
+  const C2 = '0000c002-0000-4000-8000-000000000000'   // family B's child login
+  const V  = '0000c003-0000-4000-8000-000000000000'   // an invited co-parent viewing family A's child
+  const D  = '0000c004-0000-4000-8000-000000000000'   // an adult with their own learner AND a stray 'self' row on A's child
+  const LD = '0000c005-0000-4000-8000-000000000000'
+  let db: PGlite
+  const users = async () => (await db.query<{ id: string }>(`select id from auth.users where id in ('${C1}','${C2}','${V}','${D}') order by id`)).rows.map(r => r.id)
+
+  beforeAll(async () => {
+    ({ db } = await loadSchema())
+    await seedFamily(db, A, [LA], 'a@example.com')
+    await seedFamily(db, B, [LB], 'b@example.com')
+    await db.exec(`
+      insert into auth.users (id, email, email_confirmed_at) values
+        ('${C1}', 'kid1@learner.adaptivelearn.invalid', now()), ('${C2}', 'kid2@learner.adaptivelearn.invalid', now()),
+        ('${V}', 'coparent@example.com', now()), ('${D}', 'other@example.com', now());
+      insert into public.learners (id, display_name, created_by, age_group) values ('${LD}', 'D kid', '${D}', '3-5');
+      insert into public.learner_access (learner_id, parent_id, access_role) values
+        ('${LA}', '${C1}', 'self'), ('${LB}', '${C2}', 'self'), ('${LA}', '${V}', 'viewer'), ('${LA}', '${D}', 'self');
+    `)
+  }, 120_000)
+
+  it('removes family A\'s child login (account, profile and access) and reports it, keeping the other three', async () => {
+    expect(await users()).toEqual([C1, C2, V, D])   // positive control: all four exist before
+    const { rows } = await callDelete(db, A, 'a@example.com', 'a@example.com')
+    expect((rows[0] as { counts: Record<string, number> }).counts.child_logins).toBe(1)
+    expect(await users()).toEqual([C2, V, D])
+    const left = async (sql: string) => Number((await db.query<{ n: number }>(`select count(*)::int as n from ${sql}`)).rows[0].n)
+    expect(await left(`public.profiles where id = '${C1}'`)).toBe(0)
+    expect(await left(`public.learner_access where parent_id = '${C1}'`)).toBe(0)
+    expect(await left(`public.learner_access where parent_id = '${C2}' and access_role = 'self'`)).toBe(1)
+  })
+})
