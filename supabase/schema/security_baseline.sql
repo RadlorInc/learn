@@ -58,6 +58,13 @@
 --   grade_chapters             rls=t  policies=3
 --   grades                     rls=t  policies=4
 --   learner_access             rls=t  policies=3   (SELECT/INSERT/DELETE — DELETE added V11)
+--                                                  ⚠️ 2026-09-17 (20260917072319): access_role admits 'self' — a
+--                                                  child's own login, written ONLY by /api/child-login with the
+--                                                  service role. No policy changed; see that migration's header.
+--   parent_pins                rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-17, 20260917160000),
+--                                                  same mechanism as admin_users: all privileges revoked from
+--                                                  public/anon/authenticated; reached only by the four
+--                                                  parent-PIN DEFINER functions below, each keyed on auth.uid().
 --   learner_events             rls=t  policies=2
 --   learner_invites            rls=t  policies=3   (sender INSERT now requires learner ownership — V1)
 --   learner_progress           rls=t  policies=1
@@ -132,6 +139,12 @@
 --     sync_session(...)                        volatile search_path=public   [learner_access guard; xp/coins server-derived — V2]
 --     sync_diagnostic(...)                     volatile search_path=public   [learner_access guard; payload bounds — V5]
 --     sync_recheck(...)                        volatile search_path=public   [learner_access guard]
+--     parent_pin_status()                      volatile search_path=public   [auth.uid() row only; 2026-09-17]
+--     verify_parent_pin(text)                  volatile search_path=public   [auth.uid() row only; 5 tries → escalating lock]
+--     set_parent_pin(text,text)                volatile search_path=public   [auth.uid() row only; change needs current PIN]
+--     request_parent_pin_reset()               volatile search_path=public   [auth.uid() row only; lapses after 24h]
+--   INVOKER, not granted to any client role:
+--     parent_pin_hash(text,text)               immutable search_path=public  [revoked from public/anon/authenticated]
 --   INVOKER, authenticated-callable (RLS is the gate):
 --     get_parent_dashboard()                   stable   search_path=public
 --     get_insights_rollup(timestamptz)         stable   search_path=public

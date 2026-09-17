@@ -26,6 +26,7 @@ import { planLine, swapCopy } from '@/core/planCopy'
 import { useState } from 'react'
 import { LessonLibrary, type LibraryLearner } from '@/features/lessons/LessonLibrary'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
+import { ParentPinGate } from '@/shared/ui/ParentPinGate'
 
 function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
@@ -75,6 +76,7 @@ function Surfaces() {
       {p === 'empty' && <div data-t="empty" className="adult-shell"><EmptyDashboard onAdd={() => {}} /></div>}
       {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
       {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
+      {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'library' && <div data-t="library" className="adult-shell" style={{ width: '100%' }}><LibraryPreview /></div>}
 
       {/* The `.card-grid` used by the grade list, the invite lists and class triage. ⚠️ SAME NARROW
