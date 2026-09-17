@@ -27,7 +27,10 @@ const VOICE = (grade: number) => (grade <= 5 ? 'teddy' : 'stevie')
 
 type Row = { key: string; text: string; voice: string; grade: number; kind: 'beat' | 'bigIdea'; where: string }
 
-const rows = new Map<string, Row>()   // by key — identical text anywhere is ONE clip
+// By voice + key: identical text is ONE clip PER VOICE. ⚠️ Keyed by text alone (until 2026-09-17), a line said in both a
+// Grade 3–5 and a Grade 6–8 lesson went only to whichever voice met it first — 67 Stevie lines were rendered in Teddy
+// only, and those Grade 6–8 screens could never find their clip (src/__tests__/lessonVoiceClips.test.ts found it).
+const rows = new Map<string, Row>()
 let occurrences = 0
 
 for (const m of MODULES) {
@@ -49,9 +52,9 @@ function add(r: Omit<Row, 'key'>) {
   const text = normalizeSpoken(r.text)
   if (!text) return
   const key = clipKey(text)
-  const had = rows.get(key)
+  const had = rows.get(`${r.voice}:${key}`)
   if (had) { if (!had.where.includes(r.where)) had.where += ` + ${r.where}` ; return }
-  rows.set(key, { ...r, text, key })
+  rows.set(`${r.voice}:${key}`, { ...r, text, key })
 }
 
 const all = [...rows.values()]

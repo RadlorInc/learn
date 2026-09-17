@@ -9,6 +9,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
+import { setSceneVoice } from '@/infra/voiceClipPlayer'
+import { lessonVoice } from '@/infra/storage/voicePref'
 import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf,
   type FlowState, type Lesson, type Screen,
@@ -36,6 +38,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
   const [replay, setReplay] = useState(0)
   const [audio, setAudio] = useState(false)
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
+  // Her lines play from recorded clips in this grade's voice (lines without a clip still fall back to browser speech).
+  useEffect(() => {
+    setSceneVoice(lessonVoice(Number(lesson.id.match(/^g(\d)/)?.[1] ?? 3)))
+    return () => setSceneVoice(null)
+  }, [lesson.id])
   const ladder = ladderOf(lesson.id)
   const [run, setRun] = useState<Run | null>(null)
   const r = useRef(rng(freshSeed())).current

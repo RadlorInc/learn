@@ -1049,7 +1049,7 @@
     "chars": 42,
     "kind": "beat",
     "sources": [
-      "g3m2-t1 s7 b1 + g7m5-t2 s7 b1"
+      "g3m2-t1 s7 b1"
     ]
   },
   {
@@ -1364,7 +1364,7 @@
     "chars": 23,
     "kind": "beat",
     "sources": [
-      "g3m2-t3 s7 b1 + g3m3-t2 s7 b1 + g3m5-t3 s7 b1 + g4m3-t2 s7 b1 + g4m4-t2 s7 b1 + g5m2-t6 s7 b1 + g5m4-t5 s7 b1 + g5m6-t6 s7 b1 + g6m3-t5 s7 b1 + g6m4-t5 s2 b1"
+      "g3m2-t3 s7 b1 + g3m3-t2 s7 b1 + g3m5-t3 s7 b1 + g4m3-t2 s7 b1 + g4m4-t2 s7 b1 + g5m2-t6 s7 b1 + g5m4-t5 s7 b1 + g5m6-t6 s7 b1"
     ]
   },
   {
@@ -1526,7 +1526,7 @@
     "chars": 17,
     "kind": "beat",
     "sources": [
-      "g3m2-t4 s7 b1 + g3m3-t6 s7 b1 + g3m4-t4 s7 b1 + g4m3-t5 s7 b1 + g4m4-t3 s7 b1 + g4m6-t3 s7 b1 + g5m2-t3 s7 b1 + g5m4-t2 s7 b1 + g5m5-t5 s7 b1 + g5m6-t5 s7 b1 + g6m1-t4 s7 b1 + g6m2-t1 s7 b1 + g6m2-t4 s7 b1 + g6m3-t6 s7 b1 + g6m7-t2 s7 b1 + g7m1-t1 s7 b1 + g7m2-t2 s7 b1 + g8m3-t4 s7 b1"
+      "g3m2-t4 s7 b1 + g3m3-t6 s7 b1 + g3m4-t4 s7 b1 + g4m3-t5 s7 b1 + g4m4-t3 s7 b1 + g4m6-t3 s7 b1 + g5m2-t3 s7 b1 + g5m4-t2 s7 b1 + g5m5-t5 s7 b1 + g5m6-t5 s7 b1"
     ]
   },
   {
@@ -1679,7 +1679,7 @@
     "chars": 30,
     "kind": "beat",
     "sources": [
-      "g3m2-t5 s7 b1 + g3m3-t8 s7 b1 + g4m4-t1 s7 b1 + g5m3-t1 s7 b1 + g5m4-t1 s7 b1 + g6m2-t5 s7 b1 + g6m4-t1 s7 b1 + g6m7-t1 s7 b1 + g7m2-t1 s7 b1 + g8m2-t8 s7 b1 + g8m5-t3 s7 b1"
+      "g3m2-t5 s7 b1 + g3m3-t8 s7 b1 + g4m4-t1 s7 b1 + g5m3-t1 s7 b1 + g5m4-t1 s7 b1"
     ]
   },
   {
@@ -1832,7 +1832,7 @@
     "chars": 27,
     "kind": "beat",
     "sources": [
-      "g3m2-t6 s7 b1 + g5m2-t7 s7 b1 + g7m2-t4 s7 b1"
+      "g3m2-t6 s7 b1 + g5m2-t7 s7 b1"
     ]
   },
   {
@@ -1985,7 +1985,7 @@
     "chars": 36,
     "kind": "beat",
     "sources": [
-      "g3m2-t7 s7 b1 + g3m6-t2 s7 b1 + g4m3-t6 s7 b1 + g5m1-t5 s7 b1 + g5m4-t9 s7 b1 + g5m6-t2 s7 b1 + g6m3-t2 s7 b1 + g6m4-t4 s7 b1 + g7m5-t1 s7 b1 + g7m5-t3 s7 b1 + g7m5-t4 s7 b1 + g7m5-t5 s7 b1 + g7m5-t6 s7 b1 + g8m2-t1 s7 b1 + g8m3-t1 s7 b1 + g8m6-t2 s7 b1"
+      "g3m2-t7 s7 b1 + g3m6-t2 s7 b1 + g4m3-t6 s7 b1 + g5m1-t5 s7 b1 + g5m4-t9 s7 b1 + g5m6-t2 s7 b1"
     ]
   },
   {
@@ -2300,7 +2300,7 @@
     "chars": 20,
     "kind": "beat",
     "sources": [
-      "g3m2-t9 s7 b1 + g8m3-t6 s7 b1"
+      "g3m2-t9 s7 b1"
     ]
   },
   {
@@ -2444,7 +2444,7 @@
     "chars": 40,
     "kind": "beat",
     "sources": [
-      "g3m3-t1 s7 b1 + g3m6-t1 s7 b1 + g4m3-t1 s7 b1 + g4m6-t1 s7 b1 + g5m5-t1 s7 b1 + g6m3-t1 s7 b1 + g8m4-t1 s7 b1 + g8m6-t1 s7 b1"
+      "g3m3-t1 s7 b1 + g3m6-t1 s7 b1 + g4m3-t1 s7 b1 + g4m6-t1 s7 b1 + g5m5-t1 s7 b1"
     ]
   },
   {
@@ -2507,7 +2507,7 @@
     "chars": 17,
     "kind": "beat",
     "sources": [
-      "g3m3-t2 s4 b2 + g6m2-t1 s5 b3"
+      "g3m3-t2 s4 b2"
     ]
   },
   {
@@ -2687,7 +2687,7 @@
     "chars": 32,
     "kind": "beat",
     "sources": [
-      "g3m3-t3 s7 b1 + g3m4-t2 s7 b1 + g3m6-t3 s7 b1 + g4m5-t2 s7 b1 + g5m6-t1 s7 b1 + g6m1-t1 s7 b1 + g8m2-t2 s7 b1"
+      "g3m3-t3 s7 b1 + g3m4-t2 s7 b1 + g3m6-t3 s7 b1 + g4m5-t2 s7 b1 + g5m6-t1 s7 b1"
     ]
   },
   {
@@ -2813,7 +2813,7 @@
     "chars": 26,
     "kind": "beat",
     "sources": [
-      "g3m3-t4 s7 b1 + g3m4-t3 s7 b1 + g4m5-t3 s7 b1 + g7m1-t6 s7 b1 + g8m4-t2 s7 b1"
+      "g3m3-t4 s7 b1 + g3m4-t3 s7 b1 + g4m5-t3 s7 b1"
     ]
   },
   {
@@ -2939,7 +2939,7 @@
     "chars": 22,
     "kind": "beat",
     "sources": [
-      "g3m3-t5 s7 b1 + g4m4-t7 s7 b1 + g5m1-t3 s7 b1 + g7m1-t3 s7 b1 + g8m3-t3 s7 b1"
+      "g3m3-t5 s7 b1 + g4m4-t7 s7 b1 + g5m1-t3 s7 b1"
     ]
   },
   {
@@ -4208,7 +4208,7 @@
     "chars": 45,
     "kind": "beat",
     "sources": [
-      "g3m5-t1 s7 b1 + g4m2-t1 s7 b1 + g6m6-t1 s7 b1 + g8m1-t1 s7 b1 + g8m5-t1 s7 b1"
+      "g3m5-t1 s7 b1 + g4m2-t1 s7 b1"
     ]
   },
   {
@@ -4802,7 +4802,7 @@
     "chars": 33,
     "kind": "beat",
     "sources": [
-      "g3m5-t5 s7 b1 + g4m2-t6 s7 b1 + g5m1-t13 s7 b1 + g5m4-t4 s7 b1 + g8m3-t2 s7 b1"
+      "g3m5-t5 s7 b1 + g4m2-t6 s7 b1 + g5m1-t13 s7 b1 + g5m4-t4 s7 b1"
     ]
   },
   {
@@ -5108,7 +5108,7 @@
     "chars": 17,
     "kind": "beat",
     "sources": [
-      "g3m5-t7 s7 b1 + g5m1-t20 s7 b1 + g5m2-t4 s7 b1 + g5m6-t4 s7 b1 + g6m7-t8 s7 b1"
+      "g3m5-t7 s7 b1 + g5m1-t20 s7 b1 + g5m2-t4 s7 b1 + g5m6-t4 s7 b1"
     ]
   },
   {
@@ -5855,7 +5855,7 @@
     "chars": 23,
     "kind": "beat",
     "sources": [
-      "g3m6-t4 s7 b1 + g4m2-t4 s7 b1 + g7m1-t7 s7 b1"
+      "g3m6-t4 s7 b1 + g4m2-t4 s7 b1"
     ]
   },
   {
@@ -6161,7 +6161,7 @@
     "chars": 26,
     "kind": "beat",
     "sources": [
-      "g3m6-t6 s7 b1 + g4m2-t5 s7 b1 + g4m4-t9 s7 b1 + g5m1-t8 s7 b1 + g6m1-t3 s7 b1 + g6m7-t6 s7 b1 + g7m1-t8 s7 b1"
+      "g3m6-t6 s7 b1 + g4m2-t5 s7 b1 + g4m4-t9 s7 b1 + g5m1-t8 s7 b1"
     ]
   },
   {
@@ -6467,7 +6467,7 @@
     "chars": 29,
     "kind": "beat",
     "sources": [
-      "g4m1-t1 s7 b1 + g7m3-t3 s7 b1"
+      "g4m1-t1 s7 b1"
     ]
   },
   {
@@ -6638,7 +6638,7 @@
     "chars": 13,
     "kind": "beat",
     "sources": [
-      "g4m1-t3 s2 b1 + g5m5-t4 s2 b1 + g7m3-t5 s2 b1"
+      "g4m1-t3 s2 b1 + g5m5-t4 s2 b1"
     ]
   },
   {
@@ -7340,7 +7340,7 @@
     "chars": 15,
     "kind": "beat",
     "sources": [
-      "g4m1-t7 s7 b1 + g4m2-t8 s7 b1 + g6m2-t7 s7 b1 + g6m3-t3 s7 b1 + g8m1-t7 s7 b1"
+      "g4m1-t7 s7 b1 + g4m2-t8 s7 b1"
     ]
   },
   {
@@ -9482,7 +9482,7 @@
     "chars": 19,
     "kind": "beat",
     "sources": [
-      "g4m3-t6 s7 b2 + g6m3-t5 s7 b2"
+      "g4m3-t6 s7 b2"
     ]
   },
   {
@@ -10931,7 +10931,7 @@
     "chars": 26,
     "kind": "beat",
     "sources": [
-      "g4m4-t8 s7 b1 + g5m1-t12 s7 b1 + g5m2-t2 s7 b1 + g5m3-t7 s7 b1 + g8m1-t5 s7 b1"
+      "g4m4-t8 s7 b1 + g5m1-t12 s7 b1 + g5m2-t2 s7 b1 + g5m3-t7 s7 b1"
     ]
   },
   {
@@ -11957,7 +11957,7 @@
     "chars": 17,
     "kind": "beat",
     "sources": [
-      "g4m5-t6 s7 b1 + g7m2-t6 s7 b1"
+      "g4m5-t6 s7 b1"
     ]
   },
   {
@@ -12110,7 +12110,7 @@
     "chars": 25,
     "kind": "beat",
     "sources": [
-      "g4m5-t7 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m3-t4 s7 b1 + g6m1-t8 s7 b1 + g6m2-t3 s7 b1 + g7m2-t3 s7 b1 + g7m2-t7 s7 b1 + g8m2-t5 s7 b1"
+      "g4m5-t7 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m3-t4 s7 b1"
     ]
   },
   {
@@ -12560,7 +12560,7 @@
     "chars": 29,
     "kind": "beat",
     "sources": [
-      "g4m6-t2 s7 b1 + g5m5-t3 s7 b1 + g8m1-t2 s7 b1 + g8m2-t7 s7 b1"
+      "g4m6-t2 s7 b1 + g5m5-t3 s7 b1"
     ]
   },
   {
@@ -13028,7 +13028,7 @@
     "chars": 19,
     "kind": "beat",
     "sources": [
-      "g4m6-t5 s7 b1 + g8m2-t3 s7 b1 + g8m2-t6 s7 b1 + g8m2-t9 s7 b1"
+      "g4m6-t5 s7 b1"
     ]
   },
   {
@@ -17924,7 +17924,7 @@
     "chars": 23,
     "kind": "beat",
     "sources": [
-      "g5m3-t6 s5 b1 + g8m6-t2 s5 b1"
+      "g5m3-t6 s5 b1"
     ]
   },
   {
