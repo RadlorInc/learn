@@ -10,7 +10,7 @@ import {
 } from '@/data/repositories'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
-import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
+import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 
 /* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
 const P = {
@@ -37,7 +37,6 @@ function GradesInner() {
   // Students this teacher added, and their logins (learnerId → username; null = lookup failed).
   const [students,  setStudents]  = useState<LearnerWithRole[]>([])
   const [logins,    setLogins]    = useState<Record<string, string> | null>(null)
-  const [loginFor,  setLoginFor]  = useState<LearnerWithRole | null>(null)
 
   async function load() {
     setLoading(true)
@@ -125,34 +124,12 @@ function GradesInner() {
           </div>
         )}
 
-        {students.length > 0 && (
-          <section style={{ marginTop:24 }}>
-            <h2 style={{ fontSize:16, fontWeight:800, color:P.ink, margin:'0 0 10px' }}>Student logins</h2>
-            <p style={{ fontSize:14, color:P.ink2, margin:'0 0 12px', lineHeight:1.4 }}>Give a student a username and password so they sign in on any device and go straight to their lessons.</p>
-            <div className="card-grid">
-              {students.map(l => (
-                <div key={l.id} style={{ background:P.card, border:`1.5px solid ${P.edge}`, borderRadius:14, padding:'12px 14px', display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }}>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ fontWeight:800, color:P.ink }}>{l.display_name}</div>
-                    <div style={{ fontSize:13, color:P.ink2 }}>{logins === null ? '—' : logins[l.id] ? `Username: ${logins[l.id]}` : 'No login yet'}</div>
-                  </div>
-                  <button onClick={() => setLoginFor(l)} style={{ flexShrink:0, background:'#F26B2C', color:'#fff', border:'none', borderRadius:10, padding:'9px 12px', minHeight:44, fontSize:13, fontWeight:800, cursor:'pointer' }}>
-                    🔑 {logins?.[l.id] ? 'Change' : 'Set login'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        <div style={{ marginTop:24 }}>
+          <ChildLoginsList title="Student logins" blurb="Give a student a username and password so they sign in on any device and go straight to their lessons."
+            learners={students.map(l => ({ id: l.id, name: l.display_name }))} logins={logins} onLogins={setLogins} />
+        </div>
       </div>
 
-      {loginFor && (
-        <ChildLoginSheet
-          learnerId={loginFor.id} name={loginFor.display_name} current={logins?.[loginFor.id] ?? null}
-          onClose={() => setLoginFor(null)}
-          onChanged={u => setLogins(prev => { const n = { ...(prev ?? {}) }; if (u) n[loginFor.id] = u; else delete n[loginFor.id]; return n })}
-        />
-      )}
 
       {editing && (
         <GradeModal

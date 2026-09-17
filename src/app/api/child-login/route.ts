@@ -14,7 +14,7 @@ import { CHILD_MIN_PASSWORD, childEmail, normalizeUsername, usernameFromEmail } 
  * The service role is used only for what a client cannot do at all: create or change an auth user, and write the
  * child's `learner_access` row and `profiles.role`.
  *
- * WHAT THE CHILD CAN THEN DO: a `learner_access` row with `access_role = 'self'` (migration 20260917120000). Every
+ * WHAT THE CHILD CAN THEN DO: a `learner_access` row with `access_role = 'self'` (migration 20260917072319). Every
  * policy guarding a child's data reads `learner_access.parent_id = auth.uid()`, so the child reaches their OWN record
  * and nothing else. Updating or deleting the learner is `created_by`-only, so a child cannot change their topics,
  * rename themselves, or delete anything.

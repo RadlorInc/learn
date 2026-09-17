@@ -1,5 +1,10 @@
 -- Child logins: a child signs in with a username and password set by the adult who created them.
 --
+-- ✅ APPLIED TO PRODUCTION 2026-09-17 by hand (ledger version 20260917072319; this file renamed to match).
+-- Measured after: the CHECK reads owner/viewer/self, public policy count unchanged at 35, 0 'self' rows.
+-- A creator cannot use this to grant another account: the insert policy requires parent_id = auth.uid(),
+-- and UNIQUE (learner_id, parent_id) refuses a second row for a child they already own.
+--
 -- ⚠️⚠️ DEPLOY ORDER: EXPAND-ONLY, APPLY BEFORE THE CLIENT. The only change is widening a CHECK to admit a
 -- new value. Nothing running today writes 'self', so this is safe to apply first — and it MUST be, because
 -- `main` auto-deploys and `/api/child-login` inserts 'self' rows: with the client live and this not applied,

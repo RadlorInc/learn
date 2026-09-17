@@ -25,7 +25,7 @@ import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner
 import { CHAPTER_PARENT_LABELS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
-import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
+import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules } from '@/features/lessons/modules'
 import { LessonLibrary } from '@/features/lessons/LessonLibrary'
 import { lessonDone } from '@/infra/storage/lessonProgress'
@@ -437,6 +437,10 @@ export default function ParentDashboard() {
                 <Link href="/parent/invites" style={ghost}>✉️ Share access</Link>
               </div>
             </div>
+
+            <ChildLoginsList title="Child logins" blurb="Set a username and password for each child, so they can sign in on any device and go straight to their lessons."
+              learners={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
+              logins={childLogins} onLogins={setChildLogins} />
           </>
         )}
 

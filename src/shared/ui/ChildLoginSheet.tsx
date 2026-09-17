@@ -89,3 +89,40 @@ const label: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6,
 const field: CSSProperties = { padding: '12px 14px', fontSize: 15, minHeight: 44, border: '2px solid var(--card-border)', borderRadius: 12, boxSizing: 'border-box', color: 'var(--ink)', background: '#fff', fontWeight: 500 }
 const btn: CSSProperties = { background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 16px', minHeight: 44, fontSize: 15, fontWeight: 800, cursor: 'pointer' }
 const ghost: CSSProperties = { ...btn, background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--card-border)' }
+
+/**
+ * Every child this adult created, each with its login status and a button to set or change it — so a parent or teacher
+ * can give all of them passwords in one place. `logins` null = the lookup failed; the buttons still work.
+ */
+export function ChildLoginsList({ learners, logins, onLogins, title, blurb }: {
+  learners: { id: string; name: string }[]
+  logins: Record<string, string> | null
+  onLogins: (next: Record<string, string>) => void
+  title: string; blurb: string
+}) {
+  const [open, setOpen] = useState<{ id: string; name: string } | null>(null)
+  if (learners.length === 0) return null
+  return (
+    <section style={{ background: 'var(--paper-soft)', border: '1.5px solid var(--card-border)', borderRadius: 16, padding: 16, margin: '0 0 24px' }}>
+      <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 800, color: 'var(--ink)' }}>{title}</h3>
+      <p style={{ margin: '0 0 12px', fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.4 }}>{blurb}</p>
+      <div className="card-grid">
+        {learners.map(l => (
+          <div key={l.id} style={{ background: '#fff', border: '1.5px solid var(--card-border)', borderRadius: 14, padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontWeight: 800, color: 'var(--ink)' }}>{l.name}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-soft)' }}>{logins === null ? 'Login status unknown' : logins[l.id] ? `Username: ${logins[l.id]}` : 'No login yet'}</div>
+            </div>
+            <button type="button" onClick={() => setOpen(l)} style={{ ...btn, flexShrink: 0, fontSize: 13, padding: '9px 12px' }}>
+              🔑 {logins?.[l.id] ? 'Change' : 'Set password'}
+            </button>
+          </div>
+        ))}
+      </div>
+      {open && (
+        <ChildLoginSheet learnerId={open.id} name={open.name} current={logins?.[open.id] ?? null} onClose={() => setOpen(null)}
+          onChanged={u => { const n = { ...(logins ?? {}) }; if (u) n[open.id] = u; else delete n[open.id]; onLogins(n) }} />
+      )}
+    </section>
+  )
+}

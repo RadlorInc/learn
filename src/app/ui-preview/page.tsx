@@ -25,7 +25,7 @@ import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
 import { planLine, swapCopy } from '@/core/planCopy'
 import { useState } from 'react'
 import { LessonLibrary, type LibraryLearner } from '@/features/lessons/LessonLibrary'
-import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
+import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 
 function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
@@ -74,7 +74,7 @@ function Surfaces() {
       {p === 'role'  && <div data-t="role" style={{ width: '100%' }}><RolePicker name="Sarah" onPick={() => {}} /></div>}
       {p === 'empty' && <div data-t="empty" className="adult-shell"><EmptyDashboard onAdd={() => {}} /></div>}
       {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
-      {p === 'childlogin' && <ChildLoginSheet learnerId="x" name="Aarav" current={null} onClose={() => {}} onChanged={() => {}} />}
+      {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
       {p === 'library' && <div data-t="library" className="adult-shell" style={{ width: '100%' }}><LibraryPreview /></div>}
 
       {/* The `.card-grid` used by the grade list, the invite lists and class triage. ⚠️ SAME NARROW
