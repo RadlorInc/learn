@@ -5,8 +5,10 @@
  * Laid out like the founder's SampleUI template. A module that is not built yet says "Coming soon"; nothing is locked.
  */
 import Link from 'next/link'
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { lessonDone } from '@/infra/storage/lessonProgress'
+import { pullLessonProgress } from '@/infra/storage/lessonSync'
+import { getWallet } from '@/data/repositories/points'
 import { Thing, INK, TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
 import { chosenModules, mixedPractice } from './modules'
@@ -22,6 +24,18 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }
   const GRADES = [...new Set(mods.map(x => x.grade))]
   const modulesOf = (g: number) => mods.filter(x => x.grade === g)
   const firstOf = (g: number) => { const ms = modulesOf(g); return (ms.find(x => x.lessons.length > 0) ?? ms[0]).id }
+  // Progress follows the account: bring what another device did onto this one, then redraw. And the child's points.
+  const [, redraw] = useState(0)
+  const [points, setPoints] = useState<number | null>(null)
+  useEffect(() => {
+    if (!learnerId) return
+    let live = true
+    // The wallet after the pull, so points earned by uploads it just sent are counted.
+    pullLessonProgress(learnerId, chosenModules(null).flatMap(x => x.lessons.map(l => l.id)))
+      .then(ok => { if (live && ok) redraw(n => n + 1); return getWallet(learnerId) })
+      .then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
+    return () => { live = false }
+  }, [learnerId])
   const [picked, setPicked] = useState(() => firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]))
   const m = mods.find(x => x.id === picked) ?? mods[0]
   const grade = m.grade, ready = m.lessons.length > 0
@@ -41,7 +55,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds }
           {back && 'href' in back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link>
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Grade {grade}</span>
-          <span />
+          {points === null ? <span /> : <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
         </div>
 
         <div role="tablist" aria-label="Grades" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: 'clamp(14px, 3vw, 24px) clamp(14px, 3vw, 24px) 0' }}>

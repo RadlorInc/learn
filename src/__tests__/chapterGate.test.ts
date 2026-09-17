@@ -179,7 +179,9 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
   it('⚠️ THE DIAGNOSTIC IS NEVER GATED — counted, not eyeballed', () => {
     // It is how a parent decides to buy. Counting the call sites is the check: asserting the
     // diagnostic "does not import it" passes just as happily when a third route starts to.
-    const callers = ['src/app/game/page.tsx', 'src/app/parent/page.tsx']
+    // The parent dashboard left this list on 2026-09-17: the founder removed the old chapter history from it (and
+    // with it the per-chapter lock), and the new lessons have no paywall.
+    const callers = ['src/app/game/page.tsx']
     const all = [
       'src/app/game/page.tsx', 'src/app/parent/page.tsx', 'src/app/diagnostic/page.tsx',
       'src/app/demo/page.tsx', 'src/app/teen-preview/page.tsx', 'src/app/menu/page.tsx',
@@ -216,12 +218,11 @@ describe('the PARENT side is the only side with a price', () => {
     }
   })
 
-  it('routes a locked chapter to it from the parent dashboard only', () => {
+  it('the parent dashboard still links to it', () => {
+    // It used to route a locked CHAPTER there (`chapterLocks[ch] === false`). The chapter list went with the old
+    // chapter history on 2026-09-17; the link to the plan stays, on the parent side only.
     const parent = decomment(read('src/app/parent/page.tsx'))
     expect(parent).toMatch(/\/parent\/plan/)
-    // ⚠️ `false` only. `null` means the lookup failed, and a failed lookup must not become a lock —
-    // the same fail-open rule the child's gate has.
-    expect(parent).toMatch(/chapterLocks\[ch\] === false/)
   })
 })
 

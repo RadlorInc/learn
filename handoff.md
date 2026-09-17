@@ -10,6 +10,7 @@
 > 🏠 **2026-09-14: `/parent` is the MathPath home** (sidebar menus per role, "Coming soon" placeholders, `RoleGate` on the teacher/parent-only pages) and **every Grade 5 topic has a drawn backdrop.** This folder is on `main`; the classroom work is parked on `classroom-parked`. Story in the 🧩 block below.
 > 🔢 **2026-09-15: Grade 5 · Module 1 is 20 lessons**, re-split from the textbook contents page the founder photographed (lesson and part names only; the content is ours). Wide tables now zoom to fit a phone in every module. **LIVE** (PR #109, sw v189). The founder has not read the 20 lessons. Story in docs/handoff-archive.md (🔢).
 > 🪜 **2026-09-17: practice is ADAPTIVE in all 36 modules — each level is a different KIND of question, every ladder agreed with a blind solver, and review brings weak topics back.** Branch `adaptive-practice`, uncommitted. No human has read a ladder. Story in the 🪜 block below.
+> 🎮 **2026-09-17 (evening): points buy game time (parent-limited), lesson progress syncs to the account, old XP / chapter history deleted from production.** See the 🎮 block. The game file is still to come.
 > 🔐 **2026-09-17: children sign in with a username + password set by their parent or teacher; the parent dashboard asks a PIN every time; closing an account removes the children's logins.** LIVE (PRs #115–#118, sw **v197**). CI's Supabase CLI pinned (PR #119). **108 old Vercel deployments deleted** (storage was 60 GB / 10 GB). ⚠️ `.env.local` now points at PRODUCTION. Story in the 🔐 block below.
 > 🧑‍🏫 **2026-09-16: every lesson is a TEACHER — she says a line, then writes or draws it on the board (`Screen.beats`).** **Production has it on 2 sample topics only; all 282 are converted on branch `lesson-teacher-voice`, pushed, NOT merged** (unread wording, sw not bumped). New lesson work follows the beats section of AUTHORING.md — the gate refuses a teaching screen without beats. Story in the 🧑‍🏫 block below.
 
@@ -197,6 +198,18 @@
 > ⚠️ **AT 2026-09-16 (🧑‍🏫 block added): 🎨 2026-09-13 (evening) WENT OUT, its live items lifted into 🧑‍🏫's ▶ OPEN items 7–11.** The next block out is 📚 2026-09-14 — lift its ▶ OPEN (parents' topic-save write never proven, the ~1.2 MB eager bundle, per-device progress, the 🧹 items it carries) first.
 > ⚠️ **AT 2026-09-17 (🪜 block added): 📚 2026-09-14 WENT OUT, its ▶ OPEN lifted into 🪜's item 6.** The next block out is 🧩 2026-09-14/15.)_
 > ⚠️ **AT 2026-09-17 (🔐 block added): 🧩 2026-09-14/15 WENT OUT, its ▶ OPEN lifted into 🔐's item 9. Then 🔢 2026-09-15 WENT OUT (file at 60.2 KiB), its ▶ OPEN lifted into 🔐's item 10.** The next block out is 🧑‍🏫 2026-09-16 — lift its ▶ OPEN (founder read of the wording, pictures showing their own answer, silent-mode pacing, the e2e port, the tablet scratch pad, audio-on-by-default, the two probe lead rows) first.
+
+> 🎮 **2026-09-17 (evening) — POINTS BUY GAME TIME, LESSON PROGRESS FOLLOWS THE ACCOUNT, AND THE OLD XP / CHAPTER HISTORY IS GONE.** Rules and file map: **[docs/new-flow/points.md](docs/new-flow/points.md)**. Branch `dashboard-topics-mastered`, sw **v198**.
+
+- **Founder's calls:** XP off the dashboard → "Topics mastered"; the currency is **points** (2 first try / 1 otherwise / +3 level up / +15 mastered once / +10 lesson once / +10 module practice), **no daily earning cap**, 8 points = 1 game minute, parent sets on/off + minutes per day (default 20); everything synced to the account; old XP and chapter history deleted from the database.
+- **Applied to PRODUCTION by hand:** `20260917112109_lesson_progress_and_points` (3 tables, 5 DEFINER functions; md5(prosrc) = file; anon → 42501 on all, measured from outside) and `20260917112252_delete_legacy_xp_and_chapter_history` (sessions 24→0, learner_progress 20→0, learner_state 1→0, learner_stats zeroed 6→0; learners 23 / diagnostic 9 / events 364 unchanged). ⚠️ The delete is irreversible.
+- **Code:** `lessonSync.ts` (queue + pull), `/play` (wallet + clock), dashboard 🎮 Game time + Topics cards, `/profile` and `VoicePicker` deleted, export + Terms §6 + security baseline + deletion census extended (their gates went red first). Tests `lessonPoints.test.ts` (real schema, as parent / child 'self' / other family) and `lessonSync.test.ts`, each watched red on planted breaks; the sync test caught a real bug (an empty queue left the flush promise stuck, so nothing ever uploaded again).
+
+## ▶ OPEN
+1. 🔴 **The game itself is not in** — founder is sending the files; it mounts where `/play` says "Your game goes here".
+2. 🔴 **Never driven signed in:** a child earning points, the parent changing game settings, a second device pulling progress. `/play` was driven only against stubbed responses.
+3. ⏭️ Points are client-reported answers scored server-side — someone calling the RPC by hand can claim answers; spending is bounded by the parent's minutes. The game clock is the device's.
+4. ⏭️ Terms §6 gained two bullets (points, lesson progress) — the document is still a draft awaiting the attorney.
 
 > 🔐 **2026-09-17 (later) — CHILDREN SIGN IN AS THEMSELVES, THE PARENT DASHBOARD IS BEHIND A PIN, AND CLOSING AN ACCOUNT TAKES THE CHILDREN'S LOGINS WITH IT. PLUS ONE ADD BUTTON, A SEARCHABLE LESSON LIBRARY, AND THE VOICE QUEUE AT ZERO.** Every piece below was measured LIVE on 2026-09-17; re-measure with `curl -s https://adaptivelearn.radlor.com/sw.js | head -1`.
 

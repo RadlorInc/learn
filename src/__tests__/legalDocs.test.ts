@@ -270,6 +270,9 @@ describe('the terms still agree with the schema they were written against', () =
       diagnostic_rechecks: 'placement checks',
       error_events:        '**Error reports.**',
       subscription_seats:  'how many seats you have paid for',
+      lesson_progress:     'which lesson topics were finished',
+      point_events:        'each time points were earned',
+      game_settings:       'the game-time settings you choose',
       // Adult-to-adult authorisation rather than data about the child — §5, not §6.
       learner_access:      'You may invite another parent or guardian',
       learner_invites:     'You may invite another parent or guardian',

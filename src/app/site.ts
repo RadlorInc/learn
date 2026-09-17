@@ -61,6 +61,6 @@ export const PUBLIC_ROUTES = ['/', '/diagnostic', '/help', '/legal/privacy', '/l
 /** Signed-in surfaces, kept out of results. `/api/` is here because an endpoint in an index is
  *  noise for everyone. */
 export const PRIVATE_ROUTES = [
-  '/api/', '/parent', '/insights', '/profile', '/shop', '/menu', '/game', '/story',
+  '/api/', '/parent', '/insights', '/play', '/shop', '/menu', '/game', '/story',
   '/name-entry', '/auth', '/teen-preview', '/sim-preview',
 ] as const
