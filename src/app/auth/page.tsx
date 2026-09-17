@@ -340,12 +340,6 @@ export default function AuthPage() {
                 adult commits rather than after. This is the consent record — without it we cannot show
                 that anyone was told what they were agreeing to. */}
             <ConsentLine />
-            {/* ⚠️ Small and below the adult path on purpose — a parent looking for their own login
-                must not land on the child screen. A child arrives here with a class code. */}
-            <p style={{ textAlign: 'center', margin: '14px 0 0', fontSize: 12.5, color: '#8a7a63' }}>
-              Are you a student? <a href="/auth/child" style={{ color: '#F26B2C', fontWeight: 700 }}>Sign in with your class code</a>
-            </p>
-
             {/* Email auth button */}
             <button
               onClick={handleEmailAuth}
