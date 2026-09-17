@@ -6,11 +6,14 @@
  * WHAT IS IN: the `say` line of every teaching-screen beat — what she says while teaching, Screens 2–7 —
  * plus each lesson's whole `bigIdea` line, which the player speaks on its own when a practice answer misses.
  *
- * ⚠️ WHAT IS DELIBERATELY OUT, and why: every QUESTION and everything wrapped around one. Screen 1's text
- * (it ends in the question that becomes the button), `turn`/`twin`/`practice` problem text, `prompt`,
- * `hint1`/`hint2`, worked `steps`, and the `won`/`twinWon` screens. Founder's call 2026-09-16: render the
- * explanations first, questions later. Adding them later is a re-run of this script with QUESTIONS = true,
- * and because keys are content-addressed nothing already rendered is re-billed or re-rendered.
+ * AND (founder's call 2026-09-17) every other FIXED line the player speaks, built by the player's own `SAY` /
+ * `hintsFor` / `wonFor`: Screen 1, Screen 8's question with its prompt, both hints for the first problem and the
+ * twin, the twin's "Try a new one", Screen 9 (both versions and "keep practicing"), "Right!" and "Here is how this
+ * one works.". Explanations sort first, so a run finishes those before starting on these.
+ *
+ * ⚠️ STILL OUT: practice problems (generated with random numbers by the ladders — no finite set to render; founder:
+ * not now) and worked `steps` (they are shown, never spoken). Keys are content-addressed, so re-running this script
+ * never re-renders a line that already has a clip.
  *
  * Keys come from clipKey() in src/core/voiceClips.ts — the same function the browser uses to ask "do I have a
  * clip for this line?". It MUST stay byte-identical between here and there or every lookup misses, which is
@@ -19,13 +22,16 @@
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { MODULES } from '../src/features/lessons/modules.ts'
 import { clipKey, normalizeSpoken } from '../src/core/voiceClips.ts'
+import { SAY, START, hintsFor, wonFor } from '../src/features/lessons/script.ts'
 
 const outDir = process.argv[2] ?? 'scripts/.voice-lessons'
 
 /** Which recorded voice reads which grades. The founder picks; this is only the split the files are cut on. */
 const VOICE = (grade: number) => (grade <= 5 ? 'teddy' : 'stevie')
 
-type Row = { key: string; text: string; voice: string; grade: number; kind: 'beat' | 'bigIdea'; where: string }
+type Kind = 'beat' | 'bigIdea' | 'screen1' | 'turn' | 'hint' | 'twin' | 'won' | 'feedback'
+type Row = { key: string; text: string; voice: string; grade: number; kind: Kind; where: string }
+const ORDER: Kind[] = ['beat', 'bigIdea', 'screen1', 'turn', 'hint', 'twin', 'won', 'feedback']
 
 // By voice + key: identical text is ONE clip PER VOICE. ⚠️ Keyed by text alone (until 2026-09-17), a line said in both a
 // Grade 3–5 and a Grade 6–8 lesson went only to whichever voice met it first — 67 Stevie lines were rendered in Teddy
@@ -45,6 +51,18 @@ for (const m of MODULES) {
     }
     occurrences++
     add({ text: l.bigIdea, voice: VOICE(grade), grade, kind: 'bigIdea', where: `${l.id} bigIdea` })
+
+    const voice = VOICE(grade), line = (kind: Kind, text: string, where: string) => { occurrences++; add({ text, voice, grade, kind, where: `${l.id} ${where}` }) }
+    line('screen1', SAY.screen(l.screens[0]), 's1')
+    line('turn', SAY.turn(l), 'turn')
+    const first = hintsFor(l, { ...START, mode: 'turn' }), twin = hintsFor(l, { ...START, mode: 'turn', twin: true })
+    line('hint', first[0], 'hint1'); line('hint', first[1], 'hint2')
+    line('hint', twin[0], 'twin hint1'); line('hint', twin[1], 'twin hint2')
+    line('twin', SAY.twin(l), 'twin')
+    line('won', wonFor(l, { ...START, mode: 'won' }).text, 'won')
+    line('won', wonFor(l, { ...START, mode: 'won', twin: true }).text, 'twinWon')
+    line('won', wonFor(l, { ...START, mode: 'won', twin: true, misses: 3 }).text, 'keep practicing')
+    line('feedback', SAY.right, 'right'); line('feedback', SAY.worked, 'worked')
   }
 }
 
@@ -74,7 +92,7 @@ writeFileSync(`${outDir}/lines-all.jsonl`, all.map(r => JSON.stringify(r)).join(
 // so they must be committed and pushed before a run can see them. Beats first, then the big ideas, so an
 // interrupted run has rendered the teaching screens before the practice-miss line.
 for (const voice of ['teddy', 'stevie']) {
-  const mine = all.filter(r => r.voice === voice).sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'beat' ? -1 : 1))
+  const mine = all.filter(r => r.voice === voice).sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
   writeFileSync(`scripts/.voice-corpus-lessons-${voice}.json`,
     JSON.stringify(mine.map(r => ({ key: r.key, text: r.text, chars: r.text.length, kind: r.kind, sources: [r.where] })), null, 2) + '\n')
 }
@@ -84,7 +102,7 @@ const per = (v: string, k: string) => all.filter(r => r.voice === v && r.kind ==
 console.log(JSON.stringify({
   occurrencesInLessons: occurrences, uniqueClips: all.length, savedByDeduping: occurrences - all.length,
   characters: chars,
-  teddy: { beats: per('teddy', 'beat'), bigIdeas: per('teddy', 'bigIdea') },
-  stevie: { beats: per('stevie', 'beat'), bigIdeas: per('stevie', 'bigIdea') },
+  teddy: Object.fromEntries(ORDER.map(k => [k, per('teddy', k)])),
+  stevie: Object.fromEntries(ORDER.map(k => [k, per('stevie', k)])),
   outDir,
 }, null, 1))

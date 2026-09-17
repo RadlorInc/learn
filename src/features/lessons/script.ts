@@ -238,6 +238,19 @@ export function hintsFor(l: Lesson, s: FlowState): [string, string] {
   }
 }
 
+/**
+ * Every fixed line the lesson player SPEAKS that is not a teaching beat — one definition, used by LessonPlayer and by
+ * scripts/lesson-voice-corpus.mts. A recorded clip is found by the exact text, so a line built in two places drifts
+ * and its clip silently stops playing; built here, the player and the render corpus cannot disagree.
+ */
+export const SAY = {
+  screen: (sc: Screen) => (sc.beats ? '' : `${sc.title}. ${sc.text}`),
+  turn: (l: Lesson) => `Now you try. ${l.turn.text} ${l.turn.prompt}`,
+  twin: (l: Lesson) => `Try a new one. ${l.turn.twin.text}`,
+  right: 'Right!',
+  worked: 'Here is how this one works.',
+}
+
 /** Screen 9 after a twin that was missed 3 times: the child did not get it, so it must not say so. */
 export const KEEP_GOING = {
   title: "Let's keep practicing",

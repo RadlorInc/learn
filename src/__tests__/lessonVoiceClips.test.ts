@@ -11,18 +11,28 @@ import { readFileSync } from 'node:fs'
 import { MODULES } from '@/features/lessons/modules'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import { clipKey } from '@/core/voiceClips'
+import { SAY, START, hintsFor, wonFor, type Lesson } from '@/features/lessons/script'
 
 const onDisk = (voice: string): Set<string> => new Set(JSON.parse(readFileSync(`public/audio/${voice}/manifest.json`, 'utf8')))
 const CORPUS: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie' }
 const queued = (voice: string): Set<string> =>
   new Set((JSON.parse(readFileSync(`scripts/.voice-corpus-lessons-${CORPUS[voice]}.json`, 'utf8')) as { key: string }[]).map(l => l.key))
 
-it("every beat and big idea has a clip in its lesson's voice, or is queued to be rendered in it", () => {
+/** What the player speaks from clips: the beats and big idea, and every fixed line it builds with SAY / hintsFor / wonFor. */
+const spoken = (l: Lesson): string[] => [
+  ...l.screens.slice(1).flatMap(s => (s.beats ?? []).map(b => b.say)), l.bigIdea,
+  SAY.screen(l.screens[0]), SAY.turn(l), SAY.twin(l), SAY.right, SAY.worked,
+  ...hintsFor(l, { ...START, mode: 'turn' }), ...hintsFor(l, { ...START, mode: 'turn', twin: true }),
+  wonFor(l, { ...START, mode: 'won' }).text, wonFor(l, { ...START, mode: 'won', twin: true }).text,
+  wonFor(l, { ...START, mode: 'won', twin: true, misses: 3 }).text,
+]
+
+it("every line a lesson speaks has a clip in its lesson's voice, or is queued to be rendered in it", () => {
   const lost: string[] = [], waiting = new Set<string>()
   let lines = 0
   for (const m of MODULES) for (const l of m.lessons) {
     const voice = lessonVoice(m.grade), have = onDisk(voice), todo = queued(voice)
-    for (const text of [...l.screens.slice(1).flatMap(s => (s.beats ?? []).map(b => b.say)), l.bigIdea]) {
+    for (const text of spoken(l)) {
       lines++
       const key = clipKey(text)
       if (have.has(key)) continue
@@ -30,8 +40,8 @@ it("every beat and big idea has a clip in its lesson's voice, or is queued to be
       else lost.push(`${l.id} (${CORPUS[voice]}): ${text.slice(0, 60)}`)
     }
   }
-  expect(lines).toBeGreaterThan(4000)   // positive control: the sweep is really reading the lessons
+  expect(lines).toBeGreaterThan(8000)   // positive control: the sweep is really reading the lessons
   expect(lost.slice(0, 10)).toEqual([])
   // Rendered but not yet merged. Lower this as zips are merged; it must never grow without a corpus change.
-  expect(waiting.size).toBeLessThanOrEqual(27)
+  expect(waiting.size).toBeLessThanOrEqual(2527)
 })

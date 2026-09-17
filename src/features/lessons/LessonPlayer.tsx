@@ -12,7 +12,7 @@ import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
-  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf,
+  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
   type FlowState, type Lesson, type Screen,
 } from './script'
 import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, type Run } from './adaptive'
@@ -70,7 +70,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     if (spoken) say(spoken)
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
   }
-  const screenSay = (sc: Screen) => (sc.beats ? '' : `${sc.title}. ${sc.text}`)
+  const screenSay = SAY.screen
 
   const problem = s.mode === 'practice' && run ? run.current.problem : currentProblem(lesson, s)
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
@@ -95,7 +95,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     const submit = () => {
       if (!ready(solutionOf(problem), value)) return
       const n = check(lesson, s, value, problem)
-      go(n, n.feedback === 'idea' ? bigIdea : n.feedback === 'right' ? 'Right!' : n.feedback === 'worked' ? 'Here is how this one works.' : undefined)
+      go(n, n.feedback === 'idea' ? bigIdea : n.feedback === 'right' ? SAY.right : n.feedback === 'worked' ? SAY.worked : undefined)
       if (n.feedback !== 'right') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
     // Laddered: no "of 5" — how many problems depends on the child, and the count must not read as a score.
@@ -155,7 +155,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
       if (n.mode === 'won') firstTry.current = !s.twin && s.misses === 0
       const fb = n.mode === 'won' ? wonFor(lesson, n).text
         : n.feedback === 'hint1' ? hintsFor(lesson, n)[0] : n.feedback === 'hint2' ? hintsFor(lesson, n)[1]
-        : n.feedback === 'worked' ? 'Here is how this one works.' : undefined
+        : n.feedback === 'worked' ? SAY.worked : undefined
       go(n, fb)
       if (n.mode !== 'won') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
@@ -188,7 +188,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
           {worked
             ? <button type="button" style={primary} onClick={() => {
                 const n = afterWorked(s)
-                go(n, n.mode === 'turn' ? `Try a new one. ${lesson.turn.twin.text}` : wonFor(lesson, n).text)
+                go(n, n.mode === 'turn' ? SAY.twin(lesson) : wonFor(lesson, n).text)
               }}>{s.twin ? 'Next' : 'Try a new one'}</button>
             : <button type="submit" form="lp-turn" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>}
         </div>
@@ -235,7 +235,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
       : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
     action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
       const n = next(s)
-      go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? `Now you try. ${lesson.turn.text} ${lesson.turn.prompt}` : undefined)
+      go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? SAY.turn(lesson) : undefined)
     }}>{ask ? <><span>{ask[2]}</span><span style={{ fontSize: 16, opacity: 0.95 }}>Let&apos;s see ▶</span></> : 'Next'}</button>
     if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => go(back(s), screenSay(lesson.screens[s.screen - 1]))}>← Back</button>
   } else if (s.mode === 'won') {
