@@ -113,8 +113,9 @@ export default function ParentDashboard() {
   const learners = role === 'teacher' && classId ? allLearners.filter(d => d.learner.grade_id === classId) : allLearners
   const currentClass = classes.find(c => c.id === classId)
 
-  async function loadAll() {
-    setLoading(true)
+  // `quiet`: refresh the data without the full-screen splash, so an open panel (a class's new passwords) stays on screen.
+  async function loadAll(quiet?: boolean) {
+    if (quiet !== true) setLoading(true)
     setLoadError(false)
     try {
       // Local session (no auth-server round trip); RLS guards the reads below.
@@ -293,7 +294,7 @@ export default function ParentDashboard() {
       <div style={{ fontSize:56 }}>🦊</div>
       <p style={{ fontSize:18, fontWeight:700, color:'#3D2516', margin:0 }}>Hmm, we couldn&apos;t load your dashboard.</p>
       <p style={{ fontSize:14, color:'#7a6a55', margin:0 }}>Check your connection and try again.</p>
-      <button onClick={loadAll} style={{ padding:'14px 28px', background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>Try again</button>
+      <button onClick={() => loadAll()} style={{ padding:'14px 28px', background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>Try again</button>
     </div>
   )
 
@@ -400,7 +401,7 @@ export default function ParentDashboard() {
         {tea && view === 'home' && currentClass && (
           <ClassPanel cls={currentClass} paid={paid}
             students={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
-            onChanged={loadAll} onDeleted={() => { setClassId(null); loadAll() }} />
+            onChanged={loadAll} onStudentsAdded={() => { void loadAll(true) }} onDeleted={() => { setClassId(null); loadAll() }} />
         )}
 
         {view === 'home' && learners.length > 0 && (

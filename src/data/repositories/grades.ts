@@ -57,6 +57,24 @@ export async function updateClass(id: string, patch: { name?: string; grade?: nu
   return true
 }
 
+/**
+ * Give a class these lessons: the class row, then EVERY student in it, in one update filtered in the database by
+ * `grade_id` (RLS limits it to the teacher's own students). Returns how many students were updated, or null on failure.
+ * ⚠️ It deliberately takes no list of students. It used to update the students the dashboard had in memory, and that
+ * list was stale right after adding students — so on 2026-09-18 a second module reached the class and not the child,
+ * with no error, and the panel (which shows the CLASS's modules) said it had worked. The database knows who is in the
+ * class; the screen only remembers who was.
+ */
+export async function setClassLessons(classId: string, lessonIds: string[] | null): Promise<number | null> {
+  const { data: { user } } = await db().auth.getUser()
+  if (!user) return null
+  if (!(await updateClass(classId, { lesson_ids: lessonIds }))) return null
+  const { data, error } = await db().from('learners')
+    .update({ lesson_ids: lessonIds } as never).eq('grade_id', classId).eq('created_by', user.id).select('id')
+  if (error) { console.error('[setClassLessons]', error.code, error.message); toast.error('Saved for the class, but not for its students — try again'); return null }
+  return data?.length ?? 0
+}
+
 /** Deleting a class keeps its children and their lessons; they just belong to no class (FK ON DELETE SET NULL). */
 export async function deleteClass(id: string): Promise<boolean> {
   const { error } = await db().from('grades').delete().eq('id', id)

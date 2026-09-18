@@ -13,7 +13,7 @@
 import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
 import {
-  createClass, updateClass, deleteClass, createLearner, deleteLearner, setChildLogin, setLearnerLessons,
+  createClass, updateClass, deleteClass, createLearner, deleteLearner, setChildLogin, setClassLessons,
   type ClassRow,
 } from '@/data/repositories'
 import { GRADES, MODULES, modulesOf, hasModule } from '@/features/lessons/modules'
@@ -93,8 +93,8 @@ function NewClass({ onClose, onCreated }: { onClose: () => void; onCreated: (c: 
 
 /* ─── the chosen class: summary, modules, add students, rename/delete ───────────────────────────────── */
 
-export function ClassPanel({ cls, students, paid, onChanged, onDeleted }: {
-  cls: ClassRow; students: ClassStudent[]; paid: boolean; onChanged: () => void; onDeleted: () => void
+export function ClassPanel({ cls, students, paid, onChanged, onStudentsAdded, onDeleted }: {
+  cls: ClassRow; students: ClassStudent[]; paid: boolean; onChanged: () => void; onStudentsAdded: () => void; onDeleted: () => void
 }) {
   const [open, setOpen] = useState<'modules' | 'exercises' | 'add' | 'rename' | 'delete' | null>(null)
   const chosen = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m))
@@ -120,8 +120,8 @@ export function ClassPanel({ cls, students, paid, onChanged, onDeleted }: {
         </div>
       </div>
       {open === 'exercises' && <ExerciseEditor cls={cls} onChanged={onChanged} />}
-      {open === 'modules' && <ModulePicker cls={cls} students={students} onDone={() => { setOpen(null); onChanged() }} />}
-      {open === 'add' && <AddStudents cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
+      {open === 'modules' && <ModulePicker cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
+      {open === 'add' && <AddStudents cls={cls} onAdded={onStudentsAdded} onDone={() => { setOpen(null); onChanged() }} />}
       {open === 'rename' && <Rename cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
       {open === 'delete' && (
         <div style={{ marginTop: 14, background: '#FEF2F2', border: '1.5px solid #FCA5A5', borderRadius: 12, padding: 12 }}>
@@ -150,7 +150,7 @@ function Rename({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
 }
 
 /** Tick modules (any grade, opening on the class's). Saving gives every student in the class exactly these lessons. */
-function ModulePicker({ cls, students, onDone }: { cls: ClassRow; students: ClassStudent[]; onDone: () => void }) {
+function ModulePicker({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
   const [grade, setGrade] = useState(cls.grade)
   const [pick, setPick] = useState<Set<string>>(() => new Set(
     cls.lesson_ids?.length ? MODULES.filter(m => m.lessons.length && hasModule(cls.lesson_ids, m)).map(m => m.id) : []))
@@ -162,11 +162,9 @@ function ModulePicker({ cls, students, onDone }: { cls: ClassRow; students: Clas
     // In teaching order; none ticked = every topic (the same meaning an empty list has for a child).
     const ids = MODULES.filter(m => pick.has(m.id)).flatMap(m => m.lessons.map(l => l.id))
     const lessonIds = ids.length ? ids : null
-    if (!(await updateClass(cls.id, { lesson_ids: lessonIds }))) { setSaving(false); return }
-    const results = await Promise.all(students.map(s => setLearnerLessons(s.id, lessonIds)))
-    const failed = results.filter(r => r !== 'ok').length
+    const n = await setClassLessons(cls.id, lessonIds)
     setSaving(false)
-    if (failed) { setMsg(`Saved for the class, but ${failed} student${failed === 1 ? '' : 's'} could not be updated. Try again.`); return }
+    if (n === null) { setMsg('Could not save. Check your connection and try again.'); return }
     onDone()
   }
 
@@ -224,7 +222,7 @@ async function addOne(row: RosterRow, cls: ClassRow): Promise<Made> {
   return { ...row, password }
 }
 
-function AddStudents({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
+function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: () => void; onDone: () => void }) {
   const [mode, setMode] = useState<'one' | 'list'>('list')
   const [text, setText] = useState('')
   const [oneName, setOneName] = useState('')
@@ -250,6 +248,9 @@ function AddStudents({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
     }
     setProgress(null)
     setMade(out)
+    // Refresh the dashboard's student list now, not only on Done: the passwords stay on screen, and the class header,
+    // Roster and results already count the new students if the teacher goes straight to another button.
+    if (out.some(m => m.password)) onAdded()
   }
 
   if (made) {

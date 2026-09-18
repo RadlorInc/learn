@@ -88,7 +88,7 @@ function Surfaces() {
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'classespaid' && (
         <div className="adult-shell" style={{ width: '100%' }}>
-          <ClassPanel cls={DEMO_CLASSES[0]} paid students={[{ id: 'a', name: 'Aarav' }]} onChanged={() => {}} onDeleted={() => {}} />
+          <ClassPanel cls={DEMO_CLASSES[0]} paid students={[{ id: 'a', name: 'Aarav' }]} onChanged={() => {}} onStudentsAdded={() => {}} onDeleted={() => {}} />
         </div>
       )}
       {p === 'mhex' && <div style={{ width: '100%' }}><ModuleHome learnerId={null} grade={5} exercises={{ count: 1, onOpen: () => {} }} /></div>}
@@ -97,7 +97,7 @@ function Surfaces() {
       {p === 'classes' && (
         <div data-t="classes" className="adult-shell" style={{ width: '100%' }}>
           <ClassBar classes={DEMO_CLASSES} current="c1" onPick={() => {}} onCreated={() => {}} />
-          <ClassPanel cls={DEMO_CLASSES[0]} paid={false} students={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }]} onChanged={() => {}} onDeleted={() => {}} />
+          <ClassPanel cls={DEMO_CLASSES[0]} paid={false} students={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }]} onChanged={() => {}} onStudentsAdded={() => {}} onDeleted={() => {}} />
         </div>
       )}
 
