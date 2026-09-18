@@ -56,7 +56,8 @@
 --                                                  service-role only. Advisor reports this as INFO
 --                                                  rls_enabled_no_policy — that is the design.
 --   grade_chapters             rls=t  policies=3
---   grades                     rls=t  policies=4
+--   grades                     rls=t  policies=4   2026-09-18: + grade, lesson_ids, exercises (a teacher's CLASS);
+--                                                  no policy changed (20260918100000, 20260918120000).
 --   learner_access             rls=t  policies=3   (SELECT/INSERT/DELETE — DELETE added V11)
 --                                                  ⚠️ 2026-09-17 (20260917072319): access_role admits 'self' — a
 --                                                  child's own login, written ONLY by /api/child-login with the
@@ -66,6 +67,11 @@
 --                                                  public/anon/authenticated; reached only by the four
 --                                                  parent-PIN DEFINER functions below, each keyed on auth.uid().
 --   learner_events             rls=t  policies=2
+--   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
+--                                                  or the row of the adult who created my learner. Every write
+--                                                  privilege revoked from public/anon/authenticated and no write
+--                                                  policy: set by hand / the service role only, so a teacher cannot
+--                                                  mark themselves paid. No row = free.
 --   lesson_progress            rls=t  policies=1   ⚠️ 2026-09-17 (20260917112109): SELECT only, for any learner_access
 --   point_events               rls=t  policies=1      row (owner/viewer/self). Every write privilege revoked; rows come
 --   game_settings              rls=t  policies=1      only from five DEFINER functions. game_settings is written only by
