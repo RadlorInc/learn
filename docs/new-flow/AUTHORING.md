@@ -137,7 +137,7 @@ the next line.** That is the format, and every teaching screen is written in it.
   // `text` is the WHOLE screen, still — speech, /lesson-preview and every gate read it.
   text: 'Meters are smaller, so it takes more of them to cover the same distance. Smaller unit, more of them. That means we multiply. 5 × 1,000 = 5,000. So the run is 5,000 m long.',
   beats: [
-    { say: 'Meters are smaller, so it takes more of them to cover the same distance.', pic: 0, effect: 'draw' },
+    { say: 'Meters are smaller, so it takes more of them to cover the same distance.', pic: 0 },
     { say: 'Smaller unit, more of them. That means we multiply.', write: 'smaller unit → multiply' },
     { say: '5 × 1,000 = 5,000. So the run is 5,000 m long.', pic: 1 },
   ],
@@ -149,7 +149,6 @@ the next line.** That is the format, and every teaching screen is written in it.
 | `say` | one line she says. Short — one idea. 2–4 beats a screen. |
 | `write` | a line she writes on the board with that say. It stays up. |
 | `pic` | the index in `pictures` she puts up with that say. A picture **no beat names is up from the start**. |
-| `effect` | how the PICTURE arrives: `'write'` (default, swept on left to right), `'draw'` (the outline traces itself, ink behind it), `'pop'`. A `write` line is always written on. |
 
 ### The rules (each one is gated, or is a defect you cannot see)
 
@@ -158,13 +157,14 @@ the next line.** That is the format, and every teaching screen is written in it.
    sentence boundaries, then reword — and change both together. Gated.
 2. **`pic` must index a real picture.** A `pic` past the end draws nothing and hides nothing: the
    screen looks right while the staging you wrote simply does not happen. Gated.
-3. **`effect: 'draw'` only on a picture that renders SVG.** On anything else it is inert: you asked
-   for a drawing, got an instant appearance, and nothing anywhere says so. Gated against the real
-   renderer. Measured 2026-09-16 by rendering one of every kind — the gate, not this list, is the
-   authority, but this is what it said:
-   - **SVG, `draw` allowed:** `bars` `tape` `numline` `clock` `measure` `blocks` `columns` `longdiv`
-     `grid` `area` `poly` `angle` `chart` `plot` `coord` `cubes` `solid` `chips` `balance` `spinner` `line`
-   - **DOM, `write`/`pop` only:** `table` `eq` `cards` `groups` `array` `share` `rings` `triangle` `scatter`
+3. **Everything on the board is DRAWN, by one pen (2026-09-19, founder: "left canvas pe SVG drawing chahiye").**
+   Every picture, every `eq`, `table` and `cards`, and every `write` line is SVG; the pen (`usePen` in
+   `LessonPlayer.tsx`) traces each line and shape and writes each letter — outline first, then ink — in
+   document order. There is no `effect` field any more. The only exception is Module 1's object pictures
+   (`groups` `array` `share` `rings` `triangle` `scatter`: drawn art in HTML), which pop up. A new picture kind
+   must render SVG or it silently loses the drawing — gated against the real renderer.
+   Text in a diagram goes through `T` (or `Ink`) in `Diagrams.tsx`, which splits it into one `tspan` per letter
+   so the pen can write it; a raw `<text>` is still drawn, but all its letters at once.
 4. **Screen 1 gets NO beats, and its `text` is not reworded either** — the split that makes its
    closing question into the button is a regex over that text.
    ⚠️ So screen 1 keeps the old written-page voice while the rest of the lesson is spoken. That is a

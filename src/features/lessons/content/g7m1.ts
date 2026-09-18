@@ -217,7 +217,7 @@ export const G7M1: Lesson[] = [
         pictures: [{ kind: 'coord', min: 0, max: 10, points: [{ x: 1, y: 2 }, { x: 2, y: 4 }, { x: 3, y: 6 }, { x: 4, y: 8 }] }] },
       { title: 'Dots can fool you', text: 'Look at the dots. They march up to the right, and that looks steady. But dots can climb without keeping one steady rate. So what do you look for? You need something you can spot on a graph in a second.',
         beats: [
-          { say: 'Look at the dots. They march up to the right, and that looks steady.', pic: 0, effect: 'draw' },
+          { say: 'Look at the dots. They march up to the right, and that looks steady.', pic: 0 },
           { say: 'But dots can climb without keeping one steady rate.' },
           { say: 'So what do you look for?' },
           { say: 'You need something you can spot on a graph in a second.' },
@@ -225,13 +225,13 @@ export const G7M1: Lesson[] = [
         pictures: [{ kind: 'coord', min: 0, max: 10, points: [{ x: 1, y: 2 }, { x: 2, y: 4 }, { x: 3, y: 6 }, { x: 4, y: 8 }] }] },
       { title: 'The big idea', text: 'A proportional graph is a straight line through (0, 0). The y-value at x = 1 is the rate.',
         beats: [
-          { say: 'A proportional graph is a straight line through (0, 0).', pic: 0, effect: 'draw' },
+          { say: 'A proportional graph is a straight line through (0, 0).', pic: 0 },
           { say: 'The y-value at x = 1 is the rate.' },
         ],
         pictures: [{ kind: 'coord', min: 0, max: 10, points: [{ x: 1, y: 2 }, { x: 2, y: 4 }, { x: 3, y: 6 }, { x: 4, y: 8 }], lines: [{ a: [0, 0], b: [4, 8], extend: true }] }] },
       { title: 'Join the dots', text: 'Lay a ruler across those dots. Every one of them sits on a single straight line. Not a curve, not a bend. Straight.',
         beats: [
-          { say: 'Lay a ruler across those dots.', pic: 0, effect: 'draw' },
+          { say: 'Lay a ruler across those dots.', pic: 0 },
           { say: 'Every one of them sits on a single straight line.' },
           { say: 'Not a curve, not a bend. Straight.', write: 'test 1: straight' },
         ],
@@ -239,14 +239,14 @@ export const G7M1: Lesson[] = [
       { title: 'Start at zero', text: 'Now the second thing to check. Before Jo saved anything, she had $0. Zero weeks, zero dollars. So the line runs right through the corner of the graph.',
         beats: [
           { say: 'Now the second thing to check.' },
-          { say: 'Before Jo saved anything, she had $0. Zero weeks, zero dollars.', pic: 0, effect: 'draw' },
+          { say: 'Before Jo saved anything, she had $0. Zero weeks, zero dollars.', pic: 0 },
           { say: 'So the line runs right through the corner of the graph.', write: 'test 2: starts at the corner' },
         ],
         pictures: [{ kind: 'coord', min: 0, max: 10, points: [{ x: 0, y: 0, label: '(0, 0)' }, { x: 2, y: 4 }, { x: 4, y: 8 }], lines: [{ a: [0, 0], b: [4, 8], extend: true }], motion: true }] },
       { title: 'Read the rate at x = 1', text: 'Here is the useful part. Find x = 1 along the bottom, then go straight up to the line. y is 2 there. So Jo saves $2 a week, and the rule is y = 2x.',
         beats: [
           { say: 'Here is the useful part.' },
-          { say: 'Find x = 1 along the bottom, then go straight up to the line.', pic: 0, effect: 'draw' },
+          { say: 'Find x = 1 along the bottom, then go straight up to the line.', pic: 0 },
           { say: 'y is 2 there.' },
           { say: 'So Jo saves $2 a week, and the rule is y = 2x.', pic: 1 },
         ],
@@ -307,20 +307,20 @@ export const G7M1: Lesson[] = [
         pictures: [perOne(4, '1/4 h', '1/2', 'Miles')] },
       { title: 'Fractions make it look hard', text: "Normally you would just divide. So that is 1/2 ÷ 1/4. And that looks strange, doesn't it? You cannot even tell whether the answer should be bigger or smaller than 1/2.",
         beats: [
-          { say: 'Normally you would just divide. So that is 1/2 ÷ 1/4.', pic: 0, effect: 'draw' },
+          { say: 'Normally you would just divide. So that is 1/2 ÷ 1/4.', pic: 0 },
           { say: "And that looks strange, doesn't it?" },
           { say: 'You cannot even tell whether the answer should be bigger or smaller than 1/2.', write: 'bigger or smaller?' },
         ],
         pictures: [perOne(4, '1/4 h', '1/2', 'Miles')] },
       { title: 'The big idea', text: 'Divide the amount by the time, even when both are fractions. Ask how much fits in one whole.',
         beats: [
-          { say: 'Divide the amount by the time, even when both are fractions.', pic: 0, effect: 'draw' },
+          { say: 'Divide the amount by the time, even when both are fractions.', pic: 0 },
           { say: 'Ask how much fits in one whole.' },
         ],
         pictures: [perOne(4, '1/4 h', '1/2', 'Miles')] },
       { title: 'Fill the hour', text: "Let's picture the whole hour instead. One hour splits into 4 quarter hours. Your walk so far fills just one of those four.",
         beats: [
-          { say: "Let's picture the whole hour instead.", pic: 0, effect: 'draw' },
+          { say: "Let's picture the whole hour instead.", pic: 0 },
           { say: 'One hour splits into 4 quarter hours.' },
           { say: 'Your walk so far fills just one of those four.' },
         ],
@@ -328,7 +328,7 @@ export const G7M1: Lesson[] = [
       { title: 'Each quarter adds 1/2 mile', text: 'Now keep that same pace going. Every quarter hour you add another 1/2 mile. Four quarters, so 1/2 + 1/2 + 1/2 + 1/2. That is 2 miles in the hour.',
         beats: [
           { say: 'Now keep that same pace going.' },
-          { say: 'Every quarter hour you add another 1/2 mile.', pic: 0, effect: 'draw' },
+          { say: 'Every quarter hour you add another 1/2 mile.', pic: 0 },
           { say: 'Four quarters, so 1/2 + 1/2 + 1/2 + 1/2.' },
           { say: 'That is 2 miles in the hour.' },
         ],
@@ -484,7 +484,7 @@ export const G7M1: Lesson[] = [
         pictures: [change('$20', 20, '$25', 25)] },
       { title: '$5 out of what?', text: 'The price went up $5. That part is easy. But a percent always compares one amount to another amount. So $5 out of what? Out of the old $20, or out of the new $25? Those two give different answers.',
         beats: [
-          { say: 'The price went up $5. That part is easy.', pic: 0, effect: 'draw' },
+          { say: 'The price went up $5. That part is easy.', pic: 0 },
           { say: 'But a percent always compares one amount to another amount.' },
           { say: 'So $5 out of what? Out of the old $20, or out of the new $25?' },
           { say: 'Those two give different answers.', write: '$5 out of what?' },
@@ -492,12 +492,12 @@ export const G7M1: Lesson[] = [
         pictures: [change('$20', 20, '$25', 25)] },
       { title: 'The big idea', text: 'Find the change, then compare it to the original amount: change ÷ original × 100.',
         beats: [
-          { say: 'Find the change, then compare it to the original amount: change ÷ original × 100.', pic: 0, effect: 'draw' },
+          { say: 'Find the change, then compare it to the original amount: change ÷ original × 100.', pic: 0 },
         ],
         pictures: [change('$20', 20, '$25', 25)] },
       { title: 'Find the change', text: 'Start with the change. Take the new price and subtract the old one. $25 − $20 = $5. That $5 is the piece that got added on.',
         beats: [
-          { say: 'Start with the change.', pic: 0, effect: 'draw' },
+          { say: 'Start with the change.', pic: 0 },
           { say: 'Take the new price and subtract the old one.' },
           { say: '$25 − $20 = $5.', pic: 1 },
           { say: 'That $5 is the piece that got added on.' },
@@ -505,7 +505,7 @@ export const G7M1: Lesson[] = [
         pictures: [tape([{ label: 'Before', cells: [{ w: 20, text: '$20' }] }, { label: 'After', cells: [{ w: 20, text: '$20' }, { w: 5, text: '$5', shade: true }], brace: '$25' }], true), { kind: 'eq', text: '25 − 20 = 5' }] },
       { title: 'Compare to the original', text: "Now hold that change against last year's price. Cut the $20 into equal $5 pieces. Four of them. And the change is exactly one of those four pieces: 5 ÷ 20 = 0.25.",
         beats: [
-          { say: "Now hold that change against last year's price.", pic: 0, effect: 'draw' },
+          { say: "Now hold that change against last year's price.", pic: 0 },
           { say: 'Cut the $20 into equal $5 pieces. Four of them.' },
           { say: 'And the change is exactly one of those four pieces: 5 ÷ 20 = 0.25.', pic: 1 },
         ],
@@ -573,7 +573,7 @@ export const G7M1: Lesson[] = [
         pictures: [addOn('$20', ['40%'], 'Price: ?')] },
       { title: 'Not $60', text: 'Careful with that 40. It does not mean $40, so the tag is not $20 plus $40. A percent is a share out of 100. So 40% means 40 dollars for every 100 dollars.',
         beats: [
-          { say: 'Careful with that 40.', pic: 0, effect: 'draw' },
+          { say: 'Careful with that 40.', pic: 0 },
           { say: 'It does not mean $40, so the tag is not $20 plus $40.' },
           { say: 'A percent is a share out of 100.' },
           { say: 'So 40% means 40 dollars for every 100 dollars.', write: '40% = 40 out of every 100' },
@@ -581,7 +581,7 @@ export const G7M1: Lesson[] = [
         pictures: [addOn('$20', ['40%'], 'Price: ?')] },
       { title: 'The big idea', text: 'Find the percent of the price and add it on. That is the same as taking 100% plus that percent of the price.',
         beats: [
-          { say: 'Find the percent of the price and add it on.', pic: 0, effect: 'draw' },
+          { say: 'Find the percent of the price and add it on.', pic: 0 },
           { say: 'That is the same as taking 100% plus that percent of the price.' },
         ],
         pictures: [addOn('$20', ['40%'], 'Price: ?')] },
@@ -589,7 +589,7 @@ export const G7M1: Lesson[] = [
         beats: [
           { say: 'So find the extra first.' },
           { say: '10% of $20 is $2.', write: '10% of $20 = $2' },
-          { say: 'And 40% is four of those tens.', pic: 0, effect: 'draw' },
+          { say: 'And 40% is four of those tens.', pic: 0 },
           { say: '4 × $2 = $8.', pic: 1 },
         ],
         pictures: [addOn('$20', ['$8'], 'Price: ?', true), { kind: 'eq', text: '40% of 20 = 8' }] },
@@ -597,7 +597,7 @@ export const G7M1: Lesson[] = [
         beats: [
           { say: 'Now add the extra to what the shop paid.' },
           { say: '$20 + $8 = $28.', pic: 1 },
-          { say: 'That is the number on the tag.', pic: 0, effect: 'draw' },
+          { say: 'That is the number on the tag.', pic: 0 },
         ],
         pictures: [addOn('$20', ['$8'], '$28', true), { kind: 'eq', text: '20 + 8 = 28' }] },
       { title: 'One step instead of two', text: 'There is a faster way, once you see it. The tag is all of the $20, which is 100%, plus 40% more. Together that is 140% of the $20. And 140% is just 1.4, so 1.4 × $20 = $28. Same answer, one step.',
@@ -662,7 +662,7 @@ export const G7M1: Lesson[] = [
         pictures: [guess('45', 45, '50', 50)] },
       { title: '5 off is not always close', text: 'Your guess is 5 beans off. Now, is 5 off good? For a jar of 50, that is pretty close. For a jar of 10, it is way off. So the gap on its own does not tell you how good the guess was.',
         beats: [
-          { say: 'Your guess is 5 beans off.', pic: 0, effect: 'draw' },
+          { say: 'Your guess is 5 beans off.', pic: 0 },
           { say: 'Now, is 5 off good?' },
           { say: 'For a jar of 50, that is pretty close. For a jar of 10, it is way off.' },
           { say: 'So the gap on its own does not tell you how good the guess was.', write: 'the gap alone is not enough' },
@@ -670,13 +670,13 @@ export const G7M1: Lesson[] = [
         pictures: [guess('45', 45, '50', 50)] },
       { title: 'The big idea', text: 'Find how far the guess is from the real amount. Divide by the real amount, then multiply by 100.',
         beats: [
-          { say: 'Find how far the guess is from the real amount.', pic: 0, effect: 'draw' },
+          { say: 'Find how far the guess is from the real amount.', pic: 0 },
           { say: 'Divide by the real amount, then multiply by 100.' },
         ],
         pictures: [guess('45', 45, '50', 50)] },
       { title: 'How far off?', text: 'Start with the gap. 50 − 45 = 5, so the guess was 5 beans away. And if you had guessed too high, you would still write the gap as a positive number. We only care how far off it was, not which side.',
         beats: [
-          { say: 'Start with the gap.', pic: 0, effect: 'draw' },
+          { say: 'Start with the gap.', pic: 0 },
           { say: '50 − 45 = 5, so the guess was 5 beans away.', pic: 1 },
           { say: 'And if you had guessed too high, you would still write the gap as a positive number.', write: 'the gap is always positive' },
           { say: 'We only care how far off it was, not which side.' },
@@ -685,7 +685,7 @@ export const G7M1: Lesson[] = [
           { kind: 'eq', text: '50 − 45 = 5' }] },
       { title: 'Compare to the real amount', text: 'Now hold that gap against the real count. Cut the 50 into equal pieces of 5. Ten of them. The gap is one piece out of ten: 5 ÷ 50 = 0.1.',
         beats: [
-          { say: 'Now hold that gap against the real count.', pic: 0, effect: 'draw' },
+          { say: 'Now hold that gap against the real count.', pic: 0 },
           { say: 'Cut the 50 into equal pieces of 5. Ten of them.' },
           { say: 'The gap is one piece out of ten: 5 ÷ 50 = 0.1.', pic: 1 },
         ],

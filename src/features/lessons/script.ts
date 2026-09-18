@@ -90,6 +90,8 @@ export interface YourTurn extends Problem {
   twin: Problem & { hint1?: string; hint2?: string }   // hints are required when the twin has no `op`
 }
 
+import type { ChalkMark } from './chalk'
+
 export interface Screen {
   title: string
   text: string           // the whole line the screen says; with `beats` it must equal their `say`s joined by a space
@@ -102,10 +104,10 @@ export interface Screen {
     say: string
     write?: string
     pic?: number
-    /** How it arrives: swept on left to right like handwriting (default), traced like a drawing, or popped. */
-    effect?: 'write' | 'draw' | 'pop'
   }[]
   pictures: Picture[]
+  /** The chalkboard (./chalk.ts): when a screen has it, the board draws what she says, word by word, instead of `pictures`. */
+  chalk?: ChalkMark[]
   scene?: string          // a drawn backdrop behind the pictures (public/assets/lessons/<scene>.webp); lessonScenes.test.ts checks the file exists
 }
 
