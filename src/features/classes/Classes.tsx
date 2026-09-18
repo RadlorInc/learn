@@ -6,9 +6,11 @@
  *
  * A class is a `grades` row; a student is in one class (`learners.grade_id`). The class's modules are copied onto each
  * student's `lesson_ids` (what /modules reads), and a student added later starts with them.
- * ⏭️ Phase 2 (founder, same day): an unpaid teacher's class gets practice only — the same questions for everyone,
- * not adaptive, difficulty set by the teacher. Nothing here is gated yet.
+ * Every teacher can give the class EXERCISES: the same questions for every student, not adaptive, level and count set
+ * by the teacher (./exercise.ts). A PAID teacher's students get the modules AND the exercises; a FREE teacher's (no
+ * paid row in `teacher_plans`) get the exercises only.
  */
+import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
 import {
   createClass, updateClass, deleteClass, createLearner, deleteLearner, setChildLogin, setLearnerLessons,
@@ -18,6 +20,9 @@ import { GRADES, MODULES, modulesOf, hasModule } from '@/features/lessons/module
 import { parseRoster, tempPassword, rosterCsv, type RosterRow } from '@/core/classRoster'
 import { normalizeUsername } from '@/core/childLogin'
 import type { AgeGroup } from '@/core/chapters'
+
+// Only a free teacher opens it, and it carries every question ladder.
+const ExerciseEditor = dynamic(() => import('./ExerciseEditor').then(m => m.ExerciseEditor), { ssr: false })
 
 const P = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', accent: 'var(--milo-orange)', soft: 'var(--milo-orange-soft)' } as const
 const card = { background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 16, padding: 16 } as const
@@ -88,10 +93,10 @@ function NewClass({ onClose, onCreated }: { onClose: () => void; onCreated: (c: 
 
 /* ─── the chosen class: summary, modules, add students, rename/delete ───────────────────────────────── */
 
-export function ClassPanel({ cls, students, onChanged, onDeleted }: {
-  cls: ClassRow; students: ClassStudent[]; onChanged: () => void; onDeleted: () => void
+export function ClassPanel({ cls, students, paid, onChanged, onDeleted }: {
+  cls: ClassRow; students: ClassStudent[]; paid: boolean; onChanged: () => void; onDeleted: () => void
 }) {
-  const [open, setOpen] = useState<'modules' | 'add' | 'rename' | 'delete' | null>(null)
+  const [open, setOpen] = useState<'modules' | 'exercises' | 'add' | 'rename' | 'delete' | null>(null)
   const chosen = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m))
   return (
     <div style={{ ...card, marginBottom: 18 }}>
@@ -99,17 +104,22 @@ export function ClassPanel({ cls, students, onChanged, onDeleted }: {
         <div>
           <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: P.ink }}>{cls.name}</h2>
           <div style={{ fontSize: 14, color: P.ink2, marginTop: 2 }}>
-            Grade {cls.grade} · {students.length} student{students.length === 1 ? '' : 's'} · {chosen.length ? `${chosen.length} module${chosen.length === 1 ? '' : 's'}` : 'no modules chosen yet'}
+            Grade {cls.grade} · {students.length} student{students.length === 1 ? '' : 's'}
+            {paid && ` · ${chosen.length ? `${chosen.length} module${chosen.length === 1 ? '' : 's'}` : 'no modules chosen yet'}`}
+            {` · ${cls.exercises.length} exercise${cls.exercises.length === 1 ? '' : 's'}`}
           </div>
-          {chosen.length > 0 && <div style={{ fontSize: 13, color: P.ink3, marginTop: 4 }}>{chosen.map(m => `G${m.grade} M${m.n}`).join(' · ')}</div>}
+          {!paid && <div style={{ fontSize: 13, color: P.ink3, marginTop: 4 }}>Free plan: your students see these exercises only. Modules for students come with the classroom plan.</div>}
+          {paid && chosen.length > 0 && <div style={{ fontSize: 13, color: P.ink3, marginTop: 4 }}>{chosen.map(m => `G${m.grade} M${m.n}`).join(' · ')}</div>}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button onClick={() => setOpen(open === 'add' ? null : 'add')} style={btn}>+ Add students</button>
-          <button onClick={() => setOpen(open === 'modules' ? null : 'modules')} style={ghost}>Choose modules</button>
+          {paid && <button onClick={() => setOpen(open === 'modules' ? null : 'modules')} style={ghost}>Choose modules</button>}
+          <button onClick={() => setOpen(open === 'exercises' ? null : 'exercises')} style={ghost}>Exercises</button>
           <button onClick={() => setOpen(open === 'rename' ? null : 'rename')} style={ghost}>Rename</button>
           <button onClick={() => setOpen(open === 'delete' ? null : 'delete')} style={{ ...ghost, color: '#B42318' }}>Delete</button>
         </div>
       </div>
+      {open === 'exercises' && <ExerciseEditor cls={cls} onChanged={onChanged} />}
       {open === 'modules' && <ModulePicker cls={cls} students={students} onDone={() => { setOpen(null); onChanged() }} />}
       {open === 'add' && <AddStudents cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
       {open === 'rename' && <Rename cls={cls} onDone={() => { setOpen(null); onChanged() }} />}

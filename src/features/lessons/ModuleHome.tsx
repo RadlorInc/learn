@@ -20,8 +20,10 @@ import type { Obj } from './script'
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
 /** `lessonIds` = the topics the parent chose for this child (null = every topic); grades and modules with none are hidden. */
-export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds }: {
+/** `exercises`: the class's exercises, for a child in a PAID teacher's class (features/classes) — a button to open them. */
+export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exercises }: {
   learnerId: string | null; back?: { href: string; label: string } | { onClick: () => void; label: string }; grade?: number; lessonIds?: readonly string[] | null
+  exercises?: { count: number; onOpen: () => void }
 }) {
   // The assigned lessons as of the latest read: the copy saved at sign-in, replaced by the account's own on mount, so a
   // lesson the parent assigns while the child is signed in reaches them the next time they open this screen.
@@ -78,6 +80,9 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
             <button key={g} type="button" role="tab" aria-selected={g === grade} onClick={() => setPicked(firstOf(g))}
               style={{ ...pill, background: g === grade ? INK : '#fff', color: g === grade ? '#fff' : INK }}>Grade {g}</button>
           ))}
+          {exercises && exercises.count > 0 && (
+            <button type="button" onClick={exercises.onOpen} style={{ ...pill, marginLeft: 'auto', background: '#ffd166', color: INK }}>✏️ Exercises ({exercises.count})</button>
+          )}
         </div>
 
         <div className="mh-grid" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>

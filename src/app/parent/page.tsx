@@ -10,7 +10,7 @@ import {
   deleteLearnerPermanently, removeMyselfFromLearner,
   getLatestGap, getCheckupStatus,
   getMyRole, setMyRole, setLearnerLessons, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
-  getWallet, setGameSettings, type Wallet, getMyClasses, type ClassRow,
+  getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -108,6 +108,7 @@ export default function ParentDashboard() {
   const [loginFor, setLoginFor] = useState<string | null>(null)       // learnerId whose login sheet is open
   const [classes, setClasses] = useState<ClassRow[]>([])              // a teacher's classes (features/classes)
   const [classId, setClassId] = useState<string | null>(null)         // null = all students
+  const [paid, setPaid] = useState(false)                             // a paid teacher's classes get modules, a free one's exercises
   // A teacher looking at one class sees only its students — on every view, since they all read `learners`.
   const learners = role === 'teacher' && classId ? allLearners.filter(d => d.learner.grade_id === classId) : allLearners
   const currentClass = classes.find(c => c.id === classId)
@@ -133,7 +134,7 @@ export default function ParentDashboard() {
       if (myRole === 'learner') { router.replace(await enterAsChild()); return }
       setInvites(pendingInvites)
       setRole(myRole)
-      if (myRole === 'teacher') getMyClasses().then(setClasses)
+      if (myRole === 'teacher') { getMyClasses().then(setClasses); getMyTeacherPaid().then(setPaid) }
       getChildLogins().then(setChildLogins)   // not awaited: the dashboard must not wait on the login lookup   // null → the render shows the one-time Teacher/Parent picker
 
       let data: LearnerData[]
@@ -397,7 +398,7 @@ export default function ParentDashboard() {
         </div>
 
         {tea && view === 'home' && currentClass && (
-          <ClassPanel cls={currentClass}
+          <ClassPanel cls={currentClass} paid={paid}
             students={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
             onChanged={loadAll} onDeleted={() => { setClassId(null); loadAll() }} />
         )}

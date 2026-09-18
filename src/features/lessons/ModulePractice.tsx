@@ -26,15 +26,22 @@ import { mixedPractice, type Module } from './modules'
 
 type Feedback = null | 'idea' | 'worked' | 'right'
 
-export function ModulePractice({ module, learnerId = null, onExit }: { module: Module; learnerId?: string | null; onExit: () => void }) {
-  const adaptive = module.lessons.every(l => ladderOf(l.id))
+/**
+ * `exercise`: a class exercise (features/classes/exercise.ts) — a FIXED list, the same for every child, so nothing is
+ * adaptive: no standing moves, nothing is synced, and there is no link to a lesson (the child of a free teacher has none).
+ */
+export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
+  module: Module; learnerId?: string | null; onExit: () => void
+  exercise?: { title: string; items: { problem: Problem; lesson: Lesson }[] }
+}) {
+  const adaptive = !exercise && module.lessons.every(l => ladderOf(l.id))
   const r = useRef(rng(freshSeed())).current
   const drawFor = (asked: { problem: Problem; lesson: Lesson }[]) => {
     const id = nextModuleTopic(module.lessons.map(l => l.id), x => loadStanding(learnerId, x), asked.map(x => x.lesson.id), r)
     const problem = draw(ladderOf(id)!, loadStanding(learnerId, id)?.level ?? 0, r, asked.slice(-6).map(x => x.problem.text))
     return [...asked, { problem, lesson: module.lessons.find(l => l.id === id)! }]
   }
-  const [items, setItems] = useState(() => (adaptive ? drawFor([]) : mixedPractice(module)))
+  const [items, setItems] = useState(() => (exercise ? exercise.items : adaptive ? drawFor([]) : mixedPractice(module)))
   const total = adaptive ? MODULE_PROBLEMS : items.length
   const [answers] = useState(() => (adaptive ? module.lessons.flatMap(l => ladderAnswers(ladderOf(l.id)!)) : items.map(x => solutionOf(x.problem))))
   const [i, setI] = useState(0)
@@ -46,14 +53,14 @@ export function ModulePractice({ module, learnerId = null, onExit }: { module: M
 
   const done = i >= total
   const page = (crumb: string, title: string, left: React.ReactNode, pad: boolean) => (
-    <PracticeLayout corner={`Module ${module.n}`} crumb={crumb} title={title} onExit={onExit} pad={pad} padKey={i}>{left}</PracticeLayout>
+    <PracticeLayout corner={exercise?.title ?? `Module ${module.n}`} crumb={crumb} title={title} onExit={onExit} pad={pad} padKey={i}>{left}</PracticeLayout>
   )
 
   if (done) {
     return page('Done!', 'Practice done!', <>
-      <p style={idea}>You practiced every topic in Module {module.n}.</p>
+      <p style={idea}>{exercise ? `You finished ${exercise.title}.` : `You practiced every topic in Module ${module.n}.`}</p>
       <p style={bubble}>You worked through all {total} problems. Nice work sticking with it!</p>
-      <div className="pr-foot"><span /><button type="button" style={primary} onClick={onExit}>Back to modules</button></div>
+      <div className="pr-foot"><span /><button type="button" style={primary} onClick={onExit}>{exercise ? 'Back to exercises' : 'Back to modules'}</button></div>
     </>, false)
   }
 
@@ -77,7 +84,7 @@ export function ModulePractice({ module, learnerId = null, onExit }: { module: M
   }
   const answering = feedback !== 'right' && feedback !== 'worked'
 
-  return page(`Practice ${i + 1} of ${total}`, `Problem ${i + 1} of ${total}`, <>
+  return page(`${exercise ? 'Question' : 'Practice'} ${i + 1} of ${total}`, `Problem ${i + 1} of ${total}`, <>
     <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
     <div style={stage}>
       <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
@@ -100,9 +107,9 @@ export function ModulePractice({ module, learnerId = null, onExit }: { module: M
         <b>Here&apos;s how this one works:</b>
         <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
       </div>
-      <Link href={`/lesson?id=${lesson.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+      {!exercise && <Link href={`/lesson?id=${lesson.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
         Watch the lesson: {lesson.title}
-      </Link>
+      </Link>}
     </>}
 
     <div className="pr-foot">

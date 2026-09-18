@@ -103,6 +103,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.lesson_progress':          `public.lesson_progress where learner_id in (${ls})`,
     'public.point_events':             `public.point_events where learner_id in (${ls})`,
     'public.game_settings':            `public.game_settings where learner_id in (${ls})`,
+    'public.teacher_plans':            `public.teacher_plans where teacher_id = '${uid}'`,
   }
   const out: Record<string, number> = { 'auth.users': await count(db, `auth.users where id = '${uid}'`) }
   for (const t of tables) {
@@ -118,6 +119,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
   await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${uid}', '${email}', now())`)   // a confirmed account → trigger makes the profile
   await db.exec(`insert into public.grades (id, created_by, name, age_group) values (gen_random_uuid(), '${uid}', 'Class', '3-5')`)
   await db.exec(`insert into public.auth_events (user_id, event) values ('${uid}', 'login')`)
+  await db.exec(`insert into public.teacher_plans (teacher_id, paid) values ('${uid}', true)`)   // a paid teacher: the row must go too
   // An admin deleting their own account is a real case, and admin_users is the table whose
   // survival would leave a dead uuid holding dashboard access.
   await db.exec(`insert into public.admin_users (user_id) values ('${uid}')`)
