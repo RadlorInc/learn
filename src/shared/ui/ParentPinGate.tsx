@@ -28,11 +28,15 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
   const [msg, setMsg] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // Same PIN for both adult roles; only the words follow the role — a teacher is not a "parent" (2026-09-18).
+  const [teacher, setTeacher] = useState(false)
 
   async function load() {
     setStage('loading'); setMsg(null)
     if (!(await getCurrentSession())) { setStage('open'); return }
-    if ((await getMyRole().catch(() => null)) === 'learner') { setStage('open'); return }
+    const role = await getMyRole().catch(() => null)
+    if (role === 'learner') { setStage('open'); return }
+    setTeacher(role === 'teacher')
     const s = await getPinStatus()
     if (s.state === 'unavailable') setStage('open')
     else if (s.state === 'error') setStage('error')
@@ -81,10 +85,10 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
       <div role="dialog" aria-labelledby="pin-title" style={card}>
         <div style={{ fontSize: 40 }}>🔒</div>
         <h1 id="pin-title" style={{ margin: 0, fontSize: 24, fontWeight: 900, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
-          {stage === 'create' ? 'Set a parent PIN' : stage === 'error' ? 'Could not open the dashboard' : 'Enter your parent PIN'}
+          {stage === 'create' ? `Set a ${teacher ? 'teacher' : 'parent'} PIN` : stage === 'error' ? 'Could not open the dashboard' : `Enter your ${teacher ? 'teacher' : 'parent'} PIN`}
         </h1>
         <p style={{ margin: 0, fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.45 }}>
-          {stage === 'create' ? 'Choose 4 digits. We ask for it every time this dashboard opens, so a child on this device cannot get in.'
+          {stage === 'create' ? `Choose 4 digits. We ask for it every time this dashboard opens, so a ${teacher ? 'student' : 'child'} on this device cannot get in.`
             : stage === 'error' ? 'Check your connection and try again.'
             : 'This keeps the dashboard for grown-ups only.'}
         </p>
