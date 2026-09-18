@@ -32,9 +32,9 @@ export async function setMyRole(role: UserRole): Promise<boolean> {
   return !error
 }
 
-/** Where a given role lands after login: teachers start on Grades, everyone else on the dashboard. */
+/** Where a given role lands after login: a child's own account on its lessons, adults on the dashboard. */
 export const homeForRole = (role: UserRole | null): string =>
-  role === 'teacher' ? '/parent/grades' : role === 'learner' ? '/modules' : '/parent'
+  role === 'learner' ? '/modules' : '/parent'
 
 export async function signOut() {
   const supabase = db()
