@@ -7,7 +7,7 @@
  *
  * `motion` reveals the parts one after another (bars shading, jumps, points, cubes), the "picture that moves" of Screens 4–6.
  */
-import { useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
 import type { Picture } from './script'
 import { INK, TEAL, ACCENT } from './Pictures'
 
@@ -29,7 +29,72 @@ function Svg({ w, h, label, children, max = 380 }: { w: number; h: number; label
 }
 
 const T = ({ x, y, s = 18, a = 'middle', w = 800, fill = INK, children, style }: { x: number; y: number; s?: number; a?: 'start' | 'middle' | 'end'; w?: number; fill?: string; children: ReactNode; style?: CSSProperties }) =>
-  <text x={x} y={y} fontSize={s} textAnchor={a} fontWeight={w} fill={fill} dominantBaseline="middle" style={style}>{children}</text>
+  <text x={x} y={y} fontSize={s} textAnchor={a} fontWeight={w} fill={fill} dominantBaseline="middle" style={style}>{letters(children)}</text>
+
+/** One `tspan` per letter, so the pen in LessonPlayer can write a word letter by letter (a glyph's outline is traced,
+ *  then its ink fills in). The text content is unchanged: speech, search and screen readers still read the whole word. */
+export const letters = (c: ReactNode) =>
+  typeof c === 'string' || typeof c === 'number' ? [...String(c)].map((ch, i) => <tspan key={i} data-c="">{ch}</tspan>) : c
+
+/** Breaks a line at spaces so no row is longer than `n` characters (a word longer than `n` keeps its own row). */
+export function wrap(t: string, n: number): string[] {
+  const out: string[] = []
+  for (const word of t.split(' ')) {
+    const last = out.length - 1
+    if (last >= 0 && (out[last] + ' ' + word).length <= n) out[last] += ' ' + word
+    else out.push(word)
+  }
+  return out
+}
+
+// Text width, for sizing an SVG around its words. Measured on a canvas in the display font once the page is live;
+// the server (and the first client render, so hydration matches) uses an estimate. Re-measures when a font loads,
+// because Fredoka is wider than its fallback.
+let fontTick = 0, ctx: CanvasRenderingContext2D | null | undefined
+const onFonts = (cb: () => void) => {
+  const f = () => { fontTick++; cb() }
+  document.fonts?.addEventListener('loadingdone', f)
+  return () => document.fonts?.removeEventListener('loadingdone', f)
+}
+export function useTextWidth() {
+  const live = useSyncExternalStore(onFonts, () => fontTick, () => -1)
+  if (live >= 0 && !/jsdom/.test(navigator.userAgent)) {
+    ctx ??= document.createElement('canvas').getContext('2d')
+    const family = getComputedStyle(document.documentElement).getPropertyValue('--font-display') || 'sans-serif'
+    if (ctx) return (t: string, s: number, w: number) => { ctx!.font = `${w} ${s}px ${family}`; return ctx!.measureText(t).width }
+  }
+  return (t: string, s: number) => t.length * s * 0.6
+}
+
+export interface InkRow { t: string; s: number; w?: number; fill?: string }
+
+/**
+ * Words on the board, as SVG so the pen can write them: an equation, a line she writes, a card. `box` puts them on a
+ * card with an ink outline and shadow (the outline is drawn too). Sized to its words and never wider than its column:
+ * on a phone it shrinks as a whole instead of wrapping differently from the tablet.
+ */
+export function Ink({ rows, box, a = 'middle', minW = 0, minRows = 0 }: { rows: InkRow[]; box?: string; a?: 'start' | 'middle'; minW?: number; minRows?: number }) {
+  const tw = useTextWidth()
+  const pad = box ? 18 : 4, gapY = 0.3
+  const W = Math.max(minW, ...rows.map(r => tw(r.t, r.s, r.w ?? 800))) + pad * 2
+  const hs = rows.map(r => r.s * (1 + gapY))
+  const H = hs.reduce((x, y) => x + y, 0) + Math.max(0, minRows - rows.length) * (rows.at(-1)?.s ?? 0) * (1 + gapY) + pad * 2 - (box ? 0 : rows[0].s * gapY)
+  let y = pad - (box ? 0 : rows[0].s * gapY / 2)
+  return (
+    <svg viewBox={`${box ? -2 : 0} ${box ? -2 : 0} ${W + (box ? 8 : 0)} ${H + (box ? 8 : 0)}`} role="img" aria-label={rows.map(r => r.t).join(' ')}
+      style={{ width: W + (box ? 10 : 0), maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto', overflow: 'visible', fontFamily: F }}>
+      {box && <>
+        <rect x={4} y={4} width={W} height={H} rx={16} fill={INK} />
+        <rect x={0} y={0} width={W} height={H} rx={16} fill={box} stroke={INK} strokeWidth={4} />
+      </>}
+      {rows.map((r, i) => {
+        const at = y + hs[i] / 2
+        y += hs[i]
+        return <text key={i} x={a === 'start' ? pad : W / 2} y={at} fontSize={r.s} fontWeight={r.w ?? 800} fill={r.fill ?? INK} textAnchor={a} dominantBaseline="middle">{letters(r.t)}</text>
+      })}
+    </svg>
+  )
+}
 
 type P<K extends Picture['kind']> = Extract<Picture, { kind: K }>
 
@@ -626,37 +691,38 @@ function Coord({ p }: { p: P<'coord'> }) {
 
 // ── Table ─────────────────────────────────────────────────────────────────────────────────────
 function Table({ p }: { p: P<'table'> }) {
+  const tw = useTextWidth()
   const marked = (r: number, c: number) => p.mark?.some(([mr, mc]) => mr === r && mc === c)
-  const cell: CSSProperties = { border: `3px solid ${INK}`, padding: '8px clamp(5px, 1.4vw, 14px)', textAlign: 'center', fontSize: 'clamp(17px, 2.2vw, 22px)', fontWeight: 700, color: INK }
-  // A wide table (a 5-place chart is ~470px) does not fit a phone's picture (~275px). Shrink it to fit rather than cut it off
-  // or make the child scroll to find a digit. CSS zoom shrinks the layout box too, so nothing under the table moves.
-  const box = useRef<HTMLDivElement>(null)
-  useLayoutEffect(() => {
-    const el = box.current, table = el?.firstElementChild as HTMLElement | null
-    if (!el || !table) return
-    const fit = () => {
-      if (!el.clientWidth) return
-      table.style.zoom = ''
-      const k = el.clientWidth / table.offsetWidth   // offsetWidth is the unzoomed width
-      table.style.zoom = k < 1 ? String(k) : ''
-    }
-    fit()
-    // Not a ResizeObserver: the zoom changes the box's height, which would re-trigger it. The width only changes with the
-    // window, and the table's own width changes when the display font finishes loading (it is wider than the fallback).
-    addEventListener('resize', fit)
-    document.fonts?.addEventListener('loadingdone', fit)
-    return () => { removeEventListener('resize', fit); document.fonts?.removeEventListener('loadingdone', fit) }
-  }, [p])
+  // Row -1 is the heading row. A long cell wraps; each column is as wide as its widest line. A wide table (a 5-place
+  // chart) is scaled down as a whole to fit a phone, never cut off.
+  const all = [...(p.head ? [{ r: -1, cells: p.head }] : []), ...p.rows.map((cells, r) => ({ r, cells }))]
+  const S = 20, HS = 19, px = 12, lh = 1.25
+  const size = (r: number, c: number) => (r < 0 || (p.rowHead && c === 0) ? HS : S)
+  const weight = (r: number, c: number) => (r < 0 || (p.rowHead && c === 0) ? 900 : 700)
+  const lines = all.map(({ r, cells }) => cells.map((t, c) => wrap(t, 16).map(l => ({ l, s: size(r, c), w: weight(r, c) }))))
+  const cols = Math.max(...all.map(x => x.cells.length))
+  const cw = Array.from({ length: cols }, (_, c) => Math.max(40, ...lines.flatMap(row => (row[c] ?? []).map(x => tw(x.l, x.s, x.w)))) + px * 2)
+  const rh = lines.map(row => Math.max(...row.map(ls => ls.length)) * S * lh + 16)
+  const xs = cw.map((_, c) => cw.slice(0, c).reduce((a, b) => a + b, 0)), W = cw.reduce((a, b) => a + b, 0)
+  const ys = rh.map((_, i) => rh.slice(0, i).reduce((a, b) => a + b, 0)), H = rh.reduce((a, b) => a + b, 0)
   return (
-    <div ref={box} style={{ overflowX: 'auto' }}>
-      <table style={{ borderCollapse: 'collapse', margin: '0 auto', background: '#fff', fontFamily: F, maxWidth: '100%' }}>
-        {/* On a phone the headings get smaller than the digits under them: the digits are what the child reads. */}
-        {p.head && <thead><tr>{p.head.map((h, i) => <th key={i} style={{ ...cell, fontSize: 'clamp(13px, 2.2vw, 22px)', background: TONE[2], fontWeight: 900 }}>{h}</th>)}</tr></thead>}
-        <tbody>{p.rows.map((r, i) => <tr key={i}>{r.map((c, j) => (
-          <td key={j} style={{ ...cell, ...(p.rowHead && j === 0 ? { background: TONE[2], fontWeight: 900 } : {}), ...(marked(i, j) ? { background: TONE[1] } : {}), ...reveal(i, p.motion, 400) }}>{c}</td>
-        ))}</tr>)}</tbody>
-      </table>
-    </div>
+    <svg viewBox={`-2 -2 ${W + 4} ${H + 4}`} role="img" aria-label="Table"
+      style={{ width: W + 4, maxWidth: '100%', height: 'auto', display: 'block', margin: '0 auto', overflow: 'visible', fontFamily: F }}>
+      <g>
+        {all.map(({ r, cells }, i) => (
+          <g key={i} style={r >= 0 ? reveal(r, p.motion, 400) : undefined}>
+            {cells.map((_, c) => {
+              const bg = r >= 0 && marked(r, c) ? TONE[1] : r < 0 || (p.rowHead && c === 0) ? TONE[2] : '#fff'
+              const ls = lines[i][c]
+              return <g key={c}>
+                <rect x={xs[c]} y={ys[i]} width={cw[c]} height={rh[i]} fill={bg} stroke={INK} strokeWidth={3} />
+                {ls.map((x, k) => <T key={k} x={xs[c] + cw[c] / 2} y={ys[i] + rh[i] / 2 + (k - (ls.length - 1) / 2) * S * lh} s={x.s} w={x.w}>{x.l}</T>)}
+              </g>
+            })}
+          </g>
+        ))}
+      </g>
+    </svg>
   )
 }
 

@@ -10,6 +10,10 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
+import { wordMs, chalkWidth } from '@/features/lessons/chalk'
+
+/** Module 1's object pictures: drawn art in HTML, which pops onto the board instead of being drawn. */
+const OBJECT_PICTURES = new Set(['groups', 'array', 'share', 'rings', 'triangle', 'scatter'])
 import { createElement } from 'react'
 import { MODULES } from '@/features/lessons/modules'
 import { Pic } from '@/features/lessons/Pictures'
@@ -179,12 +183,24 @@ describe.each(MODULES.filter(m => m.lessons.length > 0).map(m => [m.id, m] as co
         // A `pic` past the end draws nothing AND hides nothing: the screen looks right while the staging
         // the author wrote simply does not happen.
         if (b.pic !== undefined) expect(b.pic, `${l.id} "${s.title}" beat draws pictures[${b.pic}] of ${s.pictures.length}`).toBeLessThan(s.pictures.length)
-        if (b.effect !== 'draw') continue
-        expect(b.pic, `${l.id} "${s.title}": effect 'draw' with no picture to draw`).not.toBeUndefined()
-        // Asked of the real renderer, never of a list of kinds — a list drifts from Diagrams.tsx and then
-        // certifies a 'draw' that does nothing.
-        const html = renderToStaticMarkup(createElement(Pic, { p: s.pictures[b.pic!] }))
-        expect(html.includes('<svg'), `${l.id} "${s.title}": effect 'draw' on a ${s.pictures[b.pic!].kind}, which draws no SVG — the effect would do nothing`).toBe(true)
+      }
+      // A chalk mark goes up at its word. A word that is not in its line gives -1 and would draw at the start
+      // of the line instead — looks almost right, and is exactly the drift from what she says this board exists to stop.
+      for (const m of s.chalk ?? []) {
+        expect(m.beat, `${l.id} "${s.title}": chalk mark on beat ${m.beat} of ${beats.length}`).toBeLessThan(beats.length)
+        expect(wordMs(beats[m.beat].say, m.at), `${l.id} "${s.title}": chalk mark at "${m.at}" — not a word of "${beats[m.beat].say}"`).toBeGreaterThanOrEqual(0)
+        // Writing that runs off the 600 × 400 board is cut off by it, and nothing else would notice.
+        if (m.t !== undefined) {
+          const half = chalkWidth(m.t, m.s ?? 30) / 2, x = m.x ?? 0, y = m.y ?? 0, s2 = (m.s ?? 30) / 2
+          expect(x - half >= 0 && x + half <= 600 && y - s2 >= 0 && y + s2 <= 400, `${l.id} "${s.title}": "${m.t}" at ${x},${y} runs off the board`).toBe(true)
+        }
+      }
+      // The pen draws only SVG (LessonPlayer's usePen). A board picture that renders none just pops up —
+      // right for the object pictures (cookies, plates: drawn art), a silent loss of the drawing anywhere else.
+      // Asked of the real renderer, never of a list of SVG kinds — a list drifts from Diagrams.tsx.
+      for (const p of s.pictures) {
+        const html = renderToStaticMarkup(createElement(Pic, { p }))
+        if (!OBJECT_PICTURES.has(p.kind)) expect(html.includes('<svg'), `${l.id} "${s.title}": a ${p.kind} renders no SVG, so the pen cannot draw it`).toBe(true)
       }
     }
   })

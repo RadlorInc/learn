@@ -3,6 +3,7 @@
  * Written to docs/new-flow/AUTHORING.md. Not yet founder-reviewed.
  */
 import type { Lesson, Picture } from '../script'
+import { write, box, cross, ring, arrow, line, clockFace, hand, clockHop, onClock } from '../chalk'
 
 /** A number line of clock times: one tick every 5 minutes, a time label every 10. `from`/`to` are minutes after `h`:00. */
 const timeline = (h: number, from: number, to: number, extra: Partial<Extract<Picture, { kind: 'numline' }>> = {}): Picture => ({
@@ -28,6 +29,11 @@ const between = (min: number, max: number, at: number): Picture =>
 const add = (a: string, b: string): Picture => ({ kind: 'columns', rows: [a, b], op: '+', places: ['H', 'T', 'O'], answer: null })
 const sub = (a: string, b: string): Picture => ({ kind: 'columns', rows: [a, b], op: '−', places: ['H', 'T', 'O'], answer: null })
 
+// The chalkboard clock for Topic 1 (g3m2-t1): 4:15, drawn on the left of the board; words go on the right.
+const CX = 195, CY = 200, CR = 150
+const num = (n: number) => onClock(CX, CY, CR * 0.8, n)
+const ringNum = (at: [number, string?], n: number, c: 'y' | 'r' | 'b' | 'd' = 'y') => ring(at, ...num(n), 22, 22, c)
+
 export const G3M2: Lesson[] = [
   // ── Topic 1 ──────────────────────────────────────────────────────────────────────────────────
   {
@@ -38,29 +44,59 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'clock', h: 4, m: 15 }] },
       { title: 'The numbers are not the minutes', text: 'Look where the long hand is pointing. Right at the 3. Now, careful here. That does not mean 3 minutes. Those big numbers count the hours. They never count the minutes.',
         beats: [
-          { say: 'Look where the long hand is pointing. Right at the 3.', pic: 0, effect: 'draw' },
+          { say: 'Look where the long hand is pointing. Right at the 3.', pic: 0 },
           { say: 'Now, careful here. That does not mean 3 minutes.', write: 'not 3 minutes' },
           { say: 'Those big numbers count the hours. They never count the minutes.' },
+        ],
+        chalk: [
+          ...clockFace([0, 'Look'], CX, CY, CR), hand([0, 'Look'], CX, CY, 4.25, 75, 'r', 7),
+          hand([0, 'long'], CX, CY, 3, 100, 'b'), ringNum([0, '3'], 3),
+          write([1, 'careful'], '!', 470, 70, 50, 'r'),
+          write([1, '3'], '3 minutes', 470, 150, 36), cross([1, 'minutes'], 395, 125, 150, 50),
+          ringNum([2, 'numbers'], 12, 'd'), ringNum([2, 'numbers'], 3, 'd'), ringNum([2, 'numbers'], 6, 'd'), ringNum([2, 'numbers'], 9, 'd'),
+          write([2, 'hours'], 'big numbers', 470, 245, 30, 'y'), write([2, 'hours'], '= hours', 470, 285, 30, 'y'),
+          write([2, 'never'], 'never minutes', 470, 340, 28, 'r'),
         ],
         pictures: [{ kind: 'clock', h: 4, m: 15 }] },
       { title: 'The big idea', text: 'The long hand counts by 5s. Each number on the clock is 5 more minutes.',
         beats: [
-          { say: 'The long hand counts by 5s.', pic: 0, effect: 'draw' },
+          { say: 'The long hand counts by 5s.', pic: 0 },
           { say: 'Each number on the clock is 5 more minutes.' },
+        ],
+        chalk: [
+          ...clockFace([0], CX, CY, CR), hand([0, 'long'], CX, CY, 3, 100, 'b'),
+          ...[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(n => write([0, '5s'], String(n ? n * 5 : 60), ...onClock(CX, CY, CR + 24, n), 20, 'y')),
+          clockHop([1, 'number'], CX, CY, CR - 55, 0, 1), write([1, 'number'], '1 number', 470, 130, 34),
+          arrow([1, 'is'], [470, 160], [470, 215]), write([1, '5'], '5 more', 470, 250, 38, 'y'), write([1, 'minutes'], 'minutes', 470, 295, 34, 'y'),
         ],
         pictures: [{ kind: 'clock', h: 4, m: 15, fives: true }] },
       { title: 'Read the short hand first', text: "Let's start with the short hand. It is just past the 4, and it has not reached the 5 yet. So the hour is 4. I'll write that down.",
         beats: [
-          { say: "Let's start with the short hand.", pic: 0, effect: 'draw' },
+          { say: "Let's start with the short hand.", pic: 0 },
           { say: 'It is just past the 4, and it has not reached the 5 yet.' },
           { say: "So the hour is 4. I'll write that down.", write: 'Hour: 4' },
+        ],
+        chalk: [
+          ...clockFace([0], CX, CY, CR), hand([0, 'short'], CX, CY, 4.25, 75, 'r', 7),
+          ringNum([1, '4'], 4, 'y'), write([1, 'past'], 'just past 4', 470, 120, 30, 'y'),
+          ringNum([1, '5'], 5, 'd'), write([1, 'yet'], 'not 5 yet', 470, 170, 28, 'd'),
+          write([2, 'hour'], 'Hour:', 450, 270, 44), write([2, '4'], '4', 540, 270, 54, 'r'), line([2, 'write'], [[395, 305], [575, 305]], 'w', 2.5),
         ],
         pictures: [{ kind: 'clock', h: 4, m: 15 }] },
       { title: 'Count by 5s', text: 'Now the long hand. Start at the top and count by 5s. Five, ten, fifteen. Stop at the long hand. That is 15 minutes.',
         beats: [
-          { say: 'Now the long hand. Start at the top and count by 5s.', pic: 0, effect: 'draw' },
+          { say: 'Now the long hand. Start at the top and count by 5s.', pic: 0 },
           { say: 'Five, ten, fifteen. Stop at the long hand.', pic: 1 },
           { say: 'That is 15 minutes.', write: 'Minutes: 15' },
+        ],
+        chalk: [
+          ...clockFace([0], CX, CY, CR), hand([0], CX, CY, 4.25, 75, 'd', 7),
+          hand([0, 'long'], CX, CY, 3, 100, 'b'), ringNum([0, 'top'], 12, 'y'),
+          clockHop([1, 'Five'], CX, CY, CR + 12, 0, 1), write([1, 'Five'], '5', ...onClock(CX, CY, CR + 30, 0.5), 26, 'y'),
+          clockHop([1, 'ten'], CX, CY, CR + 12, 1, 2), write([1, 'ten'], '10', ...onClock(CX, CY, CR + 32, 1.5), 26, 'y'),
+          clockHop([1, 'fifteen'], CX, CY, CR + 12, 2, 3), write([1, 'fifteen'], '15', ...onClock(CX, CY, CR + 32, 2.5), 26, 'y'),
+          ringNum([1, 'Stop'], 3, 'b'),
+          write([2, '15'], '15 minutes', 470, 200, 40, 'y'), box([2, 'minutes'], 370, 165, 200, 70, 'y'),
         ],
         pictures: [{ kind: 'clock', h: 4, m: 15, fives: true }, { kind: 'table', head: ['Long hand on', 'Minutes'], rows: [['1', '5'], ['2', '10'], ['3', '15']], motion: true }] },
       { title: 'Put it together', text: 'So we have hour 4, and 15 minutes. We write the hour first, then two dots, then the minutes. Say it out loud with me: four fifteen.',
@@ -69,12 +105,25 @@ export const G3M2: Lesson[] = [
           { say: 'We write the hour first, then two dots, then the minutes.', pic: 0 },
           { say: 'Say it out loud with me: four fifteen.' },
         ],
+        chalk: [
+          write([0, 'hour'], 'hour 4', 150, 70, 34, 'r'), write([0, '15'], '15 minutes', 440, 70, 34, 'b'),
+          arrow([1, 'hour'], [150, 100], [205, 185], 'r'), write([1, 'first'], '4', 230, 235, 110, 'r'),
+          write([1, 'dots'], ':', 305, 230, 110), arrow([1, 'minutes'], [440, 100], [400, 185], 'b'), write([1, 'minutes'], '15', 390, 235, 110, 'b'),
+          write([2, 'four'], 'four', 230, 340, 36, 'r'), write([2, 'fifteen'], 'fifteen', 390, 340, 36, 'b'),
+        ],
         pictures: [{ kind: 'eq', text: '4:15' }] },
       { title: 'One thing not to do', text: "Here is the mix-up almost everybody makes. Do not write down the number the long hand is pointing at. The long hand on the 3 means 15 minutes, not 3.",
         beats: [
           { say: 'Here is the mix-up almost everybody makes.' },
           { say: 'Do not write down the number the long hand is pointing at.', pic: 0 },
           { say: 'The long hand on the 3 means 15 minutes, not 3.' },
+        ],
+        chalk: [
+          line([0, 'mix-up'], [[300, 25], [345, 100], [255, 100], [300, 25]], 'r'), write([0, 'mix-up'], '!', 300, 74, 40, 'r'),
+          ...clockFace([1, 'write'], 150, 260, 110, [12, 3, 6, 9]), hand([1, 'long'], 150, 260, 3, 85, 'b'),
+          ring([1, 'number'], ...onClock(150, 260, 88, 3), 20, 20, 'y'),
+          write([1, 'pointing'], '4:03', 440, 200, 56), cross([1, 'at'], 385, 170, 110, 60),
+          arrow([2, 'means'], [260, 262], [360, 300], 'y'), write([2, '15'], '4:15', 440, 310, 56, 'y'), write([2, 'minutes'], '15 minutes, not 3', 440, 365, 24, 'y'),
         ],
         pictures: [{ kind: 'cards', wrong: '4:03', right: '4:15' }] },
     ],
@@ -113,20 +162,20 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'clock', h: 3, m: 27 }] },
       { title: 'The long hand is between numbers', text: 'Look at the long hand. It is not on a number at all. It is sitting between the 5 and the 6. So counting by 5s on its own will not get us there.',
         beats: [
-          { say: 'Look at the long hand. It is not on a number at all.', pic: 0, effect: 'draw' },
+          { say: 'Look at the long hand. It is not on a number at all.', pic: 0 },
           { say: 'It is sitting between the 5 and the 6.' },
           { say: 'So counting by 5s on its own will not get us there.', write: '5s alone is not enough' },
         ],
         pictures: [{ kind: 'clock', h: 3, m: 27 }] },
       { title: 'The big idea', text: 'Count by 5s to the last number the long hand passed. Then count on by 1s for the little marks.',
         beats: [
-          { say: 'Count by 5s to the last number the long hand passed.', pic: 0, effect: 'draw' },
+          { say: 'Count by 5s to the last number the long hand passed.', pic: 0 },
           { say: 'Then count on by 1s for the little marks.' },
         ],
         pictures: [{ kind: 'clock', h: 3, m: 27, fives: true }] },
       { title: 'Hour first, then 5s', text: 'First the short hand, like always. It is just past the 3, so the hour is 3. Now the long hand. It has already gone past the 5. So count by 5s to the 5: 5, 10, 15, 20, 25.',
         beats: [
-          { say: 'First the short hand, like always.', pic: 0, effect: 'draw' },
+          { say: 'First the short hand, like always.', pic: 0 },
           { say: 'It is just past the 3, so the hour is 3.', write: 'Hour: 3' },
           { say: 'Now the long hand. It has already gone past the 5.' },
           { say: 'So count by 5s to the 5: 5, 10, 15, 20, 25.' },
@@ -134,7 +183,7 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'clock', h: 3, m: 27, fives: true }] },
       { title: 'Count on by 1s', text: 'Now the little marks. Each one is 1 more minute. We stopped at 25, so keep going: 26, 27. That is 27 minutes.',
         beats: [
-          { say: 'Now the little marks.', pic: 0, effect: 'draw' },
+          { say: 'Now the little marks.', pic: 0 },
           { say: 'Each one is 1 more minute.', write: 'each little mark = 1 minute' },
           { say: 'We stopped at 25, so keep going: 26, 27.', pic: 1 },
           { say: 'That is 27 minutes.' },
@@ -191,19 +240,19 @@ export const G3M2: Lesson[] = [
       { title: 'A clock does not show how long', text: 'A clock is good at one thing: telling you what time it is right now. It does not tell you how long something took. For that we have to count the minutes in between.',
         beats: [
           { say: 'A clock is good at one thing: telling you what time it is right now.' },
-          { say: 'It does not tell you how long something took.', pic: 0, effect: 'draw' },
+          { say: 'It does not tell you how long something took.', pic: 0 },
           { say: 'For that we have to count the minutes in between.', write: 'how long = count in between' },
         ],
         pictures: [timeline(3, 0, 60, { points: [{ at: 10, label: 'start' }, { at: 45, label: 'end' }] })] },
       { title: 'The big idea', text: 'Start at the start time. Jump to the end time and add up the jumps.',
         beats: [
-          { say: 'Start at the start time.', pic: 0, effect: 'draw' },
+          { say: 'Start at the start time.', pic: 0 },
           { say: 'Jump to the end time and add up the jumps.' },
         ],
         pictures: [timeline(3, 0, 60, { points: [{ at: 10, label: 'start' }, { at: 45, label: 'end' }] })] },
       { title: 'Jump by 10s', text: 'We start at 3:10 and hop along in tens. 3:20, 3:30, 3:40. That is 3 hops of 10, so 30 minutes so far.',
         beats: [
-          { say: 'We start at 3:10 and hop along in tens.', pic: 0, effect: 'draw' },
+          { say: 'We start at 3:10 and hop along in tens.', pic: 0 },
           { say: '3:20, 3:30, 3:40.' },
           { say: 'That is 3 hops of 10, so 30 minutes so far.', write: 'hop in 10s, then the bit left over' },
         ],
@@ -211,14 +260,14 @@ export const G3M2: Lesson[] = [
           jumps: [{ from: 10, to: 20, label: '10' }, { from: 20, to: 30, label: '10' }, { from: 30, to: 40, label: '10' }], motion: true })] },
       { title: 'Jump the rest', text: 'We are at 3:40 now, and the end is 3:45. That last little hop is 5 minutes.',
         beats: [
-          { say: 'We are at 3:40 now, and the end is 3:45.', pic: 0, effect: 'draw' },
+          { say: 'We are at 3:40 now, and the end is 3:45.', pic: 0 },
           { say: 'That last little hop is 5 minutes.' },
         ],
         pictures: [timeline(3, 0, 60, { points: [{ at: 10, label: 'start' }, { at: 45, label: 'end' }],
           jumps: [{ from: 10, to: 20, label: '10' }, { from: 20, to: 30, label: '10' }, { from: 30, to: 40, label: '10' }, { from: 40, to: 45, label: '5' }], motion: true })] },
       { title: 'Add up the jumps', text: 'Now add up every hop we made. 30 minutes and 5 minutes make 35 minutes. The game is 35 minutes long.',
         beats: [
-          { say: 'Now add up every hop we made.', pic: 0, effect: 'draw' },
+          { say: 'Now add up every hop we made.', pic: 0 },
           { say: '30 minutes and 5 minutes make 35 minutes.', pic: 1 },
           { say: 'The game is 35 minutes long.' },
         ],
@@ -275,27 +324,27 @@ export const G3M2: Lesson[] = [
         pictures: [gramScale(700)] },
       { title: 'Not every mark has a number', text: 'Look at where the needle stopped. It is somewhere between 600 and 800. There is no number printed right where it is pointing.',
         beats: [
-          { say: 'Look at where the needle stopped.', pic: 0, effect: 'draw' },
+          { say: 'Look at where the needle stopped.', pic: 0 },
           { say: 'It is somewhere between 600 and 800.' },
           { say: 'There is no number printed right where it is pointing.' },
         ],
         pictures: [gramScale(700)] },
       { title: 'The big idea', text: 'Find how much each little mark is worth. Then count the marks to the needle.',
         beats: [
-          { say: 'Find how much each little mark is worth.', pic: 0, effect: 'draw' },
+          { say: 'Find how much each little mark is worth.', pic: 0 },
           { say: 'Then count the marks to the needle.' },
         ],
         pictures: [gramScale(700)] },
       { title: 'What is one mark worth?', text: 'Start at 0 and go up to 200. Count the little marks in between: there are 2 of them. So 200 split over 2 marks means each mark is worth 100 grams.',
         beats: [
-          { say: 'Start at 0 and go up to 200.', pic: 0, effect: 'draw' },
+          { say: 'Start at 0 and go up to 200.', pic: 0 },
           { say: 'Count the little marks in between: there are 2 of them.', pic: 1 },
           { say: 'So 200 split over 2 marks means each mark is worth 100 grams.', write: 'one mark = 100 g' },
         ],
         pictures: [gramScale(700), { kind: 'table', head: ['Marks from 0', 'Grams'], rows: [['1', '100'], ['2', '200']], motion: true }] },
       { title: 'Count to the needle', text: 'Now find the last number before the needle. That is 600. One more mark takes us to 700. So the apples weigh 700 grams.',
         beats: [
-          { say: 'Now find the last number before the needle. That is 600.', pic: 0, effect: 'draw' },
+          { say: 'Now find the last number before the needle. That is 600.', pic: 0 },
           { say: 'One more mark takes us to 700.', pic: 1 },
           { say: 'So the apples weigh 700 grams.' },
         ],
@@ -304,7 +353,7 @@ export const G3M2: Lesson[] = [
         beats: [
           { say: 'One more thing: which unit do we use?' },
           { say: 'Light things, like a bag of apples, are weighed in grams.' },
-          { say: 'Heavy things, like a dog, are weighed in kilograms.', pic: 0, effect: 'draw' },
+          { say: 'Heavy things, like a dog, are weighed in kilograms.', pic: 0 },
           { say: 'And 1 kilogram is 1,000 grams.', write: '1 kg = 1,000 g' },
         ],
         pictures: [kgScale(12, 20, 1, 5)] },
@@ -352,27 +401,27 @@ export const G3M2: Lesson[] = [
         pictures: [mlJug(500)] },
       { title: 'The top is between numbers', text: 'Look at the top of the juice. It sits between 400 and 600. There is no number written right at that line.',
         beats: [
-          { say: 'Look at the top of the juice.', pic: 0, effect: 'draw' },
+          { say: 'Look at the top of the juice.', pic: 0 },
           { say: 'It sits between 400 and 600.' },
           { say: 'There is no number written right at that line.' },
         ],
         pictures: [mlJug(500)] },
       { title: 'The big idea', text: 'Find how much each little mark is worth. Then count the marks up to the top of the water.',
         beats: [
-          { say: 'Find how much each little mark is worth.', pic: 0, effect: 'draw' },
+          { say: 'Find how much each little mark is worth.', pic: 0 },
           { say: 'Then count the marks up to the top of the water.' },
         ],
         pictures: [mlJug(500)] },
       { title: 'What is one mark worth?', text: 'Start at the bottom, at 0, and go up to 200. There are 2 little marks in that space. So each mark is worth 100 milliliters.',
         beats: [
-          { say: 'Start at the bottom, at 0, and go up to 200.', pic: 0, effect: 'draw' },
+          { say: 'Start at the bottom, at 0, and go up to 200.', pic: 0 },
           { say: 'There are 2 little marks in that space.', pic: 1 },
           { say: 'So each mark is worth 100 milliliters.', write: 'one mark = 100 mL' },
         ],
         pictures: [mlJug(500), { kind: 'table', head: ['Marks from 0', 'Milliliters'], rows: [['1', '100'], ['2', '200']], motion: true }] },
       { title: 'Count up to the top', text: 'Now find the last number below the juice. That is 400. Count up one mark: 500. So there are 500 milliliters of juice in the jug.',
         beats: [
-          { say: 'Now find the last number below the juice. That is 400.', pic: 0, effect: 'draw' },
+          { say: 'Now find the last number below the juice. That is 400.', pic: 0 },
           { say: 'Count up one mark: 500.', pic: 1 },
           { say: 'So there are 500 milliliters of juice in the jug.' },
         ],
@@ -381,7 +430,7 @@ export const G3M2: Lesson[] = [
         beats: [
           { say: 'Now, which unit do we use?' },
           { say: 'A small amount, like a cup of water, is measured in milliliters.' },
-          { say: 'A big amount, like a bucket, is measured in liters.', pic: 0, effect: 'draw' },
+          { say: 'A big amount, like a bucket, is measured in liters.', pic: 0 },
           { say: 'And 1 liter is 1,000 milliliters.', write: '1 L = 1,000 mL' },
         ],
         pictures: [literJug(7, 10, 1, 2)] },
@@ -429,26 +478,26 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'numline', min: 30, max: 40, ticks: 10, points: [{ at: 37, label: '37' }] }] },
       { title: 'The first number can fool you', text: 'Careful here. 37 starts with a 3, so it is tempting to say 30. But the first digit does not tell you which ten is closer.',
         beats: [
-          { say: 'Careful here. 37 starts with a 3, so it is tempting to say 30.', pic: 0, effect: 'draw' },
+          { say: 'Careful here. 37 starts with a 3, so it is tempting to say 30.', pic: 0 },
           { say: 'But the first digit does not tell you which ten is closer.', write: 'closer, not first digit' },
         ],
         pictures: [{ kind: 'numline', min: 30, max: 40, ticks: 10, points: [{ at: 37, label: '37' }] }] },
       { title: 'The big idea', text: 'A number rounds to the ten it is closer to. If it is right in the middle, it goes up.',
         beats: [
-          { say: 'A number rounds to the ten it is closer to.', pic: 0, effect: 'draw' },
+          { say: 'A number rounds to the ten it is closer to.', pic: 0 },
           { say: 'If it is right in the middle, it goes up.' },
         ],
         pictures: [{ kind: 'numline', min: 30, max: 40, ticks: 10, points: [{ at: 37, label: '37' }] }] },
       { title: 'Find the two tens', text: 'First, find the two tens that 37 lives between. It is more than 30 and less than 40. So 30 and 40 are our two tens, one on each side.',
         beats: [
-          { say: 'First, find the two tens that 37 lives between.', pic: 0, effect: 'draw' },
+          { say: 'First, find the two tens that 37 lives between.', pic: 0 },
           { say: 'It is more than 30 and less than 40.' },
           { say: 'So 30 and 40 are our two tens, one on each side.' },
         ],
         pictures: [{ kind: 'numline', min: 30, max: 40, ticks: 10, labels: 'ends', points: [{ at: 37, label: '37' }] }] },
       { title: 'Which ten is closer?', text: 'Now count the hops each way. From 37 up to 40 is 3 hops. From 37 back down to 30 is 7 hops. 3 is fewer than 7, so 40 is closer. 37 rounds to 40.',
         beats: [
-          { say: 'Now count the hops each way.', pic: 0, effect: 'draw' },
+          { say: 'Now count the hops each way.', pic: 0 },
           { say: 'From 37 up to 40 is 3 hops. From 37 back down to 30 is 7 hops.' },
           { say: '3 is fewer than 7, so 40 is closer. 37 rounds to 40.', write: 'fewer hops → that is the one' },
         ],
@@ -456,7 +505,7 @@ export const G3M2: Lesson[] = [
           jumps: [{ from: 37, to: 38 }, { from: 38, to: 39 }, { from: 39, to: 40 }], motion: true }] },
       { title: 'Right in the middle', text: 'Now what about 35? It sits exactly halfway, 5 hops from 30 and 5 hops from 40. When it is right in the middle, we send it up. So 35 rounds to 40.',
         beats: [
-          { say: 'Now what about 35?', pic: 0, effect: 'draw' },
+          { say: 'Now what about 35?', pic: 0 },
           { say: 'It sits exactly halfway, 5 hops from 30 and 5 hops from 40.' },
           { say: 'When it is right in the middle, we send it up.', write: 'in the middle → goes up' },
           { say: 'So 35 rounds to 40.', pic: 1 },
@@ -505,27 +554,27 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'numline', min: 200, max: 300, ticks: 10, points: [{ at: 270, label: '270' }] }] },
       { title: 'The hundreds are far apart', text: 'From 200 up to 300 is a long stretch. Counting one at a time would take us all day. So we hop by 10s instead.',
         beats: [
-          { say: 'From 200 up to 300 is a long stretch.', pic: 0, effect: 'draw' },
+          { say: 'From 200 up to 300 is a long stretch.', pic: 0 },
           { say: 'Counting one at a time would take us all day.' },
           { say: 'So we hop by 10s instead.', write: 'big gaps → hop by 10s' },
         ],
         pictures: [{ kind: 'numline', min: 200, max: 300, ticks: 10, points: [{ at: 270, label: '270' }] }] },
       { title: 'The big idea', text: 'A number rounds to the hundred it is closer to. If it is right in the middle, it goes up.',
         beats: [
-          { say: 'A number rounds to the hundred it is closer to.', pic: 0, effect: 'draw' },
+          { say: 'A number rounds to the hundred it is closer to.', pic: 0 },
           { say: 'If it is right in the middle, it goes up.' },
         ],
         pictures: [{ kind: 'numline', min: 200, max: 300, ticks: 10, points: [{ at: 270, label: '270' }] }] },
       { title: 'Find the two hundreds', text: 'Same first move as before. Find the two hundreds that 270 lives between. It is more than 200 and less than 300, so those are our two.',
         beats: [
           { say: 'Same first move as before.' },
-          { say: 'Find the two hundreds that 270 lives between.', pic: 0, effect: 'draw' },
+          { say: 'Find the two hundreds that 270 lives between.', pic: 0 },
           { say: 'It is more than 200 and less than 300, so those are our two.' },
         ],
         pictures: [{ kind: 'numline', min: 200, max: 300, ticks: 10, labels: 'ends', points: [{ at: 270, label: '270' }] }] },
       { title: 'Which hundred is closer?', text: 'Now count the hops of 10 each way. From 270 up to 300 is 3 hops. Back down to 200 is 7 hops. 300 is closer, so 270 rounds to 300.',
         beats: [
-          { say: 'Now count the hops of 10 each way.', pic: 0, effect: 'draw' },
+          { say: 'Now count the hops of 10 each way.', pic: 0 },
           { say: 'From 270 up to 300 is 3 hops. Back down to 200 is 7 hops.' },
           { say: '300 is closer, so 270 rounds to 300.', write: 'fewer hops → that is the one' },
         ],
@@ -533,7 +582,7 @@ export const G3M2: Lesson[] = [
           jumps: [{ from: 270, to: 280 }, { from: 280, to: 290 }, { from: 290, to: 300 }], motion: true }] },
       { title: 'Right in the middle', text: 'Now try 250. It sits exactly halfway between 200 and 300. Same rule as before: in the middle, it goes up. So 250 rounds to 300.',
         beats: [
-          { say: 'Now try 250.', pic: 0, effect: 'draw' },
+          { say: 'Now try 250.', pic: 0 },
           { say: 'It sits exactly halfway between 200 and 300.' },
           { say: 'Same rule as before: in the middle, it goes up.', write: 'in the middle → goes up' },
           { say: 'So 250 rounds to 300.', pic: 1 },
@@ -582,34 +631,34 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'blocks', hundreds: 1, tens: 4, ones: 6 }, { kind: 'blocks', hundreds: 1, tens: 2, ones: 8 }] },
       { title: 'Too many ones', text: 'Push all the ones together first. 6 ones and 8 ones make 14 ones. But one place can only hold up to 9, so we cannot just write 14 there.',
         beats: [
-          { say: 'Push all the ones together first.', pic: 0, effect: 'draw' },
+          { say: 'Push all the ones together first.', pic: 0 },
           { say: '6 ones and 8 ones make 14 ones.' },
           { say: 'But one place can only hold up to 9, so we cannot just write 14 there.', write: 'one place holds 0 to 9' },
         ],
         pictures: [{ kind: 'blocks', hundreds: 2, tens: 6, ones: 14 }] },
       { title: 'The big idea', text: 'Add the ones first. If there are 10 or more, trade 10 ones for 1 ten.',
         beats: [
-          { say: 'Add the ones first.', pic: 0, effect: 'draw' },
+          { say: 'Add the ones first.', pic: 0 },
           { say: 'If there are 10 or more, trade 10 ones for 1 ten.' },
         ],
         pictures: [{ kind: 'blocks', hundreds: 2, tens: 6, ones: 14 }] },
       { title: 'Add the ones first', text: 'So here are all our ones in one pile. 6 and 8 make 14 ones. That is 10 or more, which means it is time to trade.',
         beats: [
-          { say: 'So here are all our ones in one pile.', pic: 0, effect: 'draw' },
+          { say: 'So here are all our ones in one pile.', pic: 0 },
           { say: '6 and 8 make 14 ones.' },
           { say: 'That is 10 or more, which means it is time to trade.', write: '10 or more → trade' },
         ],
         pictures: [{ kind: 'blocks', hundreds: 2, tens: 6, ones: 14, motion: true }] },
       { title: 'Trade 10 ones for a ten', text: 'Ring 10 of those ones. Swap the whole ring for 1 ten and slide it over. Now look: 7 tens and 4 ones, and nothing was lost.',
         beats: [
-          { say: 'Ring 10 of those ones.', pic: 0, effect: 'draw' },
+          { say: 'Ring 10 of those ones.', pic: 0 },
           { say: 'Swap the whole ring for 1 ten and slide it over.' },
           { say: 'Now look: 7 tens and 4 ones, and nothing was lost.', pic: 1 },
         ],
         pictures: [{ kind: 'blocks', hundreds: 2, tens: 6, ones: 14, trade: 'ones' }, { kind: 'blocks', hundreds: 2, tens: 7, ones: 4, motion: true }] },
       { title: 'Add the tens and hundreds', text: 'Now the rest is easy. We have 2 hundreds, 7 tens and 4 ones. Read it straight off: 274. So 146 + 128 = 274.',
         beats: [
-          { say: 'Now the rest is easy.', pic: 0, effect: 'draw' },
+          { say: 'Now the rest is easy.', pic: 0 },
           { say: 'We have 2 hundreds, 7 tens and 4 ones. Read it straight off: 274.' },
           { say: 'So 146 + 128 = 274.', pic: 1 },
         ],
@@ -618,7 +667,7 @@ export const G3M2: Lesson[] = [
         beats: [
           { say: 'Here is the mistake almost everyone makes once.' },
           { say: "Don't forget the ten you traded.", pic: 0 },
-          { say: 'It has to join the other tens when you add that column.', pic: 1, effect: 'draw' },
+          { say: 'It has to join the other tens when you add that column.', pic: 1 },
         ],
         pictures: [{ kind: 'cards', wrong: '146 + 128 = 264', right: '146 + 128 = 274' }, { kind: 'columns', rows: ['146', '128'], op: '+', carry: '1 ', places: ['H', 'T', 'O'], answer: '274' }] },
     ],
@@ -657,21 +706,21 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'blocks', hundreds: 3, tens: 5, ones: 2 }] },
       { title: 'Not enough ones', text: 'We have to take away 7 ones. But count what we have: only 2 ones. You cannot take 7 away from 2.',
         beats: [
-          { say: 'We have to take away 7 ones.', pic: 0, effect: 'draw' },
+          { say: 'We have to take away 7 ones.', pic: 0 },
           { say: 'But count what we have: only 2 ones.' },
           { say: 'You cannot take 7 away from 2.' },
         ],
         pictures: [{ kind: 'blocks', hundreds: 3, tens: 5, ones: 2 }] },
       { title: 'The big idea', text: 'Take away the ones first. If there are not enough ones, break 1 ten into 10 ones.',
         beats: [
-          { say: 'Take away the ones first.', pic: 0, effect: 'draw' },
+          { say: 'Take away the ones first.', pic: 0 },
           { say: 'If there are not enough ones, break 1 ten into 10 ones.' },
         ],
         pictures: [{ kind: 'blocks', hundreds: 3, tens: 5, ones: 2 }] },
       { title: 'Break a ten', text: 'So we go next door and borrow. Take 1 ten and break it apart into 10 ones. Now we have 4 tens and 12 ones. Count it all up and it is still 352, just dressed differently.',
         beats: [
           { say: 'So we go next door and borrow.', write: '1 ten = 10 ones' },
-          { say: 'Take 1 ten and break it apart into 10 ones.', pic: 0, effect: 'draw' },
+          { say: 'Take 1 ten and break it apart into 10 ones.', pic: 0 },
           { say: 'Now we have 4 tens and 12 ones.' },
           { say: 'Count it all up and it is still 352, just dressed differently.' },
         ],
@@ -680,13 +729,13 @@ export const G3M2: Lesson[] = [
         beats: [
           { say: 'Now we have plenty of ones: 12 of them.' },
           { say: 'Take 7 of them away.' },
-          { say: 'That leaves 5 ones.', pic: 0, effect: 'draw' },
+          { say: 'That leaves 5 ones.', pic: 0 },
         ],
         pictures: [{ kind: 'blocks', hundreds: 3, tens: 4, ones: 5, motion: true }] },
       { title: 'Take away the tens and hundreds', text: 'Now the tens: 4 take away 2 leaves 2 tens. And the hundreds: 3 take away 1 leaves 2 hundreds. So 352 − 127 = 225. Nia has 225 stickers left.',
         beats: [
           { say: 'Now the tens: 4 take away 2 leaves 2 tens.' },
-          { say: 'And the hundreds: 3 take away 1 leaves 2 hundreds.', pic: 0, effect: 'draw' },
+          { say: 'And the hundreds: 3 take away 1 leaves 2 hundreds.', pic: 0 },
           { say: 'So 352 − 127 = 225. Nia has 225 stickers left.', pic: 1 },
         ],
         pictures: [{ kind: 'blocks', hundreds: 2, tens: 2, ones: 5 }, { kind: 'eq', text: '352 − 127 = 225' }] },
@@ -694,7 +743,7 @@ export const G3M2: Lesson[] = [
         beats: [
           { say: 'Here is the big one.' },
           { say: "Don't flip the ones around to make them easier.", pic: 0 },
-          { say: '2 − 7 is not the same as 7 − 2. Break a ten instead.', pic: 1, effect: 'draw' },
+          { say: '2 − 7 is not the same as 7 − 2. Break a ten instead.', pic: 1 },
         ],
         pictures: [{ kind: 'cards', wrong: '352 − 127 = 235', right: '352 − 127 = 225' }, { kind: 'columns', rows: ['352', '127'], op: '−', places: ['H', 'T', 'O'], answer: '225' }] },
     ],

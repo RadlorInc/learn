@@ -224,12 +224,12 @@ export const GRADE3_MODULE1: Lesson[] = [
         pictures: [{ kind: 'groups', groups: 6, each: 2, obj: 'sock' }] },
       { title: 'Jump by 2s', text: 'Each pair is a jump of 2: 2, 4, 6, 8, 10, 12.',
         beats: [
-          { say: 'Each pair is a jump of 2: 2, 4, 6, 8, 10, 12.', pic: 1, effect: 'draw' },
+          { say: 'Each pair is a jump of 2: 2, 4, 6, 8, 10, 12.', pic: 1 },
         ],
         pictures: [{ kind: 'groups', groups: 6, each: 2, obj: 'sock' }, { kind: 'line', max: 12, step: 2, jumps: 6, motion: true }] },
       { title: 'How many jumps?', text: 'We made 6 jumps of 2, and we landed on 12. 6 × 2 = 12.',
         beats: [
-          { say: 'We made 6 jumps of 2, and we landed on 12.', pic: 0, effect: 'draw' },
+          { say: 'We made 6 jumps of 2, and we landed on 12.', pic: 0 },
           { say: '6 × 2 = 12.', pic: 1 },
         ],
         pictures: [{ kind: 'line', max: 12, step: 2, jumps: 6, show: 'count' }, { kind: 'eq', text: '6 × 2 = 12' }] },
@@ -288,14 +288,14 @@ export const GRADE3_MODULE1: Lesson[] = [
         pictures: [{ kind: 'groups', groups: 4, each: 3, obj: 'wheel' }] },
       { title: 'Jump by 3s', text: 'Each tricycle is a jump of 3: 3, 6, 9, 12. 4 jumps of 3 make 12.',
         beats: [
-          { say: 'Each tricycle is a jump of 3: 3, 6, 9, 12.', pic: 1, effect: 'draw' },
+          { say: 'Each tricycle is a jump of 3: 3, 6, 9, 12.', pic: 1 },
           { say: '4 jumps of 3 make 12.' },
         ],
         pictures: [{ kind: 'groups', groups: 4, each: 3, obj: 'wheel' }, { kind: 'line', max: 12, step: 3, jumps: 4, motion: true }] },
       { title: 'Now cars', text: 'A car has 4 wheels. Jump by 4s: 4, 8, 12. 3 jumps of 4 make 12.',
         beats: [
           { say: 'A car has 4 wheels.', pic: 0 },
-          { say: 'Jump by 4s: 4, 8, 12.', pic: 1, effect: 'draw' },
+          { say: 'Jump by 4s: 4, 8, 12.', pic: 1 },
           { say: '3 jumps of 4 make 12.' },
         ],
         pictures: [{ kind: 'groups', groups: 3, each: 4, obj: 'wheel' }, { kind: 'line', max: 12, step: 4, jumps: 3, motion: true }] },
@@ -484,7 +484,7 @@ export const GRADE3_MODULE1: Lesson[] = [
         pictures: [{ kind: 'scatter', n: 20, obj: 'chair' }] },
       { title: 'Count by 4s', text: 'Count by 4s until you reach 20: 4, 8, 12, 16, 20. That is 5 jumps.',
         beats: [
-          { say: 'Count by 4s until you reach 20: 4, 8, 12, 16, 20.', pic: 0, effect: 'draw' },
+          { say: 'Count by 4s until you reach 20: 4, 8, 12, 16, 20.', pic: 0 },
           { say: 'That is 5 jumps.' },
         ],
         pictures: [{ kind: 'line', max: 20, step: 4, jumps: 5, show: 'count', motion: true }] },

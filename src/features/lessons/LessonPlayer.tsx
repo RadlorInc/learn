@@ -22,6 +22,9 @@ import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { syncLesson } from '@/infra/storage/lessonSync'
 import { Pic, tapCue, pill, INK } from './Pictures'
+import { Ink, wrap } from './Diagrams'
+import { Chalkboard } from './Chalkboard'
+import { beatMs } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
@@ -60,7 +63,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     // fast for a long line. Either way the lines and the board move together.
     if (audio) return speakSteps(beats.map(b => b.say), { onStep: i => setShown(i + 1) })
     let t = 0
-    const ids = beats.map((b, i) => { const at = t; t += Math.min(6500, 1500 + b.say.length * 55); return setTimeout(() => setShown(i + 1), at) })
+    const ids = beats.map((b, i) => { const at = t; t += beatMs(b.say); return setTimeout(() => setShown(i + 1), at) })
     return () => ids.forEach(clearTimeout)
   }, [beats, audio, replay])
 
@@ -206,7 +209,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     // ponytail: on Screen 1 the closing question becomes the button ("How many…? Let's see"), split out of the approved text.
     const ask = s.screen === 0 ? sc.text.match(/^([\s\S]*?[.!])\s+([^.!?]+\?)$/) : null
     // "One thing not to do": the Not this / Do this cards run full width, the explanation underneath (the template's Trap door).
-    stack = sc.pictures.length > 0 && sc.pictures.every(p => p.kind === 'cards')
+    stack = !sc.chalk && sc.pictures.length > 0 && sc.pictures.every(p => p.kind === 'cards')
     crumb = `Screen ${s.screen + 1} of 9`; at = s.screen
     title = sc.title
     // The board: a picture a beat draws waits for that beat; one no beat names is up from the start. Her written
@@ -217,12 +220,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
       // On the board before she says anything: written on in turn, so the screen opens by being drawn, not by being there.
       ...sc.pictures.flatMap((p, k) => (drawn.includes(k) ? [] : [<Written key={`p${k}`} after={k}><Pic p={p} /></Written>])),
       ...(sc.beats?.slice(0, shown).flatMap((b, i) => [
-        ...(b.pic === undefined ? [] : [<Written key={`p${b.pic}`} how={b.effect}><Pic p={sc.pictures[b.pic]} /></Written>]),
-        // A written line is always written on — `effect` chooses how she puts the PICTURE up.
-        ...(b.write ? [<Written key={`w${i}`}><p style={board}>{b.write}</p></Written>] : []),
+        ...(b.pic === undefined ? [] : [<Written key={`p${b.pic}`}><Pic p={sc.pictures[b.pic]} /></Written>]),
+        ...(b.write ? [<Written key={`w${i}`}><Ink rows={wrap(b.write, 26).map(t => ({ t, s: 28, w: 900 }))} box="#fff" /></Written>] : []),
       ]) ?? []),
     ]
-    picture = stack
+    picture = sc.chalk && sc.beats
+      ? <Chalkboard key={`${s.screen}-${replay}`} marks={sc.chalk} says={sc.beats.map(b => b.say)} shown={shown} label={sc.text} />
+      : stack
       ? <div key={`${s.screen}-${replay}`} style={{ flex: 1 }}>{onBoard}</div>
       : <div key={`${s.screen}-${replay}`} style={sc.scene ? { ...stage, background: `center / cover url(/assets/lessons/${sc.scene}.webp)`, borderRadius: 20, padding: '24px 12px' } : stage}>
         {onBoard}
@@ -281,9 +285,6 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
 
 const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', padding: '14px 22px', borderRadius: 20, background: '#ffd166', border: `4px solid ${INK}`,
   boxShadow: `5px 5px 0 ${INK}`, fontWeight: 800, fontSize: 20, color: INK, '--lp-tilt': '-2deg', transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' } as CSSProperties
-/** Puts one thing on the board the way a hand does: written on, left to right. `after` staggers the things
- *  that are already up when a screen opens, so they arrive in order instead of all at once.
- *  (Keyframes in ./Pictures; the global prefers-reduced-motion rule there turns this off for a child who asked.) */
 /**
  * When does this stroke's own picture become visible? A `motion: true` picture reveals its parts on a stagger
  * (`lp-in` with delays of 0, 0.7s, 1.4s…), and a trace that runs while its part is still at opacity 0 is spent
@@ -294,9 +295,7 @@ const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', paddi
 function fadesInAt(el: Element, stop: Element): number {
   for (let n: Element | null = el; n && n !== stop; n = n.parentElement) {
     const cs = getComputedStyle(n)
-    // ⚠️ MATCH THE NAME, NOT A SUBSTRING OF IT. The first version asked `includes('lp-in')` — and the
-    // stroke's own ink fade is called `lp-fill`, which contains `lp-in`, so every walk stopped on the
-    // element itself at delay 0 and the whole thing was inert while looking correct.
+    // ⚠️ MATCH THE NAME, NOT A SUBSTRING OF IT (an animation named `lp-fill` contains `lp-in`).
     const names = cs.animationName.split(',').map(x => x.trim())
     const at = names.indexOf('lp-in')
     if (at >= 0) return parseFloat(cs.animationDelay.split(',')[at] ?? '0') * 1000 || 0
@@ -304,47 +303,61 @@ function fadesInAt(el: Element, stop: Element): number {
   return 0
 }
 
-/** Traces every stroke inside, each over its OWN length, one just behind the last — a pen going round the
- *  shape rather than the whole outline arriving at once. Web Animations, not CSS, for two reasons: the length
- *  is per element and only the DOM knows it, and an `animate()` with the default fill leaves nothing behind,
- *  so an authored dashed line (a symmetry line, a transformed shape) keeps its dashes when the trace ends. */
-function useTracedStrokes(on: boolean) {
+/**
+ * The pen. Everything on the board is SVG, and this draws it the way a hand does, one thing after another in
+ * document order: a line, shape or outline is traced over its own length and its colour follows; a letter (one
+ * `tspan` each, see `letters` in ./Diagrams) has its outline written and then its ink filled in.
+ * Web Animations, not CSS: a trace needs each path's own length, which only the DOM knows. `fill: 'backwards'` keeps a
+ * thing invisible until the pen reaches it; nothing is held after, so an authored dash or fill-opacity is untouched.
+ * A picture with no SVG in it (the object pictures: cookies, plates) pops up instead.
+ */
+function usePen(start: number) {
   const host = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (!on || !host.current) return
+    const root = host.current
+    if (!root || typeof root.animate !== 'function') return
     // A child who asked for less motion gets none: the global CSS rule cannot reach a script-driven animation.
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    const els = host.current.querySelectorAll<SVGGeometryElement>('svg :is(path, line, rect, circle, ellipse, polyline, polygon)')
-    els.forEach((el, i) => {
-      const len = el.getTotalLength?.() ?? 0
+    const parts = [...root.querySelectorAll<SVGGeometryElement | SVGTextContentElement>('svg :is(path, line, rect, circle, ellipse, polyline, polygon, text, tspan[data-c])')]
+      .filter(el => el.tagName !== 'text' || !el.querySelector('tspan[data-c]'))
+    if (!parts.length) {
+      root.animate([{ opacity: 0, transform: 'scale(.85)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 350, delay: start, easing: 'ease-out', fill: 'backwards' })
+      return
+    }
+    const isText = (el: Element) => el.tagName === 'text' || el.tagName === 'tspan'
+    // Paced so a long card is written in about the time she takes to say it, never slower than a pen.
+    const steps = parts.map(el => (isText(el) ? 45 : 22))
+    const k = Math.min(1, 3500 / steps.reduce((a, b) => a + b, 0))
+    let t = start
+    parts.forEach((el, i) => {
+      const cs = getComputedStyle(el), fo = cs.fillOpacity || '1'
+      const delay = t + fadesInAt(el, root)
+      t += steps[i] * k
+      if (isText(el)) {
+        const L = (parseFloat(cs.fontSize) || 20) * 4, pen = { stroke: cs.fill, strokeWidth: '1.4', strokeDasharray: `${L}` }
+        el.animate([
+          { ...pen, strokeDashoffset: `${L}`, fillOpacity: 0 },
+          { ...pen, strokeDashoffset: '0', fillOpacity: 0, offset: 0.6 },
+          { ...pen, strokeDashoffset: '0', fillOpacity: fo },
+        ], { duration: 550, delay, easing: 'ease-out', fill: 'backwards' })
+        return
+      }
+      const len = 'getTotalLength' in el ? el.getTotalLength?.() ?? 0 : 0
       if (!len) return
-      el.animate(
-        [{ strokeDasharray: `${len}`, strokeDashoffset: `${len}` }, { strokeDasharray: `${len}`, strokeDashoffset: '0' }],
-        { duration: 700, delay: Math.min(i * 22, 600) + fadesInAt(el, host.current!), easing: 'ease-out' },
-      )
+      el.animate([
+        { strokeDasharray: `${len}`, strokeDashoffset: `${len}`, fillOpacity: 0 },
+        { strokeDasharray: `${len}`, strokeDashoffset: '0', fillOpacity: fo },
+      ], { duration: 700, delay, easing: 'ease-out', fill: 'backwards' })
     })
-  }, [on])
+  }, [start])
   return host
 }
 
-function Written({ children, after = 0, how = 'write' }: { children: ReactNode; after?: number; how?: 'write' | 'draw' | 'pop' }) {
-  // A real box, not `display: contents` — that generates no box, so the clip-path has nothing to clip and the
-  // whole thing silently appears instantly. It is a column so what is inside still centres itself as it did.
-  const traced = useTracedStrokes(how === 'draw')
-  const box: CSSProperties = { display: 'flex', flexDirection: 'column' }
-  const delay = `${after * 0.12}s`
-  // `draw` animates the SVG's own strokes (class + keyframes in ./Pictures), so the wrapper must NOT also clip:
-  // a clip sweeping across a tracing outline reads as neither, and hides the half the tracing has reached.
-  // No `after` stagger here on purpose: animation-delay does not inherit, so setting it on this wrapper would
-  // do nothing to the strokes inside — an inert line that reads as a working one. Only the from-the-start
-  // pictures stagger, and those are written on.
-  if (how === 'draw') return <div ref={traced} className="lp-draw" style={box}>{children}</div>
-  return <div style={{ ...box, animation: `${how === 'pop' ? 'lp-pop .35s' : 'lp-write .55s'} ease-out ${delay} both` }}>{children}</div>
+/** Puts one thing on the board, drawn by the pen. `after` staggers the things already up when a screen opens. */
+function Written({ children, after = 0 }: { children: ReactNode; after?: number }) {
+  // A real box, a column so what is inside still centres itself.
+  return <div ref={usePen(after * 900)} style={{ display: 'flex', flexDirection: 'column' }}>{children}</div>
 }
 
 const said: CSSProperties = { margin: 0, fontSize: 'clamp(19px, 2.4vw, 24px)', lineHeight: 1.35, color: INK, fontWeight: 600, transition: 'opacity .4s ease' }
-// What she writes on the board: it appears as she says the line and stays up, the way a real board does.
-const board: CSSProperties = { margin: 0, alignSelf: 'center', background: '#fff', border: `4px solid ${INK}`, borderRadius: 16, padding: '8px 20px',
-  boxShadow: `4px 4px 0 ${INK}`, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(22px, 3vw, 30px)', color: INK, animation: 'lp-pop .3s ease-out' }
-
 const askBtn: CSSProperties = { ...primary, flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '12px 22px', maxWidth: 440 }

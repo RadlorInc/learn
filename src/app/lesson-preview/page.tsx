@@ -11,6 +11,7 @@ import { notFound, useSearchParams } from 'next/navigation'
 import { Pic, INK, PAGE_BG, LESSON_KEYFRAMES } from '@/features/lessons/Pictures'
 import { findModule } from '@/features/lessons/modules'
 import { TopicPicker } from '@/features/lessons/TopicPicker'
+import { Chalkboard } from '@/features/lessons/Chalkboard'
 import { solutionOf, showAnswer, stepsOf, type Picture, type Problem } from '@/features/lessons/script'
 
 const SAMPLES: [string, Picture][] = [
@@ -61,6 +62,29 @@ function Preview() {
   if (params.get('picker')) {
     return <TopicPicker childName="Ava" initial={['g4m2-t1', 'g4m2-t3']} canEdit onBack={() => history.back()}
       onSave={async ids => { console.log('[preview] save', ids); return params.get('picker') === 'notready' ? 'not_ready' : 'ok' }} />
+  }
+  // ?chalk=g5m1 (&topic=g5m1-t3): every chalkboard of a module in its finished state, each beat's lines under it.
+  const cm = findModule(params.get('chalk'))
+  if (cm) {
+    const only = params.get('topic')
+    return (
+      <div style={{ background: PAGE_BG, minHeight: '100dvh', padding: 16 }}>
+        {cm.lessons.filter(l => !only || l.id === only).map(l => (
+          <section key={l.id} id={l.id} style={{ marginBottom: 32 }}>
+            <h2>{l.id} · {l.title}</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(460px, 1fr))', gap: 14 }}>
+              {l.screens.map((s, i) => s.chalk && s.beats && (
+                <div key={i} data-screen={`${l.id}-${i + 1}`} style={card}>
+                  <b>Screen {i + 1}: {s.title}</b>
+                  <Chalkboard marks={s.chalk} says={s.beats.map(b => b.say)} shown={s.beats.length} label={s.text} still />
+                  <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13 }}>{s.beats.map((b, k) => <li key={k}>{b.say}</li>)}</ol>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    )
   }
   const m = findModule(params.get('module'))
   if (!m) {

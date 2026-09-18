@@ -8,7 +8,7 @@
  */
 import type { CSSProperties } from 'react'
 import { scratchLineMax, type Obj, type Picture } from './script'
-import { Diagram } from './Diagrams'
+import { Diagram, Ink, wrap, useTextWidth, type InkRow } from './Diagrams'
 
 export const INK = '#2a1c14', SOFT = '#6d4c3d', ACCENT = '#ff6b4a', TEAL = '#0f8a7a', GOOD = '#1f7a43', BAD = '#c1121f', CARD = '#FFFFFF', LINE = '#d9c3a0'
 
@@ -83,30 +83,10 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
 
   switch (p.kind) {
     case 'eq':
-      return (
-        <div style={{ ...label, fontSize: 'clamp(26px, 5vw, 36px)', textAlign: 'center', lineHeight: 1.35 }}>
-          {p.text}
-          {p.lines?.map((l, i) => <div key={i} style={{ fontSize: 'clamp(22px, 4vw, 30px)', ...anim(i * 700, true) }}>{l}</div>)}
-        </div>
-      )
+      return <Ink rows={[...wrap(p.text, 22).map(t => ({ t, s: 34 })), ...(p.lines ?? []).flatMap(l => wrap(l, 24).map(t => ({ t, s: 28 })))]} />
 
     case 'cards':
-      // "One thing not to do": a big Not this card beside a big Do this card (the template's Trap door).
-      return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
-          {([[p.wrong, false], [p.right, true]] as const).map(([t, ok]) => (
-            <div key={String(ok)} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '18px 22px', borderRadius: 22,
-              border: `4px solid ${INK}`, background: ok ? '#b7f0c6' : '#ffb4b4' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontWeight: 800, fontSize: 'clamp(20px, 2.4vw, 26px)', color: INK }}>
-                <span aria-hidden style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  background: ok ? GOOD : BAD, border: `3px solid ${INK}`, color: '#fff', fontSize: 20, fontWeight: 900 }}>{ok ? '✓' : '✕'}</span>
-                {ok ? 'Do this' : 'Not this'}
-              </span>
-              <span style={{ ...label, fontSize: 'clamp(28px, 3.6vw, 38px)' }}>{t}</span>
-            </div>
-          ))}
-        </div>
-      )
+      return <Cards wrong={p.wrong} right={p.right} />
 
     case 'groups': {
       let k = 0
@@ -262,6 +242,20 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
   }
 }
 
+/** "One thing not to do": a Not this card beside a Do this card (the template's Trap door), the same size so they read as a pair. */
+function Cards({ wrong, right }: { wrong: string; right: string }) {
+  const tw = useTextWidth()
+  const card = (t: string, ok: boolean): InkRow[] => [{ t: ok ? '✓ Do this' : '✕ Not this', s: 24, fill: ok ? GOOD : BAD }, ...wrap(t, 20).map(x => ({ t: x, s: 32 }))]
+  const both = [card(wrong, false), card(right, true)]
+  const minW = Math.max(...both.flat().map(r => tw(r.t, r.s, 800)))
+  const minRows = Math.max(...both.map(c => c.length))
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, alignItems: 'start' }}>
+      {both.map((rows, k) => <Ink key={k} rows={rows} box={k ? '#b7f0c6' : '#ffb4b4'} a="start" minW={minW} minRows={minRows} />)}
+    </div>
+  )
+}
+
 /** An obviously unfair split (e.g. 12 → 6, 4, 2) that still adds up to the total. */
 export function unevenSplit(total: number, groups: number): number[] {
   const w = Array.from({ length: groups }, (_, g) => groups - g)
@@ -281,18 +275,6 @@ export const LESSON_KEYFRAMES = `
 @keyframes lp-turn { to { transform: rotate(90deg) } }
 @keyframes lp-pop { from { transform: scale(.85) rotate(var(--lp-tilt, 0deg)); opacity: 0 } to { transform: scale(1) rotate(var(--lp-tilt, 0deg)); opacity: 1 } }
 @keyframes lp-nudge { 50% { transform: scale(1.06) } }
-/* Anything going up on the board arrives the way a hand puts it there, never just by being present. */
-/* WRITTEN: swept on left to right. Right for words, equations, tables, anything read in that order. */
-@keyframes lp-write { from { clip-path: inset(0 100% 0 0) } to { clip-path: inset(0 -6px 0 0) } }
-/* DRAWN: the outline traces itself and the colour arrives behind it. Right for a shape, a clock, a diagram.
- * The INK (fills and lettering) fades in here; the strokes are traced in LessonPlayer's Written wrapper, because a
- * real trace needs each path's own length and CSS cannot ask for it. A single fixed dash long enough for the
- * longest path covers a short one completely — which is why the first version only faded small shapes in. */
-/* Named lp-FILL, not lp-ink: "lp-ink".includes("lp-in") is TRUE, and the code that walks up from a stroke
- * looking for its part's lp-in fade matched this on the stroke itself and stopped at delay 0 — inert, and
- * it read as working. Exact-matching fixed it; the rename means a substring test cannot bring it back. */
-@keyframes lp-fill { from { fill-opacity: 0 } to { fill-opacity: 1 } }
-.lp-draw svg :is(path, line, rect, circle, ellipse, polyline, polygon, text) { animation: lp-fill .9s ease-out backwards }
 button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #2a1c14 !important }
 button:disabled { opacity: .5; box-shadow: none !important; cursor: default }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-delay: 0ms !important } }
