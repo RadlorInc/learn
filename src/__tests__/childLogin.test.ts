@@ -94,7 +94,7 @@ describe('/api/child-login', () => {
     expect(await r.json()).toEqual({ ok: true, username: 'aarav7' })
     expect(adminCalls().map(c => [c.method, c.path, c.auth, c.body])).toEqual([
       ['POST', '/auth/v1/admin/users', 'Bearer service-key',
-        { email: 'aarav7@learner.adaptivelearn.invalid', password: 'secret1', email_confirm: true, user_metadata: { full_name: 'Aarav' } }],
+        { email: 'aarav7@learner.adaptivelearn.invalid', password: 'secret1', email_confirm: true, user_metadata: { full_name: 'Aarav', must_change_password: false } }],
       ['POST', '/rest/v1/learner_access', 'Bearer service-key', { learner_id: LEARNER, parent_id: CHILD, access_role: 'self' }],
       ['POST', '/rest/v1/profiles', 'Bearer service-key', { id: CHILD, role: 'learner', display_name: 'Aarav' }],
     ])
@@ -117,8 +117,27 @@ describe('/api/child-login', () => {
     const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav8', password: 'newpass1' }))
     expect(await r.json()).toEqual({ ok: true, username: 'aarav8' })
     expect(adminCalls().map(c => [c.method, c.path, c.body])).toEqual([
-      ['PUT', `/auth/v1/admin/users/${CHILD}`, { email: 'aarav8@learner.adaptivelearn.invalid', password: 'newpass1', email_confirm: true }],
+      ['PUT', `/auth/v1/admin/users/${CHILD}`, { email: 'aarav8@learner.adaptivelearn.invalid', password: 'newpass1', email_confirm: true, user_metadata: { must_change_password: false } }],
     ])
+  })
+
+  it('a TEMPORARY password (class list) marks the child to choose their own, on a new login and on a changed one', async () => {
+    script = [signedIn, owns, noLogin,
+      ['POST /auth/v1/admin/users', () => res(200, { id: CHILD })],
+      ['POST /rest/v1/learner_access', () => res(201, {})],
+      ['POST /rest/v1/profiles', () => res(201, {})]]
+    await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'tiger482', temporary: true }))
+    expect(adminCalls()[0].body).toEqual({ email: 'aarav7@learner.adaptivelearn.invalid', password: 'tiger482', email_confirm: true, user_metadata: { full_name: 'Aarav', must_change_password: true } })
+
+    calls = []
+    script = [signedIn, owns, hasLogin, [`PUT /auth/v1/admin/users/${CHILD}`, () => res(200, { id: CHILD })]]
+    await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'otter915', temporary: true }))
+    expect(adminCalls().map(c => c.body)).toEqual([{ email: 'aarav7@learner.adaptivelearn.invalid', password: 'otter915', email_confirm: true, user_metadata: { must_change_password: true } }])
+
+    // Only the literal `true` counts: a string "true" from a sloppy client is not a temporary password.
+    calls = []
+    await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'otter915', temporary: 'true' }))
+    expect((adminCalls()[0].body as { user_metadata: unknown }).user_metadata).toEqual({ must_change_password: false })
   })
 
   it('reports a taken username as such, and rejects a bad username or short password before any write', async () => {

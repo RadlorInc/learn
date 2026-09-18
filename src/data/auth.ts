@@ -57,6 +57,20 @@ export function setPassword(password: string) {
   return createClient().auth.updateUser({ password })
 }
 
+/**
+ * A child whose teacher gave them a TEMPORARY password (a class list) must choose their own before anything else.
+ * The flag lives in user_metadata, set by /api/child-login; the child clears it with the same call that sets the
+ * new password. Read from the local session — no network.
+ */
+export async function mustChangePassword(): Promise<boolean> {
+  const { data: { session } } = await createClient().auth.getSession()
+  return session?.user?.user_metadata?.must_change_password === true
+}
+
+export function setOwnPassword(password: string) {
+  return createClient().auth.updateUser({ password, data: { must_change_password: false } })
+}
+
 /** Durable account-access log → `auth_events` (insert-only; reads are dashboard-only).
  *  Supabase's own auth logs are short-retention platform logs and `last_sign_in_at` is
  *  latest-only, so without this a login history simply does not exist. Best-effort:

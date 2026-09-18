@@ -25,7 +25,8 @@ import { CHILD_MIN_PASSWORD, childEmail, normalizeUsername, usernameFromEmail } 
  */
 export const dynamic = 'force-dynamic'
 
-const LIMIT = 20
+// A teacher's class upload sets one login per child in a burst, so the cap is a class, not a person typing.
+const LIMIT = 60
 const WINDOW_MS = 60_000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -103,12 +104,16 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const body = (await req.json().catch(() => ({}))) as { learnerId?: unknown; username?: unknown; password?: unknown }
+  const body = (await req.json().catch(() => ({}))) as { learnerId?: unknown; username?: unknown; password?: unknown; temporary?: unknown }
   const b = await begin(req, body.learnerId)
   if ('res' in b) return b.res
   const learner = b.learner!   // begin() with a learnerId returns one or a refusal
   const username = typeof body.username === 'string' ? normalizeUsername(body.username) : null
   const password = typeof body.password === 'string' ? body.password : ''
+  // A TEMPORARY password (a teacher's class list) makes the child choose their own at first sign-in. It is a UX flag
+  // in user_metadata, which the child can clear themselves — that only skips their own prompt, it grants nothing.
+  // A password an adult sets by hand is not temporary, and setting one clears any old flag.
+  const mustChange = body.temporary === true
   if (!username) return json({ ok: false, error: 'bad_username' }, 400)
   if (password.length < CHILD_MIN_PASSWORD || password.length > 72) return json({ ok: false, error: 'weak_password' }, 400)
 
@@ -119,7 +124,7 @@ export async function POST(req: Request) {
   // Already has a login: change its username and/or password in place.
   if (rows.length) {
     const r = await asService(b.e, `/auth/v1/admin/users/${rows[0].parent_id}`, {
-      method: 'PUT', body: JSON.stringify({ email: childEmail(username), password, email_confirm: true }),
+      method: 'PUT', body: JSON.stringify({ email: childEmail(username), password, email_confirm: true, user_metadata: { must_change_password: mustChange } }),
     })
     if (await taken(r)) return json({ ok: false, error: 'username_taken' }, 409)
     if (!r.ok) return json({ ok: false, error: 'update_failed' }, 502)
@@ -128,7 +133,7 @@ export async function POST(req: Request) {
 
   // New login: the account (pre-confirmed — nobody can confirm a `.invalid` address), then the link, then the role.
   const c = await asService(b.e, '/auth/v1/admin/users', {
-    method: 'POST', body: JSON.stringify({ email: childEmail(username), password, email_confirm: true, user_metadata: { full_name: learner.display_name } }),
+    method: 'POST', body: JSON.stringify({ email: childEmail(username), password, email_confirm: true, user_metadata: { full_name: learner.display_name, must_change_password: mustChange } }),
   })
   if (await taken(c)) return json({ ok: false, error: 'username_taken' }, 409)
   const created = c.ok ? ((await c.json()) as { id?: string }) : null

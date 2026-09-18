@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { getMyRole, signOut } from '@/data/repositories'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { ModuleHome } from '@/features/lessons/ModuleHome'
+import { mustChangePassword } from '@/data/auth'
 
 const noSubscribe = () => () => {}
 
@@ -28,7 +29,9 @@ function Modules() {
   useEffect(() => {
     getMyRole().then(r => r === 'learner').catch(() => false)   // cannot tell → the adult's button, as before
       .then(c => { knownChild = c; setChild(c) })
-  }, [])
+    // A child still on the temporary password from a class list (e.g. reopening the app) chooses their own first.
+    mustChangePassword().then(m => { if (m) router.replace('/auth/new-password') }).catch(() => {})
+  }, [router])
   // Client-only (progress lives in kv): null on the server, true once mounted.
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   if (!mounted) return null
