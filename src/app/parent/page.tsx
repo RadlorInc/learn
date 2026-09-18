@@ -10,7 +10,7 @@ import {
   deleteLearnerPermanently, removeMyselfFromLearner,
   getLatestGap, getCheckupStatus,
   getMyRole, setMyRole, setLearnerLessons, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
-  getWallet, setGameSettings, type Wallet,
+  getWallet, setGameSettings, type Wallet, getMyClasses, type ClassRow,
 } from '@/data/repositories'
 import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
@@ -31,6 +31,7 @@ import { chosenModules } from '@/features/lessons/modules'
 import { LessonLibrary } from '@/features/lessons/LessonLibrary'
 import { AssignLessons } from '@/features/lessons/AssignLessons'
 import { Performance } from '@/features/lessons/Performance'
+import { ClassBar, ClassPanel } from '@/features/classes/Classes'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding } from '@/infra/storage/lessonStanding'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
@@ -87,7 +88,7 @@ interface LearnerData {
 
 export default function ParentDashboard() {
   const router = useRouter()
-  const [learners,     setLearners]     = useState<LearnerData[]>([])
+  const [allLearners,  setLearners]     = useState<LearnerData[]>([])
   const [selected,     setSelected]     = useState<string | null>(null)
   const [loading,      setLoading]      = useState(true)
   const [loadError,    setLoadError]    = useState(false)
@@ -105,6 +106,11 @@ export default function ParentDashboard() {
   const [picked, setView] = useState<string | null>(null)             // null = that role's home
   const [childLogins, setChildLogins] = useState<Record<string, string> | null>(null)   // learnerId → username; null = unknown
   const [loginFor, setLoginFor] = useState<string | null>(null)       // learnerId whose login sheet is open
+  const [classes, setClasses] = useState<ClassRow[]>([])              // a teacher's classes (features/classes)
+  const [classId, setClassId] = useState<string | null>(null)         // null = all students
+  // A teacher looking at one class sees only its students — on every view, since they all read `learners`.
+  const learners = role === 'teacher' && classId ? allLearners.filter(d => d.learner.grade_id === classId) : allLearners
+  const currentClass = classes.find(c => c.id === classId)
 
   async function loadAll() {
     setLoading(true)
@@ -127,6 +133,7 @@ export default function ParentDashboard() {
       if (myRole === 'learner') { router.replace(await enterAsChild()); return }
       setInvites(pendingInvites)
       setRole(myRole)
+      if (myRole === 'teacher') getMyClasses().then(setClasses)
       getChildLogins().then(setChildLogins)   // not awaited: the dashboard must not wait on the login lookup   // null → the render shows the one-time Teacher/Parent picker
 
       let data: LearnerData[]
@@ -330,6 +337,10 @@ export default function ParentDashboard() {
 
       <div style={{ minWidth:0 }}>
       <div className="adult-shell">
+        {tea && !current?.soon && (
+          <ClassBar classes={classes} current={classId} onPick={setClassId}
+            onCreated={c => { setClasses(cs => [...cs, c]); setClassId(c.id); setView('home') }} />
+        )}
         {view === 'library' ? (
           <LessonLibrary
             learners={learners.map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, canEdit: d.accessRole === 'owner' }))}
@@ -377,13 +388,19 @@ export default function ParentDashboard() {
 
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, flexWrap:'wrap', marginBottom:18 }}>
           <div>
-            <h1 style={{ margin:0, fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{view === 'learners' ? 'Learners' : `${greeting}, ${parentName}`}</h1>
+            <h1 style={{ margin:0, fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{view === 'learners' ? (tea ? 'Roster' : 'Learners') : `${greeting}, ${parentName}`}</h1>
             <div style={{ color:P.ink2, fontSize:14, marginTop:2 }}>{learners.length} learner{learners.length === 1 ? '' : 's'}{invites.length > 0 ? ` · ${invites.length} invite${invites.length === 1 ? '' : 's'} waiting` : ''}</div>
           </div>
           <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            <button onClick={() => setShowAddModal(true)} style={ghost}>+ Add learner</button>
+            {!currentClass && <button onClick={() => setShowAddModal(true)} style={ghost}>+ Add learner</button>}
           </div>
         </div>
+
+        {tea && view === 'home' && currentClass && (
+          <ClassPanel cls={currentClass}
+            students={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
+            onChanged={loadAll} onDeleted={() => { setClassId(null); loadAll() }} />
+        )}
 
         {view === 'home' && learners.length > 0 && (
           <>
@@ -486,7 +503,7 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {learners.length === 0 && <EmptyDashboard onAdd={() => setShowAddModal(true)} />}
+        {learners.length === 0 && !currentClass && <EmptyDashboard onAdd={() => setShowAddModal(true)} />}
 
         {/* ⚠️ TWO COLUMNS ABOVE 1024px, ONE BELOW — and the whole page was capped at 480px before,
             so a laptop rendered a phone column with ~800px of empty paper either side. The rail

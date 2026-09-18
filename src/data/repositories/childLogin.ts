@@ -4,6 +4,7 @@
 import { db } from '@/data/repositories/_shared'
 import { getMyLearners } from '@/data/repositories/learners'
 import { setActiveLearner } from '@/data/supabase/useLearnerSession'
+import { mustChangePassword } from '@/data/auth'
 
 export type ChildLoginError =
   | 'bad_username' | 'weak_password' | 'username_taken' | 'not_owner' | 'not_configured' | 'rate_limited' | 'unauthenticated' | 'failed'
@@ -30,11 +31,12 @@ export async function getChildLogins(): Promise<Record<string, string> | null> {
   return r.ok ? (r.logins as Record<string, string>) : null
 }
 
-export const setChildLogin = (learnerId: string, username: string, password: string) => call('POST', { learnerId, username, password })
+export const setChildLogin = (learnerId: string, username: string, password: string, temporary = false) => call('POST', { learnerId, username, password, temporary })
 export const removeChildLogin = (learnerId: string) => call('DELETE', { learnerId })
 
 /**
- * A signed-in CHILD's way in: their own learner becomes the active one, then their lessons.
+ * A signed-in CHILD's way in: their own learner becomes the active one, then their lessons — or, when their
+ * password is still the temporary one from a class list, the page where they choose their own.
  * ⚠️ Returns '/modules' even when the learner could not be read, so a child is never dropped on the parent dashboard;
  * the modules page works without an active learner (progress just is not attributed).
  */
@@ -43,5 +45,6 @@ export async function enterAsChild(): Promise<string> {
     const [mine] = await getMyLearners()
     if (mine) setActiveLearner(mine)
   } catch { /* offline: still their lessons */ }
-  return '/modules'
+  // A temporary password from a class list: choose their own first.
+  return (await mustChangePassword()) ? '/auth/new-password' : '/modules'
 }

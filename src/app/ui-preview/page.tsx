@@ -27,6 +27,13 @@ import { useState } from 'react'
 import { LessonLibrary, type LibraryLearner } from '@/features/lessons/LessonLibrary'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { ParentPinGate } from '@/shared/ui/ParentPinGate'
+import { ClassBar, ClassPanel } from '@/features/classes/Classes'
+import type { ClassRow } from '@/data/repositories'
+
+const DEMO_CLASSES: ClassRow[] = [
+  { id: 'c1', name: '5-A', grade: 5, lesson_ids: null },
+  { id: 'c2', name: 'Room 12 (Grade 3)', grade: 3, lesson_ids: null },
+]
 
 function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
@@ -78,6 +85,12 @@ function Surfaces() {
       {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'library' && <div data-t="library" className="adult-shell" style={{ width: '100%' }}><LibraryPreview /></div>}
+      {p === 'classes' && (
+        <div data-t="classes" className="adult-shell" style={{ width: '100%' }}>
+          <ClassBar classes={DEMO_CLASSES} current="c1" onPick={() => {}} onCreated={() => {}} />
+          <ClassPanel cls={DEMO_CLASSES[0]} students={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }]} onChanged={() => {}} onDeleted={() => {}} />
+        </div>
+      )}
 
       {/* The `.card-grid` used by the grade list, the invite lists and class triage. ⚠️ SAME NARROW
           CLAIM AS `?p=cols`: this is the CLASS with placeholder children, not those pages — it
