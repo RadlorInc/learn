@@ -208,6 +208,9 @@ you typed.
 - in-app items bought with earned coins;
 - which lesson topics were finished, and where practice stands on each (the level
   reached and whether the topic is mastered);
+- **class exercise results**, when a teacher's class sets exercises: for each exercise
+  the child finished, how each question went (right first time, right after a hint,
+  or shown the answer) and when, which the class's teacher can see;
 - **points**: each time points were earned, and each time they were spent on game
   time, plus the game-time settings you choose (on or off, minutes per day, your
   time zone);

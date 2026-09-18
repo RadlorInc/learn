@@ -95,7 +95,7 @@ export async function getMyTeacherPaid(): Promise<boolean> {
 }
 
 /** `lessons` may still carry the class's exercises: a PAID teacher's students get both (founder, 2026-09-18). */
-export type ClassMode = { mode: 'lessons'; className?: string; exercises?: Exercise[] } | { mode: 'exercises'; className: string; exercises: Exercise[] }
+export type ClassMode = { mode: 'lessons'; classId?: string; className?: string; exercises?: Exercise[] } | { mode: 'exercises'; classId: string; className: string; exercises: Exercise[] }
 
 /**
  * What a child sees: their lessons (plus the class's exercises, in a paid teacher's class), or — in a class whose
@@ -114,6 +114,36 @@ export async function getClassMode(learner: Pick<Learner, 'grade_id' | 'created_
   if (pe) { console.warn('[getClassMode]', pe.message); return { mode: 'lessons' } }
   const exercises = c.exercises ?? []
   return (plan as { paid?: boolean } | null)?.paid
-    ? { mode: 'lessons', className: c.name, exercises }
-    : { mode: 'exercises', className: c.name, exercises }
+    ? { mode: 'lessons', classId: learner.grade_id, className: c.name, exercises }
+    : { mode: 'exercises', classId: learner.grade_id, className: c.name, exercises }
+}
+
+/**
+ * One finished attempt at a class exercise (migration 20260918140000): how each question went, in order —
+ * 'first' right first time · 'second' right after a hint or a miss · 'worked' shown the answer.
+ * Only the child's own login can post one, and only while the exercise is OPEN; nobody can edit it afterwards.
+ */
+export type ExerciseOutcome = 'first' | 'second' | 'worked'
+export interface ExerciseResult { learner_id: string; exercise_id: string; outcomes: ExerciseOutcome[]; created_at: string }
+
+/**
+ * 'refused' = the database said no and always will (the exercise was locked again, or is gone): do not retry it.
+ * 'failed' = anything else (offline, a timeout): keep it and try again later.
+ */
+export async function saveExerciseResult(learnerId: string, classId: string, exerciseId: string, outcomes: ExerciseOutcome[]): Promise<'ok' | 'refused' | 'failed'> {
+  try {
+    const { error } = await db().from('exercise_results' as never)
+      .insert({ learner_id: learnerId, class_id: classId, exercise_id: exerciseId, outcomes } as never)
+    if (!error) return 'ok'
+    console.warn('[saveExerciseResult]', error.code, error.message)
+    return error.code === '42501' || /^23/.test(error.code ?? '') ? 'refused' : 'failed'
+  } catch { return 'failed' }
+}
+
+/** Every attempt in a class, oldest first — RLS gives a teacher their own students' only. */
+export async function getExerciseResults(classId: string): Promise<ExerciseResult[] | null> {
+  const { data, error } = await db().from('exercise_results' as never)
+    .select('learner_id, exercise_id, outcomes, created_at').eq('class_id', classId).order('created_at', { ascending: true })
+  if (error) { console.warn('[getExerciseResults]', error.message); return null }
+  return (data ?? []) as unknown as ExerciseResult[]
 }

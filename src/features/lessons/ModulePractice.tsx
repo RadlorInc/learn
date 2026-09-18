@@ -32,7 +32,7 @@ type Feedback = null | 'idea' | 'worked' | 'right'
  */
 export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
   module: Module; learnerId?: string | null; onExit: () => void
-  exercise?: { title: string; items: { problem: Problem; lesson: Lesson }[] }
+  exercise?: { title: string; items: { problem: Problem; lesson: Lesson }[]; onFinish?: (outcomes: Outcome[]) => void }
 }) {
   const adaptive = !exercise && module.lessons.every(l => ladderOf(l.id))
   const r = useRef(rng(freshSeed())).current
@@ -50,6 +50,7 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
   const [asked, setAsked] = useState(false)   // Hint tapped
   const [value, setValue] = useState('')
   const [taps, setTaps] = useState(0)
+  const outcomes = useRef<Outcome[]>([])   // an exercise's result, question by question
 
   const done = i >= total
   const page = (crumb: string, title: string, left: React.ReactNode, pad: boolean) => (
@@ -72,8 +73,12 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
     setMisses(m); setFeedback(m === 1 ? 'idea' : 'worked'); setValue('')   // a wrong answer must not sit there to be re-submitted
   }
   const nextProblem = () => {
+    const o: Outcome = feedback === 'worked' ? 'worked' : misses === 0 && !asked ? 'first' : 'second'
+    if (exercise) {
+      outcomes.current[i] = o
+      if (i + 1 === total) exercise.onFinish?.(outcomes.current.slice(0, total))
+    }
     if (adaptive) {
-      const o: Outcome = feedback === 'worked' ? 'worked' : misses === 0 && !asked ? 'first' : 'second'
       const ladder = ladderOf(lesson.id)!
       saveStanding(learnerId, lesson.id, step(loadStanding(learnerId, lesson.id) ?? FRESH, ladder.length, o))
       syncLesson(learnerId, lesson.id, o)

@@ -104,6 +104,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.point_events':             `public.point_events where learner_id in (${ls})`,
     'public.game_settings':            `public.game_settings where learner_id in (${ls})`,
     'public.teacher_plans':            `public.teacher_plans where teacher_id = '${uid}'`,
+    'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
   }
   const out: Record<string, number> = { 'auth.users': await count(db, `auth.users where id = '${uid}'`) }
   for (const t of tables) {
@@ -117,7 +118,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
 
 async function seedFamily(db: PGlite, uid: string, learners: string[], email: string) {
   await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${uid}', '${email}', now())`)   // a confirmed account → trigger makes the profile
-  await db.exec(`insert into public.grades (id, created_by, name, age_group) values (gen_random_uuid(), '${uid}', 'Class', '3-5')`)
+  const klass = (await db.query<{ id: string }>(`insert into public.grades (created_by, name, age_group) values ('${uid}', 'Class', '3-5') returning id`)).rows[0].id
   await db.exec(`insert into public.auth_events (user_id, event) values ('${uid}', 'login')`)
   await db.exec(`insert into public.teacher_plans (teacher_id, paid) values ('${uid}', true)`)   // a paid teacher: the row must go too
   // An admin deleting their own account is a real case, and admin_users is the table whose
@@ -140,6 +141,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       insert into public.lesson_progress (learner_id, lesson_id, done) values ('${l}', 'g3m2-t1', true);
       insert into public.point_events (learner_id, reason, lesson_id, points) values ('${l}', 'lesson_done', 'g3m2-t1', 10);
       insert into public.game_settings (learner_id) values ('${l}');
+      insert into public.exercise_results (learner_id, class_id, exercise_id, outcomes) values ('${l}', '${klass}', 'e1', '{first,worked}');
       insert into public.learner_progress (learner_id, chapter, best_stars) values ('${l}', 'counting', 3);
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');
