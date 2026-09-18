@@ -8,7 +8,7 @@ import {
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
-  getMyGrades, getLatestGap, getCheckupStatus, type GradeSummary,
+  getLatestGap, getCheckupStatus,
   getMyRole, setMyRole, setLearnerLessons, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet,
 } from '@/data/repositories'
@@ -24,7 +24,7 @@ import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { LEGACY_CHAPTERS_HIDDEN, type AgeGroup, type ChapterType } from '@/core/chapters'
-import { AGE_GROUP_OPTIONS, AGE_GROUP_LABELS } from '@/core/ageGroups'
+import { AGE_GROUP_OPTIONS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules } from '@/features/lessons/modules'
@@ -67,12 +67,12 @@ const FAMILY_NAV: NavItem[] = [
   { label: 'Help', href: '/help' },
 ]
 const TEACHER_NAV: NavItem[] = [
-  { label: 'Class Home', view: 'thome', soon: { text: 'A summary of your class: who practised this week, who is stuck, and this week’s assignment. Your classes are ready now.', link: { href: '/parent/grades', label: 'Open your classes' } } },
-  { label: 'Roster', view: 'roster', soon: { text: 'Every student across your classes in one list.', link: { href: '/parent/grades', label: 'Open your classes' } } },
+  { label: 'Class Home', view: 'home' },
+  { label: 'Roster', view: 'learners' },
   { label: 'Groups', view: 'groups', soon: { text: 'Small groups built from the stuck list, so you can assign one rescue lesson to a few students at once.' } },
   { label: 'Lesson library', view: 'library' },
-  { label: 'Assign', view: 'tassign', soon: { text: 'Assign to the whole class, a group or one student, with a due date.' } },
-  { label: 'Class dashboard', view: 'tclass', soon: { text: 'Finished, in progress and not started for each assignment, with skill bars for the class.' } },
+  { label: 'Assign', view: 'assign' },
+  { label: 'Class dashboard', view: 'dash' },
   { label: 'Classroom plan', view: 'tplan', soon: { text: 'What the teacher classroom includes, and school or district options.' } },
   { label: 'Help', href: '/help' },
 ]
@@ -219,11 +219,10 @@ export default function ParentDashboard() {
     }
   }
 
-  // First-login role choice: persist it, then teachers jump to Grades (parents stay on the dashboard).
+  // First-login role choice: persist it; both roles stay here, the menu follows the role.
   async function handlePickRole(r: UserRole) {
     setRole(r)                    // optimistic — the picker disappears immediately
     await setMyRole(r)
-    if (r === 'teacher') router.replace('/parent/grades')
   }
 
   // A BRAND-NEW learner is OFFERED the checkup on their first "Start learning". Established kids —
@@ -314,7 +313,7 @@ export default function ParentDashboard() {
   // The menu is decided by the account's role alone — a teacher never sees the family menu, and back.
   const tea = role === 'teacher'
   const nav = tea ? TEACHER_NAV : FAMILY_NAV
-  const view = picked ?? (tea ? 'thome' : 'home')
+  const view = picked ?? 'home'
   const current = nav.find(i => i.view === view)
 
   return (
@@ -441,7 +440,7 @@ export default function ParentDashboard() {
               </div>
             </div>
 
-            <ChildLoginsList title="Child logins" blurb="Set a username and password for each child, so they can sign in on any device and go straight to their lessons."
+            <ChildLoginsList title={tea ? 'Student logins' : 'Child logins'} blurb={`Set a username and password for each ${tea ? 'student' : 'child'}, so they can sign in on any device and go straight to their lessons.`}
               learners={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
               logins={childLogins} onLogins={setChildLogins} />
           </>
@@ -889,25 +888,14 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
     const b = peekPendingDiagnostic()?.band
     return AGE_GROUP_OPTIONS.some(o => o.value === b) ? (b as AgeGroup) : '3-5'
   })
-  const [grades,      setGrades]      = useState<GradeSummary[]>([])
-  const [gradeId,     setGradeId]     = useState<string | null>(null) // null = no grade, pick a band directly
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
-
-  useEffect(() => { getMyGrades().then(setGrades) }, [])
-
-  // When a grade is chosen, the band comes from the grade (chapters are scoped
-  // to it). When cleared, the parent picks a band directly as before.
-  function pickGrade(g: GradeSummary | null) {
-    setGradeId(g?.id ?? null)
-    if (g) setAgeGroup(g.age_group)
-  }
 
   async function handleAdd() {
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError('Please enter a name (at least 2 characters)'); return }
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, gradeId ?? undefined)
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup)
     if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
     // Capture-at-report loop: if this parent just took the logged-out diagnostic, save that result
     // against the child they're creating now — but ONLY when the bands match (a 9–11 plan is
@@ -981,34 +969,7 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
         <input id="learner-name" type="text" placeholder="First name is plenty" value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
-        {/* Grade (optional) — shown once this account has created grades. Choosing
-            one scopes the child to that grade's chapters and fixes the band. */}
-        {grades.length > 0 && (
-          <>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', margin:'10px 0 8px' }}>
-              <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:0 }}>Grade <span style={{ fontWeight:500, color:P.ink3 }}>(optional)</span></p>
-            </div>
-            <div className="opt-grid" style={{ marginBottom:14 }}>
-              <button onClick={() => pickGrade(null)} aria-pressed={!gradeId} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:!gradeId?'var(--milo-orange-soft)':P.page, border:!gradeId?`3px solid ${P.accent}`:`2px solid ${P.edge}` }}>
-                <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>No grade</div>
-                <div style={{ fontSize:11, color:P.ink2, lineHeight:1.3, marginTop:2 }}>Pick an age band directly — all its chapters.</div>
-              </button>
-              {grades.map(g => {
-                const on = gradeId === g.id
-                return (
-                  <button key={g.id} onClick={() => pickGrade(g)} aria-pressed={on} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:on?'var(--milo-orange-soft)':P.page, border:on?`3px solid ${P.accent}`:`2px solid ${P.edge}` }}>
-                    <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>🎓 {g.name}</div>
-                    <div style={{ fontSize:11, color:P.ink2, lineHeight:1.3, marginTop:2 }}>{AGE_GROUP_LABELS[g.age_group]} · {g.chapterCount} chapter{g.chapterCount === 1 ? '' : 's'}</div>
-                  </button>
-                )
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Age band — only when no grade is chosen (a grade already fixes the band) */}
-        {!gradeId && (
-          <>
+        {/* Age band */}
             <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 4px' }}>Age group</p>
             <p style={{ fontSize:11.5, color:P.ink3, margin:'0 0 8px', lineHeight:1.4 }}>Sets where the check starts. It is not a grade and nobody else sees it.</p>
             <div className="opt-grid" style={{ marginBottom:4 }}>
@@ -1022,8 +983,6 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
                 )
               })}
             </div>
-          </>
-        )}
 
         <p style={{ fontSize:11.5, color:P.ink3, margin:'14px 0 0', lineHeight:1.45 }}>
           Progress is private to this account. No public profiles and no comparisons with other children.

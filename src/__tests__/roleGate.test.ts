@@ -8,8 +8,6 @@ import { describe, expect, it } from 'vitest'
 import { roleGateRedirect } from '@/shared/ui/RoleGate'
 
 const PAGES: Record<string, 'teacher' | 'parent'> = {
-  'src/app/parent/grades/page.tsx':        'teacher',
-  'src/app/parent/grades/triage/page.tsx': 'teacher',
   'src/app/parent/plan/page.tsx':          'parent',
 }
 

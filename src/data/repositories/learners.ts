@@ -57,22 +57,17 @@ export async function createLearner(
   name: string,
   avatarIndex: number,
   ageGroup: AgeGroup,
-  gradeId?: string,
 ): Promise<Learner | null> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) { console.error('[createLearner] no user'); return null }
 
-  // grade_id is only sent when a grade was actually chosen, so the no-grade
-  // path stays identical to the original insert (forward-compatible with DBs
-  // that predate the grades migration).
   const payload: Record<string, unknown> = {
     display_name:  name,
     avatar_index:  avatarIndex,
     age_group:     ageGroup,
     created_by:    user.id,
   }
-  if (gradeId) payload.grade_id = gradeId
 
   const { data, error } = await supabase
     .from('learners')
@@ -123,17 +118,6 @@ export async function setLearnerAssignments(learnerId: string, lessonIds: string
     return error.code === 'PGRST204' || /lesson_ids|lesson_due/.test(error.message) ? 'not_ready' : 'error'
   }
   return data && data.length > 0 ? 'ok' : 'error'
-}
-
-/** Move an existing learner into a grade (or clear it with null). */
-export async function setLearnerGrade(learnerId: string, gradeId: string | null): Promise<boolean> {
-  const supabase = db()
-  const { error } = await supabase
-    .from('learners')
-    .update({ grade_id: gradeId })
-    .eq('id', learnerId)
-  if (error) { console.error('[setLearnerGrade]', error.message); toast.error('Could not change grade'); return false }
-  return true
 }
 
 export async function deleteLearner(learnerId: string) {

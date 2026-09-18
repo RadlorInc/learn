@@ -41,11 +41,9 @@ const PAGES = [
   { url: '/ui-preview?p=sheet',   name: 'add learner' },
   { url: '/ui-preview?p=cols',    name: 'dashboard grid' },
   { url: '/ui-preview?p=cards',   name: 'card grid' },
-  // ⚠️ ONLY THE THREE OF THE SIX REMAINING ADULT PAGES THAT A HARNESS CAN ACTUALLY REACH.
-  // /parent/grades and /parent/grades/triage bounce to /auth on `!user`, and /parent/invites sits
-  // on its loading splash for ever when the reads fail (it has no loadError branch, unlike
-  // /parent) — a planted JWT is refused by `getCurrentSession`, so none of the three renders.
-  // Their restyle is source-verified, NOT driven, and this list is where that shows.
+  // ⚠️ /parent/invites is NOT here: it sits on its loading splash for ever when the reads fail (it
+  // has no loadError branch, unlike /parent) — a planted JWT is refused by `getCurrentSession`, so
+  // it never renders. Its restyle is source-verified, NOT driven, and this list is where that shows.
   { url: '/help',                 name: 'help' },
   { url: '/parent/plan',          name: 'pricing' },
   { url: '/parent/account',       name: 'close account' },
