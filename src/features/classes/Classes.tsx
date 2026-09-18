@@ -93,8 +93,8 @@ function NewClass({ onClose, onCreated }: { onClose: () => void; onCreated: (c: 
 
 /* ─── the chosen class: summary, modules, add students, rename/delete ───────────────────────────────── */
 
-export function ClassPanel({ cls, students, paid, onChanged, onStudentsAdded, onDeleted }: {
-  cls: ClassRow; students: ClassStudent[]; paid: boolean; onChanged: () => void; onStudentsAdded: () => void; onDeleted: () => void
+export function ClassPanel({ cls, students, paid, onChanged, onStudentsAdded, onUpdate, onDeleted }: {
+  cls: ClassRow; students: ClassStudent[]; paid: boolean; onChanged: () => void; onStudentsAdded: () => void; onUpdate: (c: ClassRow) => void; onDeleted: () => void
 }) {
   const [open, setOpen] = useState<'modules' | 'exercises' | 'add' | 'rename' | 'delete' | null>(null)
   const chosen = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m))
@@ -119,7 +119,7 @@ export function ClassPanel({ cls, students, paid, onChanged, onStudentsAdded, on
           <button onClick={() => setOpen(open === 'delete' ? null : 'delete')} style={{ ...ghost, color: '#B42318' }}>Delete</button>
         </div>
       </div>
-      {open === 'exercises' && <ExerciseEditor cls={cls} onChanged={onChanged} />}
+      {open === 'exercises' && <ExerciseEditor cls={cls} students={students} onUpdate={onUpdate} />}
       {open === 'modules' && <ModulePicker cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
       {open === 'add' && <AddStudents cls={cls} onAdded={onStudentsAdded} onDone={() => { setOpen(null); onChanged() }} />}
       {open === 'rename' && <Rename cls={cls} onDone={() => { setOpen(null); onChanged() }} />}

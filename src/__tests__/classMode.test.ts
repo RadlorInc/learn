@@ -33,12 +33,12 @@ describe('getClassMode', async () => {
 
   it('a PAID teacher\'s class: lessons AND the class\'s exercises', async () => {
     rows.teacher_plans = { data: { paid: true }, error: null }
-    expect(await getClassMode(kid)).toEqual({ mode: 'lessons', className: '5-A', exercises: EX })
+    expect(await getClassMode(kid)).toEqual({ mode: 'lessons', classId: 'class-1', className: '5-A', exercises: EX })
   })
 
   it('a FREE teacher\'s class (no paid row): the exercises only', async () => {
     rows.teacher_plans = { data: null, error: null }
-    expect(await getClassMode(kid)).toEqual({ mode: 'exercises', className: '5-A', exercises: EX })
+    expect(await getClassMode(kid)).toEqual({ mode: 'exercises', classId: 'class-1', className: '5-A', exercises: EX })
     rows.teacher_plans = { data: { paid: false }, error: null }
     expect((await getClassMode(kid)).mode).toBe('exercises')
   })

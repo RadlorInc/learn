@@ -33,7 +33,7 @@ import { ModuleHome } from '@/features/lessons/ModuleHome'
 import type { ClassRow } from '@/data/repositories'
 
 const DEMO_CLASSES: ClassRow[] = [
-  { id: 'c1', name: '5-A', grade: 5, lesson_ids: null, exercises: [{ id: 'x1', module: 'g5m2', level: 2, count: 10, seed: 42 }] },
+  { id: 'c1', name: '5-A', grade: 5, lesson_ids: null, exercises: [{ id: 'x1', module: 'g5m2', level: 2, count: 10, seed: 42, open: true }, { id: 'x2', module: 'g5m3', level: 3, count: 5, seed: 7, open: false }] },
   { id: 'c2', name: 'Room 12 (Grade 3)', grade: 3, lesson_ids: null, exercises: [] },
 ]
 
@@ -88,16 +88,16 @@ function Surfaces() {
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'classespaid' && (
         <div className="adult-shell" style={{ width: '100%' }}>
-          <ClassPanel cls={DEMO_CLASSES[0]} paid students={[{ id: 'a', name: 'Aarav' }]} onChanged={() => {}} onStudentsAdded={() => {}} onDeleted={() => {}} />
+          <ClassPanel cls={DEMO_CLASSES[0]} paid students={[{ id: 'a', name: 'Aarav' }]} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />
         </div>
       )}
       {p === 'mhex' && <div style={{ width: '100%' }}><ModuleHome learnerId={null} grade={5} exercises={{ count: 1, onOpen: () => {} }} /></div>}
-      {p === 'exhome' && <ExerciseHome learnerId={null} className="5-A" exercises={DEMO_CLASSES[0].exercises} />}
+      {p === 'exhome' && <ExerciseHome learnerId={null} classId={null} className="5-A" exercises={DEMO_CLASSES[0].exercises} />}
       {p === 'library' && <div data-t="library" className="adult-shell" style={{ width: '100%' }}><LibraryPreview /></div>}
       {p === 'classes' && (
         <div data-t="classes" className="adult-shell" style={{ width: '100%' }}>
           <ClassBar classes={DEMO_CLASSES} current="c1" onPick={() => {}} onCreated={() => {}} />
-          <ClassPanel cls={DEMO_CLASSES[0]} paid={false} students={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }]} onChanged={() => {}} onStudentsAdded={() => {}} onDeleted={() => {}} />
+          <ClassPanel cls={DEMO_CLASSES[0]} paid={false} students={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }]} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />
         </div>
       )}
 

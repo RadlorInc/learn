@@ -45,14 +45,24 @@ function Modules() {
       .then(me => me?.grade_id ? getClassMode(me) : { mode: 'lessons' as const })
       .then(setMode).catch(() => setMode({ mode: 'lessons' }))
   }, [])
+  // A teacher opens an exercise when it is test time: a child in a class sees it within 20 seconds, without reloading.
+  const classId = mode?.mode === 'exercises' ? mode.classId : mode?.classId
+  useEffect(() => {
+    const a = getActiveLearner()
+    if (!classId || !a?.created_by) return
+    const t = setInterval(() => {
+      getClassMode({ grade_id: classId, created_by: a.created_by }).then(m => { if (m.mode !== 'lessons' || m.classId) setMode(m) }).catch(() => {})
+    }, 20_000)
+    return () => clearInterval(t)
+  }, [classId])
   // Client-only (progress lives in kv): null on the server, true once mounted.
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   if (!mounted || !mode) return null
   const learner = getActiveLearner()
   const signOutBtn = { label: 'Sign out', onClick: async () => { knownChild = undefined; await signOut(); router.replace('/auth') } }
-  if (mode.mode === 'exercises') return <ExerciseHome learnerId={learner?.id ?? null} className={mode.className} exercises={mode.exercises}
+  if (mode.mode === 'exercises') return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId} className={mode.className} exercises={mode.exercises}
     back={child ? signOutBtn : undefined} />
-  if (showExercises && mode.exercises) return <ExerciseHome learnerId={learner?.id ?? null} className={mode.className ?? ''} exercises={mode.exercises}
+  if (showExercises && mode.exercises) return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId ?? null} className={mode.className ?? ''} exercises={mode.exercises}
     back={{ label: '← Lessons', onClick: () => setShowExercises(false) }} />
   return <ModuleHome key={grade} grade={grade}
     exercises={mode.exercises?.length ? { count: mode.exercises.length, onOpen: () => setShowExercises(true) } : undefined} learnerId={learner?.id ?? null} lessonIds={learner?.lesson_ids} back={child === undefined ? undefined

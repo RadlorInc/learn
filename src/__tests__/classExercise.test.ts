@@ -38,3 +38,34 @@ describe('class exercise', () => {
     expect(exerciseItems(ex({ module: 'g9m1' }))).toEqual([])
   })
 })
+
+describe('summarize (the teacher\'s results)', async () => {
+  const { summarize } = await import('@/features/classes/exercise')
+  const r = (learner_id: string, outcomes: ('first' | 'second' | 'worked')[], created_at: string, exercise_id = 'e1') => ({ learner_id, exercise_id, outcomes, created_at })
+
+  it('the FIRST attempt is the result; later ones only count as attempts', () => {
+    const s = summarize('e1', ['a', 'b', 'c'], [
+      r('a', ['worked', 'first', 'second'], '2026-09-18T10:05:00Z'),     // a retook it later and got everything —
+      r('a', ['first', 'first', 'first'], '2026-09-18T10:20:00Z'),       //   that is practice, not the test
+      r('b', ['first', 'first', 'worked'], '2026-09-18T10:07:00Z'),
+      r('c', ['first', 'first', 'first'], '2026-09-18T10:09:00Z', 'e2'), // another exercise
+    ])
+    expect(s.students).toEqual([
+      { learnerId: 'a', done: true, right: 1, total: 3, attempts: 2, at: '2026-09-18T10:05:00Z' },
+      { learnerId: 'b', done: true, right: 2, total: 3, attempts: 1, at: '2026-09-18T10:07:00Z' },
+      { learnerId: 'c', done: false, right: 0, total: 0, attempts: 0, at: null },
+    ])
+    expect(s.done).toBe(2)
+    // Q1: a missed, b right · Q2: both right · Q3: neither right first time.
+    expect(s.perQuestion).toEqual([{ right: 1, of: 2 }, { right: 2, of: 2 }, { right: 0, of: 2 }])
+  })
+
+  it('reads the order from the timestamps, not the order the rows arrived in', () => {
+    const s = summarize('e1', ['a'], [r('a', ['first'], '2026-09-18T11:00:00Z'), r('a', ['worked'], '2026-09-18T10:00:00Z')])
+    expect(s.students[0].right).toBe(0)
+  })
+
+  it('nobody has taken it: nothing done, no questions to show', () => {
+    expect(summarize('e1', ['a'], [])).toEqual({ students: [{ learnerId: 'a', done: false, right: 0, total: 0, attempts: 0, at: null }], done: 0, perQuestion: [] })
+  })
+})

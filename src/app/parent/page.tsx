@@ -401,7 +401,8 @@ export default function ParentDashboard() {
         {tea && view === 'home' && currentClass && (
           <ClassPanel cls={currentClass} paid={paid}
             students={learners.filter(d => d.accessRole === 'owner').map(d => ({ id: d.learner.id, name: d.learner.display_name }))}
-            onChanged={loadAll} onStudentsAdded={() => { void loadAll(true) }} onDeleted={() => { setClassId(null); loadAll() }} />
+            onChanged={loadAll} onStudentsAdded={() => { void loadAll(true) }} onUpdate={c => setClasses(cs => cs.map(x => x.id === c.id ? c : x))}
+            onDeleted={() => { setClassId(null); loadAll() }} />
         )}
 
         {view === 'home' && learners.length > 0 && (

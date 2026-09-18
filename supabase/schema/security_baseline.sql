@@ -67,6 +67,10 @@
 --                                                  public/anon/authenticated; reached only by the four
 --                                                  parent-PIN DEFINER functions below, each keyed on auth.uid().
 --   learner_events             rls=t  policies=2
+--   exercise_results           rls=t  policies=2   2026-09-18 (20260918140000): SELECT for the learner's creator or a
+--                                                  learner_access row; INSERT (4 data columns only) for the child's
+--                                                  OWN 'self' login, into their class, for an exercise that is OPEN.
+--                                                  No update/delete for anyone.
 --   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
 --                                                  or the row of the adult who created my learner. Every write
 --                                                  privilege revoked from public/anon/authenticated and no write
