@@ -6,7 +6,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { findLesson, chosenModules } from '@/features/lessons/modules'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { LessonList } from '@/features/lessons/LessonList'
-import { markLessonDone } from '@/infra/storage/lessonProgress'
+import { markLessonDone, lessonDone } from '@/infra/storage/lessonProgress'
 import { syncLesson } from '@/infra/storage/lessonSync'
 
 const noSubscribe = () => () => {}
@@ -41,6 +41,9 @@ function Lesson() {
       lesson={lesson}
       learnerId={learnerId}
       earlier={module.lessons.slice(0, module.lessons.indexOf(lesson)).map(l => l.id)}
+      // The module is done when every topic of it this child HAS (their chosen ones) is finished; this one counts, it is ending.
+      moduleDone={() => (chosenModules(learner?.lesson_ids).find(m => m.id === module.id)?.lessons ?? module.lessons)
+        .every(l => l.id === lesson.id || lessonDone(learnerId, l.id))}
       onFinish={() => { markLessonDone(learnerId, lesson.id); syncLesson(learnerId, lesson.id) }}
       onExit={() => router.push(`/lesson?module=${module.id}`)}
     />

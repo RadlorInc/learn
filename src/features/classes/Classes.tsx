@@ -32,7 +32,7 @@ const input = { padding: '12px 14px', minHeight: 44, fontSize: 16, color: P.ink,
 const chip = (on: boolean) => ({ padding: '8px 14px', minHeight: 40, borderRadius: 50, border: '2px solid', borderColor: on ? P.accent : P.edge, background: on ? P.soft : P.card, color: P.ink, cursor: 'pointer', fontSize: 14, fontWeight: 700 }) as const
 
 /** `learners.age_group` is a legacy band that is still required; a class child gets the band their grade sits in. */
-const bandOf = (grade: number): AgeGroup => (grade <= 5 ? '9-11' : '12-14')
+export const bandOf = (grade: number): AgeGroup => (grade <= 5 ? '9-11' : '12-14')
 
 export interface ClassStudent { id: string; name: string }
 
@@ -149,6 +149,32 @@ function Rename({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
   )
 }
 
+/** Grade chips and a tick per module — what a class and a newly added child are given. `pick` holds module ids. */
+export function ModuleChecklist({ grade, setGrade, pick, setPick }: {
+  grade: number; setGrade: (g: number) => void; pick: Set<string>; setPick: (f: (p: Set<string>) => Set<string>) => void
+}) {
+  return (
+    <>
+      <div className="chip-scroll" aria-label="Grade">
+        {GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>Grade {g}</button>)}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {modulesOf(grade).map(m => {
+          const on = pick.has(m.id), soon = m.lessons.length === 0
+          return (
+            <label key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 12px', minHeight: 44, borderRadius: 12, border: `2px solid ${on ? P.accent : P.edge}`, background: on ? P.soft : P.page, cursor: soon ? 'default' : 'pointer', opacity: soon ? 0.5 : 1 }}>
+              <input type="checkbox" checked={on} disabled={soon} style={{ width: 20, height: 20, accentColor: 'var(--milo-orange)' }}
+                onChange={e => setPick(p => { const n = new Set(p); if (e.target.checked) n.add(m.id); else n.delete(m.id); return n })} />
+              <span style={{ fontSize: 14, fontWeight: 700, color: P.ink }}>Module {m.n} · {m.title}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: P.ink3 }}>{soon ? 'coming soon' : `${m.lessons.length} topics`}</span>
+            </label>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
 /** Tick modules (any grade, opening on the class's). Saving gives every student in the class exactly these lessons. */
 function ModulePicker({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
   const [grade, setGrade] = useState(cls.grade)
@@ -170,22 +196,7 @@ function ModulePicker({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
 
   return (
     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div className="chip-scroll" aria-label="Grade">
-        {GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>Grade {g}</button>)}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {modulesOf(grade).map(m => {
-          const on = pick.has(m.id), soon = m.lessons.length === 0
-          return (
-            <label key={m.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '10px 12px', minHeight: 44, borderRadius: 12, border: `2px solid ${on ? P.accent : P.edge}`, background: on ? P.soft : P.page, cursor: soon ? 'default' : 'pointer', opacity: soon ? 0.5 : 1 }}>
-              <input type="checkbox" checked={on} disabled={soon} style={{ width: 20, height: 20, accentColor: 'var(--milo-orange)' }}
-                onChange={e => setPick(p => { const n = new Set(p); if (e.target.checked) n.add(m.id); else n.delete(m.id); return n })} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: P.ink }}>Module {m.n} · {m.title}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: P.ink3 }}>{soon ? 'coming soon' : `${m.lessons.length} topics`}</span>
-            </label>
-          )
-        })}
-      </div>
+      <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
       {msg && <p role="alert" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#93000A' }}>{msg}</p>}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <button onClick={save} disabled={saving} style={btn}>{saving ? 'Saving…' : pick.size ? `Give ${pick.size} module${pick.size === 1 ? '' : 's'} to the class` : 'Give the class every module'}</button>

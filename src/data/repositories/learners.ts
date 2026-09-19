@@ -57,7 +57,8 @@ export async function createLearner(
   name: string,
   avatarIndex: number,
   ageGroup: AgeGroup,
-  inClass?: { classId: string; lessonIds: string[] | null },
+  /** What the child starts with: a class (its lessons), or just the modules chosen when adding them. */
+  inClass?: { classId?: string; lessonIds: string[] | null },
 ): Promise<Learner | null> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
@@ -70,7 +71,10 @@ export async function createLearner(
     created_by:    user.id,
   }
   // A child added to a class starts with that class's lessons (what /modules reads).
-  if (inClass) { payload.grade_id = inClass.classId; payload.lesson_ids = inClass.lessonIds }
+  if (inClass) {
+    if (inClass.classId) payload.grade_id = inClass.classId
+    payload.lesson_ids = inClass.lessonIds
+  }
 
   const { data, error } = await supabase
     .from('learners')

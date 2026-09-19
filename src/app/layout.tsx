@@ -105,15 +105,19 @@ export const metadata: Metadata = {
       'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
   },
   manifest: '/manifest.json',
+  /* ⚠️ `default`, NOT `black-translucent` (changed 2026-09-19). Translucent lays every page UNDER the iPhone's status
+     bar when the app is opened from the home screen — the dashboard's Home / Learners bar sat under the clock and could
+     not be tapped — and no page reserved the space. `default` makes iOS start the page below the bar, for every page at
+     once, which no future page can forget. */
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'AdaptiveLearn',
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': 'AdaptiveLearn',
     'msapplication-TileColor': '#F26B2C',
     'msapplication-tap-highlight': 'no',
@@ -129,7 +133,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png" />
         <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body>
         <MiloErrorBoundary>
