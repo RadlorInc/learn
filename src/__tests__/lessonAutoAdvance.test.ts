@@ -60,7 +60,7 @@ it('with her voice on, the screen waits for the VOICE to finish, not for a clock
   await wait(MINUTE)
   expect(screen()).toBe(2)                       // still talking: however long it takes, the screen stays
   await act(async () => { steps.at(-1)!.onDone!() })
-  await wait(2500)
+  await wait(2000)
   expect(screen()).toBe(2)                       // a moment to take in the finished board…
   await wait(1000)
   expect(screen()).toBe(3)                       // …then on
