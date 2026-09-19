@@ -31,6 +31,10 @@ assert ref.exists(), f'no reference wav for {a.voice}'
 out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
 ff = imageio_ffmpeg.get_ffmpeg_exe()
 # Chatterbox renders ~12 dB under ElevenLabs (measured -26..-30 LUFS against -14); level to match.
+# Chatterbox pads every clip with ~0.1-0.2 s of silence in front and ~0.3-0.4 s behind. Between two sentences of one
+# screen that stacked to ~0.5 s of dead air on top of the load, and the founder heard the stop (2026-09-19). Keep 0.04 s
+# in front and 0.12 s behind: a breath, not a gap. Measured on the pilot: the speech itself is untouched (7.09 s -> 7.10 s).
+TRIM = ',silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.04,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.12,areverse'
 LOUDNORM = 'acompressor=threshold=-20dB:ratio=3:attack=5:release=60:makeup=2,loudnorm=I=-14:TP=-1:LRA=11'  # compressor first: short exclamations are peak-bound and loudnorm alone leaves them 4 dB under
 
 seen, corpus = set(), []
@@ -68,7 +72,7 @@ try:
         if dev == 'mps': torch.mps.synchronize()
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
             torchaudio.save(tmp.name, wav.detach().cpu(), model.sr)
-        subprocess.run([ff, '-y', '-loglevel', 'error', '-i', tmp.name, '-af', LOUDNORM, '-ar', '22050', '-ac', '1', '-b:a', '32k', str(out / f"{l['key']}.mp3")], check=True)
+        subprocess.run([ff, '-y', '-loglevel', 'error', '-i', tmp.name, '-af', LOUDNORM + TRIM, '-ar', '22050', '-ac', '1', '-b:a', '32k', str(out / f"{l['key']}.mp3")], check=True)
         pathlib.Path(tmp.name).unlink()
         wall, audio = time.perf_counter() - t, wav.shape[-1] / model.sr
         print(f'{i:5}/{len(todo)} {wall:6.1f}s  {audio:5.1f}s audio  RTF {wall/audio:5.1f}  {l.get("style", "A"):2} {l["key"]}  {l["text"][:50]!r}', flush=True)

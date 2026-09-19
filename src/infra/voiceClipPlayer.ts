@@ -35,9 +35,19 @@ export function setClipOnly(v: boolean): void { _clipOnly = v }
 
 // The voice a SCREEN speaks in, whatever the learner's band or the device pick — a new-flow lesson reads in its grade's
 // voice (lessonVoice), because that is the voice its clips were rendered in. Set while a lesson is mounted.
-// An explicit 'device' pick still wins: that means "no clips".
+// It wins over a stored 'device' pick too (see voiceNow).
 let _sceneVoice: string | null = null
 export function setSceneVoice(v: string | null): void { _sceneVoice = v }
+
+/**
+ * The voice a line plays in, or null for browser speech. A lesson's scene voice wins even over a stored 'device' pick:
+ * the picker that set it was deleted (2026-09-17), so the pick could never be undone and the lesson spoke in browser
+ * TTS for ever. Elsewhere, the learner's band may own a voice (3–5 → Teddy); otherwise the device pick stands.
+ */
+function voiceNow(): string | null {
+  const pref = getVoicePref()
+  return _sceneVoice ?? (pref === 'device' ? null : BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref)
+}
 
 let _keys: Set<string> | null = null
 let _loading: Promise<void> | null = null
@@ -183,6 +193,22 @@ function playSequence(urls: string[], onStart?: () => void): { done: Promise<voi
   return { done, cancel: () => { cancelled = true; try { a.pause() } catch {} } }
 }
 
+/**
+ * Download these lines' clips now, so the next sentence starts the moment the last one ends. Fetched one at a time
+ * when due, the download sat between every two sentences of a screen (measured on production: 309 ms, on a fast
+ * connection). The service worker keeps them (cache-first), so the <audio> element's own request is a cache hit.
+ */
+export function prefetchClips(texts: string[]): void {
+  const voice = voiceNow()
+  if (!voice || typeof fetch === 'undefined') return
+  void loadManifest(voice).then(() => {
+    for (const t of texts) {
+      const key = clipKey(t)
+      if (_keys?.has(key)) void fetch(`/audio/${voice}/${key}.mp3`).catch(() => {})
+    }
+  })
+}
+
 /** Stop any clip in flight. Called by stopSpeech() so one stop covers both paths. */
 export function stopClip(): void {
   if (_active) { try { _active.pause() } catch {} ; _active = null }
@@ -216,10 +242,8 @@ export function speakLine(text: string, opts: Opts): () => void {
     stopClip()
   }
 
-  const pref = getVoicePref()
-  if (pref === 'device') { fallback(); return cancel }
-  // The learner's band may own a voice (3–5 → Teddy); otherwise the device pick stands.
-  const voice = _sceneVoice ?? BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref
+  const voice = voiceNow()
+  if (!voice) { fallback(); return cancel }
 
   // A miss with a custom voice selected: stay silent (custom-voice-only) instead of the
   // free voice, unless clip-only is off — then fall back exactly as before.
