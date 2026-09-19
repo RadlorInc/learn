@@ -1,4 +1,4 @@
-"""Render corpus lines with Chatterbox Turbo, cloning a voice from a reference wav.
+"""Render corpus lines with Chatterbox (Turbo, or the original model for style B and B+ rows), cloning a voice from a reference wav.
 
   .venv/bin/python scripts/chatterbox-render.py --voice <id> --corpus scripts/.voice-corpus-3-5.json \
       --out <dir> [--limit N] [--only k1,k2]
@@ -11,6 +11,13 @@ import argparse, json, pathlib, subprocess, sys, tempfile, time
 import torch, torchaudio
 import imageio_ffmpeg
 from chatterbox.tts_turbo import ChatterboxTurboTTS
+from chatterbox.tts import ChatterboxTTS
+
+# A corpus row's `style` (src/features/lessons/content/voice/styles.ts, docs/new-flow/voice.md): which model reads it, and how.
+# Turbo ignores exaggeration and cfg; its emotion comes from a tag in the text ([happy]). The original model has no emotion
+# tags, and its dial is what makes it expressive. A row with no style is A, which is how every clip before 2026-09-19 was made.
+STYLES = {'A': ('turbo', {}), 'A+': ('turbo', {}), 'B': ('original', dict(exaggeration=0.8, cfg_weight=0.3)),
+          'B+': ('original', dict(exaggeration=0.8, cfg_weight=0.3))}
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--voice', required=True); ap.add_argument('--corpus', required=True); ap.add_argument('--out', required=True)
@@ -42,22 +49,29 @@ def write_manifest():
     return len(keys)
 
 dev = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
-t = time.perf_counter()
-model = ChatterboxTurboTTS.from_pretrained(device=dev)
-print(f'model loaded {time.perf_counter()-t:.0f}s on {dev}', flush=True)
-model.generate('Warming up.', audio_prompt_path=str(ref))   # off-corpus: first call pays kernel setup
+_models = {}
+def model_for(kind):
+    # Loaded on first use: a corpus with no B lines never pays for the original model.
+    if kind not in _models:
+        t = time.perf_counter()
+        _models[kind] = (ChatterboxTurboTTS if kind == 'turbo' else ChatterboxTTS).from_pretrained(device=dev)
+        print(f'{kind} model loaded {time.perf_counter()-t:.0f}s on {dev}', flush=True)
+        _models[kind].generate('Warming up.', audio_prompt_path=str(ref))   # off-corpus: first call pays kernel setup
+    return _models[kind]
 
 try:
     for i, l in enumerate(todo, 1):
         t = time.perf_counter()
-        wav = model.generate(l['text'], audio_prompt_path=str(ref))
+        kind, kw = STYLES[l.get('style', 'A')]
+        model = model_for(kind)
+        wav = model.generate(l['text'], audio_prompt_path=str(ref), **kw)
         if dev == 'mps': torch.mps.synchronize()
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
             torchaudio.save(tmp.name, wav.detach().cpu(), model.sr)
         subprocess.run([ff, '-y', '-loglevel', 'error', '-i', tmp.name, '-af', LOUDNORM, '-ar', '22050', '-ac', '1', '-b:a', '32k', str(out / f"{l['key']}.mp3")], check=True)
         pathlib.Path(tmp.name).unlink()
         wall, audio = time.perf_counter() - t, wav.shape[-1] / model.sr
-        print(f'{i:5}/{len(todo)} {wall:6.1f}s  {audio:5.1f}s audio  RTF {wall/audio:5.1f}  {l["key"]}  {l["text"][:50]!r}', flush=True)
+        print(f'{i:5}/{len(todo)} {wall:6.1f}s  {audio:5.1f}s audio  RTF {wall/audio:5.1f}  {l.get("style", "A"):2} {l["key"]}  {l["text"][:50]!r}', flush=True)
         if dev == 'mps': torch.mps.empty_cache()   # 8 GB laptop: unbounded MPS cache is what drove swap to 20 GB
         if i % 10 == 0: write_manifest()
 finally:

@@ -25,11 +25,19 @@ export const VOICES = [
 export const BAND_VOICE: Partial<Record<string, string>> = { '3-5': 'XjGYkUkzth8BPs29fmcV' }
 
 /**
- * The new-flow lessons' voice, by grade: Teddy reads Grades 3–5, Stevie 6–8. The SAME split
+ * Lessons already re-voiced in Stevie with the expressive render (docs/new-flow/voice.md). Founder, 2026-09-19: every
+ * lesson moves to Stevie; a lesson joins this list once its Stevie clips are merged, never before, or it plays
+ * browser speech. Started with the pilot, g5m1-t1 and t2.
+ */
+const STEVIE_NOW = new Set(['g5m1-t1', 'g5m1-t2'])
+
+/**
+ * A new-flow lesson's voice: Stevie for Grades 6–8 and for STEVIE_NOW, Teddy for the rest of Grades 3–5. The SAME split
  * scripts/lesson-voice-corpus.mts cuts the render corpus on — change one, change both, or the lesson asks a
  * voice for clips that were rendered in the other.
  */
-export const lessonVoice = (grade: number): string => (grade <= 5 ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT')
+export const lessonVoice = (lessonId: string): string =>
+  Number(lessonId.match(/^g(\d)/)?.[1] ?? 3) <= 5 && !STEVIE_NOW.has(lessonId) ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT'
 
 export type VoiceId = (typeof VOICES)[number]['id'] | 'device'
 
