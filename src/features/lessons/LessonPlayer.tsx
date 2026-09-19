@@ -47,7 +47,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
   // Her lines play from recorded clips in this grade's voice (lines without a clip still fall back to browser speech).
   useEffect(() => {
-    setSceneVoice(lessonVoice(Number(lesson.id.match(/^g(\d)/)?.[1] ?? 3)))
+    setSceneVoice(lessonVoice(lesson.id))
     return () => setSceneVoice(null)
   }, [lesson.id])
   const ladder = ladderOf(lesson.id)

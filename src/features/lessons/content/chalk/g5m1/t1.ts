@@ -26,8 +26,8 @@ export const T1: (ChalkMark[] | undefined)[] = [
   ],
   // The big idea: left = 10 times, right = 1/10
   [
-    ...heads([0, 'Move'], 45), cells([0, 'Move'], 120, 70, 360, 60, 4), ...digits([0, 'Move'], 2, '40', 100),
-    write([0, 'Move'], '40', 65, 100, 28),
+    ...heads([0, 'Slide'], 45), cells([0, 'Slide'], 120, 70, 360, 60, 4), ...digits([0, 'Slide'], 2, '40', 100),
+    write([0, 'Slide'], '40', 65, 100, 28),
     cells([0, 'left'], 120, 190, 360, 60, 4), arrow([0, 'left'], [345, 134], [262, 184], 'r'),
     ...digits([0, 'worth'], 1, '400', 220, 'y'), write([0, 'worth'], '400', 65, 220, 28, 'y'),
     write([0, '10'], '× 10', 540, 160, 32, 'r'),
