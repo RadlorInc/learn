@@ -30,9 +30,9 @@ import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './F
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
 
-/** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder, 2026-09-20:
- * 1.8 s felt fast. */
-const HOLD_MS = 3000
+/** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder,
+ * 2026-09-20: 1.8 s felt fast, 3 s felt like waiting. */
+const HOLD_MS = 2300
 /** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.45 s: the
  * old ~0.8 s stop sounded generated, and none at all (2026-09-19) ran the sentences together. */
 const GAP_MS = 300
