@@ -44,8 +44,7 @@ it("every line a lesson speaks has a clip in its lesson's voice, or is queued to
   expect(lines).toBeGreaterThan(8000)   // positive control: the sweep is really reading the lessons
   expect(lost.slice(0, 10)).toEqual([])
   // Queued, not yet rendered and merged. Lower this as zips are merged; it must never grow without a corpus change.
-  // 53 = the 2026-09-19 expressive pilot, g5m1-t1 and t2 re-voiced in Stevie (docs/new-flow/voice.md).
-  expect(waiting.size).toBeLessThanOrEqual(53)
+  expect(waiting.size).toBeLessThanOrEqual(0)
 })
 
 it('every render row in content/voice is a line some lesson still says', () => {
