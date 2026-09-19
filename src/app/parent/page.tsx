@@ -27,11 +27,11 @@ import { LEGACY_CHAPTERS_HIDDEN, type AgeGroup, type ChapterType } from '@/core/
 import { AGE_GROUP_OPTIONS } from '@/core/ageGroups'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
-import { chosenModules } from '@/features/lessons/modules'
+import { chosenModules, MODULES, GRADES } from '@/features/lessons/modules'
 import { LessonLibrary } from '@/features/lessons/LessonLibrary'
 import { AssignLessons } from '@/features/lessons/AssignLessons'
 import { Performance } from '@/features/lessons/Performance'
-import { ClassBar, ClassPanel } from '@/features/classes/Classes'
+import { ClassBar, ClassPanel, ModuleChecklist, bandOf } from '@/features/classes/Classes'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding } from '@/infra/storage/lessonStanding'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
@@ -902,20 +902,23 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
   const router = useRouter()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
-  // Prefill from a captured (logged-out) diagnostic so the default matches the band the parent already
-  // chose in the check — otherwise the replay's exact band match silently fails and the capture is lost.
-  const [ageGroup,    setAgeGroup]    = useState<AgeGroup>(() => {
-    const b = peekPendingDiagnostic()?.band
-    return AGE_GROUP_OPTIONS.some(o => o.value === b) ? (b as AgeGroup) : '3-5'
-  })
+  // Which modules the child gets — asked, never assumed (founder, 2026-09-19: a new child was silently given every module).
+  const [grade,       setGrade]       = useState(GRADES[0])
+  const [pick,        setPick]        = useState<Set<string>>(() => new Set())
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
 
   async function handleAdd() {
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError('Please enter a name (at least 2 characters)'); return }
+    if (pick.size === 0) { setError('Choose at least one module for this learner.'); return }
+    const chosen = MODULES.filter(m => pick.has(m.id))
+    // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19). A captured
+    // logged-out diagnostic keeps its band so its replay below still matches; otherwise the band of the first grade chosen.
+    const b = peekPendingDiagnostic()?.band
+    const ageGroup = AGE_GROUP_OPTIONS.some(o => o.value === b) ? (b as AgeGroup) : bandOf(chosen[0].grade)
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup)
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) })
     if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
     // Capture-at-report loop: if this parent just took the logged-out diagnostic, save that result
     // against the child they're creating now — but ONLY when the bands match (a 9–11 plan is
@@ -989,26 +992,16 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
         <input id="learner-name" type="text" placeholder="First name is plenty" value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
-        {/* Age band */}
-            <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 4px' }}>Age group</p>
-            <p style={{ fontSize:11.5, color:P.ink3, margin:'0 0 8px', lineHeight:1.4 }}>Sets where the check starts. It is not a grade and nobody else sees it.</p>
-            <div className="opt-grid" style={{ marginBottom:4 }}>
-              {AGE_GROUP_OPTIONS.map(opt => {
-                const selected = ageGroup === opt.value
-                return (
-                  <button key={opt.value} onClick={() => setAgeGroup(opt.value)} aria-pressed={selected} style={{ textAlign:'left', padding:'12px 14px', minHeight:44, borderRadius:14, cursor:'pointer', background:selected?'var(--milo-orange-soft)':P.page, border:selected?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
-                    <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>{opt.label}</div>
-                    <div style={{ fontSize:11, color:P.ink2, lineHeight:1.3, marginTop:2 }}>{opt.hint}</div>
-                  </button>
-                )
-              })}
-            </div>
+        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>Which modules can they see?</p>
+        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+          <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
+        </div>
 
         <p style={{ fontSize:11.5, color:P.ink3, margin:'14px 0 0', lineHeight:1.45 }}>
           Progress is private to this account. No public profiles and no comparisons with other children.
         </p>
         <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading?P.edge:P.accent, color:loading?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer', boxShadow:loading?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
-          {loading ? 'Adding...' : 'Add learner 🎉'}
+          {loading ? 'Adding...' : pick.size ? `Add learner with ${pick.size} module${pick.size === 1 ? '' : 's'}` : 'Add learner'}
         </button>
       </div>
     </div>

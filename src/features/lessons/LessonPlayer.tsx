@@ -33,8 +33,11 @@ import { PracticeLayout, hintBtn } from './PracticeLayout'
  * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
  * (see ./adaptive) asks generated problems that follow the child, and may bring back one earlier topic that is not mastered.
  */
-export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish, onExit }: {
-  lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]; onFinish: () => void; onExit: () => void
+export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit }: {
+  lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]
+  /** True once every topic of this lesson's module (that the child has) is finished — the badge is shown then, and only then. */
+  moduleDone?: () => boolean
+  onFinish: () => void; onExit: () => void
 }) {
   const [s, setS] = useState<FlowState>(START)
   const [taps, setTaps] = useState(0)
@@ -75,6 +78,26 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
   }
   const screenSay = SAY.screen
+
+  // Screen 8 solved (or the twin's worked steps seen): straight on to practice. Founder's call, 2026-09-19: a right answer
+  // gets the green check at the top and moves on — no badge or sticker screen per topic; the badge waits for the module.
+  const startPractice = () => {
+    if (ladder) {
+      const standing = startLevel(loadStanding(learnerId, lesson.id), firstTry.current, ladder.length)
+      const review = reviewTopic(earlier, id => lessonDone(learnerId, id), id => loadStanding(learnerId, id), ladderOf)
+      setRun(beginRun(lesson.id, ladder, standing, r, review))
+    }
+    go(toPractice(s))
+  }
+  const won = s.mode === 'won'
+  useEffect(() => {
+    if (!won) return
+    // A child who did not solve the twin gets no check: nothing to celebrate, so no pause either.
+    const id = setTimeout(startPractice, wonFor(lesson, s).helped ? 0 : 1500)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per arrival on the won state, with that render's state
+  }, [won])
+
 
   const problem = s.mode === 'practice' && run ? run.current.problem : currentProblem(lesson, s)
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
@@ -245,31 +268,22 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
     if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => go(back(s), screenSay(lesson.screens[s.screen - 1]))}>← Back</button>
   } else if (s.mode === 'won') {
     const w = wonFor(lesson, s)
-    crumb = 'Screen 9 of 9'; at = 8
-    title = <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span style={{ ...tick, width: 44, height: 44, fontSize: 26 }} aria-hidden>✓</span>{w.title}</span>
-    picture = <div style={stage}>
-      {w.helped && <p style={idea}>{lesson.bigIdea}</p>}
-      <div style={{ alignSelf: 'center', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <img src="/assets/lessons/badge.webp" alt="" width={96} height={112} style={{ flexShrink: 0, animation: 'lp-pop .4s ease-out' }} />
-        <span style={sticker}>
-          <small style={{ display: 'block', fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', color: '#6d4c3d' }}>Math word sticker</small>
-          {w.sticker}
-        </span>
-      </div>
+    crumb = 'Screen 8 of 9'; at = 7
+    title = w.helped ? w.title
+      : <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><span style={{ ...tick, width: 44, height: 44, fontSize: 26 }} aria-hidden>✓</span>{w.title}</span>
+    picture = <div style={{ ...stage, alignItems: 'center' }}>
+      {!w.helped && <span style={{ ...tick, width: 120, height: 120, fontSize: 72, animation: 'lp-pop .4s ease-out' }} aria-hidden>✓</span>}
     </div>
     words = <p style={bubble}>{w.text}</p>
-    action = <button type="button" style={primary} onClick={() => {
-      if (ladder) {
-        const standing = startLevel(loadStanding(learnerId, lesson.id), firstTry.current, ladder.length)
-        const review = reviewTopic(earlier, id => lessonDone(learnerId, id), id => loadStanding(learnerId, id), ladderOf)
-        setRun(beginRun(lesson.id, ladder, standing, r, review))
-      }
-      go(toPractice(s))
-    }}>Keep practicing</button>
+    action = <button type="button" style={primary} onClick={startPractice}>Next</button>
   } else {
     crumb = 'Done!'; at = 8
-    title = `${lesson.title}: done!`
-    picture = <div style={stage}><p style={idea}>{lesson.bigIdea}</p></div>
+    const allDone = moduleDone?.() ?? false
+    title = allDone ? 'Module complete!' : `${lesson.title}: done!`
+    picture = <div style={stage}>
+      {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
+      <p style={idea}>{lesson.bigIdea}</p>
+    </div>
     words = <p style={bubble}>{run
       ? run.standing.mastered ? 'You really know this one now. Nice work!' : `You worked through ${run.asked} practice problems. Nice work sticking with it!`
       : 'You worked through all 5 practice problems. Nice work sticking with it!'}</p>
@@ -283,8 +297,6 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], onFinish,
   )
 }
 
-const sticker = { alignSelf: 'center', maxWidth: 460, textAlign: 'center', padding: '14px 22px', borderRadius: 20, background: '#ffd166', border: `4px solid ${INK}`,
-  boxShadow: `5px 5px 0 ${INK}`, fontWeight: 800, fontSize: 20, color: INK, '--lp-tilt': '-2deg', transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' } as CSSProperties
 /**
  * When does this stroke's own picture become visible? A `motion: true` picture reveals its parts on a stagger
  * (`lp-in` with delays of 0, 0.7s, 1.4s…), and a trace that runs while its part is still at opacity 0 is spent

@@ -238,6 +238,12 @@ html, body {
   margin: 0; padding: 0;
   min-height: 100dvh;
 }
+/* The phone's own edges: the notch in landscape and the home bar at the bottom (viewport-fit=cover lets the page reach
+   under both). 0 everywhere else, so desktops and browsers are untouched. The top is iOS's job — see layout.tsx. */
+body {
+  box-sizing: border-box;
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
 
 h1, .h1 {
   font-family: var(--font-display);
