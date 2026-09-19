@@ -9,7 +9,8 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { setSceneVoice } from '@/infra/voiceClipPlayer'
+import { setSceneVoice, prefetchClips } from '@/infra/voiceClipPlayer'
+import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
@@ -28,6 +29,9 @@ import { beatMs } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
+
+/** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. */
+const HOLD_MS = 1800
 
 /**
  * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
@@ -48,8 +52,10 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // Her lines play from recorded clips in this grade's voice (lines without a clip still fall back to browser speech).
   useEffect(() => {
     setSceneVoice(lessonVoice(lesson.id))
+    // Download her lines now, so one sentence runs into the next instead of waiting on a download between them.
+    prefetchClips([...lesson.screens.flatMap(sc => sc.beats?.map(b => b.say) ?? []), SAY.turn(lesson), lesson.bigIdea])
     return () => setSceneVoice(null)
-  }, [lesson.id])
+  }, [lesson])
   const ladder = ladderOf(lesson.id)
   const [run, setRun] = useState<Run | null>(null)
   const r = useRef(rng(freshSeed())).current
@@ -59,16 +65,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // puts on the board on the left — so BOTH columns read `shown`, and it has to live above the early returns below.
   const beats = s.mode === 'lesson' ? lesson.screens[s.screen].beats : undefined
   const [shown, setShown] = useState(1)
-  useEffect(() => {
-    if (!beats) return
-    setShown(1)
-    // Her voice paces it when the child has audio on; when they don't, reading time does — a flat beat is far too
-    // fast for a long line. Either way the lines and the board move together.
-    if (audio) return speakSteps(beats.map(b => b.say), { onStep: i => setShown(i + 1) })
-    let t = 0
-    const ids = beats.map((b, i) => { const at = t; t += beatMs(b.say); return setTimeout(() => setShown(i + 1), at) })
-    return () => ids.forEach(clearTimeout)
-  }, [beats, audio, replay])
+  // Founder, 2026-09-19: a teaching screen moves on by itself once her last line is done, HOLD_MS later so the board
+  // can finish and the child can take it in. ← Back pauses it — a child who went back to look again is not pulled
+  // forward — and Next turns it back on. Screens 2–6 only: Screen 1 waits for the child to tap its question, and
+  // Screen 7 leads into "Your turn", which the child starts.
+  const [autoOn, setAutoOn] = useState(true)
 
   const say = (text: string, on = audio) => { if (on && text) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
@@ -78,6 +79,23 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
   }
   const screenSay = SAY.screen
+
+  const autoNext = useLatestRef(() => { if (autoOn && s.mode === 'lesson' && s.screen >= 1 && s.screen < 6) go(next(s)) })
+  useEffect(() => {
+    if (!beats) return
+    setShown(1)
+    // Her voice paces it when the child has audio on; when they don't, reading time does — a flat beat is far too
+    // fast for a long line. Either way the lines and the board move together.
+    let hold: ReturnType<typeof setTimeout> | undefined
+    if (audio) {
+      const stop = speakSteps(beats.map(b => b.say), { onStep: i => setShown(i + 1), onDone: () => { hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
+      return () => { stop(); clearTimeout(hold) }
+    }
+    let t = 0
+    const ids = beats.map((b, i) => { const at = t; t += beatMs(b.say); return setTimeout(() => setShown(i + 1), at) })
+    ids.push(setTimeout(() => autoNext.current(), t + HOLD_MS))
+    return () => ids.forEach(clearTimeout)
+  }, [beats, audio, replay, autoNext])
 
   // Screen 8 solved (or the twin's worked steps seen): straight on to practice. Founder's call, 2026-09-19: a right answer
   // gets the green check at the top and moves on — no badge or sticker screen per topic; the badge waits for the module.
@@ -211,7 +229,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           </div>
         )}
         <div className="pr-foot">
-          <button type="button" style={hintBtn} onClick={() => go(back(s), screenSay(lesson.screens[6]))}>← Back</button>
+          <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s), screenSay(lesson.screens[6])) }}>← Back</button>
           {worked
             ? <button type="button" style={primary} onClick={() => {
                 const n = afterWorked(s)
@@ -262,10 +280,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         </div>
       : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
     action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
+      setAutoOn(true)
       const n = next(s)
       go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? SAY.turn(lesson) : undefined)
     }}>{ask ? <><span>{ask[2]}</span><span style={{ fontSize: 16, opacity: 0.95 }}>Let&apos;s see ▶</span></> : 'Next'}</button>
-    if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => go(back(s), screenSay(lesson.screens[s.screen - 1]))}>← Back</button>
+    if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s), screenSay(lesson.screens[s.screen - 1])) }}>← Back</button>
   } else if (s.mode === 'won') {
     const w = wonFor(lesson, s)
     crumb = 'Screen 8 of 9'; at = 7
