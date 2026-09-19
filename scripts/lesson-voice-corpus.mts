@@ -23,14 +23,17 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { MODULES } from '../src/features/lessons/modules.ts'
 import { clipKey, normalizeSpoken } from '../src/core/voiceClips.ts'
 import { SAY, START, hintsFor, wonFor } from '../src/features/lessons/script.ts'
+import { lessonVoice } from '../src/infra/storage/voicePref.ts'
+import { renderOf, type VoiceStyle } from '../src/features/lessons/content/voice/styles.ts'
 
 const outDir = process.argv[2] ?? 'scripts/.voice-lessons'
 
-/** Which recorded voice reads which grades. The founder picks; this is only the split the files are cut on. */
-const VOICE = (grade: number) => (grade <= 5 ? 'teddy' : 'stevie')
+/** Which recorded voice reads a lesson: lessonVoice, the function the player uses, so the two cannot disagree. */
+const VOICE = (id: string) => (lessonVoice(id) === 'IvUJKFyjVb5hItY9dJAT' ? 'stevie' : 'teddy')
 
 type Kind = 'beat' | 'bigIdea' | 'screen1' | 'turn' | 'hint' | 'twin' | 'won' | 'feedback'
-type Row = { key: string; text: string; voice: string; grade: number; kind: Kind; where: string }
+// `text` is what the voice model reads (renderOf: tags, pauses, symbols spelt out); `key` is the line as the lesson says it.
+type Row = { key: string; text: string; style: VoiceStyle; voice: string; grade: number; kind: Kind; where: string }
 const ORDER: Kind[] = ['beat', 'bigIdea', 'screen1', 'turn', 'hint', 'twin', 'won', 'feedback']
 
 // By voice + key: identical text is ONE clip PER VOICE. ⚠️ Keyed by text alone (until 2026-09-17), a line said in both a
@@ -46,13 +49,13 @@ for (const m of MODULES) {
       if (i === 0 || !s.beats) continue          // screen 1 holds the question that becomes the button
       for (const [b, beat] of s.beats.entries()) {
         occurrences++
-        add({ text: beat.say, voice: VOICE(grade), grade, kind: 'beat', where: `${l.id} s${i + 1} b${b + 1}` })
+        add({ text: beat.say, voice: VOICE(l.id), grade, kind: 'beat', where: `${l.id} s${i + 1} b${b + 1}` })
       }
     }
     occurrences++
-    add({ text: l.bigIdea, voice: VOICE(grade), grade, kind: 'bigIdea', where: `${l.id} bigIdea` })
+    add({ text: l.bigIdea, voice: VOICE(l.id), grade, kind: 'bigIdea', where: `${l.id} bigIdea` })
 
-    const voice = VOICE(grade), line = (kind: Kind, text: string, where: string) => { occurrences++; add({ text, voice, grade, kind, where: `${l.id} ${where}` }) }
+    const voice = VOICE(l.id), line = (kind: Kind, text: string, where: string) => { occurrences++; add({ text, voice, grade, kind, where: `${l.id} ${where}` }) }
     line('screen1', SAY.screen(l.screens[0]), 's1')
     line('turn', SAY.turn(l), 'turn')
     const first = hintsFor(l, { ...START, mode: 'turn' }), twin = hintsFor(l, { ...START, mode: 'turn', twin: true })
@@ -66,13 +69,13 @@ for (const m of MODULES) {
   }
 }
 
-function add(r: Omit<Row, 'key'>) {
+function add(r: Omit<Row, 'key' | 'style'>) {
   const text = normalizeSpoken(r.text)
   if (!text) return
-  const key = clipKey(text)
+  const key = clipKey(text), { style, say } = renderOf(text)
   const had = rows.get(`${r.voice}:${key}`)
   if (had) { if (!had.where.includes(r.where)) had.where += ` + ${r.where}` ; return }
-  rows.set(`${r.voice}:${key}`, { ...r, text, key })
+  rows.set(`${r.voice}:${key}`, { ...r, text: say, style, key })
 }
 
 const all = [...rows.values()]
@@ -94,7 +97,7 @@ writeFileSync(`${outDir}/lines-all.jsonl`, all.map(r => JSON.stringify(r)).join(
 for (const voice of ['teddy', 'stevie']) {
   const mine = all.filter(r => r.voice === voice).sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
   writeFileSync(`scripts/.voice-corpus-lessons-${voice}.json`,
-    JSON.stringify(mine.map(r => ({ key: r.key, text: r.text, chars: r.text.length, kind: r.kind, sources: [r.where] })), null, 2) + '\n')
+    JSON.stringify(mine.map(r => ({ key: r.key, text: r.text, style: r.style, chars: r.text.length, kind: r.kind, sources: [r.where] })), null, 2) + '\n')
 }
 
 const chars = all.reduce((n, r) => n + r.text.length, 0)
