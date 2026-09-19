@@ -13,7 +13,7 @@ vi.mock('@/infra/useMiloSpeaker', () => ({
   speak: () => {}, stopSpeech: () => {},
   speakSteps: (_: string[], opts: { onDone?: () => void }) => { steps.push(opts); return () => {} },
 }))
-vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {} }))
+vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/infra/storage/lessonSync', () => ({ syncLesson: () => {}, syncModulePractice: () => {} }))
 vi.mock('@/features/lessons/ScratchPad', () => ({ ScratchPad: () => null }))
 
@@ -60,7 +60,7 @@ it('with her voice on, the screen waits for the VOICE to finish, not for a clock
   await wait(MINUTE)
   expect(screen()).toBe(2)                       // still talking: however long it takes, the screen stays
   await act(async () => { steps.at(-1)!.onDone!() })
-  await wait(1000)
+  await wait(2500)
   expect(screen()).toBe(2)                       // a moment to take in the finished board…
   await wait(1000)
   expect(screen()).toBe(3)                       // …then on

@@ -72,6 +72,9 @@ export function setClipRate(r: number): void {
 }
 function applyRate(a: HTMLAudioElement): void {
   try {
+    // defaultPlaybackRate too: loading a new src resets playbackRate TO it, and the whole-line path sets src without
+    // calling this again, so a rate set here lasted one clip at most. Measured 2026-09-20: 0.9 asked, 1 played.
+    a.defaultPlaybackRate = _rate
     a.playbackRate = _rate
     // Non-standard on older WebKit; harmless where absent.
     ;(a as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true

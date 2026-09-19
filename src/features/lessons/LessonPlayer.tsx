@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { setSceneVoice, prefetchClips } from '@/infra/voiceClipPlayer'
+import { setSceneVoice, prefetchClips, setClipRate } from '@/infra/voiceClipPlayer'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
@@ -30,8 +30,14 @@ import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './F
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
 
-/** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. */
-const HOLD_MS = 1800
+/** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder, 2026-09-20:
+ * 1.8 s felt fast. */
+const HOLD_MS = 3000
+/** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.45 s: the
+ * old ~0.8 s stop sounded generated, and none at all (2026-09-19) ran the sentences together. */
+const GAP_MS = 300
+/** Her clips play a little slower than rendered, pitch kept (founder, 2026-09-20: "Stevie khud tez bolti hai"). */
+const LESSON_RATE = 0.9
 
 /**
  * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
@@ -52,9 +58,10 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // Her lines play from recorded clips in this grade's voice (lines without a clip still fall back to browser speech).
   useEffect(() => {
     setSceneVoice(lessonVoice(lesson.id))
+    setClipRate(LESSON_RATE)
     // Download her lines now, so one sentence runs into the next instead of waiting on a download between them.
     prefetchClips([...lesson.screens.flatMap(sc => sc.beats?.map(b => b.say) ?? []), SAY.turn(lesson), lesson.bigIdea])
-    return () => setSceneVoice(null)
+    return () => { setSceneVoice(null); setClipRate(1) }
   }, [lesson])
   const ladder = ladderOf(lesson.id)
   const [run, setRun] = useState<Run | null>(null)
@@ -88,7 +95,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     // fast for a long line. Either way the lines and the board move together.
     let hold: ReturnType<typeof setTimeout> | undefined
     if (audio) {
-      const stop = speakSteps(beats.map(b => b.say), { onStep: i => setShown(i + 1), onDone: () => { hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
+      const stop = speakSteps(beats.map(b => b.say), { gapMs: GAP_MS, onStep: i => setShown(i + 1), onDone: () => { hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
       return () => { stop(); clearTimeout(hold) }
     }
     let t = 0
