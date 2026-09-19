@@ -14,7 +14,7 @@ import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
-  type FlowState, type Lesson, type Screen,
+  type FlowState, type Lesson,
 } from './script'
 import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, type Run } from './adaptive'
 import { ladderOf, ladderAnswers } from './ladders'
@@ -31,8 +31,9 @@ import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
 
 /** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder,
- * 2026-09-20: 1.8 s felt fast, 3 s felt like waiting. */
-const HOLD_MS = 2300
+ * 2026-09-20: 3 s then 2.3 s both felt long — and the screen now carries a bar that says where it is, so the wait
+ * does not have to be long enough to be understood on its own. */
+const HOLD_MS = 1500
 /** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.45 s: the
  * old ~0.8 s stop sounded generated, and none at all (2026-09-19) ran the sentences together. */
 const GAP_MS = 300
@@ -53,7 +54,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const [taps, setTaps] = useState(0)
   const [value, setValue] = useState('')
   const [replay, setReplay] = useState(0)
-  const [audio, setAudio] = useState(false)
+  // Founder, 2026-09-20: she reads every lesson — no "Read it to me" to find first. The clip needs a gesture to start
+  // (autoplay), and Screen 1's own button is it; a lesson opened straight from a link speaks from Screen 2 on.
+  const audio = true
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
   // Her lines play from recorded clips in this grade's voice (lines without a clip still fall back to browser speech).
   useEffect(() => {
@@ -74,8 +77,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const [shown, setShown] = useState(1)
   // Founder, 2026-09-19: a teaching screen moves on by itself once her last line is done, HOLD_MS later so the board
   // can finish and the child can take it in. ← Back pauses it — a child who went back to look again is not pulled
-  // forward — and Next turns it back on. Screens 2–6 only: Screen 1 waits for the child to tap its question, and
-  // Screen 7 leads into "Your turn", which the child starts.
+  // forward — and Next turns it back on. From Screen 2 on: Screen 1 waits for the child to tap its question, and
+  // Screen 7 runs on into "Your turn" (founder, 2026-09-20).
   const [autoOn, setAutoOn] = useState(true)
 
   const say = (text: string, on = audio) => { if (on && text) speak(text) }
@@ -87,7 +90,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   }
   const screenSay = SAY.screen
 
-  const autoNext = useLatestRef(() => { if (autoOn && s.mode === 'lesson' && s.screen >= 1 && s.screen < 6) go(next(s)) })
+  const autoNext = useLatestRef(() => {
+    if (!autoOn || s.mode !== 'lesson' || s.screen < 1) return
+    const n = next(s)
+    go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
+  })
   useEffect(() => {
     if (!beats) return
     setShown(1)
@@ -133,13 +140,6 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
   const box = problem && <AnswerInput answer={solutionOf(problem)} value={value} onChange={setValue} signed={needsSign(all)} mixed={needsWhole(all)} />
 
-  const toggleAudio = () => {
-    const on = !audio
-    setAudio(on)
-    if (!on) stopSpeech()
-    else if (s.mode === 'lesson') say(screenSay(lesson.screens[s.screen]), true)
-  }
-
   // A lesson's 5 practice problems: the practice screen (problem left, scratch pad right), shared with mixed practice.
   // Hint shows the big idea without counting as a miss; a miss shows it too; a second miss shows the worked steps.
   if (s.mode === 'practice' && problem) {
@@ -162,7 +162,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const of = ladder ? '' : ' of 5'
     return (
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
-        onExit={() => { stopSpeech(); onExit() }} audio={{ on: audio, toggle: toggleAudio }} pad padKey={s.practice}>
+        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.practice}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
           <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
@@ -213,7 +213,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     }
     return (
       <PracticeLayout corner={lesson.title} crumb="Screen 8 of 9" title="Now you try" exitLabel="Exit lesson"
-        onExit={() => { stopSpeech(); onExit() }} audio={{ on: audio, toggle: toggleAudio }} pad padKey={s.twin ? 'twin' : 'first'}>
+        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: INK }}>{lesson.turn.prompt}</p>
         <div style={stage}>
@@ -319,7 +319,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   return (
     <Frame crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action} back={backBtn}
       exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }}
-      audio={{ on: audio, toggle: toggleAudio }} />
+      progress={beats ? shown / beats.length : undefined} />
   )
 }
 

@@ -10,10 +10,11 @@ import { pill, INK, TEAL, GOOD, LESSON_KEYFRAMES, PAGE_BG, shell, topBar } from 
 
 export const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
-export function Frame({ crumb, exit, audio, title, picture, words, action, back, at, total, stack }: {
+export function Frame({ crumb, exit, progress, title, picture, words, action, back, at, total, stack }: {
   crumb: string
   exit: { label: string; onClick: () => void }
-  audio?: { on: boolean; toggle: () => void }
+  /** How far through this screen she is, 0–1: the bar under the top bar. Undefined on a screen that does not play itself. */
+  progress?: number
   title: ReactNode; picture: ReactNode; words: ReactNode; action: ReactNode; back?: ReactNode
   at: number; total: number; stack?: boolean
 }) {
@@ -24,10 +25,14 @@ export function Frame({ crumb, exit, audio, title, picture, words, action, back,
         <div style={topBar}>
           <button type="button" style={barBtn} onClick={exit.onClick}>{exit.label}</button>
           <span style={{ fontSize: 'clamp(14px, 3.6vw, 18px)', fontWeight: 800, textAlign: 'center' }}>{crumb}</span>
-          {audio
-            ? <button type="button" style={{ ...barBtn, background: audio.on ? '#ffd166' : '#fff' }} aria-pressed={audio.on} onClick={audio.toggle}>{audio.on ? '🔊 Reading aloud' : '🔈 Read it to me'}</button>
-            : <span />}
+          <span />
         </div>
+        {progress !== undefined && (
+          // Founder, 2026-09-20: a screen that moves on by itself has to show how far along it is.
+          <div aria-hidden style={{ height: 10, background: '#fff', borderBottom: `4px solid ${INK}` }}>
+            <div style={{ height: '100%', width: `${Math.round(Math.min(1, progress) * 100)}%`, background: TEAL, transition: 'width .45s linear' }} />
+          </div>
+        )}
         <main style={{ flex: 1, padding: 'clamp(14px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: 14 }}>
           <h1 style={h1}>{title}</h1>
           <div className={stack ? 'lp-row lp-stack' : 'lp-row'}>
