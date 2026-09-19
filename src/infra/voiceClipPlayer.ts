@@ -189,7 +189,7 @@ function playSequence(urls: string[], onStart?: () => void): { done: Promise<voi
       a.onerror = () => reject(new Error('fragment missing'))
       a.src = urls[i++]
       applyRate(a)   // re-assert per clip: a src change can reset playbackRate
-      a.play().then(() => { if (i === 1) onStart?.() }).catch(reject)
+      a.play().then(() => { if (i === 1) onStart?.() }).catch((e: unknown) => { if ((e as DOMException | undefined)?.name !== 'AbortError') reject(e) })
     }
     next()
   })
@@ -299,7 +299,21 @@ export function speakLine(text: string, opts: Opts): () => void {
           onWord(i)
         }, step)
       }
-    }).catch(() => miss())   // autoplay refused (no gesture yet) → fall back, or silent under clip-only
+    }).catch((e: unknown) => {
+      // ⚠️ NOT every rejection is a miss. A play() that WAS running and got replaced or paused rejects with
+      // AbortError — which is what our own next line does through the shared element — and treating that as "no clip"
+      // spoke the line in browser TTS with its clip sitting right there. Measured on production 2026-09-20: Screen 8
+      // said "Now you try…" in the robot voice, key 16ie8k4 in the manifest and 200 on the CDN. A real refusal
+      // (NotAllowedError: no gesture yet) still falls back.
+      if ((e as DOMException | undefined)?.name === 'AbortError') {
+        // A NEWER line took the element: that one speaks, this one is done. Nothing took it (our own pause raced the
+        // play) → play it again, because dropping it silently is worse than the robot voice this used to produce.
+        if (cancelled) return
+        audio.play().catch(() => miss())
+        return
+      }
+      miss()
+    })
   })
 
   return cancel
