@@ -1,9 +1,9 @@
 /**
- * `ConsentLine` belongs wherever an adult hands over an address — its own docstring names two
- * places, the signup form and the cold funnel's lead capture — and for weeks it was rendered on
- * only the first. `/diagnostic` asked a stranger for their email and never showed them the Terms or
- * the Privacy Policy. ① renders the email step and looks for the links a PERSON would see (a grep
- * for the import would pass the moment the import exists). ② pins `/auth` byte-for-byte: the
+ * `ConsentLine` belongs wherever an adult hands over an address. ⚠️ It used to have TWO sites —
+ * `/auth` and the check's own lead capture, which asked a stranger for their email and for weeks
+ * showed them neither the Terms nor the Privacy Policy. The check was deleted 2026-09-20 and ①
+ * with it; if a second address-collecting surface ever ships, restore that assertion from history.
+ * ② pins `/auth` byte-for-byte: the
  * expected markup was rendered from the component BEFORE the colour props were added, and is
  * written out here rather than re-rendered, so a changed default goes red. ③ measures the contrast
  * of both palettes with the WCAG formula — 12px text wants headroom over 4.5:1, not a hair past it.
@@ -12,39 +12,9 @@ import { describe, it, expect } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
-import { EmailGate } from '@/features/diagnostic/EmailGate'
 import { PT, ACCENTS } from '@/features/chapters/story/preteen/kit'
 
 const hrefs = (html: string) => Array.from(html.matchAll(/href="([^"]+)"/g), m => m[1])
-
-describe('the lead capture shows the documents at the moment of submission', () => {
-  for (const key of ['lime', 'cyan'] as const) {   // the two accents `/diagnostic` actually uses
-    it(`EmailGate (${key}) links /legal/terms and /legal/privacy`, () => {
-      const html = renderToStaticMarkup(createElement(EmailGate, { accent: ACCENTS[key], onSubmit: () => {} }))
-      expect(html).toContain('Start the check →')                 // it IS the email step
-      expect(hrefs(html)).toContain('/legal/terms')
-      expect(hrefs(html)).toContain('/legal/privacy')
-      // where: after the button, not at the top of the card
-      expect(html.indexOf('/legal/terms')).toBeGreaterThan(html.indexOf('Start the check →'))
-    })
-  }
-})
-
-describe('the short frame pays for the line out of duplicated chrome, not out of the line', () => {
-  // Measured 2026-09-09 at 640×320: the card was 317px tall and fitted; with the consent line it was
-  // 345px and clipped 12px off BOTH ends (no scroll). The footnote repeats the age picker's own
-  // eyebrow ("Free · about 10 minutes · no account needed"), so on a short frame it goes and the
-  // documents stay. Roomy frames keep both.
-  it('short: footnote gone, links present', () => {
-    const html = renderToStaticMarkup(createElement(EmailGate, { accent: ACCENTS.cyan, short: true, onSubmit: () => {} }))
-    expect(html).not.toContain('takes about ten minutes')
-    expect(hrefs(html)).toEqual(['/legal/terms', '/legal/privacy'])
-  })
-  it('roomy: footnote present', () => {
-    const html = renderToStaticMarkup(createElement(EmailGate, { accent: ACCENTS.cyan, onSubmit: () => {} }))
-    expect(html).toContain('takes about ten minutes')
-  })
-})
 
 describe('/auth is unchanged', () => {
   it('ConsentLine with no props renders the pre-change markup, byte for byte', () => {

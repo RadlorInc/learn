@@ -203,14 +203,15 @@ describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('adopting a demo run onto a real learner
 describe('the caller (source)', () => {
   const parent = strip(readFileSync('src/app/parent/page.tsx', 'utf8'))
 
-  it('adopts on learner creation, and lets the diagnosis keep the plan', () => {
+  it('adopts on learner creation, and claims the plan', () => {
+    // ⚠️ This also asserted the demo YIELDS the plan to a diagnosis. The check was deleted
+    // 2026-09-20 and `/parent` now always passes true; what still matters is that the run is
+    // adopted at all — the P0 this file exists for.
     const at = parent.indexOf('adoptDemoRun(')
     expect(at, 'nothing adopts the demo — a parent who played two chapters finds nothing').toBeGreaterThan(0)
     const call = balanced(parent, at, '(', ')')
     expect(call, 'the adopt call could not be bounded — re-read this gate').not.toBe('')
-    expect(call, 'the demo claims the plan unconditionally, overwriting a diagnosed one')
-      .toMatch(/claimedByDiagnostic/)
-    expect(parent, 'claimedByDiagnostic is not derived from the pending diagnostic')
-      .toMatch(/claimedByDiagnostic = !!\(pending && pending\.band === learner\.age_group\)/)
+    expect(call, 'the demo no longer claims the plan, so a demo player signs up to nothing')
+      .toMatch(/learner\.age_group as AgeGroup, true/)
   })
 })

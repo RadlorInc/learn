@@ -4,7 +4,6 @@
 import { db } from '@/data/repositories/_shared'
 import { logAuthEvent } from '@/data/auth'
 import { clearActiveLearner } from '@/data/supabase/useLearnerSession'
-import { clearPendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
 import type { UserRole } from '@/data/supabase/types'
 
 /**
@@ -52,6 +51,5 @@ export async function signOut() {
   } catch { /* best-effort — never block sign-out */ }
   await supabase.auth.signOut()
   clearActiveLearner()        // else the next account (same tab) briefly sees the previous child's profile
-  clearPendingDiagnostic()    // V9: don't leave a child's name + gap profile in localStorage after sign-out
   window.location.href = '/auth'
 }

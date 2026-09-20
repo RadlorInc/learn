@@ -8,17 +8,14 @@ import {
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, removeMyselfFromLearner,
-  getLatestGap, getCheckupStatus,
   getMyRole, setMyRole, setLearnerLessons, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
 } from '@/data/repositories'
-import { enqueueDiagnostic, flushDiagnosticQueue, enqueueSession, flushQueue } from '@/infra/useOfflineSync'
-import { peekPendingDiagnostic, takePendingDiagnostic } from '@/infra/storage/pendingDiagnostic'
+import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { setActivePlan, advancePlan } from '@/infra/storage/activePlan'
 import { adoptDemoRun } from '@/infra/storage/demoRun'
 import { scoreChapter } from '@/core/scoring'
 import { track } from '@/infra/analytics'
-import { hasCheckup, markCheckupDone, checkupSkips } from '@/infra/storage/checkup'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
@@ -101,7 +98,6 @@ export default function ParentDashboard() {
   const [confirming,   setConfirming]   = useState<string | null>(null) // learnerId being confirmed
   const [wallets, setWallets] = useState<Record<string, Wallet | 'unavailable' | null>>({})   // learnerId → points + game settings
   const [, redraw] = useState(0)
-  const [recheckDue, setRecheckDue] = useState<{ weeks: number } | null>(null)   // week-6 nudge for the active learner
   const [role, setRole] = useState<UserRole | null | 'loading'>('loading')       // null = show the one-time Teacher/Parent picker
   const [picked, setView] = useState<string | null>(null)             // null = that role's home
   const [childLogins, setChildLogins] = useState<Record<string, string> | null>(null)   // learnerId → username; null = unknown
@@ -234,53 +230,18 @@ export default function ParentDashboard() {
     await setMyRole(r)
   }
 
-  // A BRAND-NEW learner is OFFERED the checkup on their first "Start learning". Established kids —
-  // any who already have play history (progress / sessions / XP) OR have already done a checkup —
-  // go straight into the app and are never asked. So existing profiles are grandfathered, while a
-  // new child sees the offer exactly once.
-  //
-  // ⚠️ OFFERED, NOT FORCED, SINCE 2026-08-24 — the destination is the same screen, but that screen
-  // now carries a one-tap "Skip for now" that issues a grade-start plan. `checkupSkips` is what
-  // stops the offer reappearing on every launch: without it, "optional" would mean "asked forever",
-  // which is worse than mandatory because it never even resolves.
-  function isEstablished(d: LearnerData): boolean {
-    return !!d.stats?.last_played_at || (d.stats?.total_xp ?? 0) > 0 || d.progress.length > 0 || d.sessions.length > 0
-  }
-  async function launchGame(d: LearnerData) {
-    const learner = d.learner
-    setActiveLearner(learner)
-    // While legacy chapters are hidden the check is off, so every child goes straight to the lesson list.
-    if (LEGACY_CHAPTERS_HIDDEN || isEstablished(d) || checkupSkips(learner.id) > 0 || await hasCheckup(learner.id)) router.push('/menu')
-    else router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
-  }
-
-  // The diagnostic front door for a signed-in learner: set them active (so the result saves + items
-  // personalize to their name) and open the probe pre-tuned to their age band.
-  function findStartingPoint(learner: Learner) {
-    setActiveLearner(learner)
-    router.push(`/diagnostic?band=${learner.age_group ?? '3-5'}`)
-  }
-
-  // Step 8: the week-N re-check — pull the learner's last root gap and open the guarantee check.
-  async function recheckGap(learner: Learner) {
-    setActiveLearner(learner)
-    const g = await getLatestGap(learner.id)
-    if (!g?.rootGap) { setActionMsg('Run the check-up first — then we can re-check the gap.'); return }
-    router.push(`/diagnostic/recheck?skill=${encodeURIComponent(g.rootGap)}&band=${g.band}&week=6`)
+  /**
+   * ⚠️ THE STARTING-POINT CHECK WAS DELETED 2026-09-20, with its engine, its skill graph and the
+   * week-6 re-check. Every child now goes straight to the lesson list; the plan they walk is
+   * `gradeStartPlan` — the band from the top, refined by play. The "offered, not forced" branch,
+   * `isEstablished`, `checkupSkips` and `recheckGap` all went with it.
+   */
+  function launchGame(d: LearnerData) {
+    setActiveLearner(d.learner)
+    router.push('/menu')
   }
 
   const active = learners.find(d => d.learner.id === selected)
-
-  // Week-6 re-check nudge: surface the guarantee loop in-app when a re-check is due for this learner.
-  useEffect(() => {
-    setRecheckDue(null)
-    if (!active) return
-    let cancelled = false
-    getCheckupStatus(active.learner.id)
-      .then(st => { if (!cancelled && st?.recheckDue) setRecheckDue({ weeks: st.weeksSince }) })
-      .catch(() => { /* best-effort nudge */ })
-    return () => { cancelled = true }
-  }, [active?.learner.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6', fontSize:48 }}>🦊</div>
@@ -563,11 +524,6 @@ export default function ParentDashboard() {
                   ))}
                 </div>
 
-                {recheckDue && !LEGACY_CHAPTERS_HIDDEN && (
-                  <button onClick={() => recheckGap(active.learner)} style={{ width:'100%', padding:'13px 14px', marginBottom:10, background:'rgba(255,255,255,0.95)', color:'#B45309', border:'2px solid #F6C453', borderRadius:16, fontSize:14, fontWeight:800, cursor:'pointer', textAlign:'left', lineHeight:1.35 }}>
-                    🔔 It&apos;s been {recheckDue.weeks} weeks — time to re-check {active.learner.display_name}&apos;s gap →
-                  </button>
-                )}
                 <button onClick={() => launchGame(active)} style={{ width:'100%', padding:'14px', background:'#fff', color:'#F26B2C', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>
                   ▶ Start learning
                 </button>
@@ -582,14 +538,6 @@ export default function ParentDashboard() {
                     🔑 {childLogins === null ? 'Login' : childLogins[active.learner.id] ? `Login · ${childLogins[active.learner.id]}` : 'Set a login'}
                   </button>
                 )}
-                {!LEGACY_CHAPTERS_HIDDEN && <div style={{ display:'flex', gap:10, marginTop:10 }}>
-                  <button onClick={() => findStartingPoint(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
-                    🔍 Find starting point
-                  </button>
-                  <button onClick={() => recheckGap(active.learner)} style={{ flex:1, padding:'12px', background:'rgba(255,255,255,0.16)', color:'#fff', border:'1.5px solid rgba(255,255,255,0.5)', borderRadius:50, fontSize:13.5, fontWeight:800, cursor:'pointer' }}>
-                    🔁 Re-check the gap
-                  </button>
-                </div>}
               </div>
 
               {/* COPPA: a parent may SEE what is stored and have it DELETED. Both live under one
@@ -913,46 +861,23 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
     if (!trimmed || trimmed.length < 2) { setError('Please enter a name (at least 2 characters)'); return }
     if (pick.size === 0) { setError('Choose at least one module for this learner.'); return }
     const chosen = MODULES.filter(m => pick.has(m.id))
-    // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19). A captured
-    // logged-out diagnostic keeps its band so its replay below still matches; otherwise the band of the first grade chosen.
-    const b = peekPendingDiagnostic()?.band
-    const ageGroup = AGE_GROUP_OPTIONS.some(o => o.value === b) ? (b as AgeGroup) : bandOf(chosen[0].grade)
+    // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19).
+    // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
+    const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
     const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) })
     if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
-    // Capture-at-report loop: if this parent just took the logged-out diagnostic, save that result
-    // against the child they're creating now — but ONLY when the bands match (a 9–11 plan is
-    // meaningless on a 3–5 learner). PEEK first, then CONSUME only on a match: a mismatch must leave
-    // the capture stashed so it can still attach to the diagnosed child if they add a sibling first.
-    const pending = peekPendingDiagnostic()
-    if (pending && pending.band === learner.age_group) {
-      takePendingDiagnostic()   // confirmed match → consume it (one-shot; never replays twice)
-      // Durable-first: enqueue (survives a failed post-signup write) then flush. Reuses the stashed
-      // clientId so the idempotent RPC won't double-write if a signed-in save ever also lands.
-      enqueueDiagnostic({
-        learnerId: learner.id, band: pending.band, rootGap: pending.rootGap, secondGap: pending.secondGap,
-        blocked: pending.blocked, strengths: pending.strengths, workingLevel: pending.workingLevel,
-        planSkills: pending.planSkills, planChapters: pending.planChapters, items: pending.items,
-        clientId: pending.clientId,
-      })
-      void flushDiagnosticQueue()
-      markCheckupDone(learner.id)   // replayed checkup → this new child passes the play gate
-      setActivePlan(learner.id, pending.band, pending.planChapters)   // step 7: walkable plan for the new child
-    }
-
     /**
      * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
      * find nothing here — no stars, and a plan whose first step is the chapter their child just
      * finished. That is worse than never having played: we showed them the product and took it away
      * at the moment they committed.
      *
-     * ⚠️ THE DIAGNOSTIC OUTRANKS THE DEMO FOR THE PLAN. A diagnosed plan is one somebody looked for;
-     * a grade-start plan is the band from the top. So the demo claims the plan only when the pending
-     * diagnostic did not — but its SESSIONS are adopted either way, because the child played them.
+     * ⚠️ THE DIAGNOSTIC USED TO OUTRANK THE DEMO FOR THE PLAN; it was deleted 2026-09-20, so the
+     * demo always claims it (`true`) and its sessions are adopted as before.
      */
-    const claimedByDiagnostic = !!(pending && pending.band === learner.age_group)
     const adopted = adoptDemoRun(
-      learner.id, learner.age_group as AgeGroup, !claimedByDiagnostic,
+      learner.id, learner.age_group as AgeGroup, true,
       {
         enqueueSession: p => enqueueSession({ ...p, chapter: p.chapter as ChapterType }),
         score: (c, w, m) => scoreChapter(c, w, m),

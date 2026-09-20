@@ -51,16 +51,16 @@ export const APP_ID = 'https://adaptivelearn.radlor.com/#app'
 
 /**
  * The only routes that may be crawled. Everything else is a signed-in surface: it renders nothing
- * useful to a crawler, and `/parent` and `/insights` are other people's children.
+ * useful to a crawler, and `/parent` and `/admin` are other people's children.
  *
  * ⚠️ This is NOT the access control — RLS is. It stops a bot spending crawl budget on an app shell
  * and stops those URLs appearing in results; it protects nothing on its own.
  */
-export const PUBLIC_ROUTES = ['/', '/diagnostic', '/help', '/legal/privacy', '/legal/terms'] as const
+export const PUBLIC_ROUTES = ['/', '/help', '/legal/privacy', '/legal/terms'] as const
 
 /** Signed-in surfaces, kept out of results. `/api/` is here because an endpoint in an index is
  *  noise for everyone. */
 export const PRIVATE_ROUTES = [
-  '/api/', '/parent', '/insights', '/play', '/shop', '/menu', '/game', '/story',
-  '/name-entry', '/auth', '/teen-preview', '/sim-preview',
+  '/api/', '/parent', '/admin', '/play', '/shop', '/menu', '/game', '/story',
+  '/auth', '/practice', '/lesson', '/modules',
 ] as const
