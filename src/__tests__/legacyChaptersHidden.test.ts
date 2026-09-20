@@ -25,7 +25,7 @@ describe('legacy chapters are hidden', () => {
   })
 
   it('names still resolve, so saved progress and past sessions still read', () => {
-    expect(CHAPTER_IDS.length).toBe(72)
+    expect(CHAPTER_IDS.length).toBe(23)
     expect(CHAPTER_NAMES.counting).toBe('Counting')
   })
 

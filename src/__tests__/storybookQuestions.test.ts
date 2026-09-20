@@ -9,8 +9,8 @@
  * it took to test.
  *
  * ⚠️ AND THE FOUR THAT WERE ALREADY EXPORTED SWEEP CLEAN, WHICH IS THE ARGUMENT FOR THIS FILE
- * RATHER THAN AGAINST IT. TickTock, SliceShop, OrderDesk and LevelRun are exported *because*
- * somebody gated them (`tickTockClock`, `sliceShopFit`, `orderDeskPlaceValue`, `levelRunRounding`).
+ * RATHER THAN AGAINST IT. TickTock and SliceShop are exported *because* somebody gated them
+ * (`tickTockClock`, `sliceShopFit`).
  * Reachability is what caused them to be tested. The other twenty are the untested ones.
  *
  * What a `Beat` exposes, and therefore what can be checked here:
@@ -43,8 +43,6 @@ import { BEAT as COIN_SHOP, askFor as coinAsk, openerFor, stallAt } from '@/feat
 import { askFor as yardAsk } from '@/features/chapters/story/BlockYard'
 import { makeTimeBeat } from '@/features/chapters/story/TickTock'
 import { makeFrBeat } from '@/features/chapters/story/SliceShop'
-import { makeBeat as makeOrderBeat } from '@/features/chapters/story/OrderDesk'
-import { makeBeat as makeLevelBeat } from '@/features/chapters/story/LevelRun'
 // The two whose beat is built inside the component from component state: their question surface is
 // module-scope pure functions, so those are driven directly rather than the beat being lifted out.
 import { makePatternRound, promptFor as beadPrompt, sayFor as beadSay, EMPTY_STRAND } from '@/features/chapters/story/BeadShop'
@@ -108,13 +106,6 @@ const BANNER_OWNED = [
   'subtractionTo100 · Block Yard (−)',
   'placeValue · Building Blocks',
   'money · Coin Shop',
-  // ⚠️ THESE TWO JOINED THE LIST ON 2026-09-04, DELIBERATELY. Both already left `beat.prompt` empty
-  // (Milo's bubble is their only question region) and carried `say: d => d.ask` purely so the shell
-  // would speak it. The shell now QUEUES its line instead of superseding, so that `say` became the
-  // same question said twice — once by the shell, once by the chapter — and it was dropped. The
-  // question is still driven below, from the generator the bubble itself reads.
-  'bigNumbers · Order Desk',
-  'rounding · Level Run',
 ]
 
 const noop = () => {}
@@ -148,8 +139,6 @@ const CHAPTERS: Chapter[] = [
   fromBeat('money · Coin Shop', COIN_SHOP),
   fromBeat('time · Tick Tock', makeTimeBeat()),
   fromBeat('fractions · Slice Shop', makeFrBeat()),
-  fromBeat('bigNumbers · Order Desk', makeOrderBeat()),
-  fromBeat('rounding · Level Run', makeLevelBeat()),
   // ⚠️ EVERY WORLD, not the first. A world changes the nouns and the scenes, so it changes the
   // question — sweeping one of three would sweep a third of the chapter and report full coverage.
   ...MEASURE_WORLDS.map(w => fromBeat(`measurement · Measure It (${w.id})`, makeMeasureBeat(w, noop))),
@@ -176,20 +165,6 @@ const CHAPTERS: Chapter[] = [
     banner: true,
     rounds: BUILDING_BLOCKS.rounds,
     prompt: (d, round) => blocksAsk(BUILDING_BLOCKS.make(d, round, [])),
-    say: () => '',
-  },
-  {
-    id: 'bigNumbers · Order Desk · banner',
-    banner: true,
-    rounds: makeOrderBeat().rounds,
-    prompt: (d, round) => (makeOrderBeat().make(d, round, []) as { ask: string }).ask,
-    say: () => '',
-  },
-  {
-    id: 'rounding · Level Run · banner',
-    banner: true,
-    rounds: makeLevelBeat().rounds,
-    prompt: (d, round) => (makeLevelBeat().make(d, round, []) as { ask: string }).ask,
     say: () => '',
   },
   {
@@ -227,7 +202,7 @@ describe('every live storybook chapter is reachable at all', () => {
 })
 
 describe('S1 · every chapter states its question, at every tier and every round', () => {
-  it('the silent-BEAT list is EXACTLY those six ids, and has not grown', () => {
+  it('the silent-BEAT list is EXACTLY those four ids, and has not grown', () => {
     // A claim about `beat.prompt`, not about the child: all four DO state their question, through
     // the banner probes above. What this pins is that nothing else quietly joins them.
     const silent = CHAPTERS.filter(c => !c.id.endsWith('· banner')).filter(c => {

@@ -9,7 +9,6 @@ import { gateVerdict, lockCopy } from '@/features/billing/chapterGate'
 import { PAYWALL_ENABLED } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 import { CHAPTERS } from '@/core/chapters'
-import { isArChapter } from '@/core/arChapters'
 
 /**
  * BILLING STAGE 3 — the chapter gate and the screens.
@@ -78,12 +77,6 @@ describe('the lock NAMES what is behind it', () => {
     }
   })
 
-  it('says the camera one is played with your hands, and only that one', () => {
-    const ar = CHAPTERS.filter(c => isArChapter(c.id))
-    expect(ar.length, 'no AR chapters found — the sweep has rotted').toBeGreaterThan(0)
-    for (const c of CHAPTERS) expect(lockCopy(c.id).hands, c.id).toBe(isArChapter(c.id))
-  })
-
   it('falls back to something honest for an id the catalogue does not know', () => {
     const copy = lockCopy('not-a-chapter')
     expect(copy.title).toBeTruthy()
@@ -141,9 +134,9 @@ describe('⚠️ a CHILD never sees a price', () => {
   })
 
   it('tells the child to ask a grown-up, and NAMES the chapter rather than saying "locked"', () => {
-    const t = text('decimals')
+    const t = text('money')
     expect(t).toMatch(/ask a grown-up/i)
-    expect(t).toContain('Decimals')
+    expect(t).toContain('Money')
     // "Locked" is the word that does no work — §3 of docs/billing-stage-3.md.
     expect(/locked/i.test(t), 'the card announces itself as "locked" instead of explaining').toBe(false)
   })
@@ -184,7 +177,7 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
     const callers = ['src/app/game/page.tsx']
     const all = [
       'src/app/game/page.tsx', 'src/app/parent/page.tsx', 'src/app/diagnostic/page.tsx',
-      'src/app/demo/page.tsx', 'src/app/teen-preview/page.tsx', 'src/app/menu/page.tsx',
+      'src/app/demo/page.tsx', 'src/app/menu/page.tsx',
       'src/app/diagnostic/recheck/page.tsx',
     ]
     const uses = all.filter(f => /useChapterGate|entitledChapters|isChapterEntitled/.test(decomment(read(f))))
@@ -245,7 +238,7 @@ describe('⚠️ the hook, DRIVEN — a verdict nothing reads is not a gate', ()
     vi.doMock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => learner }))
     const { useChapterGate } = await import('@/features/billing/useChapterGate')
     const seen: string[] = []
-    function Probe() { seen.push(useChapterGate('decimals')); return null }
+    function Probe() { seen.push(useChapterGate('money')); return null }
     const el = document.createElement('div')
     document.body.appendChild(el)
     const root = createRoot(el)
@@ -321,7 +314,7 @@ describe('⚠️ the repository fails OPEN — the direction that silently locks
     vi.resetModules()
     vi.doMock('@/data/supabase/client', () => ({ createClient: () => ({ rpc }) }))
     const { isChapterEntitled } = await import('@/data/repositories/billing')
-    return isChapterEntitled('L1', 'decimals')
+    return isChapterEntitled('L1', 'money')
   }
 
   it('passes a true through', async () => {
@@ -349,6 +342,6 @@ describe('⚠️ the repository fails OPEN — the direction that silently locks
   it('asks with the learner and chapter it was given', async () => {
     let seen: unknown = null
     await ask(async (...args: unknown[]) => { seen = args; return { data: true, error: null } })
-    expect(seen).toEqual(['is_chapter_entitled', { p_learner_id: 'L1', p_chapter: 'decimals' }])
+    expect(seen).toEqual(['is_chapter_entitled', { p_learner_id: 'L1', p_chapter: 'money' }])
   })
 })

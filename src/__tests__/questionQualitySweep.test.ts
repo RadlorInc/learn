@@ -28,14 +28,6 @@
  * only 4 stacks" contains "4" and so does the answer 4. Every number check here is anchored.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import * as cents from '@/features/chapters/story/cents'
-import * as factors from '@/features/chapters/story/factors'
-import * as pizza from '@/features/chapters/story/pizza'
-import * as inches from '@/features/chapters/story/inches'
-import * as words from '@/features/chapters/story/words'
-import * as cargo from '@/features/chapters/story/cargo'
-import * as angles from '@/features/chapters/story/angles'
-import * as plot from '@/features/chapters/story/plotMaths'
 import * as slice from '@/features/chapters/story/slice'
 
 type Tier = 1 | 2 | 3
@@ -82,135 +74,8 @@ interface Probe<R> {
 // Each one is thin on purpose: it must not re-implement a rule, only expose the module's own
 // functions in a common shape. Anything computed here rather than called is a second copy.
 
-const centsProbe: Probe<cents.CtRound> = {
-  id: 'decimals · The Coin Tray',
-  make: d => cents.makeRound(d),
-  // the tag is the board's headline BEFORE the commit, plus what Milo says and the action chip
-  preAnswer: r => [cents.headline(r, false), cents.sayFor(r, 'tap'), cents.instructionFor('tap', 'dimes')],
-  // ⚠️ NOT `padChoices()`. The answer is a PAIR of wells, so what the child can reach is every
-  // amount 0..99 in cents; the pad is one DIGIT of it. Reading the pad as the answer surface said
-  // "no reachable input grades true" on every single round — the instrument being wrong, not the app.
-  inputs: () => Array.from({ length: 100 }, (_, i) => i),
-  accepted: r => Array.from({ length: 100 }, (_, i) => i)
-    .filter(v => cents.graded(r, { dimes: Math.floor(v / 10), pennies: v % 10 })),
-  // A `make` round's whole question is "lay out this amount", so the tag NAMES the target on
-  // purpose — the same reason an exact-degrees round prints its degrees. Only the other two types
-  // must keep it back, and `cents.headline` already does (gated in coinTrayDecimals.test.ts).
-  asksForTheFigure: r => r.qType === 'make',
-  nudge: (r, v) => cents.nudgeFor(r, { dimes: v, pennies: 0 }, 'tap'),
-  miss: r => cents.missFor(r),
-}
-
-const factorsProbe: Probe<factors.FlRound> = {
-  id: 'factorsMultiples · Factor Lab',
-  make: d => factors.makeRound(d),
-  preAnswer: r => [r.work, r.spoken, factors.instructionFor(r, 'tap'), factors.sayFor(r, 'tap')],
-  inputs: () => factors.padChoices(),
-  accepted: r => factors.padChoices().filter(v => factors.graded(r, v)),
-  nudge: (r, v) => factors.nudgeFor(r, v, 'tap'),
-  miss: r => factors.missFor(r),
-  verdict: (r, v) => factors.verdictFor(r, v).text,
-}
-
-const pizzaProbe: Probe<pizza.PzRound> = {
-  id: 'fractionsCompare · The Pizza Counter',
-  /**
-   * ⚠️ EXEMPT FROM Q2, AND THE REASON IS THE MATERIAL RATHER THAN THE CODE — measured, not waved
-   * through. On a `match` round the answer is a COUNT OF SLICES and the givens are two DENOMINATORS,
-   * so the two collide whenever `refNum × den / refDen` lands on a number already in the sentence:
-   * 34.7% of `match`, 27.2% of `more`, 6.8% of `op` (2026-08-20).
-   *
-   * The pool cannot be cleaned without gutting it. Tier 1 is match-only over three pairs, and
-   * `[2, 4]` — half a pizza against quarters, k = 2 = the denominator — collides on its ONLY
-   * numerator. That pair is the single most canonical equivalence in the chapter, and removing the
-   * best worked example to close a coincidence is a bad trade.
-   *
-   * It is also the harmless direction: the collision can only make a guess luckier, never make a
-   * correct method wrong — unlike The Height Bar's `4 × 12 = 48` landing on a posted limit of 48,
-   * which manufactures a wrong answer and IS gated (heightBarUnits.test.ts). The answer surface is
-   * 1..10, so a child copying one of three visible numbers is still not near a coin flip.
-   */
-  asksForTheFigure: () => true,
-  make: d => pizza.makeRound(d),
-  preAnswer: r => [r.work, r.spoken, pizza.instructionFor(r, 'tap'), pizza.sayFor(r, 'tap')],
-  inputs: () => pizza.padChoices(),
-  accepted: r => pizza.padChoices().filter(v => pizza.graded(r, v)),
-  nudge: (r, v) => pizza.nudgeFor(r, v, 'tap'),
-  miss: r => pizza.missFor(r),
-  verdict: (r, v) => pizza.verdictFor(r, v).text,
-}
-
-const inchesProbe: Probe<inches.HbRound> = {
-  id: 'measurementUnits · The Height Bar',
-  make: d => inches.makeRound(d),
-  preAnswer: r => [inches.headline(r, false), inches.sayFor(r, 'tap'), inches.instructionFor('tap', 'tens')],
-  inputs: () => Array.from({ length: 100 }, (_, i) => i),
-  accepted: r => Array.from({ length: 100 }, (_, i) => i)
-    .filter(v => inches.graded(r, { tens: Math.floor(v / 10), ones: v % 10 })),
-  nudge: (r, v) => inches.nudgeFor(r, { tens: Math.floor(v / 10), ones: v % 10 }, 'tap'),
-  miss: r => inches.missFor(r),
-  verdict: (r, v) => inches.verdictFor(r, { tens: Math.floor(v / 10), ones: v % 10 }).text,
-}
-
-/** One reading turned into the cart the chapter grades: a stack PICK on `most`, a LOAD otherwise. */
-function cartFor(r: cargo.LbRound, v: number): cargo.CartV {
-  if (r.qType === 'most') return { load: [0, 0, 0, 0], pick: v }
-  if (r.qType === 'total') return { load: [...r.counts], pick: null }
-  const load = [0, 0, 0, 0]
-  load[r.focus] = v
-  return { load, pick: null }
-}
-
-const cargoProbe: Probe<cargo.LbRound> = {
-  id: 'dataGraphs · The Loading Bay',
-  make: d => cargo.makeRound(d),
-  preAnswer: r => [r.prompt, r.work, cargo.instructionFor(r, 'tap')],
-  inputs: () => Array.from({ length: 13 }, (_, i) => i),
-  accepted: r => Array.from({ length: 13 }, (_, i) => i).filter(v => cargo.graded(r, cartFor(r, v))),
-  nudge: (r, v) => cargo.nudgeFor(r, v),
-  miss: r => cargo.missFor(r),
-}
-
-const wordsProbe: Probe<words.WpRound> = {
-  id: 'wordProblems · The Mission Brief',
-  make: d => words.makeRound(d),
-  preAnswer: r => [r.story, r.prompt, r.say, r.tag],
-  inputs: r => r.choices.map(Number),
-  accepted: r => [r.answer],
-  nudge: () => null,
-  miss: r => words.missFor(r),
-}
-
-const plotProbe: Probe<plot.PlotRound> = {
-  id: 'areaPerimeter · The Empty Plot',
-  make: d => plot.makeRound(d),
-  preAnswer: r => [r.prompt, r.say, r.tag],
-  inputs: () => Array.from({ length: 13 }, (_, i) => i),
-  // ⚠️ THE DEPTH, not `target` — `target` is the load on the lorry and is GIVEN. Driven through
-  // the real grader so this cannot drift from what the chapter accepts.
-  accepted: r => Array.from({ length: 13 }, (_, i) => i).filter(v => plot.gradePeg(r, v)),
-  nudge: () => null,
-  miss: (r, v) => plot.missFor(r, v),
-}
-
-const anglesProbe: Probe<angles.Round> = {
-  id: 'anglesSymmetry · The Angle Shop',
-  make: (d, i) => angles.makeRound(d, i),
-  preAnswer: r => [r.ask],
-  inputs: r => (r.type === 'angle' ? angles.reachable() : []),
-  accepted: r => (r.type === 'angle'
-    ? angles.reachable().filter(deg => angles.grade(r, deg))
-    : []),
-  nudge: () => null,
-  miss: (r, v) => angles.missFor(r, v),
-  verdict: (r, v) => angles.verdictFor(r, v),
-  // "Set the bike ramp to exactly 85°" — the figure IS the ask, like a coin tray `make` round.
-  asksForTheFigure: r => r.type === 'angle' && r.job === 'degrees',
-}
-
 /**
- * 6–8 · SLICE SHOP — the one chapter outside this band with a pure module, so the sweep is not
- * only a 9–11 gate.
+ * 6–8 · SLICE SHOP — the one chapter with a pure module.
  *
  * ⚠️ THE NUMERIC AXIS HERE IS HOW MANY PIECES ARE LAID, with the round's own piece size. The
  * chapter's other axis — WHICH piece the child reaches for — is the central misconception and is
@@ -232,10 +97,7 @@ const sliceProbe: Probe<slice.FrRound> = {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const PROBES: Probe<any>[] = [
-  centsProbe, factorsProbe, pizzaProbe, inchesProbe, cargoProbe, wordsProbe, plotProbe, anglesProbe,
-  sliceProbe,
-]
+const PROBES: Probe<any>[] = [sliceProbe]
 
 // ─── the rules ───────────────────────────────────────────────────────────────────────────
 

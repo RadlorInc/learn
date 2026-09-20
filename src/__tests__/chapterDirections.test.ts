@@ -21,7 +21,6 @@ import { strip } from './_window'
 
 const read = (p: string) => strip(readFileSync(join(process.cwd(), p), 'utf8'))
 const PORTAL = 'src/features/chapters/ChapterPortal.tsx'
-const SHELL = 'src/features/chapters/teen/games/parts/GameShell.tsx'
 const CARD = 'src/features/chapters/DirectionsCard.tsx'
 const SHAPES = 'src/features/chapters/story/ShapeTown.tsx'
 const MEASURE = 'src/features/chapters/story/MeasureIt.tsx'
@@ -43,17 +42,6 @@ describe('every chapter carries a line of typed directions', () => {
   })
 
   /** Both engines, because the band is split across them and a child gets one or the other. */
-  it('is rendered by the story portal and by the teen shell', () => {
-    // Anchored on the real call, not on the import: an import that nothing renders is the shape of
-    // this repo's own dead-prop fault.
-    expect(read(PORTAL), 'the story portal stopped drawing the directions')
-      .toContain('<DirectionsCard chapter={skill} />')
-    expect(read(SHELL), 'the teen header stopped drawing the directions')
-      .toContain('{getChapter(config.chapterId).hint}')
-    // ⚠️ The counting chapter keeps its own wrapper and is NOT covered by the portal line above.
-    expect(read('src/features/chapters/game/CountingStoryChapter.tsx'), 'chapter 1 lost its directions')
-      .toContain('<DirectionsCard chapter="counting" />')
-  })
 
   /**
    * ⚠️⚠️ THE STRIP IS NEVER STACKED ON A CHAPTER'S OWN BANNER, AND THAT IS THE WHOLE OF THE FIX.

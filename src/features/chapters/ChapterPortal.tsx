@@ -20,10 +20,7 @@ import { useRouter } from 'next/navigation'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { stopSpeech } from '@/infra/useMiloSpeaker'
 import CelebrationModal from '@/shared/ui/CelebrationModal'
-import MasteryState from '@/features/chapters/teen/MasteryState'
-import ExploreStep from '@/features/chapters/teen/ExploreStep'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
-import type { AgeBand } from '@/features/chapters/teen/types'
 import type { ChapterType } from '@/core/chapters'
 
 export type ChapterProps = {
@@ -110,99 +107,6 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
         {/* The typed "what to do" note, in one place for all 24 story chapters rather than 24 copies. */}
         <DirectionsCard chapter={skill} />
         <CelebrationModal onExit={exit} onPlayAgain={replay} />
-      </div>,
-      body,
-    )
-  }
-}
-
-// ─── Teen chapters (12–18) ──────────────────────────────────────────────────
-
-export type TeenGame = React.ComponentType<{ childName: string; onExit: () => void; onFinish: Finish }>
-export type Sim = React.ComponentType<{ band: AgeBand }>
-
-export type TeenChapterCfg = {
-  skill: ChapterType
-  band: AgeBand
-  conceptsConfirmed: string[]
-  nextPointer: string
-  /** Optional play-with-it beat before the game. Skippable by design. */
-  explore?: { title: string; intro: string; continueLabel?: string }
-}
-
-function Centered({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="milo-lesson" style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 18px', background: 'var(--bg-page)', color: 'var(--ink)', fontFamily: 'var(--font-body)', boxSizing: 'border-box' }}>
-      {children}
-    </div>
-  )
-}
-
-function TeenWorld({ cfg, Game, SimComp, childName, onFinish, onExit, onReplay }: {
-  cfg: TeenChapterCfg; Game: TeenGame; SimComp?: Sim
-  childName: string; onFinish: Finish; onExit: () => void; onReplay: () => void
-}) {
-  const [phase, setPhase] = useState<'explore' | 'game' | 'done'>(cfg.explore && SimComp ? 'explore' : 'game')
-
-  if (phase === 'explore' && cfg.explore && SimComp) {
-    return (
-      <ExploreStep
-        band={cfg.band}
-        title={cfg.explore.title}
-        intro={cfg.explore.intro}
-        continueLabel={cfg.explore.continueLabel ?? 'Skip to the game'}
-        onContinue={() => setPhase('game')}
-      >
-        <SimComp band={cfg.band} />
-      </ExploreStep>
-    )
-  }
-
-  if (phase === 'done') {
-    return (
-      <Centered>
-        <MasteryState
-          band={cfg.band}
-          conceptsConfirmed={cfg.conceptsConfirmed}
-          nextPointer={cfg.nextPointer}
-          onPlayAgain={onReplay}
-          onExit={onExit}
-        />
-      </Centered>
-    )
-  }
-
-  // ⚠️ NO `DirectionsCard` HERE. The 12–18 shell draws its own directions IN its header row
-  // (`GameShell`), because a fixed card dropped on that row covered the chapter title — measured at
-  // 640×320. A flex child cannot overlap; a floating one over somebody else's layout can.
-  return (
-    <Game
-      childName={childName}
-      onExit={onExit}
-      onFinish={(c, w, mastered) => { onFinish(c, w, mastered); setPhase('done') }}
-    />
-  )
-}
-
-export function makeTeenChapter(cfg: TeenChapterCfg, Game: TeenGame, SimComp?: Sim) {
-  return function TeenChapter(props: ChapterProps) {
-    const { router, body, runKey, finish, replay } = usePortalRun(cfg.skill, true, props.onComplete)
-    if (!body) return null
-    // ⚠️ `stopSpeech` runs on EITHER path. A caller-supplied exit that skipped it would leave Milo
-    // narrating over whatever screen comes next, which is the sort of thing only a person notices.
-    const exit = () => { stopSpeech(); if (props.onExit) props.onExit(); else router.push('/menu') }
-    return createPortal(
-      <div data-band={cfg.band} style={{ position: 'fixed', inset: 0, zIndex: 900, overflowY: 'auto', background: 'var(--bg-page)', color: 'var(--ink)' }}>
-        <TeenWorld
-          key={runKey}
-          cfg={cfg}
-          Game={Game}
-          SimComp={SimComp}
-          childName={props.childName}
-          onFinish={finish}
-          onExit={exit}
-          onReplay={replay}
-        />
       </div>,
       body,
     )

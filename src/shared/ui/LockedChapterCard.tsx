@@ -34,11 +34,6 @@ export function LockedChapterCard({ chapterId, onBack }: { chapterId: string; on
         <p style={{ fontSize: 15, lineHeight: 1.55, color: '#6b5a42', margin: '0 0 6px' }}>
           {copy.what}
         </p>
-        {copy.hands && (
-          <p style={{ fontSize: 15, lineHeight: 1.55, color: '#6b5a42', margin: '0 0 6px' }}>
-            This one you play with your hands, through the camera.
-          </p>
-        )}
         <p style={{ fontSize: 15, lineHeight: 1.55, color: '#6b5a42', margin: '10px 0 20px', fontWeight: 700 }}>
           Ask a grown-up to open it for you.
         </p>

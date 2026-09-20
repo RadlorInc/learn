@@ -14,7 +14,6 @@
  */
 import { kv } from '@/infra/storage/kv'
 import { gradeStartPlan, type AgeGroup } from '@/core/chapters'
-import { demoEligible } from '@/core/arChapters'
 
 /** How many chapters a visitor may play before the account. */
 export const DEMO_LIMIT = 2
@@ -32,22 +31,9 @@ export interface DemoRun { band: AgeGroup; results: DemoResult[]; startedAt: str
 
 export const doneChapters = (run: DemoRun | null): string[] => run?.results.map(r => r.chapter) ?? []
 
-/**
- * The chapters this band's demo offers: the start of the same `gradeStartPlan` a skipper gets, minus
- * anything that would ask for the camera.
- *
- * ⚠️⚠️ THE AR FILTER IS CURRENTLY INERT, AND THAT IS WHY IT IS SPLIT OUT. Measured 2026-08-24, no
- * band's first two chapters ask for the camera — so deleting the filter changes nothing today and
- * every test over the real bands stays green, which is exactly what an inert clause looks like from
- * outside: protection nobody has watched work. It becomes load-bearing the instant a curriculum
- * order changes, and what it prevents is a logged-out child being offered "Turn on the camera".
- *
- * So the POLICY is separated from the band lookup: `pickDemo` takes a plan, so a gate can hand it a
- * plan that DOES start with a camera chapter and watch the filter bind. Keeping the clause and
- * making it untestable would have been the worse half of both options.
- */
-export const pickDemo = (plan: string[]): string[] =>
-  plan.filter(demoEligible).slice(0, DEMO_LIMIT)
+/** The chapters this band's demo offers: the head of the same `gradeStartPlan` a skipper gets.
+ *  ⚠️ It used to also drop camera chapters; those went with the AR band (2026-09-20). */
+export const pickDemo = (plan: string[]): string[] => plan.slice(0, DEMO_LIMIT)
 
 export function demoChapters(band: AgeGroup): string[] {
   return pickDemo(gradeStartPlan(band))

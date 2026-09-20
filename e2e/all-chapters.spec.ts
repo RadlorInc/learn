@@ -100,13 +100,12 @@ type FrameName = keyof typeof FRAMES
 interface Chapter { id: string; url: string; shell: 'gameshell' | 'story' }
 
 /**
- * Where each chapter lives. A chapter is on GameShell if `registry.tsx` names it, and a storybook
- * chapter if `storyChapters.tsx` does. The story route takes an ALIAS rather than the skill id
- * (`?ch=bignum` for `bigNumbers`), so the alias table in `app/story/page.tsx` is reversed here.
+ * Where each chapter lives — all of them are storybook chapters now (`storyChapters.tsx`). The
+ * story route takes an ALIAS rather than the skill id (`?ch=add100` for `additionTo100`), so the
+ * alias table in `app/story/page.tsx` is reversed here.
  */
 function chapters(): Chapter[] {
   const ids = [...read('src/core/chapters.ts').matchAll(/\{ id: '([A-Za-z0-9]+)'/g)].map(m => m[1])
-  const registry = read('src/features/chapters/registry.tsx')
   const story = read('src/features/chapters/storyChapters.tsx')
 
   // alias -> skill, from the PREVIEW table; reversed to skill -> alias (first alias wins).
@@ -117,16 +116,13 @@ function chapters(): Chapter[] {
   }
 
   return ids.map(id => {
-    if (new RegExp(`^\\s*${id}:`, 'm').test(registry)) {
-      return { id, url: `/teen-preview?c=${id}`, shell: 'gameshell' as const }
-    }
     if (new RegExp(`^\\s*${id}:`, 'm').test(story)) {
       const alias = aliasOf[id] ?? id
       return { id, url: `/story?ch=${alias}`, shell: 'story' as const }
     }
-    // Declared to children with nothing behind it — a dead tap. Kept in the list so it FAILS
-    // loudly rather than being silently skipped.
-    return { id, url: `/teen-preview?c=${id}`, shell: 'gameshell' as const }
+    // Declared to children with nothing behind it — a dead tap. Kept in the list, pointed at a
+    // URL that cannot resolve, so it FAILS loudly rather than being silently skipped.
+    return { id, url: `/story?ch=${id}`, shell: 'story' as const }
   })
 }
 

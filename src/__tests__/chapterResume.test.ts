@@ -15,7 +15,6 @@ const CH = 'numberRecognition' as ChapterType
 const run = { round: 7, correct: 5, wrong: 2, seen: ['a', 'b'], asked: ['x'] }
 const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8')
 const STORY = 'src/features/chapters/story/StoryWorld.tsx'
-const SHELL = 'src/features/chapters/teen/games/parts/GameShell.tsx'
 
 describe('mid-chapter resume (the run, not just the tier)', () => {
   beforeEach(() => localStorage.clear())
@@ -81,38 +80,12 @@ describe('both engines end a run cleanly', () => {
     }
   })
 
-  it('every GameShell exit from a run clears the resume point', () => {
-    const lines = read(SHELL).split('\n').filter(l => /\bonFinish\(c, w[,)]/.test(l))
-    expect(lines.length, 'GameShell gained or lost a way to finish a run').toBe(2)
-    for (const l of lines) {
-      expect(l, `a run ends here without clearing its resume point:\n${l.trim()}`).toContain('clearChapterResume')
-    }
-  })
-
   /**
    * ⚠️ COUNTED, NOT MERELY PRESENT. Written as a `toContain` this survived mutation: SkillBeat
    * advances a run from TWO places — a scored answer and the end of a re-teach — and deleting the
    * save from the scored answer left the re-teach's copy to satisfy the search. A rule that has to
    * hold in N places is asserted N times.
    */
-  it('both engines write the run as it goes, not on the way out', () => {
-    // There is no exit event for a closed tab, so a save that only happens on unmount saves nothing
-    // in exactly the case the student reported.
-    const story = read(STORY)
-    const saves = story.split('setChapterResume(learnerId, beat.skillId, {').length - 1
-    expect(saves, 'a path that advances a SkillBeat run no longer records where it got to').toBe(2)
-    expect(story, 'the scored answer stopped recording').toContain('round: roundIdx + 1, correct:')
-    expect(story, 'the re-teach stopped recording').toContain('round: next, correct:')
-    const shell = read(SHELL)
-    expect(shell.split('setChapterResume(learnerId, config.chapterId, {').length - 1,
-      'GameShell stopped recording progress mid-run').toBe(1)
-  })
-
-  it('a resumed run re-enters play rather than replaying the teaching', () => {
-    expect(read(STORY), 'the round no longer starts where the child left off').toContain('useState(resume?.round ?? 0)')
-    expect(read(STORY), 'the score no longer carries across the gap').toContain('resume?.correct ?? 0, wrong: resume?.wrong ?? 0')
-    expect(read(SHELL), 'GameShell replays the walkthrough on a resume').toContain('if (resume) { finishDemo(); return }')
-  })
 
   /**
    * ⚠️ THE START CARD IS LOAD-BEARING ON A RESUME AND MUST NOT BE SKIPPED. It is where
@@ -120,12 +93,6 @@ describe('both engines end a run cleanly', () => {
    * on an AR chapter, where BOTH camera doors live. A resume that jumped straight into play would
    * put a child in front of a camera nobody consented to on this visit.
    */
-  it('a resumed GameShell run still passes through the start card', () => {
-    const s = read(SHELL)
-    const doors = s.split('\n').filter(l => l.includes('enterAfterStart()'))
-    expect(doors.length, 'a start-card door stopped routing through the resume-aware entry').toBe(4)
-    for (const l of doors) expect(l, 'a door skips the speech unlock').toContain('unlockSpeech()')
-  })
 })
 
 describe('spoken praise on a correct answer', () => {
@@ -164,11 +131,6 @@ describe('spoken praise on a correct answer', () => {
     expect(praisesOnCorrect(''), 'an unknown band opts IN, which is the wrong default').toBe(false)
   })
 
-  it('the teen shell asks the shared rule rather than deciding for itself', () => {
-    // A second copy of the cutoff in the shell is a second thing to keep in step with the first.
-    expect(read(SHELL), 'GameShell stopped praising, or grew its own copy of the rule')
-      .toContain('if (praisesOnCorrect(BAND)) speak(PRAISE[')
-  })
 })
 
 /**

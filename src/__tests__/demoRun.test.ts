@@ -4,11 +4,7 @@
  * ⚠️ THE RULE THIS FILE EXISTS FOR IS "THE DEMO ENDS". A cap that never binds is a free product, and
  * a cap that binds too early is a wall in front of the value. Both are silent, and neither shows up
  * in a type-check — the only thing that catches them is driving the run to its end and past it.
- *
- * ⚠️ AND THE COPPA ONE: no band may OFFER a camera chapter to a visitor with no account.
- * `GuardedChapter` would refuse the render anyway, but a demo whose offer is a chapter it then
- * refuses is a dead end, which is worse than a wrong answer.
- */
+\n */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { balanced, strip } from './_window'
@@ -19,10 +15,10 @@ import {
 } from '@/infra/storage/demoRun'
 import { gradeStartPlan, CHAPTER_NAMES, LEGACY_CHAPTERS_HIDDEN, type AgeGroup, type ChapterType } from '@/core/chapters'
 import { adoptDemoRun } from '@/infra/storage/demoRun'
-import { isArChapter } from '@/core/arChapters'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
 
-const BANDS: AgeGroup[] = ['3-5', '6-8', '9-11', '12-14', '15-16', '17-18']
+// Only the two bands that still have chapters; the other four exist as `age_group` values only.
+const BANDS: AgeGroup[] = ['3-5', '6-8']
 beforeEach(() => { clearDemo() })
 
 // Legacy chapters are hidden (src/core/chapters.ts); these assert their lists. Re-enable by flipping the flag.
@@ -39,28 +35,12 @@ describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('what the demo offers', () => {
     }
   })
 
-  it('NEVER offers a camera chapter to a visitor with no account', () => {
-    for (const b of BANDS) for (const c of demoChapters(b)) {
-      expect(isArChapter(c), `${b}: ${c} asks for the camera and is offered to a logged-out child`).toBe(false)
-    }
-  })
-
-  it('EXCLUDES a camera chapter when the plan starts with one — the case no band produces today', () => {
-    // ⚠️ Written because a mutation survived: dropping the AR filter passed every check over the
-    // real bands, since none of them starts with a camera chapter. The clause was real protection
-    // that nothing had ever watched work. Hand `pickDemo` the plan the bands do not have.
-    const ar = Object.keys(CHAPTER_NAMES).find(isArChapter)!
-    const safe = Object.keys(CHAPTER_NAMES).filter(c => !isArChapter(c)).slice(0, 2)
-    expect(pickDemo([ar, ...safe]), 'a camera chapter was offered to a logged-out visitor').toEqual(safe)
-    expect(pickDemo(safe), 'control: a clean plan is passed through untouched').toEqual(safe)
-  })
-
   it('is the head of the same plan a skipper gets — not a second curriculum to keep in step', () => {
     for (const b of BANDS) {
       const plan = gradeStartPlan(b)
       for (const c of demoChapters(b)) expect(plan, `${b}: ${c} is not in the band's plan`).toContain(c)
-      // order preserved: the demo is a PREFIX of the plan once AR chapters are dropped
-      expect(demoChapters(b)).toEqual(plan.filter(x => !isArChapter(x)).slice(0, DEMO_LIMIT))
+      // order preserved: the demo is a PREFIX of the plan
+      expect(demoChapters(b)).toEqual(plan.slice(0, DEMO_LIMIT))
     }
   })
 })
@@ -128,10 +108,10 @@ describe('the route (source)', () => {
     expect(handler, 'the demo discards its completion callback').toMatch(/completeDemoChapter\(/)
   })
 
-  it('both logged-out doors go through the one guard', () => {
-    // Two copies of the camera check is the day they disagree. Anchored on the import, so deleting
-    // the shared component and inlining `useChapterAccess` fails here.
-    for (const f of ['src/app/demo/page.tsx', 'src/app/teen-preview/page.tsx']) {
+  it('the logged-out door goes through the one guard', () => {
+    // Anchored on the IMPORT, so inlining the guard at the route fails here. `/teen-preview` was
+    // the second door until the 9–18 chapters went (2026-09-20); `/demo` is the only one left.
+    for (const f of ['src/app/demo/page.tsx']) {
       expect(readFileSync(f, 'utf8'), `${f} does not use the shared guard`)
         .toMatch(/import \{ GuardedChapter \}/)
     }

@@ -21,7 +21,6 @@ import { SHEETS } from '@/features/chapters/story/canvas/sheets'
 import * as StoryTime from '@/features/chapters/story/StoryTime'
 import * as MarketDay from '@/features/chapters/story/MarketDay'
 import * as SeesawPark from '@/features/chapters/story/SeesawPark'
-import * as OrderDesk from '@/features/chapters/story/OrderDesk'
 
 const CHAPTERS = [
   { name: 'StoryTime (story problems)', m: StoryTime },
@@ -80,6 +79,10 @@ it('every drawn walk cycle in sheets.ts is actually used by a chapter', () => {
     // unusable — just not yet cast in a chapter. HopAlong is its natural home if it ever wants a
     // hopping creature alongside Milo.
     '/assets/objects/frog_side.png',
+    // Order Desk's two cast members, orphaned when the 9–11 chapters were deleted (2026-09-20).
+    // The art is kept (founder's call); these are the sheets nothing casts any more.
+    '/assets/objects/foreman_bear_side.png',
+    '/assets/objects/driver_badger_side.png',
     '/assets/objects/alien_side.png',       // orphaned when the moon base was dropped
     '/assets/objects/astronaut_side.png',   // ditto
     '/assets/objects/nest_side.png',        // NestTree's chick-in-a-nest, a prop rather than a mover
@@ -89,9 +92,6 @@ it('every drawn walk cycle in sheets.ts is actually used by a chapter', () => {
     '/assets/characters/milo_hop_side.png',
   ])
   const used = new Set(CHAPTERS.flatMap(c => c.m.RUN.map(p => p.item.img)))
-  // The 9–11 band casts people rather than countable creatures, so its RUN carries a `customer`
-  // instead of an `item`. They are drawn cycles all the same and must not read as idle art.
-  for (const y of OrderDesk.RUN) used.add(y.customer)
   const idle = Object.keys(SHEETS).filter(k => !used.has(k) && !UNUSED_ON_PURPOSE.has(k))
   expect(idle).toEqual([])
 })

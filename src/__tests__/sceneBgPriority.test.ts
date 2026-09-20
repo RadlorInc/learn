@@ -40,7 +40,8 @@ describe('SceneBg', () => {
   })
 
   it('is actually in use — a gate over nothing proves nothing', () => {
-    expect(sites.length).toBeGreaterThan(25)
+    // Floor lowered 25 → 14 on 2026-09-20 with the 9–11 chapters; it is a rot guard, not a target.
+    expect(sites.length).toBeGreaterThan(14)
   })
 
   it('every chapter backdrop states its loading priority', () => {

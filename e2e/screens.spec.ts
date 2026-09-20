@@ -27,7 +27,6 @@ const PUBLIC = [
   { path: '/legal/privacy',  name: 'privacy' },
   { path: '/legal/terms',    name: 'terms' },
   { path: '/story',          name: 'story-index' },
-  { path: '/teen-preview',   name: 'teen-index' },
 ]
 
 /**
