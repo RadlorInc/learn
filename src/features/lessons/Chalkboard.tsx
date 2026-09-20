@@ -22,10 +22,15 @@ export function Chalkboard({ marks, says, shown, label, still }: { marks: ChalkM
       const start = Math.max(free, Number(el.dataset.at) || 0), quick = el.dataset.quick !== undefined
       if (el.tagName === 'text') {
         const ls = [...el.querySelectorAll('tspan')], stroke = el.getAttribute('fill') ?? CHALK.w
+        // ⚠️ The dash that holds a letter back must be LONGER THAN THE GLYPH'S OWN OUTLINE, so it scales with the
+        // writing. A fixed 120 only covered the default s=30: measured in Chrome, s=56 left a speck and s=110 left
+        // most of a "5" already on the board — a piece of a mark that had not been said yet. Same rule as the pen
+        // in ./LessonPlayer.tsx (`fontSize * 4`), and 4x was watched clean at 30/40/56/110.
+        const L = (Number(el.getAttribute('font-size')) || 30) * 4, pen = { stroke, strokeWidth: '1.2', strokeDasharray: `${L}` }
         ls.forEach((l, i) => l.animate([
-          { stroke, strokeWidth: '1.2', strokeDasharray: '120', strokeDashoffset: '120', fillOpacity: 0 },
-          { stroke, strokeWidth: '1.2', strokeDasharray: '120', strokeDashoffset: '0', fillOpacity: 0, offset: 0.55 },
-          { stroke, strokeWidth: '1.2', strokeDasharray: '120', strokeDashoffset: '0', fillOpacity: 1 },
+          { ...pen, strokeDashoffset: `${L}`, fillOpacity: 0 },
+          { ...pen, strokeDashoffset: '0', fillOpacity: 0, offset: 0.55 },
+          { ...pen, strokeDashoffset: '0', fillOpacity: 1 },
         ], { duration: 380, delay: start + i * 60, easing: 'ease-out', fill: 'backwards' }))
         free = start + ls.length * 60 + 120   // the next mark starts while the last letter fills in
       } else if (el.dataset.wash) {
