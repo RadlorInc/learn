@@ -7,7 +7,6 @@
  * paywall nobody has watched refuse anything.
  */
 import { getChapter } from '@/core/chapters'
-import { isArChapter } from '@/core/arChapters'
 
 /** `checking` renders nothing; `allowed` mounts the chapter; `locked` shows the card. */
 export type GateVerdict = 'checking' | 'allowed' | 'locked'
@@ -39,8 +38,6 @@ export interface LockCopy {
   title: string
   /** What the chapter DOES. One line, from the catalog, never written twice. */
   what: string
-  /** Only for a camera chapter: the band's speciality, named rather than hidden. */
-  hands: boolean
 }
 
 /**
@@ -59,6 +56,5 @@ export function lockCopy(chapterId: string): LockCopy {
     title: meta?.name ?? 'This chapter',
     // The catalog's own one-liner. Written once, for the picker, and true here for the same reason.
     what: meta?.hint ?? 'There is more for Milo to show you in here.',
-    hands: isArChapter(chapterId),
   }
 }

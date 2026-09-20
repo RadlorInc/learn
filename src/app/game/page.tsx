@@ -2,10 +2,7 @@
 export const dynamic = 'force-static'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, Suspense } from 'react'
-import nextDynamic from 'next/dynamic'
 import { useMiloStore } from '@/state/store'
-import { type ChapterType } from '@/core/chapters'
-import { getChapter, type AgeGroup } from '@/core/chapters'
 
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { setLastPlayed } from '@/infra/storage/lastPlayed'
@@ -19,12 +16,6 @@ import { isChapterVisible } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
-
-// Teen chapters render their own full-screen portal + MasteryState completion, so
-// the kids' CelebrationModal (which also auto-speaks) must NOT mount for them.
-const TEEN_AGE_GROUPS: AgeGroup[] = ['12-14', '15-16', '17-18']
-const isTeenChapter = (id: ChapterType | null) =>
-  !!id && (getChapter(id)?.ageGroups ?? []).some(g => TEEN_AGE_GROUPS.includes(g))
 
 export default function GamePage() {
   const router         = useRouter()
@@ -142,7 +133,7 @@ export default function GamePage() {
     {/* Modal + pointer live OUTSIDE the zoom wrapper so they stay full-screen and
         their fixed coords aren't double-scaled. The counting story renders its own
         celebration over the forest, so we skip the global one there. */}
-    {playingChapter !== 'counting' && !isTeenChapter(playingChapter) && <CelebrationModal />}
+    {playingChapter !== 'counting' && <CelebrationModal />}
     <MiloPointer />
     </>
   )

@@ -223,7 +223,6 @@ describe('afterSpeech', () => {
 describe('the two engines queue their narration rather than cutting it', () => {
   const read = (p: string) => readFileSync(join(process.cwd(), p), 'utf8')
   const STORY = 'src/features/chapters/story/StoryWorld.tsx'
-  const SHELL = 'src/features/chapters/teen/games/parts/GameShell.tsx'
 
   it('SkillBeat announces a round behind whatever is still being said', () => {
     // The round advances 1300ms after the verdict; most verdicts run longer than that.
@@ -233,21 +232,10 @@ describe('the two engines queue their narration rather than cutting it', () => {
       .not.toContain('speak((beat.say ?? beat.prompt)(data))\n')
   })
 
-  it('GameShell hands the guided round over without talking across it', () => {
-    expect(read(SHELL), '"Your turn" cuts off the guided round\'s last words again')
-      .toContain('speakAfterCurrent(`Your turn, ${childName}.`)')
-  })
 
   /**
    * ⚠️ THE REVEAL AND THE RE-EXPLANATION MUST BE ONE SEQUENCE. As two `speakSteps` calls 1800ms
    * apart the second supersedes the first, so the child who has just missed three in a row has the
    * answer taken away mid-word by the explanation they earned.
    */
-  it('GameShell says the reveal and the re-teach as ONE sequence', () => {
-    const src = read(SHELL)
-    expect(src, 'the re-teach is a second sequence again, so it cuts the reveal')
-      .toContain('speakSteps([`It was ${config.revealText(task)}.`, ...task.work]')
-    // Exactly two reveal-shaped calls: this one, and the no-re-teach branch's two-utterance form.
-    expect(src.match(/speakSteps\(\[`It was \$\{config\.revealText\(task\)\}\.`/g)?.length).toBe(2)
-  })
 })

@@ -41,14 +41,6 @@ const PREVIEW: Record<string, StorySkill> = {
   story: 'storyProblems', multiply: 'multiplication', fractions: 'fractions',
   money: 'money', time: 'time', add100: 'additionTo100', sub100: 'subtractionTo100',
   solids: 'shapes2d3d',
-  // ── 9–11 — pre-teen "Number Lab" (Mission-HUD) look — single lab, no world picker ──
-  bignum: 'bigNumbers', round: 'rounding',
-  // ⚠️ EIGHT OF THE TEN 9–11 CHAPTERS ARE NOT HERE ANY MORE. The Coin Tray, The Factor Lab, The
-  // Pizza Counter, The Height Bar, The Angle Shop and The Mission Brief moved onto GameShell
-  // (2026-08-14), The Empty Plot followed (2026-08-15) and The Loading Bay with it — so they are no
-  // longer bare story experiences and their preview is `/teen-preview?c=<id>`. The unknown-key
-  // branch below names the keys that DO work rather than silently falling through, which is the
-  // whole reason it exists.
 }
 
 // Lazy-load each heavy chapter view so only the selected chapter's JS ships, mirroring the

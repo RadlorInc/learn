@@ -2,8 +2,10 @@
  * WHO LEARNS THAT A CHAPTER FINISHED.
  *
  * ⚠️⚠️ THIS IS THE SEAM THAT COST THREE MONTHS. `ChapterProps.onComplete` sat in every chapter's
- * signature while both registry factories took it as `_props` and dropped it, so `/game`'s handler
- * never ran and no child's plan advanced. The pointer was moved into `finishAndSync` — correct, and
+ * signature while the registry factories took it as `_props` and dropped it, so `/game`'s handler
+ * never ran and no child's plan advanced. (There were TWO factories until 2026-09-20; the teen one
+ * went with the 9–18 chapters. The counts below are 1 for that reason, not because a check was
+ * loosened — if a second factory is ever added they must go back to 2.) The pointer was moved into `finishAndSync` — correct, and
  * it left the PROP behind, still typed, still looking wired, for the next caller to trust.
  *
  * `/demo` is that caller and cannot use `finishAndSync` (a logged-out visitor has no learner, so it
@@ -20,11 +22,12 @@ const game = readFileSync('src/app/game/page.tsx', 'utf8')
 
 
 describe('the completion callback reaches its caller', () => {
-  it('BOTH registry factories pass onComplete through — one is the bug', () => {
-    // ⚠️ COUNTED. Story and teen are separate factories written months apart; wiring one and not
-    // the other is the original fault applied to half the app, and it looks fixed from either side.
+  it('EVERY registry factory passes onComplete through — one that does not is the bug', () => {
+    // ⚠️ COUNTED against the number of factories in the file, so adding a factory that drops the
+    // prop goes red rather than being averaged away.
     expect((strip(portal).match(/usePortalRun\([^)]*props\.onComplete\)/g) ?? []).length,
-      'a registry factory drops onComplete — chapters in that half can never report completion').toBe(2)
+      'a registry factory drops onComplete — chapters in that half can never report completion')
+      .toBe((strip(portal).match(/^export function make\w+Chapter/gm) ?? []).length)
     expect(strip(portal), 'the factories must read props, not discard them').not.toMatch(/_props: ChapterProps/)
   })
 
@@ -70,7 +73,7 @@ describe('waking the handler must not change /game', () => {
  * right to ask for a login.
  */
 describe('the exit destination is a parameter, not knowledge', () => {
-  it('BOTH factories honour a caller-supplied exit, and BOTH still default to /menu', () => {
+  it('EVERY factory honours a caller-supplied exit, and every one still defaults to /menu', () => {
     /**
      * ⚠️ COUNT THE FACTORIES, NOT THE OCCURRENCES. The first draft asserted `props.onExit` appears
      * twice; it appears FOUR times (each exit names it in a condition and a call), so the gate went
@@ -78,7 +81,8 @@ describe('the exit destination is a parameter, not knowledge', () => {
      * broken gate PASS. A count is only a check when you have counted the right thing.
      */
     const exits = strip(portal).match(/const exit = \(\) => .*/g) ?? []
-    expect(exits.length, 'the exits changed shape — re-read this gate').toBe(2)
+    expect(exits.length, 'the exits changed shape — re-read this gate')
+      .toBe((strip(portal).match(/^export function make\w+Chapter/gm) ?? []).length)
     for (const e of exits) {
       expect(e, `a factory ignores the caller's exit, stranding a logged-out visitor: ${e}`).toMatch(/props\.onExit/)
       expect(e, `a factory lost its /menu default, which a signed-in child needs: ${e}`).toMatch(/router\.push\('\/menu'\)/)
@@ -92,12 +96,10 @@ describe('the exit destination is a parameter, not knowledge', () => {
       .not.toMatch(/getSession|isLoggedIn|activeLearner|\/auth|\/demo/)
   })
 
-  it('the teen exit still stops speech on the caller-supplied path', () => {
-    // Easy to lose in a ternary: Milo would go on narrating over whatever screen comes next, which
-    // is the sort of thing only a person notices.
-    const at = strip(portal).indexOf('const exit = () => { stopSpeech()')
-    expect(at, 'the teen exit changed shape — re-read this gate').toBeGreaterThan(0)
-    const line = balanced(strip(portal), at)   // the arrow body, brace to brace
-    expect(line).toMatch(/stopSpeech\(\);\s*if \(props\.onExit\)/)
+  it('leaving a chapter stops Milo talking', () => {
+    // Milo would otherwise go on narrating over whatever screen comes next, which is the sort of
+    // thing only a person notices. The story factory does this in usePortalRun's cleanup rather
+    // than in `exit`, so the assertion is that SOME path stops speech on unmount.
+    expect(strip(portal), 'nothing stops speech when a chapter goes away').toMatch(/stopSpeech\(\)/)
   })
 })

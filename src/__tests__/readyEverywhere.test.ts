@@ -48,16 +48,14 @@ const CHAPTERS: Array<[file: string, kind: 'bar' | 'own', tokens: string[]]> = [
   ['CoinShop.tsx', 'own', ['onClick={onPay}']],
   ['HomeTime.tsx', 'own', ['Ready! 🔔']],
   ['HopAlong.tsx', 'own', ['Ready ✓']],
-  ['LevelRun.tsx', 'own', ['onClick={commit}']],
   ['MeasureIt.tsx', 'own', ['Done ✓']],
-  ['OrderDesk.tsx', 'own', ['onClick={commit}']],
   ['SliceShop.tsx', 'own', ['onClick={commit}']],
   ['TickTock.tsx', 'own', ['onClick={commit}']],
 ]
 
 describe('every storybook chapter has a commit step', () => {
   it('covers the whole band — a chapter cannot ship without one by omission', () => {
-    expect(CHAPTERS.length, 'a chapter joined or left the band without joining this table').toBe(23)
+    expect(CHAPTERS.length, 'a chapter joined or left the band without joining this table').toBe(21)
     expect(new Set(CHAPTERS.map(c => c[0])).size).toBe(CHAPTERS.length)
   })
 

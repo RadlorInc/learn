@@ -38,17 +38,27 @@ describe('Content-Security-Policy', () => {
     expect(scriptSrc(await csp('development'))).toMatch(/ 'unsafe-eval'/)
   })
 
-  it('the allowances every AR chapter depends on are still there', async () => {
-    // Enforcing the policy without these kills the 9–11 band's camera, and nothing fails until a
-    // child opens it: MediaPipe fetches WASM from jsDelivr, its model from storage.googleapis.com,
-    // instantiates WebAssembly, and runs its detector in a blob: worker.
+  it('grants nothing for code that is not here any more', async () => {
+    /**
+     * ⚠️ THIS ASSERTION WAS INVERTED ON 2026-09-20 AND THAT IS THE POINT. It used to require
+     * 'wasm-unsafe-eval', jsDelivr, storage.googleapis.com and a blob: worker, because MediaPipe
+     * hand-tracking needed all four. The AR chapters were deleted; the grants were not load-bearing
+     * any more, and a grant nobody uses is reach nobody re-examines.
+     *
+     * So it now fails the other way: re-adding any of them WITHOUT the code that needs them goes
+     * red. Put them back in the same commit as a real WASM/CDN dependency, never ahead of one.
+     */
     const p = await csp('production')
-    expect(p).toContain("'wasm-unsafe-eval'")
-    expect(p).toMatch(/script-src [^;]*https:\/\/cdn\.jsdelivr\.net/)
-    expect(p).toMatch(/connect-src [^;]*https:\/\/storage\.googleapis\.com/)
-    expect(p).toMatch(/worker-src [^;]*blob:/)
+    expect(p, "'wasm-unsafe-eval' is granted but nothing runs WASM").not.toContain("'wasm-unsafe-eval'")
+    expect(p, 'jsDelivr is granted but nothing loads from it').not.toMatch(/https:\/\/cdn\.jsdelivr\.net/)
+    expect(p, 'storage.googleapis.com is granted but nothing fetches from it').not.toMatch(/https:\/\/storage\.googleapis\.com/)
+    expect(p, 'a blob: worker is granted but only our own service worker exists').not.toMatch(/worker-src [^;]*blob:/)
+  })
+
+  it('keeps the allowances the app still depends on', async () => {
+    const p = await csp('production')
     // The mobile-autoplay unlock plays a `data:` WAV inside a user gesture; blocked, every recorded
-    // voice clip in bands 12–18 silently falls back to browser speech. Found on prod, in the console.
+    // lesson clip silently falls back to browser speech. Found on prod, in the console.
     expect(p).toMatch(/media-src [^;]*data:/)
     expect(p).toContain("frame-ancestors 'none'")
     expect(p).toContain("object-src 'none'")

@@ -30,10 +30,6 @@ import {
 const BAND_PICK: { band: AgeGroup; age: string; grade: string }[] = [
   { band: '3-5', age: 'Ages 3–5', grade: 'Pre-K – K' },
   { band: '6-8', age: 'Ages 6–8', grade: 'Grade 1–2' },
-  { band: '9-11', age: 'Ages 9–11', grade: 'Grade 3–5' },
-  { band: '12-14', age: 'Ages 12–14', grade: 'Grade 6–8' },
-  { band: '15-16', age: 'Ages 15–16', grade: 'Grade 9–10' },
-  { band: '17-18', age: 'Ages 17–18', grade: 'Grade 11–12' },
 ]
 const accent: Accent = ACCENTS.cyan
 

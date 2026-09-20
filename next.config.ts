@@ -107,14 +107,18 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              /** 'wasm-unsafe-eval' + jsDelivr: the MediaPipe hand-tracking WASM loader.
+              /** ⚠️ jsDelivr, storage.googleapis.com, 'wasm-unsafe-eval' and blob: workers were all
+               *  here for the MediaPipe hand tracker, which went with the AR chapters (2026-09-20).
+               *  Removed rather than left: an unused grant is reach nobody re-examines. Put them
+               *  back WITH the code that needs them, never ahead of it — and update /privacy, which
+               *  names both origins.
                *  ⚠️ 'unsafe-eval' IN DEV ONLY, and it is not cosmetic: React's dev build calls
                *  `eval()` for its debugging features, so with it blocked EVERY page logs a console
                *  error — which made `npm run test:chapters` (the C7 gate, whose contract is "zero
                *  console errors") fail 210 of 211 against the dev server it is documented to drive.
                *  It went unnoticed because the gate was last run against production. Never shipped:
                *  this whole branch is dropped from the production header. */
-              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://cdn.jsdelivr.net`,
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
               // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
@@ -127,10 +131,9 @@ const nextConfig: NextConfig = {
                *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing;
                *  the clips themselves are 'self' (/audio/<voice>/*.mp3). */
               "media-src 'self' data:",
-              // Supabase (REST + realtime), and the two origins MediaPipe pulls its model from.
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://storage.googleapis.com",
-              // MediaPipe runs its detector in a blob: worker; our own service worker is 'self'.
-              "worker-src 'self' blob:",
+              // Supabase (REST + realtime).
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              "worker-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self' https://accounts.google.com",
