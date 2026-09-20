@@ -14,7 +14,6 @@ export interface ActivePlan {
   chapters: string[]   // chapters.ts ids, foundational-first
   index: number        // pointer to the current (next-to-play) chapter
   startedAt: string
-  revised?: boolean    // play-data revision already applied (fires at most once)
   /**
    * ⚠️ WHERE THE PLAN CAME FROM, AND IT IS NOT BOOKKEEPING — IT DECIDES WHAT WE MAY SAY ABOUT IT.
    * The plan card's own words are "Milo picked this to close the gap", which is true of a diagnosed
@@ -80,22 +79,6 @@ export function advancePlan(learnerId: string, completedChapterId: string): stri
   return p.index < p.chapters.length ? p.chapters[p.index] : null
 }
 
-/** Play-data revision: the child STRUGGLED in the plan's FIRST chapter (the diagnosed root), so
- *  the true gap sits deeper — prepend the deeper prerequisite chapter so it becomes the new
- *  current step. Fires at most ONCE per plan (one level of revision is evidence-driven; repeated
- *  automatic descent without a fresh diagnostic would be guessing) and only while the pointer is
- *  still on step 0 — struggle later in the plan is normal learning, not a wrong diagnosis.
- *  Returns the new current chapter, or null if no revision applied. */
-export function revisePlanDeeper(learnerId: string, struggledChapterId: string, deeperChapterId: string): string | null {
-  const p = getActivePlan(learnerId)
-  if (!p || p.revised || p.index !== 0) return null
-  if (p.chapters[0] !== struggledChapterId || p.chapters.includes(deeperChapterId)) return null
-  p.chapters.unshift(deeperChapterId)
-  p.revised = true
-  try { localStorage.setItem(key(learnerId), JSON.stringify(p)) } catch { /* ignore */ }
-  return deeperChapterId
-}
-
 /**
  * THE WHOLE END-OF-CHAPTER PLAN DECISION, in one place.
  *
@@ -118,29 +101,15 @@ export function revisePlanDeeper(learnerId: string, struggledChapterId: string, 
 export function advanceAfterChapter(
   learnerId: string,
   completedChapterId: string,
-  correct: number,
-  wrong: number,
-  mastered: boolean,
-  deeperFor: (chapterId: string) => string | null,
-): { kind: 'revised' | 'advanced'; to: string | null } | null {
-  const plan = getActivePlan(learnerId)
-  if (!plan) return null
-
-  // Play-data revision: the probe's root can sit one level SHALLOW when a prerequisite was
-  // lucky-guessed (~25% on a 4-choice item), and the plan's FIRST chapter is a dozen adaptive
-  // questions on that very skill — far stronger evidence than one probe item. "Struggled" is
-  // deliberately conservative: a false trigger silently rewrites a child's plan, a miss just means
-  // chapter one is slow. `mastered` can never coincide — it requires a correct streak.
-  const total = correct + wrong
-  const struggled = !mastered && total >= 4 && correct / total < 0.5
-  const atRoot = plan.index === 0 && plan.chapters[0] === completedChapterId
-  if (atRoot && struggled) {
-    const deeper = deeperFor(completedChapterId)
-    const applied = deeper ? revisePlanDeeper(learnerId, completedChapterId, deeper) : null
-    // Revised: the pointer now rests on the deeper chapter, so it must NOT also advance past the
-    // root. Only a successful revision short-circuits — if it did not apply, fall through.
-    if (applied) return { kind: 'revised', to: applied }
-  }
+): { kind: 'advanced'; to: string | null } | null {
+  /**
+   * ⚠️ THE PLAY-DATA REVISION IS GONE WITH THE DIAGNOSTIC (2026-09-20). It prepended a deeper
+   * prerequisite chapter when a child struggled in the plan's first chapter — but the only thing
+   * that could name a "deeper" chapter was `skillGraph`, so with the graph deleted the branch
+   * could only ever take the `advanced` path. Left in, it would read as protection while being
+   * incapable of firing. Restore it WITH a graph, never ahead of one.
+   */
+  if (!getActivePlan(learnerId)) return null
   return { kind: 'advanced', to: advancePlan(learnerId, completedChapterId) }
 }
 
@@ -160,9 +129,7 @@ export function advanceAfterChapter(
  * self-heals if a device misses a write.
  *
  * ⚠️ MONOTONIC, like `mergeServerProgress`: the pointer only ever moves FORWARD. A device that is
- * behind must never drag a child back to a chapter they finished, and a local plan that has been
- * REVISED deeper keeps its own chapter list — the remote copy predates the revision and would undo
- * it.
+ * behind must never drag a child back to a chapter they finished.
  *
  * Returns the reconciled plan, or null when there is nothing to reconcile.
  */
@@ -172,8 +139,6 @@ export function reconcilePlan(
   completedChapterIds: readonly string[],
 ): ActivePlan | null {
   const local = getActivePlan(learnerId)
-  // A revised local plan is AHEAD of the remote one; seeding from remote would drop the deeper
-  // chapter the revision just added.
   const chapters = local ? local.chapters : remoteChapters
   if (chapters.length === 0) return null
 
@@ -189,7 +154,6 @@ export function reconcilePlan(
     chapters,
     index: Math.max(local?.index ?? 0, derived),
     startedAt: local?.startedAt ?? new Date().toISOString(),
-    ...(local?.revised ? { revised: true } : null),
     /**
      * ⚠️⚠️ CARRY THE SOURCE, OR THE RECONCILE SILENTLY RE-LABELS A GRADE-START PLAN AS DIAGNOSED.
      *

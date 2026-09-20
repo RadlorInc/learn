@@ -176,9 +176,8 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
     // with it the per-chapter lock), and the new lessons have no paywall.
     const callers = ['src/app/game/page.tsx']
     const all = [
-      'src/app/game/page.tsx', 'src/app/parent/page.tsx', 'src/app/diagnostic/page.tsx',
+      'src/app/game/page.tsx', 'src/app/parent/page.tsx',
       'src/app/demo/page.tsx', 'src/app/menu/page.tsx',
-      'src/app/diagnostic/recheck/page.tsx',
     ]
     const uses = all.filter(f => /useChapterGate|entitledChapters|isChapterEntitled/.test(decomment(read(f))))
     expect(uses.sort(), 'a route started gating that should not, or one stopped').toEqual(callers.sort())

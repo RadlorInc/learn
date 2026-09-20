@@ -13,7 +13,6 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { syncSession } from '@/data/repositories'
 import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
 import { advanceAfterChapter } from '@/infra/storage/activePlan'
-import { deeperChapter } from '@/core/diagnosticEngine'
 import { track } from '@/infra/analytics'
 
 
@@ -79,8 +78,7 @@ export function useChapterSync(chapter?: ChapterType) {
     if (phase === 'practice') {
       try {
         track('practice_complete', { chapter, correct, wrong, mastered })
-        const moved = advanceAfterChapter(learner.id, chapter, correct, wrong, mastered, deeperChapter)
-        if (moved?.kind === 'revised') track('plan_revised_deeper', { from: chapter, to: moved.to, correct, wrong })
+        advanceAfterChapter(learner.id, chapter)
       } catch { /* scoring already landed; never let bookkeeping undo it */ }
     }
 

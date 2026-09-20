@@ -8,7 +8,7 @@
  * active learner or no network. Day-level retention is derived from the existing
  * `sessions` table — these events add the funnel (opens vs completes, skips).
  *
- * Read it all on the founder dashboard at /insights.
+ * Read it all on the founder dashboard at /admin.
  */
 import { kv } from '@/infra/storage/kv'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'

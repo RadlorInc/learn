@@ -14,7 +14,6 @@ export const dynamic = 'force-static'
 
 const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
   '/': 'what AdaptiveLearn is and who it is for',
-  '/diagnostic': 'the free placement check — ten minutes, no account needed',
   '/help': 'questions parents ask: offline play, lost progress, the camera, choosing a level',
   '/legal/privacy': 'what is stored about a child, who can see it, and how to delete it',
   '/legal/terms': 'terms of service',
@@ -23,7 +22,7 @@ const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
 export function GET() {
   const text = `# ${APP_NAME}
 
-> Adaptive math for ages 3 to 18. A short placement check finds the gap, then a plan fixes it.
+> Adaptive math for grades 3 to 8: a lesson, then practice that adapts to what the child gets wrong.
 
 ${APP_NAME} is made by ${COMPANY} (${COMPANY_URL}) and lives at ${SITE_URL}.
 

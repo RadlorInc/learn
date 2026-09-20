@@ -55,7 +55,9 @@ describe('security', () => {
   })
 
   it('server write paths check res.ok — fetch does not throw on 4xx/5xx', () => {
-    for (const f of ['app/api/lead/route.ts', 'infra/errorSink.ts']) {
+    // ⚠️ `app/api/lead/route.ts` was the other one; it went with the check (2026-09-20). Add any
+    // NEW server fetch that writes somewhere to this list — that is the whole point of it.
+    for (const f of ['infra/errorSink.ts']) {
       const src = readFileSync(join(SRC, f), 'utf8')
       expect(src, `${f} must read res.ok on its fetch`).toMatch(/res\.ok/)
     }
