@@ -19,7 +19,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { stopSpeech } from '@/infra/useMiloSpeaker'
-import CelebrationModal from '@/shared/ui/CelebrationModal'
+import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
 import type { ChapterType } from '@/core/chapters'
 
@@ -63,6 +63,10 @@ function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
   const { finishAndSync } = useChapterSync(skill)
   const [body, setBody] = useState<HTMLElement | null>(null)
   const [runKey, setRunKey] = useState(0)
+  // ⚠️ STATE, not just the ref: the ref stops a double-score, this opens the end card. They were
+  // one thing while the card read `celebration` out of the zustand store; the store went with the
+  // XP economy (2026-09-20) and the portal owns the moment now.
+  const [done, setDone] = useState(false)
   const doneRef = useRef(false)
   const cbRef = useRef(onComplete)
   cbRef.current = onComplete
@@ -77,15 +81,16 @@ function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
   const finish = useCallback<Finish>((c, w, mastered) => {
     if (doneRef.current) return
     doneRef.current = true
+    setDone(true)
     finishAndSync(skill, c, w, 'practice', mastered)
     // After the sync, and guarded: the score is already written and a caller's handler must never
     // be able to undo it. Same reasoning as the plan pointer's own try/catch in `finishAndSync`.
     try { cbRef.current?.(c, w, mastered) } catch { /* a caller's bookkeeping is not the child's score */ }
   }, [finishAndSync, skill])
 
-  const replay = useCallback(() => { doneRef.current = false; setRunKey(k => k + 1) }, [])
+  const replay = useCallback(() => { doneRef.current = false; setDone(false); setRunKey(k => k + 1) }, [])
 
-  return { router, body, runKey, finish, replay }
+  return { router, body, runKey, finish, replay, done }
 }
 
 // ─── Story chapters (3–11) ──────────────────────────────────────────────────
@@ -98,7 +103,7 @@ export type StoryInner = React.ComponentType<StoryProps>
 
 export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInner) {
   return function StoryChapter(props: ChapterProps) {
-    const { router, body, runKey, finish, replay } = usePortalRun(skill, false, props.onComplete)
+    const { router, body, runKey, finish, replay, done } = usePortalRun(skill, false, props.onComplete)
     if (!body) return null
     const exit = () => props.onExit ? props.onExit() : router.push('/menu')
     return createPortal(
@@ -106,7 +111,7 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
         <Inner key={runKey} onFinish={finish} onExit={exit} />
         {/* The typed "what to do" note, in one place for all 24 story chapters rather than 24 copies. */}
         <DirectionsCard chapter={skill} />
-        <CelebrationModal onExit={exit} onPlayAgain={replay} />
+        <ChapterDone open={done} childName={props.childName} onExit={exit} onPlayAgain={replay} />
       </div>,
       body,
     )

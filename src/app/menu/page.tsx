@@ -3,50 +3,27 @@ export const dynamic = 'force-static'
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useMiloStore } from '@/state/store'
 import { type ChapterType } from '@/core/chapters'
 import { CHAPTER_NAMES, CHAPTER_EMOJIS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup } from '@/core/chapters'
 import { ModuleHome } from '@/features/lessons/ModuleHome'
-import { shouldReoffer, recordCheckupSkip } from '@/infra/storage/checkup'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
-import ChapterPicker from '@/shared/ui/ChapterPicker'
 import PWAInstallBanner from '@/shared/ui/PWAInstallBanner'
 import { getActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
-import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds, getActivePlanChapters } from '@/data/repositories'
-import type { LearnerState } from '@/data/supabase/types'
+import { getLearnerBootstrap, getGradeChapterIds } from '@/data/repositories'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
-import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
+import { chapterKey } from '@/core/chapters'
+import { lessonDone } from '@/infra/storage/lessonProgress'
+import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { track } from '@/infra/analytics'
-import { currentPlanChapter, planProgress, reconcilePlan, planSource } from '@/infra/storage/activePlan'
-import { planLine } from '@/core/planCopy'
-import CheckDoor from '@/shared/ui/CheckDoor'
-import { getCheckupStatus } from '@/data/repositories'
+import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
-const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
 // True when this device's shop state equals what's on the server, so we can skip
 // the write-back on a plain menu visit. (After applyServerProgress merges the
 // server in, local is always a superset, so equality means "nothing new here".)
-function shopStateMatchesServer(
-  p: { coinsSpent: number; ownedItems: string[]; equippedItems: Record<string, string> },
-  state: LearnerState | null,
-): boolean {
-  if (!state) {
-    return p.coinsSpent === 0 && p.ownedItems.length === 0 && Object.keys(p.equippedItems).length === 0
-  }
-  if ((state.coins_spent ?? 0) !== (p.coinsSpent ?? 0)) return false
-  const owned = [...p.ownedItems].sort()
-  const sOwned = [...(state.owned_items ?? [])].sort()
-  if (owned.length !== sOwned.length || owned.some((x, i) => x !== sOwned[i])) return false
-  const pe = p.equippedItems ?? {}
-  const se = state.equipped_items ?? {}
-  const keys = new Set([...Object.keys(pe), ...Object.keys(se)])
-  for (const k of keys) if (pe[k] !== se[k]) return false
-  return true
-}
 
 // Short TTL so a menu→game→menu bounce doesn't re-run the full cross-device bootstrap (RPC +
 // merge + possible write) every time. Module-scoped so it survives component remounts within a
@@ -63,17 +40,22 @@ const _greeted = new Set<string>()
 export default function MainMenu() {
   const router = useRouter()
   const authed = useAuthGuard()
-  const { profile, startChapter, loadLearner, applyServerProgress } = useMiloStore()
+  /**
+   * ⚠️ NO PROFILE STORE ANY MORE. The zustand store held the XP / coins / stars economy and went on
+   * 2026-09-20 with it; a chapter's "have they finished this" is now `lessonDone` on the SAME
+   * per-topic record a new-flow lesson writes, and the child's name and avatar come from the
+   * learner row, which is where they always were.
+   */
+  const [childName, setChildName] = useState('')
+  const [avatarIndex, setAvatarIndex] = useState(0)
+  const chapterDone = (id: string | null, ch: string) => lessonDone(id, chapterKey(ch))
   const { speak } = useMiloSpeaker()
-  const [showPicker,   setShowPicker]   = useState(false)
   const [ready,        setReady]        = useState(false)
   const [learnerId,    setLearnerId]    = useState<string | null>(null)
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('3-5')
   const [chapterIds,   setChapterIds]   = useState<ChapterType[]>([])
   const [lastPlayed,   setLastPlayedState] = useState<ChapterType | null>(null)
-  const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number; source: string } | null>(null)
-  const [reoffer,      setReoffer]      = useState(false)
-  const [recheck,      setRecheck]      = useState<{ skill: string; band: string; weeks: number } | null>(null)
+  const [planNext,     setPlanNext]     = useState<{ ch: ChapterType; step: number; total: number } | null>(null)
 
   // The checkup is OPTIONAL — no play gate. A child can enter the menu directly; the checkup is
   // reachable by choice from the parent dashboard ("Find starting point"), never forced.
@@ -84,42 +66,17 @@ export default function MainMenu() {
     if (!learnerId) { setPlanNext(null); return }
     const ch = currentPlanChapter(learnerId), prog = planProgress(learnerId)
     setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-      ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learnerId) }
+      ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total }
       : null)
-    // ⚠️ THE RE-OFFER IS EVIDENCE-GATED, NOT TIME-GATED. It appears only once the child has actually
-    // FINISHED a plan chapter — the parent has now seen the thing work, so the ask has something
-    // behind it, and they are a different person from the one who skipped at signup. A second
-    // decline retires it to the parent dashboard for good.
-    setReoffer(shouldReoffer(learnerId, prog?.done ?? 0))
   }, [learnerId])
 
-  /**
-   * ⚠️⚠️ THE WEEK-6 RE-CHECK, WHERE THE CHILD ACTUALLY IS. It is the promise ("gap closed or you
-   * don't pay"), the retention signal AND the efficacy dataset — one mechanism doing three jobs —
-   * and on production it had fired **zero times**, with FIVE children 45–50 days past their check-up
-   * and genuinely due one. The logic was never broken: the nudge lived only on the PARENT dashboard,
-   * for whichever learner happened to be selected, so it required a parent to visit a screen they
-   * have no reason to open. The child opens THIS one every session.
-   *
-   * Best-effort: a failed lookup just means no card, never a blocked menu.
-   */
-  useEffect(() => {
-    if (!learnerId) return
-    let cancelled = false
-    getCheckupStatus(learnerId)
-      .then(st => { if (!cancelled && st?.recheckDue && st.rootGap) setRecheck({ skill: st.rootGap, band: st.band, weeks: st.weeksSince }) })
-      .catch(() => { /* the menu must open regardless */ })
-    // Clearing on the way OUT rather than on the way in: it runs before the next learner's lookup,
-    // so a sibling can never see the previous child's card, and nothing sets state synchronously
-    // inside the effect body.
-    return () => { cancelled = true; setRecheck(null) }
-  }, [learnerId])
 
   useEffect(() => {
     const learner = getActiveLearner()
 
     if (learner) {
-      loadLearner(learner.id, learner.display_name, learner.avatar_index)
+      setChildName(learner.display_name)
+      setAvatarIndex(learner.avatar_index ?? 0)
       setLearnerId(learner.id)
       // Fall back to 3–5 for learner records cached before age_group existed.
       const band = learner.age_group ?? '3-5'
@@ -163,11 +120,11 @@ export default function MainMenu() {
           // Successful sync — mark fresh so quick re-mounts within the TTL skip the round trip.
           _bootAt.set(learner.id, Date.now())
 
-          const { stats, progress, state } = boot.data
-          applyServerProgress(stats, progress, state)
-          // Difficulty memory follows the child across devices: seed this device from the server's
-          // rows where it has none of its own. See hydrateChapterLevels for why it is not a merge.
-          hydrateChapterLevels(learner.id, progress)
+          const { progress } = boot.data
+          // ⚠️ NOTHING IS MERGED FROM `learner_stats` / `learner_state` ANY MORE. They held the XP,
+          // coins and shop state, deleted 2026-09-20; a chapter's standing and done-flag follow the
+          // account through `lesson_progress`, pulled by `pullLessonProgress` like a topic's.
+          void pullLessonProgress(learner.id, chaptersForAge(band).map(c => chapterKey(c.id)))
 
           /**
            * ⚠️ THE PLAN POINTER, RECONCILED ACROSS DEVICES. It lives in localStorage, so before
@@ -204,22 +161,13 @@ export default function MainMenu() {
             if (!plan) return
             const ch = currentPlanChapter(learner.id), prog = planProgress(learner.id)
             setPlanNext(ch && prog && CHAPTER_NAMES[ch as ChapterType]
-              ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total, source: planSource(learner.id) }
+              ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total }
               : null)
-            setReoffer(shouldReoffer(learner.id, prog?.done ?? 0))
           }
-          const localPlayed = () => {
-            const stars = useMiloStore.getState().profile.chapterStars
-            return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
-          }
-          try {
-            const remote = await getActivePlanChapters(learner.id)
-            applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), remote)
-          } catch {
-            // ⚠️ `remote: []` on purpose — with a local plan present `reconcilePlan` keeps the local
-            // chapter list, so this derives the POSITION without inventing a plan we cannot read.
-            applyPlan(localPlayed(), [])
-          }
+          // ⚠️ `remote: []` since the check was deleted (2026-09-20): `diagnostic_plans` was the
+          // only remote plan source, so `reconcilePlan` now derives the POSITION from played
+          // chapters and keeps the local grade-start chapter list.
+          applyPlan(progress.filter(p => (p.total_sessions ?? 0) > 0).map(p => p.chapter as string), [])
 
           // Continue-where-you-left-off, cross-device: progress is ordered by
           // last_played_at desc, so progress[0] is the most recently played
@@ -229,18 +177,6 @@ export default function MainMenu() {
           const resolved = reconcileLastPlayed(learner.id, top?.chapter as ChapterType | undefined, top?.last_played_at)
           if (resolved) setLastPlayedState(resolved)
 
-          // Push shop state back ONLY when this device has something the server
-          // doesn't (offline purchases, etc.). applyServerProgress merges the
-          // server in monotonically, so equal state means a plain menu visit —
-          // no write needed, no needless mobile request.
-          const p = useMiloStore.getState().profile
-          if (!shopStateMatchesServer(p, state)) {
-            await saveLearnerState(learner.id, {
-              coinsSpent:    p.coinsSpent,
-              ownedItems:    p.ownedItems,
-              equippedItems: p.equippedItems,
-            })
-          }
         } catch { /* offline / transient — local profile stands until next online load */ }
       })()
 
@@ -250,7 +186,7 @@ export default function MainMenu() {
       if (!_greeted.has(learner.id)) {
         _greeted.add(learner.id)
         const ids = chaptersForAge(learner.age_group ?? '3-5').map(c => c.id)
-        const doneCount = ids.filter(ch => (profile.chapterStars[ch] ?? 0) > 0).length
+        const doneCount = ids.filter(ch => chapterDone(learner.id, ch)).length
         if (lp && doneCount > 0) {
           speak(`Welcome back, ${learner.display_name}! Ready to continue ${CHAPTER_NAMES[lp]}?`)
         } else {
@@ -260,24 +196,17 @@ export default function MainMenu() {
       return
     }
 
-    if (profile.hasCompletedSetup) {
-      setReady(true)
-      return
-    }
-
     router.replace('/parent')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const levelName   = LEVEL_NAMES[Math.min(profile.currentLevel - 1, LEVEL_NAMES.length - 1)]
-  const avatarSrc = AVATAR_SRCS[profile.avatarIndex] ?? AVATAR_SRCS[0]
-  const childName   = profile.childName
+  const avatarSrc = AVATAR_SRCS[avatarIndex] ?? AVATAR_SRCS[0]
 
   // Next unplayed chapter
-  const nextChapter = chapterIds.find(ch => (profile.chapterStars[ch] ?? 0) === 0)
+  const nextChapter = chapterIds.find(ch => !chapterDone(learnerId, ch))
     ?? chapterIds[chapterIds.length - 1]
 
-  const doneCount = chapterIds.filter(ch => (profile.chapterStars[ch] ?? 0) > 0).length
+  const doneCount = chapterIds.filter(ch => chapterDone(learnerId, ch)).length
   const allDone   = doneCount === chapterIds.length
 
   // Resume chapter = last played if different from next, else null
@@ -288,8 +217,7 @@ export default function MainMenu() {
   function playChapter(chapter: ChapterType) {
     if (learnerId) setLastPlayed(learnerId, chapter)
     speak(`Let's play ${CHAPTER_NAMES[chapter]}!`)
-    startChapter(chapter)
-    router.push('/game')
+    router.push(`/game?c=${chapter}`)
   }
 
   function handleResume() { if (resumeChapter) playChapter(resumeChapter) }
@@ -306,7 +234,7 @@ export default function MainMenu() {
   // are hidden the child's home is the new-flow topic list instead.
   if (LEGACY_CHAPTERS_HIDDEN) return <ModuleHome learnerId={learnerId} lessonIds={getActiveLearner()?.lesson_ids} back={{ href: '/parent', label: '← Switch' }} />
 
-  const resumeStars = resumeChapter ? (profile.chapterStars[resumeChapter] ?? 0) : 0
+
 
   return (
     <div className="kit-screen" style={{ background: 'var(--bg-page)' }}>
@@ -316,17 +244,8 @@ export default function MainMenu() {
 
       {/* Topbar: Chapters · Level (top-left) + Wallet · Profile / Shop / Switch (top-right) */}
       <div className="kit-topbar" style={{ padding: '20px 28px' }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button className="milo-btn tone-purple size-sm" onClick={() => setShowPicker(true)}>📚 Chapters</button>
-          <span className="milo-chip tone-blue">
-            Level {profile.currentLevel} · {levelName}
-          </span>
-        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span className="milo-chip tone-yellow" title="Wallet">
-            👛 <span className="numeric">{profile.totalCoins}</span>&nbsp;Wallet
-          </span>
-          <button className="milo-btn tone-yellow size-sm" onClick={() => router.push('/shop')} aria-label="Shop">🛍</button>
           <BackButton href='/parent' label='← Switch' size='sm' />
         </div>
       </div>
@@ -368,24 +287,6 @@ export default function MainMenu() {
           </div>
         </div>
 
-        {/* ── Week-6 re-check — the guarantee loop, surfaced to the child who has to take it ── */}
-        {recheck && (
-          <button onClick={() => router.push(`/diagnostic/recheck?skill=${encodeURIComponent(recheck.skill)}&band=${recheck.band}&week=${recheck.weeks}`)} className="milo-card" style={{
-            width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left', cursor: 'pointer',
-            background: 'linear-gradient(135deg, #FFF4DA 0%, #fff 100%)', border: '3px solid var(--milo-orange)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
-              <div style={{ fontSize: 36 }}>🔍</div>
-              <div style={{ flex: 1, minWidth: 150 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--milo-orange-deep)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Quick check · 2 minutes</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Milo wants to see how much you&apos;ve grown</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>Just a few questions — no scores, no timers.</div>
-              </div>
-              <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--milo-orange)', border: '3px solid var(--milo-orange-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Let&apos;s go ▶</span>
-            </div>
-          </button>
-        )}
-
         {/* ── Your plan — walk the diagnostic's arranged chapters, foundational-first ── */}
         {planNext && (
           <button onClick={() => playChapter(planNext.ch)} className="milo-card" style={{
@@ -397,12 +298,14 @@ export default function MainMenu() {
               <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#1e9e5f', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Your plan · step {planNext.step} of {planNext.total}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Next: {CHAPTER_NAMES[planNext.ch]}</div>
-                {/* ⚠️ A GRADE-START PLAN HAS NO DIAGNOSED GAP, so it may not claim one. "Milo picked
-                    this to close the gap" is true after a check and a straight falsehood after a
-                    skip — nobody looked. Same rule as the report's never-say-"on track". */}
+                {/* ⚠️ EVERY PLAN IS A GRADE-START PLAN NOW — the check that produced a diagnosed
+                    one was deleted 2026-09-20 — so this may not claim a gap. "Milo picked this to
+                    close the gap" would be a straight falsehood. Same rule as the report's
+                    never-say-"on track". */}
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                  {planLine(planNext.source === 'gradeStart' ? 'gradeStart' : 'diagnostic',
-                    (profile.chapterStars[planNext.ch] ?? 0) > 0)}
+                  {chapterDone(learnerId, planNext.ch)
+                    ? "You've played this one — a quick second go, then something new."
+                    : 'Starting from the beginning — Milo adjusts as they play.'}
                 </div>
               </div>
               <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: '#2BB673', border: '3px solid #1e9e5f', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Continue ▶</span>
@@ -423,58 +326,6 @@ export default function MainMenu() {
           * still the first thing on screen. Anything that covers the play button to ask a parent a
           * question has made the product worse for the child in order to sell to the adult.
           */}
-        {reoffer && (
-          <div className="milo-card" style={{
-            width: '100%', maxWidth: 700, padding: '14px 20px', textAlign: 'left',
-            background: 'linear-gradient(135deg, #EEF4FF 0%, #fff 100%)', border: '3px solid #6C8FE8',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
-              <div style={{ fontSize: 36 }}>🔍</div>
-              <div style={{ flex: 1, minWidth: 150 }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18 }}>Want a plan built around {childName || 'your child'}?</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                  Milo can find the one thing worth fixing first, instead of starting from the top.
-                  About ten minutes — you can stop and pick up where you left off.
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                <button onClick={() => {
-                  track('checkup_offer', { action: 'taken', at: 'reoffer', band: ageGroup })
-                  router.push(`/diagnostic?band=${ageGroup}`)
-                }} style={{ minHeight: 44, background: '#6C8FE8', border: '3px solid #4A6FD0', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff', cursor: 'pointer' }}>Find it ▶</button>
-                <button onClick={() => {
-                  if (learnerId) recordCheckupSkip(learnerId)   // → 2: retired to the parent dashboard
-                  track('checkup_offer', { action: 'skipped', at: 'reoffer', band: ageGroup })
-                  setReoffer(false)
-                }} style={{ minHeight: 44, background: 'transparent', border: '2px solid var(--ink-mute, #bbb)', borderRadius: 50, padding: '8px 16px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, color: 'var(--ink-soft)', cursor: 'pointer' }}>Not now</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/**
-          * ⚠️⚠️ THE CHILD'S OWN DOOR TO THE CHECK — PERMANENT, AND THE POINT IS THAT IT NEVER CLOSES.
-          * Founder's call, 2026-08-31: *"mein chahata hu ki bacche ka jab mann kare woh diagnostic
-          * kare — woh chiz bann naii hona chahiye."* Until now the only permanent door was on the
-          * PARENT dashboard (`findStartingPoint`); on the child's own screen the check existed as an
-          * offer made at most twice, which then retired. Optional was never meant to mean
-          * unavailable — a child who wants to find out where they stand had no way to say so.
-          *
-          * ⚠️ NEVER TOGETHER WITH THE RE-OFFER ABOVE. That card is the same action with an argument
-          * attached; two cards asking one thing on one screen is the duplicate this repo keeps
-          * paying for. While the offer is up it owns the ask, and this is hidden.
-          *
-          * ⚠️ IT SITS BELOW THE PLAN, like the offer, so the child's next chapter is still the first
-          * thing on screen. A door, not a suggestion — no badge, no pulse, nothing competing with
-          * playing.
-          */}
-        {!reoffer && (
-          <CheckDoor onOpen={() => {
-            track('checkup_offer', { action: 'taken', at: 'menu_door', band: ageGroup })
-            router.push(`/diagnostic?band=${ageGroup}`)
-          }} />
-        )}
-
         {/* ── Story Mode — the 3–5 storyline adventure ── */}
         {ageGroup === '3-5' && (
           <button onClick={() => router.push('/story')} className="milo-card" style={{
@@ -512,9 +363,7 @@ export default function MainMenu() {
                   {CHAPTER_NAMES[resumeChapter]}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                  {resumeStars > 0
-                    ? `${[1,2,3].map(i => i <= resumeStars ? '⭐' : '☆').join('')} — play again to improve!`
-                    : 'Not completed yet'}
+                  {chapterDone(learnerId, resumeChapter) ? 'Played — go again any time' : 'Not finished yet'}
                 </div>
               </div>
               <button
@@ -528,16 +377,16 @@ export default function MainMenu() {
           </div>
         )}
 
-        {/* Pick what to play from the Chapters button (top-left). Empty-state hint when nothing
-            else is on screen (no plan / no resume / not the 3–5 story age). */}
+        {/* ⚠️ The chapter PICKER went with the star economy (2026-09-20) — it drew a star count per
+            chapter and read it out of the deleted store. With no plan and no resume there is now
+            nothing to pick from here, so the empty state points at the one screen that does. */}
         {!planNext && !resumeChapter && ageGroup !== '3-5' && (
-          <button className="milo-btn tone-green size-lg" onClick={() => setShowPicker(true)}>
-            📚 Choose a chapter to play
+          <button className="milo-btn tone-green size-lg" onClick={() => router.push('/modules')}>
+            📚 Choose something to learn
           </button>
         )}
       </div>
 
-      {showPicker && <ChapterPicker onClose={() => setShowPicker(false)} />}
       <style>{`@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }`}</style>
       <PWAInstallBanner />
     </div>

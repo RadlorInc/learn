@@ -15,9 +15,21 @@
  * invisible in review (the import line looks ordinary) and re-forms the moment someone adds the
  * next convenience re-export, so the barrel is gated, not just the import that exposed it.
  *
- * All three pass by construction today. Mutate any one — point an import back at `@/state/store`
- * from `core/`, move a hook back into `core/`, or add `export { CHAPTER_ORDER } from
- * '@/core/chapters'` back into the store — and the matching test fails.
+ * ⚠️⚠️ THERE WERE THREE RULES; THE THIRD WENT ON 2026-09-20 WITH ITS SUBJECT. It read
+ * `state/store.ts` and failed if that file re-exported anything from `@/core` — the migration shim
+ * described above. `src/state/` was deleted when the chapters moved onto the same records as the
+ * new-flow lessons, so the rule had nothing to read.
+ *
+ * ⚠️ AND IT WAS NOT REPLACED WITH A WIDER SWEEP, DELIBERATELY. "No module anywhere re-exports
+ * `@/core`" was written, run, and came back RED on three innocent files — a type-only re-export in
+ * `data/supabase/types.ts` (erased at compile time) among them. A gate that fires on correct code
+ * is spent exactly like one that never fires; the harm in the original was a HEAVY module (zustand
+ * + IndexedDB + a Supabase helper) standing in front of pure domain, not the re-export itself, and
+ * that predicate is not worth the check it would need. **The class is recorded here instead: if a
+ * module with real runtime dependencies starts re-exporting `@/core`, that is the shim coming back.**
+ *
+ * The two that remain pass by construction. Mutate either — point an import back at a non-`core`
+ * layer from `core/`, or move a hook into `core/` — and the matching test fails.
  */
 import { describe, it, expect } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -56,10 +68,4 @@ describe('layering', () => {
     expect(violations).toEqual([])
   })
 
-  it('state/store.ts does not re-export core domain — no barrel to hide the boundary', () => {
-    const store = readFileSync(join(SRC, 'state/store.ts'), 'utf8')
-    const reExports = [...store.matchAll(/^export\s+(?:type\s+)?\{[^}]*\}\s+from\s+'(@\/core[^']*)'/gm)]
-      .map(m => m[0].replace(/\s+/g, ' '))
-    expect(reExports).toEqual([])
-  })
 })

@@ -86,39 +86,16 @@ export interface InsightsRollup {
 }
 
 /**
- * Pre-aggregated retention/funnel data for /insights in ONE round trip — no raw session/event
- * rows shipped to the browser. Returns `null` to signal the caller should fall back to the legacy
- * raw-row path (RPC missing/errored). `sinceISO` bounds the window.
+ * Pre-aggregated retention/funnel data in ONE round trip — no raw session/event rows shipped to
+ * the browser. Returns `null` when the RPC is missing or errors. `sinceISO` bounds the window.
+ * ⚠️ The client-side re-aggregation this used to fall back to was deleted with /insights
+ * (2026-09-20): two implementations of one set of numbers is two things to keep in step.
  */
 export async function getInsightsRollup(sinceISO: string): Promise<InsightsRollup | null> {
   const supabase = db()
   const { data, error } = await supabase.rpc('get_insights_rollup', { p_since: sinceISO })
   if (error) { console.warn('[getInsightsRollup] rpc failed, falling back:', error.message); return null }
   return data as InsightsRollup
-}
-
-// Raw-row shapes for the legacy /insights fallback (when the rollup RPC is unavailable).
-export interface InsightsSessionRow { learner_id: string; phase: string; correct_count: number; wrong_count: number; completed_at: string | null; started_at: string | null }
-export interface InsightsEventRow   { learner_id: string; event: string; created_at: string }
-
-/**
- * Legacy fallback for /insights: the raw session + event rows within the window, aggregated
- * client-side. Only used when getInsightsRollup returns null. Throws on a real query error
- * (the caller treats it as the page's error state).
- */
-export async function getInsightsRawRows(
-  learnerIds: string[],
-  sinceISO: string,
-): Promise<{ sessions: InsightsSessionRow[]; events: InsightsEventRow[] }> {
-  const supabase = db()
-  const [s, e] = await Promise.all([
-    // ⚠️ completed_at, not started_at: a NULL started_at makes `gte` drop the row entirely.
-    supabase.from('sessions').select('learner_id, phase, correct_count, wrong_count, completed_at, started_at').in('learner_id', learnerIds).gte('completed_at', sinceISO),
-    supabase.from('learner_events').select('learner_id, event, created_at').in('learner_id', learnerIds).gte('created_at', sinceISO),
-  ])
-  if (s.error) throw new Error(s.error.message)
-  if (e.error) throw new Error(e.error.message)
-  return { sessions: (s.data ?? []) as InsightsSessionRow[], events: (e.data ?? []) as InsightsEventRow[] }
 }
 
 // ─── Menu bootstrap (single round trip) ───────────────────────

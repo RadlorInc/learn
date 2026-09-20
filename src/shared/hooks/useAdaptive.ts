@@ -22,7 +22,10 @@
  */
 
 import { useRef, useState, useCallback } from 'react'
-import { type ChapterType } from '@/core/chapters'
+import { chapterKey, type ChapterType } from '@/core/chapters'
+import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { saveStanding } from '@/infra/storage/lessonStanding'
+import { syncLesson } from '@/infra/storage/lessonSync'
 import {
   type Difficulty,
   type Progress,
@@ -121,6 +124,30 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
     ref.current = next   // synchronous — the next tap this tick reads the new values
     setSnapshot(next)    // re-render with the new values
 
+    /**
+     * ⚠️ A CHAPTER RECORDS ITS ANSWER EXACTLY AS A TOPIC DOES — AND IT IS WIRED HERE, IN THE ONE
+     * FUNCTION EVERY CHAPTER'S EVERY ANSWER ALREADY PASSES THROUGH, rather than at the ~23 call
+     * sites. A per-chapter call is the shape `ChapterProps.onComplete` had when it cost this repo
+     * three months: typed, passed, and dropped by the one caller nobody re-read.
+     *
+     * The mapping: `difficulty` (1–3) is the standing's level, `streak` is its streak, and the miss
+     * that preceded a correct answer is what tells 'first' (2 points) from 'second' (1) — the same
+     * distinction a lesson's practice problem makes.
+     *
+     * ponytail: only a CORRECT answer uploads. A wrong one moves the difficulty but earns nothing,
+     * and the next correct answer carries the new standing with it — so a child retrying one
+     * question does not queue a row per attempt. Sync every step if per-attempt data is ever wanted.
+     */
+    if (isCorrect) {
+      const learnerId = getActiveLearner()?.id ?? null
+      if (learnerId) {
+        const key = chapterKey(chapter)
+        const mastered = isMastered(p)
+        saveStanding(learnerId, key, { level: p.difficulty, streak: p.streak, mastered })
+        syncLesson(learnerId, key, s.wrongStreak > 0 ? 'second' : 'first')
+      }
+    }
+
     return {
       difficulty: p.difficulty,
       streak:     p.streak,
@@ -128,7 +155,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
       wrong:      p.wrong,
       mastered:   isMastered(p),
     }
-  }, [])
+  }, [chapter])
 
   const difficultyLabel =
     snapshot.difficulty === 1 ? 'Starter ⭐' :

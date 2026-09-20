@@ -17,7 +17,6 @@ import type { Metadata } from 'next'
 import { PUBLIC_ROUTES } from '@/app/site'
 
 import { metadata as home } from '@/app/page'
-import { metadata as diagnostic } from '@/app/diagnostic/layout'
 import { metadata as help } from '@/app/help/page'
 import { generateMetadata as legalMeta } from '@/app/legal/[slug]/page'
 import { DOCS } from '@/app/legal/content'
@@ -35,7 +34,6 @@ const canonicalOf = (m: Metadata) => m.alternates?.canonical
 describe('every public route declares its own search surface', () => {
   const pages: [string, Metadata][] = [
     ['/', home],
-    ['/diagnostic', diagnostic],
     ['/help', help],
   ]
 
@@ -53,7 +51,6 @@ describe('every public route declares its own search surface', () => {
    * advertises a placement check is a duplicate meta description and a lie about the page.
    */
   it.each([
-    ['/diagnostic', diagnostic],
     ['/help', help],
   ])('%s declares its own description and title', (_route, m) => {
     expect(m.description).toBeTruthy()
@@ -71,7 +68,7 @@ describe('every public route declares its own search surface', () => {
     const legal = await Promise.all(
       DOCS.map(d => legalMeta({ params: Promise.resolve({ slug: d.slug }) })),
     )
-    const all = [diagnostic, help, ...legal].map(m => m.description)
+    const all = [help, ...legal].map(m => m.description)
     expect(new Set(all).size).toBe(all.length)
   })
 

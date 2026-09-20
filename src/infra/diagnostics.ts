@@ -22,7 +22,7 @@
  */
 import { kv } from '@/infra/storage/kv'
 import { getRecentErrors } from '@/infra/storage/lastError'
-import { getQueuedSessions, getQueuedDiagnostics } from '@/infra/useOfflineSync'
+import { pendingLessonUploads } from '@/infra/storage/lessonSync'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getCurrentSession } from '@/data/auth'
 
@@ -35,7 +35,6 @@ export interface Diagnostics {
   learnerId: string
   storeMode: 'idb' | 'local'
   queuedSessions: number
-  queuedDiagnostics: number
   storageUsedMb: string
   online: boolean
   viewport: string
@@ -88,8 +87,7 @@ export async function collectDiagnostics(learnerIdOverride?: string): Promise<Di
     accountEmail: session?.user?.email ?? 'signed out',
     learnerId: learnerIdOverride ?? getActiveLearner()?.id ?? 'none selected',
     storeMode: kv.mode(),
-    queuedSessions: getQueuedSessions().length,
-    queuedDiagnostics: getQueuedDiagnostics().length,
+    queuedSessions: pendingLessonUploads(),
     storageUsedMb: used,
     online: navigator.onLine,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
@@ -107,7 +105,7 @@ export function formatDiagnostics(d: Diagnostics): string {
     `account   ${d.accountEmail}  ${d.accountId}`,
     `learner   ${d.learnerId}`,
     `storage   ${d.storeMode}, ${d.storageUsedMb} used`,
-    `unsynced  ${d.queuedSessions} session(s), ${d.queuedDiagnostics} check-up(s)`,
+    `unsynced  ${d.queuedSessions} session(s)`,
     `network   ${d.online ? 'online' : 'OFFLINE'}`,
     `screen    ${d.viewport}`,
     `browser   ${d.ua}`,

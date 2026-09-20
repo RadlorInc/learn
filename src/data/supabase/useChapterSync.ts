@@ -1,129 +1,78 @@
 'use client'
 /**
- * useChapterSync
- * Wraps finishChapter — updates local store instantly,
- * syncs to Supabase in background, queues if offline.
+ * What happens when a 3–8 story chapter finishes.
+ *
+ * ⚠️⚠️ SINCE 2026-09-20 A CHAPTER RECORDS ITSELF EXACTLY AS A NEW-FLOW TOPIC DOES — founder's call,
+ * *"unke data ka collection same abhi joh modules waalo ka hai wohi kardo"*. One row per chapter in
+ * `lesson_progress` (keyed `c:<chapter>`, see `chapterKey`), points awarded by the database from
+ * what changed, uploads queued by `lessonSync` and retried until they land.
+ *
+ * What went with it: `syncSession` and the `sessions` / `learner_progress` / `learner_stats` rows,
+ * the XP / coins / stars economy in the zustand store, and the separate offline session queue. All
+ * four were emptied in production on 2026-09-17 (`20260917112252`) and were being written to by
+ * nobody else — two parallel progress systems, which is what this removes.
+ *
+ * The per-ANSWER half lives in `shared/hooks/useAdaptive`, the one function every chapter's every
+ * answer already passes through. This hook owns only the end of the run: the chapter is `done`, and
+ * the plan pointer moves.
  */
 
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { ChapterType } from '@/data/supabase/types'
-import { useMiloStore } from '@/state/store'
-import { getChapterLevel } from '@/infra/storage/chapterLevel'
+import { chapterKey } from '@/core/chapters'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { syncSession } from '@/data/repositories'
-import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
+import { markLessonDone } from '@/infra/storage/lessonProgress'
+import { loadStanding } from '@/infra/storage/lessonStanding'
+import { saveStanding } from '@/infra/storage/lessonStanding'
+import { syncLesson, flushLessonSync } from '@/infra/storage/lessonSync'
+import { FRESH } from '@/features/lessons/adaptive'
 import { advanceAfterChapter } from '@/infra/storage/activePlan'
-import { deeperChapter } from '@/core/diagnosticEngine'
 import { track } from '@/infra/analytics'
 
-
-function randomId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
-  })
-}
-
-/**
- * @param chapter the chapter currently on screen. Passing it ARMS the start clock; omitting it
- *   (as `/game` does, which only wants `flushQueue`) leaves `started_at` null — honestly unknown.
- *
- * ⚠️ THE CHAPTER IS A PARAMETER RATHER THAN A `markStart()` A CALLER MUST REMEMBER, DELIBERATELY.
- * This repo has already paid three months for a wire both ends believed in: `ChapterProps.onComplete`
- * was typed, passed and silently dropped, so no child's plan advanced. A separate "call me when the
- * chapter opens" function is that same shape waiting to happen — the hook that owns the END of the
- * measurement now owns the START, and there is nothing left to forget.
- */
-export function useChapterSync(chapter?: ChapterType) {
-  const finishChapter = useMiloStore(s => s.finishChapter)
-
-  /**
-   * Armed DURING RENDER, not in an effect. Effects run after paint, so an effect-set start would
-   * miss everything the child does in the first frame — and this repo's own rule (chapter-craft §1)
-   * is that per-run state is derived during render for exactly that reason. Re-running with the same
-   * chapter is a no-op, so StrictMode's double render cannot move it.
-   */
-  const startRef = useRef<{ chapter: ChapterType; at: string } | null>(null)
-  if (chapter && startRef.current?.chapter !== chapter) {
-    startRef.current = { chapter, at: new Date().toISOString() }
-  }
-
+export function useChapterSync(_chapter?: ChapterType) {
   const finishAndSync = useCallback(async (
-    chapter: ChapterType,
-    correct: number,
-    wrong:   number,
-    phase:   'lesson' | 'practice' = 'practice',
+    chapter:  ChapterType,
+    correct:  number,
+    wrong:    number,
+    phase:    'lesson' | 'practice' = 'practice',
     mastered = false,
   ) => {
-    // 1. Update local store immediately — no delay for the child.
-    //    Reuse the score it just computed instead of recomputing the formula.
-    //    `mastered` (early finish at the top tier) forces the full 3 stars.
-    const { stars, xp: xpEarned, coins: coinsEarned } = finishChapter(chapter, correct, wrong, mastered)
-
-    // 2. Build payload
+    // No learner = the logged-out demo. It has nowhere to record to, and `/demo` counts its own
+    // completions — the same early return this function has always had.
     const learner = getActiveLearner()
     if (!learner) return
 
+    const key = chapterKey(chapter)
+
     /**
-     * 2a. THE PLAN POINTER AND THE COMPLETION EVENT — here, because this is the ONE function every
-     * completion path already calls. It used to live in `/game`'s `handleComplete`, which reached a
-     * chapter as `ChapterProps.onComplete` and was never invoked: both registry factories in
-     * `ChapterPortal` drop that prop. So sessions were written and the plan never moved.
-     *
-     * ⚠️ BEFORE THE NETWORK, DELIBERATELY. The pointer is local and must advance for a child playing
-     * offline; below this point the function can return early on `!navigator.onLine`.
-     * ⚠️ PRACTICE ONLY — a lesson completion is not a plan step.
-     * ⚠️ BEST-EFFORT — a storage or analytics failure must never cost a child their score, which has
-     * already been written to the store above.
+     * ⚠️ THE PLAN POINTER FIRST, BEFORE ANYTHING THAT CAN AWAIT. It is local and must advance for a
+     * child playing offline. It used to live in `/game`'s `handleComplete`, which was never invoked
+     * — both registry factories dropped the prop — so chapters scored and no plan ever moved.
+     * ⚠️ PRACTICE ONLY: a lesson completion is not a plan step.
+     * ⚠️ BEST-EFFORT: bookkeeping must never cost a child the progress recorded below.
      */
     if (phase === 'practice') {
       try {
         track('practice_complete', { chapter, correct, wrong, mastered })
-        const moved = advanceAfterChapter(learner.id, chapter, correct, wrong, mastered, deeperChapter)
-        if (moved?.kind === 'revised') track('plan_revised_deeper', { from: chapter, to: moved.to, correct, wrong })
-      } catch { /* scoring already landed; never let bookkeeping undo it */ }
+        advanceAfterChapter(learner.id, chapter)
+      } catch { /* never let bookkeeping undo the run */ }
     }
 
-    const payload = {
-      learnerId:    learner.id,
-      chapter,
-      phase,
-      correctCount: correct,
-      wrongCount:   wrong,
-      starsEarned:  stars,
-      xpEarned,
-      coinsEarned,
-      clientId:     randomId(),
-      completedAt:  new Date().toISOString(),
-      // Only this chapter's own start counts. If the hook was mounted without a chapter, or the
-      // child somehow finished a different one, we say nothing rather than guessing.
-      startedAt:    startRef.current?.chapter === chapter ? startRef.current.at : undefined,
-      // The tier the run ended on, straight off the same per-device store both engines write after
-      // every scored answer — so the row the server keeps and the row this device keeps agree.
-      difficulty:   getChapterLevel(learner.id, chapter),
-    }
-
-    // 3. Try to sync — queue if offline or failed
-    if (!navigator.onLine) {
-      enqueueSession(payload)
-      return
-    }
-
-    // A replay of the SAME chapter must time itself, not inherit the finished run's clock. Cleared
-    // here so the next render re-arms; `runKey` remounts the chapter, which guarantees that render.
-    startRef.current = null
-
-    const outcome = await syncSession(payload)
-    // Only queue for retry on a transient failure. A 'drop' (learner gone / not
-    // owned) can never succeed, so queueing it would just loop forever.
-    if (outcome === 'retry') {
-      enqueueSession(payload)
-    }
-  }, [finishChapter, chapter])
-
-  const flushOfflineQueue = useCallback(async () => {
-    await flushQueue()
+    /**
+     * `done` is the chapter's "lesson_done" — worth its once-only bonus the first time, and once
+     * only in the DATABASE rather than in a flag a re-play could clear. `mastered` is carried from
+     * the run itself (the early finish at the top tier), which is stronger evidence than the
+     * standing's own last answer.
+     */
+    markLessonDone(learner.id, key)
+    const standing = loadStanding(learner.id, key) ?? FRESH
+    if (mastered && !standing.mastered) saveStanding(learner.id, key, { ...standing, mastered: true })
+    syncLesson(learner.id, key)
+    await flushLessonSync()
   }, [])
 
-  return { finishAndSync, flushQueue: flushOfflineQueue }
+  // `/game` mounts this hook only to drain the queue on open, exactly as it did before.
+  const flushQueue = useCallback(async () => { await flushLessonSync() }, [])
+
+  return { finishAndSync, flushQueue }
 }

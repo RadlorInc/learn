@@ -134,24 +134,23 @@ describe('the route (source)', () => {
  */
 // Legacy chapters are hidden (src/core/chapters.ts); these assert their lists. Re-enable by flipping the flag.
 describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('adopting a demo run onto a real learner', () => {
+  // `recorded` was `sessions` until 2026-09-20: adopting a demo run wrote a `sessions` row with
+  // stars/XP/coins. A played chapter is now recorded exactly as a signed-in child's is.
   const harness = () => {
-    const sessions: { chapter: string; starsEarned: number }[] = []
+    const recorded: { chapter: string; mastered: boolean }[] = []
     const advanced: string[] = []
     let planned: string[] | null = null
-    let n = 0
     return {
-      sessions, advanced, get planned() { return planned },
+      recorded, advanced, get planned() { return planned },
       deps: {
-        enqueueSession: (p: { chapter: string; starsEarned: number }) => { sessions.push(p) },
-        score: (c: number) => ({ stars: c > 0 ? 3 : 0, xp: c * 10, coins: c }),
+        record: (chapter: string, mastered: boolean) => { recorded.push({ chapter, mastered }) },
         plan: (chapters: string[]) => { planned = chapters },
         advance: (chapter: string) => { advanced.push(chapter) },
-        newId: () => `id-${n++}`,
       },
     }
   }
 
-  it('writes a session per played chapter and starts the plan past them', () => {
+  it('records every played chapter and starts the plan past them', () => {
     startDemo('12-14')
     const [a, b] = demoChapters('12-14')
     completeDemoChapter(a, 8, 2, false)
@@ -160,8 +159,8 @@ describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('adopting a demo run onto a real learner
     const h = harness()
     const out = adoptDemoRun('kid', '12-14', true, h.deps)!
     expect(out.adopted, 'the play was not carried onto the account').toBe(2)
-    expect(h.sessions.map(s => s.chapter)).toEqual([a, b])
-    expect(h.sessions[0].starsEarned, 'stars were not recomputed from the recorded counts').toBeGreaterThan(0)
+    expect(h.recorded.map(r => r.chapter)).toEqual([a, b])
+    expect(h.recorded.map(r => r.mastered), 'the mastered flag was not carried onto the account').toEqual([false, true])
     expect(h.planned, 'the new learner got no plan').toEqual(gradeStartPlan('12-14'))
     expect(h.advanced, 'the plan would restart on a chapter the child just finished').toEqual([a, b])
     expect(readDemo(), 'the run was not consumed — it would adopt onto a second learner too').toBeNull()
@@ -172,7 +171,7 @@ describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('adopting a demo run onto a real learner
     completeDemoChapter(demoChapters('9-11')[0], 5, 5, false)
     const h = harness()
     expect(adoptDemoRun('sibling', '3-5', true, h.deps), 'a 9–11 run was adopted onto a 3–5 child').toBeNull()
-    expect(h.sessions, 'sessions were written for the wrong child').toEqual([])
+    expect(h.recorded, 'progress was written for the wrong child').toEqual([])
     expect(readDemo(), 'a mismatch consumed the run — the capture is lost unrecoverably').not.toBeNull()
     // …and the right child still gets it
     expect(adoptDemoRun('kid', '9-11', true, h.deps)!.adopted).toBe(1)
@@ -187,13 +186,13 @@ describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('adopting a demo run onto a real learner
     expect(out.planSet).toBe(false)
     expect(h.planned, "the demo overwrote the diagnostic's plan").toBeNull()
     expect(h.advanced, 'the demo moved a pointer it does not own').toEqual([])
-    expect(h.sessions.length, 'the child played it — the account must record it').toBe(1)
+    expect(h.recorded.length, 'the child played it — the account must record it').toBe(1)
   })
 
   it('no run → nothing happens, and that is not an error', () => {
     const h = harness()
     expect(adoptDemoRun('kid', '9-11', true, h.deps)).toBeNull()
-    expect(h.sessions).toEqual([])
+    expect(h.recorded).toEqual([])
   })
 })
 
@@ -203,14 +202,15 @@ describe.skipIf(LEGACY_CHAPTERS_HIDDEN)('adopting a demo run onto a real learner
 describe('the caller (source)', () => {
   const parent = strip(readFileSync('src/app/parent/page.tsx', 'utf8'))
 
-  it('adopts on learner creation, and lets the diagnosis keep the plan', () => {
+  it('adopts on learner creation, and claims the plan', () => {
+    // ⚠️ This also asserted the demo YIELDS the plan to a diagnosis. The check was deleted
+    // 2026-09-20 and `/parent` now always passes true; what still matters is that the run is
+    // adopted at all — the P0 this file exists for.
     const at = parent.indexOf('adoptDemoRun(')
     expect(at, 'nothing adopts the demo — a parent who played two chapters finds nothing').toBeGreaterThan(0)
     const call = balanced(parent, at, '(', ')')
     expect(call, 'the adopt call could not be bounded — re-read this gate').not.toBe('')
-    expect(call, 'the demo claims the plan unconditionally, overwriting a diagnosed one')
-      .toMatch(/claimedByDiagnostic/)
-    expect(parent, 'claimedByDiagnostic is not derived from the pending diagnostic')
-      .toMatch(/claimedByDiagnostic = !!\(pending && pending\.band === learner\.age_group\)/)
+    expect(call, 'the demo no longer claims the plan, so a demo player signs up to nothing')
+      .toMatch(/learner\.age_group as AgeGroup, true/)
   })
 })

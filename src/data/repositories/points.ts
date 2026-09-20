@@ -16,11 +16,28 @@ export type GameStart = { ok: true; playing_until: string; balance: number } | {
 /** The functions are not in the database yet (this code deployed before the migration). */
 const missing = (e: { code?: string; message?: string }) => e.code === 'PGRST202' || e.code === 'PGRST205' || /Could not find the (function|table)/i.test(e.message ?? '')
 
+/**
+ * ⚠️ A CHAPTER ID AGAINST THE OLD CHECK IS A DEPLOY-ORDER SYMPTOM, NOT A BAD ROW.
+ *
+ * `classifySyncError` classes `23514 check_violation` as **'drop'** — correct for a genuinely
+ * malformed row, and catastrophic here: until `20260920120000` is applied, `lesson_progress`
+ * rejects every `c:` id, so a child's whole chapter would be silently discarded with no error
+ * anywhere. `main` auto-deploys and migrations are applied by hand, so code-first is the DEFAULT
+ * order on this repo, which makes this the likely path rather than the unlucky one.
+ *
+ * Narrow on purpose: only a check violation, and only for a `c:` id — the exact case that
+ * migration fixes. A genuinely bad row still drops rather than looping in the queue for ever.
+ */
+const awaitingChapterIds = (e: { code?: string; message?: string }, args: Record<string, unknown>) =>
+  e.code === '23514' && typeof args.p_lesson === 'string' && args.p_lesson.startsWith('c:')
+
 async function send(fn: string, args: Record<string, unknown>): Promise<SyncOutcome> {
   try {
     const { error } = await db().rpc(fn, args)
     // Not applied yet: keep it queued, so nothing earned before the migration is lost.
-    return !error ? 'ok' : missing(error) ? 'retry' : classifySyncError(error)
+    return !error ? 'ok'
+      : missing(error) || awaitingChapterIds(error, args) ? 'retry'
+      : classifySyncError(error)
   } catch { return 'retry' }
 }
 
