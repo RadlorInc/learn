@@ -1,28 +1,34 @@
 'use client'
 export const dynamic = 'force-static'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState, Suspense } from 'react'
-import { useMiloStore } from '@/state/store'
-
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { setLastPlayed } from '@/infra/storage/lastPlayed'
-import CelebrationModal from '@/shared/ui/CelebrationModal'
 import MiloPointer from '@/shared/ui/MiloPointer'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { track } from '@/infra/analytics'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
-import { isChapterVisible } from '@/core/chapters'
+import { isChapterVisible, type ChapterType } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 
 export default function GamePage() {
+  // useSearchParams needs a Suspense boundary on a static page (next docs: use-search-params).
+  return <Suspense fallback={null}><Game /></Suspense>
+}
+
+function Game() {
   const router         = useRouter()
   const authed         = useAuthGuard()
-  const profile        = useMiloStore(s => s.profile)
-  const currentChapter = useMiloStore(s => s.currentChapter)
-  const celebration    = useMiloStore(s => s.celebration)
+  /**
+   * ⚠️ THE CHAPTER COMES FROM THE URL, NOT A STORE. It was `useMiloStore.currentChapter`, set by a
+   * `startChapter()` the menu called just before navigating — so a reload, a back button or a
+   * shared link landed on `/game` with nothing to play. The store held the XP/coins economy and
+   * went on 2026-09-20; the URL is both smaller and the only one of the two that survives a reload.
+   */
+  const currentChapter = useSearchParams().get('c') as ChapterType | null
   const { flushQueue } = useChapterSync()
 
   const [playingChapter,  setPlayingChapter]  = useState(currentChapter)
@@ -37,7 +43,7 @@ export default function GamePage() {
    */
   const gate = useChapterGate(playingChapter)
   const [ready,          setReady]          = useState(false)
-  const [childName,      setChildName]      = useState(profile.childName)
+  const [childName,      setChildName]      = useState('')
 
   // Guards against a chapter firing onComplete twice (double-tap / re-render):
   // a second call would double-count XP, coins and stars both locally and via
@@ -65,9 +71,7 @@ export default function GamePage() {
       return
     }
 
-    if (!celebration) {
-      router.replace('/menu')
-    }
+    router.replace('/menu')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChapter])
 
@@ -100,7 +104,7 @@ export default function GamePage() {
 
   if (!ready && !playingChapter) return null
 
-  const props = { onComplete: handleComplete, childName: childName || profile.childName }
+  const props = { onComplete: handleComplete, childName: childName || 'friend' }
 
   // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
   // same way the camera guard refuses the render rather than disabling a control.
@@ -130,10 +134,9 @@ export default function GamePage() {
         ) : null
       })()}
     </div>
-    {/* Modal + pointer live OUTSIDE the zoom wrapper so they stay full-screen and
-        their fixed coords aren't double-scaled. The counting story renders its own
-        celebration over the forest, so we skip the global one there. */}
-    {playingChapter !== 'counting' && <CelebrationModal />}
+    {/* ⚠️ NO GLOBAL END CARD ANY MORE. It read `celebration` out of the store; every chapter now
+        renders its own `ChapterDone` inside its portal, which is also the only way it can layer
+        over the chapter rather than over a blank screen. */}
     <MiloPointer />
     </>
   )

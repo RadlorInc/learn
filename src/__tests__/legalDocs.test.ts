@@ -331,9 +331,9 @@ describe('§11 promises account deletion, and the control is really there', () =
     expect(account, 'the page must call the real deletion path').toContain('deleteMyAccount')
 
     // ⚠️ AND NOTHING ON THE CHILD'S SIDE MAY LINK TO IT. The threat is a seven-year-old on a
-    // signed-in device; a link from /game, /menu or /shop would defeat the placement argument
-    // however good the guards on the page are.
-    for (const childRoute of ['src/app/game', 'src/app/menu', 'src/app/shop']) {
+    // signed-in device; a link from a child route would defeat the placement argument however good
+    // the guards on the page are. (`/shop` left this list on 2026-09-20 with the coin economy.)
+    for (const childRoute of ['src/app/game', 'src/app/menu', 'src/app/modules', 'src/app/lesson', 'src/app/practice', 'src/app/play']) {
       const dir = resolve(ROOT, childRoute)
       const files = readdirSync(dir, { recursive: true }) as string[]
       for (const f of files) {

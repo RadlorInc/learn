@@ -105,28 +105,18 @@ export function adoptDemoRun(
   band: AgeGroup,
   claimPlan: boolean,
   deps: {
-    enqueueSession: (p: { learnerId: string; chapter: string; phase: 'practice'; correctCount: number
-      wrongCount: number; starsEarned: number; xpEarned: number; coinsEarned: number
-      clientId: string; completedAt: string }) => void
-    score: (correct: number, wrong: number, mastered: boolean) => { stars: number; xp: number; coins: number }
+    /** Record one played chapter against the new learner — the same call a signed-in child's
+     *  completion makes (2026-09-20). It used to enqueue a `sessions` row with stars/XP/coins. */
+    record: (chapter: string, mastered: boolean) => void
     plan: (chapters: string[]) => void
     advance: (chapter: string) => void
-    newId: () => string
   },
 ): { adopted: number; planSet: boolean } | null {
   const run = readDemo()
   if (!run) return null
   if (run.band !== band) return null          // ⚠️ leave it stashed — the right child may come next
 
-  for (const r of run.results) {
-    const { stars, xp, coins } = deps.score(r.correct, r.wrong, r.mastered)
-    deps.enqueueSession({
-      learnerId, chapter: r.chapter, phase: 'practice',
-      correctCount: r.correct, wrongCount: r.wrong,
-      starsEarned: stars, xpEarned: xp, coinsEarned: coins,
-      clientId: deps.newId(), completedAt: new Date().toISOString(),
-    })
-  }
+  for (const r of run.results) deps.record(r.chapter, r.mastered)
 
   if (claimPlan) {
     deps.plan(gradeStartPlan(band))
