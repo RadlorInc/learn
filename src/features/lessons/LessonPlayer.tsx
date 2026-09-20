@@ -89,6 +89,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
   }
   const screenSay = SAY.screen
+  // Screen 1 has no beats, so the beat clock never speaks it — and since the audio button went (2026-09-20) nothing
+  // else did either, so the lesson opened in silence. Say it on arrival: the first mount, ← Back to it, and "Watch the
+  // lesson again". ⚠️ A browser only allows sound after a tap, so this is heard when the child came from the topic
+  // list (their tap) and not on a lesson opened cold from a link — where Screen 1's own button is the first tap.
+  const line1 = s.mode === 'lesson' && s.screen === 0 ? screenSay(lesson.screens[0]) : ''
+  useEffect(() => { if (line1) speak(line1) }, [line1, replay])
 
   const autoNext = useLatestRef(() => {
     if (!autoOn || s.mode !== 'lesson' || s.screen < 1) return
@@ -184,7 +190,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           </div>
           {from
             ? <Link href={`/lesson?id=${from.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Watch the lesson: {from.title}</Link>
-            : <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s), screenSay(lesson.screens[0]))}>Watch the lesson again</button>}
+            : <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s))}>Watch the lesson again</button>}
         </>}
         <div className="pr-foot">
           {answering ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || s.feedback === 'idea'}>Hint</button> : <span />}
@@ -236,7 +242,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           </div>
         )}
         <div className="pr-foot">
-          <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s), screenSay(lesson.screens[6])) }}>← Back</button>
+          <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s)) }}>← Back</button>
           {worked
             ? <button type="button" style={primary} onClick={() => {
                 const n = afterWorked(s)
@@ -289,9 +295,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
       setAutoOn(true)
       const n = next(s)
-      go(n, n.mode === 'lesson' ? screenSay(lesson.screens[n.screen]) : n.mode === 'turn' ? SAY.turn(lesson) : undefined)
+      go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
     }}>{ask ? <><span>{ask[2]}</span><span style={{ fontSize: 16, opacity: 0.95 }}>Let&apos;s see ▶</span></> : 'Next'}</button>
-    if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s), screenSay(lesson.screens[s.screen - 1])) }}>← Back</button>
+    if (s.screen > 0) backBtn = <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s)) }}>← Back</button>
   } else if (s.mode === 'won') {
     const w = wonFor(lesson, s)
     crumb = 'Screen 8 of 9'; at = 7

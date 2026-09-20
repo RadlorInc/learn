@@ -8,9 +8,9 @@ import { it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 
-const { steps } = vi.hoisted(() => ({ steps: [] as { onDone?: () => void }[] }))
+const { steps, said } = vi.hoisted(() => ({ steps: [] as { onDone?: () => void }[], said: [] as string[] }))
 vi.mock('@/infra/useMiloSpeaker', () => ({
-  speak: () => {}, stopSpeech: () => {},
+  speak: (t: string) => { said.push(t) }, stopSpeech: () => {},
   speakSteps: (_: string[], opts: { onDone?: () => void }) => { steps.push(opts); return () => {} },
 }))
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
@@ -19,13 +19,14 @@ vi.mock('@/features/lessons/ScratchPad', () => ({ ScratchPad: () => null }))
 
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { findLesson } from '@/features/lessons/modules'
+import { SAY } from '@/features/lessons/script'
 
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 const lesson = findLesson('g5m1-t1')!.lesson
 
 let host: HTMLDivElement, root: Root
 beforeEach(async () => {
-  vi.useFakeTimers(); steps.length = 0
+  vi.useFakeTimers(); steps.length = 0; said.length = 0
   host = document.createElement('div'); document.body.append(host); root = createRoot(host)
   await act(async () => { root.render(createElement(LessonPlayer, { lesson, onFinish: () => {}, onExit: () => {} })) })
 })
@@ -84,4 +85,12 @@ it('the screen shows how far through it she is', async () => {
   expect(bar()).toBe('33%')                      // 3 lines on this screen, the first one up
   await wait(60_000)
   expect(bar()).toBe('33%')                      // it follows her lines, not a clock
+})
+
+it('Screen 1 is spoken on arrival — it has no beats, so nothing else says it', async () => {
+  expect(said).toEqual([SAY.screen(lesson.screens[0])])
+  await tap(/Let's see/)
+  await tap(/Back/)
+  expect(screen()).toBe(1)
+  expect(said.at(-1)).toBe(SAY.screen(lesson.screens[0]))   // and again when the child comes back to it
 })
