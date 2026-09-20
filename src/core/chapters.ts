@@ -130,3 +130,14 @@ export const CHAPTER_EMOJIS = Object.fromEntries(
 export const CHAPTER_PARENT_LABELS = Object.fromEntries(
   CHAPTERS.map(c => [c.id, c.parentLabel]),
 ) as Record<ChapterType, string>
+
+/**
+ * A chapter's id in `lesson_progress` / `point_events`.
+ *
+ * ⚠️ THE `c:` PREFIX IS THE WHOLE POINT. Since 2026-09-20 a chapter records progress through the
+ * SAME table and the SAME RPC as a new-flow topic, so the two id namespaces share one column — and
+ * `c:` is what keeps a chapter out of every "how is this child doing on Grade 5 Module 1" read.
+ * The database enforces both shapes (migration 20260920151900); a second column would be one more
+ * thing every query has to remember to filter on.
+ */
+export const chapterKey = (id: ChapterType | string): string => `c:${id}`

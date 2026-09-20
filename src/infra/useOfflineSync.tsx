@@ -1,63 +1,23 @@
 'use client'
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { syncSession } from '@/data/repositories'
-import type { SessionPayload } from '@/data/repositories'
-import { kv } from '@/infra/storage/kv'
-
-const QUEUE_KEY = 'milo_offline_queue'
-
-// ─── Queue helpers ────────────────────────────────────────────
-
-export function enqueueSession(payload: SessionPayload) {
-  try {
-    const q: SessionPayload[] = JSON.parse(kv.get(QUEUE_KEY) ?? '[]')
-    if (!q.find(p => p.clientId === payload.clientId)) {
-      q.push(payload)
-      kv.set(QUEUE_KEY, JSON.stringify(q))
-    }
-  } catch {}
-}
-
-export function getQueuedSessions(): SessionPayload[] {
-  try { return JSON.parse(kv.get(QUEUE_KEY) ?? '[]') } catch { return [] }
-}
+import { flushLessonSync, pendingLessonUploads } from '@/infra/storage/lessonSync'
 
 /**
- * ⚠️ THE DIAGNOSTIC QUEUE WENT WITH THE DIAGNOSTIC (2026-09-20). A device that was offline with a
- * queued diagnosis still holds `milo_offline_diagnostics` in kv; it is now never read and never
- * flushed. Not cleared on purpose — a read would be the only way to recover it if the check ever
- * comes back, and an unread key costs nothing.
+ * ⚠️ THIS FILE OWNED ITS OWN QUEUE UNTIL 2026-09-20 — `milo_offline_queue`, of `sessions` rows,
+ * flushed through `syncSession`. Chapters and lessons now record the same way, through the one
+ * queue in `lessonSync`, so this is the banner and the hook over THAT queue and nothing else.
+ *
+ * Two dead kv keys are left on devices and are deliberately not cleared: `milo_offline_queue`
+ * (sessions) and `milo_offline_diagnostics` (the check, deleted the same day). Reading either is
+ * the only way they could ever be recovered, and an unread key costs nothing.
  */
 
-// App-wide lock: the banner, the hook, and chapter-sync all call flushQueue;
-// this guarantees only ONE flush runs at a time across the whole app, so the
-// same queued items aren't processed concurrently (which multiplied the errors).
-let _flushing = false
-
 export async function flushQueue(): Promise<number> {
-  if (_flushing || !navigator.onLine) return 0
-  _flushing = true
-  try {
-    const q = getQueuedSessions()
-    if (q.length === 0) return 0
-    let flushed = 0
-    const remaining: SessionPayload[] = []
-    for (const payload of q) {
-      try {
-        const outcome = await syncSession(payload)
-        if (outcome === 'ok') flushed++
-        else if (outcome === 'retry') remaining.push(payload)
-        // 'drop' — permanent failure (learner gone / not owned); discard so it
-        // doesn't re-error on every flush forever.
-      } catch { remaining.push(payload) }   // threw → transient (network); keep
-    }
-    if (remaining.length === 0) kv.remove(QUEUE_KEY)
-    else kv.set(QUEUE_KEY, JSON.stringify(remaining))
-    return flushed
-  } finally {
-    _flushing = false
-  }
+  if (!navigator.onLine) return 0
+  const before = pendingLessonUploads()
+  await flushLessonSync()
+  return Math.max(0, before - pendingLessonUploads())
 }
 
 // ─── Hook ─────────────────────────────────────────────────────
@@ -70,7 +30,7 @@ export function useOfflineSync() {
   const syncingRef = useRef(false)
 
   const updatePendingCount = useCallback(() => {
-    setPendingCount(getQueuedSessions().length)
+    setPendingCount(pendingLessonUploads())
   }, [])
 
   const doFlush = useCallback(async () => {
@@ -79,7 +39,7 @@ export function useOfflineSync() {
     setSyncing(true)
     try {
       const flushed = await flushQueue()
-      if (flushed > 0) console.log(`[Milo] Synced ${flushed} queued sessions`)
+      if (flushed > 0) console.log(`[Milo] Synced ${flushed} queued updates`)
     } finally {
       syncingRef.current = false
       setSyncing(false)
@@ -132,7 +92,7 @@ export function OfflineBanner(): React.ReactElement | null {
   const syncingRef = useRef(false)
 
   const updateCount = useCallback(() => {
-    setPendingCount(getQueuedSessions().length)
+    setPendingCount(pendingLessonUploads())
   }, [])
 
   const doFlush = useCallback(async () => {
@@ -188,7 +148,7 @@ export function OfflineBanner(): React.ReactElement | null {
           <span>
             You&apos;re offline
             {pendingCount > 0
-              ? ` — ${pendingCount} session${pendingCount !== 1 ? 's' : ''} will sync when reconnected`
+              ? ` — ${pendingCount} update${pendingCount !== 1 ? 's' : ''} will sync when reconnected`
               : ' — progress saves when reconnected'}
           </span>
         </>
@@ -198,7 +158,7 @@ export function OfflineBanner(): React.ReactElement | null {
           <span>
             {syncing
               ? 'Syncing your progress...'
-              : `${pendingCount} session${pendingCount !== 1 ? 's' : ''} waiting to sync…`}
+              : `${pendingCount} update${pendingCount !== 1 ? 's' : ''} waiting to sync…`}
           </span>
         </>
       )}

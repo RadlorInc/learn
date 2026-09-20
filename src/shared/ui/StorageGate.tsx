@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { useMiloStore } from '@/state/store'
 import { kv } from '@/infra/storage/kv'
 
 /**
@@ -54,7 +53,8 @@ export default function StorageGate({ children }: { children: React.ReactNode })
     // a hung rehydrate too, so Safari can never freeze the app on the fox splash.)
     const t = setTimeout(boot, 4000)
     kv.ready()
-      .then(async () => { try { await useMiloStore.persist.rehydrate() } catch { /* boot anyway */ } })
+      // ⚠️ It also rehydrated the zustand profile store here; that store held the XP/coins/stars
+      // economy and went on 2026-09-20. The kv hydrate below is the whole job now.
       .catch(() => { /* boot anyway */ })
       .finally(() => { clearTimeout(t); boot() })
     return () => { cancelled = true; clearTimeout(t) }

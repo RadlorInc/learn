@@ -16,7 +16,8 @@ import { useRouter } from 'next/navigation'
 import { speak, speakAfterCurrent, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { getChapterLevel, setChapterLevel } from '@/infra/storage/chapterLevel'
+import { chapterKey } from '@/core/chapters'
+import { loadStanding } from '@/infra/storage/lessonStanding'
 import { PRAISE } from '@/core/praise'
 import { DirectionsInline, ownsChromeRow } from '@/features/chapters/directions'
 import { getChapterResume, setChapterResume, clearChapterResume } from '@/infra/storage/chapterResume'
@@ -175,7 +176,16 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   // in a row, so a tier that no longer fits is given back inside two questions.
   // No learner (the logged-out /story preview) → tier 1, exactly as before.
   const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
-  const [startDiff] = useState<Difficulty>(() => getChapterLevel(learnerId, beat.skillId))
+  /**
+   * Resume at the tier the child left off on. ⚠️ It reads the SAME per-topic standing a new-flow
+   * lesson uses (2026-09-20) — `chapterLevel` was a second store of the same fact and went with the
+   * old economy. `useAdaptive` writes it after every correct answer, so this is always the tier the
+   * child actually left at, and it now follows the ACCOUNT rather than the device.
+   */
+  const [startDiff] = useState<Difficulty>(() => {
+    const lvl = loadStanding(learnerId, chapterKey(beat.skillId))?.level
+    return lvl === 3 ? 3 : lvl === 2 ? 2 : 1
+  })
   // An unfinished run of THIS chapter, read once at mount. Everything below seeds from it, so a
   // child who left after seven questions comes back to question eight with those seven still
   // counted — before this, `onComplete` never fired and the whole run was discarded. Null for a
@@ -219,10 +229,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
 
   const onSubmit = useCallback((correct: boolean) => {
     if (phase !== 'play') return
+    // ⚠️ `record` also SAVES the standing and queues the upload — after every scored answer, not
+    // at the end, so a child who closes the tab mid-chapter keeps both their tier and their points.
     const res = ada.record(correct)
-    // Remember the tier after EVERY scored answer, not at the end: a child who closes the tab
-    // mid-chapter still resumes where they actually were. Same call GameShell makes.
-    setChapterLevel(learnerId, beat.skillId, res.difficulty)
     if (correct) tally.current.correct++; else tally.current.wrong++
     // Where the run is NOW, written before anything can go wrong with the rest of the round. There
     // is no exit event for a closed tab, so this is the only moment the child's work is safe.

@@ -11,17 +11,20 @@ import {
   getMyRole, setMyRole, setLearnerLessons, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
 } from '@/data/repositories'
-import { enqueueSession, flushQueue } from '@/infra/useOfflineSync'
+import { flushQueue } from '@/infra/useOfflineSync'
+import { chapterKey } from '@/core/chapters'
+import { markLessonDone } from '@/infra/storage/lessonProgress'
+import { loadStanding as loadChapterStanding, saveStanding } from '@/infra/storage/lessonStanding'
+import { syncLesson } from '@/infra/storage/lessonSync'
+import { FRESH } from '@/features/lessons/adaptive'
 import { setActivePlan, advancePlan } from '@/infra/storage/activePlan'
 import { adoptDemoRun } from '@/infra/storage/demoRun'
-import { scoreChapter } from '@/core/scoring'
 import { track } from '@/infra/analytics'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
-import { LEGACY_CHAPTERS_HIDDEN, type AgeGroup, type ChapterType } from '@/core/chapters'
-import { AGE_GROUP_OPTIONS } from '@/core/ageGroups'
+import { LEGACY_CHAPTERS_HIDDEN, type AgeGroup } from '@/core/chapters'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet, ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules, MODULES, GRADES } from '@/features/lessons/modules'
@@ -847,7 +850,6 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
 }
 
 export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
-  const router = useRouter()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
   // Which modules the child gets — asked, never assumed (founder, 2026-09-19: a new child was silently given every module).
@@ -879,11 +881,14 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
     const adopted = adoptDemoRun(
       learner.id, learner.age_group as AgeGroup, true,
       {
-        enqueueSession: p => enqueueSession({ ...p, chapter: p.chapter as ChapterType }),
-        score: (c, w, m) => scoreChapter(c, w, m),
+        record: (chapter, mastered) => {
+          const key = chapterKey(chapter)
+          markLessonDone(learner.id, key)
+          if (mastered) saveStanding(learner.id, key, { ...(loadChapterStanding(learner.id, key) ?? FRESH), mastered: true })
+          syncLesson(learner.id, key)
+        },
         plan: chapters => { setActivePlan(learner.id, learner.age_group ?? '3-5', chapters, 'gradeStart') },
         advance: chapter => { advancePlan(learner.id, chapter) },
-        newId: () => crypto.randomUUID(),
       },
     )
     if (adopted) {

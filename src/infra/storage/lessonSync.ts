@@ -39,6 +39,9 @@ export function syncModulePractice(learnerId: string | null, moduleId: string): 
   void flushLessonSync()
 }
 
+/** How many uploads are waiting. The offline banner's number — it used to count `sessions`. */
+export const pendingLessonUploads = (): number => read().length
+
 let flushing: Promise<void> | null = null
 /** Sends the queue in order and stops at the first item that should be retried, so order is kept. */
 export function flushLessonSync(): Promise<void> {

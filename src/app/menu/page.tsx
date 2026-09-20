@@ -3,46 +3,27 @@ export const dynamic = 'force-static'
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { useMiloStore } from '@/state/store'
 import { type ChapterType } from '@/core/chapters'
 import { CHAPTER_NAMES, CHAPTER_EMOJIS, LEGACY_CHAPTERS_HIDDEN, chaptersForAge, type AgeGroup } from '@/core/chapters'
 import { ModuleHome } from '@/features/lessons/ModuleHome'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 import BackButton from '@/shared/ui/BackButton'
-import ChapterPicker from '@/shared/ui/ChapterPicker'
 import PWAInstallBanner from '@/shared/ui/PWAInstallBanner'
 import { getActiveLearner, clearActiveLearner } from '@/data/supabase/useLearnerSession'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
-import { getLearnerBootstrap, saveLearnerState, getGradeChapterIds } from '@/data/repositories'
-import type { LearnerState } from '@/data/supabase/types'
+import { getLearnerBootstrap, getGradeChapterIds } from '@/data/repositories'
 import { getLastPlayed, setLastPlayed, reconcileLastPlayed } from '@/infra/storage/lastPlayed'
-import { hydrateChapterLevels } from '@/infra/storage/chapterLevel'
+import { chapterKey } from '@/core/chapters'
+import { lessonDone } from '@/infra/storage/lessonProgress'
+import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { track } from '@/infra/analytics'
 import { currentPlanChapter, planProgress, reconcilePlan } from '@/infra/storage/activePlan'
 
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
-const LEVEL_NAMES   = ['Beginner','Counter','Explorer','Number Star','Math Wizard','Champion',"Milo's Champion",'Legend']
 
 // True when this device's shop state equals what's on the server, so we can skip
 // the write-back on a plain menu visit. (After applyServerProgress merges the
 // server in, local is always a superset, so equality means "nothing new here".)
-function shopStateMatchesServer(
-  p: { coinsSpent: number; ownedItems: string[]; equippedItems: Record<string, string> },
-  state: LearnerState | null,
-): boolean {
-  if (!state) {
-    return p.coinsSpent === 0 && p.ownedItems.length === 0 && Object.keys(p.equippedItems).length === 0
-  }
-  if ((state.coins_spent ?? 0) !== (p.coinsSpent ?? 0)) return false
-  const owned = [...p.ownedItems].sort()
-  const sOwned = [...(state.owned_items ?? [])].sort()
-  if (owned.length !== sOwned.length || owned.some((x, i) => x !== sOwned[i])) return false
-  const pe = p.equippedItems ?? {}
-  const se = state.equipped_items ?? {}
-  const keys = new Set([...Object.keys(pe), ...Object.keys(se)])
-  for (const k of keys) if (pe[k] !== se[k]) return false
-  return true
-}
 
 // Short TTL so a menu→game→menu bounce doesn't re-run the full cross-device bootstrap (RPC +
 // merge + possible write) every time. Module-scoped so it survives component remounts within a
@@ -59,9 +40,16 @@ const _greeted = new Set<string>()
 export default function MainMenu() {
   const router = useRouter()
   const authed = useAuthGuard()
-  const { profile, startChapter, loadLearner, applyServerProgress } = useMiloStore()
+  /**
+   * ⚠️ NO PROFILE STORE ANY MORE. The zustand store held the XP / coins / stars economy and went on
+   * 2026-09-20 with it; a chapter's "have they finished this" is now `lessonDone` on the SAME
+   * per-topic record a new-flow lesson writes, and the child's name and avatar come from the
+   * learner row, which is where they always were.
+   */
+  const [childName, setChildName] = useState('')
+  const [avatarIndex, setAvatarIndex] = useState(0)
+  const chapterDone = (id: string | null, ch: string) => lessonDone(id, chapterKey(ch))
   const { speak } = useMiloSpeaker()
-  const [showPicker,   setShowPicker]   = useState(false)
   const [ready,        setReady]        = useState(false)
   const [learnerId,    setLearnerId]    = useState<string | null>(null)
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('3-5')
@@ -87,7 +75,8 @@ export default function MainMenu() {
     const learner = getActiveLearner()
 
     if (learner) {
-      loadLearner(learner.id, learner.display_name, learner.avatar_index)
+      setChildName(learner.display_name)
+      setAvatarIndex(learner.avatar_index ?? 0)
       setLearnerId(learner.id)
       // Fall back to 3–5 for learner records cached before age_group existed.
       const band = learner.age_group ?? '3-5'
@@ -131,11 +120,11 @@ export default function MainMenu() {
           // Successful sync — mark fresh so quick re-mounts within the TTL skip the round trip.
           _bootAt.set(learner.id, Date.now())
 
-          const { stats, progress, state } = boot.data
-          applyServerProgress(stats, progress, state)
-          // Difficulty memory follows the child across devices: seed this device from the server's
-          // rows where it has none of its own. See hydrateChapterLevels for why it is not a merge.
-          hydrateChapterLevels(learner.id, progress)
+          const { progress } = boot.data
+          // ⚠️ NOTHING IS MERGED FROM `learner_stats` / `learner_state` ANY MORE. They held the XP,
+          // coins and shop state, deleted 2026-09-20; a chapter's standing and done-flag follow the
+          // account through `lesson_progress`, pulled by `pullLessonProgress` like a topic's.
+          void pullLessonProgress(learner.id, chaptersForAge(band).map(c => chapterKey(c.id)))
 
           /**
            * ⚠️ THE PLAN POINTER, RECONCILED ACROSS DEVICES. It lives in localStorage, so before
@@ -175,10 +164,6 @@ export default function MainMenu() {
               ? { ch: ch as ChapterType, step: Math.min(prog.done + 1, prog.total), total: prog.total }
               : null)
           }
-          const localPlayed = () => {
-            const stars = useMiloStore.getState().profile.chapterStars
-            return Object.keys(stars).filter(ch => (stars[ch as ChapterType] ?? 0) > 0)
-          }
           // ⚠️ `remote: []` since the check was deleted (2026-09-20): `diagnostic_plans` was the
           // only remote plan source, so `reconcilePlan` now derives the POSITION from played
           // chapters and keeps the local grade-start chapter list.
@@ -192,18 +177,6 @@ export default function MainMenu() {
           const resolved = reconcileLastPlayed(learner.id, top?.chapter as ChapterType | undefined, top?.last_played_at)
           if (resolved) setLastPlayedState(resolved)
 
-          // Push shop state back ONLY when this device has something the server
-          // doesn't (offline purchases, etc.). applyServerProgress merges the
-          // server in monotonically, so equal state means a plain menu visit —
-          // no write needed, no needless mobile request.
-          const p = useMiloStore.getState().profile
-          if (!shopStateMatchesServer(p, state)) {
-            await saveLearnerState(learner.id, {
-              coinsSpent:    p.coinsSpent,
-              ownedItems:    p.ownedItems,
-              equippedItems: p.equippedItems,
-            })
-          }
         } catch { /* offline / transient — local profile stands until next online load */ }
       })()
 
@@ -213,7 +186,7 @@ export default function MainMenu() {
       if (!_greeted.has(learner.id)) {
         _greeted.add(learner.id)
         const ids = chaptersForAge(learner.age_group ?? '3-5').map(c => c.id)
-        const doneCount = ids.filter(ch => (profile.chapterStars[ch] ?? 0) > 0).length
+        const doneCount = ids.filter(ch => chapterDone(learner.id, ch)).length
         if (lp && doneCount > 0) {
           speak(`Welcome back, ${learner.display_name}! Ready to continue ${CHAPTER_NAMES[lp]}?`)
         } else {
@@ -223,24 +196,17 @@ export default function MainMenu() {
       return
     }
 
-    if (profile.hasCompletedSetup) {
-      setReady(true)
-      return
-    }
-
     router.replace('/parent')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const levelName   = LEVEL_NAMES[Math.min(profile.currentLevel - 1, LEVEL_NAMES.length - 1)]
-  const avatarSrc = AVATAR_SRCS[profile.avatarIndex] ?? AVATAR_SRCS[0]
-  const childName   = profile.childName
+  const avatarSrc = AVATAR_SRCS[avatarIndex] ?? AVATAR_SRCS[0]
 
   // Next unplayed chapter
-  const nextChapter = chapterIds.find(ch => (profile.chapterStars[ch] ?? 0) === 0)
+  const nextChapter = chapterIds.find(ch => !chapterDone(learnerId, ch))
     ?? chapterIds[chapterIds.length - 1]
 
-  const doneCount = chapterIds.filter(ch => (profile.chapterStars[ch] ?? 0) > 0).length
+  const doneCount = chapterIds.filter(ch => chapterDone(learnerId, ch)).length
   const allDone   = doneCount === chapterIds.length
 
   // Resume chapter = last played if different from next, else null
@@ -251,8 +217,7 @@ export default function MainMenu() {
   function playChapter(chapter: ChapterType) {
     if (learnerId) setLastPlayed(learnerId, chapter)
     speak(`Let's play ${CHAPTER_NAMES[chapter]}!`)
-    startChapter(chapter)
-    router.push('/game')
+    router.push(`/game?c=${chapter}`)
   }
 
   function handleResume() { if (resumeChapter) playChapter(resumeChapter) }
@@ -269,7 +234,7 @@ export default function MainMenu() {
   // are hidden the child's home is the new-flow topic list instead.
   if (LEGACY_CHAPTERS_HIDDEN) return <ModuleHome learnerId={learnerId} lessonIds={getActiveLearner()?.lesson_ids} back={{ href: '/parent', label: '← Switch' }} />
 
-  const resumeStars = resumeChapter ? (profile.chapterStars[resumeChapter] ?? 0) : 0
+
 
   return (
     <div className="kit-screen" style={{ background: 'var(--bg-page)' }}>
@@ -279,17 +244,8 @@ export default function MainMenu() {
 
       {/* Topbar: Chapters · Level (top-left) + Wallet · Profile / Shop / Switch (top-right) */}
       <div className="kit-topbar" style={{ padding: '20px 28px' }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button className="milo-btn tone-purple size-sm" onClick={() => setShowPicker(true)}>📚 Chapters</button>
-          <span className="milo-chip tone-blue">
-            Level {profile.currentLevel} · {levelName}
-          </span>
-        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }} />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span className="milo-chip tone-yellow" title="Wallet">
-            👛 <span className="numeric">{profile.totalCoins}</span>&nbsp;Wallet
-          </span>
-          <button className="milo-btn tone-yellow size-sm" onClick={() => router.push('/shop')} aria-label="Shop">🛍</button>
           <BackButton href='/parent' label='← Switch' size='sm' />
         </div>
       </div>
@@ -347,7 +303,7 @@ export default function MainMenu() {
                     close the gap" would be a straight falsehood. Same rule as the report's
                     never-say-"on track". */}
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                  {(profile.chapterStars[planNext.ch] ?? 0) > 0
+                  {chapterDone(learnerId, planNext.ch)
                     ? "You've played this one — a quick second go, then something new."
                     : 'Starting from the beginning — Milo adjusts as they play.'}
                 </div>
@@ -407,9 +363,7 @@ export default function MainMenu() {
                   {CHAPTER_NAMES[resumeChapter]}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
-                  {resumeStars > 0
-                    ? `${[1,2,3].map(i => i <= resumeStars ? '⭐' : '☆').join('')} — play again to improve!`
-                    : 'Not completed yet'}
+                  {chapterDone(learnerId, resumeChapter) ? 'Played — go again any time' : 'Not finished yet'}
                 </div>
               </div>
               <button
@@ -423,16 +377,16 @@ export default function MainMenu() {
           </div>
         )}
 
-        {/* Pick what to play from the Chapters button (top-left). Empty-state hint when nothing
-            else is on screen (no plan / no resume / not the 3–5 story age). */}
+        {/* ⚠️ The chapter PICKER went with the star economy (2026-09-20) — it drew a star count per
+            chapter and read it out of the deleted store. With no plan and no resume there is now
+            nothing to pick from here, so the empty state points at the one screen that does. */}
         {!planNext && !resumeChapter && ageGroup !== '3-5' && (
-          <button className="milo-btn tone-green size-lg" onClick={() => setShowPicker(true)}>
-            📚 Choose a chapter to play
+          <button className="milo-btn tone-green size-lg" onClick={() => router.push('/modules')}>
+            📚 Choose something to learn
           </button>
         )}
       </div>
 
-      {showPicker && <ChapterPicker onClose={() => setShowPicker(false)} />}
       <style>{`@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }`}</style>
       <PWAInstallBanner />
     </div>

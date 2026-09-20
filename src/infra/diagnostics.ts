@@ -22,7 +22,7 @@
  */
 import { kv } from '@/infra/storage/kv'
 import { getRecentErrors } from '@/infra/storage/lastError'
-import { getQueuedSessions } from '@/infra/useOfflineSync'
+import { pendingLessonUploads } from '@/infra/storage/lessonSync'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getCurrentSession } from '@/data/auth'
 
@@ -87,7 +87,7 @@ export async function collectDiagnostics(learnerIdOverride?: string): Promise<Di
     accountEmail: session?.user?.email ?? 'signed out',
     learnerId: learnerIdOverride ?? getActiveLearner()?.id ?? 'none selected',
     storeMode: kv.mode(),
-    queuedSessions: getQueuedSessions().length,
+    queuedSessions: pendingLessonUploads(),
     storageUsedMb: used,
     online: navigator.onLine,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
