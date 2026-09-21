@@ -113,7 +113,7 @@ export default function AccountPage() {
 
       <p style={{ ...p, marginTop: 14 }}>
         Deleting your account removes it and <strong>every child profile you created</strong>, with all of
-        their progress, sessions, placement checks and activity — permanently, straight away.
+        their lessons, practice results, points, game-time settings and logins — permanently, straight away.
         There is no grace period and nothing kept in case you change your mind.
       </p>
 
