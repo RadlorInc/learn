@@ -9,10 +9,6 @@
  * that order, because a FAQ nobody scrolls is a FAQ that answers nothing.
  *
  * A Server Component — it is text and links.
- *
- * ⚠️ STALE, noted 2026-09-21 (not fixed): three answers describe deleted systems — "How does Milo decide what to
- * teach?" (the placement check, deleted #145), "Some chapters use the camera" (AR, deleted #144) and "between age
- * groups" (bands 9–18, deleted #144). The dashboard's Help tab links here as "Questions and answers".
  */
 import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
@@ -35,7 +31,7 @@ const P = {
 export const metadata: Metadata = {
   title: 'Help',
   description:
-    'Answers to the questions parents ask about AdaptiveLearn: offline play, lost progress, how it decides what to teach, the camera, and choosing the right level for a child.',
+    'Answers to the questions parents ask about AdaptiveLearn: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.',
   alternates: { canonical: '/help' },
 }
 
@@ -66,10 +62,10 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'My child\u2019s progress has disappeared',
-    a: <>Almost always it is still there. Milo saves on the device first, so progress follows the
-       <strong> browser and device</strong> you played on unless you are signed in. Check you are on the
-       same device, in the same browser, and not in a private window. If you are signed in and it is
-       still missing, email us — do not start again, we can look.</>,
+    a: <>Almost always it is still there. Finished lessons are saved to your child&apos;s profile, so check
+       that the right child is signed in, or that you opened the right child from your{' '}
+       <Link href="/parent" style={{ color: '#F26B2C', fontWeight: 700 }}>dashboard</Link>. If the connection dropped, their answers are
+       kept on the device and sent when it is back. Still missing? Email us — do not start again, we can look.</>,
   },
   {
     q: 'I did not get the sign-in email',
@@ -78,35 +74,42 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'How does Milo decide what to teach?',
-    a: <>A short placement check finds the deepest gap worth fixing — not the newest thing your child
-       got wrong, but the thing underneath it. After that, every chapter quietly adjusts: it gets
-       easier after a wrong answer, harder after a run of right ones, and re-explains if your child
-       gets three wrong in a row. There is no timer, no score and no red cross anywhere.</>,
+    a: <>You choose. On your dashboard you pick what your child sees: whole modules or single topics,
+       from any grade from 3 to 8, or simply every topic. Each lesson explains one idea step by step,
+       then practice adjusts to your child: two right in a row brings a different, harder kind of
+       question; needing help brings an easier one; and topics they found hard come back later for
+       review. Your child never sees a level, a timer or a red cross.</>,
   },
   {
-    q: 'Some chapters use the camera. Is that safe?',
-    a: <>Yes, and it never leaves the device. In a few chapters a child can answer by holding up
-       fingers instead of tapping. The hand is recognised <strong>in the browser</strong> — no image or
-       video is uploaded, and nothing from the camera is stored. Every one of those chapters also has
-       a tap option, and you can simply never turn the camera on.</>,
+    q: 'Which grade should my child start in?',
+    a: <>Start with their school grade. If it feels too hard, choose a module from the grade before; if it
+       feels too easy, choose one from the grade after. You can mix grades and change the choice any
+       time from your child&apos;s Lessons tab.</>,
+  },
+  {
+    q: 'How does my child sign in on their own?',
+    a: <>Give them a username and password from the Login &amp; data tab on their page in your dashboard. They
+       sign in with it on any device and go straight to their lessons. If they forget it, set a new one
+       there. Teachers do the same from a class&apos;s Students tab.</>,
+  },
+  {
+    q: 'What is game time?',
+    a: <>Your child earns points by practising and can spend them on minutes of a building game. It starts
+       on, at up to 20 minutes a day. You can turn it off or change the daily limit on the Game time tab
+       on their page.</>,
   },
   {
     q: 'What do you store about my child, and can I see it?',
-    a: <>Their display name and age band, their placement answers, and which chapters they have
-       played. You can download a copy of all of it, or delete it permanently, from the{' '}
-       <Link href="/parent" style={{ color: '#F26B2C', fontWeight: 700 }}>parent dashboard</Link>.
+    a: <>Their name, the lessons you chose for them, which lessons they finished and how their practice
+       went, their points and game-time settings, and their login username if you set one. You can
+       download a copy of all of it, or delete it permanently, from the Login &amp; data tab on their page in
+       your{' '}<Link href="/parent" style={{ color: '#F26B2C', fontWeight: 700 }}>dashboard</Link>.
        Details are in the{' '}
        <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>.</>,
   },
   {
-    q: 'Does it work without internet?',
-    a: <>Yes. Chapters play offline and progress is saved on the device, then synced the next time you
-       are online and signed in.</>,
-  },
-  {
-    q: 'My child is between age groups',
-    a: <>Use the placement check rather than the age. It is the more honest answer, and Milo will put
-       them where they actually are.</>,
+    q: 'What if the internet drops during a lesson?',
+    a: <>Your child can carry on. Their answers are kept on the device and sent the next time it is online.</>,
   },
 ]
 

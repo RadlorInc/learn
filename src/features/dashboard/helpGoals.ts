@@ -48,7 +48,7 @@ export function helpGoals({ tea, paid, c, k }: { tea: boolean; paid: boolean; c?
         { url: '/parent', target: 'add-child', title: 'Add a child', text: 'Their name, and the modules they should see.' },
         ...(c ? [{ url: `/parent?child=${c}&tab=login`, target: 'login-card', title: 'Give them a login', text: 'With a username and password they can sign in on any device, on their own.' },
                  { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: 'Choose what they learn', text: 'Tap “Change” and tick modules or single topics, from any grade.' },
-                 { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: 'Game time (optional)', text: 'Turn it on and they earn minutes of the game by practising.' }] : [])] } },
+                 { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: 'Game time (optional)', text: 'They earn minutes of the game by practising. It starts on, at 20 minutes a day; turn it off or change the limit here.' }] : [])] } },
       ...(c ? [{ t: 'Let my child start learning here', d: 'Open their lessons on this device.', tour: { title: 'Start learning', steps: [
         { url: `/parent?child=${c}`, target: 'start-learning', title: 'Start learning', text: 'Opens their lessons on this device. On their own device they sign in with their login instead.' }] } }] : []),
     ] },
