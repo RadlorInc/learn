@@ -79,7 +79,7 @@ export default function PWAInstallBanner() {
       zIndex: 9999,
       background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)',
       color: '#fff',
-      padding: '16px 20px 24px',
+      padding: '16px 20px calc(24px + env(safe-area-inset-bottom))',
       borderRadius: '20px 20px 0 0',
       boxShadow: '0 -4px 24px rgba(0,0,0,0.2)',
       animation: 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
