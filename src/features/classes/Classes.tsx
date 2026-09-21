@@ -2,7 +2,7 @@
 /**
  * A teacher's classes (founder's call, 2026-09-18): make a class (name + Grade 3–8), add students one at a time or
  * from a list of usernames — each gets a TEMPORARY password they replace at first sign-in — and choose the class's
- * modules. The class bar picks which class the whole dashboard shows.
+ * modules. Each class has its own page (features/dashboard/ClassPage.tsx).
  *
  * A class is a `grades` row; a student is in one class (`learners.grade_id`). The class's modules are copied onto each
  * student's `lesson_ids` (what /modules reads), and a student added later starts with them.
@@ -10,10 +10,9 @@
  * by the teacher (./exercise.ts). A PAID teacher's students get the modules AND the exercises; a FREE teacher's (no
  * paid row in `teacher_plans`) get the exercises only.
  */
-import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
 import {
-  createClass, updateClass, deleteClass, createLearner, deleteLearner, setChildLogin, setClassLessons,
+  createClass, updateClass, createLearner, deleteLearner, setChildLogin, setClassLessons,
   type ClassRow,
 } from '@/data/repositories'
 import { GRADES, MODULES, modulesOf, hasModule } from '@/features/lessons/modules'
@@ -21,8 +20,6 @@ import { parseRoster, tempPassword, rosterCsv, type RosterRow } from '@/core/cla
 import { normalizeUsername } from '@/core/childLogin'
 import type { AgeGroup } from '@/core/chapters'
 
-// Only a free teacher opens it, and it carries every question ladder.
-const ExerciseEditor = dynamic(() => import('./ExerciseEditor').then(m => m.ExerciseEditor), { ssr: false })
 
 const P = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', accent: 'var(--milo-orange)', soft: 'var(--milo-orange-soft)' } as const
 const card = { background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 16, padding: 16 } as const
@@ -36,29 +33,9 @@ export const bandOf = (grade: number): AgeGroup => (grade <= 5 ? '9-11' : '12-14
 
 export interface ClassStudent { id: string; name: string }
 
-/* ─── the bar: All students · each class · + New class ─────────────────────────────────────────────── */
+/* ─── the parts a class page is built from (features/dashboard/ClassPage.tsx) ───────────────────────── */
 
-export function ClassBar({ classes, current, onPick, onCreated }: {
-  classes: ClassRow[]; current: string | null; onPick: (id: string | null) => void; onCreated: (c: ClassRow) => void
-}) {
-  const [making, setMaking] = useState(false)
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div className="chip-scroll" aria-label="Class">
-        <button onClick={() => onPick(null)} aria-pressed={current === null} style={chip(current === null)}>All students</button>
-        {classes.map(c => (
-          <button key={c.id} onClick={() => onPick(c.id)} aria-pressed={current === c.id} style={chip(current === c.id)}>
-            {c.name} <span style={{ color: P.ink3, fontWeight: 600 }}>· G{c.grade}</span>
-          </button>
-        ))}
-        <button onClick={() => setMaking(true)} style={{ ...chip(false), borderStyle: 'dashed' }}>+ New class</button>
-      </div>
-      {making && <NewClass onClose={() => setMaking(false)} onCreated={c => { setMaking(false); onCreated(c) }} />}
-    </div>
-  )
-}
-
-function NewClass({ onClose, onCreated }: { onClose: () => void; onCreated: (c: ClassRow) => void }) {
+export function NewClass({ onClose, onCreated }: { onClose: () => void; onCreated: (c: ClassRow) => void }) {
   const [name, setName] = useState('')
   const [grade, setGrade] = useState(3)
   const [saving, setSaving] = useState(false)
@@ -91,54 +68,7 @@ function NewClass({ onClose, onCreated }: { onClose: () => void; onCreated: (c: 
   )
 }
 
-/* ─── the chosen class: summary, modules, add students, rename/delete ───────────────────────────────── */
-
-export function ClassPanel({ cls, students, paid, onChanged, onStudentsAdded, onUpdate, onDeleted }: {
-  cls: ClassRow; students: ClassStudent[]; paid: boolean; onChanged: () => void; onStudentsAdded: () => void; onUpdate: (c: ClassRow) => void; onDeleted: () => void
-}) {
-  const [open, setOpen] = useState<'modules' | 'exercises' | 'add' | 'rename' | 'delete' | null>(null)
-  const chosen = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m))
-  return (
-    <div style={{ ...card, marginBottom: 18 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: P.ink }}>{cls.name}</h2>
-          <div style={{ fontSize: 14, color: P.ink2, marginTop: 2 }}>
-            Grade {cls.grade} · {students.length} student{students.length === 1 ? '' : 's'}
-            {paid && ` · ${chosen.length ? `${chosen.length} module${chosen.length === 1 ? '' : 's'}` : 'no modules chosen yet'}`}
-            {` · ${cls.exercises.length} exercise${cls.exercises.length === 1 ? '' : 's'}`}
-          </div>
-          {!paid && <div style={{ fontSize: 13, color: P.ink3, marginTop: 4 }}>Free plan: your students see these exercises only. Modules for students come with the classroom plan.</div>}
-          {paid && chosen.length > 0 && <div style={{ fontSize: 13, color: P.ink3, marginTop: 4 }}>{chosen.map(m => `G${m.grade} M${m.n}`).join(' · ')}</div>}
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button onClick={() => setOpen(open === 'add' ? null : 'add')} style={btn}>+ Add students</button>
-          {paid && <button onClick={() => setOpen(open === 'modules' ? null : 'modules')} style={ghost}>Choose modules</button>}
-          <button onClick={() => setOpen(open === 'exercises' ? null : 'exercises')} style={ghost}>Exercises</button>
-          <button onClick={() => setOpen(open === 'rename' ? null : 'rename')} style={ghost}>Rename</button>
-          <button onClick={() => setOpen(open === 'delete' ? null : 'delete')} style={{ ...ghost, color: '#B42318' }}>Delete</button>
-        </div>
-      </div>
-      {open === 'exercises' && <ExerciseEditor cls={cls} students={students} onUpdate={onUpdate} />}
-      {open === 'modules' && <ModulePicker cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
-      {open === 'add' && <AddStudents cls={cls} onAdded={onStudentsAdded} onDone={() => { setOpen(null); onChanged() }} />}
-      {open === 'rename' && <Rename cls={cls} onDone={() => { setOpen(null); onChanged() }} />}
-      {open === 'delete' && (
-        <div style={{ marginTop: 14, background: '#FEF2F2', border: '1.5px solid #FCA5A5', borderRadius: 12, padding: 12 }}>
-          <p style={{ margin: '0 0 10px', fontSize: 14, fontWeight: 600, color: '#991B1B' }}>
-            Delete “{cls.name}”? The {students.length} student{students.length === 1 ? '' : 's'} and their logins and lessons stay — they just won’t be in a class.
-          </p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={async () => { if (await deleteClass(cls.id)) onDeleted() }} style={{ ...btn, background: '#DC2626' }}>Yes, delete class</button>
-            <button onClick={() => setOpen(null)} style={ghost}>Cancel</button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function Rename({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
+export function Rename({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
   const [name, setName] = useState(cls.name)
   const ok = name.trim().length >= 1 && name.trim().length <= 60
   return (
@@ -176,7 +106,7 @@ export function ModuleChecklist({ grade, setGrade, pick, setPick }: {
 }
 
 /** Tick modules (any grade, opening on the class's). Saving gives every student in the class exactly these lessons. */
-function ModulePicker({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
+export function ModulePicker({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
   const [grade, setGrade] = useState(cls.grade)
   const [pick, setPick] = useState<Set<string>>(() => new Set(
     cls.lesson_ids?.length ? MODULES.filter(m => m.lessons.length && hasModule(cls.lesson_ids, m)).map(m => m.id) : []))
@@ -200,7 +130,7 @@ function ModulePicker({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
       {msg && <p role="alert" style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#93000A' }}>{msg}</p>}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <button onClick={save} disabled={saving} style={btn}>{saving ? 'Saving…' : pick.size ? `Give ${pick.size} module${pick.size === 1 ? '' : 's'} to the class` : 'Give the class every module'}</button>
-        <span style={{ fontSize: 12.5, color: P.ink3 }}>Replaces what each student in this class sees. You can still change one student under Assign.</span>
+        <span style={{ fontSize: 12.5, color: P.ink3 }}>Replaces what each student in this class sees. You can still change one student from their own page.</span>
       </div>
     </div>
   )
@@ -233,7 +163,7 @@ async function addOne(row: RosterRow, cls: ClassRow): Promise<Made> {
   return { ...row, password }
 }
 
-function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: () => void; onDone: () => void }) {
+export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: () => void; onDone: () => void }) {
   const [mode, setMode] = useState<'one' | 'list'>('list')
   const [text, setText] = useState('')
   const [oneName, setOneName] = useState('')

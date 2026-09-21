@@ -879,10 +879,29 @@ input[type="range"] { height: 44px; }
 @media (min-width: 1024px) { .dash-rail { position: sticky; top: 88px; } }
 
 /* Parent home: a dark sidebar beside the page on a laptop, a sideways-scrolling top bar on a phone. */
-.home-app { display: grid; grid-template-columns: 1fr; min-height: 100dvh; background: var(--paper); }
-.home-nav { background: #10232b; padding: 8px 12px; display: flex; align-items: center; gap: 4px; overflow-x: auto; min-width: 0; position: sticky; top: 0; z-index: 10; }
-.home-nav a, .home-nav button { color: #d5e6e3; background: transparent; border: 0; border-radius: 10px; padding: 11px 12px; min-height: 44px; font: inherit; font-size: 14px; font-weight: 700; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
-.home-nav a.on, .home-nav a:hover, .home-nav button:hover { background: #1c3d46; color: #fff; }
+.home-app { display: grid; grid-template-columns: 1fr; align-content: start; min-height: 100dvh; background: var(--paper); }
+/* align-content: start — without it a short page shares its spare height between the rows and the phone top bar grows tall. */
+.home-nav { display: none; }
+/* Phone and tablet: a slim light bar with ☰ and the bell; the menu opens as a drawer (DashNav). */
+.dash-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30;
+  background: var(--paper-soft); border-bottom: 1.5px solid var(--card-border); padding: 2px 6px; }
+.dash-top button { color: var(--ink); background: none; border: 0; min-width: 44px; min-height: 44px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
+.dash-top button:hover { background: var(--paper); }
+.dash-top-logo { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--ink); }
+.dash-count { background: var(--milo-orange); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 7px; font-weight: 900; margin-left: auto; }
+.dash-drawer { border: 0; padding: 0; margin: 0 auto 0 0; height: 100dvh; max-height: 100dvh; background: transparent; }
+.dash-drawer::backdrop { background: rgba(38, 22, 12, .45); }
+.dash-drawer-panel { background: #10232b; height: 100%; width: min(300px, 82vw); padding: calc(12px + env(safe-area-inset-top, 0px)) 10px calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 4px; overflow-y: auto; animation: dash-in .2s ease-out; }
+.dash-drawer-panel .home-logo { display: flex; justify-content: space-between; align-items: center; color: #fff; font-weight: 800; padding: 4px 4px 12px 12px; }
+.dash-x { color: #d5e6e3; background: none; border: 0; font-size: 24px; min-width: 44px; min-height: 44px; border-radius: 10px; cursor: pointer; }
+.dash-drawer-panel .home-nav-end { margin-top: auto; }
+@keyframes dash-in { from { transform: translateX(-100%) } to { transform: none } }
+@media (prefers-reduced-motion: reduce) { .dash-drawer-panel { animation: none; } }
+.home-nav a, .home-nav button, .dash-drawer-panel a, .dash-drawer-panel button:not(.dash-x) { display: flex; align-items: center; gap: 8px; }
+.home-nav a, .home-nav button, .dash-drawer-panel a, .dash-drawer-panel button:not(.dash-x) { color: #d5e6e3; background: transparent; border: 0; border-radius: 10px; padding: 11px 12px; min-height: 44px; font: inherit; font-size: 14px; font-weight: 700; text-align: left; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.home-nav a.on, .home-nav a:hover, .home-nav button:hover, .dash-drawer-panel a.on, .dash-drawer-panel a:hover, .dash-drawer-panel button:not(.dash-x):hover { background: #1c3d46; color: #fff; }
+.home-nav a.on, .dash-drawer-panel a.on { box-shadow: inset 4px 0 0 var(--milo-orange); }
 .home-nav button.on { background: #1c3d46; color: #fff; }
 .home-logo { font-weight: 900; font-size: 18px; color: #ffb4a2; margin: 0 10px 0 4px; white-space: nowrap; }
 .home-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
@@ -895,7 +914,8 @@ input[type="range"] { height: 44px; }
 .home-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
 @media (min-width: 1024px) {
   .home-app { grid-template-columns: 240px 1fr; }
-  .home-nav { flex-direction: column; align-items: stretch; height: 100dvh; padding: 20px 14px; }
+  .home-nav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; height: 100dvh; padding: 20px 14px; background: #10232b; position: sticky; top: 0; z-index: 10; }
+  .dash-top { display: none; }
   .home-logo { margin: 0 12px 16px; font-size: 20px; }
   .home-nav-end { margin-top: auto; }
   .home-two { grid-template-columns: 1.35fr 0.65fr; }
@@ -940,3 +960,35 @@ input[type="range"] { height: 44px; }
 @media (prefers-reduced-motion: reduce) {
   .sheet-card { animation: none; }
 }
+
+/* ── Dashboard pages (features/dashboard): tabs inside a child or a class ─────────────────────────── */
+.dash-tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--card-border); margin: 14px 0 18px; }
+.dash-tabs a { text-decoration: none; padding: 10px 14px; min-height: 44px; display: flex; align-items: center; font-weight: 800; font-size: 15px; color: var(--ink-soft);
+  border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+.dash-tabs a:hover { color: var(--ink); }
+.dash-tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--milo-orange); }
+@media (max-width: 760px) {
+  /* A grid of buttons on a phone: every tab visible, nothing scrolls sideways. */
+  .dash-tabs { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 6px; border-bottom: 0; }
+  .dash-tabs a { justify-content: center; text-align: center; white-space: normal; border: 1.5px solid var(--card-border); border-radius: 10px; margin: 0;
+    background: var(--paper-soft); font-size: 14px; padding: 8px 6px; }
+  .dash-tabs a[aria-current="page"] { background: var(--milo-orange-soft); border-color: var(--milo-orange); }
+}
+.dash-sheet { border: 0; padding: 0; background: transparent; color: var(--ink); max-width: calc(100vw - 32px); }
+.dash-sheet::backdrop { background: rgba(38, 22, 12, .45); }
+.dash-sheet > div { background: var(--paper-soft); border-radius: 22px; padding: 22px; width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; box-sizing: border-box; }
+.dash-sheet.side[open] { margin: 0 0 0 auto; height: 100dvh; max-height: 100dvh; max-width: 100vw; }
+.dash-sheet.side > div { height: 100%; max-height: none; border-radius: 22px 0 0 22px; width: min(440px, 100vw); }
+.dash-more { position: relative; }
+.dash-more summary { list-style: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: 900; font-size: 20px; color: var(--ink-muted); cursor: pointer; }
+.dash-more summary::-webkit-details-marker { display: none; }
+.dash-more summary:hover { background: var(--paper); color: var(--ink); }
+.dash-more[open] > div { position: absolute; right: 0; top: 46px; z-index: 20; background: #fff; border: 1.5px solid var(--card-border); border-radius: 12px; padding: 6px;
+  box-shadow: 0 8px 24px rgba(38,22,12,.15); display: flex; flex-direction: column; min-width: 200px; }
+.dash-more[open] > div button { text-align: left; border: 0; background: none; padding: 10px 12px; min-height: 44px; border-radius: 8px; font-weight: 800; cursor: pointer; color: var(--ink); }
+.dash-more[open] > div button:hover { background: var(--paper); }
+.dash-spot { position: fixed; z-index: 90; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(38, 22, 12, .55); pointer-events: none; outline: 3px solid #fff; transition: all .25s ease; }
+.dash-coach { position: fixed; z-index: 91; background: #fff; border-radius: 16px; padding: 16px; width: min(340px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,.25); box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { .dash-spot { transition: none; } }
+/* Buttons and fields do not inherit the page font by default — they rendered in the system font. */
+.home-app button, .home-app select, .home-app input, .home-app textarea { font-family: inherit; }
