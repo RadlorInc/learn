@@ -29,6 +29,7 @@ import { beatMs } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn } from './PracticeLayout'
+import { Feedback } from './Feedback'
 
 /** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder,
  * 2026-09-20: 3 s then 2.3 s both felt long — and the screen now carries a bar that says where it is, so the wait
@@ -137,6 +138,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   }, [won])
 
 
+  // "Didn't get it?" on every screen, for a signed-in child only (the row belongs to a learner). Opening it pauses the
+  // lesson: her voice stops and the screen does not move on while the child is choosing.
+  const where = s.mode === 'lesson' ? `${s.screen + 1}` : s.mode === 'turn' || s.mode === 'won' ? '8' : s.mode === 'practice' ? `p${s.practice + 1}` : '9'
+  const feedback = learnerId
+    ? <Feedback key={where} learnerId={learnerId} lessonId={lesson.id} screen={where} onOpen={() => { stopSpeech(); setAutoOn(false) }} />
+    : undefined
+
   const problem = s.mode === 'practice' && run ? run.current.problem : currentProblem(lesson, s)
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
   const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? findLesson(run.current.from)?.lesson ?? null : null
@@ -168,7 +176,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const of = ladder ? '' : ' of 5'
     return (
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
-        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.practice}>
+        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
           <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
@@ -219,7 +227,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     }
     return (
       <PracticeLayout corner={lesson.title} crumb="Screen 8 of 9" title="Now you try" exitLabel="Exit lesson"
-        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'}>
+        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'} feedback={feedback}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: INK }}>{lesson.turn.prompt}</p>
         <div style={stage}>
@@ -323,7 +331,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   }
 
   return (
-    <Frame crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action} back={backBtn}
+    <Frame corner={feedback} crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action} back={backBtn}
       exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }}
       progress={beats ? shown / beats.length : undefined} />
   )
