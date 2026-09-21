@@ -432,6 +432,7 @@ function inspect([T, B, L, R]) {
 const engine = process.env.ENGINE === 'webkit' ? webkit : chromium
 const browser = await engine.launch()
 const results = []
+const t0 = Date.now()
 for (const [name, w, h, insets, mobile] of PROFILES) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: engine === chromium ? !!mobile : undefined, hasTouch: !!mobile, deviceScaleFactor: mobile ? 2 : 1 })
   if (process.env.SEED) await ctx.addInitScript(process.env.SEED)
@@ -459,6 +460,7 @@ for (const [name, w, h, insets, mobile] of PROFILES) {
     } catch (e) { results.push({ route: R.url, profile: name, rule: 'load-error', msg: e.message.split('\n')[0] }) }
   }
   await ctx.close()
+  console.error(`· ${name} done — ${results.length} findings so far, ${Math.round((Date.now() - t0) / 1000)}s`)
 }
 await browser.close()
 if (process.env.OUT) writeFileSync(process.env.OUT, JSON.stringify(results, null, 1))
