@@ -10,8 +10,10 @@ import { pill, INK, TEAL, GOOD, LESSON_KEYFRAMES, PAGE_BG, shell, topBar } from 
 
 export const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
-export function Frame({ crumb, exit, progress, title, picture, words, action, back, at, total, stack }: {
+export function Frame({ crumb, exit, progress, title, picture, words, action, back, at, total, stack, corner }: {
   crumb: string
+  /** Top right of the bar (the "Didn't get it?" button). */
+  corner?: ReactNode
   exit: { label: string; onClick: () => void }
   /** How far through this screen she is, 0–1: the bar under the top bar. Undefined on a screen that does not play itself. */
   progress?: number
@@ -25,7 +27,7 @@ export function Frame({ crumb, exit, progress, title, picture, words, action, ba
         <div style={topBar}>
           <button type="button" style={barBtn} onClick={exit.onClick}>{exit.label}</button>
           <span style={{ fontSize: 'clamp(14px, 3.6vw, 18px)', fontWeight: 800, textAlign: 'center' }}>{crumb}</span>
-          <span />
+          {corner ?? <span />}
         </div>
         {progress !== undefined && (
           // Founder, 2026-09-20: a screen that moves on by itself has to show how far along it is.

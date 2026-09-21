@@ -274,6 +274,7 @@ describe('the terms still agree with the schema they were written against', () =
       point_events:        'each time points were earned',
       game_settings:       'the game-time settings you choose',
       exercise_results:    'class exercise results',
+      lesson_feedback:     'which lesson screen was hard to follow',
       // Adult-to-adult authorisation rather than data about the child — §5, not §6.
       learner_access:      'You may invite another parent or guardian',
       learner_invites:     'You may invite another parent or guardian',

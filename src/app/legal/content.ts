@@ -211,6 +211,8 @@ you typed.
 - **class exercise results**, when a teacher's class sets exercises: for each exercise
   the child finished, how each question went (right first time, right after a hint,
   or shown the answer) and when, which the class's teacher can see;
+- **lesson feedback**, when a child taps "Didn't get it?": which lesson screen was hard to follow
+  and the reasons they picked from a fixed list (no typed text), and when;
 - **points**: each time points were earned, and each time they were spent on game
   time, plus the game-time settings you choose (on or off, minutes per day, your
   time zone);

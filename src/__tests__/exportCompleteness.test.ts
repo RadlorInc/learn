@@ -53,6 +53,7 @@ const EXPORTED: Record<string, string> = {
   point_events:             'points',
   game_settings:            'gameSettings',
   exercise_results:         'classExerciseResults',
+  lesson_feedback:          'lessonFeedback',
 }
 
 /** Deliberately out, each with the reason it is out. Adding to this list is a decision. */
@@ -91,7 +92,7 @@ describe('the data export covers every child-data table', () => {
     // drift from the code — a table mapped to a key that no longer exists would otherwise pass.
     const out = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: {}, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], notes: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], notes: [],
     })
     const missing = Object.entries(EXPORTED).filter(([, key]) => !(key in out)).map(([t, k]) => `${t} → ${k}`)
     expect(missing, `buildExport does not emit:\n  ${missing.join('\n  ')}`).toEqual([])
@@ -104,13 +105,13 @@ describe('the data export covers every child-data table', () => {
     // events are 96% of the payload, so they are the section that can actually blow the timeout.
     const whole = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], notes: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], notes: [],
     }) as { completeness: { complete: boolean; notes: string[] } }
     expect(whole.completeness.complete, 'a whole export must not claim to be partial').toBe(true)
 
     const partial = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [],
       notes: ['the activity log was capped'],
     }) as { completeness: { complete: boolean; notes: string[] } }
     expect(partial.completeness.complete, 'a capped export must not claim to be complete').toBe(false)

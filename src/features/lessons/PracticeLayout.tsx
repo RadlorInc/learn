@@ -10,8 +10,8 @@ import { pill, INK, PAGE_BG, shell, topBar, LESSON_KEYFRAMES } from './Pictures'
 import { LANDSCAPE } from './Frame'
 import { ScratchPad } from './ScratchPad'
 
-export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit practice', pad, padKey, children }: {
-  corner: string; crumb: string; title: string; onExit: () => void; exitLabel?: string
+export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit practice', pad, padKey, feedback, children }: {
+  corner: string; crumb: string; feedback?: ReactNode; title: string; onExit: () => void; exitLabel?: string
   pad: boolean; padKey: string | number; children: ReactNode
 }) {
   return (
@@ -21,7 +21,7 @@ export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit
         <div style={topBar}>
           <span style={{ fontSize: 'clamp(14px, 3.4vw, 18px)' }}>{corner}</span>
           <span style={{ fontSize: 'clamp(14px, 3.6vw, 18px)', textAlign: 'center' }}>{crumb}</span>
-          <span />
+          {feedback ?? <span />}
         </div>
         <main style={{ flex: 1, padding: 'clamp(14px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

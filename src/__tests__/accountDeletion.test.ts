@@ -105,6 +105,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.game_settings':            `public.game_settings where learner_id in (${ls})`,
     'public.teacher_plans':            `public.teacher_plans where teacher_id = '${uid}'`,
     'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
+    'public.lesson_feedback':          `public.lesson_feedback where learner_id in (${ls})`,
   }
   const out: Record<string, number> = { 'auth.users': await count(db, `auth.users where id = '${uid}'`) }
   for (const t of tables) {
@@ -142,6 +143,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       insert into public.point_events (learner_id, reason, lesson_id, points) values ('${l}', 'lesson_done', 'g3m2-t1', 10);
       insert into public.game_settings (learner_id) values ('${l}');
       insert into public.exercise_results (learner_id, class_id, exercise_id, outcomes) values ('${l}', '${klass}', 'e1', '{first,worked}');
+      insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${l}', 'g3m2-t1', '3', '{fast,words}');
       insert into public.learner_progress (learner_id, chapter, best_stars) values ('${l}', 'counting', 3);
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');
