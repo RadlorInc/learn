@@ -31,9 +31,9 @@ export const T1: (ChalkMark[] | undefined)[] = [
     cells([0, 'left'], 120, 190, 360, 60, 4), arrow([0, 'left'], [345, 134], [262, 184], 'r'),
     ...digits([0, 'worth'], 1, '400', 220, 'y'), write([0, 'worth'], '400', 65, 220, 28, 'y'),
     write([0, '10'], '× 10', 540, 160, 32, 'r'),
-    cells([1, 'One'], 120, 300, 360, 60, 4), arrow([1, 'right'], [262, 254], [340, 294], 'b'),
-    ...digits([1, 'worth'], 2, '40', 330, 'b'), write([1, 'worth'], '40', 65, 330, 28, 'b'),
-    write([1, '1/10'], '1/10', 540, 280, 30, 'b'),
+    cells([0, 'right'], 120, 300, 360, 60, 4), arrow([0, 'right'], [262, 254], [340, 294], 'b'),
+    ...digits([0, 'right'], 2, '40', 330, 'b'), write([0, 'right'], '40', 65, 330, 28, 'b'),
+    write([0, '1/10'], '1/10', 540, 280, 30, 'b'),
   ],
   // Each place is 10 of the next
   [
@@ -68,7 +68,7 @@ export const T1: (ChalkMark[] | undefined)[] = [
   ],
   // One thing not to do
   [
-    ...warn([0, 'trap']),
+    ...warn([0, 'mix']),
     write([1, 'Ten'], '10 × 40', 180, 170, 36), write([1, 'add'], '= 50', 300, 170, 36, 'r'),
     cross([1, '10'], 262, 150, 76, 40),
     ...digits([2, 'slides'], 2, '40', 240).map(m => ({ ...m, x: m.x! - 25 })),
