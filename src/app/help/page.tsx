@@ -9,6 +9,10 @@
  * that order, because a FAQ nobody scrolls is a FAQ that answers nothing.
  *
  * A Server Component — it is text and links.
+ *
+ * ⚠️ STALE, noted 2026-09-21 (not fixed): three answers describe deleted systems — "How does Milo decide what to
+ * teach?" (the placement check, deleted #145), "Some chapters use the camera" (AR, deleted #144) and "between age
+ * groups" (bands 9–18, deleted #144). The dashboard's Help tab links here as "Questions and answers".
  */
 import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
