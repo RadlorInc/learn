@@ -51,6 +51,7 @@ import { UpNext, RemindersSheet, Sheet, TourRunner, dbtn, dghost, dcard, dlink, 
 import { ChildPage, ChildCard, CHILD_TABS, type ChildTab } from '@/features/dashboard/ChildPage'
 import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dashboard/ClassPage'
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
+import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -372,42 +373,6 @@ function Dashboard() {
     setTour(null)
   }
 
-  /** "Show me how": step-by-step walkthroughs on the real screens (under Help). */
-  function goals(): { t: string; d: string; tour: Tour }[] {
-    const c = learners[0]?.learner.id, k = classes[0]?.id
-    if (tea) return [
-      { t: 'Set up a new class', d: 'Make the class, add students, choose lessons.', tour: { title: 'Set up a new class', steps: [
-        { url: '/parent', target: 'new-class', title: 'Make a class', text: 'Give it a name and a grade.' },
-        ...(k ? [{ url: `/parent?class=${k}&tab=students`, target: 'add-students', title: 'Add your students', text: 'Upload a list of usernames. Everyone gets a temporary password you can print.' },
-                 { url: `/parent?class=${k}&tab=lessons`, target: 'tab-lessons', title: 'Choose the class’s lessons', text: 'Tick modules. Students added later get them too.' }] : [])] } },
-      ...(k ? [
-        { t: 'Give my class a test', d: 'Make an exercise, open it, read the results.', tour: { title: 'Give my class a test', steps: [
-          { url: `/parent?class=${k}&tab=exercises`, target: 'exercises', title: 'Exercises', text: 'Make one (module, level, how many questions). It stays locked until you open it; then read how each question went.' }] } },
-        { t: 'Find who is stuck', d: 'Topics the class finds hard, and who.', tour: { title: 'Find who is stuck', steps: [
-          { url: `/parent?class=${k}&tab=progress`, target: 'tab-progress', title: 'Progress', text: 'Pick a student to see what they find hard.' }] } },
-        { t: 'Help a student who can’t sign in', d: 'Give them a new temporary password.', tour: { title: 'Help a student sign in', steps: [
-          { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Find them in the list', text: '“New password” gives them a temporary one; they choose their own at first sign-in.' }] } },
-      ] : []),
-    ]
-    return [
-      { t: 'Set up a new child', d: 'Add them, give them a login, choose their lessons.', tour: { title: 'Set up a new child', steps: [
-        { url: '/parent', target: 'add-child', title: 'Add a child', text: 'Their name, and the modules they should see.' },
-        ...(c ? [{ url: `/parent?child=${c}&tab=login`, target: 'login-card', title: 'Give them a login', text: 'With a username and password they can sign in on any device, on their own.' },
-                 { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: 'Choose what they learn', text: 'Tap “Change” and tick modules or single topics, from any grade.' },
-                 { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: 'Game time (optional)', text: 'Turn it on and they earn minutes of the game by practising.' }] : [])] } },
-      ...(c ? [
-        { t: 'See how my child is doing', d: 'Progress, and what they find hard.', tour: { title: 'See how they’re doing', steps: [
-          { url: '/parent', target: `child-${c}`, title: 'Every child has a card', text: 'Their next lesson and how far along they are.' },
-          { url: `/parent?child=${c}&tab=progress`, target: 'tab-progress', title: 'Their progress', text: 'Lessons finished, topics mastered, and what they find hard.' }] } },
-        { t: 'Give homework with a due date', d: 'Pick a lesson and a day.', tour: { title: 'Give homework', steps: [
-          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: 'Check they can see it', text: '“Change” adds a module or a single topic.' },
-          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-due', title: 'Add a due date', text: 'The lesson goes to the top of their list, with the date. It saves straight away.' }] } },
-        { t: 'Share with my partner', d: 'Let another adult see the dashboard.', tour: { title: 'Share with my partner', steps: [
-          { url: `/parent?child=${c}&tab=login`, target: 'share-card', title: 'Invite someone', text: 'They get their own sign-in and see the child’s progress.' }] } },
-      ] : []),
-    ]
-  }
-
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6', fontSize:48 }}>🦊</div>
   )
@@ -532,7 +497,7 @@ function Dashboard() {
     page = <>
       <h1 style={{ ...h1, marginBottom: 18 }}>Account</h1>
       <div className="card-grid">
-        <section style={dcard}>
+        <section style={dcard} data-tour="reminders-card">
           <h2 style={h2}>Reminders</h2>
           <p style={{ margin:'4px 0 6px', fontSize:13, color:P.ink3, fontWeight:700 }}>Choose what we point out. You can also snooze or hide one reminder with ⋯. Saved on this device.</p>
           {([['setup', 'Setup steps', 'Things not set up yet: logins, game time, modules, exercises.'],
@@ -553,13 +518,13 @@ function Dashboard() {
           })}
         </section>
         {tea
-          ? <section style={dcard}><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
-          : <section style={dcard}><h2 style={h2}>Plan & billing</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Your plan and what it costs.</p><Link href="/parent/plan" style={dghost}>See plans</Link></section>}
+          ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
+          : <section style={dcard} data-tour="plan-card"><h2 style={h2}>Plan & billing</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Your plan and what it costs.</p><Link href="/parent/plan" style={dghost}>See plans</Link></section>}
         {!tea && <section style={dcard}><h2 style={h2}>Share access</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Let another parent or guardian see a child’s progress.</p><Link href="/parent/invites" style={dghost}>Share access</Link></section>}
         {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
             /parent. The page itself carries the real guards. */}
-        <section style={dcard}><h2 style={h2}>Close your account</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Deletes your account and every {tea ? 'student' : 'child'} profile you added.</p>
+        <section style={dcard} data-tour="close-card"><h2 style={h2}>Close your account</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Deletes your account and every {tea ? 'student' : 'child'} profile you added.</p>
           <a href="/parent/account" style={{ ...dghost, color:'#B42318' }}>Close your account</a></section>
       </div>
     </>
@@ -568,11 +533,16 @@ function Dashboard() {
       <h1 style={{ ...h1, marginBottom: 18 }}>Help</h1>
       <section style={{ ...dcard, maxWidth: 640, display:'flex', flexDirection:'column', gap:8 }}>
         <h2 style={{ ...h2, marginBottom: 4 }}>Show me how to…</h2>
-        {goals().map(g => (
-          <button key={g.t} type="button" onClick={() => setTour(g.tour)}
-            style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:2, textAlign:'left', border:`1.5px solid ${P.edge}`, background:'#fff', borderRadius:14, padding:'12px 14px', minHeight:56, cursor:'pointer' }}>
-            <b style={{ color:P.ink }}>{g.t}</b><span style={{ fontSize:13.5, color:P.ink2 }}>{g.d}</span>
-          </button>
+        {helpGoals({ tea, paid, c: learners[0]?.learner.id, k: classes[0]?.id }).map(g => (
+          <div key={g.h} style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            <h3 style={{ margin:'10px 0 0', fontSize:13, fontWeight:900, color:P.ink3, textTransform:'uppercase', letterSpacing:'.06em' }}>{g.h}</h3>
+            {g.items.map(i => (
+              <button key={i.t} type="button" onClick={() => setTour(i.tour)}
+                style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:2, textAlign:'left', border:`1.5px solid ${P.edge}`, background:'#fff', borderRadius:14, padding:'12px 14px', minHeight:56, cursor:'pointer' }}>
+                <b style={{ color:P.ink }}>{i.t}</b><span style={{ fontSize:13.5, color:P.ink2 }}>{i.d}</span>
+              </button>
+            ))}
+          </div>
         ))}
         <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginTop:6 }}>
           <button type="button" style={dlink} onClick={() => startTour('first')}>Take the 1-minute tour again</button>

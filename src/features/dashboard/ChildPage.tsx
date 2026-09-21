@@ -41,7 +41,7 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
         <img src={avatar} alt="" width={48} height={48} style={{ borderRadius: 14, objectFit: 'cover', background: 'var(--milo-orange-soft)' }} />
         <h1 style={{ margin: 0, fontSize: 30, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{name}</h1>
       </div>
-      <button type="button" style={dbtn} onClick={onLaunch}>▶ Start learning</button>
+      <button type="button" style={dbtn} data-tour="start-learning" onClick={onLaunch}>▶ Start learning</button>
     </div>
     <Tabs base={base} tabs={CHILD_TABS} on={tab} />
 
@@ -65,7 +65,7 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>Let a partner or grandparent see {name}&apos;s progress with their own sign-in.</p>
           <Link href="/parent/invites" style={dghost}>Invite someone</Link>
         </section>
-        <section style={dcard}>{dataRights}</section>
+        <section style={dcard} data-tour="data-card">{dataRights}</section>
       </div>
     )}
   </>
