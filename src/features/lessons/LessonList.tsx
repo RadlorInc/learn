@@ -2,14 +2,15 @@
 /**
  * The new-flow topic list, drawn as a winding path: one module's topics in teaching order, one stop per topic.
  * Portrait (phone): the path runs top to bottom. Landscape (tablet sideways, laptop): it runs left to right.
- * The first unfinished topic is "Next up"; nothing is locked (a child may replay or jump ahead).
+ * The first unfinished topic is "Next up" and glows; every other stop is dimmed — a done one with a green tick, one still
+ * ahead with its number (founder, 2026-09-21). Nothing is locked: a child may replay or jump ahead.
  */
 import { showDay } from './progressReport'
 import Link from 'next/link'
 import { useSyncExternalStore, type CSSProperties } from 'react'
 import type { Module } from './modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
-import { Thing, INK, TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
+import { Thing, INK, TEAL, GOOD, pill, PAGE_BG, shell, topBar } from './Pictures'
 import type { Lesson, Obj } from './script'
 
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
@@ -49,6 +50,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
   return (
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 32px', display: 'flex', justifyContent: 'center' }}>
       <style>{`@keyframes lp-bob { 0%,100% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 5px)) } }
+@keyframes lp-glow { 0%,100% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166 } 50% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 10px #ffd16666, 0 0 34px 14px #ffd166 } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important } }`}</style>
       <div style={{ ...shell, maxWidth: across ? 1180 : 620, alignSelf: 'flex-start' }}>
         <div style={topBar}>
@@ -75,6 +77,10 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                   const isDone = done.includes(l.id), isNext = l.id === nextUp
                   const obj = objOf(l), size = isNext ? 84 : 68, { x, y } = pos(i)
                   const gap = size / 2 + 12
+                  // Dimmed with solid muted colours, not opacity: a see-through stop shows the trail running through it.
+                  const dim: CSSProperties = isNext ? {} : { opacity: 0.5 }
+                  const dimStop: CSSProperties = isNext ? {} : { background: '#f3ede6', borderColor: MUTED, boxShadow: `4px 4px 0 ${MUTED}`, color: MUTED }
+                  const faded: CSSProperties = isNext ? {} : { opacity: 0.45 }
                   // The label sits on the open side of its stop: right/left when vertical, above/below when horizontal.
                   const label: CSSProperties = across
                     ? { left: 0, width: STEP + 16, transform: 'translateX(-50%)', textAlign: 'center', display: 'flex', alignItems: 'center',
@@ -83,14 +89,16 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                   return (
                     <li key={l.id} style={{ position: 'absolute', top: y, left: across ? x : `${x}%`, width: 0, height: 0 }}>
                       <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : isNext ? ', next up' : ''}`}
-                        style={{ ...stop, width: size, height: size, background: isDone ? '#9cf0d8' : isNext ? '#ffd166' : '#fff',
-                          ...(isNext ? { animation: 'lp-bob 1.8s ease-in-out infinite' } : {}) }}>
+                        style={{ ...stop, width: size, height: size, background: isNext ? '#ffd166' : '#fff', ...dimStop,
+                          ...(isNext ? { animation: 'lp-bob 1.8s ease-in-out infinite, lp-glow 1.8s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166` } : {}) }}>
                         {obj
-                          ? <span style={{ display: 'flex', gap: 3, '--lp-u': isNext ? '20px' : '16px' } as CSSProperties}><Thing obj={obj} /><Thing obj={obj} /><Thing obj={obj} /></span>
-                          : <b style={{ fontSize: 24 }}>{i + 1}</b>}
-                        <span style={{ ...badge, background: isDone ? TEAL : isNext ? '#ff6b4a' : '#fff', color: isDone || isNext ? '#fff' : INK }}>{isDone ? '✓' : i + 1}</span>
+                          ? <span style={{ display: 'flex', gap: 3, '--lp-u': isNext ? '20px' : '16px', ...faded } as CSSProperties}><Thing obj={obj} /><Thing obj={obj} /><Thing obj={obj} /></span>
+                          : <b style={{ fontSize: 24, ...faded }}>{i + 1}</b>}
+                        {!isDone && <span style={{ ...badge, ...(isNext ? { background: '#ff6b4a', color: '#fff' } : { background: '#f3ede6', color: MUTED, borderColor: MUTED }) }}>{i + 1}</span>}
                       </Link>
-                      <Link href={`/lesson?id=${l.id}`} tabIndex={-1} aria-hidden style={{ position: 'absolute', textDecoration: 'none', color: INK, ...label }}>
+                      {/* Outside the dimmed stop, so the tick itself is not dimmed. */}
+                      {isDone && <span aria-hidden style={{ ...badge, top: -size / 2 - 6, left: size / 2 - 22, width: 32, height: 32, fontSize: 18, background: GOOD, color: '#fff', pointerEvents: 'none' }}>✓</span>}
+                      <Link href={`/lesson?id=${l.id}`} tabIndex={-1} aria-hidden style={{ position: 'absolute', textDecoration: 'none', color: INK, ...label, ...dim }}>
                         <b style={{ display: 'inline-block', fontFamily: 'var(--font-display)', fontSize: isNext ? 19 : 16, lineHeight: 1.2, background: '#fff', border: `3px solid ${INK}`, borderRadius: 14, padding: '6px 10px', boxShadow: `3px 3px 0 ${INK}` }}>{l.title}</b>
                         {/* Never "late" to a child: the date is information, not a mark against them. */}
                         {!isDone && due?.[l.id] && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 6,
@@ -110,6 +118,8 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
   )
 }
 
+/** A dimmed stop's ink: done, or not reached yet. */
+const MUTED = '#b3a79e'
 const stop: CSSProperties = { position: 'absolute', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', justifyContent: 'center',
   borderRadius: '50%', border: `4px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`, textDecoration: 'none', color: INK }
 const badge: CSSProperties = { position: 'absolute', top: -6, right: -6, width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center',
