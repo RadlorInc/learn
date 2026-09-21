@@ -77,32 +77,32 @@ export const viewport: Viewport = {
  *
  * ⚠️ THE DESCRIPTION SAYS WHAT THE PRODUCT DOES, NOT WHAT IT IS CALLED. "Milo's interactive
  * learning adventure for kids" contains no word a parent would type. This one names the job
- * (find the gap) and the ages, because the description is the only sentence most people read.
+ * (lessons that adapt) and the grades, because the description is the only sentence most people read.
  */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AdaptiveLearn — find the gap that's holding your child back in math",
+    default: "AdaptiveLearn — math lessons that adapt to your child, grades 3 to 8",
     template: '%s · AdaptiveLearn',
   },
   description:
-    'A short placement check finds the deepest gap under your child’s math — not the newest thing they got wrong — then a plan fixes it. Ages 3–18. No timer, no score, no red crosses.',
+    'Math for grades 3 to 8: each lesson explains one idea step by step, then practice adapts to what your child gets right and wrong. You choose the lessons. No timer, no red crosses.',
   applicationName: 'AdaptiveLearn',
   openGraph: {
     type: 'website',
     siteName: 'AdaptiveLearn',
-    title: "AdaptiveLearn — find the gap that's holding your child back in math",
+    title: "AdaptiveLearn — math lessons that adapt to your child, grades 3 to 8",
     description:
-      'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
+      'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
     url: '/',
     // ⚠️ No `images` here on purpose — `app/opengraph-image.tsx` supplies the 1200×630 card.
     // Naming one back would override the file-based route and reinstate the square.
   },
   twitter: {
     card: 'summary',
-    title: "AdaptiveLearn — find the gap that's holding your child back in math",
+    title: "AdaptiveLearn — math lessons that adapt to your child, grades 3 to 8",
     description:
-      'A short placement check finds the deepest gap under your child’s math, then a plan fixes it. Ages 3–18.',
+      'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
   },
   manifest: '/manifest.json',
   /* ⚠️ `default`, NOT `black-translucent` (changed 2026-09-19). Translucent lays every page UNDER the iPhone's status
