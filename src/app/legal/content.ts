@@ -13,10 +13,13 @@
  * LOOKS real is worse than no page at all, because a parent would believe it.
  *
  * What the attorney needs to cover (from launch-plan.md §1.2), so the brief writes itself:
- *   · what is collected: parent email, child display name + age band, diagnostic answers,
- *     chapter progress/sessions, and (for the cold funnel) a lead email
- *   · that hand-tracking runs ON DEVICE and no camera frame ever leaves the browser
- *   · verifiable parental consent — the parent creates the learner, which is the consent vector
+ *   · what is collected (rewritten 2026-09-21 for the app as it ships): adult email; child display
+ *     name, grade (+ a derived age band), avatar, chosen lessons, lesson progress, points and
+ *     game-time settings, an optional username login, class exercise results, "Didn't get it?"
+ *     taps; plus records from the earlier version (placement answers, chapter progress) and old
+ *     lead emails. The camera was removed 2026-09-20.
+ *   · verifiable parental consent — the parent creates the learner, which is the consent vector;
+ *     ⚠️ a TEACHER adding students is a second route, and it is flagged [LAWYER REVIEW] in §2
  *   · the parent's right to see and delete (both now live at /parent — see DataRights)
  *   · retention, and who can read what (the RLS model) — note the deliberate split: the placement
  *     check's RAW ANSWERS are analytics and prune at 90 days, while the PLAN derived from them is
@@ -35,15 +38,15 @@ export const PRIVACY: LegalDoc = {
 
 AdaptiveLearn is used by children, so we keep the amount we store small and we do not sell or share it.
 
-What we store: the parent's email address, the child's display name and age band, their answers to the placement check, and which chapters they have played. If you used the free check before making an account, we also store the email address you gave us there. We do not store a child's date of birth, only their age band.
+What we store: the adult's email address; for each child, their display name, grade, avatar and the lessons chosen for them; which lessons they finished and how their practice went; their points and the game-time settings you choose; the username of their login, if you set one; their results on any class exercises a teacher sets; and which lesson screens they marked "Didn't get it?", with the reasons they picked from a fixed list. We do not store a child's date of birth. For accounts that used the earlier version of the app, we also keep what it recorded — placement-check answers and the chapters played — until the profile is deleted. If you used the free check before it was removed in September 2026, we also store the email address you gave us there.
 
 The camera: the app does not use your camera. Chapters that answered by holding up a hand were removed on 20 September 2026, along with the hand-tracking model they downloaded. Nothing in the app now requests camera access.
 
-Who else sees the data: Supabase hosts our database and Vercel serves the site, both as processors acting on our instructions. We do not sell or share your child's data, and there is no advertising or behavioural tracking anywhere in the app.
+Who else sees the data: anyone you invite to a child's profile sees that child's progress. If a child is in a teacher's class, that teacher sees their exercise results and progress. Supabase hosts our database and Vercel serves the site, both as processors acting on our instructions. We do not sell or share your child's data, and there is no advertising or behavioural tracking anywhere in the app.
 
-How long we keep it: your child's profile and progress are kept until you delete them, and that includes the learning plan the placement check produces. Their individual answers to the placement check are deleted automatically after 90 days, as are gameplay analytics and crash reports — we keep what the check concluded, not every answer they gave. An email given to the free check before an account exists is kept for up to 24 months.
+How long we keep it: your child's profile and progress are kept until you delete them. Usage analytics, crash reports, and individual answers to the earlier placement check are deleted automatically after 90 days. An email given to the free check before an account exists is kept for up to 24 months.
 
-Your choices: you can download a copy of everything we hold about your child — their profile, progress, sessions, placement checks and learning plans, and the activity log — or delete it permanently, from the parent dashboard at any time. Deleting a child's profile removes their progress, sessions, placement results and analytics. If you gave us an email for the free check and never made an account, write to us and we will delete it.
+Your choices: you can download a copy of everything we hold about your child, or delete it permanently, from the Login & data tab on their page in the parent dashboard, at any time. Deleting a child's profile removes their progress, points, results and analytics; closing your account also removes their logins. If you gave us an email for the free check and never made an account, write to us and we will delete it.
 
 This wording has not been reviewed by a lawyer yet and is not the final policy.`,
 }
@@ -91,10 +94,17 @@ create an account and do not use the Service.**
 **Only adults create accounts.** You must be at least 18 years old and legally
 able to enter a contract to create an account.
 
-**Children use the Service only through a profile created by their parent or
-legal guardian.** Children do not have their own accounts, do not sign in, and
-are not asked for an email address or password. Every child profile sits inside
-an adult account, and the adult who created it is responsible for it.
+**Children use the Service only through a profile created by an adult: their
+parent or legal guardian, or a teacher who adds them to a class.** Children do
+not create accounts and are never asked for an email address. The adult may give
+a child a **username and password** so the child can sign in on their own; the
+adult chooses the username and a first password, and the child may change the
+password. Every child profile sits inside an adult account, and the adult who
+created it is responsible for it.
+
+**[LAWYER REVIEW — a teacher adding students is a second consent route: whether a
+school or teacher may consent in place of the parent under COPPA, and what the
+school must tell parents, has not been decided.]**
 
 If you create a profile for a child, you confirm that:
 
@@ -116,17 +126,21 @@ with anything else in these Terms.
 
 **What a child never gives us.** A child is never asked for an email address, a
 phone number, a home address, a date of birth, a photograph, a voice recording,
-or free-text they can type. There is no chat, no messaging, no profile
+or free-text they can type, apart from choosing a new password for a login an
+adult set up for them. There is no chat, no messaging, no profile
 description, and no way for a child to publish anything or contact another user.
 
 **What you tell us about a child.** When you create a child profile you provide:
 
 - a **display name** — this can be a nickname or a first name, and we recommend a
   nickname. It is shown only to you and to anyone you invite to that profile.
-- an **age band** — one of 3–5, 6–8, 9–11, 12–14, 15–16, 17–18. **We do not
-  collect a date of birth**, only the band.
+- a **grade** (3 to 8) and the lessons the child should see. From the grade we
+  record an **age band** — one of 3–5, 6–8, 9–11, 12–14, 15–16, 17–18 — which
+  earlier parts of the Service used. **We do not collect a date of birth**, only
+  the grade and the band.
 - an **avatar** chosen from a small fixed set of pictures.
-- optionally, a **grade or class name** you type yourself.
+- optionally, a **username and password** for the child's own login.
+- for a teacher, a **class name** you type yourself.
 
 **What the Service records as the child uses it.** See Section 6.
 
@@ -155,16 +169,16 @@ applies, are legal determinations. They have not been made.]**
 
 ## 4. What the Service is — and what it is not
 
-Milo is an adaptive learning application. It presents mathematics chapters, asks
-questions, adjusts difficulty from the answers, and can run a short placement
-check to suggest where a learner should start.
+Milo is an adaptive learning application. It presents mathematics lessons for
+grades 3 to 8, asks practice questions, adjusts the kind and difficulty of the
+questions from the answers, and brings back topics a learner found hard.
 
 **The Service is an educational support tool only.** It is not a school, not a
 tutor, not a diagnosis, and not a substitute for teaching, professional tutoring,
 special-education services, or any medical or psychological assessment.
 
-**"Placement check", "gap" and "working level" are product features, not
-findings about a child.** They describe how a child answered a set of questions
+**"Level", "mastered" and "finds this hard" are product features, not findings
+about a child.** They describe how a child answered a set of questions
 on one occasion. They are not an assessment of ability, intelligence, or any
 learning difficulty, and must not be relied on as one. If you have concerns about
 a child's learning, speak to a teacher or a qualified professional.
@@ -193,19 +207,12 @@ this against what you see in the app.
 password, or Google), a display name and avatar you choose, and a record of when
 your account was created and when you sign in.
 
-**For each child profile:** display name, age band, avatar, and any grade name
-you typed.
+**For each child profile:** display name, grade and age band, avatar, the lessons
+chosen for them, the class they are in (if any), and their login username (if
+one was set).
 
 **As a child uses the Service, per child profile:**
 
-- each completed practice run: which chapter, how many answers were right and
-  wrong, stars and points earned, and when it started and finished;
-- cumulative progress per chapter: best stars, total points, number of sessions,
-  the difficulty tier reached, when it was last played;
-- totals per child: points, coins, level, when last played;
-- placement checks: which questions were asked, whether each was answered
-  correctly, and the resulting suggested starting point and practice plan;
-- in-app items bought with earned coins;
 - which lesson topics were finished, and where practice stands on each (the level
   reached and whether the topic is mastered);
 - **class exercise results**, when a teacher's class sets exercises: for each exercise
@@ -216,13 +223,26 @@ you typed.
 - **points**: each time points were earned, and each time they were spent on game
   time, plus the game-time settings you choose (on or off, minutes per day, your
   time zone);
-- **usage events** — that the app was opened, that a chapter was opened, that a
-  practice run finished, and similar. These carry no free text and no
+- **usage events** — that the app was opened, that a lesson was opened, that
+  practice finished, and similar. These carry no free text and no
   identifying information beyond the profile they belong to.
 
+**Records from the earlier version of the Service.** Before 20 September 2026 the
+Service also recorded the following. No new records of these kinds are made; any
+that exist are kept with the profile and deleted with it:
+
+- each completed practice run: which chapter, how many answers were right and
+  wrong, stars and points earned, and when it started and finished;
+- cumulative progress per chapter: best stars, total points, number of sessions,
+  the difficulty tier reached, when it was last played;
+- totals per child: points, coins, level, when last played;
+- placement checks: which questions were asked, whether each was answered
+  correctly, and the resulting suggested starting point and practice plan;
+- in-app items bought with earned coins.
+
 **Retention.** Usage events are **deleted automatically after 90 days.** Learning
-records — sessions, progress, placement results — are kept while the profile
-exists, and are deleted when you delete the profile or your account.
+records — lesson progress, points, exercise results and feedback, and any
+records from the earlier version — are kept while the profile exists, and are deleted when you delete the profile or your account.
 **[LAWYER REVIEW — confirm this matches the Privacy Policy exactly. The two must
 not disagree.]**
 
@@ -263,7 +283,7 @@ We may suspend or close an account that breaks these rules.
 
 ## 8. Subscriptions, payment and cancellation
 
-Some chapters require a paid subscription. Price, billing period and the number
+Some features require a paid subscription. Price, billing period and the number
 of child seats included are shown before you pay.
 
 **Automatic renewal.** A subscription renews automatically at the end of each
@@ -285,7 +305,7 @@ least as easy as signing up. Confirm the checkout flow meets them.]**
 
 ## 9. Content and ownership
 
-The Service, including its software, question banks, chapter content, artwork,
+The Service, including its software, question banks, lesson content, artwork,
 audio and the Milo and Radlor names and logos, belongs to Radlor or its
 licensors. You get a personal, non-transferable, revocable licence to use it for
 your family's own non-commercial learning. Nothing more is granted.
@@ -298,14 +318,14 @@ your account.
 
 **We do not use children's information to train AI models.** We may use
 information that has been aggregated so that it cannot identify any person — for
-example "how many learners finished this chapter" — to understand how the Service
+example "how many learners finished this lesson" — to understand how the Service
 is used and to improve it.
 
 ## 10. Adaptive and automated features
 
 The Service adapts what it shows based on how a learner answers. It is automated
-and it can be wrong: it may pick the wrong difficulty, suggest the wrong starting
-point, or mis-judge what a learner knows.
+and it can be wrong: it may pick the wrong difficulty, mark a topic as mastered
+or hard when it is not, or mis-judge what a learner knows.
 
 You acknowledge that:
 

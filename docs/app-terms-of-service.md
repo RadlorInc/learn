@@ -20,10 +20,17 @@ create an account and do not use the Service.**
 **Only adults create accounts.** You must be at least 18 years old and legally
 able to enter a contract to create an account.
 
-**Children use the Service only through a profile created by their parent or
-legal guardian.** Children do not have their own accounts, do not sign in, and
-are not asked for an email address or password. Every child profile sits inside
-an adult account, and the adult who created it is responsible for it.
+**Children use the Service only through a profile created by an adult: their
+parent or legal guardian, or a teacher who adds them to a class.** Children do
+not create accounts and are never asked for an email address. The adult may give
+a child a **username and password** so the child can sign in on their own; the
+adult chooses the username and a first password, and the child may change the
+password. Every child profile sits inside an adult account, and the adult who
+created it is responsible for it.
+
+**[LAWYER REVIEW — a teacher adding students is a second consent route: whether a
+school or teacher may consent in place of the parent under COPPA, and what the
+school must tell parents, has not been decided.]**
 
 If you create a profile for a child, you confirm that:
 
@@ -45,17 +52,21 @@ with anything else in these Terms.
 
 **What a child never gives us.** A child is never asked for an email address, a
 phone number, a home address, a date of birth, a photograph, a voice recording,
-or free-text they can type. There is no chat, no messaging, no profile
+or free-text they can type, apart from choosing a new password for a login an
+adult set up for them. There is no chat, no messaging, no profile
 description, and no way for a child to publish anything or contact another user.
 
 **What you tell us about a child.** When you create a child profile you provide:
 
 - a **display name** — this can be a nickname or a first name, and we recommend a
   nickname. It is shown only to you and to anyone you invite to that profile.
-- an **age band** — one of 3–5, 6–8, 9–11, 12–14, 15–16, 17–18. **We do not
-  collect a date of birth**, only the band.
+- a **grade** (3 to 8) and the lessons the child should see. From the grade we
+  record an **age band** — one of 3–5, 6–8, 9–11, 12–14, 15–16, 17–18 — which
+  earlier parts of the Service used. **We do not collect a date of birth**, only
+  the grade and the band.
 - an **avatar** chosen from a small fixed set of pictures.
-- optionally, a **grade or class name** you type yourself.
+- optionally, a **username and password** for the child's own login.
+- for a teacher, a **class name** you type yourself.
 
 **What the Service records as the child uses it.** See Section 6.
 
@@ -84,16 +95,16 @@ applies, are legal determinations. They have not been made.]**
 
 ## 4. What the Service is — and what it is not
 
-Milo is an adaptive learning application. It presents mathematics chapters, asks
-questions, adjusts difficulty from the answers, and can run a short placement
-check to suggest where a learner should start.
+Milo is an adaptive learning application. It presents mathematics lessons for
+grades 3 to 8, asks practice questions, adjusts the kind and difficulty of the
+questions from the answers, and brings back topics a learner found hard.
 
 **The Service is an educational support tool only.** It is not a school, not a
 tutor, not a diagnosis, and not a substitute for teaching, professional tutoring,
 special-education services, or any medical or psychological assessment.
 
-**"Placement check", "gap" and "working level" are product features, not
-findings about a child.** They describe how a child answered a set of questions
+**"Level", "mastered" and "finds this hard" are product features, not findings
+about a child.** They describe how a child answered a set of questions
 on one occasion. They are not an assessment of ability, intelligence, or any
 learning difficulty, and must not be relied on as one. If you have concerns about
 a child's learning, speak to a teacher or a qualified professional.
@@ -122,10 +133,24 @@ this against what you see in the app.
 password, or Google), a display name and avatar you choose, and a record of when
 your account was created and when you sign in.
 
-**For each child profile:** display name, age band, avatar, and any grade name
-you typed.
+**For each child profile:** display name, grade and age band, avatar, the lessons
+chosen for them, the class they are in (if any), and their login username (if
+one was set).
 
 **As a child uses the Service, per child profile:**
+
+- which lesson topics were finished, and where practice stands on each (the level
+  reached and whether the topic is mastered);
+- **points**: each time points were earned, and each time they were spent on game
+  time, plus the game-time settings you choose (on or off, minutes per day, your
+  time zone);
+- **usage events** — that the app was opened, that a lesson was opened, that
+  practice finished, and similar. These carry no free text and no
+  identifying information beyond the profile they belong to.
+
+**Records from the earlier version of the Service.** Before 20 September 2026 the
+Service also recorded the following. No new records of these kinds are made; any
+that exist are kept with the profile and deleted with it:
 
 - each completed practice run: which chapter, how many answers were right and
   wrong, stars and points earned, and when it started and finished;
@@ -134,19 +159,11 @@ you typed.
 - totals per child: points, coins, level, when last played;
 - placement checks: which questions were asked, whether each was answered
   correctly, and the resulting suggested starting point and practice plan;
-- in-app items bought with earned coins;
-- which lesson topics were finished, and where practice stands on each (the level
-  reached and whether the topic is mastered);
-- **points**: each time points were earned, and each time they were spent on game
-  time, plus the game-time settings you choose (on or off, minutes per day, your
-  time zone);
-- **usage events** — that the app was opened, that a chapter was opened, that a
-  practice run finished, and similar. These carry no free text and no
-  identifying information beyond the profile they belong to.
+- in-app items bought with earned coins.
 
 **Retention.** Usage events are **deleted automatically after 90 days.** Learning
-records — sessions, progress, placement results — are kept while the profile
-exists, and are deleted when you delete the profile or your account.
+records — lesson progress, points, exercise results and feedback, and any
+records from the earlier version — are kept while the profile exists, and are deleted when you delete the profile or your account.
 **[LAWYER REVIEW — confirm this matches the Privacy Policy exactly. The two must
 not disagree.]**
 
@@ -187,7 +204,7 @@ We may suspend or close an account that breaks these rules.
 
 ## 8. Subscriptions, payment and cancellation
 
-Some chapters require a paid subscription. Price, billing period and the number
+Some features require a paid subscription. Price, billing period and the number
 of child seats included are shown before you pay.
 
 **Automatic renewal.** A subscription renews automatically at the end of each
@@ -209,7 +226,7 @@ least as easy as signing up. Confirm the checkout flow meets them.]**
 
 ## 9. Content and ownership
 
-The Service, including its software, question banks, chapter content, artwork,
+The Service, including its software, question banks, lesson content, artwork,
 audio and the Milo and Radlor names and logos, belongs to Radlor or its
 licensors. You get a personal, non-transferable, revocable licence to use it for
 your family's own non-commercial learning. Nothing more is granted.
@@ -222,14 +239,14 @@ your account.
 
 **We do not use children's information to train AI models.** We may use
 information that has been aggregated so that it cannot identify any person — for
-example "how many learners finished this chapter" — to understand how the Service
+example "how many learners finished this lesson" — to understand how the Service
 is used and to improve it.
 
 ## 10. Adaptive and automated features
 
 The Service adapts what it shows based on how a learner answers. It is automated
-and it can be wrong: it may pick the wrong difficulty, suggest the wrong starting
-point, or mis-judge what a learner knows.
+and it can be wrong: it may pick the wrong difficulty, mark a topic as mastered
+or hard when it is not, or mis-judge what a learner knows.
 
 You acknowledge that:
 
