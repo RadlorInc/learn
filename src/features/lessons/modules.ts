@@ -49,19 +49,7 @@ export function hasModule(lessonIds: readonly string[] | null | undefined, m: Mo
   return m.lessons.every(l => lessonIds.includes(l.id))
 }
 
-/**
- * The child's list with module `m` added or removed, in teaching order. From "every topic" (null) an ADD starts a list of
- * just that module (founder's call, 2026-09-17). Removing the last module returns null — every topic again — because an
- * empty list already means that, and a child is never left with nothing.
- */
-export function withModule(lessonIds: readonly string[] | null | undefined, m: Module, on: boolean): string[] | null {
-  const pick = new Set(lessonIds ?? [])
-  for (const l of m.lessons) on ? pick.add(l.id) : pick.delete(l.id)
-  const ids = MODULES.flatMap(x => x.lessons.map(l => l.id)).filter(id => pick.has(id))
-  return ids.length ? ids : null
-}
-
-/** Library search: a module matches on its title or any topic title, case-insensitive. Returns the matching topics too. */
+/** Lesson search (the Change panel): a module matches on its title or any topic title, case-insensitive. Returns the matching topics too. */
 export function searchModule(m: Module, q: string): { hit: boolean; topics: string[] } {
   const n = q.trim().toLowerCase()
   if (!n) return { hit: true, topics: [] }

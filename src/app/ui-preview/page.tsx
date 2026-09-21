@@ -22,10 +22,14 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
 import { useState } from 'react'
-import { LessonLibrary, type LibraryLearner } from '@/features/lessons/LessonLibrary'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { ParentPinGate } from '@/shared/ui/ParentPinGate'
-import { ClassBar, ClassPanel } from '@/features/classes/Classes'
+import { DashNav } from '@/features/dashboard/DashNav'
+import { UpNext, RemindersSheet, TourRunner } from '@/features/dashboard/Helpers'
+import { ChildCard, ChildPage, type ChildTab } from '@/features/dashboard/ChildPage'
+import { ClassCard, ClassPage, type ClassTab } from '@/features/dashboard/ClassPage'
+import { LessonsTab } from '@/features/dashboard/LessonsTab'
+import type { Reminder } from '@/features/dashboard/reminders'
 import { ExerciseHome } from '@/features/classes/ExerciseHome'
 import { ModuleHome } from '@/features/lessons/ModuleHome'
 import type { ClassRow } from '@/data/repositories'
@@ -55,20 +59,11 @@ function Surfaces() {
       {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
       {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
-      {p === 'classespaid' && (
-        <div className="adult-shell" style={{ width: '100%' }}>
-          <ClassPanel cls={DEMO_CLASSES[0]} paid students={[{ id: 'a', name: 'Aarav' }]} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />
-        </div>
-      )}
       {p === 'mhex' && <div style={{ width: '100%' }}><ModuleHome learnerId={null} grade={5} exercises={{ count: 1, onOpen: () => {} }} /></div>}
       {p === 'exhome' && <ExerciseHome learnerId={null} classId={null} className="5-A" exercises={DEMO_CLASSES[0].exercises} />}
-      {p === 'library' && <div data-t="library" className="adult-shell" style={{ width: '100%' }}><LibraryPreview /></div>}
-      {p === 'classes' && (
-        <div data-t="classes" className="adult-shell" style={{ width: '100%' }}>
-          <ClassBar classes={DEMO_CLASSES} current="c1" onPick={() => {}} onCreated={() => {}} />
-          <ClassPanel cls={DEMO_CLASSES[0]} paid={false} students={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }]} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />
-        </div>
-      )}
+      {/* The dashboard (features/dashboard) with placeholder data: ?p=home | teacher | child&tab=… | class&tab=… | lessons.
+          The real page needs a session; these are the SAME components it renders, fed in-memory data. */}
+      {(p === 'home' || p === 'teacher' || p === 'child' || p === 'class' || p === 'lessons') && <DashPreview p={p} />}
 
       {/* The `.card-grid` used by the grade list, the invite lists and class triage. ⚠️ SAME NARROW
           CLAIM AS `?p=cols`: this is the CLASS with placeholder children, not those pages — it
@@ -107,14 +102,43 @@ export default function UiPreviewPage() {
   return <Suspense><Surfaces /></Suspense>
 }
 
-/** The library with two placeholder children and an in-memory save — layout and the add/remove state, never the database. */
-function LibraryPreview() {
-  const [kids, setKids] = useState<LibraryLearner[]>([
-    { id: 'a', name: 'Sarah', lessonIds: null, canEdit: true },
-    { id: 'b', name: 'Omar', lessonIds: null, canEdit: false },
-  ])
-  return <LessonLibrary learners={kids} onSave={async (id, ids) => {
-    if (!kids.find(k => k.id === id)?.canEdit) return 'error'
-    setKids(ks => ks.map(k => k.id === id ? { ...k, lessonIds: ids } : k)); return 'ok'
-  }} />
+const DEMO_REMINDERS: Reminder[] = [
+  { id: 'login:b', kind: 'setup', who: 'b', whoName: 'Maya', title: 'Maya has no login yet', detail: 'With a username and password Maya can sign in on any device and go straight to their lessons.', action: 'Set a login', to: '?child=b&tab=login' },
+  { id: 'stuck:a', kind: 'help', who: 'a', whoName: 'Aarav', title: 'Aarav is finding “Divide by 10, 100, 1,000” hard', detail: 'Fewer than half of the practice problems on it were right on the first try.', action: 'See progress', to: '?child=a&tab=progress' },
+  { id: 'quiet:b', kind: 'nudge', who: 'b', whoName: 'Maya', title: 'Maya hasn’t practised for 6 days', detail: 'A few minutes a day works better than a long session once a week.', action: 'Start a lesson with Maya', to: 'start:b' },
+]
+
+/** The dashboard's parts with in-memory data and saves — layout and state, never the database. */
+function DashPreview({ p }: { p: string }) {
+  const tab = useSearchParams().get('tab')
+  const [ids, setIds] = useState<string[] | null>(['g5m1-t1', 'g5m1-t2', 'g5m1-t3', 'g4m2-t1'])
+  const [due, setDue] = useState<Record<string, string>>({ 'g5m1-t2': '2026-09-19' })
+  const [bell, setBell] = useState(false)
+  const [tour, setTour] = useState<null | { title: string; steps: { target: string; title: string; text: string }[] }>(null)
+  const save = async (i: string[] | null, d: Record<string, string>) => { setIds(i); setDue(i ? d : {}); return 'ok' as const }
+  const nav = [{ label: p === 'teacher' || p === 'class' ? 'Classes' : 'Home', href: '/ui-preview?p=home', on: true }, { label: 'Help', href: '/ui-preview?p=home', on: false, tour: 'nav-help' }, { label: 'Account', href: '/ui-preview?p=home', on: false }]
+  return (
+    <div className="home-app" style={{ width: '100vw', alignSelf: 'stretch', margin: -16 }}>
+      <DashNav items={nav} reminders={DEMO_REMINDERS.length} onBell={() => setBell(true)} onSignOut={() => {}} />
+      <div style={{ minWidth: 0 }}><main className="adult-shell" data-t="dash">
+        {p === 'home' && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <UpNext top={DEMO_REMINDERS[0]} rest={2} allClear="" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onOpenAll={() => setBell(true)} />
+          <div className="card-grid">
+            <ChildCard id="a" name="Aarav" avatar="/assets/objects/fox.png" lastPlayed="yesterday" next="Estimate products and quotients" done={3} total={20} onStart={() => {}} />
+            <ChildCard id="b" name="Maya" avatar="/assets/objects/bunny.png" lastPlayed="—" next="Hundreds, tens and ones" done={0} total={8} onStart={() => {}} />
+          </div>
+          <button type="button" onClick={() => setTour({ title: 'Quick tour', steps: [{ target: 'upnext', title: 'The one thing to do next', text: 'Always the most useful thing.' }, { target: 'child-a', title: 'One card per child', text: 'Everything about them is inside.' }, { target: 'bell', title: 'Reminders', text: 'Everything else waits here.' }, { target: 'nav-help', title: 'Not sure how?', text: 'Help has walkthroughs.' }] })}>Preview the tour</button>
+        </div>}
+        {p === 'teacher' && <div className="card-grid">{DEMO_CLASSES.map(c => <ClassCard key={c.id} cls={c} paid students={3} />)}</div>}
+        {p === 'child' && <ChildPage id="a" name="Aarav" avatar="/assets/objects/fox.png" tab={(tab ?? 'lessons') as ChildTab} crumb={{ href: '/ui-preview?p=home', label: 'Home' }} owner
+          lessonIds={ids} due={due} isDone={() => false} login={undefined} wallet={{ balance: 140, minutes_used_today: 5, minutes_per_day: 20, points_per_minute: 10, enabled: true } as never}
+          onLaunch={() => {}} onSaveLessons={save} onSaveGame={async () => {}} onLogin={() => {}} dataRights={<p>Download / delete (the real DataRights needs a session)</p>} />}
+        {p === 'class' && <ClassPage cls={DEMO_CLASSES[0]} tab={(tab ?? 'students') as ClassTab} paid students={[{ id: 'a', name: 'Aarav', lessonIds: null, due: {} }, { id: 'b', name: 'Maya', lessonIds: null, due: {} }]}
+          logins={{ a: 'aarav7' }} onLogin={() => {}} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />}
+        {p === 'lessons' && <LessonsTab name="Aarav" ids={ids} due={due} canEdit isDone={() => false} onSave={save} />}
+      </main></div>
+      <RemindersSheet open={bell} onClose={() => setBell(false)} list={DEMO_REMINDERS} snoozedCount={1} settingsHref="#" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onUnsnooze={() => {}} />
+      <TourRunner tour={tour} onEnd={() => setTour(null)} />
+    </div>
+  )
 }

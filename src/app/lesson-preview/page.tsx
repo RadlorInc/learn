@@ -4,13 +4,12 @@
  *   /lesson-preview                 one sample of every diagram kind
  *   /lesson-preview?module=g4m1     every screen, Screen 8, the twin and all 5 practice problems of every topic in a module,
  *                                   each with its text and answer — the page to LOOK at before a module ships.
- *   /lesson-preview?picker=1        the parent's topic picker with a stand-in save (the real page needs a signed-in parent).
+ *   (The parent's lesson chooser moved into the dashboard: /ui-preview?p=lessons.)
  */
 import { Suspense } from 'react'
 import { notFound, useSearchParams } from 'next/navigation'
 import { Pic, INK, PAGE_BG, LESSON_KEYFRAMES } from '@/features/lessons/Pictures'
 import { findModule } from '@/features/lessons/modules'
-import { TopicPicker } from '@/features/lessons/TopicPicker'
 import { Chalkboard } from '@/features/lessons/Chalkboard'
 import { solutionOf, showAnswer, stepsOf, type Picture, type Problem } from '@/features/lessons/script'
 
@@ -59,10 +58,6 @@ const card = { background: '#fff', border: `4px solid ${INK}`, borderRadius: 18,
 
 function Preview() {
   const params = useSearchParams()
-  if (params.get('picker')) {
-    return <TopicPicker childName="Ava" initial={['g4m2-t1', 'g4m2-t3']} canEdit onBack={() => history.back()}
-      onSave={async ids => { console.log('[preview] save', ids); return params.get('picker') === 'notready' ? 'not_ready' : 'ok' }} />
-  }
   // ?chalk=g5m1 (&topic=g5m1-t3): every chalkboard of a module in its finished state, each beat's lines under it.
   const cm = findModule(params.get('chalk'))
   if (cm) {

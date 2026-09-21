@@ -1,32 +1,29 @@
 /**
- * The library's add/remove writes `learners.lesson_ids`, which decides every topic a child sees. Expected lists are
- * written out by hand, not derived from MODULES, so a change to the ordering or the null rule goes red here.
+ * What a child sees (`learners.lesson_ids`) — the helpers behind a child's Lessons tab and its Change panel
+ * (src/features/dashboard/LessonsTab.tsx, 2026-09-21; the Lesson library that used `withModule` is gone). Expected
+ * values are written out by hand, not derived from MODULES.
  */
 import { it, expect } from 'vitest'
-import { MODULES, hasModule, withModule, searchModule } from '@/features/lessons/modules'
+import { MODULES, hasModule, searchModule } from '@/features/lessons/modules'
+import { describe as seeLine } from '@/features/dashboard/LessonsTab'
 
 const m = (id: string) => MODULES.find(x => x.id === id)!
 const G3M4 = ['g3m4-t1', 'g3m4-t2', 'g3m4-t3', 'g3m4-t4']
 
-it('from every topic, the first add is a list of just that module (founder, 2026-09-17)', () => {
-  expect(withModule(null, m('g3m4'), true)).toEqual(G3M4)
+it('a child with no choice (null or empty) has every module; a single topic is not the whole module', () => {
   expect(hasModule(null, m('g5m6'))).toBe(true)
+  expect(hasModule([], m('g5m6'))).toBe(true)
   expect(hasModule(G3M4, m('g5m6'))).toBe(false)
   expect(hasModule(G3M4, m('g3m4'))).toBe(true)
-})
-
-it('adds keep teaching order, not the order they were tapped', () => {
-  const later = withModule(null, m('g5m6'), true)
-  expect(withModule(later, m('g3m4'), true)).toEqual([...G3M4, 'g5m6-t1', 'g5m6-t2', 'g5m6-t3', 'g5m6-t4', 'g5m6-t5', 'g5m6-t6'])
-})
-
-it('removing keeps the rest, and removing the last module is every topic again — never an empty list', () => {
-  const both = withModule(G3M4, m('g5m6'), true)
-  expect(withModule(both, m('g5m6'), false)).toEqual(G3M4)
-  expect(withModule(G3M4, m('g3m4'), false)).toBeNull()
-  // A single topic picked in "Choose topics" counts as not having the whole module, and an add fills it in.
   expect(hasModule(['g3m4-t2'], m('g3m4'))).toBe(false)
-  expect(withModule(['g3m4-t2'], m('g3m4'), true)).toEqual(G3M4)
+})
+
+it('the summary line says whole modules, single topics and grades — and every topic for null', () => {
+  expect(seeLine(null, 'Aarav')).toBe('Aarav sees every topic in every grade.')
+  expect(seeLine([], 'Aarav')).toBe('Aarav sees every topic in every grade.')
+  expect(seeLine(G3M4, 'Aarav')).toBe('Aarav sees 1 whole module, from Grade 3.')
+  expect(seeLine([...G3M4, 'g5m6-t1', 'g5m6-t2'], 'Maya')).toBe('Maya sees 1 whole module and 2 single topics, from Grade 3 and 5.')
+  expect(seeLine(['g3m4-t2'], 'Maya')).toBe('Maya sees 1 single topic, from Grade 3.')
 })
 
 it('search matches a module title or a topic title, ignoring case', () => {
