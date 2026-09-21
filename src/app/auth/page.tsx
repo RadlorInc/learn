@@ -34,6 +34,34 @@ const field: React.CSSProperties = {
   transition: 'border-color 0.15s',
 }
 
+/** A password box with a show/hide eye. Each box has its own toggle, so revealing one never reveals the other. */
+function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const [shown, setShown] = useState(false)
+  return (
+    <div style={{ position: 'relative' }}>
+      <input {...props} type={shown ? 'text' : 'password'} style={{ ...field, paddingRight: 48 }} />
+      <button
+        type="button"
+        onClick={() => setShown(s => !s)}
+        aria-label={shown ? 'Hide password' : 'Show password'}
+        aria-pressed={shown}
+        aria-controls={props.id}
+        style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0, width: 46,   // 44px tap floor
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: 'none', cursor: 'pointer', color: C.ink2,
+        }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+          <circle cx="12" cy="12" r="3" />
+          {shown && <line x1="3" y1="3" x2="21" y2="21" />}
+        </svg>
+      </button>
+    </div>
+  )
+}
+
 export default function AuthPage() {
   const router = useRouter()
   const [mode,     setMode]     = useState<Mode>('login')
@@ -64,21 +92,26 @@ export default function AuthPage() {
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUpWithEmail(
+        const { data, error } = await signUpWithEmail(
           email.trim(),
           password,
           `${window.location.origin}/auth/callback`,
         )
-        if (error) {
-          // V10: don't leak whether an email is already registered (account enumeration).
-          // For an "already exists" collision, show the same neutral confirmation copy as a
-          // fresh signup; surface only genuinely actionable errors (weak password, invalid email).
-          const msg = error.message.toLowerCase()
-          if (msg.includes('already') || msg.includes('registered') || msg.includes('exists')) {
-            setSuccess('Check your email for a confirmation link!')
-          } else {
-            setError(error.message)
-          }
+        // V10 REVERSED (founder's call, 2026-09-22): say plainly that the email already has an account,
+        // as most apps do. The cost is account enumeration — anyone can learn whether an address is
+        // registered — accepted because a parent who forgot they signed up got "check your email" and
+        // then nothing, with no way to know why.
+        // ⚠️ Supabase does NOT return an error for an existing CONFIRMED address: it answers with a
+        // fake user whose `identities` is EMPTY (measured on production). An existing UNCONFIRMED
+        // address gets a real resend and a non-empty list, so "check your email" stays right for it.
+        const exists = error
+          ? /already|registered|exists/i.test(error.message)
+          : data.user?.identities?.length === 0
+        if (exists) {
+          setMode('login'); setConfirm('')
+          setError('This email already has an account. Sign in below, or tap "Forgot password?"')
+        } else if (error) {
+          setError(error.message)
         } else {
           setSuccess('Check your email for a confirmation link!')
         }
@@ -299,15 +332,13 @@ export default function AuthPage() {
                   >Forgot password?</button>
                 )}
               </div>
-              <input
+              <PasswordInput
                 id="auth-password"
-                type="password"
                 placeholder={mode === 'signup' ? 'At least 6 characters' : '••••••••'}
                 value={password}
                 onChange={e => { setPassword(e.target.value); reset() }}
                 onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                style={field}
                 onFocus={e => { e.target.style.borderColor = C.accent }}
                 onBlur={e => { e.target.style.borderColor = C.edge }}
               />
@@ -320,16 +351,14 @@ export default function AuthPage() {
                 <label htmlFor="auth-confirm" style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>
                   Confirm password
                 </label>
-                <input
+                <PasswordInput
                   id="auth-confirm"
-                  type="password"
                   placeholder="Type it again"
                   value={confirm}
                   onChange={e => { setConfirm(e.target.value); reset() }}
                   onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
                   autoComplete="new-password"
                   aria-label="Confirm password"
-                  style={field}
                   onFocus={e => { e.target.style.borderColor = C.accent }}
                   onBlur={e => { e.target.style.borderColor = C.edge }}
                 />
