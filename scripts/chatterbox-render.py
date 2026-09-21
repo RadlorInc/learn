@@ -14,10 +14,10 @@ from chatterbox.tts_turbo import ChatterboxTurboTTS
 from chatterbox.tts import ChatterboxTTS
 
 # A corpus row's `style` (src/features/lessons/content/voice/styles.ts, docs/new-flow/voice.md): which model reads it, and how.
-# Turbo ignores exaggeration and cfg; its emotion comes from a tag in the text ([happy]). The original model has no emotion
-# tags, and its dial is what makes it expressive. A row with no style is A, which is how every clip before 2026-09-19 was made.
-STYLES = {'A': ('turbo', {}), 'A+': ('turbo', {}), 'B': ('original', dict(exaggeration=0.8, cfg_weight=0.3)),
-          'B+': ('original', dict(exaggeration=0.8, cfg_weight=0.3))}
+# Turbo ignores exaggeration and cfg. The original model's two dials carry the expression, not tags in the text
+# (docs/new-flow/voice.md: 0.5/0.5 everyday, 0.7/0.3 more punch). A row with no style is A, which is how every clip before 2026-09-19 was made.
+STYLES = {'A': ('turbo', {}), 'B': ('original', dict(exaggeration=0.5, cfg_weight=0.5)),
+          'B+': ('original', dict(exaggeration=0.7, cfg_weight=0.3))}
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--voice', required=True); ap.add_argument('--corpus', required=True); ap.add_argument('--out', required=True)

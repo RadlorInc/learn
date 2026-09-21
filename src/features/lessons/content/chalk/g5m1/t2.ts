@@ -31,10 +31,10 @@ export const T2: (ChalkMark[] | undefined)[] = [
   [
     write([0, '10'], '10', 130, 60, 36), write([0, '100'], '100', 300, 60, 36), write([0, '1,000'], '1,000', 470, 60, 36),
     ...[['1 zero', 130], ['2 zeros', 300], ['3 zeros', 470]].map(([t, x]) => ({ ...write([0, '1,000'], t as string, x as number, 105, 22, 'y'), quick: true })),
-    write([1, 'places'], 'zeros = places to slide', 300, 160, 26, 'y'),
-    write([1, 'digit'], '37', 300, 240, 40),
-    arrow([1, 'left'], [262, 240], [110, 240], 'r'), write([1, 'multiply'], '× multiply', 180, 285, 26, 'r'),
-    arrow([1, 'right'], [338, 240], [490, 240], 'b'), write([1, 'divide'], '÷ divide', 420, 285, 26, 'b'),
+    write([0, 'place'], 'zeros = places to slide', 300, 160, 26, 'y'),
+    write([0, 'digit'], '37', 300, 240, 40),
+    arrow([0, 'left'], [262, 240], [110, 240], 'r'), write([0, 'multiply'], '× multiply', 180, 285, 26, 'r'),
+    arrow([0, 'right'], [338, 240], [490, 240], 'b'), write([0, 'divide'], '÷ divide', 420, 285, 26, 'b'),
   ],
   // One zero, one place
   [
@@ -74,7 +74,7 @@ export const T2: (ChalkMark[] | undefined)[] = [
   ],
   // One thing not to do
   [
-    ...warn([0, 'watch']),
+    ...warn([0, 'mix']),
     write([1, 'divide'], '÷', 150, 175, 44),
     write([1, 'left'], 'slide left', 330, 170, 30, 'r'), arrow([1, 'left'], [400, 205], [260, 205], 'r'),
     cross([1, 'left'], 245, 145, 170, 80),

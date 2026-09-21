@@ -1,219 +1,209 @@
 [
   {
-    "key": "hi6fc9",
-    "text": "Hmm... you could add 40, ten times over.",
-    "style": "A",
-    "chars": 40,
+    "key": "f6hzkf",
+    "text": "You could add 40, ten times.",
+    "style": "B",
+    "chars": 28,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s2 b1"
     ]
   },
   {
-    "key": "ehg1mi",
-    "text": "That works! But it takes a while... and it's so easy to lose count.",
-    "style": "A",
-    "chars": 67,
+    "key": "1rsuzmd",
+    "text": "That works. But it takes a while, and it's easy to lose count.",
+    "style": "B",
+    "chars": 62,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s2 b2"
     ]
   },
   {
-    "key": "28hmgo",
-    "text": "[happy] Here's the good news! There's a much faster way... and it lives right here, in a chart of places.",
-    "style": "A+",
-    "chars": 105,
+    "key": "u45sg3",
+    "text": "Is there a faster way? Yes. It's in this chart of places.",
+    "style": "B",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s2 b3"
     ]
   },
   {
-    "key": "1jryd60",
-    "text": "[happy] Slide a digit one place to the left... and it's worth 10 times as much!",
-    "style": "A+",
-    "chars": 79,
+    "key": "fj08d3",
+    "text": "Slide a digit left and it's worth 10 times as much, slide it right and it's worth one tenth as much.",
+    "style": "B",
+    "chars": 100,
     "kind": "beat",
     "sources": [
-      "g5m1-t1 s3 b1"
+      "g5m1-t1 s3 b1 + g5m1-t1 bigIdea"
     ]
   },
   {
-    "key": "tbp62q",
-    "text": "Slide it one place to the right... and it's worth one tenth as much.",
-    "style": "A",
-    "chars": 68,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s3 b2"
-    ]
-  },
-  {
-    "key": "r5fty4",
-    "text": "Let's walk through the places, starting from the right.",
-    "style": "A",
-    "chars": 55,
+    "key": "r6wd8d",
+    "text": "Look at the places, from the right.",
+    "style": "B",
+    "chars": 35,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s4 b1"
     ]
   },
   {
-    "key": "1h8l8rs",
-    "text": "10 ones make 1 ten. 10 tens make 1 hundred. And 10 hundreds make 1 thousand!",
+    "key": "1h2vch6",
+    "text": "10 ones make 1 ten. 10 tens make 1 hundred. 10 hundreds make 1 thousand.",
     "style": "B",
-    "chars": 76,
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s4 b2"
     ]
   },
   {
-    "key": "1ycwjda",
-    "text": "See the pattern? Every step to the left is worth 10 times as much.",
-    "style": "A",
-    "chars": 66,
+    "key": "1sdn48o",
+    "text": "See the pattern? Each step to the left is 10 times as much.",
+    "style": "B",
+    "chars": 59,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s4 b3"
     ]
   },
   {
-    "key": "efabts",
-    "text": "Look at 40. The 4 is sitting in the tens place, so it's worth 4 tens.",
-    "style": "A",
-    "chars": 69,
+    "key": "s5dh3x",
+    "text": "Look at 40. The 4 is in the tens place.",
+    "style": "B",
+    "chars": 39,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s5 b1"
     ]
   },
   {
-    "key": "1nzo0uc",
-    "text": "Now watch. Slide it one place to the left — and it lands in the hundreds. Now it's 4 hundreds — 400!",
-    "style": "B+",
-    "chars": 100,
+    "key": "2qhi2w",
+    "text": "Slide it one place to the left, into the hundreds. That's 400.",
+    "style": "B",
+    "chars": 62,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s5 b2"
     ]
   },
   {
-    "key": "6satdv",
-    "text": "[happy] That slide is what 10 times as much looks like. So a carton holds 400 pencils!",
-    "style": "A+",
-    "chars": 86,
+    "key": "lrzbxw",
+    "text": "That's 10 times as much. So a carton holds 400 pencils.",
+    "style": "B",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s5 b3"
     ]
   },
   {
-    "key": "ztbq7k",
-    "text": "Now let's go back the other way. One box is one tenth of a carton.",
-    "style": "A",
-    "chars": 66,
+    "key": "12q1h2v",
+    "text": "Now go back the other way. One box is one tenth of a carton.",
+    "style": "B",
+    "chars": 60,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s6 b1"
     ]
   },
   {
-    "key": "7m0j97",
-    "text": "So slide the 4 in 400 one place to the right... back into the tens place. And it's 40 again!",
-    "style": "A",
-    "chars": 92,
+    "key": "kdex4j",
+    "text": "Slide the 4 in 400 one place to the right, back to the tens. That's 40.",
+    "style": "B",
+    "chars": 71,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s6 b2"
     ]
   },
   {
-    "key": "6v4h49",
-    "text": "[happy] There it is! One tenth of 400 is 40 pencils.",
-    "style": "A+",
-    "chars": 52,
+    "key": "ia3usj",
+    "text": "So one tenth of 400 is 40 pencils.",
+    "style": "B",
+    "chars": 34,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s6 b3"
     ]
   },
   {
-    "key": "1hgwt8k",
-    "text": "Now, here's a trap I want you to watch out for.",
-    "style": "B",
-    "chars": 47,
+    "key": "rbphfx",
+    "text": "Here's the part people mix up.",
+    "style": "B+",
+    "chars": 30,
     "kind": "beat",
     "sources": [
-      "g5m1-t1 s7 b1"
+      "g5m1-t1 s7 b1 + g5m1-t2 s7 b1"
     ]
   },
   {
-    "key": "3czo2x",
-    "text": "Ten times as much does not mean — add 10!",
+    "key": "bju0ms",
+    "text": "Ten times as much does not mean ADD 10.",
     "style": "B+",
-    "chars": 41,
+    "chars": 39,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s7 b2"
     ]
   },
   {
-    "key": "j7f6gk",
-    "text": "It slides every single digit one place to the left.",
-    "style": "A",
-    "chars": 51,
+    "key": "crgd4p",
+    "text": "That gives 50. Every digit slides one place to the left.",
+    "style": "B+",
+    "chars": 56,
     "kind": "beat",
     "sources": [
       "g5m1-t1 s7 b3"
     ]
   },
   {
-    "key": "1mgbvzs",
-    "text": "[sigh] Add 37 one thousand times? That would take — all day!",
-    "style": "B+",
-    "chars": 60,
+    "key": "uwkn3j",
+    "text": "Okay. Your turn.",
+    "style": "B",
+    "chars": 16,
+    "kind": "beat",
+    "sources": [
+      "g5m1-t1 s7 b4 + g5m1-t2 s7 b4"
+    ]
+  },
+  {
+    "key": "1m6caat",
+    "text": "Add 37 one thousand times? That would take all day.",
+    "style": "B",
+    "chars": 51,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s2 b1"
     ]
   },
   {
-    "key": "ft2fp",
-    "text": "[happy] But there's a much faster way. And the best part? It works for dividing too!",
-    "style": "A+",
-    "chars": 84,
+    "key": "14dc7m5",
+    "text": "There's a faster way. And it works for dividing too.",
+    "style": "B",
+    "chars": 52,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s2 b2"
     ]
   },
   {
-    "key": "7keo37",
-    "text": "Count the zeros in 10, 100 or 1,000.",
-    "style": "A",
-    "chars": 36,
+    "key": "14ynwfb",
+    "text": "Each zero in 10, 100 or 1,000 slides every digit one place, left to multiply and right to divide.",
+    "style": "B",
+    "chars": 97,
     "kind": "beat",
     "sources": [
-      "g5m1-t2 s3 b1"
+      "g5m1-t2 s3 b1 + g5m1-t2 bigIdea"
     ]
   },
   {
-    "key": "cl529h",
-    "text": "That's how many places every digit slides — left to multiply, right to divide.",
-    "style": "B+",
-    "chars": 78,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s3 b2"
-    ]
-  },
-  {
-    "key": "61gfla",
-    "text": "Let's start with the easy one. 10 has just one zero.",
-    "style": "A",
-    "chars": 52,
+    "key": "5jaec9",
+    "text": "Start with 10. It has one zero.",
+    "style": "B",
+    "chars": 31,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s4 b1"
@@ -222,7 +212,7 @@
   {
     "key": "1cwmewk",
     "text": "So 37 times 10 slides the 3 and the 7 one place to the left.",
-    "style": "A",
+    "style": "B",
     "chars": 60,
     "kind": "beat",
     "sources": [
@@ -230,100 +220,90 @@
     ]
   },
   {
-    "key": "gji85f",
-    "text": "[happy] Now the ones place is empty... so a zero fills that spot. And we get 370!",
-    "style": "A+",
-    "chars": 81,
+    "key": "1cz4ejs",
+    "text": "The ones place is empty now, so a zero fills it. That's 370.",
+    "style": "B",
+    "chars": 60,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s4 b3"
     ]
   },
   {
-    "key": "1irqi13",
-    "text": "Now add a zero. 100 has two zeros, so the digits slide two places... 3,700.",
-    "style": "A",
-    "chars": 75,
+    "key": "1a0kskd",
+    "text": "Now 100. It has two zeros, so the digits slide two places. That's 3,700.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s5 b1"
     ]
   },
   {
-    "key": "1oxjjbl",
-    "text": "And 1,000 has three zeros, so they slide three places... 37,000.",
-    "style": "A",
-    "chars": 64,
+    "key": "epqnf9",
+    "text": "1,000 has three zeros, so they slide three places. That's 37,000.",
+    "style": "B",
+    "chars": 65,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s5 b2"
     ]
   },
   {
-    "key": "jnzk3n",
-    "text": "[happy] And there's our answer! The shop has 37,000 beads!",
-    "style": "A+",
-    "chars": 58,
+    "key": "105ql7z",
+    "text": "So the shop has 37,000 beads.",
+    "style": "B",
+    "chars": 29,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s5 b3"
     ]
   },
   {
-    "key": "w2wwel",
-    "text": "Now let's go backwards. The shop shares all 37,000 beads into 1,000 bags.",
-    "style": "A",
-    "chars": 73,
+    "key": "1oqmpmt",
+    "text": "Now go backwards. The shop shares 37,000 beads into 1,000 bags.",
+    "style": "B",
+    "chars": 63,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s6 b1"
     ]
   },
   {
-    "key": "tp01yx",
-    "text": "1,000 still has three zeros, so every digit slides three places — but this time, to the right.",
-    "style": "B+",
-    "chars": 94,
+    "key": "1ybi7wa",
+    "text": "1,000 still has three zeros. So every digit slides three places — this time to the right.",
+    "style": "B",
+    "chars": 89,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s6 b2"
     ]
   },
   {
-    "key": "1ct9g7l",
-    "text": "The zeros slide right off the end, and 37 beads go in each bag.",
-    "style": "A",
-    "chars": 63,
+    "key": "dmgdy5",
+    "text": "The zeros slide off the end. That's 37 beads in each bag.",
+    "style": "B",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s6 b3"
     ]
   },
   {
-    "key": "18uozbf",
-    "text": "Now, one more thing to watch out for.",
-    "style": "B",
-    "chars": 37,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s7 b1"
-    ]
-  },
-  {
-    "key": "1wv5yp0",
-    "text": "When you divide... don't slide to the left!",
-    "style": "A",
-    "chars": 43,
+    "key": "j3xqj",
+    "text": "When you divide, don't slide LEFT.",
+    "style": "B+",
+    "chars": 34,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s7 b2"
     ]
   },
   {
-    "key": "1ubs9mg",
-    "text": "Dividing makes the number smaller, so every digit slides to the right.",
-    "style": "A",
-    "chars": 70,
+    "key": "1enohhe",
+    "text": "Dividing makes the number smaller, so every digit slides right.",
+    "style": "B+",
+    "chars": 63,
     "kind": "beat",
     "sources": [
       "g5m1-t2 s7 b3"
@@ -22180,26 +22160,6 @@
     ]
   },
   {
-    "key": "65bon5",
-    "text": "Slide a digit one place to the left, and it's worth 10 times as much. Slide it one place to the right, and it's worth one tenth as much.",
-    "style": "A",
-    "chars": 136,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t1 bigIdea"
-    ]
-  },
-  {
-    "key": "z68bi1",
-    "text": "Count the zeros in 10, 100 or 1,000. That's how many places every digit slides: left to multiply, right to divide.",
-    "style": "A",
-    "chars": 114,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t2 bigIdea"
-    ]
-  },
-  {
     "key": "1jd0bmn",
     "text": "Compare a part to a part, or a part to the whole. For every 3 red beads there are 2 blue beads.",
     "style": "A",
@@ -32611,9 +32571,9 @@
   },
   {
     "key": "1rp04ti",
-    "text": "[happy] You did it! You slid the 7 one place to the left, and now it's worth 10 times as much.",
-    "style": "A+",
-    "chars": 94,
+    "text": "You did it! You slid the 7 one place to the left, and now it's worth 10 times as much.",
+    "style": "B",
+    "chars": 86,
     "kind": "won",
     "sources": [
       "g5m1-t1 won"
@@ -32621,9 +32581,9 @@
   },
   {
     "key": "gn6e70",
-    "text": "[happy] Yes! You slid the 3 one place to the left, from 300 all the way to 3,000.",
-    "style": "A+",
-    "chars": 81,
+    "text": "Yes! You slid the 3 one place to the left, from 300 all the way to 3,000.",
+    "style": "B",
+    "chars": 73,
     "kind": "won",
     "sources": [
       "g5m1-t1 twinWon"
@@ -32641,9 +32601,9 @@
   },
   {
     "key": "16etxu5",
-    "text": "[happy] You did it! You counted three zeros and slid every digit three places to the left.",
-    "style": "A+",
-    "chars": 90,
+    "text": "You did it! You counted three zeros and slid every digit three places to the left.",
+    "style": "B",
+    "chars": 82,
     "kind": "won",
     "sources": [
       "g5m1-t2 won"
@@ -32651,9 +32611,9 @@
   },
   {
     "key": "1ycx6pb",
-    "text": "[happy] Yes! You counted two zeros and slid 29 two places to the left, all the way to 2,900.",
-    "style": "A+",
-    "chars": 92,
+    "text": "Yes! You counted two zeros and slid 29 two places to the left, all the way to 2,900.",
+    "style": "B",
+    "chars": 84,
     "kind": "won",
     "sources": [
       "g5m1-t2 twinWon"

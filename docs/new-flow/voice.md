@@ -2,40 +2,49 @@
 
 Founder, 2026-09-19: the recorded voice was right, but it **read** every line flat, like somebody reading a page. Two
 causes: the lines were written like a textbook, and every clip went through Chatterbox Turbo with no expression.
-Samples of four fixes were heard (`/voice-samples.html`), and a partner's feedback was that **no one style wins every
-line**. So each line gets its own style. **Every lesson moves to Stevie**; a lesson switches when its clips are merged
+Samples of four fixes were heard (`/voice-samples.html`); on 2026-09-22 the founder replaced them with the rules below. **Every lesson moves to Stevie**; a lesson switches when its clips are merged
 (`STEVIE_NOW` in `src/infra/storage/voicePref.ts`).
 
-⚠️ **Status (2026-09-19): a pilot.** Only `g5m1-t1` and `g5m1-t2` are written this way, and the style rule below is
-drawn from **7 sample lines, each rendered once** — a render varies by chance, so some of those preferences may be luck.
-Listen to the pilot in the app, in order, before writing the next lesson this way.
+⚠️ **Status (2026-09-22): a pilot.** Only `g5m1-t1` and `g5m1-t2` are written this way, and the 0.5/0.5 and 0.7/0.3
+settings come from the document, not from listening. Listen to both topics in the app before writing the next one.
 
-## The four styles
+## The rules (founder's two documents, 2026-09-22: "Chatterbox_Audio_Fix" and "Topic_Explanation")
 
+They replace the 2026-09-19 pilot's four styles. **g5m1-t1 and g5m1-t2 are rewritten to them; no other lesson yet.**
+
+### How a teaching screen reads (Screens 2–7)
+- A teacher talking to ONE child. Short sentences, one idea each; mix a short line with a longer one.
+- Ask a real question at least once, then answer it ("Is there a faster way? Yes.").
+- Spoken glue that is allowed: "Look." "Wait." "Here's the part people mix up." "Okay. Your turn."
+- Never: "Welcome, student." "Let's dive in." "Great job engaging." "In this module." "As previously discussed."
+- Order: situation (Screen 1) → question → one big idea (ONE sentence) → walk the example → the watch-out →
+  "Okay. Your turn." (the last beat of Screen 7; Screen 8 is the look-alike problem).
+- About 80–160 words for the teach. Longer is split into beats, never a wall.
+
+### Punctuation is the performance
+- `.` full stop, `,` a breath, `?` lift and wait, a new beat is a new move, `—` only for a real turn in thought.
+- **No `...`, no stacked `!`, no emoji, no ALL-CAPS sentence.** CAPS on one or two words, only the warning word
+  ("does not mean ADD 10", "don't slide LEFT").
+- **No tags at all** — no `[happy]`, `[sigh]`, `[pause:…]`, no SSML. `[happy]` is not a Chatterbox command and may be
+  read out loud.
+
+### Math on the screen vs math in the mouth
+The screen keeps symbols (`1/10`, `×`, `37 × 10`); the render text (`say` in `content/voice/<module>.ts`, or
+`speakable()`) says them in words: "one tenth", "times", "a zero". Never "slash", "over" or "open parenthesis".
+
+### The styles — expression comes from the model settings, not markup
 | style | model | when |
 |---|---|---|
-| **A** | Chatterbox Turbo, the words as written | a plain explanation — the default |
-| **A+** | Turbo with an emotion tag in front: `[happy]` (also `[surprised]`) | a reveal, a trick, a win |
-| **B** | original Chatterbox, expressiveness 0.8 | a warning ("here's a trap"), a pattern that builds |
-| **B+** | B with `—` pauses, and a sound tag where one fits (`[sigh]`) | a line with a turn in it ("… — but this time, to the right") |
+| **A** | Chatterbox Turbo, the words as written | a line nobody has re-voiced yet (the default) |
+| **B** | original Chatterbox, `exaggeration=0.5, cfg_weight=0.5` | the everyday teacher |
+| **B+** | original Chatterbox, `exaggeration=0.7, cfg_weight=0.3` | the watch-out (Screen 7), more punch |
 
-The model settings are `STYLES` in `scripts/chatterbox-render.py`. ⚠️ Each model has its own tags: Turbo knows
-`[happy] [surprised] [chuckle] [sigh] [gasp] …` but ignores the expressiveness dial; the original knows sound tags
-(`[sigh] [gasp] [giggle] [laughter] …`) but not `[happy]`. ⚠️ And each turns punctuation into speech differently:
-**Turbo keeps `...` as a pause, the original turns `...` into a comma** — so A/A+ pause with `...`, B/B+ with `—`.
+Settings are `STYLES` in `scripts/chatterbox-render.py`. If the reference voice talks fast, lower `cfg_weight`
+toward 0.3. ⚠️ High exaggeration speeds the talk up.
 
-## Writing a line
-
-1. **Say it the way a teacher would, on screen as well.** Contractions, `!`, a question to the child ("See the
-   pattern?"). The screen and the voice use the SAME words — the child reads what she hears.
-2. **The render text (`say` in `content/voice/<module>.ts`) adds only** a tag, pauses and punctuation, and spells
-   symbols the way she would say them (`1/10` → "one tenth", `×` → "times"; `speakable()` does the common ones for
-   a line with no row). Never a word that is not on screen.
-3. **At most one emotion tag per screen.** A tag on every line is as flat as none.
-4. **No counting lists** ("3... 6... 9... 12!") — disliked in every style in the samples. Put the numbers in a sentence.
-5. The chalkboard hangs its marks on words (`at: 'lose'`); a reworded line must keep them, or move the mark.
-   Gated: `lessonsAllModules` names the mark and the line.
-6. Screen 1 and the problem wording are not reworded (AUTHORING.md rule 4, and the answer checks).
+### Unchanged
+The chalkboard hangs its marks on words (`at: 'mix'`); a reworded line must keep them, or move the mark — gated by
+`lessonsAllModules`. Screen 1 and the problem wording are not reworded (AUTHORING.md rule 4).
 
 ## Rendering
 
