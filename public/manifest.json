@@ -1,7 +1,7 @@
 {
   "name": "AdaptiveLearn",
   "short_name": "AdaptiveLearn",
-  "description": "Adaptive maths for ages 3 to 18. A placement check finds the gap, then a plan fixes it.",
+  "description": "Adaptive math for grades 3 to 8. A lesson explains one idea step by step, then practice adapts to your child.",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

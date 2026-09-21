@@ -15,9 +15,10 @@
  * fox would be back in the HTML and none of this would be visible.
  *
  * ⚠️ THE COPY IS ASSEMBLED FROM WORDS THAT WERE ALREADY WRITTEN, not invented here — the promise is
- * `/help`'s own "How does Milo decide what to teach?" answer, the camera and offline lines are that
- * page's answers verbatim in shorter form, and "no timer, no score, no red cross" is the standing
- * anti-fear rule. Change the words freely; keep them TRUE, because this is the one page that makes
+ * `/help`'s own "How does Milo decide what to teach?" answer, the game-time and offline lines are
+ * that page's answers in shorter form, and "no timer, no red cross" is the standing anti-fear rule.
+ * Rewritten 2026-09-21: it still sold the placement check, story chapters, ages 3–18 and the camera,
+ * all deleted. Change the words freely; keep them TRUE, because this is the one page that makes
  * a promise before anybody has played anything.
  */
 import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, SUPPORT_EMAIL, SITE_URL } from '@/app/site'
@@ -52,7 +53,7 @@ function AppJsonLd() {
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web browser',
         description:
-          'A short placement check finds the deepest gap under a child\u2019s math, then story chapters teach from there with the difficulty moving question by question. Ages 3 to 18.',
+          'Math for grades 3 to 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents and teachers choose the lessons.',
         publisher: { '@id': COMPANY_ID },
         brand: { '@id': COMPANY_ID },
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -65,16 +66,16 @@ function AppJsonLd() {
 
 const POINTS: { h: string; p: string }[] = [
   {
-    h: 'It looks underneath',
-    p: 'A short check finds the deepest gap worth fixing — not the newest thing your child got wrong, but the thing underneath it. A fifteen-year-old’s gap sometimes turns out to live in grade four.',
+    h: 'You choose what they learn',
+    p: 'Pick whole modules or single topics, from any grade from 3 to 8, and add a due date if you like. You see which lessons they finished and what they find hard. Teachers do the same for a whole class, and can give class exercises.',
+  },
+  {
+    h: 'Practice that adapts',
+    p: 'Two right answers in a row bring a different, harder kind of question — for example, from a picture to bare numbers to a word problem. A miss brings the worked steps and an easier kind. Topics they found hard come back later for review.',
   },
   {
     h: 'Nothing to be scared of',
-    p: 'No timer, no score, no red cross anywhere. A chapter gets easier after a wrong answer, harder after a run of right ones, and quietly explains again after three misses.',
-  },
-  {
-    h: 'It is a world, not a worksheet',
-    p: 'Every chapter is somewhere to be — a market, a rail line, a building plot — with something to do and someone who needs it done. The math is the thing that makes it work.',
+    p: 'No timer, and no red cross anywhere. Your child never sees a level. A wrong answer gets another go, then the worked steps — never a mark.',
   },
 ]
 
@@ -110,17 +111,17 @@ export default function RootPage() {
           fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34, lineHeight: 1.2,
           color: '#3d2516', margin: '0 0 14px',
         }}>
-          Find the gap that’s holding your child back in math
+          Math lessons that adapt to your child
         </h1>
 
         <p style={{ fontSize: 18, lineHeight: 1.6, color: '#5b4c39', margin: '0 0 26px' }}>
-          Most math trouble is not about the topic your child is failing today — it is about
-          something further down that never quite landed. AdaptiveLearn runs a short placement check to find
-          that, then builds a plan that fixes it. Ages 3 to 18.
+          Each lesson explains one idea step by step, the way a good teacher would at the board. Then
+          practice adapts to what your child gets right and wrong, and brings back what they found hard.
+          Grades 3 to 8, for parents and teachers.
         </p>
 
-        {/* ⚠️ Check + demo are off while legacy chapters are hidden (src/core/chapters.ts). The
-            heading and paragraph above still describe the check — new copy pending from the founder. */}
+        {/* ⚠️ The old check + demo buttons below only return if the legacy chapters are un-hidden (src/core/chapters.ts);
+            /diagnostic itself was deleted (#145), so that branch would need its link rewritten first. */}
         {LEGACY_CHAPTERS_HIDDEN ? (
           <Link href="/auth" style={{
             minHeight: 56, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -170,9 +171,8 @@ export default function RootPage() {
         ))}
 
         <p style={{ fontSize: 15, lineHeight: 1.6, color: '#5b4c39', margin: '22px 0 0' }}>
-          Chapters play offline, and progress is saved on the device. A few chapters let a child
-          answer by holding up fingers to the camera — that is recognised <strong>in the browser</strong>,
-          no image is ever uploaded, and every one of those chapters can be tapped instead.
+          Children earn points by practising and can spend them on game time, up to a daily limit you set.
+          If the connection drops during a lesson, their answers are kept on the device and sent when it is back.
         </p>
 
         {/*

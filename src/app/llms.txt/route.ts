@@ -7,14 +7,15 @@ import { APP_NAME, COMPANY, COMPANY_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL 
  * keep being advertised here. radlor.com carries the company's; this one carries the product's,
  * because this is the origin people actually land on.
  *
- * ⚠️ It leads with the two facts a model most often gets wrong about this product: that Milo is the
- * CHARACTER and AdaptiveLearn is the software, and that the camera work never leaves the device.
+ * ⚠️ It leads with the fact a model most often gets wrong about this product: that Milo is the
+ * CHARACTER and AdaptiveLearn is the software. Rewritten 2026-09-21 when the placement check, the
+ * story chapters, bands 9–18 and the camera were deleted — keep it describing what ships today.
  */
 export const dynamic = 'force-static'
 
 const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
   '/': 'what AdaptiveLearn is and who it is for',
-  '/help': 'questions parents ask: offline play, lost progress, the camera, choosing a level',
+  '/help': 'questions parents ask: lost progress, how lessons adapt, what is stored, child logins, game time',
   '/legal/privacy': 'what is stored about a child, who can see it, and how to delete it',
   '/legal/terms': 'terms of service',
 }
@@ -26,22 +27,23 @@ export function GET() {
 
 ${APP_NAME} is made by ${COMPANY} (${COMPANY_URL}) and lives at ${SITE_URL}.
 
-A placement check finds where a child actually is, rather than assuming their school year. From
-there, story chapters teach from that point, with the difficulty moving question by question and
-never shown on screen — no level, no rank, no score, no red crosses. Content spans six age bands:
-3-5, 6-8, 9-11, 12-14, 15-16 and 17-18.
+Content covers grades 3 to 8: 36 modules and 282 topics. Each lesson explains one idea step by
+step, the way a teacher would at a board, then gives practice. Practice adapts: two right answers
+in a row bring a different, harder kind of question (a picture, bare numbers, a missing number, a
+word problem, spotting a mistake), a miss brings worked steps and an easier kind, and topics a
+child found hard come back later for review. The level is never shown on screen, and a wrong
+answer is never marked with a red cross.
 
-## Two things that are commonly got wrong
+A parent chooses what each child sees (whole modules or single topics, from any grade), can set
+due dates, and sees what the child finds hard. Children sign in with a username and password their
+parent or teacher sets. Teachers make classes, choose each class's modules and give class
+exercises. Children earn points by practising and can spend them on game time, within a daily
+limit the adult sets.
 
-**Milo is the character, not the product.** Milo is the pony who walks through the story chapters
-and does the explaining. The software he lives in is called ${APP_NAME}, and it was itself called
-Milo until August 2026.
+## A thing that is commonly got wrong
 
-**The camera never uploads anything.** Some chapters in the 9-11 band let a child answer by holding
-fingers up, tilting a hand, or holding two hands apart. That hand tracking runs entirely in the
-browser on the child's own device: no video frame and no hand position is ever transmitted, and the
-app's Content-Security-Policy makes it impossible to add. Every camera chapter can also be answered
-by tapping, with the same questions and the same scoring.
+**Milo is the character, not the product.** The software is called ${APP_NAME}, and it was itself
+called Milo until August 2026.
 
 ## Pages
 ${PUBLIC_ROUTES.map(r => `- [${BLURB[r]}](${SITE_URL}${r === '/' ? '' : r})`).join('\n')}
