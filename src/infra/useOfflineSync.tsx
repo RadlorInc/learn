@@ -136,7 +136,7 @@ export function OfflineBanner(): React.ReactElement | null {
   return (
     <div style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-      padding: '12px 20px',
+      padding: '12px 20px calc(12px + env(safe-area-inset-bottom))',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
       fontSize: 14, fontWeight: 600, color: '#fff',
       background: !isOnline ? '#1f2937' : syncing ? '#166534' : '#92400e',

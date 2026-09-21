@@ -23,7 +23,7 @@ export default function AdminLogin() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f5f7fa', fontFamily: 'ui-sans-serif, system-ui' }}>
-      <form onSubmit={submit} style={{ background: '#fff', border: '1px solid #e3e8ef', borderRadius: 10, padding: 24, width: 320 }}>
+      <form onSubmit={submit} style={{ background: '#fff', border: '1px solid #e3e8ef', borderRadius: 10, padding: 24, width: 'min(320px, calc(100vw - 32px))', boxSizing: 'border-box' }}>
         <h1 style={{ fontSize: 16, margin: '0 0 14px' }}>Sign in</h1>
         <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Email"
                autoComplete="username" style={inp} />

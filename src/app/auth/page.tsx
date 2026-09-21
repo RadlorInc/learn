@@ -156,7 +156,7 @@ export default function AuthPage() {
             display: 'inline-block', background: 'var(--milo-orange-soft)', color: C.ink,
             borderRadius: 999, padding: '6px 14px', fontSize: 12, fontWeight: 800,
             letterSpacing: 0.3, textTransform: 'uppercase',
-          }}>Adaptive math · ages 3 to 18</span>
+          }}>Adaptive math · grades 3 to 8</span>
           <h2 style={{
             fontSize: 38, lineHeight: 1.15, fontWeight: 900, color: C.ink,
             margin: '18px 0 14px', fontFamily: 'var(--font-display)', maxWidth: 520,
@@ -196,7 +196,7 @@ export default function AuthPage() {
               fontFamily: 'var(--font-display)',
             }}>AdaptiveLearn</h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
-              Adaptive math for ages 3 to 18
+              Adaptive math for grades 3 to 8
             </p>
           </div>
 

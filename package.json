@@ -13,6 +13,7 @@
     "test:chapters": "playwright test e2e/all-chapters.spec.ts",
     "preflight": "bash scripts/preflight.sh",
     "break": "scripts/break-check.sh",
+    "sweep:responsive": "node scripts/responsive-sweep.mjs",
     "break:live": "scripts/break-live.sh"
   },
   "dependencies": {

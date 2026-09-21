@@ -29,6 +29,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [minCohort, setMinCohort] = useState<number | null>(null)
 
   useEffect(() => {
+    // ⚠️ The layout wraps /admin/login too: without this, a signed-out visit to the login page sent itself to the
+    // login page, forever (≈70 reloads in 4 s, the form never shown). Found by the responsive sweep, 2026-09-21.
+    if (path === '/admin/login') return
     let dead = false
     ;(async () => {
       const { data: { session } } = await createClient().auth.getSession()
@@ -37,7 +40,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (!dead && r.ok) setMinCohort((await r.json()).minCohort)
     })()
     return () => { dead = true }
-  }, [])
+  }, [path])
 
   if (path === '/admin/login') return <>{children}</>
 

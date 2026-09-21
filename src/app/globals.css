@@ -238,11 +238,14 @@ html, body {
   margin: 0; padding: 0;
   min-height: 100dvh;
 }
-/* The phone's own edges: the notch in landscape and the home bar at the bottom (viewport-fit=cover lets the page reach
-   under both). 0 everywhere else, so desktops and browsers are untouched. The top is iOS's job — see layout.tsx. */
+/* The phone's own edges: the status bar, the notch in landscape and the home bar (viewport-fit=cover lets the page reach
+   under all of them). Each inset is 0 wherever nothing covers the page, so desktops and browsers are untouched.
+   ⚠️ THE TOP IS INCLUDED ON PURPOSE (2026-09-21). It used to be left to iOS via statusBarStyle 'default' (layout.tsx) —
+   which only holds for an app ADDED after 2026-09-19 and only on iOS; wherever the page does reach under the bar, iOS
+   reports the inset and this pads for it. Anything `position: fixed/sticky` ignores this padding and needs its own. */
 body {
   box-sizing: border-box;
-  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 h1, .h1 {
@@ -891,7 +894,7 @@ input[type="range"] { height: 44px; }
 .dash-count { background: var(--milo-orange); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 7px; font-weight: 900; margin-left: auto; }
 .dash-drawer { border: 0; padding: 0; margin: 0 auto 0 0; height: 100dvh; max-height: 100dvh; background: transparent; }
 .dash-drawer::backdrop { background: rgba(38, 22, 12, .45); }
-.dash-drawer-panel { background: #10232b; height: 100%; width: min(300px, 82vw); padding: calc(12px + env(safe-area-inset-top, 0px)) 10px calc(16px + env(safe-area-inset-bottom, 0px));
+.dash-drawer-panel { background: #10232b; height: 100%; width: min(calc(300px + env(safe-area-inset-left, 0px)), 82vw); box-sizing: border-box; padding: calc(12px + env(safe-area-inset-top, 0px)) 10px calc(16px + env(safe-area-inset-bottom, 0px)) calc(10px + env(safe-area-inset-left, 0px));
   display: flex; flex-direction: column; gap: 4px; overflow-y: auto; animation: dash-in .2s ease-out; }
 .dash-drawer-panel .home-logo { display: flex; justify-content: space-between; align-items: center; color: #fff; font-weight: 800; padding: 4px 4px 12px 12px; }
 .dash-x { color: #d5e6e3; background: none; border: 0; font-size: 24px; min-width: 44px; min-height: 44px; border-radius: 10px; cursor: pointer; }
@@ -914,7 +917,7 @@ input[type="range"] { height: 44px; }
 .home-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; }
 @media (min-width: 1024px) {
   .home-app { grid-template-columns: 240px 1fr; }
-  .home-nav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; height: 100dvh; padding: 20px 14px; background: #10232b; position: sticky; top: 0; z-index: 10; }
+  .home-nav { display: flex; flex-direction: column; align-items: stretch; gap: 4px; height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 20px 14px; background: #10232b; position: sticky; top: env(safe-area-inset-top); z-index: 10; box-sizing: border-box; }
   .dash-top { display: none; }
   .home-logo { margin: 0 12px 16px; font-size: 20px; }
   .home-nav-end { margin-top: auto; }
@@ -928,6 +931,8 @@ input[type="range"] { height: 44px; }
 /* Add-learner: a bottom sheet on a phone (thumb reach), a centred dialog above it. */
 .sheet-wrap { display: flex; align-items: flex-end; justify-content: center; }
 .sheet-card { border-radius: 24px 24px 0 0; max-height: 92dvh; width: 100%; max-width: 480px; animation: sheetUp .3s var(--ease-bounce); }
+/* A bottom sheet is fixed, so the body's padding does not reach it: its last button would sit under the home bar. */
+.sheet-wrap { padding-bottom: env(safe-area-inset-bottom); }
 @media (min-width: 768px) {
   .sheet-wrap { align-items: center; padding: 24px; }
   .sheet-card { border-radius: 24px; max-height: 88dvh; max-width: 560px; animation: sheetIn .22s var(--ease-smooth); }
@@ -976,9 +981,10 @@ input[type="range"] { height: 44px; }
 }
 .dash-sheet { border: 0; padding: 0; background: transparent; color: var(--ink); max-width: calc(100vw - 32px); }
 .dash-sheet::backdrop { background: rgba(38, 22, 12, .45); }
-.dash-sheet > div { background: var(--paper-soft); border-radius: 22px; padding: 22px; width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; box-sizing: border-box; }
+.dash-sheet > div { background: var(--paper-soft); border-radius: 22px; padding: 22px; width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow-y: auto; box-sizing: border-box; }
 .dash-sheet.side[open] { margin: 0 0 0 auto; height: 100dvh; max-height: 100dvh; max-width: 100vw; }
-.dash-sheet.side > div { height: 100%; max-height: none; border-radius: 22px 0 0 22px; width: min(440px, 100vw); }
+.dash-sheet.side > div { height: 100%; max-height: none; border-radius: 22px 0 0 22px; width: min(440px, 100vw);
+  padding: calc(22px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) 22px; }
 .dash-more { position: relative; }
 .dash-more summary { list-style: none; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; font-weight: 900; font-size: 20px; color: var(--ink-muted); cursor: pointer; }
 .dash-more summary::-webkit-details-marker { display: none; }
@@ -987,6 +993,12 @@ input[type="range"] { height: 44px; }
   box-shadow: 0 8px 24px rgba(38,22,12,.15); display: flex; flex-direction: column; min-width: 200px; }
 .dash-more[open] > div button { text-align: left; border: 0; background: none; padding: 10px 12px; min-height: 44px; border-radius: 8px; font-weight: 800; cursor: pointer; color: var(--ink); }
 .dash-more[open] > div button:hover { background: var(--paper); }
+/* On a phone Up next's buttons wrap under the text, so the ⋯ sits mid-card and a menu hung off its right edge ran off
+   the LEFT of the screen (x = −2 at 320–430 px). Hang it from the start of the button row instead: that edge is inside
+   the card at every width. */
+.dash-act { position: relative; }
+.dash-act .dash-more { position: static; }
+.dash-act .dash-more[open] > div { left: 0; right: auto; top: calc(100% + 4px); }
 .dash-spot { position: fixed; z-index: 90; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(38, 22, 12, .55); pointer-events: none; outline: 3px solid #fff; transition: all .25s ease; }
 .dash-coach { position: fixed; z-index: 91; background: #fff; border-radius: 16px; padding: 16px; width: min(340px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,.25); box-sizing: border-box; }
 @media (prefers-reduced-motion: reduce) { .dash-spot { transition: none; } }

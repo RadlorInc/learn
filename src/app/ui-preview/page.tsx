@@ -118,7 +118,7 @@ function DashPreview({ p }: { p: string }) {
   const save = async (i: string[] | null, d: Record<string, string>) => { setIds(i); setDue(i ? d : {}); return 'ok' as const }
   const nav = [{ label: p === 'teacher' || p === 'class' ? 'Classes' : 'Home', href: '/ui-preview?p=home', on: true }, { label: 'Help', href: '/ui-preview?p=home', on: false, tour: 'nav-help' }, { label: 'Account', href: '/ui-preview?p=home', on: false }]
   return (
-    <div className="home-app" style={{ width: '100vw', alignSelf: 'stretch', margin: -16 }}>
+    <div className="home-app" style={{ alignSelf: 'stretch', margin: -16 }}>
       <DashNav items={nav} reminders={DEMO_REMINDERS.length} onBell={() => setBell(true)} onSignOut={() => {}} />
       <div style={{ minWidth: 0 }}><main className="adult-shell" data-t="dash">
         {p === 'home' && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

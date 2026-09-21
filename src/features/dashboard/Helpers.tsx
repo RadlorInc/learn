@@ -48,7 +48,7 @@ export function UpNext({ top, rest, allClear, onAct, onSnooze, onHide, onOpenAll
         <p style={{ margin: '4px 0 0', color: 'var(--ink-soft)' }}>{top.detail}</p>
         {rest > 0 && <button type="button" style={dlink} onClick={onOpenAll}>{rest} more in Reminders</button>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <div className="dash-act" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button type="button" style={dbtn} onClick={() => onAct(top)}>{top.action}</button>
         <MoreMenu onSnooze={() => onSnooze(top)} onHide={() => onHide(top)} />
       </div>
@@ -167,11 +167,14 @@ export function TourRunner({ tour, onEnd }: { tour: Tour | null; onEnd: (finishe
 
   if (!tour || !step || !box) return null
   const n = tour.steps.length, last = i === n - 1
-  const below = box.t + box.h + 14, fitsBelow = below + 220 < window.innerHeight
+  // The phone's safe areas, as the body pads for them (globals.css): the card must not slide under the notch or the bar.
+  const pad = getComputedStyle(document.body), inset = (k: string) => parseFloat(pad.getPropertyValue(`padding-${k}`)) || 0
+  const cardW = Math.min(340, window.innerWidth - 32), minL = 12 + inset('left'), maxL = window.innerWidth - cardW - 12 - inset('right')
+  const below = box.t + box.h + 14, fitsBelow = below + 220 < window.innerHeight - inset('bottom')
   return <>
     <div className="dash-spot" style={{ left: box.l, top: box.t, width: box.w, height: box.h }} />
     <div ref={coach} className="dash-coach" role="dialog" aria-live="polite" aria-label={tour.title}
-      style={{ top: fitsBelow ? below : Math.max(12, box.t - 234), left: Math.min(Math.max(12, box.l), window.innerWidth - 352) }}>
+      style={{ top: fitsBelow ? below : Math.max(12 + inset('top'), box.t - 234), left: Math.max(minL, Math.min(box.l, maxL)) }}>
       <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>{tour.steps.map((_, k) => <i key={k} style={{ height: 5, flex: 1, borderRadius: 9, background: k <= i ? 'var(--milo-orange)' : 'var(--card-border)' }} />)}</div>
       <div style={{ color: 'var(--milo-orange)', fontWeight: 900, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em' }}>{tour.title} · {i + 1} of {n}</div>
       <h3 style={{ margin: '4px 0', fontSize: 19, fontFamily: 'var(--font-display)', ...ink }}>{step.title}</h3>
