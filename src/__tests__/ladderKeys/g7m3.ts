@@ -181,7 +181,7 @@ export const SOLVE: Record<string, (q: Q) => string> = {
       if (q.picture?.kind === 'area') picAgrees(q, same(`${q.picture.cells[0][0]} + (${q.picture.cells[0][1]})`, rhs))
       return unknown(q, k => k !== 0 && same(put(lhs, k), rhs))
     }
-    if ((m = t.match(/^A gym costs x dollars a month, and a deal takes (\d+) dollars off every month\. \w+ pays for (\d+) months and a (\d+)-dollar sign-up fee\. Which shows what \w+ pays, with no brackets\?$/))) {
+    if ((m = t.match(/^A gym costs x dollars a month, and a deal takes (\d+) dollars off every month\. \w+ pays for (\d+) months and a (\d+)-dollar sign-up fee\. Which shows what \w+ pays, with no parentheses\?$/))) {
       const e = `${m[2]}(x - ${m[1]}) + ${m[3]}`
       return pick(q, c => same(c, e) && !c.includes('('))
     }
@@ -191,7 +191,7 @@ export const SOLVE: Record<string, (q: Q) => string> = {
   'g7m3-t3': q => {
     const t = q.text
     let m: RegExpMatchArray | null
-    if ((m = t.match(/^What is the biggest number you can put outside the brackets in (\d+)x \+ (\d+)\?$/)))
+    if ((m = t.match(/^What is the biggest number you can put outside the parentheses in (\d+)x \+ (\d+)\?$/)))
       return String(gcd(n(m[1]), n(m[2])))
     if ((m = t.match(/^Which is the same as (.+)\?$/))) { const e = m[1]; return pick(q, c => same(c, e)) }
     if ((m = t.match(/^(.+) = (.+)\. What number goes in the \?$/))) {

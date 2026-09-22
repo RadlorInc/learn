@@ -1,0 +1,23 @@
+/** g8m4's chalkboards, one file per topic (see ../../../chalk.ts). */
+import type { ChalkMark } from '../../../chalk'
+import { T1 } from './t1'
+import { T2 } from './t2'
+import { T3 } from './t3'
+import { T4 } from './t4'
+import { T5 } from './t5'
+import { T6 } from './t6'
+import { T7 } from './t7'
+import { T8 } from './t8'
+import { T9 } from './t9'
+
+export const G8M4_CHALK: Record<string, (ChalkMark[] | undefined)[]> = {
+  'g8m4-t1': T1,
+  'g8m4-t2': T2,
+  'g8m4-t3': T3,
+  'g8m4-t4': T4,
+  'g8m4-t5': T5,
+  'g8m4-t6': T6,
+  'g8m4-t7': T7,
+  'g8m4-t8': T8,
+  'g8m4-t9': T9,
+}

@@ -191,7 +191,7 @@ const T2: Level[] = [
   L('a story with a deal and a fee', r => {
     const { p, q, f } = until(() => ({ p: int(r, 2, 6), q: int(r, 2, 9), f: int(r, 5, 30) }), ({ p, q, f }) => f !== p * q)
     const who = pick(r, KIDS), right: Lin = [p, f - p * q]
-    return { text: `A gym costs x dollars a month, and a deal takes ${q} dollars off every month. ${who} pays for ${p} months and a ${f}-dollar sign-up fee. Which shows what ${who} pays, with no brackets?`,
+    return { text: `A gym costs x dollars a month, and a deal takes ${q} dollars off every month. ${who} pays for ${p} months and a ${f}-dollar sign-up fee. Which shows what ${who} pays, with no parentheses?`,
       picture: eq(`${p} months of x − ${q}`, [`fee: ${f} dollars, once`]),
       answer: chooseLin(r, right, [[p, f - q], [p, -f - p * q], [1, f - p * q], [p, f + p * q]]),
       steps: [`One month costs x − ${q}, so ${p} months cost ${p}(x − ${q}) = ${p}x − ${p * q}.`,
@@ -206,7 +206,7 @@ const T3: Level[] = [
   L('with an area model: the biggest number outside', r => {
     const g = int(r, 2, 9), { a, b } = coprime(r, 1)
     const A = g * a, B = g * b
-    return { text: `What is the biggest number you can put outside the brackets in ${term(A)} + ${B}?`,
+    return { text: `What is the biggest number you can put outside the parentheses in ${term(A)} + ${B}?`,
       picture: box('?', ['?', '?'], [[term(A), String(B)]]), answer: g,
       steps: [`${A} and ${B} can both be divided by ${g} with nothing left over. Nothing bigger works.`,
         `${term(A)} + ${B} = ${bra(g, a, b)}.`, `So the number is ${g}.`] }
@@ -317,7 +317,7 @@ const T5: Level[] = [
         { a: p, b: 0, c: rr, show: `${p}x = ${rr}` },
       ])),
       steps: divide
-        ? ['The brackets are one group. Divide both sides by the number outside.', `${rr} ÷ ${p} = ${x + q}.`, `So it is ${right.show}.`]
+        ? ['The parentheses are one group. Divide both sides by the number outside.', `${rr} ÷ ${p} = ${x + q}.`, `So it is ${right.show}.`]
         : [`Multiply out: ${p} × x = ${p}x, and ${p} × ${q} = ${p * q}, because the ${p} multiplies every part inside.`, `The right side stays ${rr}.`, `So it is ${right.show}.`] }
   }),
   L('a negative outside', r => {
