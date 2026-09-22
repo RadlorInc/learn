@@ -12,11 +12,14 @@ count first, so a stale branch or an empty queue stops at cell 1 instead of spen
 import json, sys, pathlib
 
 module, branch = sys.argv[1], sys.argv[2]
+# Optional: modules whose lines were already given their own notebook (g5 minus g5m1: `... g5 <branch> g5m1`).
+skip = sys.argv[3:]
 root = pathlib.Path(__file__).resolve().parent
 corpus = json.load(open(root / '.voice-corpus-lessons-josh.json'))
 clips = root.parent / 'public/audio/nzFihrBIvB34imQBuxub'
 PREFIX = module + ('m' if 'm' not in module else '-')   # 'g3' -> 'g3m', 'g5m1' -> 'g5m1-'
-todo = [r for r in corpus if any(s.startswith(PREFIX) for s in r['sources']) and not (clips / f"{r['key']}.mp3").exists()]
+own = lambda srcs: any(s.startswith(PREFIX) and not any(s.startswith(k + '-') for k in skip) for s in srcs)
+todo = [r for r in corpus if own(r['sources']) and not (clips / f"{r['key']}.mp3").exists()]
 n = len(todo)
 assert n > 0, f'nothing queued for {module}'
 
@@ -32,13 +35,14 @@ setup = f"""import os, sys, subprocess, pathlib, shutil, json
 BRANCH = {branch!r}
 MODULE = {module!r}
 PREFIX = {module!r} + ('m' if 'm' not in {module!r} else '-')
+SKIP = {skip!r}
 VOICE = 'nzFihrBIvB34imQBuxub'   # Josh
 WORK = pathlib.Path('/kaggle/working' if os.path.isdir('/kaggle/working') else '/content')
 REPO = WORK / 'learn'
 if not REPO.exists():
     subprocess.run(['git', 'clone', '--depth', '1', '--branch', BRANCH, 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
 rows = json.load(open(REPO / 'scripts/.voice-corpus-lessons-josh.json'))
-todo = [r for r in rows if any(s.startswith(PREFIX) for s in r['sources'])
+todo = [r for r in rows if any(s.startswith(PREFIX) and not any(s.startswith(k + '-') for k in SKIP) for s in r['sources'])
         and not (REPO / 'public/audio' / VOICE / f"{{r['key']}}.mp3").exists()]
 json.dump(todo, open(WORK / 'todo.json', 'w'))
 print(len(todo), 'lines to render ·', {{s: sum(r['style'] == s for r in todo) for s in ['A', 'B', 'B+']}})
@@ -74,7 +78,7 @@ cell = lambda kind, src: {'cell_type': kind, 'metadata': {}, 'source': src, **({
 nb = {'cells': [cell('markdown', md), cell('code', setup), cell('code', venv), cell('code', render), cell('code', zipc)],
       'metadata': {'kernelspec': {'display_name': 'Python 3', 'language': 'python', 'name': 'python3'}, 'language_info': {'name': 'python'}},
       'nbformat': 4, 'nbformat_minor': 5}
-out = root / 'kaggle' / f'josh-{module}.ipynb'
+out = root / 'kaggle' / (f'josh-{module}' + ''.join(f'-no-{k}' for k in skip) + '.ipynb')
 out.parent.mkdir(exist_ok=True)
 json.dump(nb, open(out, 'w'), indent=1)
 print(f'{n} lines -> {out}')
