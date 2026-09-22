@@ -1,6 +1,6 @@
 /** g5m1-t3's chalkboards: index = screen index (0 is Screen 1, which has none). */
 import type { ChalkMark } from '../../../chalk'
-import { write, line, arrow, cross, ring, hop } from '../../../chalk'
+import { write, line, arrow, cross, ring } from '../../../chalk'
 
 type At = [number, string?]
 type C = 'w' | 'y' | 'b' | 'r' | 'd'
@@ -13,55 +13,54 @@ export const T3: (ChalkMark[] | undefined)[] = [
   undefined,
   // Zeros are hard to count
   [
-    write([0, 'zeros'], '1,000,000', 300, 80, 44),
-    write([0, 'glance'], '6 zeros?', 300, 130, 26, 'd'),
-    write([1, 'write'], '10,000,000', 300, 210, 44, 'r'),
-    write([1, 'many'], '7 zeros', 300, 260, 26, 'd'),
-    write([1, '10'], '10 times too big!', 300, 330, 30, 'r'),
+    write([0, 'zeros'], '1,000,000', 300, 70, 44),
+    write([0, 'Six'], '6 zeros?', 300, 120, 26, 'd'),
+    write([1, 'many'], '10,000,000', 300, 195, 44, 'r'),
+    write([1, 'many'], 'one zero too many', 300, 245, 24, 'd'),
+    write([1, 'big'], '10 times too big', 300, 290, 30, 'r'),
+    write([2, 'shorter'], 'a shorter way?', 300, 360, 30, 'y'),
   ],
-  // The big idea
+  // The big idea: the small number counts the 10s, and the 10s are the zeros
   [
     ...pow([0, 'small'], '3', 140, 90, 44), ring([0, 'top'], 172, 70, 18, 20, 'y'),
     write([0, '10s'], '= 10 × 10 × 10', 380, 90, 36),
-    write([0, 'multiply'], 'three 10s', 380, 135, 24, 'd'),
-    write([1, 'zeros'], '= 1,000', 380, 200, 36, 'y'), write([1, 'zeros'], '3 zeros', 520, 245, 26, 'y'),
-    write([1, 'slide'], '3 places to slide', 300, 290, 30, 'y'),
-    ...[[380, 330], [330, 280], [280, 230]].map(([a, b]) => ({ ...hop([1, 'slide'], a, b, 355, 'b'), quick: true })),
+    write([0, 'multiply'], 'three 10s', 380, 140, 24, 'd'),
+    write([0, 'zeros'], '= 1,000', 380, 230, 36, 'y'),
+    write([0, 'write'], '3 zeros', 380, 280, 26, 'y'),
   ],
   // Count the 10s
   [
-    ...[['short', 90], ['long', 280], ['number', 490]].map(([t, x]) => ({ ...write([0, 'count'], t as string, x as number, 45, 22, 'd'), quick: true })),
+    ...[['short', 90], ['long', 280], ['number', 490]].map(([t, x]) => ({ ...write([0, 'Look'], t as string, x as number, 45, 22, 'd'), quick: true })),
     write([0, '10'], '10 × 10', 280, 110, 34), write([0, 'two'], 'two 10s', 280, 150, 22, 'd'),
-    ...pow([0, '10²'], '2', 80, 110),
-    write([1, '10'], '10 × 10 × 10', 280, 200, 34), write([1, 'three'], 'three 10s', 280, 240, 22, 'd'),
-    ...pow([1, '10³'], '3', 80, 200),
-    { ...write([2, 'column'], '100', 490, 110, 34, 'y'), quick: true }, write([2, 'column'], '1,000', 490, 200, 34, 'y'),
+    ...pow([0, '10²'], '2', 80, 110), write([0, '100'], '100', 490, 110, 34, 'y'),
+    write([1, '10'], '10 × 10 × 10', 280, 210, 34), write([1, 'three'], 'three 10s', 280, 250, 22, 'd'),
+    ...pow([1, '10³'], '3', 80, 210), write([1, '1,000'], '1,000', 490, 210, 34, 'y'),
     write([2, 'zero'], 'each 10 → one more zero', 300, 330, 28, 'b'),
   ],
-  // The city the short way
+  // The city the short way: count the six zeros aloud, one at a time
   [
     line([0, 'city'], [[440, 390], [440, 330], [470, 330], [470, 300], [505, 300], [505, 345], [530, 345], [530, 315], [565, 315], [565, 390]], 'd'),
     ...[['1', 160], [',', 182], ['0', 205], ['0', 235], ['0', 265], [',', 287], ['0', 310], ['0', 340], ['0', 370]]
       .map(([t, x]) => ({ ...write([0, '1,000,000'], t as string, x as number, 90, 44), quick: true })),
     ring([0, '1'], 160, 90, 18, 26, 'd'),
-    ...[205, 235, 265, 310, 340, 370].map((x, i) => ({ ...write([0, 'Count'], String(i + 1), x, 145, 24, 'y'), quick: true })),
-    write([0, 'Count'], '6 zeros', 480, 145, 26, 'y'),
-    write([1, '10s'], '10 × 10 × 10 × 10 × 10 × 10', 300, 220, 28),
-    ...pow([1, '10⁶'], '6', 250, 300, 48), write([1, 'people'], 'people', 370, 305, 30),
+    ...['One', 'two', 'three', 'four', 'five', 'six'].map((w, i) => write([1, w], String(i + 1), [205, 235, 265, 310, 340, 370][i], 145, 24, 'y')),
+    write([2, 'zeros'], '6 zeros', 480, 145, 26, 'y'),
+    write([2, '10s'], '10 × 10 × 10 × 10 × 10 × 10', 300, 220, 28),
+    ...pow([2, '10⁶'], '6', 200, 300, 48), write([2, 'people'], 'people', 320, 305, 30),
   ],
   // It says how far to slide
   [
-    ...pow([1, 'small'], '3', 120, 80, 40), write([1, 'places'], '→ 3 places', 290, 80, 30, 'y'),
-    write([2, '45'], '45 × 10', 140, 180, 34), write([2, '45'], '3', 212, 160, 22, 'y'),
-    arrow([2, 'left'], [560, 180], [440, 180], 'r'), write([2, 'left'], '= 45,000', 320, 180, 34),
-    write([2, '62,000'], '62,000 ÷ 10', 160, 290, 34), write([2, '62,000'], '3', 266, 270, 22, 'y'),
-    arrow([2, 'right'], [440, 290], [560, 290], 'b'), write([2, 'right'], '= 62', 340, 290, 34),
+    ...pow([0, 'small'], '3', 120, 80, 40), write([0, 'slide'], '→ slide 3 places', 320, 80, 30, 'y'),
+    write([1, '45'], '45 × 10', 140, 190, 34), write([1, '45'], '3', 212, 170, 22, 'y'),
+    arrow([1, 'left'], [560, 190], [460, 190], 'r'), write([1, '45,000'], '= 45,000', 330, 190, 34, 'y'),
+    write([2, '62,000'], '62,000 ÷ 10', 160, 300, 34), write([2, '62,000'], '3', 266, 280, 22, 'y'),
+    arrow([2, 'right'], [460, 300], [560, 300], 'b'), write([2, '62'], '= 62', 350, 300, 34, 'y'),
   ],
   // One thing not to do
   [
-    ...warn([0, 'Careful']),
-    ...pow([1, '10³'], '3', 120, 190), write([1, '3'], '= 10 × 3', 290, 190, 36, 'r'), cross([1, '3'], 215, 165, 150, 50),
-    ...pow([2, 'three'], '3', 100, 290, 40, 'y'), write([2, 'three'], '= 10 × 10 × 10', 300, 290, 34, 'y'),
+    ...warn([0, 'mix']),
+    ...pow([1, '10³'], '3', 110, 180), write([1, 'TIMES'], '= 10 × 3', 270, 180, 36, 'r'), write([1, '30'], '= 30', 420, 180, 36, 'r'),
+    cross([1, '30'], 378, 160, 84, 40),
+    ...pow([2, 'three'], '3', 90, 290, 40, 'y'), write([2, '10'], '= 10 × 10 × 10', 270, 290, 34, 'y'), write([2, '1,000'], '= 1,000', 460, 290, 34, 'y'),
   ],
 ]
-

@@ -19,8 +19,8 @@ export const T8: (ChalkMark[] | undefined)[] = [
   [
     write([0, '115'], '115', 130, 90, 40, 'y'), write([0, 'digit'], '× one digit', 290, 90, 30), tick([0, 'digit'], 395, 90),
     write([1, '26'], '115 × 26', 300, 190, 40), ring([1, 'digits'], 360, 190, 28, 26, 'r'), write([1, 'digits'], '2 digits', 490, 190, 26, 'r'),
-    write([1, 'adding'], '115 + 115 + 115 + ...', 300, 270, 26),
-    span([1, 'twenty-six'], 163, 437, 305, 'd'), write([1, 'twenty-six'], '26 times', 300, 335, 24, 'd'),
+    write([1, 'Add'], '115 + 115 + 115 + 115', 300, 270, 26),
+    span([1, 'times'], 163, 437, 305, 'd'), write([1, 'times'], '26 times', 300, 335, 24, 'd'),
     clock([1, 'long'], 530, 300, 26),
   ],
   // The big idea
@@ -28,9 +28,9 @@ export const T8: (ChalkMark[] | undefined)[] = [
     write([0, 'number'], '26', 300, 45, 36),
     box([0, 'tens'], 60, 80, 340, 60, 'y'), write([0, 'tens'], '20', 230, 110, 30, 'y'), write([0, 'tens'], 'tens', 230, 160, 22, 'd'),
     box([0, 'ones'], 400, 80, 140, 60, 'b'), write([0, 'ones'], '6', 470, 110, 30, 'b'), write([0, 'ones'], 'ones', 470, 160, 22, 'd'),
-    ...q([write([1, 'each'], '× 115', 230, 205, 26), write([1, 'each'], '× 115', 470, 205, 26)]),
-    box([1, 'add'], 195, 245, 70, 44, 'y'), write([1, 'add'], '+', 350, 267, 32), box([1, 'add'], 435, 245, 70, 44, 'b'),
-    write([1, 'answers'], '= total', 350, 330, 30),
+    ...q([write([0, 'each'], '× 115', 230, 205, 26), write([0, 'each'], '× 115', 470, 205, 26)]),
+    box([0, 'add'], 195, 245, 70, 44, 'y'), write([0, 'add'], '+', 350, 267, 32), box([0, 'add'], 435, 245, 70, 44, 'b'),
+    write([0, 'answers'], '= total', 350, 330, 30),
   ],
   // Break 26 apart
   [
@@ -63,7 +63,7 @@ export const T8: (ChalkMark[] | undefined)[] = [
   ],
   // One thing not to do
   [
-    ...warn([0, 'slip']),
+    ...warn([0, 'mix']),
     write([1, '2'], '115 × 2', 420, 160, 34, 'r'),
     ...q([write([1, 'tens'], '2', 140, 170, 44, 'y'), write([1, 'tens'], '6', 176, 170, 44)]),
     ring([1, 'tens'], 140, 170, 18, 26, 'y'), write([1, 'tens'], 'tens', 140, 118, 22, 'd'),
