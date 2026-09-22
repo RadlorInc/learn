@@ -55,7 +55,7 @@ export const T7: (ChalkMark[] | undefined)[] = [
     ...cutPizza([1, 'count'], A, 235, 90), ...[0, 1, 2].map(i => slices([1, 'count'], A, 235, 90, 8, 1, i)),
     slices([1, 'LEFT'], A, 235, 90, 8, 5, 3, 'r', true),
     write([1, 'plate'], 'Ana', A, 350, 24, 'd'),
-    write([2, 'left'], '5 left', 330, 175, 30, 'r'), cross([2, 'but'], 290, 155, 80, 40),
+    write([2, 'left'], 'count 5?', 340, 175, 30, 'r'), cross([2, 'but'], 278, 155, 124, 40),
     write([2, '3'], 'Ana ate 3/8', 470, 230, 30, 'y'),
     write([2, 'each'], 'Ben ate 5/8', 470, 280, 30, 'y'),
   ],
