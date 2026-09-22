@@ -44,7 +44,7 @@ it("every line a lesson speaks has a clip in its lesson's voice, or is queued to
   expect(lines).toBeGreaterThan(8000)   // positive control: the sweep is really reading the lessons
   expect(lost.slice(0, 10)).toEqual([])
   // Queued, not yet rendered and merged. Lower this as zips are merged; it must never grow without a corpus change.
-  expect(waiting.size).toBeLessThanOrEqual(5472)
+  expect(waiting.size).toBeLessThanOrEqual(4540)
 })
 
 it('every render row in content/voice is a line some lesson still says', () => {
