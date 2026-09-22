@@ -32,7 +32,7 @@ export const JOSH = 'nzFihrBIvB34imQBuxub'
  * one at a time). A module joins in the same PR that brings its Josh clips — its lines are queued for Kaggle from the
  * moment it is listed, and the PR is not merged until they are rendered, or it plays browser speech.
  */
-export const JOSH_MODULES = new Set(['g5m1', 'g3m1', 'g3m2', 'g3m3', 'g3m4', 'g3m5', 'g3m6', 'g4m1', 'g4m3', 'g4m2', 'g4m4', 'g4m5', 'g4m6', 'g5m2', 'g5m3', 'g5m5', 'g5m4', 'g5m6', 'g6m1', 'g6m4', 'g6m2', 'g6m3', 'g6m6', 'g6m5', 'g6m7', 'g7m2', 'g7m1', 'g7m3', 'g7m5', 'g7m4', 'g8m1', 'g8m2', 'g8m3'])
+export const JOSH_MODULES = new Set(['g5m1', 'g3m1', 'g3m2', 'g3m3', 'g3m4', 'g3m5', 'g3m6', 'g4m1', 'g4m3', 'g4m2', 'g4m4', 'g4m5', 'g4m6', 'g5m2', 'g5m3', 'g5m5', 'g5m4', 'g5m6', 'g6m1', 'g6m4', 'g6m2', 'g6m3', 'g6m6', 'g6m5', 'g6m7', 'g7m2', 'g7m1', 'g7m3', 'g7m5', 'g7m4', 'g8m1', 'g8m2', 'g8m3', 'g8m5'])
 
 /**
  * A new-flow lesson's voice: Josh for a JOSH_MODULES module, else Stevie for Grades 6–8 and Teddy for Grades 3–5. The SAME
