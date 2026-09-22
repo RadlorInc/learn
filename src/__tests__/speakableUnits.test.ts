@@ -11,3 +11,15 @@ describe('speakable units', () => {
     ['0.1 L', '0.1 liters'],
   ])('%s', (t, said) => expect(speakable(t)).toBe(said))
 })
+
+// A number times a letter is two words ("3x" was left for the voice to guess); 2²⁰ is not "2 squared⁰".
+describe('speakable algebra', () => {
+  it.each([
+    ['Take 2x away from 5x.', 'Take 2 x away from 5 x.'],
+    ['15 plus 8c equals 63', '15 plus 8 c equals 63'],
+    ['Count by 5s.', 'Count by 5s.'],
+    ['the 2nd one', 'the 2nd one'],
+    ['4²', '4 squared'],
+  ])('%s', (t, said) => expect(speakable(t)).toBe(said))
+  it('leaves a longer superscript for a say row', () => expect(speakable('2²⁰')).not.toContain('squared'))
+})
