@@ -105,3 +105,24 @@ export async function foreignKeys(db: PGlite): Promise<Fk[]> {
   `)
   return rows
 }
+
+/**
+ * A GRANTED CONSENT, WHICH IS NOW THE ONLY WAY A CHILD CAN COME INTO EXISTENCE.
+ *
+ * ⚠️ WHY THE FIXTURES CALL THIS INSTEAD OF DISABLING THE TRIGGER. Six suites create a learner while
+ * testing something else entirely, and the cheap repair when the consent gate landed would have
+ * been to switch the trigger off for them. That would make every one of those suites run against a
+ * schema production does not have — the exact "fixture invents the schema" failure that cost five
+ * red commits on main in `adminMetrics.test.ts`. They create a real consent instead, because that
+ * is what the application will do.
+ */
+export async function grantedConsent(db: PGlite, parentId: string): Promise<string> {
+  const { rows } = await db.query<{ id: string }>(`
+    insert into public.parental_consents
+      (parent_id, method, state, notice_version, privacy_version, terms_version,
+       email_address, confirmed_at)
+    values ('${parentId}', 'email_plus', 'granted', 'notice-v1', 'privacy-v1', 'terms-v1',
+            'fixture@x.test', now())
+    returning id`)
+  return rows[0].id
+}

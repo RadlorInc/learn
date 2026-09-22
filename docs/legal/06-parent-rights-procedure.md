@@ -17,11 +17,11 @@ You can ask us for a copy of everything we have collected from your child. We wi
 
 ### 2. Correct it
 
-If something is wrong — your child's name, their grade level — you can change it yourself at [PLACEHOLDER — in-app path], or ask us.
+**Email us at support@radlor.com and we will correct it.** The app does not yet let you edit a child's name or grade yourself. [PLACEHOLDER — replace this with the in-app path once an edit function exists.]
 
 ### 3. Delete it
 
-You can ask us to delete your child's information. We will delete it from our live systems within 10 days. Copies in our backups disappear when those backups expire, within [PLACEHOLDER — number] days, and we never restore a deleted child's record from a backup.
+You can ask us to delete your child's information. We will delete it from our live systems within 10 days. Copies in our backups disappear when those backups expire, within 30 days, and we never restore a deleted child's record from a backup.
 
 ### 4. Withdraw your permission
 
@@ -33,13 +33,13 @@ You can withdraw the permission you gave us. If you do, we stop collecting anyth
 
 ### How to make a request
 
-**In the app:** [PLACEHOLDER — exact path]
+**In the app:** parent dashboard → your child's card → **Login & data** → *Download a copy* or *Delete this profile*. To delete everything: **Account → Close your account**, which asks you to type your email address to confirm and requires a recent sign-in.
 **By email:** support@radlor.com, from the email address on the account
 **By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
-**How we check it's really you.** Before we show or delete anything, we confirm the request came from the parent on the account. We will [PLACEHOLDER — describe the verification step actually used, e.g. send a confirmation link to the account email]. We ask for this to protect your child — it stops anyone else getting their information. We will not ask you for a government ID or any sensitive document to make a routine request.
+**How we check it's really you.** Before we show or delete anything, we confirm the request came from the parent on the account. We will send a confirmation link to the email address on the account, and act only once you click it. Deleting an account inside the app additionally requires you to have signed in within the last ten minutes. We ask for this to protect your child — it stops anyone else getting their information. We will not ask you for a government ID or any sensitive document to make a routine request.
 
-**If we can't help.** If we refuse a request, we will tell you why, in writing. [PLACEHOLDER — state whether there is an appeal route, and what it is.]
+**If we can't help.** If we refuse a request, we will tell you why, in writing. **You can appeal.** Reply to our refusal, or write to support@radlor.com saying you want the decision reviewed. A different person from the one who refused it will look at it again and reply within 10 days.
 
 **Questions:** support@radlor.com
 
@@ -49,7 +49,7 @@ You can withdraw the permission you gave us. If you do, we stop collecting anyth
 
 ## B1. Intake
 
-Every request is logged the day it arrives with: date received, requester email, child profile concerned, type of request, the deadline date, and the person handling it. [PLACEHOLDER — where the log lives.]
+Every request is logged the day it arrives with: date received, requester email, child profile concerned, type of request, the deadline date, and the person handling it. The log lives in Radlor Ops, which is a separate system from the one holding children's data.
 
 ## B2. Verify the requester
 
@@ -64,9 +64,9 @@ Every request is logged the day it arrives with: date received, requester email,
 
 | Request | Steps | Target |
 |---|---|---|
-| **See the data** | Export from [PLACEHOLDER — table list] for that child only. Check that no other family's data is in the export before sending. Send by [PLACEHOLDER — method]. | 10 days |
+| **See the data** | Export the child's rows from `learners`, `learner_access`, `lesson_progress`, `point_events`, `learner_stats`, `learner_events`, `lesson_feedback`, `game_settings` and `error_events` — that last one is easy to forget and holds a crash record tagged with the child. Check that no other family's data is in the export before sending. Send by [PLACEHOLDER — method]. | 10 days |
 | **Correct** | Apply the change; confirm by email. | 10 days |
-| **Delete** | Hard delete the child's rows from [PLACEHOLDER — exact table list]. Then re-query for the child's identifier across every table in that list and confirm zero rows return. Confirm by email. | 10 days |
+| **Delete** | Hard delete the child's rows from `learners`, `learner_access`, `lesson_progress`, `point_events`, `learner_stats`, `learner_events`, `lesson_feedback`, `game_settings` **and `error_events`** — crash records carry the child's identifier but have no database link, so they do not disappear on their own and must be deleted by hand until that is fixed. Then re-query for the child's identifier across every table in that list and confirm zero rows return. Confirm by email. | 10 days |
 | **Withdraw consent** | Delete as above for **every** child on the account, mark the consent record as withdrawn with a timestamp, close the account, stop all collection, cancel the subscription and issue the pro-rata refund. Confirm by email, stating the refund amount. | 10 days |
 | **Remove one child** (account continues) | Delete that child's rows only, verify as above, leave the subscription and the other profiles untouched. Confirm by email. | 10 days |
 
@@ -84,7 +84,7 @@ All of these must route to the same log — a request does not have to use the o
 - support@radlor.com
 - any reply to a Radlor email
 - post
-- [PLACEHOLDER — any other channel, e.g. app store reviews, social media DMs]
+- No other channel today. When the product reaches an app store, or a social account starts taking messages, that channel must be added here and to the intake routine on the same day it opens — a request does not stop being a request because it arrives somewhere we were not watching.
 
 ---
 
@@ -93,6 +93,7 @@ All of these must route to the same log — a request does not have to use the o
 0. **Adopted rule, flagged for your view.** Radlor has decided that withdrawing consent closes the entire account, including any other children on it, with a pro-rata refund. The refund half is straightforwardly good. The all-or-nothing half has a downside worth naming: a parent who wants to remove one child has to end the other child's learning too, which reads as a penalty for exercising a privacy right. The *Remove this child* path above is the mitigation — provided the product actually builds it and the interface makes it at least as easy to find as the withdrawal button. Please advise whether the all-or-nothing rule creates any exposure, particularly if the two paths are not equally prominent.
 1. Please set the response deadlines. COPPA and several state statutes impose different timelines; we would like a single internal deadline that satisfies the strictest.
 2. Please confirm the verification method in B2 is sufficient and not excessive.
-3. Please advise whether we must offer the "refuse third-party disclosure but keep using the service" option, and if so where it belongs.
+3. The vendor review found that **no third party receives a child's information** — only our own database and hosting providers, acting on our instructions. Please confirm that removes the need for a "refuse third-party disclosure" option.
+6. **A known defect, being fixed:** crash records carry a child's identifier with no database link, so they survive the child's deletion. Three such orphans already exist. Until it is fixed, the deletion procedure above deletes them by hand. Please tell us whether anything more is needed.
 4. Please advise on appeal rights, which several state privacy statutes require.
 5. Please confirm what we are obliged to retain about a request after completing it.

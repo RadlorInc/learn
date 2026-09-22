@@ -4,7 +4,9 @@
 > This document must not render as a live page while any `[PLACEHOLDER — ...]` remains unresolved.
 > Structure: **the parent is the account holder and the only party to this contract. The child is not.** That single decision fixes the age contradiction that ordinary consumer terms fall into when the actual user is a child.
 
-> **Milo is free during the soft launch (decision of 22 Sep 2026).** Before publishing, Section 5 must be replaced with a short statement that the Service is currently provided free of charge, that no payment is taken, and that paid plans will be introduced with notice and separate terms. The full Section 5 below is kept for that day. Do not publish auto-renewal terms for a product that charges nothing.
+> **Written for the paid product.** Payment is expected within days of the soft launch (Rafi, 22 Sep 2026), so this document assumes paid subscriptions throughout and does not carry a free-tier variant.
+>
+> One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
 
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Milo

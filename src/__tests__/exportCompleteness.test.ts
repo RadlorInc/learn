@@ -58,6 +58,11 @@ const EXPORTED: Record<string, string> = {
 
 /** Deliberately out, each with the reason it is out. Adding to this list is a decision. */
 const EXCLUDED: Record<string, string> = {
+  // The record of the ADULT's consent — their email, the versions they were shown, when they
+  // confirmed. It covers a child but is not data the child produced, and it holds the parent's own
+  // contact address. A parent reads it directly (RLS: parent_id = auth.uid()); folding it into a
+  // child-data export would put an adult's email inside a file about a seven-year-old.
+  parental_consents: 'the adult\'s own consent record, readable directly by them; not child data',
   // Crash telemetry, not child work. RLS on with zero policies, so a parent CANNOT read it even
   // with their own token — exporting it would need the service-role key and a second access path.
   // Pruned at 90 days, and its learner_id gains an ON DELETE SET NULL fkey in Stage 1.

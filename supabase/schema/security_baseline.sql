@@ -71,6 +71,10 @@
 --                                                  learner_access row; INSERT (4 data columns only) for the child's
 --                                                  OWN 'self' login, into their class, for an exercise that is OPEN.
 --                                                  No update/delete for anyone.
+--   parental_consents          rls=t  policies=3   2026-09-23 (20260923120000): SELECT/INSERT/UPDATE for
+--                                                  the adult who gave it (parent_id = auth.uid()). NO DELETE
+--                                                  policy and none intended: a withdrawn consent is evidence
+--                                                  and is kept as state='withdrawn'. anon has no grant.
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
 --                                                  only) for the learner's creator or a learner_access row. Reasons
 --                                                  are a fixed list (check constraint), no free text. No update/delete.

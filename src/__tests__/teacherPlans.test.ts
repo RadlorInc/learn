@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema } from './_schema'
+import { loadSchema, grantedConsent } from './_schema'
 
 const PAID = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'      // a paid teacher
 const FREE = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'      // a free teacher (no row)
@@ -22,8 +22,8 @@ beforeAll(async () => {
   await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ${users}`)
   await db.exec(`insert into public.teacher_plans (teacher_id, paid) values ('${PAID}', true)`)
   for (const [teacher, kid] of [[PAID, KID_OF_PAID], [FREE, KID_OF_FREE]]) {
-    const l = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by)
-      values ('Kid', 0, '9-11', '${teacher}') returning id`)).rows[0].id
+    const l = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id)
+      values ('Kid', 0, '9-11', '${teacher}', '${await grantedConsent(db, teacher)}') returning id`)).rows[0].id
     await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${l}', '${kid}', 'self')`)
   }
 }, 120_000)

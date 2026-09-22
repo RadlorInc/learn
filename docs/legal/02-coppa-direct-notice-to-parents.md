@@ -1,12 +1,16 @@
 # Direct Notice to Parents
 
 > **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY BEFORE PUBLICATION.**
-> This document must not render as a live page or be sent to any parent while any `[PLACEHOLDER — ...]` remains unresolved.
+> **The body of this notice — everything between "Screen / email title" and "Contact us" — is finished and contains no placeholders. It can be built.** The only open item is the version date in the header, which is set on the day it first goes live.
+>
+> **Two checks before it is shown to a parent, both of which can invalidate it:**
+> 1. Re-read the "How we protect it" paragraph against the Information Security Program that day. Every claim in it must still be implemented. A security claim that has quietly stopped being true is worse than no claim.
+> 2. Confirm the third-party paragraph is still accurate — in particular that the crash-forwarding setting is not sending children's identifiers to an unnamed recipient.
 > This is the notice COPPA requires us to give a parent **directly**, before we collect anything at all from their child. It is separate from, and shorter than, the Privacy Policy. It is delivered on screen during sign-up and again by email.
 
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Milo
-**Version:** [PLACEHOLDER — version and date]
+**Version:** v1 — [PLACEHOLDER — date, set on the day this is first shown to a parent. Every consent record stores the version the parent actually saw, so this number must change whenever the body below changes.]
 
 ---
 
@@ -26,7 +30,8 @@ You are setting up an account for a child under 13. United States law (the Child
 | The avatar you pick for your child | So your child recognises their own profile | Required — chosen from a set we provide; it is not a photograph |
 | Grade level | To give your child work at the right level | Required |
 | Answers to maths questions, scores, and progress | This is the product: it is how the app decides what to teach next and how it shows you progress | Required |
-| Basic technical information from the device — [PLACEHOLDER — list exactly: IP address, device or browser type, session identifier, cookies or local storage keys] | To keep the app working, keep the account secure, and keep your child signed in | Required for the app to function |
+| Basic technical information from the device — a sign-in token kept on the device; a per-tab marker of which child's profile is in use; an internal identifier for the child, which appears on every progress and event record; a random identifier per event, used to avoid duplicates; the device's IP address and browser type, and an approximate location — city, region and country — derived from the IP address by our hosting and database providers, who record it for every request; and, if the app crashes, the page being viewed and the browser type. We set no cookies | To keep the app working, keep the account secure, and keep your child signed in | Required for the app to function |
+| A small number of product events, such as a lesson starting | So we can see which parts of the app are used. Tied to an internal identifier, not a name; deleted after 90 days | Required |
 
 **We do not ask your child for:** a last name, an email address, a phone number, a home address, a photograph, a voice recording, or their exact location.
 
@@ -34,7 +39,7 @@ You are setting up an account for a child under 13. United States law (the Child
 
 We use this information only to run Milo for your child: to teach, to track progress, to show you reports, and to keep the service secure and working. 
 
-[PLACEHOLDER — Radlor must state here, truthfully and specifically, whether any of the child's information is disclosed to any third party, and if so to whom and for what purpose. The list of service providers in the Subprocessors document must match this statement exactly. If nothing about the child is disclosed to anyone beyond our service providers acting on our instructions, say that.]
+**Nothing about your child is given to any other company for that company's own purposes.** The only outside companies involved at all are the ones that run our systems for us — the database that stores the information and the hosting service that delivers the app — and they act only on our instructions. Every one of them is listed at https://adaptivelearn.radlor.com/legal/subprocessors. There is no analytics company, no advertising company, and no artificial-intelligence service that receives anything your child types or says.
 
 **We do not:**
 - sell your child's information;
@@ -57,9 +62,8 @@ At any time, you can:
 - **See** everything we hold about your child;
 - **Delete** your child's information;
 - **Withdraw your consent** and stop any further collection — if you do, we will delete what we hold and your child will no longer be able to use the app;
-- **Refuse** to let us disclose your child's information to third parties while still letting your child use the parts of the app that do not require it [PLACEHOLDER — this sentence applies only if any third-party disclosure actually occurs; delete it if not].
 
-To do any of these, [PLACEHOLDER — exact mechanism: in-app path AND email address]. We will verify that the request comes from you before we act on it, and we will complete the request within [PLACEHOLDER — number] days.
+To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.
 
 ### How long we keep it
 
@@ -67,7 +71,7 @@ We keep your child's information only as long as we need it to provide the servi
 
 ### How we protect it
 
-[PLACEHOLDER — one or two sentences summarising the security measures actually in place, drawn from the Information Security Program document. Do not describe a control that is not implemented.]
+Every connection to Milo is encrypted, the database enforces rules so that one family's records cannot be read by another, and the keys that would allow broad access are never sent to a browser.
 
 ### Full details
 
@@ -93,7 +97,7 @@ support@radlor.com
 
 1. **Content of direct notice.** Please confirm this notice contains every element required by 16 CFR § 312.4(b)/(c) as amended in 2025, including the notice that the parent's consent is required, the means of giving it, and the statement about what happens if consent is not given.
 2. **Separate consent for disclosure.** The amended Rule requires separate verifiable parental consent before disclosing a child's personal information to a third party, unless the disclosure is integral to the service. Please advise whether any current vendor relationship triggers that requirement, and whether the notice needs a second, distinct consent control.
-3. **Which technical identifiers are "personal information."** Persistent identifiers used for support of internal operations are treated differently. Please review the technical list once the engineering team confirms the exact identifiers in use.
+3. **Which technical identifiers are "personal information."** The list is now measured rather than assumed. Two items deserve your attention: our database provider's own platform logs record the IP address, browser and an IP-derived city/region/country for every request a child's device makes; and we keep a small number of first-party product events tied to a child's internal identifier, deleted after 90 days. Please advise how each should be characterised, and whether the support-for-internal-operations exception covers them.
 4. **Delivery.** Please confirm the combination of on-screen notice plus email satisfies the "direct notice" requirement, and advise on record-keeping of consents.
 5. **Age gate.** Please advise on how the product should establish that the user is under 13, and what happens for users aged 13–17, who fall outside COPPA but inside several state privacy statutes.
 6. **Language.** The product ships in English and Spanish, and gates every string on having a Spanish version. That means this notice, the consent screens, the Privacy Policy and the Parent Rights page all have to exist in Spanish too. Consent is only meaningful if the parent giving it can read what they are agreeing to. The Spanish text currently in the product was translated by the engineering agent and has not been reviewed by anyone who speaks Spanish. Please advise on the standard we need to meet, and note that translation review is a real line item, not a formality.

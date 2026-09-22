@@ -68,7 +68,7 @@ Questions: support@radlor.com
 - One click, no sign-in, no questions, no "tell us why" before it takes effect.
 - Effective immediately in practice.
 - The suppression list is permanent — re-adding an address requires the person to opt in again themselves.
-- [PLACEHOLDER — where the suppression list lives and which system enforces it.]
+- **Resend delivers every email**, configured as the SMTP relay behind the authentication service's mailer, so the suppression list belongs there. [PLACEHOLDER — no suppression list or unsubscribe mechanism exists yet, because only authentication emails are sent today and those are transactional. It must be built before the first commercial email, not after.] Before any send to more than one person, confirm the list is applied by looking for a known unsubscribed address in the prepared send and seeing it absent.
 
 ---
 

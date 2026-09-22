@@ -5,14 +5,14 @@
 
 ---
 
-> **Soft launch is free (decision of 22 Sep 2026), and that removes one of the two consent paths.**
+> **Build both paths. Payment is expected within days of the soft launch (Rafi, 22 Sep 2026), so Path A is the main route — but Path B is not optional.**
 >
-> Verifiable consent by payment card works because a card transaction notifies the account holder. **No payment, no card path.** During the free soft launch, **Path B (email-plus) is not a fallback — it is the only consent method available**, and everything in Path A is dormant until paid plans exist.
+> Verifiable consent by payment card works because the card transaction notifies the account holder. It therefore covers only children whose parent has actually paid. Path B (email-plus) covers everyone else: a parent who signs a child up before paying, during a trial, or in any window where no charge has been made.
 >
-> Two consequences follow, and both are hard requirements rather than preferences:
+> **Whichever path a child arrives through, a consent record must exist before any field about that child is written.** Two standing requirements:
 >
-> 1. **Email-plus is only permissible where the child's information is not disclosed to third parties.** That is no longer a footnote to check later — the entire consent basis for the soft launch rests on it. The vendor review in document 07 has to be finished, and come back clean, before a single child signs up.
-> 2. **Build Path B properly, not as a placeholder.** It was the secondary path when this was drafted. It is now the whole mechanism.
+> 1. **Email-plus is only permissible where the child's information is not disclosed to third parties.** The vendor review in document 07 has to be finished, from the code, and come back clean before Path B can be relied on for a real child.
+> 2. **Path B is a real mechanism, not a stub.** Any gap between sign-up and first payment is exactly the window where a child has no card-based consent behind them.
 
 ## Flow overview
 

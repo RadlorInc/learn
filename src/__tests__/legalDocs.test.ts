@@ -287,6 +287,15 @@ describe('the terms still agree with the schema they were written against', () =
       // Adult-to-adult authorisation rather than data about the child — §5, not §6.
       learner_access:      'You may invite another parent or guardian',
       learner_invites:     'You may invite another parent or guardian',
+      /**
+       * ⚠️ MAPPED TO §2, NOT §6, AND IT NEEDS A SENTENCE BEFORE IT SHIPS. This table records the
+       * ADULT's consent — the versions they saw and when — so it belongs with the consent clause
+       * rather than the list of what a child produces. But §2 currently describes GIVING consent,
+       * not that we keep a record of it, and that record holds the parent's email address. The
+       * Terms should gain an explicit sentence when this table reaches production; it is flagged
+       * rather than written here because this task does not change published legal copy.
+       */
+      parental_consents:   'you consent to us collecting and using the child\'s information',
     }
     const childTables = new Set<string>()
     for (const m of migrationSql.matchAll(/create table (?:if not exists )?public\.([a-z_]+)\s*\(([\s\S]*?)\n\);/g)) {

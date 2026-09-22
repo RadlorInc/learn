@@ -15,7 +15,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, foreignKeys, type Fk } from './_schema'
+import { loadSchema, foreignKeys, type Fk, grantedConsent } from './_schema'
 import { SURVIVORS } from '@/core/accountDeletion'
 
 const A = '000000a1-0000-4000-8000-000000000000'   // family A — the one being deleted
@@ -106,6 +106,16 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.teacher_plans':            `public.teacher_plans where teacher_id = '${uid}'`,
     'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
     'public.lesson_feedback':          `public.lesson_feedback where learner_id in (${ls})`,
+    /**
+     * ⚠️ AND THIS ONE IS A DECISION, NOT A MAPPING — flag it to the attorney before it ships.
+     * `parental_consents.parent_id` cascades from auth.users, so closing an account destroys the
+     * ONLY evidence that consent was ever given or withdrawn. That is what "delete everything we
+     * hold about you" promises and what the Privacy Policy says today, so it is what the schema
+     * does; but COPPA record-keeping usually wants the opposite, and squaring the two needs an
+     * anonymised consent log plus a sentence in the policy. Neither exists, so nothing here
+     * pretends otherwise.
+     */
+    'public.parental_consents':        `public.parental_consents where parent_id = '${uid}'`,
   }
   const out: Record<string, number> = { 'auth.users': await count(db, `auth.users where id = '${uid}'`) }
   for (const t of tables) {
@@ -137,7 +147,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       -- ⚠️ Triggers on public.learners already create the owner's learner_access row and the
       -- learner_stats row. Inserting them by hand is a duplicate-key error, and it is also how you
       -- find out the triggers are in the schema being tested.
-      insert into public.learners (id, display_name, created_by, age_group) values ('${l}', 'Kid', '${uid}', '3-5');
+      insert into public.learners (id, display_name, created_by, age_group, consent_id) values ('${l}', 'Kid', '${uid}', '3-5', '${await grantedConsent(db, uid)}');
       insert into public.learner_state (learner_id) values ('${l}');
       insert into public.lesson_progress (learner_id, lesson_id, done) values ('${l}', 'g3m2-t1', true);
       insert into public.point_events (learner_id, reason, lesson_id, points) values ('${l}', 'lesson_done', 'g3m2-t1', 10);
@@ -309,8 +319,12 @@ describe('deleting an account removes its children\'s logins, and nothing else',
     await db.exec(`
       insert into auth.users (id, email, email_confirmed_at) values
         ('${C1}', 'kid1@learner.adaptivelearn.invalid', now()), ('${C2}', 'kid2@learner.adaptivelearn.invalid', now()),
-        ('${V}', 'coparent@example.com', now()), ('${D}', 'other@example.com', now());
-      insert into public.learners (id, display_name, created_by, age_group) values ('${LD}', 'D kid', '${D}', '3-5');
+        ('${V}', 'coparent@example.com', now()), ('${D}', 'other@example.com', now());`)
+    // D's consent cannot be created until D's auth.users row exists, and an await inside the
+    // template above would have run first — see the same trap in lessonPoints.test.ts.
+    const dConsent = await grantedConsent(db, D)
+    await db.exec(`
+      insert into public.learners (id, display_name, created_by, age_group, consent_id) values ('${LD}', 'D kid', '${D}', '3-5', '${dConsent}');
       insert into public.learner_access (learner_id, parent_id, access_role) values
         ('${LA}', '${C1}', 'self'), ('${LB}', '${C2}', 'self'), ('${LA}', '${V}', 'viewer'), ('${LA}', '${D}', 'self');
     `)

@@ -1,75 +1,84 @@
 # Data Retention and Deletion Policy
 
 > **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY.**
-> This is an **internal** written policy. The amended COPPA Rule requires operators to maintain a written data retention policy for children's personal information, and to publish the retention practice in the online privacy notice. A short public summary drawn from this document belongs in the Privacy Policy; this full document stays internal.
-> **Nothing in this policy is true until it is implemented.** Do not adopt a retention period that no job actually enforces. Every period below needs a scheduled deletion job, and that job must be watched deleting a real test record before it is believed.
+> Internal policy. The amended COPPA Rule requires a written retention policy for children's personal information, and requires the retention practice to be published in the online privacy notice.
+> **Every period below is marked as either enforced by a job that has been watched working, or not enforced.** A period written here that no job enforces would be a published claim that is false, which is worse than having no policy.
 
-**Owner:** [PLACEHOLDER — named person responsible]
+**Owner:** Rakif [PLACEHOLDER — full name, for the record]
 **Adopted:** [PLACEHOLDER — date]
 **Review cycle:** [PLACEHOLDER — e.g. annually, and on any material change to the product]
+**Facts in this document were measured on 22 September 2026.**
 
 ---
 
 ## 1. Principle
 
-We keep children's personal information only for as long as it is reasonably necessary to provide the service for which it was collected. We do not keep it indefinitely, and we do not retain it for any secondary purpose.
+We keep children's personal information only for as long as it is reasonably necessary to provide the service for which it was collected. We do not keep it indefinitely and we do not retain it for any secondary purpose.
 
 ## 2. Retention schedule
 
-| Data | Where it lives | Retained for | Then |
+| Data | Where it lives | Retained for | Enforced? |
 |---|---|---|---|
-| Child profile — first name/nickname, grade level | [PLACEHOLDER — table name] | While the account is active, plus [PLACEHOLDER — number] days after the account closes or consent is withdrawn | Hard delete |
-| Learning events — answers, scores, progress, chosen topics | [PLACEHOLDER — table names] | [PLACEHOLDER — number] months rolling | Hard delete, or reduce to a non-identifying aggregate that cannot be linked back to a child |
-| Parent account — name, email, billing reference | [PLACEHOLDER — table name] | While the account is active, plus [PLACEHOLDER — number] days | Hard delete, except records that must be kept under Section 4 |
-| Consent records — method, timestamp, document versions | [PLACEHOLDER — table name] | [PLACEHOLDER — period advised by the attorney] | Retain as evidence of compliance, then delete |
-| Payment records held by us (never card numbers) | [PLACEHOLDER — table name] | [PLACEHOLDER — period; tax and accounting rules will set a floor] | Archive per accounting policy |
-| Server and application logs containing IP addresses or session identifiers | [PLACEHOLDER — where] | [PLACEHOLDER — number] days | Automatic rotation and deletion |
-| Backups | [PLACEHOLDER — provider and location] | [PLACEHOLDER — number] days rolling | Automatic expiry |
-| Support correspondence with parents | [PLACEHOLDER — where] | [PLACEHOLDER — number] months | Delete |
+| Product events — session starts and similar | `learner_events` | **90 days**, rolling | **Yes.** Nightly job `purge-old-learner-events`, 03:17. Watched deleting real rows |
+| Old diagnostic answers | diagnostic item tables | **90 days** | Yes. Job `prune-diagnostic-items`, 03:22. Has not yet had a row old enough to delete |
+| Crash records | `error_events` | **90 days** | Yes. Job `prune-error-events`, 03:27. Not yet exercised on a real row |
+| Adult email addresses captured before sign-up | `diagnostic_leads` | **24 months** | Yes. Job `prune-diagnostic-leads`, 03:32. First deletion falls due in 2028 |
+| Child profile — first name, avatar, age band, grade | `learners`, `learner_access` | Until the account or the profile is deleted | **No scheduled job.** Deletion is by parent request only |
+| Lesson progress, points, statistics, feedback | `lesson_progress`, `point_events`, `learner_stats`, `lesson_feedback`, `game_settings` | Until the account or the profile is deleted | **No scheduled job** |
+| Parent account | `auth.users`, `profiles`, `parent_pins` | Until the account is deleted | **No scheduled job** |
+| Sign-in events | `auth_events` | Currently kept indefinitely | **No scheduled job** |
+| Live sessions, including IP address and browser | `auth.sessions` | Until the session expires | Provider-managed |
+| Provider request logs — IP address, browser, IP-derived city/region/country, account id | Our database provider's own platform logs | **Unknown.** The project is 20 days old and nothing has aged out, so "kept indefinitely" cannot yet be distinguished from "kept at least 20 days" | **Outside our jobs entirely** |
+| Hosting request and console logs | Hosting provider | [PLACEHOLDER — the provider's retention for this plan could not be read from the API; confirm from the dashboard or the provider's documentation] | Provider-managed |
+| Backups | Encrypted build artifact, 30-day expiry by design | **No backup exists today.** See Section 6 | **Broken** |
+| Support correspondence with parents | Email | [PLACEHOLDER — number] months | Not automated |
 
-> [PLACEHOLDER — Radlor must complete this table with the real table names and real periods. A period written here that is not enforced by a job is worse than no policy, because it is a published claim that is false.]
+**Consent records: there is no consent table.** Nothing in the system records that an adult agreed, to what, or when. Until that exists there is no retention period to state, and the row that belongs here cannot be written. See the Security Program and document 16.
 
 ## 3. Deletion on request
 
-A parent may ask us to delete their child's information at any time, and may withdraw consent at any time. Either request triggers deletion under the Parent Rights procedure, which runs ahead of the schedule above. Target: complete within [PLACEHOLDER — number] days of verifying the requester.
+A parent may ask us to delete their child's information at any time, and may withdraw consent at any time. Either request triggers deletion under the Parent Rights procedure, ahead of the schedule above. Target: complete within 10 days of verifying the requester.
+
+**Known defect — deletion is not yet complete.** Crash records carry a child's internal identifier with no database link back to the child, so they do not disappear when the child is deleted. Three such records already point at children who no longer exist, each holding the page they were on and their browser type. Until that link is added, "we delete your child's data" is not fully true, and a parent asking for deletion would have it honoured everywhere except here. This must be fixed before the Parent Rights page is published.
 
 ## 4. When we keep something longer
 
-We keep information past its scheduled deletion only where we must:
+We keep information past its scheduled deletion only where we must: to comply with a legal obligation including tax and accounting record-keeping; to establish, exercise or defend a legal claim; to resolve a dispute or enforce our agreements; or to maintain security, where a limited log is necessary. Where we do, we keep the narrowest record necessary and delete it as soon as the reason ends. Every such hold is recorded with its reason and expected end date.
 
-- to comply with a legal obligation, including tax and accounting record-keeping;
-- to establish, exercise or defend a legal claim;
-- to resolve a dispute or enforce our agreements;
-- to maintain the security of the service, where a limited security log is necessary.
+## 5. Backups and the provider's own logs
 
-Where we do this, we keep the narrowest record necessary and delete it as soon as the reason ends. Any such hold must be recorded, with the reason and the expected end date.
+Two things sit outside our deletion jobs, and both must be described honestly to parents rather than glossed:
 
-## 5. Backups
+**Backups.** Deleting a record from the live database does not remove it from a backup. Backups are designed to expire after 30 days, so a deleted record can survive in a backup for up to that long. We never restore a deleted child's record from a backup. *(Today there is no backup at all — see Section 6 — so this paragraph describes the intended state, not the current one.)*
 
-Deleting a record from the live database does not remove it from backups immediately. Backups expire on the rolling schedule above. Where a parent asks for deletion, we delete from live systems immediately and the backup copy disappears when that backup expires. We do not restore a deleted child's record from backup.
-
-[PLACEHOLDER — confirm this description matches how backups actually behave on the current provider, and state the maximum window between a live deletion and the last backup copy expiring.]
+**The database provider's platform logs.** These record the IP address, browser type and an IP-derived approximate location for every request, including requests made by children's devices. They are the provider's own logs, not our tables, and none of our deletion jobs reach them. [PLACEHOLDER — establish the provider's retention period for these logs and state it here; if it is configurable, configure it.]
 
 ## 6. How this is enforced
 
 | Control | Mechanism | Evidence it works |
 |---|---|---|
-| Scheduled deletion of expired learning events | [PLACEHOLDER — job name and schedule] | [PLACEHOLDER — where the run log is] |
-| Deletion on parent request | Parent Rights procedure | [PLACEHOLDER — ticket log] |
-| Log rotation | [PLACEHOLDER] | [PLACEHOLDER] |
-| Annual review of this policy | Owner named above | [PLACEHOLDER] |
+| Deletion of expired product events | `purge-old-learner-events`, nightly 03:17 | **Proven** — a run reported deleting real rows. 19 runs since 4 September, no failures |
+| Deletion of expired diagnostic answers, crash rows, lead emails | Three further nightly jobs | Active, no failures, but none has yet had a row old enough to delete — so each is *scheduled* rather than *proven* |
+| Deletion on parent request | Parent Rights procedure | The parent-request log in Radlor Ops |
+| Backups | Nightly encrypted artifact | **FAILING.** Succeeded 14 times to 9 September, then failed **13 consecutive nights** because three of four required secrets are missing. Independently confirmed: zero backup artifacts exist. **There is no restorable copy of this database today** |
+| Annual review of this policy | Owner named above | [PLACEHOLDER — where the review is recorded] |
 
-**Verification requirement:** before any deletion job is trusted, it must be watched deleting a seeded test record, and watched *not* deleting a record that is still in date. A job that reports "0 rows deleted" is only meaningful if we have first seen it delete something.
+**Verification requirement.** Before any deletion job is trusted it must be watched deleting a seeded test record, and watched *not* deleting a record still in date. A job reporting "0 rows deleted" means nothing until it has first been seen deleting something.
 
-## 7. Known gap — the purge cliff
+## 7. The purge cliff — resolved, and a separate question opened
 
-[PLACEHOLDER — Radlor should record here the current state of the historical event data and the planned rollup, so that the retention schedule above and the actual behaviour of the system do not contradict each other. A retention policy that is published while a known conflicting purge is pending is a compliance risk.]
+Earlier notes predicted that 520 rows, about 31% of the event history, would be destroyed on 27 September 2026. **That was wrong.** Measured: the table holds 233 rows, the oldest dates from 23 July, the first row ages out on 21 October, and the largest single night ahead removes one row. There is no cliff.
+
+But the same measurement raised something else. The roughly 1,677 rows recorded on 5 September are gone, and the nightly jobs account for only three of them. About 1,440 rows of children's behavioural history left the database by a route that could not be reconstructed — most likely a deliberate deletion around 17 September, though there is no audit trail to prove it. **There is no record of who deleted what, or when.** [PLACEHOLDER — Radlor should establish what happened and decide whether an audit trail on deletions is warranted. An operator who cannot say what happened to children's data is in a weak position if ever asked.]
+
+No aggregate or rollup table exists, so nothing preserves the numbers once a purge runs.
 
 ---
 
 ### Notes for the attorney reviewing this draft
 
-1. Please set the retention periods marked as placeholders, in particular the consent-record period.
-2. Please confirm what must be summarised in the public Privacy Policy under the amended Rule, and in what words.
-3. Please advise on the backup description in Section 5 — whether the "delete live now, backup expires later" model is acceptable and how it should be described to parents.
-4. Please advise whether de-identified aggregates derived from children's learning events may be retained indefinitely, and what standard of de-identification applies.
+1. Please set the retention periods still open, in particular for sign-in events and for the child profile and progress data, which currently have no scheduled deletion at all.
+2. Please advise how the database provider's own platform logs — IP, browser, approximate location, on every child request — must be described to parents.
+3. Please advise on Section 3's known defect: crash records that survive a child's deletion. We intend to fix it before publishing; please say whether anything more is required.
+4. Please confirm what must appear in the public Privacy Policy under the amended Rule, and in what words.
+5. Please advise whether de-identified aggregates derived from children's events may be retained indefinitely, and to what standard.

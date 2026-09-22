@@ -4,7 +4,7 @@
 > This document must not render as a live page while any `[PLACEHOLDER — ...]` remains unresolved.
 > Placeholders are to be filled by Radlor Inc., not by an AI assistant.
 
-> **DORMANT — Milo is free during the soft launch (decision of 22 Sep 2026).** Nothing is charged, so there is nothing to renew, cancel or refund, and this policy must **not** be published while that is true. Publishing a refund policy for a product that takes no money describes a service we do not offer. It is kept here, finished, so that it is ready the day paid plans launch — and on that day it must be published *before* the first payment is taken, not after. The price placeholders below stay empty until then.
+> **This policy must be published before the first payment is taken, not after.** A refund and cancellation policy that appears after money has changed hands is too late to have done its job.
 
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Milo
@@ -28,7 +28,7 @@ We offer two subscription plans:
 
 Prices are in US dollars and exclude any applicable sales tax. Sales tax, where it applies, is calculated at checkout.
 
-[PLACEHOLDER — state whether a free trial is offered. If a free trial is ever offered, this policy must be amended to add the trial length, the date of the first charge, and the amount of that charge, disclosed before the parent enrols.]
+**We do not offer a free trial.** If one is ever introduced, this policy must be amended first, to add the trial length, the date of the first charge and the amount of that charge — all disclosed to the parent before they enrol. Trials are where automatic-renewal law is strictest.
 
 ## 3. Automatic renewal
 
@@ -45,9 +45,9 @@ We will send you an acknowledgement after you subscribe that sets out the terms 
 
 You can cancel your subscription at any time, and cancelling is designed to take the same number of steps as subscribing.
 
-**Online, in the app:** Sign in → [PLACEHOLDER — exact in-app path, e.g. Account → Subscription → Cancel subscription]. The cancellation takes effect immediately upon confirmation and you will receive a confirmation email.
+**Online, in the app:** [PLACEHOLDER — there is no in-app cancellation today. A cancel path must exist before this policy is published: several state statutes require cancelling online to be as easy as subscribing, and a policy that names a path a parent cannot find is worse than one that does not offer it. Fill this in with the real path once it is built.]
 
-**By email:** Write to support@radlor.com. We will action the cancellation within [PLACEHOLDER — number of business days] business days of receipt and confirm by email.
+**By email:** Write to support@radlor.com. We will action the cancellation within 2 business days of receipt and confirm by email.
 
 **By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
@@ -74,7 +74,7 @@ In every case:
 - **Withdrawal of parental consent.** If you withdraw your permission for us to collect your child's information, we close the account and refund the unused part of your subscription, calculated from the date we action the withdrawal to the end of the period you have paid for. You are never charged for exercising a privacy right.
 - **Duplicate charges** are refunded in full.
 - **Charges after a valid cancellation** are refunded in full.
-- **Unauthorised charges made by a child** — if a child completed a purchase without your permission, contact us at support@radlor.com and we will [PLACEHOLDER — state the remedy].
+- **Unauthorised charges made by a child** — if a child completed a purchase without your permission, contact us at support@radlor.com and we will refund it in full. We will not ask you to justify the request.
 
 ## 6. Price changes
 
@@ -101,5 +101,6 @@ We do not currently offer a telephone contact.
 1. **State automatic renewal laws.** California's Automatic Renewal Law and equivalent statutes in New York and other states impose specific requirements on the pre-purchase disclosure, the affirmative consent, the post-purchase acknowledgement, the renewal reminder for longer terms, and the ease of online cancellation. Please confirm the drafting here satisfies every state where Radlor will have customers, and set the reminder and notice windows in Sections 3 and 6.
 2. **Federal negative option rule.** The FTC's amended Negative Option Rule ("click to cancel") was vacated by the Eighth Circuit in 2025. Please confirm the current federal position at the time of review, since the FTC has continued to pursue negative-option cases under Section 5 and ROSCA regardless.
 3. **ROSCA.** Please confirm the checkout flow satisfies the Restore Online Shoppers' Confidence Act — clear and conspicuous disclosure before obtaining billing information, express informed consent, and a simple cancellation mechanism.
-4. **Refund stance.** Section 5 offers two options. Please advise which is appropriate given the customer base and any state-specific refund rights.
+4. **Refund stance.** A 14-day satisfaction window has been adopted. Please confirm it against state-specific refund rights.
+5. **No in-app cancellation exists today.** Section 4 is deliberately left open rather than filled with a path that does not exist. Please tell us how much of a problem that is if the policy had to be published before the path is built — our assumption is that it must be built first.
 5. **Children and purchases.** Confirm whether any additional protections are needed given that the end users are children and the account holders are parents.
