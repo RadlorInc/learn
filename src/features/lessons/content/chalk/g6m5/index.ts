@@ -5,6 +5,10 @@ import { T2 } from './t2'
 import { T3 } from './t3'
 import { T4 } from './t4'
 import { T5 } from './t5'
+import { T6 } from './t6'
+import { T7 } from './t7'
+import { T8 } from './t8'
+import { T9 } from './t9'
 
 export const G6M5_CHALK: Record<string, (ChalkMark[] | undefined)[]> = {
   'g6m5-t1': T1,
@@ -12,4 +16,8 @@ export const G6M5_CHALK: Record<string, (ChalkMark[] | undefined)[]> = {
   'g6m5-t3': T3,
   'g6m5-t4': T4,
   'g6m5-t5': T5,
+  'g6m5-t6': T6,
+  'g6m5-t7': T7,
+  'g6m5-t8': T8,
+  'g6m5-t9': T9,
 }
