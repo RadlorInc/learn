@@ -1,315 +1,5 @@
 [
   {
-    "key": "f6hzkf",
-    "text": "You could add 40, ten times.",
-    "style": "B",
-    "chars": 28,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s2 b1"
-    ]
-  },
-  {
-    "key": "1rsuzmd",
-    "text": "That works. But it takes a while, and it's easy to lose count.",
-    "style": "B",
-    "chars": 62,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s2 b2"
-    ]
-  },
-  {
-    "key": "u45sg3",
-    "text": "Is there a faster way? Yes. It's in this chart of places.",
-    "style": "B",
-    "chars": 57,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s2 b3"
-    ]
-  },
-  {
-    "key": "fj08d3",
-    "text": "Slide a digit left and it's worth 10 times as much, slide it right and it's worth one tenth as much.",
-    "style": "B",
-    "chars": 100,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s3 b1 + g5m1-t1 bigIdea"
-    ]
-  },
-  {
-    "key": "r6wd8d",
-    "text": "Look at the places, from the right.",
-    "style": "B",
-    "chars": 35,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s4 b1"
-    ]
-  },
-  {
-    "key": "1h2vch6",
-    "text": "10 ones make 1 ten. 10 tens make 1 hundred. 10 hundreds make 1 thousand.",
-    "style": "B",
-    "chars": 72,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s4 b2"
-    ]
-  },
-  {
-    "key": "1sdn48o",
-    "text": "See the pattern? Each step to the left is 10 times as much.",
-    "style": "B",
-    "chars": 59,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s4 b3"
-    ]
-  },
-  {
-    "key": "s5dh3x",
-    "text": "Look at 40. The 4 is in the tens place.",
-    "style": "B",
-    "chars": 39,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s5 b1"
-    ]
-  },
-  {
-    "key": "2qhi2w",
-    "text": "Slide it one place to the left, into the hundreds. That's 400.",
-    "style": "B",
-    "chars": 62,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s5 b2"
-    ]
-  },
-  {
-    "key": "lrzbxw",
-    "text": "That's 10 times as much. So a carton holds 400 pencils.",
-    "style": "B",
-    "chars": 55,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s5 b3"
-    ]
-  },
-  {
-    "key": "12q1h2v",
-    "text": "Now go back the other way. One box is one tenth of a carton.",
-    "style": "B",
-    "chars": 60,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s6 b1"
-    ]
-  },
-  {
-    "key": "kdex4j",
-    "text": "Slide the 4 in 400 one place to the right, back to the tens. That's 40.",
-    "style": "B",
-    "chars": 71,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s6 b2"
-    ]
-  },
-  {
-    "key": "ia3usj",
-    "text": "So one tenth of 400 is 40 pencils.",
-    "style": "B",
-    "chars": 34,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s6 b3"
-    ]
-  },
-  {
-    "key": "rbphfx",
-    "text": "Here's the part people mix up.",
-    "style": "B+",
-    "chars": 30,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s7 b1 + g5m1-t2 s7 b1"
-    ]
-  },
-  {
-    "key": "bju0ms",
-    "text": "Ten times as much does not mean ADD 10.",
-    "style": "B+",
-    "chars": 39,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s7 b2"
-    ]
-  },
-  {
-    "key": "crgd4p",
-    "text": "That gives 50. Every digit slides one place to the left.",
-    "style": "B+",
-    "chars": 56,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s7 b3"
-    ]
-  },
-  {
-    "key": "uwkn3j",
-    "text": "Okay. Your turn.",
-    "style": "B",
-    "chars": 16,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s7 b4 + g5m1-t2 s7 b4"
-    ]
-  },
-  {
-    "key": "1m6caat",
-    "text": "Add 37 one thousand times? That would take all day.",
-    "style": "B",
-    "chars": 51,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s2 b1"
-    ]
-  },
-  {
-    "key": "14dc7m5",
-    "text": "There's a faster way. And it works for dividing too.",
-    "style": "B",
-    "chars": 52,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s2 b2"
-    ]
-  },
-  {
-    "key": "14ynwfb",
-    "text": "Each zero in 10, 100 or 1,000 slides every digit one place, left to multiply and right to divide.",
-    "style": "B",
-    "chars": 97,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s3 b1 + g5m1-t2 bigIdea"
-    ]
-  },
-  {
-    "key": "5jaec9",
-    "text": "Start with 10. It has one zero.",
-    "style": "B",
-    "chars": 31,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s4 b1"
-    ]
-  },
-  {
-    "key": "1cwmewk",
-    "text": "So 37 times 10 slides the 3 and the 7 one place to the left.",
-    "style": "B",
-    "chars": 60,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s4 b2"
-    ]
-  },
-  {
-    "key": "1cz4ejs",
-    "text": "The ones place is empty now, so a zero fills it. That's 370.",
-    "style": "B",
-    "chars": 60,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s4 b3"
-    ]
-  },
-  {
-    "key": "1a0kskd",
-    "text": "Now 100. It has two zeros, so the digits slide two places. That's 3,700.",
-    "style": "B",
-    "chars": 72,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s5 b1"
-    ]
-  },
-  {
-    "key": "epqnf9",
-    "text": "1,000 has three zeros, so they slide three places. That's 37,000.",
-    "style": "B",
-    "chars": 65,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s5 b2"
-    ]
-  },
-  {
-    "key": "105ql7z",
-    "text": "So the shop has 37,000 beads.",
-    "style": "B",
-    "chars": 29,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s5 b3"
-    ]
-  },
-  {
-    "key": "1oqmpmt",
-    "text": "Now go backwards. The shop shares 37,000 beads into 1,000 bags.",
-    "style": "B",
-    "chars": 63,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s6 b1"
-    ]
-  },
-  {
-    "key": "1ybi7wa",
-    "text": "1,000 still has three zeros. So every digit slides three places — this time to the right.",
-    "style": "B",
-    "chars": 89,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s6 b2"
-    ]
-  },
-  {
-    "key": "dmgdy5",
-    "text": "The zeros slide off the end. That's 37 beads in each bag.",
-    "style": "B",
-    "chars": 57,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s6 b3"
-    ]
-  },
-  {
-    "key": "j3xqj",
-    "text": "When you divide, don't slide LEFT.",
-    "style": "B+",
-    "chars": 34,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s7 b2"
-    ]
-  },
-  {
-    "key": "1enohhe",
-    "text": "Dividing makes the number smaller, so every digit slides right.",
-    "style": "B+",
-    "chars": 63,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t2 s7 b3"
-    ]
-  },
-  {
     "key": "1qesjww",
     "text": "Here is what a friend might say: \"3 and 2.\"",
     "style": "A",
@@ -23320,26 +23010,6 @@
     ]
   },
   {
-    "key": "180l9pp",
-    "text": "A carton of pencils. A box holds 40 pencils. A carton holds 10 boxes. How many pencils are in a carton?",
-    "style": "A",
-    "chars": 103,
-    "kind": "screen1",
-    "sources": [
-      "g5m1-t1 s1"
-    ]
-  },
-  {
-    "key": "u6qy52",
-    "text": "Boxes of beads. Every box on the shelf holds 37 beads. The craft shop has 1,000 boxes. How many beads is that?",
-    "style": "A",
-    "chars": 110,
-    "kind": "screen1",
-    "sources": [
-      "g5m1-t2 s1"
-    ]
-  },
-  {
     "key": "1yzngkj",
     "text": "Beads on a bracelet. A bracelet repeats the same set again and again: 3 red beads, then 2 blue beads. How can you describe the beads?",
     "style": "A",
@@ -24650,26 +24320,6 @@
     ]
   },
   {
-    "key": "yqkw4y",
-    "text": "Now you try. In 70, the 7 is in the tens place. What is the 7 worth if it slides one place to the left? Find the place one step to the left. It's worth 10 times as much.",
-    "style": "A",
-    "chars": 169,
-    "kind": "turn",
-    "sources": [
-      "g5m1-t1 turn"
-    ]
-  },
-  {
-    "key": "16ie8k4",
-    "text": "Now you try. Multiply. 45 times 1,000 equals what? Count the zeros. Slide every digit that many places.",
-    "style": "A",
-    "chars": 103,
-    "kind": "turn",
-    "sources": [
-      "g5m1-t2 turn"
-    ]
-  },
-  {
     "key": "g0cpcq",
     "text": "Now you try. A bracelet pattern has 4 green beads for every 3 yellow beads. Green beads are 4 out of every how many beads? The whole means every bead in one set, both colors.",
     "style": "A",
@@ -25977,86 +25627,6 @@
     "kind": "turn",
     "sources": [
       "g8m6-t5 turn"
-    ]
-  },
-  {
-    "key": "1qgf80b",
-    "text": "Which place is one step to the left of the tens?",
-    "style": "A",
-    "chars": 48,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t1 hint1"
-    ]
-  },
-  {
-    "key": "v4qw46",
-    "text": "One place to the left is worth 10 times as much. So what is 10 times 7 tens?",
-    "style": "A",
-    "chars": 76,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t1 hint2"
-    ]
-  },
-  {
-    "key": "oxutkc",
-    "text": "Which place is one step to the left of the hundreds?",
-    "style": "A",
-    "chars": 52,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t1 twin hint1"
-    ]
-  },
-  {
-    "key": "1hkem3t",
-    "text": "One place to the left is worth 10 times as much. So what is 10 times 3 hundreds?",
-    "style": "A",
-    "chars": 80,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t1 twin hint2"
-    ]
-  },
-  {
-    "key": "72be6",
-    "text": "How many zeros does 1,000 have? That is how many places to slide.",
-    "style": "A",
-    "chars": 65,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t2 hint1"
-    ]
-  },
-  {
-    "key": "nktzoz",
-    "text": "Multiplying slides the digits to the left. Slide the 4 and the 5 three places, then fill the empty places with zeros.",
-    "style": "A",
-    "chars": 117,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t2 hint2"
-    ]
-  },
-  {
-    "key": "kfgafu",
-    "text": "How many zeros does 100 have? That is how many places to slide.",
-    "style": "A",
-    "chars": 63,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t2 twin hint1"
-    ]
-  },
-  {
-    "key": "1mmp7yz",
-    "text": "Multiplying slides the digits to the left. Slide the 2 and the 9 two places, then fill the empty places with zeros.",
-    "style": "A",
-    "chars": 115,
-    "kind": "hint",
-    "sources": [
-      "g5m1-t2 twin hint2"
     ]
   },
   {
@@ -31240,26 +30810,6 @@
     ]
   },
   {
-    "key": "pi734c",
-    "text": "Try a new one. In 300, the 3 is in the hundreds place. What is the 3 worth if it slides one place to the left?",
-    "style": "A",
-    "chars": 110,
-    "kind": "twin",
-    "sources": [
-      "g5m1-t1 twin"
-    ]
-  },
-  {
-    "key": "sxmf8a",
-    "text": "Try a new one. Multiply. 29 times 100 equals what?",
-    "style": "A",
-    "chars": 50,
-    "kind": "twin",
-    "sources": [
-      "g5m1-t2 twin"
-    ]
-  },
-  {
     "key": "1blal5d",
     "text": "Try a new one. A snack mix has 5 pretzels for every 4 crackers. Crackers are 4 out of every how many pieces?",
     "style": "A",
@@ -32570,56 +32120,6 @@
     ]
   },
   {
-    "key": "1rp04ti",
-    "text": "You did it! You slid the 7 one place to the left, and now it's worth 10 times as much.",
-    "style": "B",
-    "chars": 86,
-    "kind": "won",
-    "sources": [
-      "g5m1-t1 won"
-    ]
-  },
-  {
-    "key": "gn6e70",
-    "text": "Yes! You slid the 3 one place to the left, from 300 all the way to 3,000.",
-    "style": "B",
-    "chars": 73,
-    "kind": "won",
-    "sources": [
-      "g5m1-t1 twinWon"
-    ]
-  },
-  {
-    "key": "1jt5x3w",
-    "text": "You watched how it works, step by step. The practice problems will help it stick.",
-    "style": "A",
-    "chars": 81,
-    "kind": "won",
-    "sources": [
-      "g5m1-t1 keep practicing + g5m1-t2 keep practicing + g6m1-t1 keep practicing + g6m1-t2 keep practicing + g6m1-t3 keep practicing + g6m1-t4 keep practicing + g6m1-t5 keep practicing + g6m1-t6 keep practicing + g6m1-t7 keep practicing + g6m1-t8 keep practicing + g6m2-t1 keep practicing + g6m2-t2 keep practicing + g6m2-t3 keep practicing + g6m2-t4 keep practicing + g6m2-t5 keep practicing + g6m2-t6 keep practicing + g6m2-t7 keep practicing + g6m3-t1 keep practicing + g6m3-t2 keep practicing + g6m3-t3 keep practicing + g6m3-t4 keep practicing + g6m3-t5 keep practicing + g6m3-t6 keep practicing + g6m4-t1 keep practicing + g6m4-t2 keep practicing + g6m4-t3 keep practicing + g6m4-t4 keep practicing + g6m4-t5 keep practicing + g6m4-t6 keep practicing + g6m4-t7 keep practicing + g6m5-t1 keep practicing + g6m5-t2 keep practicing + g6m5-t3 keep practicing + g6m5-t4 keep practicing + g6m5-t5 keep practicing + g6m5-t6 keep practicing + g6m5-t7 keep practicing + g6m5-t8 keep practicing + g6m5-t9 keep practicing + g6m6-t1 keep practicing + g6m6-t2 keep practicing + g6m6-t3 keep practicing + g6m6-t4 keep practicing + g6m6-t5 keep practicing + g6m6-t6 keep practicing + g6m7-t1 keep practicing + g6m7-t2 keep practicing + g6m7-t3 keep practicing + g6m7-t4 keep practicing + g6m7-t5 keep practicing + g6m7-t6 keep practicing + g6m7-t7 keep practicing + g6m7-t8 keep practicing + g7m1-t1 keep practicing + g7m1-t2 keep practicing + g7m1-t3 keep practicing + g7m1-t4 keep practicing + g7m1-t5 keep practicing + g7m1-t6 keep practicing + g7m1-t7 keep practicing + g7m1-t8 keep practicing + g7m2-t1 keep practicing + g7m2-t2 keep practicing + g7m2-t3 keep practicing + g7m2-t4 keep practicing + g7m2-t5 keep practicing + g7m2-t6 keep practicing + g7m2-t7 keep practicing + g7m2-t8 keep practicing + g7m3-t1 keep practicing + g7m3-t2 keep practicing + g7m3-t3 keep practicing + g7m3-t4 keep practicing + g7m3-t5 keep practicing + g7m3-t6 keep practicing + g7m3-t7 keep practicing + g7m3-t8 keep practicing + g7m4-t1 keep practicing + g7m4-t2 keep practicing + g7m4-t3 keep practicing + g7m4-t4 keep practicing + g7m4-t5 keep practicing + g7m4-t6 keep practicing + g7m4-t7 keep practicing + g7m4-t8 keep practicing + g7m5-t1 keep practicing + g7m5-t2 keep practicing + g7m5-t3 keep practicing + g7m5-t4 keep practicing + g7m5-t5 keep practicing + g7m5-t6 keep practicing + g8m1-t1 keep practicing + g8m1-t2 keep practicing + g8m1-t3 keep practicing + g8m1-t4 keep practicing + g8m1-t5 keep practicing + g8m1-t6 keep practicing + g8m1-t7 keep practicing + g8m1-t8 keep practicing + g8m1-t9 keep practicing + g8m2-t1 keep practicing + g8m2-t2 keep practicing + g8m2-t3 keep practicing + g8m2-t4 keep practicing + g8m2-t5 keep practicing + g8m2-t6 keep practicing + g8m2-t7 keep practicing + g8m2-t8 keep practicing + g8m2-t9 keep practicing + g8m3-t1 keep practicing + g8m3-t2 keep practicing + g8m3-t3 keep practicing + g8m3-t4 keep practicing + g8m3-t5 keep practicing + g8m3-t6 keep practicing + g8m4-t1 keep practicing + g8m4-t2 keep practicing + g8m4-t3 keep practicing + g8m4-t4 keep practicing + g8m4-t5 keep practicing + g8m4-t6 keep practicing + g8m4-t7 keep practicing + g8m4-t8 keep practicing + g8m4-t9 keep practicing + g8m5-t1 keep practicing + g8m5-t2 keep practicing + g8m5-t3 keep practicing + g8m5-t4 keep practicing + g8m6-t1 keep practicing + g8m6-t2 keep practicing + g8m6-t3 keep practicing + g8m6-t4 keep practicing + g8m6-t5 keep practicing"
-    ]
-  },
-  {
-    "key": "16etxu5",
-    "text": "You did it! You counted three zeros and slid every digit three places to the left.",
-    "style": "B",
-    "chars": 82,
-    "kind": "won",
-    "sources": [
-      "g5m1-t2 won"
-    ]
-  },
-  {
-    "key": "1ycx6pb",
-    "text": "Yes! You counted two zeros and slid 29 two places to the left, all the way to 2,900.",
-    "style": "B",
-    "chars": 84,
-    "kind": "won",
-    "sources": [
-      "g5m1-t2 twinWon"
-    ]
-  },
-  {
     "key": "1o7w4df",
     "text": "You compared one part to the whole set.",
     "style": "A",
@@ -32637,6 +32137,16 @@
     "kind": "won",
     "sources": [
       "g6m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1jt5x3w",
+    "text": "You watched how it works, step by step. The practice problems will help it stick.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g6m1-t1 keep practicing + g6m1-t2 keep practicing + g6m1-t3 keep practicing + g6m1-t4 keep practicing + g6m1-t5 keep practicing + g6m1-t6 keep practicing + g6m1-t7 keep practicing + g6m1-t8 keep practicing + g6m2-t1 keep practicing + g6m2-t2 keep practicing + g6m2-t3 keep practicing + g6m2-t4 keep practicing + g6m2-t5 keep practicing + g6m2-t6 keep practicing + g6m2-t7 keep practicing + g6m3-t1 keep practicing + g6m3-t2 keep practicing + g6m3-t3 keep practicing + g6m3-t4 keep practicing + g6m3-t5 keep practicing + g6m3-t6 keep practicing + g6m4-t1 keep practicing + g6m4-t2 keep practicing + g6m4-t3 keep practicing + g6m4-t4 keep practicing + g6m4-t5 keep practicing + g6m4-t6 keep practicing + g6m4-t7 keep practicing + g6m5-t1 keep practicing + g6m5-t2 keep practicing + g6m5-t3 keep practicing + g6m5-t4 keep practicing + g6m5-t5 keep practicing + g6m5-t6 keep practicing + g6m5-t7 keep practicing + g6m5-t8 keep practicing + g6m5-t9 keep practicing + g6m6-t1 keep practicing + g6m6-t2 keep practicing + g6m6-t3 keep practicing + g6m6-t4 keep practicing + g6m6-t5 keep practicing + g6m6-t6 keep practicing + g6m7-t1 keep practicing + g6m7-t2 keep practicing + g6m7-t3 keep practicing + g6m7-t4 keep practicing + g6m7-t5 keep practicing + g6m7-t6 keep practicing + g6m7-t7 keep practicing + g6m7-t8 keep practicing + g7m1-t1 keep practicing + g7m1-t2 keep practicing + g7m1-t3 keep practicing + g7m1-t4 keep practicing + g7m1-t5 keep practicing + g7m1-t6 keep practicing + g7m1-t7 keep practicing + g7m1-t8 keep practicing + g7m2-t1 keep practicing + g7m2-t2 keep practicing + g7m2-t3 keep practicing + g7m2-t4 keep practicing + g7m2-t5 keep practicing + g7m2-t6 keep practicing + g7m2-t7 keep practicing + g7m2-t8 keep practicing + g7m3-t1 keep practicing + g7m3-t2 keep practicing + g7m3-t3 keep practicing + g7m3-t4 keep practicing + g7m3-t5 keep practicing + g7m3-t6 keep practicing + g7m3-t7 keep practicing + g7m3-t8 keep practicing + g7m4-t1 keep practicing + g7m4-t2 keep practicing + g7m4-t3 keep practicing + g7m4-t4 keep practicing + g7m4-t5 keep practicing + g7m4-t6 keep practicing + g7m4-t7 keep practicing + g7m4-t8 keep practicing + g7m5-t1 keep practicing + g7m5-t2 keep practicing + g7m5-t3 keep practicing + g7m5-t4 keep practicing + g7m5-t5 keep practicing + g7m5-t6 keep practicing + g8m1-t1 keep practicing + g8m1-t2 keep practicing + g8m1-t3 keep practicing + g8m1-t4 keep practicing + g8m1-t5 keep practicing + g8m1-t6 keep practicing + g8m1-t7 keep practicing + g8m1-t8 keep practicing + g8m1-t9 keep practicing + g8m2-t1 keep practicing + g8m2-t2 keep practicing + g8m2-t3 keep practicing + g8m2-t4 keep practicing + g8m2-t5 keep practicing + g8m2-t6 keep practicing + g8m2-t7 keep practicing + g8m2-t8 keep practicing + g8m2-t9 keep practicing + g8m3-t1 keep practicing + g8m3-t2 keep practicing + g8m3-t3 keep practicing + g8m3-t4 keep practicing + g8m3-t5 keep practicing + g8m3-t6 keep practicing + g8m4-t1 keep practicing + g8m4-t2 keep practicing + g8m4-t3 keep practicing + g8m4-t4 keep practicing + g8m4-t5 keep practicing + g8m4-t6 keep practicing + g8m4-t7 keep practicing + g8m4-t8 keep practicing + g8m4-t9 keep practicing + g8m5-t1 keep practicing + g8m5-t2 keep practicing + g8m5-t3 keep practicing + g8m5-t4 keep practicing + g8m6-t1 keep practicing + g8m6-t2 keep practicing + g8m6-t3 keep practicing + g8m6-t4 keep practicing + g8m6-t5 keep practicing"
     ]
   },
   {
@@ -35246,7 +34756,7 @@
     "chars": 6,
     "kind": "feedback",
     "sources": [
-      "g5m1-t1 right + g5m1-t2 right + g6m1-t1 right + g6m1-t2 right + g6m1-t3 right + g6m1-t4 right + g6m1-t5 right + g6m1-t6 right + g6m1-t7 right + g6m1-t8 right + g6m2-t1 right + g6m2-t2 right + g6m2-t3 right + g6m2-t4 right + g6m2-t5 right + g6m2-t6 right + g6m2-t7 right + g6m3-t1 right + g6m3-t2 right + g6m3-t3 right + g6m3-t4 right + g6m3-t5 right + g6m3-t6 right + g6m4-t1 right + g6m4-t2 right + g6m4-t3 right + g6m4-t4 right + g6m4-t5 right + g6m4-t6 right + g6m4-t7 right + g6m5-t1 right + g6m5-t2 right + g6m5-t3 right + g6m5-t4 right + g6m5-t5 right + g6m5-t6 right + g6m5-t7 right + g6m5-t8 right + g6m5-t9 right + g6m6-t1 right + g6m6-t2 right + g6m6-t3 right + g6m6-t4 right + g6m6-t5 right + g6m6-t6 right + g6m7-t1 right + g6m7-t2 right + g6m7-t3 right + g6m7-t4 right + g6m7-t5 right + g6m7-t6 right + g6m7-t7 right + g6m7-t8 right + g7m1-t1 right + g7m1-t2 right + g7m1-t3 right + g7m1-t4 right + g7m1-t5 right + g7m1-t6 right + g7m1-t7 right + g7m1-t8 right + g7m2-t1 right + g7m2-t2 right + g7m2-t3 right + g7m2-t4 right + g7m2-t5 right + g7m2-t6 right + g7m2-t7 right + g7m2-t8 right + g7m3-t1 right + g7m3-t2 right + g7m3-t3 right + g7m3-t4 right + g7m3-t5 right + g7m3-t6 right + g7m3-t7 right + g7m3-t8 right + g7m4-t1 right + g7m4-t2 right + g7m4-t3 right + g7m4-t4 right + g7m4-t5 right + g7m4-t6 right + g7m4-t7 right + g7m4-t8 right + g7m5-t1 right + g7m5-t2 right + g7m5-t3 right + g7m5-t4 right + g7m5-t5 right + g7m5-t6 right + g8m1-t1 right + g8m1-t2 right + g8m1-t3 right + g8m1-t4 right + g8m1-t5 right + g8m1-t6 right + g8m1-t7 right + g8m1-t8 right + g8m1-t9 right + g8m2-t1 right + g8m2-t2 right + g8m2-t3 right + g8m2-t4 right + g8m2-t5 right + g8m2-t6 right + g8m2-t7 right + g8m2-t8 right + g8m2-t9 right + g8m3-t1 right + g8m3-t2 right + g8m3-t3 right + g8m3-t4 right + g8m3-t5 right + g8m3-t6 right + g8m4-t1 right + g8m4-t2 right + g8m4-t3 right + g8m4-t4 right + g8m4-t5 right + g8m4-t6 right + g8m4-t7 right + g8m4-t8 right + g8m4-t9 right + g8m5-t1 right + g8m5-t2 right + g8m5-t3 right + g8m5-t4 right + g8m6-t1 right + g8m6-t2 right + g8m6-t3 right + g8m6-t4 right + g8m6-t5 right"
+      "g6m1-t1 right + g6m1-t2 right + g6m1-t3 right + g6m1-t4 right + g6m1-t5 right + g6m1-t6 right + g6m1-t7 right + g6m1-t8 right + g6m2-t1 right + g6m2-t2 right + g6m2-t3 right + g6m2-t4 right + g6m2-t5 right + g6m2-t6 right + g6m2-t7 right + g6m3-t1 right + g6m3-t2 right + g6m3-t3 right + g6m3-t4 right + g6m3-t5 right + g6m3-t6 right + g6m4-t1 right + g6m4-t2 right + g6m4-t3 right + g6m4-t4 right + g6m4-t5 right + g6m4-t6 right + g6m4-t7 right + g6m5-t1 right + g6m5-t2 right + g6m5-t3 right + g6m5-t4 right + g6m5-t5 right + g6m5-t6 right + g6m5-t7 right + g6m5-t8 right + g6m5-t9 right + g6m6-t1 right + g6m6-t2 right + g6m6-t3 right + g6m6-t4 right + g6m6-t5 right + g6m6-t6 right + g6m7-t1 right + g6m7-t2 right + g6m7-t3 right + g6m7-t4 right + g6m7-t5 right + g6m7-t6 right + g6m7-t7 right + g6m7-t8 right + g7m1-t1 right + g7m1-t2 right + g7m1-t3 right + g7m1-t4 right + g7m1-t5 right + g7m1-t6 right + g7m1-t7 right + g7m1-t8 right + g7m2-t1 right + g7m2-t2 right + g7m2-t3 right + g7m2-t4 right + g7m2-t5 right + g7m2-t6 right + g7m2-t7 right + g7m2-t8 right + g7m3-t1 right + g7m3-t2 right + g7m3-t3 right + g7m3-t4 right + g7m3-t5 right + g7m3-t6 right + g7m3-t7 right + g7m3-t8 right + g7m4-t1 right + g7m4-t2 right + g7m4-t3 right + g7m4-t4 right + g7m4-t5 right + g7m4-t6 right + g7m4-t7 right + g7m4-t8 right + g7m5-t1 right + g7m5-t2 right + g7m5-t3 right + g7m5-t4 right + g7m5-t5 right + g7m5-t6 right + g8m1-t1 right + g8m1-t2 right + g8m1-t3 right + g8m1-t4 right + g8m1-t5 right + g8m1-t6 right + g8m1-t7 right + g8m1-t8 right + g8m1-t9 right + g8m2-t1 right + g8m2-t2 right + g8m2-t3 right + g8m2-t4 right + g8m2-t5 right + g8m2-t6 right + g8m2-t7 right + g8m2-t8 right + g8m2-t9 right + g8m3-t1 right + g8m3-t2 right + g8m3-t3 right + g8m3-t4 right + g8m3-t5 right + g8m3-t6 right + g8m4-t1 right + g8m4-t2 right + g8m4-t3 right + g8m4-t4 right + g8m4-t5 right + g8m4-t6 right + g8m4-t7 right + g8m4-t8 right + g8m4-t9 right + g8m5-t1 right + g8m5-t2 right + g8m5-t3 right + g8m5-t4 right + g8m6-t1 right + g8m6-t2 right + g8m6-t3 right + g8m6-t4 right + g8m6-t5 right"
     ]
   },
   {
@@ -35256,7 +34766,7 @@
     "chars": 27,
     "kind": "feedback",
     "sources": [
-      "g5m1-t1 worked + g5m1-t2 worked + g6m1-t1 worked + g6m1-t2 worked + g6m1-t3 worked + g6m1-t4 worked + g6m1-t5 worked + g6m1-t6 worked + g6m1-t7 worked + g6m1-t8 worked + g6m2-t1 worked + g6m2-t2 worked + g6m2-t3 worked + g6m2-t4 worked + g6m2-t5 worked + g6m2-t6 worked + g6m2-t7 worked + g6m3-t1 worked + g6m3-t2 worked + g6m3-t3 worked + g6m3-t4 worked + g6m3-t5 worked + g6m3-t6 worked + g6m4-t1 worked + g6m4-t2 worked + g6m4-t3 worked + g6m4-t4 worked + g6m4-t5 worked + g6m4-t6 worked + g6m4-t7 worked + g6m5-t1 worked + g6m5-t2 worked + g6m5-t3 worked + g6m5-t4 worked + g6m5-t5 worked + g6m5-t6 worked + g6m5-t7 worked + g6m5-t8 worked + g6m5-t9 worked + g6m6-t1 worked + g6m6-t2 worked + g6m6-t3 worked + g6m6-t4 worked + g6m6-t5 worked + g6m6-t6 worked + g6m7-t1 worked + g6m7-t2 worked + g6m7-t3 worked + g6m7-t4 worked + g6m7-t5 worked + g6m7-t6 worked + g6m7-t7 worked + g6m7-t8 worked + g7m1-t1 worked + g7m1-t2 worked + g7m1-t3 worked + g7m1-t4 worked + g7m1-t5 worked + g7m1-t6 worked + g7m1-t7 worked + g7m1-t8 worked + g7m2-t1 worked + g7m2-t2 worked + g7m2-t3 worked + g7m2-t4 worked + g7m2-t5 worked + g7m2-t6 worked + g7m2-t7 worked + g7m2-t8 worked + g7m3-t1 worked + g7m3-t2 worked + g7m3-t3 worked + g7m3-t4 worked + g7m3-t5 worked + g7m3-t6 worked + g7m3-t7 worked + g7m3-t8 worked + g7m4-t1 worked + g7m4-t2 worked + g7m4-t3 worked + g7m4-t4 worked + g7m4-t5 worked + g7m4-t6 worked + g7m4-t7 worked + g7m4-t8 worked + g7m5-t1 worked + g7m5-t2 worked + g7m5-t3 worked + g7m5-t4 worked + g7m5-t5 worked + g7m5-t6 worked + g8m1-t1 worked + g8m1-t2 worked + g8m1-t3 worked + g8m1-t4 worked + g8m1-t5 worked + g8m1-t6 worked + g8m1-t7 worked + g8m1-t8 worked + g8m1-t9 worked + g8m2-t1 worked + g8m2-t2 worked + g8m2-t3 worked + g8m2-t4 worked + g8m2-t5 worked + g8m2-t6 worked + g8m2-t7 worked + g8m2-t8 worked + g8m2-t9 worked + g8m3-t1 worked + g8m3-t2 worked + g8m3-t3 worked + g8m3-t4 worked + g8m3-t5 worked + g8m3-t6 worked + g8m4-t1 worked + g8m4-t2 worked + g8m4-t3 worked + g8m4-t4 worked + g8m4-t5 worked + g8m4-t6 worked + g8m4-t7 worked + g8m4-t8 worked + g8m4-t9 worked + g8m5-t1 worked + g8m5-t2 worked + g8m5-t3 worked + g8m5-t4 worked + g8m6-t1 worked + g8m6-t2 worked + g8m6-t3 worked + g8m6-t4 worked + g8m6-t5 worked"
+      "g6m1-t1 worked + g6m1-t2 worked + g6m1-t3 worked + g6m1-t4 worked + g6m1-t5 worked + g6m1-t6 worked + g6m1-t7 worked + g6m1-t8 worked + g6m2-t1 worked + g6m2-t2 worked + g6m2-t3 worked + g6m2-t4 worked + g6m2-t5 worked + g6m2-t6 worked + g6m2-t7 worked + g6m3-t1 worked + g6m3-t2 worked + g6m3-t3 worked + g6m3-t4 worked + g6m3-t5 worked + g6m3-t6 worked + g6m4-t1 worked + g6m4-t2 worked + g6m4-t3 worked + g6m4-t4 worked + g6m4-t5 worked + g6m4-t6 worked + g6m4-t7 worked + g6m5-t1 worked + g6m5-t2 worked + g6m5-t3 worked + g6m5-t4 worked + g6m5-t5 worked + g6m5-t6 worked + g6m5-t7 worked + g6m5-t8 worked + g6m5-t9 worked + g6m6-t1 worked + g6m6-t2 worked + g6m6-t3 worked + g6m6-t4 worked + g6m6-t5 worked + g6m6-t6 worked + g6m7-t1 worked + g6m7-t2 worked + g6m7-t3 worked + g6m7-t4 worked + g6m7-t5 worked + g6m7-t6 worked + g6m7-t7 worked + g6m7-t8 worked + g7m1-t1 worked + g7m1-t2 worked + g7m1-t3 worked + g7m1-t4 worked + g7m1-t5 worked + g7m1-t6 worked + g7m1-t7 worked + g7m1-t8 worked + g7m2-t1 worked + g7m2-t2 worked + g7m2-t3 worked + g7m2-t4 worked + g7m2-t5 worked + g7m2-t6 worked + g7m2-t7 worked + g7m2-t8 worked + g7m3-t1 worked + g7m3-t2 worked + g7m3-t3 worked + g7m3-t4 worked + g7m3-t5 worked + g7m3-t6 worked + g7m3-t7 worked + g7m3-t8 worked + g7m4-t1 worked + g7m4-t2 worked + g7m4-t3 worked + g7m4-t4 worked + g7m4-t5 worked + g7m4-t6 worked + g7m4-t7 worked + g7m4-t8 worked + g7m5-t1 worked + g7m5-t2 worked + g7m5-t3 worked + g7m5-t4 worked + g7m5-t5 worked + g7m5-t6 worked + g8m1-t1 worked + g8m1-t2 worked + g8m1-t3 worked + g8m1-t4 worked + g8m1-t5 worked + g8m1-t6 worked + g8m1-t7 worked + g8m1-t8 worked + g8m1-t9 worked + g8m2-t1 worked + g8m2-t2 worked + g8m2-t3 worked + g8m2-t4 worked + g8m2-t5 worked + g8m2-t6 worked + g8m2-t7 worked + g8m2-t8 worked + g8m2-t9 worked + g8m3-t1 worked + g8m3-t2 worked + g8m3-t3 worked + g8m3-t4 worked + g8m3-t5 worked + g8m3-t6 worked + g8m4-t1 worked + g8m4-t2 worked + g8m4-t3 worked + g8m4-t4 worked + g8m4-t5 worked + g8m4-t6 worked + g8m4-t7 worked + g8m4-t8 worked + g8m4-t9 worked + g8m5-t1 worked + g8m5-t2 worked + g8m5-t3 worked + g8m5-t4 worked + g8m6-t1 worked + g8m6-t2 worked + g8m6-t3 worked + g8m6-t4 worked + g8m6-t5 worked"
     ]
   }
 ]

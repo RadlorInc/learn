@@ -15,7 +15,7 @@ import { SAY, START, hintsFor, wonFor, type Lesson } from '@/features/lessons/sc
 import { VOICED_LINES } from '@/features/lessons/content/voice/styles'
 
 const onDisk = (voice: string): Set<string> => new Set(JSON.parse(readFileSync(`public/audio/${voice}/manifest.json`, 'utf8')))
-const CORPUS: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie' }
+const CORPUS: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie', nzFihrBIvB34imQBuxub: 'josh' }
 const queued = (voice: string): Set<string> =>
   new Set((JSON.parse(readFileSync(`scripts/.voice-corpus-lessons-${CORPUS[voice]}.json`, 'utf8')) as { key: string }[]).map(l => l.key))
 
@@ -44,7 +44,7 @@ it("every line a lesson speaks has a clip in its lesson's voice, or is queued to
   expect(lines).toBeGreaterThan(8000)   // positive control: the sweep is really reading the lessons
   expect(lost.slice(0, 10)).toEqual([])
   // Queued, not yet rendered and merged. Lower this as zips are merged; it must never grow without a corpus change.
-  expect(waiting.size).toBeLessThanOrEqual(0)
+  expect(waiting.size).toBeLessThanOrEqual(52)
 })
 
 it('every render row in content/voice is a line some lesson still says', () => {

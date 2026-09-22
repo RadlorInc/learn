@@ -3,7 +3,7 @@
 Founder, 2026-09-19: the recorded voice was right, but it **read** every line flat, like somebody reading a page. Two
 causes: the lines were written like a textbook, and every clip went through Chatterbox Turbo with no expression.
 Samples of four fixes were heard (`/voice-samples.html`); on 2026-09-22 the founder replaced them with the rules below. **Every lesson moves to Stevie**; a lesson switches when its clips are merged
-(`STEVIE_NOW` in `src/infra/storage/voicePref.ts`).
+(`LESSON_VOICE` in `src/infra/storage/voicePref.ts`; g5m1-t1/t2 moved to Josh on 2026-09-22).
 
 ⚠️ **Status (2026-09-22): a pilot.** Only `g5m1-t1` and `g5m1-t2` are written this way, and the 0.5/0.5 and 0.7/0.3
 settings come from the document, not from listening. Listen to both topics in the app before writing the next one.
