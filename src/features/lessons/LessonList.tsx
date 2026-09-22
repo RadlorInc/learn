@@ -2,7 +2,7 @@
 /**
  * The new-flow topic list, drawn as a winding path: one module's topics in teaching order, one stop per topic.
  * Portrait (phone): the path runs top to bottom. Landscape (tablet sideways, laptop): it runs left to right.
- * The first unfinished topic is "Next up" and glows; every other stop is dimmed — a done one with a green tick, one still
+ * The first unfinished topic glows (no "Next up" badge — founder, 2026-09-22); every other stop is dimmed — a done one with a green tick, one still
  * ahead with its number (founder, 2026-09-21). Nothing is locked: a child may replay or jump ahead.
  */
 import { showDay } from './progressReport'
@@ -18,7 +18,7 @@ const subscribe = (cb: () => void) => { const m = matchMedia(LANDSCAPE); m.addEv
 
 const STEP = 128   // distance between stops along the path
 const CROSS = 44   // how far a stop swings off the centre line (% of the width when vertical; px when horizontal)
-const H = 480      // height of the horizontal map (room above and below for labels and the Next up badge)
+const H = 480      // height of the horizontal map (room above and below for the labels)
 
 /** The object a topic is about, from its first picture — so each stop shows cookies, chairs, straws… */
 const objOf = (l: Lesson): Obj | null => {
@@ -103,8 +103,6 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                         {/* Never "late" to a child: the date is information, not a mark against them. */}
                         {!isDone && due?.[l.id] && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 6,
                           background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>Due {showDay(due[l.id])}</span>}
-                        {isNext && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 8, marginBottom: across ? 8 : 0,
-                          background: TEAL, color: '#fff', border: `3px solid ${INK}`, boxShadow: `3px 3px 0 ${INK}`, borderRadius: 12, padding: '6px 14px', fontWeight: 800, fontSize: 15 }}>Next up ▶</span>}
                       </Link>
                     </li>
                   )
