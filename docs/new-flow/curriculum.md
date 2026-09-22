@@ -154,8 +154,8 @@ Its four parts: 1–6 Place value understanding for whole numbers · 7–11 Mult
 5 Multiply signed numbers · 6 Divide signed numbers · 7 Negative fractions and decimals · 8 Signed number stories
 
 **Module 3 · Equivalent expressions, equations and inequalities**
-1 Combine like terms · 2 Expand brackets · 3 Factor out a common number · 4 Two-step equations ·
-5 Equations with brackets · 6 Two-step inequalities · 7 Flip the sign · 8 Equation stories
+1 Combine like terms · 2 Expand parentheses · 3 Factor out a common number · 4 Two-step equations ·
+5 Equations with parentheses · 6 Two-step inequalities · 7 Flip the sign · 8 Equation stories
 
 **Module 4 · Geometry**
 1 Scale drawings · 2 Circumference · 3 Area of a circle · 4 Complementary and supplementary angles · 5 Vertical angles ·
