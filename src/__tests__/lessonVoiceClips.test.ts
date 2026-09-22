@@ -15,7 +15,7 @@ import { SAY, START, hintsFor, wonFor, type Lesson } from '@/features/lessons/sc
 import { VOICED_LINES } from '@/features/lessons/content/voice/styles'
 
 const onDisk = (voice: string): Set<string> => new Set(JSON.parse(readFileSync(`public/audio/${voice}/manifest.json`, 'utf8')))
-const CORPUS: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie' }
+const CORPUS: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie', nzFihrBIvB34imQBuxub: 'josh' }
 const queued = (voice: string): Set<string> =>
   new Set((JSON.parse(readFileSync(`scripts/.voice-corpus-lessons-${CORPUS[voice]}.json`, 'utf8')) as { key: string }[]).map(l => l.key))
 

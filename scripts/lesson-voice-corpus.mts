@@ -29,7 +29,8 @@ import { renderOf, type VoiceStyle } from '../src/features/lessons/content/voice
 const outDir = process.argv[2] ?? 'scripts/.voice-lessons'
 
 /** Which recorded voice reads a lesson: lessonVoice, the function the player uses, so the two cannot disagree. */
-const VOICE = (id: string) => (lessonVoice(id) === 'IvUJKFyjVb5hItY9dJAT' ? 'stevie' : 'teddy')
+const NAME: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie', nzFihrBIvB34imQBuxub: 'josh' }
+const VOICE = (id: string) => NAME[lessonVoice(id)]
 
 type Kind = 'beat' | 'bigIdea' | 'screen1' | 'turn' | 'hint' | 'twin' | 'won' | 'feedback'
 // `text` is what the voice model reads (renderOf: tags, pauses, symbols spelt out); `key` is the line as the lesson says it.
@@ -83,7 +84,7 @@ const csv = (list: Row[]) =>
   'filename,text\n' + list.map(r => `${r.key}.wav,"${r.text.replace(/"/g, '""')}"`).join('\n') + '\n'
 
 mkdirSync(outDir, { recursive: true })
-for (const voice of ['teddy', 'stevie']) {
+for (const voice of Object.values(NAME)) {
   const mine = all.filter(r => r.voice === voice)
   writeFileSync(`${outDir}/lines-${voice}.csv`, csv(mine.filter(r => r.kind === 'beat')))
   writeFileSync(`${outDir}/bigideas-${voice}.csv`, csv(mine.filter(r => r.kind === 'bigIdea')))
@@ -94,7 +95,7 @@ writeFileSync(`${outDir}/lines-all.jsonl`, all.map(r => JSON.stringify(r)).join(
 // renderer's own shape. Written to scripts/, NOT outDir: the notebook git-clones the repo and reads them from there,
 // so they must be committed and pushed before a run can see them. Beats first, then the big ideas, so an
 // interrupted run has rendered the teaching screens before the practice-miss line.
-for (const voice of ['teddy', 'stevie']) {
+for (const voice of Object.values(NAME)) {
   const mine = all.filter(r => r.voice === voice).sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
   writeFileSync(`scripts/.voice-corpus-lessons-${voice}.json`,
     JSON.stringify(mine.map(r => ({ key: r.key, text: r.text, style: r.style, chars: r.text.length, kind: r.kind, sources: [r.where] })), null, 2) + '\n')
@@ -105,7 +106,6 @@ const per = (v: string, k: string) => all.filter(r => r.voice === v && r.kind ==
 console.log(JSON.stringify({
   occurrencesInLessons: occurrences, uniqueClips: all.length, savedByDeduping: occurrences - all.length,
   characters: chars,
-  teddy: Object.fromEntries(ORDER.map(k => [k, per('teddy', k)])),
-  stevie: Object.fromEntries(ORDER.map(k => [k, per('stevie', k)])),
+  ...Object.fromEntries(Object.values(NAME).map(v => [v, Object.fromEntries(ORDER.map(k => [k, per(v, k)]))])),
   outDir,
 }, null, 1))

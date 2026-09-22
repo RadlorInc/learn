@@ -24,20 +24,23 @@ export const VOICES = [
  */
 export const BAND_VOICE: Partial<Record<string, string>> = { '3-5': 'XjGYkUkzth8BPs29fmcV' }
 
-/**
- * Lessons already re-voiced in Stevie with the expressive render (docs/new-flow/voice.md). Founder, 2026-09-19: every
- * lesson moves to Stevie; a lesson joins this list once its Stevie clips are merged, never before, or it plays
- * browser speech. Started with the pilot, g5m1-t1 and t2.
- */
-const STEVIE_NOW = new Set(['g5m1-t1', 'g5m1-t2'])
+/** Josh — ElevenLabs "Josh - Teacher for Kids", cloned into Chatterbox from scripts/chatterbox-ref/<id>.wav (2026-09-22). */
+export const JOSH = 'nzFihrBIvB34imQBuxub'
 
 /**
- * A new-flow lesson's voice: Stevie for Grades 6–8 and for STEVIE_NOW, Teddy for the rest of Grades 3–5. The SAME split
- * scripts/lesson-voice-corpus.mts cuts the render corpus on — change one, change both, or the lesson asks a
- * voice for clips that were rendered in the other.
+ * Lessons that speak in a voice of their own, whatever their grade would give them. A lesson joins this map once its
+ * clips in that voice are merged, never before, or it plays browser speech. Founder, 2026-09-22: g5m1-t1 and t2 move
+ * from Stevie to Josh (their Stevie clips stay on disk, so moving them back is one line).
+ */
+const LESSON_VOICE: Record<string, string> = { 'g5m1-t1': JOSH, 'g5m1-t2': JOSH }
+
+/**
+ * A new-flow lesson's voice: its LESSON_VOICE row if it has one, else Stevie for Grades 6–8 and Teddy for Grades 3–5. The
+ * SAME function scripts/lesson-voice-corpus.mts cuts the render corpus on — the lesson asks exactly the voice its clips
+ * were rendered in.
  */
 export const lessonVoice = (lessonId: string): string =>
-  Number(lessonId.match(/^g(\d)/)?.[1] ?? 3) <= 5 && !STEVIE_NOW.has(lessonId) ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT'
+  LESSON_VOICE[lessonId] ?? (Number(lessonId.match(/^g(\d)/)?.[1] ?? 3) <= 5 ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT')
 
 export type VoiceId = (typeof VOICES)[number]['id'] | 'device'
 
