@@ -1,6 +1,9 @@
-"""Write the Kaggle notebook that renders ONE module's lines in Josh.
+"""Write the Kaggle notebook that renders one GRADE's (or one module's) lines in Josh.
 
-    python3 scripts/kaggle-josh-notebook.py g5m1 <branch>   ->  scripts/kaggle/josh-g5m1.ipynb
+    python3 scripts/kaggle-josh-notebook.py g3 <branch>     ->  scripts/kaggle/josh-g3.ipynb    (every g3m* module)
+    python3 scripts/kaggle-josh-notebook.py g5m1 <branch>   ->  scripts/kaggle/josh-g5m1.ipynb  (one module)
+
+Founder, 2026-09-22: one notebook per full grade.
 
 The notebook clones <branch>, reads scripts/.voice-corpus-lessons-josh.json, keeps the rows said by that module that have no
 clip yet, renders them with scripts/chatterbox-render.py and zips them as milo-voice-josh-<module>.zip. It asserts the
@@ -12,7 +15,8 @@ module, branch = sys.argv[1], sys.argv[2]
 root = pathlib.Path(__file__).resolve().parent
 corpus = json.load(open(root / '.voice-corpus-lessons-josh.json'))
 clips = root.parent / 'public/audio/nzFihrBIvB34imQBuxub'
-todo = [r for r in corpus if any(s.startswith(module + '-') for s in r['sources']) and not (clips / f"{r['key']}.mp3").exists()]
+PREFIX = module + ('m' if 'm' not in module else '-')   # 'g3' -> 'g3m', 'g5m1' -> 'g5m1-'
+todo = [r for r in corpus if any(s.startswith(PREFIX) for s in r['sources']) and not (clips / f"{r['key']}.mp3").exists()]
 n = len(todo)
 assert n > 0, f'nothing queued for {module}'
 
@@ -27,13 +31,14 @@ Styles: B (0.5/0.5) and B+ (0.7/0.3) with the original Chatterbox, A with Turbo.
 setup = f"""import os, sys, subprocess, pathlib, shutil, json
 BRANCH = {branch!r}
 MODULE = {module!r}
+PREFIX = {module!r} + ('m' if 'm' not in {module!r} else '-')
 VOICE = 'nzFihrBIvB34imQBuxub'   # Josh
 WORK = pathlib.Path('/kaggle/working' if os.path.isdir('/kaggle/working') else '/content')
 REPO = WORK / 'learn'
 if not REPO.exists():
     subprocess.run(['git', 'clone', '--depth', '1', '--branch', BRANCH, 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
 rows = json.load(open(REPO / 'scripts/.voice-corpus-lessons-josh.json'))
-todo = [r for r in rows if any(s.startswith(MODULE + '-') for s in r['sources'])
+todo = [r for r in rows if any(s.startswith(PREFIX) for s in r['sources'])
         and not (REPO / 'public/audio' / VOICE / f"{{r['key']}}.mp3").exists()]
 json.dump(todo, open(WORK / 'todo.json', 'w'))
 print(len(todo), 'lines to render ·', {{s: sum(r['style'] == s for r in todo) for s in ['A', 'B', 'B+']}})
