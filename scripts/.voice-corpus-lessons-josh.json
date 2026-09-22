@@ -136,7 +136,7 @@
     "chars": 30,
     "kind": "beat",
     "sources": [
-      "g5m1-t1 s7 b1 + g5m1-t2 s7 b1"
+      "g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "chars": 16,
     "kind": "beat",
     "sources": [
-      "g5m1-t1 s7 b4 + g5m1-t2 s7 b4"
+      "g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4"
     ]
   },
   {
@@ -310,209 +310,199 @@
     ]
   },
   {
-    "key": "1or4k99",
-    "text": "Six zeros in a row are hard to count at a glance. Try it.",
-    "style": "A",
-    "chars": 57,
+    "key": "1hzti5q",
+    "text": "Count the zeros in 1,000,000. Six? It's hard to be sure at a glance.",
+    "style": "B",
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s2 b1"
     ]
   },
   {
-    "key": "1b09dmt",
-    "text": "And if you write one zero too many, the number is 10 times too big.",
-    "style": "A",
-    "chars": 67,
+    "key": "3ai7ag",
+    "text": "And one zero too many makes it 10 times too big.",
+    "style": "B",
+    "chars": 48,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s2 b2"
     ]
   },
   {
-    "key": "bgmfgc",
-    "text": "The small number up top says how many 10s to multiply.",
-    "style": "A",
-    "chars": 54,
+    "key": "b9zbba",
+    "text": "Is there a shorter way? Yes. A small number can count them.",
+    "style": "B",
+    "chars": 59,
     "kind": "beat",
     "sources": [
-      "g5m1-t3 s3 b1"
+      "g5m1-t3 s2 b3"
     ]
   },
   {
-    "key": "14ck6l0",
-    "text": "That is how many zeros, and how many places the digits slide.",
-    "style": "A",
-    "chars": 61,
+    "key": "lbsdou",
+    "text": "The small number up top says how many tens you multiply, and that is how many zeros to write.",
+    "style": "B",
+    "chars": 93,
     "kind": "beat",
     "sources": [
-      "g5m1-t3 s3 b2"
+      "g5m1-t3 s3 b1 + g5m1-t3 bigIdea"
     ]
   },
   {
-    "key": "k2qs2e",
-    "text": "Let us count them together. 10 times 10 is two 10s, so we write 10 squared.",
-    "style": "A",
-    "chars": 75,
+    "key": "1je8uar",
+    "text": "Look. 10 times 10 is two tens, so we write 10 to the second. That's 100.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s4 b1"
     ]
   },
   {
-    "key": "mogy4o",
-    "text": "And 10 times 10 times 10 is three 10s, so we write 10 cubed.",
-    "style": "A",
-    "chars": 60,
+    "key": "1uchtej",
+    "text": "10 times 10 times 10 is three tens, so we write 10 to the third. That's 1,000.",
+    "style": "B",
+    "chars": 78,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s4 b2"
     ]
   },
   {
-    "key": "1eu6q24",
-    "text": "Watch the last column. Each 10 you multiply adds one zero.",
-    "style": "A",
-    "chars": 58,
+    "key": "1e6wkdd",
+    "text": "See the pattern? Each 10 adds one more zero.",
+    "style": "B",
+    "chars": 44,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s4 b3"
     ]
   },
   {
-    "key": "1rc5dyv",
-    "text": "Back to our city. 1,000,000 is a 1 with 6 zeros. Count them with me.",
-    "style": "A",
-    "chars": 68,
+    "key": "fh16n5",
+    "text": "Back to the city. 1,000,000 is a 1 with 6 zeros.",
+    "style": "B",
+    "chars": 48,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s5 b1"
     ]
   },
   {
-    "key": "70bzml",
-    "text": "Six zeros means six 10s multiplied, so the city has 10⁶ people.",
-    "style": "A",
-    "chars": 63,
+    "key": "19p53ba",
+    "text": "Count them with me. One, two, three, four, five, six.",
+    "style": "B",
+    "chars": 53,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s5 b2"
     ]
   },
   {
-    "key": "od9m6s",
-    "text": "Here is the part I really like.",
-    "style": "A",
-    "chars": 31,
+    "key": "16bo9ie",
+    "text": "Six zeros, six tens. So the city has 10 to the sixth people.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g5m1-t3 s5 b3"
+    ]
+  },
+  {
+    "key": "c1lqx2",
+    "text": "That small number also says how far the digits slide.",
+    "style": "B",
+    "chars": 53,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s6 b1"
     ]
   },
   {
-    "key": "8g72vj",
-    "text": "That small number also tells you how many places the digits slide.",
-    "style": "A",
-    "chars": 66,
+    "key": "1mi9kgr",
+    "text": "So what is 45 times 10 to the third? Slide 3 places left. That's 45,000.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s6 b2"
     ]
   },
   {
-    "key": "q8k8kw",
-    "text": "So 45 times 10 cubed slides them 3 places left, and 62,000 divided by 10 cubed slides them 3 places right.",
-    "style": "A",
-    "chars": 106,
+    "key": "150cdx1",
+    "text": "And 62,000 divided by 10 to the third slides 3 places right. That's 62.",
+    "style": "B",
+    "chars": 71,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s6 b3"
     ]
   },
   {
-    "key": "g5hh8n",
-    "text": "Careful with this one.",
-    "style": "A",
-    "chars": 22,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t3 s7 b1"
-    ]
-  },
-  {
-    "key": "7oqdy",
-    "text": "Do not multiply 10 by the small number. 10 cubed is not 10 times 3.",
-    "style": "A",
-    "chars": 67,
+    "key": "874qx0",
+    "text": "10 to the third does not mean 10 times 3. That gives 30.",
+    "style": "B+",
+    "chars": 56,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s7 b2"
     ]
   },
   {
-    "key": "2qfcux",
-    "text": "It means three 10s multiplied together.",
-    "style": "A",
-    "chars": 39,
+    "key": "1ophv28",
+    "text": "It means three tens multiplied, 10 times 10 times 10. That's 1,000.",
+    "style": "B+",
+    "chars": 67,
     "kind": "beat",
     "sources": [
       "g5m1-t3 s7 b3"
     ]
   },
   {
-    "key": "ov6t9g",
-    "text": "Working out 28 times 412 exactly takes a lot of steps.",
-    "style": "A",
-    "chars": 54,
+    "key": "1so11cl",
+    "text": "You could work out 28 times 412 exactly. That takes a lot of steps.",
+    "style": "B",
+    "chars": 67,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s2 b1"
     ]
   },
   {
-    "key": "fl5oqd",
-    "text": "But sometimes you do not need exact. You only need to know about how many.",
-    "style": "A",
-    "chars": 74,
+    "key": "13p3ikz",
+    "text": "But the question asks about how many. Do you need it exact? No.",
+    "style": "B",
+    "chars": 63,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s2 b2"
     ]
   },
   {
-    "key": "wsqyqm",
-    "text": "Is it near 1,000? Near 10,000? Near 100,000?",
-    "style": "A",
-    "chars": 44,
+    "key": "3yzrxq",
+    "text": "Is it near 1,000, 10,000 or 100,000? That's all you need.",
+    "style": "B",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s2 b3"
     ]
   },
   {
-    "key": "1b20tf9",
-    "text": "Swap each number for a close round number.",
-    "style": "A",
-    "chars": 42,
+    "key": "17ms923",
+    "text": "Swap each number for a close round number, use a fact you know, then write the zeros.",
+    "style": "B",
+    "chars": 85,
     "kind": "beat",
     "sources": [
-      "g5m1-t4 s3 b1"
-    ]
-  },
-  {
-    "key": "1d6sz8z",
-    "text": "Use a fact you know, then write the zeros.",
-    "style": "A",
-    "chars": 42,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t4 s3 b2"
+      "g5m1-t4 s3 b1 + g5m1-t4 bigIdea"
     ]
   },
   {
     "key": "dfv7ag",
     "text": "Round each number at its biggest place.",
-    "style": "A",
+    "style": "B",
     "chars": 39,
     "kind": "beat",
     "sources": [
@@ -520,10 +510,10 @@
     ]
   },
   {
-    "key": "btq4qq",
-    "text": "28 is only 2 away from 30. Look how close that is.",
-    "style": "A",
-    "chars": 50,
+    "key": "1pnfh06",
+    "text": "28 is only 2 away from 30.",
+    "style": "B",
+    "chars": 26,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s4 b2"
@@ -532,7 +522,7 @@
   {
     "key": "1qwhdi2",
     "text": "And 412 is only 12 away from 400.",
-    "style": "A",
+    "style": "B",
     "chars": 33,
     "kind": "beat",
     "sources": [
@@ -542,7 +532,7 @@
   {
     "key": "bztnww",
     "text": "So 28 times 412 is close to 30 times 400.",
-    "style": "A",
+    "style": "B",
     "chars": 41,
     "kind": "beat",
     "sources": [
@@ -550,170 +540,150 @@
     ]
   },
   {
-    "key": "cc3yd3",
-    "text": "Now use a fact you already know. 3 times 4 equals 12.",
-    "style": "A",
-    "chars": 53,
+    "key": "uyqimr",
+    "text": "Now use a fact you know. 3 times 4 equals 12.",
+    "style": "B",
+    "chars": 45,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s5 b1"
     ]
   },
   {
-    "key": "1rop86a",
-    "text": "Then count the zeros. 30 has one and 400 has two, so three zeros go after the 12.",
-    "style": "A",
-    "chars": 81,
+    "key": "1jovfj0",
+    "text": "Then count the zeros. 30 has one, and 400 has two. That's three.",
+    "style": "B",
+    "chars": 64,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s5 b2"
     ]
   },
   {
-    "key": "1xiv5f9",
-    "text": "12,000. The farm packs about 12,000 eggs.",
-    "style": "A",
-    "chars": 41,
+    "key": "1kl9w5b",
+    "text": "Write them after the 12. So the farm packs about 12,000 eggs.",
+    "style": "B",
+    "chars": 61,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s5 b3"
     ]
   },
   {
-    "key": "1l1wbai",
-    "text": "Dividing works the very same way. 2,380 eggs go into crates of 58.",
-    "style": "A",
-    "chars": 66,
+    "key": "87lr70",
+    "text": "Does dividing work the same way? Yes. 2,380 eggs go into crates of 58.",
+    "style": "B",
+    "chars": 70,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s6 b1"
     ]
   },
   {
-    "key": "1d8zlxr",
-    "text": "Round 58 to the nearest ten, 60, and round 2,380 to the nearest hundred, 2,400.",
-    "style": "A",
-    "chars": 79,
+    "key": "jwttia",
+    "text": "Round 58 to the nearest ten, 60. Round 2,380 to the nearest hundred, 2,400.",
+    "style": "B",
+    "chars": 75,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s6 b2"
     ]
   },
   {
-    "key": "arjzrc",
-    "text": "24 divided by 6 equals 4, and 60 times 40 equals 2,400. So it is about 40 crates.",
-    "style": "A",
-    "chars": 81,
+    "key": "1f44c44",
+    "text": "24 divided by 6 equals 4, and 60 times 40 equals 2,400. So it's about 40 crates.",
+    "style": "B",
+    "chars": 80,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s6 b3"
     ]
   },
   {
-    "key": "13q7n6r",
-    "text": "Last one, and it is the slip that costs the most.",
-    "style": "A",
-    "chars": 49,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t4 s7 b1"
-    ]
-  },
-  {
-    "key": "1bj0pt4",
-    "text": "Do not lose the zeros.",
-    "style": "A",
-    "chars": 22,
+    "key": "8xc0ik",
+    "text": "Don't drop the zeros. 30 times 400 is not 1,200.",
+    "style": "B+",
+    "chars": 48,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s7 b2"
     ]
   },
   {
-    "key": "1buogbk",
-    "text": "30 has one zero and 400 has two, so the answer needs three zeros after the 12.",
-    "style": "A",
-    "chars": 78,
+    "key": "1sanc6b",
+    "text": "It needs all three zeros after the 12, so it's 12,000.",
+    "style": "B+",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t4 s7 b3"
     ]
   },
   {
-    "key": "x7angh",
-    "text": "A kilometer is a long way. You could walk it, but it would take you a while.",
-    "style": "A",
-    "chars": 76,
+    "key": "sp9wtu",
+    "text": "A kilometer is a long way. Walking one would take you a while.",
+    "style": "B",
+    "chars": 62,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s2 b1"
     ]
   },
   {
-    "key": "1okbvl2",
-    "text": "A meter? That is about one big step.",
-    "style": "A",
-    "chars": 36,
+    "key": "yu6e7e",
+    "text": "A meter? That's about one big step.",
+    "style": "B",
+    "chars": 35,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s2 b2"
     ]
   },
   {
-    "key": "5mkmtq",
-    "text": "So the run is only 5 kilometers, but it is going to be a lot of meters.",
-    "style": "A",
-    "chars": 71,
+    "key": "43181f",
+    "text": "So will 5 kilometers be a few meters, or a lot? A lot.",
+    "style": "B",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s2 b3"
     ]
   },
   {
-    "key": "px8zjn",
-    "text": "A bigger unit is made of 10, 100 or 1,000 smaller ones.",
-    "style": "A",
-    "chars": 55,
+    "key": "8hrr25",
+    "text": "A bigger unit is 10, 100 or 1,000 smaller ones, so multiply to go to the smaller unit and divide to go to the bigger one.",
+    "style": "B",
+    "chars": 121,
     "kind": "beat",
     "sources": [
-      "g5m1-t5 s3 b1"
+      "g5m1-t5 s3 b1 + g5m1-t5 bigIdea"
     ]
   },
   {
-    "key": "1vp5lxt",
-    "text": "Multiply to change to the smaller unit, and divide to change to the bigger one.",
-    "style": "A",
-    "chars": 79,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t5 s3 b2"
-    ]
-  },
-  {
-    "key": "rw1fyv",
-    "text": "The kilometer is the bigger unit here.",
-    "style": "A",
-    "chars": 38,
+    "key": "ssjopk",
+    "text": "Which unit is bigger here? The kilometer.",
+    "style": "B",
+    "chars": 41,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s4 b1"
     ]
   },
   {
-    "key": "by53mm",
-    "text": "And 1 kilometers is exactly the same length as 1,000 meters.",
-    "style": "A",
-    "chars": 60,
+    "key": "tu0kvw",
+    "text": "1 kilometer is exactly as long as 1,000 meters.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s4 b2"
     ]
   },
   {
-    "key": "e89x2v",
-    "text": "So every single kilometer of that run is 1,000 meters.",
-    "style": "A",
-    "chars": 54,
+    "key": "1147ofv",
+    "text": "So every kilometer of the run is 1,000 meters.",
+    "style": "B",
+    "chars": 46,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s4 b3"
@@ -722,7 +692,7 @@
   {
     "key": "11488eu",
     "text": "Meters are smaller, so it takes more of them to cover the same distance.",
-    "style": "A",
+    "style": "B",
     "chars": 72,
     "kind": "beat",
     "sources": [
@@ -730,140 +700,120 @@
     ]
   },
   {
-    "key": "1e4ii0w",
-    "text": "Smaller unit, more of them. That means we multiply.",
-    "style": "A",
-    "chars": 51,
+    "key": "1xilp0f",
+    "text": "Smaller unit, more of them. So we multiply.",
+    "style": "B",
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s5 b2"
     ]
   },
   {
-    "key": "jsaa7n",
-    "text": "5 times 1,000 equals 5,000, the same sliding you already know. So the run is 5,000 meters long.",
-    "style": "A",
-    "chars": 95,
+    "key": "1f8xed2",
+    "text": "5 times 1,000 equals 5,000. The run is 5,000 meters long.",
+    "style": "B",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s5 b3"
     ]
   },
   {
-    "key": "1l5d6su",
-    "text": "Now, a runner has gone 3,000 meters so far.",
-    "style": "A",
-    "chars": 43,
+    "key": "1r90vl1",
+    "text": "Now the other way. A runner has gone 3,000 meters. How many kilometers is that?",
+    "style": "B",
+    "chars": 79,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s6 b1"
     ]
   },
   {
-    "key": "162q7ai",
-    "text": "Kilometers are bigger, so there are fewer of them. Fewer of them means we go the other way, and divide.",
-    "style": "A",
-    "chars": 103,
+    "key": "b4q9qm",
+    "text": "Kilometers are bigger, so there are fewer of them. That means divide.",
+    "style": "B",
+    "chars": 69,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s6 b2"
     ]
   },
   {
-    "key": "at41pr",
-    "text": "3,000 divided by 1,000 equals 3. That runner has gone 3 kilometers.",
-    "style": "A",
-    "chars": 67,
+    "key": "w4ygj2",
+    "text": "3,000 divided by 1,000 equals 3. So it's 3 kilometers.",
+    "style": "B",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s6 b3"
     ]
   },
   {
-    "key": "168ks0f",
-    "text": "Here is the one that catches people.",
-    "style": "A",
-    "chars": 36,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t5 s7 b1"
-    ]
-  },
-  {
-    "key": "4fr9sa",
-    "text": "When you change to the bigger unit, don't multiply.",
-    "style": "A",
-    "chars": 51,
+    "key": "gex75p",
+    "text": "Going to a bigger unit, don't multiply.",
+    "style": "B+",
+    "chars": 39,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s7 b2"
     ]
   },
   {
-    "key": "1yp4fmg",
-    "text": "A kilogram (kg) is 1,000 grams (g), so 6,000 grams is only 6 kilograms. A much smaller number.",
-    "style": "A",
-    "chars": 94,
+    "key": "1kuz1at",
+    "text": "A kilogram is 1,000 grams, so 6,000 grams is only 6 kilograms. A bigger unit means a smaller number.",
+    "style": "B+",
+    "chars": 100,
     "kind": "beat",
     "sources": [
       "g5m1-t5 s7 b3"
     ]
   },
   {
-    "key": "sun0wg",
-    "text": "Look carefully at the two numbers. The jug is measured in liters, but the cups are in milliliters.",
-    "style": "A",
-    "chars": 98,
+    "key": "17fdue9",
+    "text": "Look at the two numbers. The jug is in liters, but the cups are in milliliters.",
+    "style": "B",
+    "chars": 79,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s2 b1"
     ]
   },
   {
-    "key": "458lim",
-    "text": "The 2 and the 250 count different units, so we cannot divide them yet.",
-    "style": "A",
-    "chars": 70,
+    "key": "2itwrz",
+    "text": "Can we just divide 2 by 250? Not yet. They count different units.",
+    "style": "B",
+    "chars": 65,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s2 b2"
     ]
   },
   {
-    "key": "1j9ct1f",
-    "text": "Change to the same unit first.",
-    "style": "A",
-    "chars": 30,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t6 s3 b1"
-    ]
-  },
-  {
-    "key": "1mx38z2",
-    "text": "Then solve the story one step at a time.",
-    "style": "A",
-    "chars": 40,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t6 s3 b2"
-    ]
-  },
-  {
-    "key": "127w93k",
-    "text": "1 liters is 1,000 milliliters, so let us count that jug in milliliters.",
-    "style": "A",
+    "key": "zzht80",
+    "text": "Change to the same unit first, then solve the story one step at a time.",
+    "style": "B",
     "chars": 71,
+    "kind": "beat",
+    "sources": [
+      "g5m1-t6 s3 b1 + g5m1-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "1mfoc46",
+    "text": "1 liter is 1,000 milliliters, so let's count the jug in milliliters.",
+    "style": "B",
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s4 b1"
     ]
   },
   {
-    "key": "1l0cm2c",
-    "text": "The jug holds 2 times 1,000 equals 2,000 milliliters.",
-    "style": "A",
-    "chars": 53,
+    "key": "ehx484",
+    "text": "2 times 1,000 equals 2,000. The jug holds 2,000 milliliters.",
+    "style": "B",
+    "chars": 60,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s4 b2"
@@ -872,7 +822,7 @@
   {
     "key": "pf9nbb",
     "text": "Now the jug and the cups are both in milliliters.",
-    "style": "A",
+    "style": "B",
     "chars": 49,
     "kind": "beat",
     "sources": [
@@ -880,10 +830,10 @@
     ]
   },
   {
-    "key": "1olvgtn",
-    "text": "Now the cups. 4 cups of 250 milliliters make 1,000 milliliters.",
-    "style": "A",
-    "chars": 63,
+    "key": "sozu76",
+    "text": "Now, how many cups? 4 cups of 250 milliliters make 1,000 milliliters.",
+    "style": "B",
+    "chars": 69,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s5 b1"
@@ -892,7 +842,7 @@
   {
     "key": "19dc76",
     "text": "The jug holds two of those thousands, so 2 times 4 equals 8 cups.",
-    "style": "A",
+    "style": "B",
     "chars": 65,
     "kind": "beat",
     "sources": [
@@ -900,60 +850,50 @@
     ]
   },
   {
-    "key": "168b4bx",
-    "text": "And that is exactly what 2,000 divided by 250 asks.",
-    "style": "A",
-    "chars": 51,
+    "key": "cx3wze",
+    "text": "That is exactly what 2,000 divided by 250 asks.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s5 b3"
     ]
   },
   {
-    "key": "1o6p592",
-    "text": "Always check. 8 cups of 250 milliliters is 8 times 250 equals 2,000 milliliters.",
-    "style": "A",
-    "chars": 80,
+    "key": "hss02b",
+    "text": "Now check. 8 cups of 250 milliliters is 8 times 250 equals 2,000 milliliters.",
+    "style": "B",
+    "chars": 77,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s6 b1"
     ]
   },
   {
-    "key": "xa50bi",
-    "text": "That is 2 liters, the whole jug, with nothing left over.",
-    "style": "A",
-    "chars": 56,
+    "key": "1l738xo",
+    "text": "That's 2 liters, the whole jug, with nothing left over.",
+    "style": "B",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s6 b2"
     ]
   },
   {
-    "key": "a7o15y",
-    "text": "You can fill 8 cups.",
-    "style": "A",
-    "chars": 20,
+    "key": "14ec5h2",
+    "text": "So you can fill 8 cups.",
+    "style": "B",
+    "chars": 23,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s6 b3"
     ]
   },
   {
-    "key": "sn7iic",
-    "text": "Here is the one to avoid.",
-    "style": "A",
-    "chars": 25,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t6 s7 b1"
-    ]
-  },
-  {
-    "key": "vdt1j7",
-    "text": "Do not do the math with two different units.",
-    "style": "A",
-    "chars": 44,
+    "key": "eoj5rn",
+    "text": "Don't do the math with two different units.",
+    "style": "B+",
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g5m1-t6 s7 b2"
@@ -962,7 +902,7 @@
   {
     "key": "1cx9x1p",
     "text": "Change 2 liters into 2,000 milliliters first, and then divide.",
-    "style": "A",
+    "style": "B+",
     "chars": 62,
     "kind": "beat",
     "sources": [
@@ -970,19 +910,19 @@
     ]
   },
   {
-    "key": "134wlws",
-    "text": "6 times 128 is not a fact you know by heart, is it?",
-    "style": "A",
-    "chars": 51,
+    "key": "cq05j6",
+    "text": "6 times 128 isn't a fact you know by heart.",
+    "style": "B",
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g5m1-t7 s2 b1"
     ]
   },
   {
-    "key": "1t4lra1",
-    "text": "And adding 128 six times takes a long time, where one slip changes the answer.",
-    "style": "A",
+    "key": "1nwhh95",
+    "text": "You could add 128 six times. But that's slow, and one slip changes the answer.",
+    "style": "B",
     "chars": 78,
     "kind": "beat",
     "sources": [
@@ -990,50 +930,50 @@
     ]
   },
   {
-    "key": "1upo961",
-    "text": "Break the big number into hundreds, tens and ones.",
-    "style": "A",
-    "chars": 50,
+    "key": "1rdzde8",
+    "text": "Is there a better way? Yes, and you already know the pieces.",
+    "style": "B",
+    "chars": 60,
     "kind": "beat",
     "sources": [
-      "g5m1-t7 s3 b1"
+      "g5m1-t7 s2 b3"
     ]
   },
   {
-    "key": "8j3h5l",
-    "text": "Multiply each part, then add all the parts.",
-    "style": "A",
-    "chars": 43,
+    "key": "8bdalo",
+    "text": "Break the big number into hundreds, tens and ones, multiply each part, then add the parts.",
+    "style": "B",
+    "chars": 90,
     "kind": "beat",
     "sources": [
-      "g5m1-t7 s3 b2"
+      "g5m1-t7 s3 b1 + g5m1-t7 bigIdea"
     ]
   },
   {
-    "key": "9sk9bn",
-    "text": "128 is 1 hundred, 2 tens and 8 ones.",
-    "style": "A",
-    "chars": 36,
+    "key": "3z57ji",
+    "text": "Look at 128. It's 1 hundred, 2 tens and 8 ones.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t7 s4 b1"
     ]
   },
   {
-    "key": "t8q07w",
-    "text": "So split each row of 128 into three parts, 100, 20 and 8.",
-    "style": "A",
-    "chars": 57,
+    "key": "6i9xf1",
+    "text": "So each row of 128 splits into three parts, 100, 20 and 8.",
+    "style": "B",
+    "chars": 58,
     "kind": "beat",
     "sources": [
       "g5m1-t7 s4 b2"
     ]
   },
   {
-    "key": "bggcb7",
-    "text": "Now take them one at a time. 6 times 1 hundred is 6 hundreds, so 6 times 100 equals 600.",
-    "style": "A",
-    "chars": 88,
+    "key": "spawut",
+    "text": "Now multiply one part at a time. 6 times 1 hundred is 6 hundreds, so 6 times 100 equals 600.",
+    "style": "B",
+    "chars": 92,
     "kind": "beat",
     "sources": [
       "g5m1-t7 s5 b1"
@@ -1042,7 +982,7 @@
   {
     "key": "157z2jw",
     "text": "6 times 2 tens is 12 tens, so 6 times 20 equals 120.",
-    "style": "A",
+    "style": "B",
     "chars": 52,
     "kind": "beat",
     "sources": [
@@ -1052,7 +992,7 @@
   {
     "key": "1a9yzho",
     "text": "And 6 times 8 equals 48.",
-    "style": "A",
+    "style": "B",
     "chars": 24,
     "kind": "beat",
     "sources": [
@@ -1060,10 +1000,10 @@
     ]
   },
   {
-    "key": "xk1xap",
-    "text": "Last move. Add the three parts, 600 plus 120 plus 48 equals 768.",
-    "style": "A",
-    "chars": 64,
+    "key": "vvrhhk",
+    "text": "Last, add the three parts. 600 plus 120 plus 48 equals 768.",
+    "style": "B",
+    "chars": 59,
     "kind": "beat",
     "sources": [
       "g5m1-t7 s6 b1"
@@ -1072,7 +1012,7 @@
   {
     "key": "i3zoik",
     "text": "So 6 times 128 equals 768. There are 768 corn plants in the field.",
-    "style": "A",
+    "style": "B",
     "chars": 66,
     "kind": "beat",
     "sources": [
@@ -1080,20 +1020,10 @@
     ]
   },
   {
-    "key": "eq8e1u",
-    "text": "Watch this one.",
-    "style": "A",
-    "chars": 15,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t7 s7 b1"
-    ]
-  },
-  {
-    "key": "10j2j7w",
-    "text": "Do not multiply the digits as if they were all ones.",
-    "style": "A",
-    "chars": 52,
+    "key": "54b5zw",
+    "text": "Don't multiply the digits as if they were all ones.",
+    "style": "B+",
+    "chars": 51,
     "kind": "beat",
     "sources": [
       "g5m1-t7 s7 b2"
@@ -1102,7 +1032,7 @@
   {
     "key": "1n81qca",
     "text": "The 1 in 128 means 100 and the 2 means 20, so the parts are 600 and 120, not 6 and 12.",
-    "style": "A",
+    "style": "B+",
     "chars": 86,
     "kind": "beat",
     "sources": [
@@ -1112,7 +1042,7 @@
   {
     "key": "1o215t1",
     "text": "You can already multiply 115 by one digit.",
-    "style": "A",
+    "style": "B",
     "chars": 42,
     "kind": "beat",
     "sources": [
@@ -1120,39 +1050,29 @@
     ]
   },
   {
-    "key": "1gu9vvm",
-    "text": "But 26 has two digits, and adding 115 twenty-six times would take far too long.",
-    "style": "A",
-    "chars": 79,
+    "key": "ly1o67",
+    "text": "But 26 has two digits. Add 115, 26 times? That would take far too long.",
+    "style": "B",
+    "chars": 71,
     "kind": "beat",
     "sources": [
       "g5m1-t8 s2 b2"
     ]
   },
   {
-    "key": "1bnj3hk",
-    "text": "Break the two-digit number into tens and ones.",
-    "style": "A",
-    "chars": 46,
+    "key": "f7g1tv",
+    "text": "Break the two-digit number into tens and ones, multiply by each part, then add the two answers.",
+    "style": "B",
+    "chars": 95,
     "kind": "beat",
     "sources": [
-      "g5m1-t8 s3 b1"
-    ]
-  },
-  {
-    "key": "i0aigw",
-    "text": "Multiply by each part, then add the two answers.",
-    "style": "A",
-    "chars": 48,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t8 s3 b2"
+      "g5m1-t8 s3 b1 + g5m1-t8 bigIdea"
     ]
   },
   {
     "key": "lufngt",
     "text": "26 is 2 tens and 6 ones.",
-    "style": "A",
+    "style": "B",
     "chars": 24,
     "kind": "beat",
     "sources": [
@@ -1160,39 +1080,39 @@
     ]
   },
   {
-    "key": "14orz14",
-    "text": "So 26 boxes are 20 boxes and 6 more boxes, and each box still holds 115 books.",
-    "style": "A",
-    "chars": 78,
+    "key": "60aieb",
+    "text": "So 26 boxes are 20 boxes and 6 more, and each box still holds 115 books.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t8 s4 b2"
     ]
   },
   {
-    "key": "1bqndqi",
-    "text": "Start with the easy piece. 115 times 2 equals 230.",
-    "style": "A",
-    "chars": 50,
+    "key": "1q8d89m",
+    "text": "Start with the tens. 115 times 2 equals 230.",
+    "style": "B",
+    "chars": 44,
     "kind": "beat",
     "sources": [
       "g5m1-t8 s5 b1"
     ]
   },
   {
-    "key": "1tccbpl",
-    "text": "20 is 10 times 2, so 115 times 20 is 10 times as much, 2,300.",
-    "style": "A",
-    "chars": 61,
+    "key": "ilzvzw",
+    "text": "20 is 10 times 2, so 115 times 20 is 10 times as much. That's 2,300.",
+    "style": "B",
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g5m1-t8 s5 b2"
     ]
   },
   {
-    "key": "1pqu32o",
-    "text": "Then the ones, 115 times 6 equals 690.",
-    "style": "A",
+    "key": "1497jjw",
+    "text": "Then the ones. 115 times 6 equals 690.",
+    "style": "B",
     "chars": 38,
     "kind": "beat",
     "sources": [
@@ -1200,9 +1120,9 @@
     ]
   },
   {
-    "key": "1lo6t4k",
-    "text": "Now add the two answers, 2,300 plus 690 equals 2,990.",
-    "style": "A",
+    "key": "1ctp1eo",
+    "text": "Now add the two answers. 2,300 plus 690 equals 2,990.",
+    "style": "B",
     "chars": 53,
     "kind": "beat",
     "sources": [
@@ -1212,7 +1132,7 @@
   {
     "key": "qxqeiq",
     "text": "So 115 times 26 equals 2,990. The shop gets 2,990 books.",
-    "style": "A",
+    "style": "B",
     "chars": 56,
     "kind": "beat",
     "sources": [
@@ -1220,20 +1140,10 @@
     ]
   },
   {
-    "key": "1c5e6ri",
-    "text": "Here is the slip to avoid.",
-    "style": "A",
-    "chars": 26,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t8 s7 b1"
-    ]
-  },
-  {
-    "key": "h18qqc",
-    "text": "Do not multiply by 2 when the 2 is in the tens place.",
-    "style": "A",
-    "chars": 53,
+    "key": "pj5ox0",
+    "text": "Don't multiply by 2 when the 2 is in the tens place.",
+    "style": "B+",
+    "chars": 52,
     "kind": "beat",
     "sources": [
       "g5m1-t8 s7 b2"
@@ -1242,7 +1152,7 @@
   {
     "key": "1r1abh9",
     "text": "It means 2 tens, which is 20. So multiply 115 by 20, not by 2.",
-    "style": "A",
+    "style": "B+",
     "chars": 62,
     "kind": "beat",
     "sources": [
@@ -1250,219 +1160,199 @@
     ]
   },
   {
-    "key": "1vtwti3",
-    "text": "Breaking 23 into 20 and 3 works just fine.",
-    "style": "A",
-    "chars": 42,
+    "key": "1cbvn5r",
+    "text": "You could break 23 into 20 and 3, and work out 124 times 20 and 124 times 3.",
+    "style": "B",
+    "chars": 76,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s2 b1"
     ]
   },
   {
-    "key": "wm9ifp",
-    "text": "But writing out 124 times 20 and 124 times 3 takes a lot of space.",
-    "style": "A",
-    "chars": 66,
+    "key": "1ddsd70",
+    "text": "That works, but it's a lot to write.",
+    "style": "B",
+    "chars": 36,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s2 b2"
     ]
   },
   {
-    "key": "1yyqlrl",
-    "text": "Columns do the same work with much less writing.",
-    "style": "A",
-    "chars": 48,
+    "key": "1f4ic3t",
+    "text": "Is there a shorter way? Yes. Stack the numbers in columns.",
+    "style": "B",
+    "chars": 58,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s2 b3"
     ]
   },
   {
-    "key": "xg16m0",
-    "text": "Multiply by the ones, then write a 0 and multiply by the tens.",
-    "style": "A",
-    "chars": 62,
+    "key": "1659vkm",
+    "text": "Make a row for the ones, then a row for the tens that starts with a zero, and add the two rows.",
+    "style": "B",
+    "chars": 95,
     "kind": "beat",
     "sources": [
-      "g5m1-t9 s3 b1"
+      "g5m1-t9 s3 b1 + g5m1-t9 bigIdea"
     ]
   },
   {
-    "key": "12ti828",
-    "text": "Add the two rows.",
-    "style": "A",
-    "chars": 17,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t9 s3 b2"
-    ]
-  },
-  {
-    "key": "1dvioj2",
-    "text": "First row first. Multiply 124 by the 3 ones.",
-    "style": "A",
-    "chars": 44,
+    "key": "9czdl4",
+    "text": "Start with the 3 ones. 4 times 3 equals 12, so write the 2 and carry the 1.",
+    "style": "B",
+    "chars": 75,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s4 b1"
     ]
   },
   {
-    "key": "ea6ih5",
-    "text": "4 times 3 equals 12, so write the 2 and carry the 1.",
-    "style": "A",
-    "chars": 52,
+    "key": "1d6la6l",
+    "text": "2 times 3 equals 6, and the carried 1 makes 7.",
+    "style": "B",
+    "chars": 46,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s4 b2"
     ]
   },
   {
-    "key": "ietx9j",
-    "text": "2 times 3 equals 6, plus the carried 1 makes 7. And 1 times 3 equals 3. The first row is 372.",
-    "style": "A",
-    "chars": 93,
+    "key": "1axujho",
+    "text": "1 times 3 equals 3. So the ones row is 372.",
+    "style": "B",
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s4 b3"
     ]
   },
   {
-    "key": "fbcsdp",
-    "text": "Now the 2 in 23. It is not 2, it is 2 tens.",
-    "style": "A",
-    "chars": 43,
+    "key": "1l1dnu6",
+    "text": "Now the 2 in 23. Is it just 2? No, it's 2 tens.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s5 b1"
     ]
   },
   {
-    "key": "ux6k1g",
-    "text": "So write a 0 in the ones place first, to hold it there.",
-    "style": "A",
-    "chars": 55,
+    "key": "ihgdj3",
+    "text": "So write a zero in the ones place first.",
+    "style": "B",
+    "chars": 40,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s5 b2"
     ]
   },
   {
-    "key": "1m7klgz",
-    "text": "Then 124 times 2 equals 248, and the second row is 2,480.",
-    "style": "A",
-    "chars": 57,
+    "key": "1cg9kqr",
+    "text": "Then 124 times 2 equals 248, and the tens row is 2,480.",
+    "style": "B",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s5 b3"
     ]
   },
   {
-    "key": "1cenvit",
-    "text": "Now add them. 372 plus 2,480 equals 2,852.",
-    "style": "A",
-    "chars": 42,
+    "key": "z1v7gt",
+    "text": "Now add the two rows. 372 plus 2,480 equals 2,852.",
+    "style": "B",
+    "chars": 50,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s6 b1"
     ]
   },
   {
-    "key": "1ej9gqk",
-    "text": "And look, those rows are 124 times 3 and 124 times 20, the same two parts as breaking 23 apart.",
-    "style": "A",
-    "chars": 95,
+    "key": "1a0abrw",
+    "text": "Look. Those rows are 124 times 3 and 124 times 20, the two parts from before.",
+    "style": "B",
+    "chars": 77,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s6 b2"
     ]
   },
   {
-    "key": "kyrv5z",
-    "text": "There are 2,852 chairs in the hall.",
-    "style": "A",
-    "chars": 35,
+    "key": "12x7ss7",
+    "text": "So there are 2,852 chairs in the hall.",
+    "style": "B",
+    "chars": 38,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s6 b3"
     ]
   },
   {
-    "key": "cyhygo",
-    "text": "This is the one almost everybody trips on.",
-    "style": "A",
-    "chars": 42,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t9 s7 b1"
-    ]
-  },
-  {
-    "key": "rax56o",
-    "text": "Do not forget the 0 when you multiply by the tens.",
-    "style": "A",
-    "chars": 50,
+    "key": "1mmtdr3",
+    "text": "In the tens row, don't forget the zero.",
+    "style": "B+",
+    "chars": 39,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s7 b2"
     ]
   },
   {
-    "key": "ahtbs4",
-    "text": "Without it, the second row is only 248 instead of 2,480.",
-    "style": "A",
-    "chars": 56,
+    "key": "1ouwapk",
+    "text": "Without it, the row is 248, not 2,480.",
+    "style": "B+",
+    "chars": 38,
     "kind": "beat",
     "sources": [
       "g5m1-t9 s7 b3"
     ]
   },
   {
-    "key": "10o02hf",
-    "text": "For a two-digit number you made two rows, the ones and the tens.",
-    "style": "A",
-    "chars": 64,
+    "key": "xjumrp",
+    "text": "With 23, you made two rows, one for the ones and one for the tens.",
+    "style": "B",
+    "chars": 66,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s2 b1"
     ]
   },
   {
-    "key": "1ekrs58",
-    "text": "But 123 has three digits, so there are hundreds to deal with too.",
-    "style": "A",
-    "chars": 65,
+    "key": "1863y18",
+    "text": "But 123 has three digits. What about the 1 hundred?",
+    "style": "B",
+    "chars": 51,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s2 b2"
     ]
   },
   {
-    "key": "drnd2b",
-    "text": "Make one row for each digit of the bottom number, and start each new row with one more 0.",
-    "style": "A",
-    "chars": 89,
+    "key": "1r6u5ip",
+    "text": "It gets a row of its own.",
+    "style": "B",
+    "chars": 25,
     "kind": "beat",
     "sources": [
-      "g5m1-t10 s3 b1"
+      "g5m1-t10 s2 b3"
     ]
   },
   {
-    "key": "15r5f54",
-    "text": "Then add all the rows.",
-    "style": "A",
-    "chars": 22,
+    "key": "1vbc5e5",
+    "text": "Make a row for each digit of the bottom number, give each new row one more zero, then add all the rows.",
+    "style": "B",
+    "chars": 103,
     "kind": "beat",
     "sources": [
-      "g5m1-t10 s3 b2"
+      "g5m1-t10 s3 b1 + g5m1-t10 bigIdea"
     ]
   },
   {
-    "key": "hfr4cu",
-    "text": "Start with the 3 ones, 231 times 3.",
-    "style": "A",
+    "key": "1u3zsde",
+    "text": "Start with the 3 ones. 231 times 3.",
+    "style": "B",
     "chars": 35,
     "kind": "beat",
     "sources": [
@@ -1470,59 +1360,59 @@
     ]
   },
   {
-    "key": "p0dfak",
-    "text": "1 times 3 equals 3, 3 times 3 equals 9 and 2 times 3 equals 6. The first row is 693.",
-    "style": "A",
-    "chars": 84,
+    "key": "4a0pgn",
+    "text": "1 times 3 equals 3, 3 times 3 equals 9 and 2 times 3 equals 6. So the ones row is 693.",
+    "style": "B",
+    "chars": 86,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s4 b2"
     ]
   },
   {
-    "key": "x3ph9y",
-    "text": "Next the 2 in 123. That 2 means 2 tens, so write one 0 first.",
-    "style": "A",
-    "chars": 61,
+    "key": "206dju",
+    "text": "Next, the 2 in 123. That 2 means 2 tens, so write one zero first.",
+    "style": "B",
+    "chars": 65,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s5 b1"
     ]
   },
   {
-    "key": "1dh9ens",
-    "text": "Then 231 times 2 equals 462, and the second row is 4,620.",
-    "style": "A",
-    "chars": 57,
+    "key": "1ralypx",
+    "text": "Then 231 times 2 equals 462. The tens row is 4,620.",
+    "style": "B",
+    "chars": 51,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s5 b2"
     ]
   },
   {
-    "key": "1ggtj6o",
-    "text": "Last row. The 1 in 123 means 1 hundred, so this time write two 0s first.",
-    "style": "A",
-    "chars": 72,
+    "key": "dtahc6",
+    "text": "Last, the 1 in 123. It means 1 hundred, so this row starts with two zeros.",
+    "style": "B",
+    "chars": 74,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s6 b1"
     ]
   },
   {
-    "key": "3yynkn",
-    "text": "Then 231 times 1 equals 231, and the row is 23,100.",
-    "style": "A",
-    "chars": 51,
+    "key": "186440d",
+    "text": "Then 231 times 1 equals 231. The hundreds row is 23,100.",
+    "style": "B",
+    "chars": 56,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s6 b2"
     ]
   },
   {
-    "key": "nzhog8",
-    "text": "Add all three rows, 693 plus 4,620 plus 23,100 equals 28,413 bottles.",
-    "style": "A",
+    "key": "1wdl4yc",
+    "text": "Add all three rows. 693 plus 4,620 plus 23,100 equals 28,413 bottles.",
+    "style": "B",
     "chars": 69,
     "kind": "beat",
     "sources": [
@@ -1530,140 +1420,130 @@
     ]
   },
   {
-    "key": "796dja",
-    "text": "Careful right at the end.",
-    "style": "A",
-    "chars": 25,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t10 s7 b1"
-    ]
-  },
-  {
-    "key": "14ilahx",
-    "text": "Do not forget the two 0s in the hundreds row.",
-    "style": "A",
-    "chars": 45,
+    "key": "f25lfp",
+    "text": "The hundreds row starts with two zeros.",
+    "style": "B+",
+    "chars": 39,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s7 b2"
     ]
   },
   {
-    "key": "1pifibh",
-    "text": "The 1 in 123 means 1 hundred, so that row is 23,100, not 231.",
-    "style": "A",
-    "chars": 61,
+    "key": "16ivzd3",
+    "text": "The 1 in 123 is 1 hundred, so the row is 23,100, not 231.",
+    "style": "B+",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t10 s7 b3"
     ]
   },
   {
-    "key": "1rsxgu4",
-    "text": "You can already multiply 406 times 35 the standard way.",
-    "style": "A",
-    "chars": 55,
+    "key": "csck5i",
+    "text": "You already know how to work out 406 times 35.",
+    "style": "B",
+    "chars": 46,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s2 b1"
     ]
   },
   {
-    "key": "1lui97b",
-    "text": "But with big numbers, one small slip, like a lost 0, can throw the answer a long way off.",
-    "style": "A",
-    "chars": 89,
+    "key": "wt2b99",
+    "text": "But with big numbers, one small slip, like a lost zero, throws the answer far off.",
+    "style": "B",
+    "chars": 82,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s2 b2"
     ]
   },
   {
-    "key": "5w3j5h",
-    "text": "And the worst part is that it still looks like a real answer.",
-    "style": "A",
-    "chars": 61,
+    "key": "1ddoy8i",
+    "text": "So how do you catch it? Estimate first.",
+    "style": "B",
+    "chars": 39,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s2 b3"
     ]
   },
   {
-    "key": "tmg2yl",
-    "text": "Estimate first with round numbers.",
-    "style": "A",
-    "chars": 34,
+    "key": "1ki9id8",
+    "text": "Estimate with round numbers first, then multiply the standard way and check that your answer is close.",
+    "style": "B",
+    "chars": 102,
     "kind": "beat",
     "sources": [
-      "g5m1-t11 s3 b1"
+      "g5m1-t11 s3 b1 + g5m1-t11 bigIdea"
     ]
   },
   {
-    "key": "whp20",
-    "text": "Then multiply the standard way and check that your answer is close.",
-    "style": "A",
-    "chars": 67,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t11 s3 b2"
-    ]
-  },
-  {
-    "key": "1cyo7gj",
-    "text": "Round each number to its biggest place. 406 rounds to 400, and 35 rounds to 40.",
-    "style": "A",
-    "chars": 79,
+    "key": "pjifkw",
+    "text": "406 is close to 400, and 35 rounds up to 40.",
+    "style": "B",
+    "chars": 44,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s4 b1"
     ]
   },
   {
-    "key": "r22k4d",
-    "text": "400 times 40 equals 16,000, so our answer should land somewhere close to 16,000.",
-    "style": "A",
-    "chars": 80,
+    "key": "1kbmgty",
+    "text": "400 times 40 equals 16,000.",
+    "style": "B",
+    "chars": 27,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s4 b2"
     ]
   },
   {
-    "key": "15464pe",
-    "text": "Now the real thing. The ones row is 406 times 5 equals 2,030.",
-    "style": "A",
-    "chars": 61,
+    "key": "h0c43m",
+    "text": "So the answer should be somewhere near 16,000.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g5m1-t11 s4 b3"
+    ]
+  },
+  {
+    "key": "1of4fy0",
+    "text": "Now multiply for real. The ones row is 406 times 5 equals 2,030.",
+    "style": "B",
+    "chars": 64,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s5 b1"
     ]
   },
   {
-    "key": "b059au",
-    "text": "For the tens row, write a 0 first, then 406 times 3 equals 1,218. The row is 12,180.",
-    "style": "A",
-    "chars": 84,
+    "key": "119apz5",
+    "text": "The tens row starts with a zero. Then 406 times 3 equals 1,218, so the row is 12,180.",
+    "style": "B",
+    "chars": 85,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s5 b2"
     ]
   },
   {
-    "key": "3lsxsn",
-    "text": "Add them, 2,030 plus 12,180 equals 14,210.",
-    "style": "A",
-    "chars": 42,
+    "key": "zmo3ht",
+    "text": "Add the rows. 2,030 plus 12,180 equals 14,210.",
+    "style": "B",
+    "chars": 46,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s6 b1"
     ]
   },
   {
-    "key": "13i29er",
-    "text": "Now the check. That is close to 16,000, so the answer makes sense.",
-    "style": "A",
-    "chars": 66,
+    "key": "1rm3j6l",
+    "text": "Now check. Is 14,210 close to 16,000? Yes, so it makes sense.",
+    "style": "B",
+    "chars": 61,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s6 b2"
@@ -1672,7 +1552,7 @@
   {
     "key": "swf9qn",
     "text": "The warehouse ships 14,210 toys.",
-    "style": "A",
+    "style": "B",
     "chars": 32,
     "kind": "beat",
     "sources": [
@@ -1680,100 +1560,90 @@
     ]
   },
   {
-    "key": "95dogi",
-    "text": "And here is what the estimate is for.",
-    "style": "A",
-    "chars": 37,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t11 s7 b1"
-    ]
-  },
-  {
-    "key": "1ffmv94",
-    "text": "Do not keep an answer that is far from your estimate.",
-    "style": "A",
-    "chars": 53,
+    "key": "1eq6g5n",
+    "text": "If your answer is far from the estimate, don't keep it.",
+    "style": "B+",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s7 b2"
     ]
   },
   {
-    "key": "1lov98s",
-    "text": "3,248 is nowhere near 16,000, because the tens row lost its 0. Look again and fix that row.",
-    "style": "A",
-    "chars": 91,
+    "key": "1wad926",
+    "text": "3,248 is nowhere near 16,000, so a row lost its zero. Go back and fix that row.",
+    "style": "B+",
+    "chars": 79,
     "kind": "beat",
     "sources": [
       "g5m1-t11 s7 b3"
     ]
   },
   {
-    "key": "1wf8b7y",
-    "text": "240 divided by 60 is not one of the facts you learned.",
-    "style": "A",
-    "chars": 54,
+    "key": "tfs7mp",
+    "text": "240 divided by 60 isn't a fact you know by heart.",
+    "style": "B",
+    "chars": 49,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s2 b1"
     ]
   },
   {
-    "key": "1hqdrn",
-    "text": "Counting up by 60s all the way to 240 is slow, and one slip changes the answer.",
-    "style": "A",
-    "chars": 79,
+    "key": "1nylw95",
+    "text": "You could count up by 60s, but that's slow, and one slip changes the answer.",
+    "style": "B",
+    "chars": 76,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s2 b2"
     ]
   },
   {
-    "key": "nj8jdw",
-    "text": "Think in tens.",
-    "style": "A",
-    "chars": 14,
+    "key": "l2qvzc",
+    "text": "Is there a fact hiding inside it? Yes.",
+    "style": "B",
+    "chars": 38,
     "kind": "beat",
     "sources": [
-      "g5m1-t12 s3 b1"
+      "g5m1-t12 s2 b3"
     ]
   },
   {
-    "key": "9b6imn",
-    "text": "240 is 24 tens and 60 is 6 tens, so 240 divided by 60 is the same as 24 divided by 6.",
-    "style": "A",
-    "chars": 85,
+    "key": "14esx1n",
+    "text": "Think of both numbers in tens, and 240 divided by 60 becomes 24 tens divided by 6 tens, the same as 24 divided by 6.",
+    "style": "B",
+    "chars": 116,
     "kind": "beat",
     "sources": [
-      "g5m1-t12 s3 b2"
+      "g5m1-t12 s3 b1 + g5m1-t12 bigIdea"
     ]
   },
   {
-    "key": "1p3jtqf",
-    "text": "Each small step on this line is 10.",
-    "style": "A",
-    "chars": 35,
+    "key": "1fihuqm",
+    "text": "Look at this line. Each small step is 10.",
+    "style": "B",
+    "chars": 41,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s4 b1"
     ]
   },
   {
-    "key": "nh2sct",
-    "text": "Jump 10 tens to 100, 10 more tens to 200, then 4 tens to 240.",
-    "style": "A",
-    "chars": 61,
+    "key": "16gs4ng",
+    "text": "Jump 10 tens to 100, 10 more to 200, then 4 more to 240.",
+    "style": "B",
+    "chars": 56,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s4 b2"
     ]
   },
   {
-    "key": "a42kmo",
-    "text": "Count them all up, and that is 24 tens.",
-    "style": "A",
-    "chars": 39,
+    "key": "11c758m",
+    "text": "That's 24 tens in all.",
+    "style": "B",
+    "chars": 22,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s4 b3"
@@ -1782,7 +1652,7 @@
   {
     "key": "13yld3s",
     "text": "Now one bus. It seats 60 students.",
-    "style": "A",
+    "style": "B",
     "chars": 34,
     "kind": "beat",
     "sources": [
@@ -1790,10 +1660,10 @@
     ]
   },
   {
-    "key": "1o0afj2",
-    "text": "60 is 6 small steps, so it is 6 tens.",
-    "style": "A",
-    "chars": 37,
+    "key": "gcyxop",
+    "text": "How many small steps is 60? 6, so 60 is 6 tens.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s5 b2"
@@ -1802,7 +1672,7 @@
   {
     "key": "52el9e",
     "text": "One busload is one jump of 6 tens.",
-    "style": "A",
+    "style": "B",
     "chars": 34,
     "kind": "beat",
     "sources": [
@@ -1810,20 +1680,20 @@
     ]
   },
   {
-    "key": "1j9f6ek",
-    "text": "So jump 6 tens at a time, all the way from 0 to 240.",
-    "style": "A",
-    "chars": 52,
+    "key": "19z2pia",
+    "text": "So jump 6 tens at a time, from zero all the way to 240.",
+    "style": "B",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s6 b1"
     ]
   },
   {
-    "key": "1s07e23",
-    "text": "It takes 4 jumps, because 24 divided by 6 equals 4.",
-    "style": "A",
-    "chars": 51,
+    "key": "vab161",
+    "text": "That's 4 jumps, because 24 divided by 6 equals 4.",
+    "style": "B",
+    "chars": 49,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s6 b2"
@@ -1832,7 +1702,7 @@
   {
     "key": "pu4myl",
     "text": "So 240 divided by 60 equals 4. The students fill 4 buses.",
-    "style": "A",
+    "style": "B",
     "chars": 57,
     "kind": "beat",
     "sources": [
@@ -1840,80 +1710,70 @@
     ]
   },
   {
-    "key": "94s6bl",
-    "text": "One warning before you go.",
-    "style": "A",
-    "chars": 26,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t12 s7 b1"
-    ]
-  },
-  {
-    "key": "1ecps81",
-    "text": "Do not take the 0 off only one number.",
-    "style": "A",
-    "chars": 38,
+    "key": "1p271r5",
+    "text": "Take the zero off both numbers, never just one.",
+    "style": "B+",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s7 b2"
     ]
   },
   {
-    "key": "19xpqk7",
-    "text": "That turns 240 divided by 60 into 240 divided by 6. Think of both numbers in tens.",
-    "style": "A",
-    "chars": 82,
+    "key": "6515gt",
+    "text": "Take it off only the 60 and you get 240 divided by 6, a different problem.",
+    "style": "B+",
+    "chars": 74,
     "kind": "beat",
     "sources": [
       "g5m1-t12 s7 b3"
     ]
   },
   {
-    "key": "ktmis5",
-    "text": "You learned your facts up to 10 times 10, but nobody learns the 17s.",
-    "style": "A",
-    "chars": 68,
+    "key": "16uxcir",
+    "text": "You know your facts up to 10 times 10. But nobody learns the 17s.",
+    "style": "B",
+    "chars": 65,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s2 b1"
     ]
   },
   {
-    "key": "1nj1rih",
-    "text": "And counting 17, 34, 51 and on is slow, and it is hard to keep track.",
-    "style": "A",
-    "chars": 69,
+    "key": "1bu99ut",
+    "text": "You could count 17, 34, 51 and on, but it's slow and hard to keep track.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s2 b2"
     ]
   },
   {
-    "key": "1szojok",
-    "text": "Round the number you divide by to the nearest ten and make a guess.",
-    "style": "A",
-    "chars": 67,
+    "key": "nm1nbs",
+    "text": "Is there a quicker way? Yes, a smart guess.",
+    "style": "B",
+    "chars": 43,
     "kind": "beat",
     "sources": [
-      "g5m1-t13 s3 b1"
+      "g5m1-t13 s2 b3"
     ]
   },
   {
-    "key": "1gb98lw",
-    "text": "Multiply to check, if a whole group still fits in what is left, the guess was too small.",
-    "style": "A",
-    "chars": 88,
+    "key": "o6ci6v",
+    "text": "Guess with the nearest ten, then multiply to check, and if a whole group still fits in what is left, add one more.",
+    "style": "B",
+    "chars": 114,
     "kind": "beat",
     "sources": [
-      "g5m1-t13 s3 b2"
+      "g5m1-t13 s3 b1 + g5m1-t13 bigIdea"
     ]
   },
   {
-    "key": "13cxvy9",
-    "text": "17 is close to 20, so let us guess with 20s.",
-    "style": "A",
-    "chars": 44,
+    "key": "1ol2zcu",
+    "text": "17 is close to 20, so guess with 20s.",
+    "style": "B",
+    "chars": 37,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s4 b1"
@@ -1922,7 +1782,7 @@
   {
     "key": "1lcc1ro",
     "text": "How many 20s fit into 68? 3 times 20 equals 60, and 4 times 20 equals 80 is too many.",
-    "style": "A",
+    "style": "B",
     "chars": 85,
     "kind": "beat",
     "sources": [
@@ -1930,9 +1790,9 @@
     ]
   },
   {
-    "key": "1o5dd1r",
-    "text": "So our guess is 3 teams.",
-    "style": "A",
+    "key": "12lb1qe",
+    "text": "So the guess is 3 teams.",
+    "style": "B",
     "chars": 24,
     "kind": "beat",
     "sources": [
@@ -1940,9 +1800,9 @@
     ]
   },
   {
-    "key": "a03hp1",
-    "text": "Now check with the real team size, 3 times 17 equals 51.",
-    "style": "A",
+    "key": "1nm6xs9",
+    "text": "Now check with the real team size. 3 times 17 equals 51.",
+    "style": "B",
     "chars": 56,
     "kind": "beat",
     "sources": [
@@ -1950,10 +1810,10 @@
     ]
   },
   {
-    "key": "1cca9rk",
-    "text": "Take it away, 68 minus 51 equals 17. There are 17 kids left.",
-    "style": "A",
-    "chars": 60,
+    "key": "j2lj46",
+    "text": "Take that away. 68 minus 51 equals 17, so 17 kids are left.",
+    "style": "B",
+    "chars": 59,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s5 b2"
@@ -1962,7 +1822,7 @@
   {
     "key": "15rn9bp",
     "text": "Wait. 17 kids left is a whole team, so the guess was too small.",
-    "style": "A",
+    "style": "B",
     "chars": 63,
     "kind": "beat",
     "sources": [
@@ -1970,10 +1830,10 @@
     ]
   },
   {
-    "key": "h4t6uw",
-    "text": "Add one more team, 4 times 17 equals 68, with no one left out.",
-    "style": "A",
-    "chars": 62,
+    "key": "1g68x2v",
+    "text": "Add one more team. 4 times 17 equals 68, and no one is left out.",
+    "style": "B",
+    "chars": 64,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s6 b2"
@@ -1982,7 +1842,7 @@
   {
     "key": "1d00tkp",
     "text": "So 68 divided by 17 equals 4. The coach makes 4 teams.",
-    "style": "A",
+    "style": "B",
     "chars": 54,
     "kind": "beat",
     "sources": [
@@ -1990,120 +1850,100 @@
     ]
   },
   {
-    "key": "137hzqb",
-    "text": "Here is the mistake to watch for.",
-    "style": "A",
-    "chars": 33,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t13 s7 b1"
-    ]
-  },
-  {
-    "key": "u1xk2f",
-    "text": "Do not stop while a whole group still fits in what is left.",
-    "style": "A",
-    "chars": 59,
+    "key": "10o714h",
+    "text": "Don't stop while a whole group still fits in what's left.",
+    "style": "B+",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s7 b2"
     ]
   },
   {
-    "key": "1v3vlzs",
-    "text": "17 kids left make one more team of 17.",
-    "style": "A",
-    "chars": 38,
+    "key": "pq8noa",
+    "text": "17 left makes one more team, so the answer is 4, not 3.",
+    "style": "B+",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t13 s7 b3"
     ]
   },
   {
-    "key": "1b3hvpx",
-    "text": "You usually start dividing with the first digit, or the first two.",
-    "style": "A",
-    "chars": 66,
+    "key": "1bnpklt",
+    "text": "You usually start with the first digit, or the first two.",
+    "style": "B",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s2 b1"
     ]
   },
   {
-    "key": "1pn9u3e",
-    "text": "But 23 does not fit into 1, and it does not fit into 18 either.",
-    "style": "A",
-    "chars": 63,
+    "key": "19u5k66",
+    "text": "But 23 doesn't fit into 1, and it doesn't fit into 18 either.",
+    "style": "B",
+    "chars": 61,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s2 b2"
     ]
   },
   {
-    "key": "zdoq5d",
-    "text": "If the number you divide by does not fit into the first two digits, the answer has one digit.",
-    "style": "A",
-    "chars": 93,
+    "key": "bofib3",
+    "text": "If the number you divide by doesn't fit into the first two digits, the answer has one digit, so guess with round numbers and try one less if it's too big.",
+    "style": "B",
+    "chars": 154,
     "kind": "beat",
     "sources": [
-      "g5m1-t14 s3 b1"
+      "g5m1-t14 s3 b1 + g5m1-t14 bigIdea"
     ]
   },
   {
-    "key": "1a38m8e",
-    "text": "Guess with round numbers, and if the guess is too big, try one less.",
-    "style": "A",
-    "chars": 68,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t14 s3 b2"
-    ]
-  },
-  {
-    "key": "jrph2a",
-    "text": "23 does not fit into 18 tens, so the answer has no tens at all.",
-    "style": "A",
-    "chars": 63,
+    "key": "85bdde",
+    "text": "23 doesn't fit into 18 tens, so the answer has no tens.",
+    "style": "B",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s4 b1"
     ]
   },
   {
-    "key": "19tjv2u",
-    "text": "It has just one digit, and that digit goes up over the 4.",
-    "style": "A",
-    "chars": 57,
+    "key": "ab5on7",
+    "text": "Where does its one digit go? Up over the 4.",
+    "style": "B",
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s4 b2"
     ]
   },
   {
-    "key": "1paiqcq",
-    "text": "23 is close to 20, so guess with 20s. How many 20s fit into 184?",
-    "style": "A",
-    "chars": 64,
+    "key": "1l0u24g",
+    "text": "23 is close to 20. How many 20s fit into 184? 9 times 20 equals 180, so guess 9.",
+    "style": "B",
+    "chars": 80,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s5 b1"
     ]
   },
   {
-    "key": "bqcm39",
-    "text": "9 times 20 equals 180, so guess 9.",
-    "style": "A",
-    "chars": 34,
+    "key": "1xj200a",
+    "text": "Now check with the real number. 9 times 23 equals 207.",
+    "style": "B",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s5 b2"
     ]
   },
   {
-    "key": "42dcwp",
-    "text": "Now check with the real number, 9 times 23 equals 207. That is more than 184, so 9 is too big.",
-    "style": "A",
-    "chars": 94,
+    "key": "xtiq5e",
+    "text": "That's more than 184, so 9 is too big.",
+    "style": "B",
+    "chars": 38,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s5 b3"
@@ -2112,7 +1952,7 @@
   {
     "key": "hp09m9",
     "text": "So try one less. 8 times 23 equals 184.",
-    "style": "A",
+    "style": "B",
     "chars": 39,
     "kind": "beat",
     "sources": [
@@ -2120,130 +1960,130 @@
     ]
   },
   {
-    "key": "1p36bw",
-    "text": "It fits exactly, with 0 left. Write the 8 over the 4.",
-    "style": "A",
-    "chars": 53,
+    "key": "f3eji",
+    "text": "It fits exactly, with zero left, so write the 8 over the 4.",
+    "style": "B",
+    "chars": 59,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s6 b2"
     ]
   },
   {
-    "key": "1p116c5",
-    "text": "So 184 divided by 23 equals 8. The shop makes 8 bunches.",
-    "style": "A",
-    "chars": 56,
+    "key": "3ue4md",
+    "text": "184 divided by 23 equals 8. The shop makes 8 bunches.",
+    "style": "B",
+    "chars": 53,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s6 b3"
     ]
   },
   {
-    "key": "vmp4fy",
-    "text": "Here is the one to watch.",
-    "style": "A",
-    "chars": 25,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t14 s7 b1 + g5m1-t15 s7 b1"
-    ]
-  },
-  {
-    "key": "1kr69z",
-    "text": "Do not keep a guess that is too big.",
-    "style": "A",
-    "chars": 36,
+    "key": "1pilohf",
+    "text": "Never keep a guess that is too big.",
+    "style": "B+",
+    "chars": 35,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s7 b2"
     ]
   },
   {
-    "key": "17si0wh",
-    "text": "9 times 23 equals 207 is more than 184, so 9 bunches cannot be made. Try one less.",
-    "style": "A",
-    "chars": 82,
+    "key": "162ge0q",
+    "text": "9 times 23 equals 207, and that's more than the 184 roses, so try one less.",
+    "style": "B+",
+    "chars": 75,
     "kind": "beat",
     "sources": [
       "g5m1-t14 s7 b3"
     ]
   },
   {
-    "key": "11wqgbi",
-    "text": "This time 13 does fit into 31, the first two digits of 312.",
-    "style": "A",
-    "chars": 59,
+    "key": "1iwbb4u",
+    "text": "Can you find 312 divided by 13 with one guess? Not really.",
+    "style": "B",
+    "chars": 58,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s2 b1"
     ]
   },
   {
-    "key": "1oipwsx",
-    "text": "So the answer has a tens digit and a ones digit. That is too much to find with one guess.",
-    "style": "A",
-    "chars": 89,
+    "key": "1ybq4qn",
+    "text": "13 fits into 31, the first two digits. So the answer has a tens digit and a ones digit.",
+    "style": "B",
+    "chars": 87,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s2 b2"
     ]
   },
   {
-    "key": "19btdk9",
-    "text": "Divide the tens first and take away.",
-    "style": "A",
-    "chars": 36,
+    "key": "jy0y41",
+    "text": "We find them one at a time.",
+    "style": "B",
+    "chars": 27,
     "kind": "beat",
     "sources": [
-      "g5m1-t15 s3 b1"
+      "g5m1-t15 s2 b3"
     ]
   },
   {
-    "key": "1b6b1kq",
-    "text": "Then bring down the ones and divide again.",
-    "style": "A",
-    "chars": 42,
+    "key": "b2isew",
+    "text": "Divide the tens first, then bring down the ones and divide again.",
+    "style": "B",
+    "chars": 65,
     "kind": "beat",
     "sources": [
-      "g5m1-t15 s3 b2"
+      "g5m1-t15 s3 b1 + g5m1-t15 bigIdea"
     ]
   },
   {
-    "key": "p3jo1b",
-    "text": "Start with the 31 tens. 2 times 13 equals 26 fits, and 3 times 13 equals 39 is too many.",
-    "style": "A",
-    "chars": 88,
+    "key": "bd5c7k",
+    "text": "Start with the 31 tens. How many thirteens fit?",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s4 b1"
     ]
   },
   {
-    "key": "t36jz8",
-    "text": "So write the 2 over the 1. Take away, 31 minus 26 equals 5.",
-    "style": "A",
-    "chars": 59,
+    "key": "18kvy3z",
+    "text": "2 times 13 equals 26 fits. 3 times 13 equals 39 is too many.",
+    "style": "B",
+    "chars": 60,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s4 b2"
     ]
   },
   {
-    "key": "9ubnpg",
-    "text": "5 tens are left over. Now bring down the 2 ones and write it beside the 5.",
-    "style": "A",
-    "chars": 74,
+    "key": "n5qutr",
+    "text": "So write the 2 over the 1, and take away. 31 minus 26 equals 5.",
+    "style": "B",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g5m1-t15 s4 b3"
+    ]
+  },
+  {
+    "key": "t9vv03",
+    "text": "5 tens are left over.",
+    "style": "B",
+    "chars": 21,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s5 b1"
     ]
   },
   {
-    "key": "vq5uaq",
-    "text": "Now there are 52 to divide.",
-    "style": "A",
-    "chars": 27,
+    "key": "1iybohl",
+    "text": "Bring down the 2 ones and write it beside the 5. Now there are 52 to divide.",
+    "style": "B",
+    "chars": 76,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s5 b2"
@@ -2252,7 +2092,7 @@
   {
     "key": "t5rbqf",
     "text": "Round two. 4 times 13 equals 52, so write the 4 over the 2.",
-    "style": "A",
+    "style": "B",
     "chars": 59,
     "kind": "beat",
     "sources": [
@@ -2260,9 +2100,9 @@
     ]
   },
   {
-    "key": "g7njgh",
-    "text": "Take away, 52 minus 52 equals 0.",
-    "style": "A",
+    "key": "1u870o5",
+    "text": "Take away. 52 minus 52 equals 0.",
+    "style": "B",
     "chars": 32,
     "kind": "beat",
     "sources": [
@@ -2272,7 +2112,7 @@
   {
     "key": "134hbnz",
     "text": "So 312 divided by 13 equals 24. The store fills 24 cartons.",
-    "style": "A",
+    "style": "B",
     "chars": 59,
     "kind": "beat",
     "sources": [
@@ -2280,80 +2120,80 @@
     ]
   },
   {
-    "key": "tmi3p4",
-    "text": "Do not stop after the tens.",
-    "style": "A",
-    "chars": 27,
+    "key": "1fzf7d4",
+    "text": "Don't stop after the tens.",
+    "style": "B+",
+    "chars": 26,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s7 b2"
     ]
   },
   {
-    "key": "14yaco3",
-    "text": "The 2 ones still have to come down. You are done only when every digit has come down.",
-    "style": "A",
-    "chars": 85,
+    "key": "kd43n3",
+    "text": "The 2 ones still have to come down. You're done only when every digit has come down.",
+    "style": "B+",
+    "chars": 84,
     "kind": "beat",
     "sources": [
       "g5m1-t15 s7 b3"
     ]
   },
   {
-    "key": "n2og70",
-    "text": "The first two digits of 1,176 make 11, and 24 does not fit into 11.",
-    "style": "A",
-    "chars": 67,
+    "key": "1efpddl",
+    "text": "Where does the answer start?",
+    "style": "B",
+    "chars": 28,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s2 b1"
     ]
   },
   {
-    "key": "j2y8kc",
-    "text": "And if the answer starts one place too far left, every digit of it lands one place off.",
-    "style": "A",
-    "chars": 87,
+    "key": "ge99i7",
+    "text": "24 doesn't fit into 11, the first two digits of 1,176.",
+    "style": "B",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s2 b2"
     ]
   },
   {
-    "key": "99ngbz",
-    "text": "Find where to start, if the number you divide by does not fit into the first two digits, start with the first three.",
-    "style": "A",
-    "chars": 116,
+    "key": "59j9lr",
+    "text": "Start one place too far left, and every digit lands one place off.",
+    "style": "B",
+    "chars": 66,
     "kind": "beat",
     "sources": [
-      "g5m1-t16 s3 b1"
+      "g5m1-t16 s2 b3"
     ]
   },
   {
-    "key": "1hfb09i",
-    "text": "Then bring down one digit at a time.",
-    "style": "A",
+    "key": "ycf5di",
+    "text": "Start where the number you divide by first fits, then bring down one digit at a time.",
+    "style": "B",
+    "chars": 85,
+    "kind": "beat",
+    "sources": [
+      "g5m1-t16 s3 b1 + g5m1-t16 bigIdea"
+    ]
+  },
+  {
+    "key": "1cjokle",
+    "text": "Does 24 fit into 1? No. Into 11? No.",
+    "style": "B",
     "chars": 36,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t16 s3 b2"
-    ]
-  },
-  {
-    "key": "1kcauny",
-    "text": "Walk it with me. 24 does not fit into 1 or into 11.",
-    "style": "A",
-    "chars": 51,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s4 b1"
     ]
   },
   {
-    "key": "had05w",
-    "text": "It does fit into 117, the first three digits.",
-    "style": "A",
-    "chars": 45,
+    "key": "1jyg8ut",
+    "text": "Into 117, the first three digits? Yes.",
+    "style": "B",
+    "chars": 38,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s4 b2"
@@ -2362,7 +2202,7 @@
   {
     "key": "16xvbwp",
     "text": "So the first digit of the answer goes over the 7.",
-    "style": "A",
+    "style": "B",
     "chars": 49,
     "kind": "beat",
     "sources": [
@@ -2370,19 +2210,19 @@
     ]
   },
   {
-    "key": "14iu2kj",
-    "text": "4 times 24 equals 96 fits into 117, and 5 times 24 equals 120 is too many.",
-    "style": "A",
-    "chars": 74,
+    "key": "1g1ifeh",
+    "text": "How many twenty-fours fit into 117? 4 times 24 equals 96 fits, and 5 times 24 equals 120 is too many.",
+    "style": "B",
+    "chars": 101,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s5 b1"
     ]
   },
   {
-    "key": "1m0k7t",
-    "text": "Write the 4 over the 7, and take away, 117 minus 96 equals 21.",
-    "style": "A",
+    "key": "10kshv1",
+    "text": "Write the 4 over the 7, and take away. 117 minus 96 equals 21.",
+    "style": "B",
     "chars": 62,
     "kind": "beat",
     "sources": [
@@ -2390,10 +2230,10 @@
     ]
   },
   {
-    "key": "i6zke3",
-    "text": "Then bring down the 6 to make 216.",
-    "style": "A",
-    "chars": 34,
+    "key": "1hevlzg",
+    "text": "Then bring down the 6. That makes 216.",
+    "style": "B",
+    "chars": 38,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s5 b3"
@@ -2402,7 +2242,7 @@
   {
     "key": "u85xpy",
     "text": "One more round. 9 times 24 equals 216, so write the 9 over the 6.",
-    "style": "A",
+    "style": "B",
     "chars": 65,
     "kind": "beat",
     "sources": [
@@ -2410,10 +2250,10 @@
     ]
   },
   {
-    "key": "gy84de",
-    "text": "216 minus 216 equals 0, and no digits are left to bring down.",
-    "style": "A",
-    "chars": 61,
+    "key": "kx84fs",
+    "text": "216 minus 216 equals 0, and there are no digits left to bring down.",
+    "style": "B",
+    "chars": 67,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s6 b2"
@@ -2422,7 +2262,7 @@
   {
     "key": "12usxs2",
     "text": "So 1,176 divided by 24 equals 49. Each kid gets 49 stickers.",
-    "style": "A",
+    "style": "B",
     "chars": 60,
     "kind": "beat",
     "sources": [
@@ -2430,100 +2270,90 @@
     ]
   },
   {
-    "key": "wym7z6",
-    "text": "Here is what goes wrong.",
-    "style": "A",
-    "chars": 24,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t16 s7 b1"
-    ]
-  },
-  {
-    "key": "w3hybo",
-    "text": "Do not write the first digit over the second 1.",
-    "style": "A",
-    "chars": 47,
+    "key": "4m03bd",
+    "text": "Don't put the first digit over the second 1. It goes over the 7, the last digit of 117.",
+    "style": "B+",
+    "chars": 87,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s7 b2"
     ]
   },
   {
-    "key": "x694jo",
-    "text": "It goes over the 7, the last digit of 117. Multiply to check, 490 times 24 equals 11,760, which is 10 times too many.",
-    "style": "A",
-    "chars": 117,
+    "key": "2su5hx",
+    "text": "Over the 1, the answer comes out 490. That's 10 times too many.",
+    "style": "B+",
+    "chars": 63,
     "kind": "beat",
     "sources": [
       "g5m1-t16 s7 b3"
     ]
   },
   {
-    "key": "18sg5zf",
-    "text": "You could add up every single piece, 4 plus 2 plus 4 plus 2 plus 4 plus 2.",
-    "style": "A",
-    "chars": 74,
+    "key": "kp2oda",
+    "text": "You could add every piece, 4 plus 2 plus 4 plus 2 plus 4 plus 2.",
+    "style": "B",
+    "chars": 64,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s2 b1"
     ]
   },
   {
-    "key": "9ey7ak",
-    "text": "That is long to write, and it hides the best part, which is that the 3 bags are all the same.",
-    "style": "A",
-    "chars": 93,
+    "key": "a8bpzx",
+    "text": "That's long. And it hides the best part.",
+    "style": "B",
+    "chars": 40,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s2 b2"
     ]
   },
   {
-    "key": "1pnhnau",
-    "text": "The ( ) keep together what goes together.",
-    "style": "A",
-    "chars": 41,
+    "key": "unq7m",
+    "text": "What's the same every time? Each bag. They're all 4 plus 2.",
+    "style": "B",
+    "chars": 59,
     "kind": "beat",
     "sources": [
-      "g5m1-t17 s3 b1"
+      "g5m1-t17 s2 b3"
     ]
   },
   {
-    "key": "1lxfb8q",
-    "text": "3 times (4 plus 2) means 3 times as much as 4 plus 2.",
-    "style": "A",
-    "chars": 53,
+    "key": "19pdlrj",
+    "text": "The brackets keep one bag together, so 3 times 4 plus 2, all together, means 3 times as much as 4 plus 2.",
+    "style": "B",
+    "chars": 105,
     "kind": "beat",
     "sources": [
-      "g5m1-t17 s3 b2"
+      "g5m1-t17 s3 b1 + g5m1-t17 bigIdea"
     ]
   },
   {
-    "key": "1fgvsbt",
-    "text": "Start with one bag. It has 4 apples and 2 pears, so that is 4 plus 2.",
-    "style": "A",
-    "chars": 69,
+    "key": "avfgsv",
+    "text": "Start with one bag. 4 apples and 2 pears, so 4 plus 2.",
+    "style": "B",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s4 b1"
     ]
   },
   {
-    "key": "6ibrst",
-    "text": "Now put ( ) around it, so the whole bag stays together.",
-    "style": "A",
-    "chars": 55,
+    "key": "ig99b7",
+    "text": "Put brackets around it. Now the whole bag stays together.",
+    "style": "B",
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s4 b2"
     ]
   },
   {
-    "key": "x7djx4",
-    "text": "There are 3 bags, all the same, so we write 3 times (4 plus 2).",
-    "style": "A",
-    "chars": 63,
+    "key": "lcegx0",
+    "text": "There are 3 bags, all the same. So write 3 times 4 plus 2, all together.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s5 b1"
@@ -2532,7 +2362,7 @@
   {
     "key": "1t815lb",
     "text": "It means 3 times as much as 4 plus 2.",
-    "style": "A",
+    "style": "B",
     "chars": 37,
     "kind": "beat",
     "sources": [
@@ -2542,7 +2372,7 @@
   {
     "key": "knr20a",
     "text": "One bag is 6, so 3 bags are 18.",
-    "style": "A",
+    "style": "B",
     "chars": 31,
     "kind": "beat",
     "sources": [
@@ -2550,130 +2380,110 @@
     ]
   },
   {
-    "key": "1j09dtu",
-    "text": "Now look at these two, 3 times (4 plus 2) and 3 times 4 plus 2.",
-    "style": "A",
-    "chars": 63,
+    "key": "ek6ll3",
+    "text": "Now look at 3 times 4 plus 2. Is it the same?",
+    "style": "B",
+    "chars": 45,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s6 b1"
     ]
   },
   {
-    "key": "15vh63d",
-    "text": "Both have 3 bags of 4 apples. But the first one has 2 pears in every bag.",
-    "style": "A",
-    "chars": 73,
+    "key": "cx3ujv",
+    "text": "No. It's 3 bags of 4 apples, and just 2 pears in all.",
+    "style": "B",
+    "chars": 53,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s6 b2"
     ]
   },
   {
-    "key": "44sh2f",
-    "text": "The second has just 2 pears in all. So the first one is more.",
-    "style": "A",
-    "chars": 61,
+    "key": "1ngs6f4",
+    "text": "3 times 4 plus 2, all together, has 2 pears in every bag, so it's more.",
+    "style": "B",
+    "chars": 71,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s6 b3"
     ]
   },
   {
-    "key": "1vi5u8i",
-    "text": "Here is the one to be careful with.",
-    "style": "A",
-    "chars": 35,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t17 s7 b1"
-    ]
-  },
-  {
-    "key": "c9qukk",
-    "text": "Do not leave out the ( ).",
-    "style": "A",
-    "chars": 25,
+    "key": "1pe8hbc",
+    "text": "Don't drop the brackets.",
+    "style": "B+",
+    "chars": 24,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s7 b2"
     ]
   },
   {
-    "key": "nvui00",
-    "text": "3 times 4 plus 2 is 3 bags of apples and just 2 pears. The ( ) put 2 pears in every bag.",
-    "style": "A",
-    "chars": 88,
+    "key": "1ax8o7x",
+    "text": "Without them, there are just 2 pears in all, not 2 in every bag.",
+    "style": "B+",
+    "chars": 64,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s7 b3"
     ]
   },
   {
-    "key": "7xc7y5",
-    "text": "The board does not tell us what the 4, the 6 or the 3 count.",
-    "style": "A",
-    "chars": 60,
+    "key": "1b6kt4t",
+    "text": "What do the 4, the 6 and the 3 count? What do the times sign and the plus sign do?",
+    "style": "B",
+    "chars": 82,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s2 b1"
     ]
   },
   {
-    "key": "lqz1ue",
-    "text": "It does not say what the times and the plus do either.",
-    "style": "A",
-    "chars": 54,
+    "key": "kgiek1",
+    "text": "The board doesn't say.",
+    "style": "B",
+    "chars": 22,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s2 b2"
     ]
   },
   {
-    "key": "fiz1d9",
-    "text": "A story has to give every part a job.",
-    "style": "A",
-    "chars": 37,
+    "key": "pzqf5p",
+    "text": "So a story has to give every part a job.",
+    "style": "B",
+    "chars": 40,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s2 b3"
     ]
   },
   {
-    "key": "1c9itiq",
-    "text": "Every number and sign is a part of the story.",
-    "style": "A",
-    "chars": 45,
+    "key": "35wqdx",
+    "text": "Give every number and sign a job in the story, and let the part in brackets happen first.",
+    "style": "B",
+    "chars": 89,
     "kind": "beat",
     "sources": [
-      "g5m1-t18 s3 b1"
+      "g5m1-t18 s3 b1 + g5m1-t18 bigIdea"
     ]
   },
   {
-    "key": "1n3g3ev",
-    "text": "The part in the ( ) happens first.",
-    "style": "A",
-    "chars": 34,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t18 s3 b2"
-    ]
-  },
-  {
-    "key": "13off1s",
-    "text": "The ( ) happen first, so they make one thing in the story.",
-    "style": "A",
-    "chars": 58,
+    "key": "1uyj4h5",
+    "text": "The part in brackets happens first, so it's one thing.",
+    "style": "B",
+    "chars": 54,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s4 b1"
     ]
   },
   {
-    "key": "9ut835",
-    "text": "Make 6 plus 3 one bag, 6 red marbles and 3 green marbles.",
-    "style": "A",
-    "chars": 57,
+    "key": "ye8npr",
+    "text": "Make 6 plus 3 one bag, 6 red marbles and 3 green.",
+    "style": "B",
+    "chars": 49,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s4 b2"
@@ -2681,148 +2491,128 @@
   },
   {
     "key": "147v7z3",
-    "text": "Now the 4 ×. That means 4 of that whole bag.",
-    "style": "A",
-    "chars": 44,
+    "text": "Now the 4 times. That means 4 of that whole bag.",
+    "style": "B",
+    "chars": 48,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s5 b1"
     ]
   },
   {
-    "key": "1jz9vxb",
-    "text": "So the story is 4 bags, each with 6 red marbles and 3 green marbles.",
-    "style": "A",
-    "chars": 68,
+    "key": "1rvtfjr",
+    "text": "So the story is 4 bags, each with 6 red and 3 green.",
+    "style": "B",
+    "chars": 52,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s5 b2"
     ]
   },
   {
-    "key": "14e0ozo",
-    "text": "Let us solve it. One bag has 6 plus 3 equals 9 marbles.",
-    "style": "A",
-    "chars": 55,
+    "key": "18ppwmg",
+    "text": "Does the story match the board? Let's solve it.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s6 b1"
     ]
   },
   {
-    "key": "6li88n",
-    "text": "And 4 bags have 4 times 9 equals 36 marbles.",
-    "style": "A",
-    "chars": 44,
+    "key": "wz2hm2",
+    "text": "One bag has 6 plus 3 equals 9 marbles. 4 bags have 4 times 9 equals 36.",
+    "style": "B",
+    "chars": 71,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s6 b2"
     ]
   },
   {
-    "key": "4fstez",
-    "text": "The story and the board give the same answer.",
-    "style": "A",
-    "chars": 45,
+    "key": "f19naa",
+    "text": "The board gives 36 too. They match.",
+    "style": "B",
+    "chars": 35,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s6 b3"
     ]
   },
   {
-    "key": "wwyxjl",
-    "text": "Here is the story that does not match.",
-    "style": "A",
-    "chars": 38,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t18 s7 b1"
-    ]
-  },
-  {
-    "key": "me6o6j",
-    "text": "Do not let the story do the times first.",
-    "style": "A",
-    "chars": 40,
+    "key": "migz4r",
+    "text": "Don't let the story multiply first.",
+    "style": "B+",
+    "chars": 35,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s7 b2"
     ]
   },
   {
-    "key": "1ase097",
-    "text": "4 bags of 6 red marbles, plus 3 green ones, is 4 times 6 plus 3. The ( ) put 3 green marbles in every bag.",
-    "style": "A",
-    "chars": 106,
+    "key": "u8hze8",
+    "text": "4 bags of 6 red, plus 3 green, is 4 times 6, plus 3. The brackets put 3 green in every bag.",
+    "style": "B+",
+    "chars": 91,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s7 b3"
     ]
   },
   {
-    "key": "13p6bk4",
-    "text": "We want to share the markers among 18 classes.",
-    "style": "A",
-    "chars": 46,
+    "key": "1ohia5b",
+    "text": "Can we share the markers among 18 classes yet? Not yet.",
+    "style": "B",
+    "chars": 55,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s2 b1"
     ]
   },
   {
-    "key": "vyaolh",
-    "text": "But how many markers are there in all? The story never says.",
-    "style": "A",
-    "chars": 60,
+    "key": "p0ze8g",
+    "text": "How many markers are there in all? The story never says.",
+    "style": "B",
+    "chars": 56,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s2 b2"
     ]
   },
   {
-    "key": "cidx4v",
-    "text": "That number is hidden, and we have to find it first.",
-    "style": "A",
-    "chars": 52,
+    "key": "5dsdow",
+    "text": "That number is hidden. We have to find it first.",
+    "style": "B",
+    "chars": 48,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s2 b3"
     ]
   },
   {
-    "key": "zrr1h4",
-    "text": "Find the hidden number first.",
-    "style": "A",
-    "chars": 29,
+    "key": "qib7xn",
+    "text": "Find the hidden number first, then use it to answer the question.",
+    "style": "B",
+    "chars": 65,
     "kind": "beat",
     "sources": [
-      "g5m1-t19 s3 b1"
+      "g5m1-t19 s3 b1 + g5m1-t19 bigIdea"
     ]
   },
   {
-    "key": "h8qm6m",
-    "text": "Then use it to answer the question.",
-    "style": "A",
-    "chars": 35,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t19 s3 b2"
-    ]
-  },
-  {
-    "key": "10whb42",
-    "text": "24 boxes, with 36 markers in each one.",
-    "style": "A",
-    "chars": 38,
+    "key": "gvym06",
+    "text": "24 boxes, with 36 markers in each.",
+    "style": "B",
+    "chars": 34,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s4 b1"
     ]
   },
   {
-    "key": "43q833",
-    "text": "24 times 36 equals 864, so there are 864 markers in all.",
-    "style": "A",
+    "key": "1h7cakx",
+    "text": "24 times 36 equals 864. So there are 864 markers in all.",
+    "style": "B",
     "chars": 56,
     "kind": "beat",
     "sources": [
@@ -2830,20 +2620,20 @@
     ]
   },
   {
-    "key": "mhdv06",
-    "text": "Now we can answer the real question.",
-    "style": "A",
-    "chars": 36,
+    "key": "1y0csqm",
+    "text": "Now answer the real question.",
+    "style": "B",
+    "chars": 29,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s5 b1"
     ]
   },
   {
-    "key": "1gvnsn1",
-    "text": "Share the 864 markers equally among 18 classes, 864 divided by 18 equals 48.",
-    "style": "A",
-    "chars": 76,
+    "key": "1ho7g64",
+    "text": "Share the 864 markers among 18 classes. 864 divided by 18 equals 48.",
+    "style": "B",
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s5 b2"
@@ -2852,7 +2642,7 @@
   {
     "key": "66ja6q",
     "text": "Each class gets 48 markers.",
-    "style": "A",
+    "style": "B",
     "chars": 27,
     "kind": "beat",
     "sources": [
@@ -2860,119 +2650,89 @@
     ]
   },
   {
-    "key": "1y8wswh",
-    "text": "Let us check it. 18 classes with 48 markers each is 18 times 48 equals 864.",
-    "style": "A",
-    "chars": 75,
+    "key": "1xo1ebk",
+    "text": "Does 48 make sense? Check it.",
+    "style": "B",
+    "chars": 29,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s6 b1"
     ]
   },
   {
-    "key": "15u4h2",
-    "text": "That is every marker in the 24 boxes.",
-    "style": "A",
-    "chars": 37,
+    "key": "mt4d1s",
+    "text": "18 classes with 48 each is 18 times 48 equals 864.",
+    "style": "B",
+    "chars": 50,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s6 b2"
     ]
   },
   {
-    "key": "mrvnky",
-    "text": "So each class gets 48 markers.",
-    "style": "A",
-    "chars": 30,
+    "key": "dc2dcs",
+    "text": "That's every marker in the 24 boxes. It checks out.",
+    "style": "B",
+    "chars": 51,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s6 b3"
     ]
   },
   {
-    "key": "qfime7",
-    "text": "Here is the trap in a two-step story.",
-    "style": "A",
-    "chars": 37,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t19 s7 b1"
-    ]
-  },
-  {
-    "key": "rw55qo",
-    "text": "Do not stop at the hidden number.",
-    "style": "A",
-    "chars": 33,
+    "key": "12bhm80",
+    "text": "Don't stop at the hidden number.",
+    "style": "B+",
+    "chars": 32,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s7 b2"
     ]
   },
   {
-    "key": "1b75d1d",
-    "text": "864 is all the markers, not the markers for one class. Always finish with the question.",
-    "style": "A",
-    "chars": 87,
+    "key": "hqsq3e",
+    "text": "864 is all the markers, not one class's share. Finish with the question.",
+    "style": "B+",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t19 s7 b3"
     ]
   },
   {
-    "key": "18ytpbj",
-    "text": "The story gives us 32, 25 and 186.",
-    "style": "A",
-    "chars": 34,
+    "key": "17thknd",
+    "text": "The story gives 32, 25 and 186. Which one is the empty seats?",
+    "style": "B",
+    "chars": 61,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s2 b1"
     ]
   },
   {
-    "key": "m5l0gu",
-    "text": "None of them is the number of empty seats.",
-    "style": "A",
-    "chars": 42,
+    "key": "6cwxd8",
+    "text": "None of them. And pick a sign too soon, and you may answer a different question.",
+    "style": "B",
+    "chars": 80,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s2 b2"
     ]
   },
   {
-    "key": "212r6i",
-    "text": "Pick a sign too soon, and you may answer a different question.",
-    "style": "A",
-    "chars": 62,
+    "key": "u0aqz",
+    "text": "Draw the story as a tape, solve one part at a time, and check what the question asks.",
+    "style": "B",
+    "chars": 85,
     "kind": "beat",
     "sources": [
-      "g5m1-t20 s2 b3"
-    ]
-  },
-  {
-    "key": "1tdfgc2",
-    "text": "Draw the story as a tape.",
-    "style": "A",
-    "chars": 25,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t20 s3 b1"
-    ]
-  },
-  {
-    "key": "gqnqha",
-    "text": "Solve one part at a time, then check what the question asks.",
-    "style": "A",
-    "chars": 60,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t20 s3 b2"
+      "g5m1-t20 s3 b1 + g5m1-t20 bigIdea"
     ]
   },
   {
     "key": "ptshbz",
     "text": "32 rows of 25 seats make one long tape.",
-    "style": "A",
+    "style": "B",
     "chars": 39,
     "kind": "beat",
     "sources": [
@@ -2980,9 +2740,9 @@
     ]
   },
   {
-    "key": "1ilfv9z",
-    "text": "32 times 25 equals 800, so the theater has 800 seats.",
-    "style": "A",
+    "key": "1dso6dt",
+    "text": "32 times 25 equals 800. So the theater has 800 seats.",
+    "style": "B",
     "chars": 53,
     "kind": "beat",
     "sources": [
@@ -2990,39 +2750,39 @@
     ]
   },
   {
-    "key": "ppt8nn",
-    "text": "The 186 sold seats are one part of the 800, and the empty seats are the other part.",
-    "style": "A",
-    "chars": 83,
+    "key": "1r5ku2u",
+    "text": "186 seats are sold. That's one part of the 800.",
+    "style": "B",
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s5 b1"
     ]
   },
   {
-    "key": "ehesq3",
-    "text": "So we take away, 800 minus 186 equals 614.",
-    "style": "A",
-    "chars": 42,
+    "key": "28jj47",
+    "text": "The empty seats are the other part. So take away. 800 minus 186 equals 614.",
+    "style": "B",
+    "chars": 75,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s5 b2"
     ]
   },
   {
-    "key": "qd7sas",
-    "text": "Now read the question again. It asks for empty seats, not sold seats.",
-    "style": "A",
-    "chars": 69,
+    "key": "1r682vc",
+    "text": "Now read the question again. Does it ask for sold seats? No, empty ones.",
+    "style": "B",
+    "chars": 72,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s6 b1"
     ]
   },
   {
-    "key": "2kxbuy",
-    "text": "Check it, 614 empty and 186 sold make 800.",
-    "style": "A",
+    "key": "1n2q4im",
+    "text": "Check it. 614 empty and 186 sold make 800.",
+    "style": "B",
     "chars": 42,
     "kind": "beat",
     "sources": [
@@ -3032,7 +2792,7 @@
   {
     "key": "fbrein",
     "text": "So 614 seats are still empty.",
-    "style": "A",
+    "style": "B",
     "chars": 29,
     "kind": "beat",
     "sources": [
@@ -3040,213 +2800,23 @@
     ]
   },
   {
-    "key": "1fw25b5",
-    "text": "One last warning.",
-    "style": "A",
-    "chars": 17,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t20 s7 b1"
-    ]
-  },
-  {
-    "key": "mzdrxr",
-    "text": "Do not add the sold seats.",
-    "style": "A",
-    "chars": 26,
+    "key": "kkpbxb",
+    "text": "Don't add the sold seats.",
+    "style": "B+",
+    "chars": 25,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s7 b2"
     ]
   },
   {
-    "key": "11xaubb",
-    "text": "They are part of the 800 seats, so take them away.",
-    "style": "A",
-    "chars": 50,
+    "key": "l5z3rt",
+    "text": "They're part of the 800, so take them away.",
+    "style": "B+",
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g5m1-t20 s7 b3"
-    ]
-  },
-  {
-    "key": "u8tcrb",
-    "text": "The small number up top says how many 10s to multiply. That is how many zeros, and how many places the digits slide.",
-    "style": "A",
-    "chars": 116,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t3 bigIdea"
-    ]
-  },
-  {
-    "key": "1100du5",
-    "text": "Swap each number for a close round number. Use a fact you know, then write the zeros.",
-    "style": "A",
-    "chars": 85,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t4 bigIdea"
-    ]
-  },
-  {
-    "key": "lyplxp",
-    "text": "A bigger unit is made of 10, 100 or 1,000 smaller ones. Multiply to change to the smaller unit, and divide to change to the bigger one.",
-    "style": "A",
-    "chars": 135,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t5 bigIdea"
-    ]
-  },
-  {
-    "key": "69j6u2",
-    "text": "Change to the same unit first. Then solve the story one step at a time.",
-    "style": "A",
-    "chars": 71,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t6 bigIdea"
-    ]
-  },
-  {
-    "key": "16vhdn",
-    "text": "Break the big number into hundreds, tens and ones. Multiply each part, then add all the parts.",
-    "style": "A",
-    "chars": 94,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t7 bigIdea"
-    ]
-  },
-  {
-    "key": "j769nt",
-    "text": "Break the two-digit number into tens and ones. Multiply by each part, then add the two answers.",
-    "style": "A",
-    "chars": 95,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t8 bigIdea"
-    ]
-  },
-  {
-    "key": "17qo3pz",
-    "text": "Multiply by the ones, then write a 0 and multiply by the tens. Add the two rows.",
-    "style": "A",
-    "chars": 80,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t9 bigIdea"
-    ]
-  },
-  {
-    "key": "d66d4c",
-    "text": "Make one row for each digit of the bottom number, and start each new row with one more 0. Then add all the rows.",
-    "style": "A",
-    "chars": 112,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t10 bigIdea"
-    ]
-  },
-  {
-    "key": "3crzcu",
-    "text": "Estimate first with round numbers. Then multiply the standard way and check that your answer is close.",
-    "style": "A",
-    "chars": 102,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t11 bigIdea"
-    ]
-  },
-  {
-    "key": "1buqv8g",
-    "text": "Think in tens. 240 is 24 tens and 60 is 6 tens, so 240 divided by 60 is the same as 24 divided by 6.",
-    "style": "A",
-    "chars": 100,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t12 bigIdea"
-    ]
-  },
-  {
-    "key": "rqlvdp",
-    "text": "Round the number you divide by to the nearest ten and make a guess. Multiply to check, if a whole group still fits in what is left, the guess was too small.",
-    "style": "A",
-    "chars": 156,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t13 bigIdea"
-    ]
-  },
-  {
-    "key": "157bx6g",
-    "text": "If the number you divide by does not fit into the first two digits, the answer has one digit. Guess with round numbers, and if the guess is too big, try one less.",
-    "style": "A",
-    "chars": 162,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t14 bigIdea"
-    ]
-  },
-  {
-    "key": "qv176g",
-    "text": "Divide the tens first and take away. Then bring down the ones and divide again.",
-    "style": "A",
-    "chars": 79,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t15 bigIdea"
-    ]
-  },
-  {
-    "key": "esbnsu",
-    "text": "Find where to start, if the number you divide by does not fit into the first two digits, start with the first three. Then bring down one digit at a time.",
-    "style": "A",
-    "chars": 153,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t16 bigIdea"
-    ]
-  },
-  {
-    "key": "1lpq0ib",
-    "text": "The ( ) keep together what goes together. 3 times (4 plus 2) means 3 times as much as 4 plus 2.",
-    "style": "A",
-    "chars": 95,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t17 bigIdea"
-    ]
-  },
-  {
-    "key": "o6taig",
-    "text": "Every number and sign is a part of the story. The part in the ( ) happens first.",
-    "style": "A",
-    "chars": 80,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t18 bigIdea"
-    ]
-  },
-  {
-    "key": "18hpdt",
-    "text": "Find the hidden number first. Then use it to answer the question.",
-    "style": "A",
-    "chars": 65,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t19 bigIdea"
-    ]
-  },
-  {
-    "key": "q1z4ht",
-    "text": "Draw the story as a tape. Solve one part at a time, then check what the question asks.",
-    "style": "A",
-    "chars": 86,
-    "kind": "bigIdea",
-    "sources": [
-      "g5m1-t20 bigIdea"
     ]
   },
   {
@@ -3291,9 +2861,9 @@
   },
   {
     "key": "fmszqq",
-    "text": "A fun run. The fun run in the park is 5 kilometers (km) long. The signs along the path count in meters (m). How many meters long is the run?",
+    "text": "A fun run. The fun run in the park is 5 kilometers long. The signs along the path count in meters. How many meters long is the run?",
     "style": "A",
-    "chars": 140,
+    "chars": 131,
     "kind": "screen1",
     "sources": [
       "g5m1-t5 s1"
@@ -3301,9 +2871,9 @@
   },
   {
     "key": "iprs67",
-    "text": "Juice for everyone. A big jug holds 2 liters (L) of juice. Each small cup holds 250 milliliters (mL). How many cups can you fill?",
+    "text": "Juice for everyone. A big jug holds 2 liters of juice. Each small cup holds 250 milliliters. How many cups can you fill?",
     "style": "A",
-    "chars": 129,
+    "chars": 120,
     "kind": "screen1",
     "sources": [
       "g5m1-t6 s1"
@@ -3421,9 +2991,9 @@
   },
   {
     "key": "u6v93s",
-    "text": "A number sentence on the board. The board in class shows 4 times (6 plus 3). What story could these numbers and signs tell?",
+    "text": "A number sentence on the board. The board in class shows 4 times 6 plus 3, all together. What story could these numbers and signs tell?",
     "style": "A",
-    "chars": 123,
+    "chars": 135,
     "kind": "screen1",
     "sources": [
       "g5m1-t18 s1"
@@ -3471,9 +3041,9 @@
   },
   {
     "key": "3p1lgs",
-    "text": "Now you try. Write 10⁴ as a number. Count how many 10s to multiply. Each one adds a zero.",
+    "text": "Now you try. Write 10 to the fourth as a number. Count how many tens to multiply. Each one adds a zero.",
     "style": "A",
-    "chars": 89,
+    "chars": 103,
     "kind": "turn",
     "sources": [
       "g5m1-t3 turn"
@@ -3611,9 +3181,9 @@
   },
   {
     "key": "dxszj6",
-    "text": "Now you try. A fruit stand packs 3 bags. Each bag has 4 apples and 5 pears. Which number sentence shows all the fruit? Keep one bag together inside the ( ). Then show how many bags.",
+    "text": "Now you try. A fruit stand packs 3 bags. Each bag has 4 apples and 5 pears. Which number sentence shows all the fruit? Keep one bag together inside the brackets. Then show how many bags.",
     "style": "A",
-    "chars": 181,
+    "chars": 186,
     "kind": "turn",
     "sources": [
       "g5m1-t17 turn"
@@ -3621,9 +3191,9 @@
   },
   {
     "key": "1v7vri4",
-    "text": "Now you try. The board shows 4 times (6 plus 5). A class makes this story, 4 bags, each with 6 red marbles and 5 green marbles. How many marbles are in the story? Do the part in the ( ) first. Then do the rest of the story.",
+    "text": "Now you try. The board shows 4 times 6 plus 5, all together. A class makes this story, 4 bags, each with 6 red marbles and 5 green marbles. How many marbles are in the story? Do the part in the brackets first. Then do the rest of the story.",
     "style": "A",
-    "chars": 223,
+    "chars": 240,
     "kind": "turn",
     "sources": [
       "g5m1-t18 turn"
@@ -4011,7 +3581,7 @@
   },
   {
     "key": "j4uc7s",
-    "text": "Make one row for each digit of 123: the 3 ones, the 2 tens and the 1 hundred.",
+    "text": "Make one row for each digit of 123, the 3 ones, the 2 tens and the 1 hundred.",
     "style": "A",
     "chars": 77,
     "kind": "hint",
@@ -4031,7 +3601,7 @@
   },
   {
     "key": "6kmpc4",
-    "text": "Make one row for each digit of 213: the 3 ones, the 1 ten and the 2 hundreds.",
+    "text": "Make one row for each digit of 213, the 3 ones, the 1 ten and the 2 hundreds.",
     "style": "A",
     "chars": 77,
     "kind": "hint",
@@ -4291,9 +3861,9 @@
   },
   {
     "key": "pos21r",
-    "text": "What is in one bag? That part goes inside the ( ).",
+    "text": "What is in one bag? That part goes inside the brackets.",
     "style": "A",
-    "chars": 50,
+    "chars": 55,
     "kind": "hint",
     "sources": [
       "g5m1-t17 hint1"
@@ -4311,9 +3881,9 @@
   },
   {
     "key": "152pqbj",
-    "text": "What is in one bag? Keep it together inside the ( ).",
+    "text": "What is in one bag? Keep it together inside the brackets.",
     "style": "A",
-    "chars": 52,
+    "chars": 57,
     "kind": "hint",
     "sources": [
       "g5m1-t17 twin hint1"
@@ -4331,9 +3901,9 @@
   },
   {
     "key": "1y0b50k",
-    "text": "Start with the ( ). How many marbles are in one bag?",
+    "text": "Start with the brackets. How many marbles are in one bag?",
     "style": "A",
-    "chars": 52,
+    "chars": 57,
     "kind": "hint",
     "sources": [
       "g5m1-t18 hint1"
@@ -4351,9 +3921,9 @@
   },
   {
     "key": "yoyyj4",
-    "text": "Start with the ( ). How many crayons are in one box?",
+    "text": "Start with the brackets. How many crayons are in one box?",
     "style": "A",
-    "chars": 52,
+    "chars": 57,
     "kind": "hint",
     "sources": [
       "g5m1-t18 twin hint1"
@@ -4461,9 +4031,9 @@
   },
   {
     "key": "1j0s7rq",
-    "text": "Try a new one. Write 10⁵ as a number.",
+    "text": "Try a new one. Write 10 to the fifth as a number.",
     "style": "A",
-    "chars": 37,
+    "chars": 49,
     "kind": "twin",
     "sources": [
       "g5m1-t3 twin"
@@ -4611,9 +4181,9 @@
   },
   {
     "key": "npkqdz",
-    "text": "Try a new one. The board shows 5 times (4 plus 3). A class makes this story, 5 boxes, each with 4 red crayons and 3 green crayons. How many crayons are in the story?",
+    "text": "Try a new one. The board shows 5 times 4 plus 3, all together. A class makes this story, 5 boxes, each with 4 red crayons and 3 green crayons. How many crayons are in the story?",
     "style": "A",
-    "chars": 165,
+    "chars": 177,
     "kind": "twin",
     "sources": [
       "g5m1-t18 twin"
@@ -4971,9 +4541,9 @@
   },
   {
     "key": "1rp83lb",
-    "text": "You kept each bag together with ( ), then showed how many bags.",
+    "text": "You kept each bag together with brackets, then showed how many bags.",
     "style": "A",
-    "chars": 63,
+    "chars": 68,
     "kind": "won",
     "sources": [
       "g5m1-t17 won"
@@ -4981,9 +4551,9 @@
   },
   {
     "key": "1ue0215",
-    "text": "You kept 5 apples and 3 pears together in the ( ), then showed 4 bags of them.",
+    "text": "You kept 5 apples and 3 pears together in the brackets, then showed 4 bags of them.",
     "style": "A",
-    "chars": 78,
+    "chars": 83,
     "kind": "won",
     "sources": [
       "g5m1-t17 twinWon"
@@ -4991,9 +4561,9 @@
   },
   {
     "key": "1tw7yvt",
-    "text": "You did the part in the ( ) first, then the rest of the story.",
+    "text": "You did the part in the brackets first, then the rest of the story.",
     "style": "A",
-    "chars": 62,
+    "chars": 67,
     "kind": "won",
     "sources": [
       "g5m1-t18 won"

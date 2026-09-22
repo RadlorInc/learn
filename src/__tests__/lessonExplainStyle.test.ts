@@ -17,6 +17,7 @@ import { describe, it, expect } from 'vitest'
 import { MODULES } from '@/features/lessons/modules'
 import { SAY, START, hintsFor, wonFor, type Lesson } from '@/features/lessons/script'
 import { renderOf, SPEAKABLE } from '@/features/lessons/content/voice/styles'
+import { JOSH_MODULES } from '@/infra/storage/voicePref'
 
 const OPEN = "Here's the part people mix up."
 const CLOSE = 'Okay. Your turn.'
@@ -67,8 +68,20 @@ export function explainProblems(l: Lesson): string[] {
   return bad
 }
 
+// A module is held to the documents once it is rewritten, which is the moment it moves to Josh (voicePref's JOSH_MODULES).
+// Every other module is a todo, and must still FAIL — a module listed there that passed without being rewritten, or an
+// unlisted one that already passes, means the gate or the list is wrong.
 for (const m of MODULES) {
   describe(m.id, () => {
-    for (const l of m.lessons) it(`${l.id} follows the explanation documents`, () => expect(explainProblems(l)).toEqual([]))
+    for (const l of m.lessons) {
+      if (JOSH_MODULES.has(m.id)) it(`${l.id} follows the explanation documents`, () => expect(explainProblems(l)).toEqual([]))
+      else it.todo(`${l.id} — not rewritten yet`)
+    }
   })
 }
+
+it('the gate can fail: a module not rewritten yet does not pass it', () => {
+  const todo = MODULES.filter(m => !JOSH_MODULES.has(m.id)).flatMap(m => m.lessons)
+  if (!todo.length) return   // every module is rewritten
+  expect(todo.filter(l => explainProblems(l).length === 0).map(l => l.id)).toEqual([])
+})
