@@ -69,7 +69,8 @@ const UNITS: Record<string, string> = { mm: 'millimeters', cm: 'centimeters', m:
 export const speakable = (t: string) =>
   t.replace(/(\d+) (\d+)\/(\d+)\b/g, (m, w, n, d) => { const f = fraction(+n, +d); return f ? `${w} and ${f}` : m })
     .replace(/(^|[^\d/])(\d+)\/(\d+)(?![\d/])/g, (m, pre, n, d) => { const f = fraction(+n, +d); return f ? pre + f : m })
-    .replace(/(\d) (sq ft|sq in|sq cm|sq m|mm|cm|km|mg|kg|mL|ft|yd|mi|lb|oz|m|g|L)\b(?!\w)/g, (_, d, u) => `${d} ${UNITS[u]}`)
+    .replace(/(\d+(?:\.\d+)?) (sq ft|sq in|sq cm|sq m|mm|cm|km|mg|kg|mL|ft|yd|mi|lb|oz|m|g|L)\b(?!\w)/g, (_, n, u) =>
+      `${n} ${n === '1' ? UNITS[u].replace('feet', 'foot').replace(/s$/, '') : UNITS[u]}`)   // 1 cm -> 1 centimeter
     .replace(/\b(\d{1,2}):00\b/g, "$1 o'clock").replace(/\b(\d{1,2}):0(\d)\b/g, '$1 oh $2').replace(/\b(\d{1,2}):(\d\d)\b/g, '$1 $2')
     .replace(/(\d)²/g, '$1 squared').replace(/(\d)³/g, '$1 cubed').replace(/([a-z])²/g, '$1 squared').replace(/([a-z])³/g, '$1 cubed')
     .replace(/(\d+(?:\.\d+)?)%/g, '$1 percent').replace(/(\d+)° (angle|turn)/g, '$1-degree $2').replace(/(\d+)°/g, '$1 degrees')
