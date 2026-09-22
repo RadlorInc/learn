@@ -374,3 +374,110 @@ describe('§11 promises account deletion, and the control is really there', () =
     }
   })
 })
+
+// ────────── ⑤ a draft out of docs/legal/ may never reach a published page ──────────
+/**
+ * ⚠️ THIS IS NOT GATE ①, AND IT CLOSES A HOLE ① LEAVES WIDE OPEN. ① only fires when `DRAFT` is
+ * FALSE. `DRAFT` is true today, so the whole of `docs/legal/11-privacy-policy.md` — thirty
+ * `[PLACEHOLDER — …]` markers and a "STATUS: DRAFT — NOT LEGAL ADVICE" banner — could be pasted
+ * into `content.ts` this afternoon and every gate above would stay green, because a draft banner is
+ * exactly what ① expects to find while the flag is up. The sixteen drafts landed in `docs/legal/` on
+ * 2026-09-22 as DOCUMENTS ONLY, wired to nothing; this is the thing that keeps them documents.
+ *
+ * ⚠️ THE TWO RULES HAVE DIFFERENT SCOPES AND THAT IS DELIBERATE, NOT UNTIDY.
+ *   · `[PLACEHOLDER` is looked for in SHIPPED SOURCE. It has no legitimate use there — zero
+ *     occurrences in `src/` and `public/` on the day this was written — so the whole tree is fair
+ *     game and a paste anywhere in it is caught before it ever renders.
+ *   · `DRAFT` is looked for in RENDERED TEXT ONLY. `content.ts` exports `const DRAFT = true`, which
+ *     is the repo's own safety flag, and the page's own banner says "⚠️ Draft — …". A source scan
+ *     for the word would go red on the two mechanisms that exist to prevent this exact defect, on
+ *     every correct commit, for ever. A check that cries wolf is spent exactly like one that never
+ *     fires, so the word is hunted where a parent would actually read it: in the text the page
+ *     paints. The drafts shout it in capitals (`STATUS: DRAFT`), the repo's banner does not.
+ *
+ * ⚠️ `docs/legal/**` IS NOT IN SCOPE AND MUST NEVER BE ADDED. The drafts are supposed to be full of
+ * markers; a gate that forbade them there would be a gate against the drafts existing.
+ */
+describe('a draft legal document never reaches published content', () => {
+  // Built by concatenation so this file can never be the thing it finds — the scope below excludes
+  // `src/__tests__/`, and this is what stops a future widening of that scope from making the gate
+  // permanently and confusingly red at itself.
+  const MARKER = '[' + 'PLACEHOLDER'
+
+  /** Everything shipped to a browser: every route and component, plus the static text in public/. */
+  function publishedFiles(): string[] {
+    const out: string[] = []
+    for (const f of readdirSync(resolve(ROOT, 'src'), { recursive: true }) as string[]) {
+      if (!/\.tsx?$/.test(f)) continue
+      if (f.startsWith('__tests__')) continue // tests are not published to anyone
+      out.push(`src/${f}`)
+    }
+    for (const f of readdirSync(resolve(ROOT, 'public'), { recursive: true }) as string[]) {
+      if (/\.(txt|json|html|webmanifest|md)$/.test(f)) out.push(`public/${f}`)
+    }
+    return out
+  }
+
+  it('no shipped source carries a draft placeholder marker', () => {
+    const files = publishedFiles()
+
+    /**
+     * ⚠️ "I CANNOT SEE" AND "THERE IS NOTHING TO SEE" MUST NOT RENDER AS THE SAME RESULT. A walk
+     * that found no files, or a marker string that could never match anything, would report this
+     * page clean in exactly the voice of a real pass. Both halves are controlled: the corpus is
+     * non-trivial, and the same search run against a document we KNOW carries the marker finds it.
+     */
+    expect(files.length, 'the walk found no published files — this gate is blind, not clean')
+      .toBeGreaterThan(100)
+    expect(read('docs/legal/11-privacy-policy.md'),
+      `positive control: "${MARKER}" was not found in a draft that is known to carry thirty of ` +
+      `them, so this search could not have found one in src/ either`).toContain(MARKER)
+
+    const hits = files.filter(f => read(f).includes(MARKER))
+    expect(hits, `a legal draft's placeholder marker has reached published content. Those markers ` +
+      `live in docs/legal/ and mean a decision nobody has made; a page carrying one is an ` +
+      `incomplete statement to a parent. Take the text back out — the drafts are not publishable ` +
+      `until an attorney has resolved every marker in docs/legal/13-placeholder-worksheet.md.`)
+      .toEqual([])
+  })
+
+  it('the rendered legal pages carry no placeholder marker and no DRAFT banner', async () => {
+    /**
+     * ⚠️ THE SOURCE SCAN ABOVE AND THIS ONE ARE TWO INSTRUMENTS, NOT ONE REPEATED. The scan reads
+     * files; this drives the real renderer and reads the text a parent's browser actually paints,
+     * which is the only place the claim "no draft text is published" is finally true or false. It
+     * also reaches text the scan cannot attribute to a document at all — a banner pasted into the
+     * page component rather than into `content.ts` renders identically and is caught here.
+     */
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: LegalPage } = await import('@/app/legal/[slug]/page')
+
+    for (const doc of DOCS) {
+      const html = renderToStaticMarkup(await LegalPage({ params: Promise.resolve({ slug: doc.slug }) }))
+      const text = flat(html.replace(/<[^>]*>/g, ' '))
+
+      /**
+       * Control first, and it is not decorative: a slug the router did not recognise, or a body that
+       * failed to render, would satisfy every assertion below in perfect silence. Anchor on the
+       * document's own title and on real length, so an empty page cannot read as a clean one.
+       */
+      expect(text, `${doc.slug} did not render its own title — this gate is reading the wrong page`)
+        .toContain(doc.title)
+      expect(text.length, `${doc.slug} rendered almost nothing — this gate is reading an empty ` +
+        `document, not a clean one`).toBeGreaterThan(500)
+
+      expect(text, `${doc.slug} renders "${MARKER}" — a draft has been pasted into a live page`)
+        .not.toContain(MARKER)
+      expect(text, `${doc.slug} renders the drafts' "STATUS: DRAFT" banner`).not.toContain('STATUS: DRAFT')
+      /**
+       * Capitalised, as the drafts write it. The page's own banner says "⚠️ Draft — this text has
+       * not been reviewed by a lawyer", which is this repo's deliberate and correct warning and
+       * must keep passing; `docs/legal/*.md` shout "STATUS: DRAFT — NOT LEGAL ADVICE", which must
+       * not. Matching case is what tells those two apart, and it is the whole reason this rule
+       * reads rendered text rather than source.
+       */
+      expect(text, `${doc.slug} renders the word DRAFT in capitals, which is how the unpublished ` +
+        `documents in docs/legal/ mark themselves`).not.toMatch(/\bDRAFT\b/)
+    }
+  })
+})
