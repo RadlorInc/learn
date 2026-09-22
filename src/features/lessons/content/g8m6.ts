@@ -4,6 +4,8 @@
  * Question pictures show the DATA (that is the question); a computed slope, prediction, count or share is never printed.
  */
 import type { Lesson, Picture } from '../script'
+import { attachChalk } from '../chalk'
+import { G8M6_CHALK } from './chalk/g8m6'
 
 type Pt = [number, number]
 const plot = (points: Pt[], xMax: number, yMax: number, xLabel: string, yLabel: string, extra: Partial<Extract<Picture, { kind: 'plot' }>> = {}): Picture =>
@@ -324,49 +326,51 @@ export const G8M6: Lesson[] = [
   // ── Topic 4 ──────────────────────────────────────────────────────────────────────────────────
   {
     id: 'g8m6-t4', title: 'Two-way tables', skill: 'Read and complete a table that counts people by two questions at once',
-    bigIdea: 'Put one question in the rows and one in the columns. Each box counts people who fit both, and the totals add across and down.',
+    bigIdea: "Put one question in the rows and one in the columns, so each box counts the people who fit both.",
     screens: [
       { title: 'Two questions, 40 students', text: '40 students answered two questions: Are you in grade 7 or grade 8? Do you like pizza? How can one picture show both answers?',
         pictures: [table(PIZZA_HEAD, PIZZA.map(r => [r[0], '?', '?', '?']))] },
-      { title: 'Two counts are not enough', text: 'Here is what we know so far. 27 students like pizza, and 20 students are in grade 7. But those two counts still cannot tell you how many grade 7 students like pizza.',
+      { title: "Two counts are not enough", text: "Here is what we know so far. 27 students like pizza, and 20 students are in grade 7. So how many grade 7 students like pizza? Those two counts cannot tell you.",
         beats: [
-          { say: 'Here is what we know so far.', pic: 0 },
-          { say: '27 students like pizza, and 20 students are in grade 7.' },
-          { say: 'But those two counts still cannot tell you how many grade 7 students like pizza.', write: 'a count each way is not enough' },
+          { say: "Here is what we know so far.", pic: 0 },
+          { say: "27 students like pizza, and 20 students are in grade 7." },
+          { say: "So how many grade 7 students like pizza? Those two counts cannot tell you." },
         ],
         pictures: [table(PIZZA_HEAD, PIZZA.map(r => [r[0], '?', '?', '?']))] },
-      { title: 'The big idea', text: 'Put one question in the rows and one in the columns. Each box counts people who fit both, and the totals add across and down.',
+      { title: "The big idea", text: "Put one question in the rows and one in the columns, so each box counts the people who fit both.",
         beats: [
-          { say: 'Put one question in the rows and one in the columns.', pic: 0 },
-          { say: 'Each box counts people who fit both, and the totals add across and down.' },
+          { say: "Put one question in the rows and one in the columns, so each box counts the people who fit both.", pic: 0 },
         ],
         pictures: [table(PIZZA_HEAD, PIZZA)] },
-      { title: 'Fill one box', text: "Let's fill one box together. 12 students are in grade 7 and they like pizza. That count goes right where the Grade 7 row meets the Likes pizza column.",
+      { title: "Fill one box", text: "Let's fill one box together. 12 students are in grade 7 and they like pizza. Where does that 12 go? Right where the Grade 7 row meets the Likes pizza column.",
         beats: [
           { say: "Let's fill one box together.", pic: 0 },
-          { say: '12 students are in grade 7 and they like pizza.' },
-          { say: 'That count goes right where the Grade 7 row meets the Likes pizza column.', write: 'row meets column = fits both' },
+          { say: "12 students are in grade 7 and they like pizza." },
+          { say: "Where does that 12 go? Right where the Grade 7 row meets the Likes pizza column." },
         ],
         pictures: [table(PIZZA_HEAD, PIZZA, [[0, 1]], true)] },
-      { title: 'Add across', text: 'Now check the rows. Each one has to add up to its own total. Grade 7: 12 and 8 make 20. Grade 8: 15 and 5 make 20 as well.',
+      { title: "Add across", text: "Now check each row. It has to add up to its own total. In grade 7, 12 and 8 make 20. In grade 8, 15 and 5 make 20 as well.",
         beats: [
-          { say: 'Now check the rows. Each one has to add up to its own total.', pic: 0 },
-          { say: 'Grade 7: 12 and 8 make 20.', pic: 1 },
-          { say: 'Grade 8: 15 and 5 make 20 as well.' },
+          { say: "Now check each row. It has to add up to its own total.", pic: 0 },
+          { say: "In grade 7, 12 and 8 make 20.", pic: 1 },
+          { say: "In grade 8, 15 and 5 make 20 as well." },
         ],
         pictures: [table(PIZZA_HEAD, PIZZA, [[0, 3], [1, 3]]), { kind: 'eq', text: '12 + 8 = 20', lines: ['15 + 5 = 20'] }] },
-      { title: 'Add down', text: 'The columns do the same thing going down. Likes pizza: 12 and 15 make 27. Does not: 8 and 5 make 13. And 27 and 13 make 40, the same 40 you get from 20 and 20.',
+      { title: "Add down", text: "Does it work going down, too? Yes. Down the Likes pizza column, 12 and 15 make 27. Down the Does not column, 8 and 5 make 13. And 27 and 13 make 40, the same 40 you get from 20 and 20.",
         beats: [
-          { say: 'The columns do the same thing going down.', pic: 0 },
-          { say: 'Likes pizza: 12 and 15 make 27. Does not: 8 and 5 make 13.', pic: 1 },
-          { say: 'And 27 and 13 make 40, the same 40 you get from 20 and 20.', write: 'across and down reach the same total' },
+          { say: "Does it work going down, too? Yes.", pic: 0 },
+          { say: "Down the Likes pizza column, 12 and 15 make 27.", pic: 1 },
+          { say: "Down the Does not column, 8 and 5 make 13." },
+          { say: "And 27 and 13 make 40, the same 40 you get from 20 and 20." },
         ],
         pictures: [table(PIZZA_HEAD, PIZZA, [[2, 1], [2, 2], [2, 3]]), { kind: 'eq', text: '12 + 15 = 27', lines: ['8 + 5 = 13', '27 + 13 = 40'] }] },
-      { title: 'One thing not to do', text: "One last trap before your turn. Don't add a row total to a column total. Those two totals count some of the same students twice.",
+      { title: "One thing not to do", text: "Here's the part people mix up. Don't ADD a row total to a column total. The 12 grade 7 pizza fans are in both, so they get counted twice. Add the two row totals instead. 20 and 20 make all 40. Okay. Your turn.",
         beats: [
-          { say: 'One last trap before your turn.' },
-          { say: "Don't add a row total to a column total.", pic: 0 },
-          { say: 'Those two totals count some of the same students twice.' },
+          { say: "Here's the part people mix up." },
+          { say: "Don't ADD a row total to a column total.", pic: 0 },
+          { say: "The 12 grade 7 pizza fans are in both, so they get counted twice." },
+          { say: "Add the two row totals instead. 20 and 20 make all 40." },
+          { say: "Okay. Your turn." },
         ],
         pictures: [{ kind: 'cards', wrong: '20 + 27 = 47 students', right: '20 + 20 = 40 students' }] },
     ],
@@ -416,48 +420,49 @@ export const G8M6: Lesson[] = [
   // ── Topic 5 ──────────────────────────────────────────────────────────────────────────────────
   {
     id: 'g8m6-t5', title: 'Relative frequency', skill: 'Divide a count by its row or column total and compare the result as a fraction, decimal or percent',
-    bigIdea: 'Divide a count by the total of its row or column. Then groups of different sizes can be compared as fractions, decimals or percents.',
+    bigIdea: "Divide each count by the total of its own group, and then groups of different sizes compare fairly.",
     screens: [
       { title: 'Which grade likes pizza more?', text: '12 grade 7 students like pizza, and 15 grade 8 students do. Does that mean grade 8 likes pizza more?',
         pictures: [table(PIZZA_HEAD, SHARE)] },
-      { title: 'The bigger count can fool you', text: '15 is more than 12, sure. But look at the row totals with me. Grade 8 has 30 students, and grade 7 has only 20. Counts from groups of different sizes do not compare fairly.',
+      { title: "The bigger count can fool you", text: "15 is more than 12, sure. But look at the row totals. Grade 8 has 30 students, and grade 7 has only 20. So is 15 out of 30 really more than 12 out of 20? The counts alone cannot tell us.",
         beats: [
-          { say: '15 is more than 12, sure. But look at the row totals with me.', pic: 0 },
-          { say: 'Grade 8 has 30 students, and grade 7 has only 20.' },
-          { say: 'Counts from groups of different sizes do not compare fairly.' },
+          { say: "15 is more than 12, sure. But look at the row totals.", pic: 0 },
+          { say: "Grade 8 has 30 students, and grade 7 has only 20." },
+          { say: "So is 15 out of 30 really more than 12 out of 20? The counts alone cannot tell us." },
         ],
         pictures: [table(PIZZA_HEAD, SHARE, [[0, 3], [1, 3]])] },
-      { title: 'The big idea', text: 'Divide a count by the total of its row or column. Then groups of different sizes can be compared as fractions, decimals or percents.',
+      { title: "The big idea", text: "Divide each count by the total of its own group, and then groups of different sizes compare fairly.",
         beats: [
-          { say: 'Divide a count by the total of its row or column.', pic: 0 },
-          { say: 'Then groups of different sizes can be compared as fractions, decimals or percents.' },
+          { say: "Divide each count by the total of its own group, and then groups of different sizes compare fairly.", pic: 0 },
         ],
         pictures: [table(PIZZA_HEAD, SHARE)] },
-      { title: "Grade 7's share", text: 'Start with grade 7. 12 of their 20 students like pizza. Divide 12 by 20 and you get 0.6, which is 60%.',
+      { title: "Grade 7's share", text: "Start with grade 7. 12 of their 20 students like pizza. Divide 12 by 20 and you get 0.6. That is 60 out of every 100, so 60%.",
         beats: [
-          { say: 'Start with grade 7. 12 of their 20 students like pizza.', pic: 0 },
-          { say: 'Divide 12 by 20 and you get 0.6, which is 60%.', pic: 1 },
+          { say: "Start with grade 7. 12 of their 20 students like pizza.", pic: 0 },
+          { say: "Divide 12 by 20 and you get 0.6.", pic: 1 },
+          { say: "That is 60 out of every 100, so 60%." },
         ],
         pictures: [table(PIZZA_HEAD, SHARE, [[0, 1], [0, 3]], true), { kind: 'eq', text: '12/20 = 0.6', lines: ['= 60%'] }] },
-      { title: "Grade 8's share", text: 'Now grade 8. 15 of their 30 students like pizza. That is 0.5, or 50%. So grade 7 likes pizza more after all, even though its count was smaller.',
+      { title: "Grade 8's share", text: "Now grade 8. 15 of their 30 students like pizza. Divide 15 by 30 and you get 0.5, or 50%. So which grade likes pizza more? Grade 7, even though its count was smaller.",
         beats: [
-          { say: 'Now grade 8. 15 of their 30 students like pizza.', pic: 0 },
-          { say: 'That is 0.5, or 50%.', pic: 1 },
-          { say: 'So grade 7 likes pizza more after all, even though its count was smaller.', write: 'compare shares, not counts' },
+          { say: "Now grade 8. 15 of their 30 students like pizza.", pic: 0 },
+          { say: "Divide 15 by 30 and you get 0.5, or 50%.", pic: 1 },
+          { say: "So which grade likes pizza more? Grade 7, even though its count was smaller." },
         ],
         pictures: [table(PIZZA_HEAD, SHARE, [[1, 1], [1, 3]], true), { kind: 'eq', text: '15/30 = 0.5', lines: ['= 50%'] }] },
-      { title: 'Ask: out of whom?', text: 'Here is a different question. Out of the students who like pizza, what part are in grade 7? Now the total we divide by is the Likes pizza column, 27. So it is 12 out of 27, which simplifies to 4/9.',
+      { title: "Ask: out of whom?", text: "Here is a different question. Of the students who like pizza, what part are in grade 7? Now we divide by the Likes pizza column total, 27. So it is 12 out of 27, which simplifies to 4/9.",
         beats: [
-          { say: 'Here is a different question. Out of the students who like pizza, what part are in grade 7?', pic: 0 },
-          { say: 'Now the total we divide by is the Likes pizza column, 27.', write: 'ask first: out of whom?' },
-          { say: 'So it is 12 out of 27, which simplifies to 4/9.', pic: 1 },
+          { say: "Here is a different question. Of the students who like pizza, what part are in grade 7?", pic: 0 },
+          { say: "Now we divide by the Likes pizza column total, 27." },
+          { say: "So it is 12 out of 27, which simplifies to 4/9.", pic: 1 },
         ],
         pictures: [table(PIZZA_HEAD, SHARE, [[0, 1], [2, 1]]), { kind: 'eq', text: '12/27 = 4/9' }] },
-      { title: 'One thing not to do', text: "And here is the slip to watch for. When the question says of grade 7 students, don't divide by the grand total. Use the Grade 7 row total instead.",
+      { title: "One thing not to do", text: "Here's the part people mix up. When the question asks about grade 7 students, don't divide by ALL 50 students. Divide by the Grade 7 row total, 20, and you get 60%. Okay. Your turn.",
         beats: [
-          { say: 'And here is the slip to watch for.' },
-          { say: "When the question says of grade 7 students, don't divide by the grand total.", pic: 0 },
-          { say: 'Use the Grade 7 row total instead.' },
+          { say: "Here's the part people mix up." },
+          { say: "When the question asks about grade 7 students, don't divide by ALL 50 students.", pic: 0 },
+          { say: "Divide by the Grade 7 row total, 20, and you get 60%." },
+          { say: "Okay. Your turn." },
         ],
         pictures: [{ kind: 'cards', wrong: '12/50 = 24%', right: '12/20 = 60%' }] },
     ],
@@ -504,3 +509,5 @@ export const G8M6: Lesson[] = [
     ],
   },
 ]
+
+attachChalk(G8M6, G8M6_CHALK)
