@@ -73,7 +73,10 @@ export const speakable = (t: string) =>
     .replace(/\b(\d{1,2}):00\b/g, "$1 o'clock").replace(/\b(\d{1,2}):0(\d)\b/g, '$1 oh $2').replace(/\b(\d{1,2}):(\d\d)\b/g, '$1 $2')
     .replace(/(\d)²/g, '$1 squared').replace(/(\d)³/g, '$1 cubed').replace(/([a-z])²/g, '$1 squared').replace(/([a-z])³/g, '$1 cubed')
     .replace(/(\d+(?:\.\d+)?)%/g, '$1 percent').replace(/(\d+)° (angle|turn)/g, '$1-degree $2').replace(/(\d+)°/g, '$1 degrees')
-    .replace(/\$(\d+(?:,\d{3})*)\.(\d\d)\b/g, (_, d, c) => `${d} ${d === '1' ? 'dollar' : 'dollars'} and ${c} ${c === '01' ? 'cent' : 'cents'}`)
+    .replace(/\$(\d+(?:,\d{3})*)\.(\d\d)\b/g, (_, d, c) => {
+      const cents = `${Number(c)} ${c === '01' ? 'cent' : 'cents'}`, dollars = `${d} ${d === '1' ? 'dollar' : 'dollars'}`
+      return d === '0' ? cents : c === '00' ? dollars : `${dollars} and ${cents}`   // $0.75 -> 75 cents, $3.00 -> 3 dollars
+    })
     .replace(/\$(\d+(?:,\d{3})*)\b/g, (_, d) => `${d} ${d === '1' ? 'dollar' : 'dollars'}`)
     .replace(/(^|[\s(])[−-](\d)/g, '$1negative $2')
     .replace(/ × /g, ' times ').replace(/ · /g, ' times ').replace(/ ÷ /g, ' divided by ').replace(/ \+ /g, ' plus ').replace(/ [−–] /g, ' minus ')

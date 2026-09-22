@@ -44,7 +44,7 @@ export function explainProblems(l: Lesson): string[] {
     // the digits ("zero point two five") where the topic is the written form, the value ("twenty-five hundredths") where it is how much.
     // Two misreadings the symbol check cannot see (found by a g6m1 writer): a spaced ratio "3 : 2" read as "3, 2", and "$1"
     // read as "1 dollars". speakable() now says both right; this keeps it that way.
-    if (/\d ,\s|\b1 dollars\b|\b01 cents\b/.test(say)) bad.push(`voice misreads a ratio or a dollar — row key ${JSON.stringify(line)} is read as ${JSON.stringify(say)}`)
+    if (/\d ,\s|\b1 dollars\b|\band 0\d cents\b|\b0 dollars and\b/.test(say)) bad.push(`voice misreads a ratio or a dollar — row key ${JSON.stringify(line)} is read as ${JSON.stringify(say)}`)
     if (/\d\.\d/.test(say)) bad.push(`voice reads a raw decimal — row key ${JSON.stringify(line)} is read as ${JSON.stringify(say)} (give it a \`say\` with the decimal in words)`)
     // Chatterbox reads a word in capitals letter by letter (ADD -> "A-D-D"; founder, 2026-09-22). CAPS belong on the screen only.
     const caps = capsWords(say).filter(w => w !== 'AM' && w !== 'PM')

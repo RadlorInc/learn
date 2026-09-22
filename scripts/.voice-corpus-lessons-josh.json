@@ -136,7 +136,7 @@
     "chars": 30,
     "kind": "beat",
     "sources": [
-      "g3m1-t1 s7 b1 + g3m1-t2 s7 b1 + g3m1-t3 s7 b1 + g3m1-t4 s7 b1 + g3m1-t5 s7 b1 + g3m1-t6 s7 b1 + g3m1-t7 s7 b1 + g3m1-t8 s7 b1 + g3m2-t1 s7 b1 + g3m2-t2 s7 b1 + g3m2-t3 s7 b1 + g3m2-t4 s7 b1 + g3m2-t5 s7 b1 + g3m2-t6 s7 b1 + g3m2-t7 s7 b1 + g3m2-t8 s7 b1 + g3m2-t9 s7 b1 + g3m3-t1 s7 b1 + g3m3-t2 s7 b1 + g3m3-t3 s7 b1 + g3m3-t4 s7 b1 + g3m3-t5 s7 b1 + g3m3-t6 s7 b1 + g3m3-t7 s7 b1 + g3m3-t8 s7 b1 + g3m3-t9 s7 b1 + g3m4-t1 s7 b1 + g3m4-t2 s7 b1 + g3m4-t3 s7 b1 + g3m4-t4 s7 b1 + g3m5-t1 s7 b1 + g3m5-t2 s7 b1 + g3m5-t3 s7 b1 + g3m5-t4 s7 b1 + g3m5-t5 s7 b1 + g3m5-t6 s7 b1 + g3m5-t7 s7 b1 + g3m5-t8 s7 b1 + g3m6-t1 s7 b1 + g3m6-t2 s7 b1 + g3m6-t3 s7 b1 + g3m6-t4 s7 b1 + g3m6-t5 s7 b1 + g3m6-t6 s7 b1 + g3m6-t7 s7 b1 + g4m1-t1 s7 b1 + g4m1-t2 s7 b1 + g4m1-t3 s7 b1 + g4m1-t4 s7 b1 + g4m1-t5 s7 b1 + g4m1-t6 s7 b1 + g4m1-t7 s7 b1 + g4m1-t8 s7 b1 + g4m2-t1 s7 b1 + g4m2-t2 s7 b1 + g4m2-t3 s7 b1 + g4m2-t4 s7 b1 + g4m2-t5 s7 b1 + g4m2-t6 s7 b1 + g4m2-t7 s7 b1 + g4m2-t8 s7 b1 + g4m3-t1 s7 b1 + g4m3-t2 s7 b1 + g4m3-t3 s7 b1 + g4m3-t4 s7 b1 + g4m3-t5 s7 b1 + g4m3-t6 s7 b1 + g4m3-t7 s7 b1 + g4m3-t8 s7 b1 + g4m4-t1 s7 b1 + g4m4-t2 s7 b1 + g4m4-t3 s7 b1 + g4m4-t4 s7 b1 + g4m4-t5 s7 b1 + g4m4-t6 s7 b1 + g4m4-t7 s7 b1 + g4m4-t8 s7 b1 + g4m4-t9 s7 b1 + g4m5-t1 s7 b1 + g4m5-t2 s7 b1 + g4m5-t3 s7 b1 + g4m5-t4 s7 b1 + g4m5-t5 s7 b1 + g4m5-t6 s7 b1 + g4m5-t7 s7 b1 + g4m5-t8 s7 b1 + g4m6-t1 s7 b1 + g4m6-t2 s7 b1 + g4m6-t3 s7 b1 + g4m6-t4 s7 b1 + g4m6-t5 s7 b1 + g4m6-t6 s7 b1 + g4m6-t7 s7 b1 + g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1 + g5m2-t1 s7 b1 + g5m2-t2 s7 b1 + g5m2-t3 s7 b1 + g5m2-t4 s7 b1 + g5m2-t5 s7 b1 + g5m2-t6 s7 b1 + g5m2-t7 s7 b1 + g5m2-t8 s7 b1 + g5m3-t1 s7 b1 + g5m3-t2 s7 b1 + g5m3-t3 s7 b1 + g5m3-t4 s7 b1 + g5m3-t5 s7 b1 + g5m3-t6 s7 b1 + g5m3-t7 s7 b1 + g5m3-t8 s7 b1 + g5m4-t1 s7 b1 + g5m4-t2 s7 b1 + g5m4-t3 s7 b1 + g5m4-t4 s7 b1 + g5m4-t5 s7 b1 + g5m4-t6 s7 b1 + g5m4-t7 s7 b1 + g5m4-t8 s7 b1 + g5m4-t9 s7 b1 + g5m5-t1 s7 b1 + g5m5-t2 s7 b1 + g5m5-t3 s7 b1 + g5m5-t4 s7 b1 + g5m5-t5 s7 b1 + g5m5-t6 s7 b1 + g5m5-t7 s7 b1 + g5m6-t1 s7 b1 + g5m6-t2 s7 b1 + g5m6-t3 s7 b1 + g5m6-t4 s7 b1 + g5m6-t5 s7 b1 + g5m6-t6 s7 b1"
+      "g3m1-t1 s7 b1 + g3m1-t2 s7 b1 + g3m1-t3 s7 b1 + g3m1-t4 s7 b1 + g3m1-t5 s7 b1 + g3m1-t6 s7 b1 + g3m1-t7 s7 b1 + g3m1-t8 s7 b1 + g3m2-t1 s7 b1 + g3m2-t2 s7 b1 + g3m2-t3 s7 b1 + g3m2-t4 s7 b1 + g3m2-t5 s7 b1 + g3m2-t6 s7 b1 + g3m2-t7 s7 b1 + g3m2-t8 s7 b1 + g3m2-t9 s7 b1 + g3m3-t1 s7 b1 + g3m3-t2 s7 b1 + g3m3-t3 s7 b1 + g3m3-t4 s7 b1 + g3m3-t5 s7 b1 + g3m3-t6 s7 b1 + g3m3-t7 s7 b1 + g3m3-t8 s7 b1 + g3m3-t9 s7 b1 + g3m4-t1 s7 b1 + g3m4-t2 s7 b1 + g3m4-t3 s7 b1 + g3m4-t4 s7 b1 + g3m5-t1 s7 b1 + g3m5-t2 s7 b1 + g3m5-t3 s7 b1 + g3m5-t4 s7 b1 + g3m5-t5 s7 b1 + g3m5-t6 s7 b1 + g3m5-t7 s7 b1 + g3m5-t8 s7 b1 + g3m6-t1 s7 b1 + g3m6-t2 s7 b1 + g3m6-t3 s7 b1 + g3m6-t4 s7 b1 + g3m6-t5 s7 b1 + g3m6-t6 s7 b1 + g3m6-t7 s7 b1 + g4m1-t1 s7 b1 + g4m1-t2 s7 b1 + g4m1-t3 s7 b1 + g4m1-t4 s7 b1 + g4m1-t5 s7 b1 + g4m1-t6 s7 b1 + g4m1-t7 s7 b1 + g4m1-t8 s7 b1 + g4m2-t1 s7 b1 + g4m2-t2 s7 b1 + g4m2-t3 s7 b1 + g4m2-t4 s7 b1 + g4m2-t5 s7 b1 + g4m2-t6 s7 b1 + g4m2-t7 s7 b1 + g4m2-t8 s7 b1 + g4m3-t1 s7 b1 + g4m3-t2 s7 b1 + g4m3-t3 s7 b1 + g4m3-t4 s7 b1 + g4m3-t5 s7 b1 + g4m3-t6 s7 b1 + g4m3-t7 s7 b1 + g4m3-t8 s7 b1 + g4m4-t1 s7 b1 + g4m4-t2 s7 b1 + g4m4-t3 s7 b1 + g4m4-t4 s7 b1 + g4m4-t5 s7 b1 + g4m4-t6 s7 b1 + g4m4-t7 s7 b1 + g4m4-t8 s7 b1 + g4m4-t9 s7 b1 + g4m5-t1 s7 b1 + g4m5-t2 s7 b1 + g4m5-t3 s7 b1 + g4m5-t4 s7 b1 + g4m5-t5 s7 b1 + g4m5-t6 s7 b1 + g4m5-t7 s7 b1 + g4m5-t8 s7 b1 + g4m6-t1 s7 b1 + g4m6-t2 s7 b1 + g4m6-t3 s7 b1 + g4m6-t4 s7 b1 + g4m6-t5 s7 b1 + g4m6-t6 s7 b1 + g4m6-t7 s7 b1 + g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1 + g5m2-t1 s7 b1 + g5m2-t2 s7 b1 + g5m2-t3 s7 b1 + g5m2-t4 s7 b1 + g5m2-t5 s7 b1 + g5m2-t6 s7 b1 + g5m2-t7 s7 b1 + g5m2-t8 s7 b1 + g5m3-t1 s7 b1 + g5m3-t2 s7 b1 + g5m3-t3 s7 b1 + g5m3-t4 s7 b1 + g5m3-t5 s7 b1 + g5m3-t6 s7 b1 + g5m3-t7 s7 b1 + g5m3-t8 s7 b1 + g5m4-t1 s7 b1 + g5m4-t2 s7 b1 + g5m4-t3 s7 b1 + g5m4-t4 s7 b1 + g5m4-t5 s7 b1 + g5m4-t6 s7 b1 + g5m4-t7 s7 b1 + g5m4-t8 s7 b1 + g5m4-t9 s7 b1 + g5m5-t1 s7 b1 + g5m5-t2 s7 b1 + g5m5-t3 s7 b1 + g5m5-t4 s7 b1 + g5m5-t5 s7 b1 + g5m5-t6 s7 b1 + g5m5-t7 s7 b1 + g5m6-t1 s7 b1 + g5m6-t2 s7 b1 + g5m6-t3 s7 b1 + g5m6-t4 s7 b1 + g5m6-t5 s7 b1 + g5m6-t6 s7 b1 + g6m1-t1 s7 b1 + g6m1-t2 s7 b1 + g6m1-t3 s7 b1 + g6m1-t4 s7 b1 + g6m1-t5 s7 b1 + g6m1-t6 s7 b1 + g6m1-t7 s7 b1 + g6m1-t8 s7 b1 + g6m4-t1 s7 b1 + g6m4-t2 s7 b1 + g6m4-t3 s7 b1 + g6m4-t4 s7 b1 + g6m4-t5 s7 b1 + g6m4-t6 s7 b1 + g6m4-t7 s7 b1"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "chars": 16,
     "kind": "beat",
     "sources": [
-      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g3m2-t1 s7 b4 + g3m2-t2 s7 b4 + g3m2-t3 s7 b4 + g3m2-t4 s7 b4 + g3m2-t5 s7 b4 + g3m2-t6 s7 b4 + g3m2-t7 s7 b4 + g3m2-t8 s7 b4 + g3m2-t9 s7 b4 + g3m3-t1 s7 b4 + g3m3-t2 s7 b4 + g3m3-t3 s7 b4 + g3m3-t4 s7 b4 + g3m3-t5 s7 b4 + g3m3-t6 s7 b4 + g3m3-t7 s7 b4 + g3m3-t8 s7 b4 + g3m3-t9 s7 b4 + g3m4-t1 s7 b4 + g3m4-t2 s7 b4 + g3m4-t3 s7 b4 + g3m4-t4 s7 b4 + g3m5-t1 s7 b4 + g3m5-t2 s7 b4 + g3m5-t3 s7 b4 + g3m5-t4 s7 b4 + g3m5-t5 s7 b4 + g3m5-t6 s7 b4 + g3m5-t7 s7 b4 + g3m5-t8 s7 b4 + g3m6-t1 s7 b4 + g3m6-t2 s7 b4 + g3m6-t3 s7 b4 + g3m6-t4 s7 b4 + g3m6-t5 s7 b4 + g3m6-t6 s7 b4 + g3m6-t7 s7 b4 + g4m1-t1 s7 b4 + g4m1-t2 s7 b4 + g4m1-t3 s7 b5 + g4m1-t4 s7 b4 + g4m1-t5 s7 b4 + g4m1-t6 s7 b4 + g4m1-t7 s7 b4 + g4m1-t8 s7 b4 + g4m2-t1 s7 b4 + g4m2-t2 s7 b4 + g4m2-t3 s7 b4 + g4m2-t4 s7 b4 + g4m2-t5 s7 b4 + g4m2-t6 s7 b4 + g4m2-t7 s7 b4 + g4m2-t8 s7 b4 + g4m3-t1 s7 b4 + g4m3-t2 s7 b4 + g4m3-t3 s7 b4 + g4m3-t4 s7 b4 + g4m3-t5 s7 b4 + g4m3-t6 s7 b4 + g4m3-t7 s7 b4 + g4m3-t8 s7 b4 + g4m4-t1 s7 b4 + g4m4-t2 s7 b4 + g4m4-t3 s7 b4 + g4m4-t4 s7 b4 + g4m4-t5 s7 b4 + g4m4-t6 s7 b4 + g4m4-t7 s7 b4 + g4m4-t8 s7 b4 + g4m4-t9 s7 b4 + g4m5-t1 s7 b4 + g4m5-t2 s7 b4 + g4m5-t3 s7 b4 + g4m5-t4 s7 b4 + g4m5-t5 s7 b4 + g4m5-t6 s7 b4 + g4m5-t7 s7 b4 + g4m5-t8 s7 b4 + g4m6-t1 s7 b4 + g4m6-t2 s7 b4 + g4m6-t3 s7 b4 + g4m6-t4 s7 b4 + g4m6-t5 s7 b4 + g4m6-t6 s7 b4 + g4m6-t7 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4 + g5m2-t1 s7 b4 + g5m2-t2 s7 b4 + g5m2-t3 s7 b4 + g5m2-t4 s7 b4 + g5m2-t5 s7 b4 + g5m2-t6 s7 b4 + g5m2-t7 s7 b4 + g5m2-t8 s7 b4 + g5m3-t1 s7 b4 + g5m3-t2 s7 b4 + g5m3-t3 s7 b4 + g5m3-t4 s7 b4 + g5m3-t5 s7 b4 + g5m3-t6 s7 b4 + g5m3-t7 s7 b4 + g5m3-t8 s7 b4 + g5m4-t1 s7 b4 + g5m4-t2 s7 b4 + g5m4-t3 s7 b4 + g5m4-t4 s7 b4 + g5m4-t5 s7 b4 + g5m4-t6 s7 b4 + g5m4-t7 s7 b4 + g5m4-t8 s7 b4 + g5m4-t9 s7 b4 + g5m5-t1 s7 b4 + g5m5-t2 s7 b4 + g5m5-t3 s7 b4 + g5m5-t4 s7 b4 + g5m5-t5 s7 b4 + g5m5-t6 s7 b5 + g5m5-t7 s7 b5 + g5m6-t1 s7 b4 + g5m6-t2 s7 b4 + g5m6-t3 s7 b4 + g5m6-t4 s7 b4 + g5m6-t5 s7 b4 + g5m6-t6 s7 b4"
+      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g3m2-t1 s7 b4 + g3m2-t2 s7 b4 + g3m2-t3 s7 b4 + g3m2-t4 s7 b4 + g3m2-t5 s7 b4 + g3m2-t6 s7 b4 + g3m2-t7 s7 b4 + g3m2-t8 s7 b4 + g3m2-t9 s7 b4 + g3m3-t1 s7 b4 + g3m3-t2 s7 b4 + g3m3-t3 s7 b4 + g3m3-t4 s7 b4 + g3m3-t5 s7 b4 + g3m3-t6 s7 b4 + g3m3-t7 s7 b4 + g3m3-t8 s7 b4 + g3m3-t9 s7 b4 + g3m4-t1 s7 b4 + g3m4-t2 s7 b4 + g3m4-t3 s7 b4 + g3m4-t4 s7 b4 + g3m5-t1 s7 b4 + g3m5-t2 s7 b4 + g3m5-t3 s7 b4 + g3m5-t4 s7 b4 + g3m5-t5 s7 b4 + g3m5-t6 s7 b4 + g3m5-t7 s7 b4 + g3m5-t8 s7 b4 + g3m6-t1 s7 b4 + g3m6-t2 s7 b4 + g3m6-t3 s7 b4 + g3m6-t4 s7 b4 + g3m6-t5 s7 b4 + g3m6-t6 s7 b4 + g3m6-t7 s7 b4 + g4m1-t1 s7 b4 + g4m1-t2 s7 b4 + g4m1-t3 s7 b5 + g4m1-t4 s7 b4 + g4m1-t5 s7 b4 + g4m1-t6 s7 b4 + g4m1-t7 s7 b4 + g4m1-t8 s7 b4 + g4m2-t1 s7 b4 + g4m2-t2 s7 b4 + g4m2-t3 s7 b4 + g4m2-t4 s7 b4 + g4m2-t5 s7 b4 + g4m2-t6 s7 b4 + g4m2-t7 s7 b4 + g4m2-t8 s7 b4 + g4m3-t1 s7 b4 + g4m3-t2 s7 b4 + g4m3-t3 s7 b4 + g4m3-t4 s7 b4 + g4m3-t5 s7 b4 + g4m3-t6 s7 b4 + g4m3-t7 s7 b4 + g4m3-t8 s7 b4 + g4m4-t1 s7 b4 + g4m4-t2 s7 b4 + g4m4-t3 s7 b4 + g4m4-t4 s7 b4 + g4m4-t5 s7 b4 + g4m4-t6 s7 b4 + g4m4-t7 s7 b4 + g4m4-t8 s7 b4 + g4m4-t9 s7 b4 + g4m5-t1 s7 b4 + g4m5-t2 s7 b4 + g4m5-t3 s7 b4 + g4m5-t4 s7 b4 + g4m5-t5 s7 b4 + g4m5-t6 s7 b4 + g4m5-t7 s7 b4 + g4m5-t8 s7 b4 + g4m6-t1 s7 b4 + g4m6-t2 s7 b4 + g4m6-t3 s7 b4 + g4m6-t4 s7 b4 + g4m6-t5 s7 b4 + g4m6-t6 s7 b4 + g4m6-t7 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4 + g5m2-t1 s7 b4 + g5m2-t2 s7 b4 + g5m2-t3 s7 b4 + g5m2-t4 s7 b4 + g5m2-t5 s7 b4 + g5m2-t6 s7 b4 + g5m2-t7 s7 b4 + g5m2-t8 s7 b4 + g5m3-t1 s7 b4 + g5m3-t2 s7 b4 + g5m3-t3 s7 b4 + g5m3-t4 s7 b4 + g5m3-t5 s7 b4 + g5m3-t6 s7 b4 + g5m3-t7 s7 b4 + g5m3-t8 s7 b4 + g5m4-t1 s7 b4 + g5m4-t2 s7 b4 + g5m4-t3 s7 b4 + g5m4-t4 s7 b4 + g5m4-t5 s7 b4 + g5m4-t6 s7 b4 + g5m4-t7 s7 b4 + g5m4-t8 s7 b4 + g5m4-t9 s7 b4 + g5m5-t1 s7 b4 + g5m5-t2 s7 b4 + g5m5-t3 s7 b4 + g5m5-t4 s7 b4 + g5m5-t5 s7 b4 + g5m5-t6 s7 b5 + g5m5-t7 s7 b5 + g5m6-t1 s7 b4 + g5m6-t2 s7 b4 + g5m6-t3 s7 b4 + g5m6-t4 s7 b4 + g5m6-t5 s7 b4 + g5m6-t6 s7 b4 + g6m1-t1 s7 b4 + g6m1-t2 s7 b4 + g6m1-t3 s7 b4 + g6m1-t4 s7 b4 + g6m1-t5 s7 b4 + g6m1-t6 s7 b4 + g6m1-t7 s7 b4 + g6m1-t8 s7 b4 + g6m4-t1 s7 b4 + g6m4-t2 s7 b4 + g6m4-t3 s7 b4 + g6m4-t4 s7 b4 + g6m4-t5 s7 b4 + g6m4-t6 s7 b4 + g6m4-t7 s7 b4"
     ]
   },
   {
@@ -21580,6 +21580,2086 @@
     ]
   },
   {
+    "key": "6im4x8",
+    "text": "A friend says the beads are 3 and 2.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s2 b1"
+    ]
+  },
+  {
+    "key": "wpoq8m",
+    "text": "Which number is red? You can't tell.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s2 b2"
+    ]
+  },
+  {
+    "key": "orfvs2",
+    "text": "And does a number count one color, or all the beads?",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s2 b3"
+    ]
+  },
+  {
+    "key": "7vzx4l",
+    "text": "Compare a part to a part, like 3 red to 2 blue, or a part to the whole, like 3 red out of 5 beads.",
+    "style": "B",
+    "chars": 98,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s3 b1 + g6m1-t1 bigIdea"
+    ]
+  },
+  {
+    "key": "1uofub5",
+    "text": "Look. Red beads on top, blue beads underneath.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s4 b1"
+    ]
+  },
+  {
+    "key": "1kbwaq7",
+    "text": "For every 3 red, there are 2 blue.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s4 b2"
+    ]
+  },
+  {
+    "key": "5x0xjp",
+    "text": "We say 3 to 2. We write it with two dots, 3 to 2.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s4 b3"
+    ]
+  },
+  {
+    "key": "77qqru",
+    "text": "Now put both colors in one line.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s5 b1"
+    ]
+  },
+  {
+    "key": "u91nfe",
+    "text": "How many beads are in one set? 3 plus 2 is 5.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s5 b2"
+    ]
+  },
+  {
+    "key": "p6okfz",
+    "text": "So 3 out of every 5 beads are red.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s5 b3"
+    ]
+  },
+  {
+    "key": "kwvk0g",
+    "text": "Wait. The order of the words sets the order of the numbers.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s6 b1"
+    ]
+  },
+  {
+    "key": "460ofu",
+    "text": "Red to blue is 3 to 2.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s6 b2"
+    ]
+  },
+  {
+    "key": "1dxc2w0",
+    "text": "Blue to red is 2 to 3.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s6 b3"
+    ]
+  },
+  {
+    "key": "1tufxv9",
+    "text": "When the question asks about all the beads, the answer is not 3 to 2.",
+    "style": "B+",
+    "chars": 69,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s7 b2"
+    ]
+  },
+  {
+    "key": "17g5jxf",
+    "text": "Count both colors. Red is 3 out of 5.",
+    "style": "B+",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t1 s7 b3"
+    ]
+  },
+  {
+    "key": "193yve0",
+    "text": "What if you just add 1 to each?",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s2 b1"
+    ]
+  },
+  {
+    "key": "1dt0mgc",
+    "text": "That's 4 cups of flour and 3 eggs.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s2 b2"
+    ]
+  },
+  {
+    "key": "11y93vt",
+    "text": "Same recipe? No. There's less flour for each egg now.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s2 b3"
+    ]
+  },
+  {
+    "key": "1heo1ym",
+    "text": "Multiply both numbers by the same number, and the mix stays the same, just bigger.",
+    "style": "B",
+    "chars": 82,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s3 b1 + g6m1-t2 bigIdea"
+    ]
+  },
+  {
+    "key": "wk6w6e",
+    "text": "Two batches means everything twice.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s4 b1"
+    ]
+  },
+  {
+    "key": "1lk5wvx",
+    "text": "Double the flour, 3 times 2 equals 6 cups.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s4 b2"
+    ]
+  },
+  {
+    "key": "ctfxrb",
+    "text": "Double the eggs too, 2 times 2 equals 4.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s4 b3"
+    ]
+  },
+  {
+    "key": "1s1nf0p",
+    "text": "What about 3 batches? Multiply both by 3.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s5 b1"
+    ]
+  },
+  {
+    "key": "901eqq",
+    "text": "Flour, 3 times 3 equals 9 cups. Eggs, 2 times 3 equals 6.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s5 b2"
+    ]
+  },
+  {
+    "key": "17fkjj3",
+    "text": "Every column here is the same recipe.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s5 b3"
+    ]
+  },
+  {
+    "key": "1qh6lcs",
+    "text": "It works backwards too.",
+    "style": "B",
+    "chars": 23,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s6 b1"
+    ]
+  },
+  {
+    "key": "16c555y",
+    "text": "Divide both by the same number.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s6 b2"
+    ]
+  },
+  {
+    "key": "4i3m45",
+    "text": "6 cups and 4 eggs, both divided by 2, are 3 cups and 2 eggs again.",
+    "style": "B",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s6 b3"
+    ]
+  },
+  {
+    "key": "8kla82",
+    "text": "Don't add the same number to both. Adding 2 gives 5 cups and 4 eggs, a different recipe.",
+    "style": "B+",
+    "chars": 88,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s7 b2"
+    ]
+  },
+  {
+    "key": "1drn2im",
+    "text": "Multiply instead. Times 2 gives 6 cups and 4 eggs, the same recipe.",
+    "style": "B+",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t2 s7 b3"
+    ]
+  },
+  {
+    "key": "crluz7",
+    "text": "Look at the tag. 5 dollars buys the whole pack.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s2 b1"
+    ]
+  },
+  {
+    "key": "ejyogh",
+    "text": "So what does one notebook cost? Not 5 dollars. That pays for all 4.",
+    "style": "B",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s2 b2"
+    ]
+  },
+  {
+    "key": "m7q77d",
+    "text": "We have to share the 5 dollars out.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s2 b3"
+    ]
+  },
+  {
+    "key": "as2hq3",
+    "text": "To find how much for one, divide the total by how many there are.",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s3 b1 + g6m1-t3 bigIdea"
+    ]
+  },
+  {
+    "key": "1e65sc2",
+    "text": "Draw the 5 dollars as one long bar.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s4 b1"
+    ]
+  },
+  {
+    "key": "1hco2kg",
+    "text": "4 notebooks share it, so cut it into 4 equal parts.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s4 b2"
+    ]
+  },
+  {
+    "key": "1hg1evl",
+    "text": "One part for each notebook.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s4 b3"
+    ]
+  },
+  {
+    "key": "1jpvkmp",
+    "text": "Now divide 5 dollars by 4. Each part gets 1 dollar, and 1 dollar is left over.",
+    "style": "B",
+    "chars": 78,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s5 b1"
+    ]
+  },
+  {
+    "key": "13vkbo7",
+    "text": "Split that last dollar into 4 quarters, 25 cents each.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s5 b2"
+    ]
+  },
+  {
+    "key": "2r1gsl",
+    "text": "So each part is 1 dollar and 25 cents. That's one notebook.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s5 b3"
+    ]
+  },
+  {
+    "key": "1ada52l",
+    "text": "Does that match the tag? Check it.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s6 b1"
+    ]
+  },
+  {
+    "key": "hv5gfj",
+    "text": "4 times 1 dollar and 25 cents equals 5 dollars. Yes.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s6 b2"
+    ]
+  },
+  {
+    "key": "t3y21i",
+    "text": "So one notebook costs 1 dollar and 25 cents.",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s6 b3"
+    ]
+  },
+  {
+    "key": "5v9as0",
+    "text": "Don't divide the other way around. 4 divided by 5 would make a notebook 80 cents, and that's too cheap.",
+    "style": "B+",
+    "chars": 103,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s7 b2"
+    ]
+  },
+  {
+    "key": "1sxa5h9",
+    "text": "Put the dollars first. 5 dollars divided by 4 equals 1 dollar and 25 cents.",
+    "style": "B+",
+    "chars": 75,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t3 s7 b3"
+    ]
+  },
+  {
+    "key": "1vhbajy",
+    "text": "3 bags cost 12 dollars. You want 5, just 2 more.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s2 b1"
+    ]
+  },
+  {
+    "key": "1kx8ybs",
+    "text": "So is it 12 dollars plus 2 dollars? No. One bag costs a lot more than 1 dollar.",
+    "style": "B",
+    "chars": 79,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s2 b2"
+    ]
+  },
+  {
+    "key": "1jsux1k",
+    "text": "First we need the price of one bag.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s2 b3"
+    ]
+  },
+  {
+    "key": "1us68a0",
+    "text": "Find how much for one first, then multiply by how many you want.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s3 b1 + g6m1-t4 bigIdea"
+    ]
+  },
+  {
+    "key": "cdxyfk",
+    "text": "Split the 12 dollars into 3 equal parts, one for each bag.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s4 b1"
+    ]
+  },
+  {
+    "key": "17f8b6x",
+    "text": "12 dollars divided by 3 equals 4 dollars.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s4 b2"
+    ]
+  },
+  {
+    "key": "1jqzy8l",
+    "text": "So one bag costs 4 dollars.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s4 b3"
+    ]
+  },
+  {
+    "key": "1ifjg4o",
+    "text": "Now line up the 5 bags you want.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s5 b1"
+    ]
+  },
+  {
+    "key": "9ftjcw",
+    "text": "What does each one cost? The same 4 dollars.",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s5 b2"
+    ]
+  },
+  {
+    "key": "1noc4j4",
+    "text": "The price didn't change. You just need more bags.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s5 b3"
+    ]
+  },
+  {
+    "key": "l6fuex",
+    "text": "Last step, multiply.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s6 b1"
+    ]
+  },
+  {
+    "key": "1r54ca8",
+    "text": "5 bags at 4 dollars each is 5 times 4 dollars equals 20 dollars.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s6 b2"
+    ]
+  },
+  {
+    "key": "aq2w7d",
+    "text": "So movie night costs 20 dollars.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s6 b3"
+    ]
+  },
+  {
+    "key": "klxgjf",
+    "text": "Don't multiply 12 dollars by 5. That gives 60 dollars, way too much.",
+    "style": "B+",
+    "chars": 68,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s7 b2"
+    ]
+  },
+  {
+    "key": "p06fwv",
+    "text": "12 dollars is the price of 3 bags, not one. Find one bag first, then 5 times 4 dollars equals 20 dollars.",
+    "style": "B+",
+    "chars": 105,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t4 s7 b3"
+    ]
+  },
+  {
+    "key": "fyuc7o",
+    "text": "You have 15 cups of nuts. How much cereal goes with them?",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s2 b1"
+    ]
+  },
+  {
+    "key": "q2ho53",
+    "text": "Going from 3 and 5 straight to 15 is a big jump. So take small steps, in a table.",
+    "style": "B",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "1ge1wjt",
+    "text": "Every column is the same mix, so you can multiply, divide or add whole columns to make a new one.",
+    "style": "B",
+    "chars": 97,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s3 b1 + g6m1-t5 bigIdea"
+    ]
+  },
+  {
+    "key": "enhd10",
+    "text": "Start with 3 cups of nuts and 5 cups of cereal.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s4 b1"
+    ]
+  },
+  {
+    "key": "1gfzzbf",
+    "text": "Double both. 3 times 2 equals 6, and 5 times 2 equals 10.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s4 b2"
+    ]
+  },
+  {
+    "key": "a4174c",
+    "text": "Same mix, just twice as much.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s4 b3"
+    ]
+  },
+  {
+    "key": "p8lyt6",
+    "text": "Can you add two columns together? Yes.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s5 b1"
+    ]
+  },
+  {
+    "key": "1gkz0mw",
+    "text": "3 plus 6 equals 9 cups of nuts, and 5 plus 10 equals 15 cups of cereal.",
+    "style": "B",
+    "chars": 71,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s5 b2"
+    ]
+  },
+  {
+    "key": "j2l9ss",
+    "text": "Still the same mix.",
+    "style": "B",
+    "chars": 19,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s5 b3"
+    ]
+  },
+  {
+    "key": "mxfo2a",
+    "text": "Now look. 6 plus 9 equals 15 cups of nuts, just what you have.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s6 b1"
+    ]
+  },
+  {
+    "key": "opmm18",
+    "text": "So add those two columns. Underneath, 10 plus 15 equals 25.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s6 b2"
+    ]
+  },
+  {
+    "key": "4hq7up",
+    "text": "You need 25 cups of cereal.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s6 b3"
+    ]
+  },
+  {
+    "key": "2c13qk",
+    "text": "Don't add 12 to both numbers. 5 plus 12 equals 17 makes a different mix.",
+    "style": "B+",
+    "chars": 72,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s7 b2"
+    ]
+  },
+  {
+    "key": "w912js",
+    "text": "3 times 5 equals 15, so multiply the cereal by 5 too. That's 25.",
+    "style": "B+",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t5 s7 b3"
+    ]
+  },
+  {
+    "key": "1xkta47",
+    "text": "Are there just 3 girls in the class? No.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s2 b1"
+    ]
+  },
+  {
+    "key": "glznfg",
+    "text": "There are 30 students in all.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s2 b2"
+    ]
+  },
+  {
+    "key": "r7nuvo",
+    "text": "The 2 and the 3 only say that for every 2 boys, there are 3 girls.",
+    "style": "B",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s2 b3"
+    ]
+  },
+  {
+    "key": "18prdom",
+    "text": "Add the parts to find how many equal boxes make the whole, then find what one box holds.",
+    "style": "B",
+    "chars": 88,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s3 b1 + g6m1-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "fs42ma",
+    "text": "Draw it as boxes. 2 for the boys, 3 for the girls.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s4 b1"
+    ]
+  },
+  {
+    "key": "sh6z92",
+    "text": "Every box holds the same number of students.",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s4 b2"
+    ]
+  },
+  {
+    "key": "1owgark",
+    "text": "How many boxes in all? 2 plus 3 equals 5.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s5 b1"
+    ]
+  },
+  {
+    "key": "1e0r89n",
+    "text": "Those 5 boxes hold all 30 students.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s5 b2"
+    ]
+  },
+  {
+    "key": "dxeaye",
+    "text": "So 30 divided by 5 equals 6 in each box.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s5 b3"
+    ]
+  },
+  {
+    "key": "16ektqi",
+    "text": "The girls have 3 boxes, and each box holds 6.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s6 b1"
+    ]
+  },
+  {
+    "key": "1y2zukb",
+    "text": "3 times 6 equals 18. So there are 18 girls.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s6 b2"
+    ]
+  },
+  {
+    "key": "1g6nowf",
+    "text": "Check it. The boys have 2 times 6 equals 12, and 12 plus 18 equals 30.",
+    "style": "B",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s6 b3"
+    ]
+  },
+  {
+    "key": "7w9i1r",
+    "text": "Don't divide 30 by just the 3. That leaves out the boys.",
+    "style": "B+",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s7 b2"
+    ]
+  },
+  {
+    "key": "12pu7qo",
+    "text": "Use all 5 boxes. 30 divided by 5 equals 6, and 3 times 6 equals 18.",
+    "style": "B+",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t6 s7 b3"
+    ]
+  },
+  {
+    "key": "16sh5vs",
+    "text": "Is 4 feet the same as 4 inches? No.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s2 b1"
+    ]
+  },
+  {
+    "key": "sn8jv6",
+    "text": "A foot is much longer than an inch.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s2 b2"
+    ]
+  },
+  {
+    "key": "9yfq0r",
+    "text": "So first you need one fact. How many inches fit in 1 foot?",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s2 b3"
+    ]
+  },
+  {
+    "key": "fw6s49",
+    "text": "Start from one fact, 1 foot is 12 inches, then multiply to change to the smaller unit and divide to change back.",
+    "style": "B",
+    "chars": 112,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s3 b1 + g6m1-t7 bigIdea"
+    ]
+  },
+  {
+    "key": "1qz0r41",
+    "text": "1 foot is 12 inches.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s4 b1"
+    ]
+  },
+  {
+    "key": "px6yas",
+    "text": "So 2 feet is 24 inches, and 3 feet is 36 inches.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s4 b2"
+    ]
+  },
+  {
+    "key": "1ncwyas",
+    "text": "Each extra foot adds 12 more.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s4 b3"
+    ]
+  },
+  {
+    "key": "qemh28",
+    "text": "Do you have to step up one foot at a time? No.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s5 b1"
+    ]
+  },
+  {
+    "key": "hqtco8",
+    "text": "4 feet is 4 times 12 equals 48 inches.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s5 b2"
+    ]
+  },
+  {
+    "key": "43va7w",
+    "text": "So the shelf is 48 inches long.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s5 b3"
+    ]
+  },
+  {
+    "key": "17h25jn",
+    "text": "What about going back, from inches to feet?",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s6 b1"
+    ]
+  },
+  {
+    "key": "mfocit",
+    "text": "Feet are bigger, so you divide by 12.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s6 b2"
+    ]
+  },
+  {
+    "key": "qwy758",
+    "text": "36 divided by 12 equals 3. So 36 inches is 3 feet.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s6 b3"
+    ]
+  },
+  {
+    "key": "exrslk",
+    "text": "Going to the smaller unit, don't divide.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s7 b2"
+    ]
+  },
+  {
+    "key": "17vc2vg",
+    "text": "Smaller units mean more of them, so multiply. 4 times 12 equals 48 inches.",
+    "style": "B+",
+    "chars": 74,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t7 s7 b3"
+    ]
+  },
+  {
+    "key": "1pmwjwc",
+    "text": "36 miles is how far you rode in all, over 3 hours.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s2 b1"
+    ]
+  },
+  {
+    "key": "7gidub",
+    "text": "So how far did you ride in one hour? The total can't say.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s2 b2"
+    ]
+  },
+  {
+    "key": "1pn8vrr",
+    "text": "A faster rider could do the same 36 miles in 2 hours.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s2 b3"
+    ]
+  },
+  {
+    "key": "1hjzp1n",
+    "text": "How fast you go is how far you go in one hour, so divide the distance by the hours.",
+    "style": "B",
+    "chars": 83,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s3 b1 + g6m1-t8 bigIdea"
+    ]
+  },
+  {
+    "key": "1j1xb5e",
+    "text": "Cut the ride up by the hours.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s4 b1"
+    ]
+  },
+  {
+    "key": "1xfxdpj",
+    "text": "3 hours means 3 equal jumps, one for each hour.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s4 b2"
+    ]
+  },
+  {
+    "key": "9nztbv",
+    "text": "So how long is one jump? 36 divided by 3 equals 12.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s5 b1"
+    ]
+  },
+  {
+    "key": "19tex3o",
+    "text": "Each jump is 12 miles. So you ride 12 miles in one hour.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s5 b2"
+    ]
+  },
+  {
+    "key": "135auhg",
+    "text": "12 miles in each hour is 12 miles per hour.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s6 b1"
+    ]
+  },
+  {
+    "key": "1jxtjjz",
+    "text": "Check it. 3 times 12 equals 36 miles, the whole ride.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s6 b2"
+    ]
+  },
+  {
+    "key": "628vk",
+    "text": "Don't divide the hours by the miles.",
+    "style": "B+",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s7 b2"
+    ]
+  },
+  {
+    "key": "1f1q4r",
+    "text": "The miles go first. 36 divided by 3, not 3 divided by 36.",
+    "style": "B+",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m1-t8 s7 b3"
+    ]
+  },
+  {
+    "key": "ca5h9h",
+    "text": "So we painted 35 tiles.",
+    "style": "B",
+    "chars": 23,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s2 b1"
+    ]
+  },
+  {
+    "key": "x22fgv",
+    "text": "On a wall of 50, that's most of it. On 1,000, it's hardly a start.",
+    "style": "B",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s2 b2"
+    ]
+  },
+  {
+    "key": "1x8x8bv",
+    "text": "So we have to say out of how many.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s2 b3"
+    ]
+  },
+  {
+    "key": "1446v12",
+    "text": "Percent means out of 100, so 35 tiles out of 100 is 35 percent.",
+    "style": "B",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s3 b1 + g6m4-t1 bigIdea"
+    ]
+  },
+  {
+    "key": "1shgboq",
+    "text": "Look at the whole wall. It has 100 equal tiles.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s4 b1"
+    ]
+  },
+  {
+    "key": "1w3cwjm",
+    "text": "One tile is 1 out of 100, and we write 1 percent.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s4 b2"
+    ]
+  },
+  {
+    "key": "1ycx76s",
+    "text": "The whole wall? 100 out of 100, or 100 percent.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s4 b3"
+    ]
+  },
+  {
+    "key": "1it85v7",
+    "text": "Now count the painted ones, full columns first.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s5 b1"
+    ]
+  },
+  {
+    "key": "lq2x3f",
+    "text": "10, 20, 30, then 5 more makes 35.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s5 b2"
+    ]
+  },
+  {
+    "key": "1smaub2",
+    "text": "So we painted 35 out of 100. That's 35 percent.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s5 b3"
+    ]
+  },
+  {
+    "key": "qyjv7j",
+    "text": "And the tiles still bare?",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s6 b1"
+    ]
+  },
+  {
+    "key": "m63ykx",
+    "text": "100 take away 35 leaves 65. That's 65 percent.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s6 b2"
+    ]
+  },
+  {
+    "key": "11qxsv5",
+    "text": "35 percent and 65 percent make 100 percent, the whole wall.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s6 b3"
+    ]
+  },
+  {
+    "key": "1ub06ih",
+    "text": "Don't count the empty tiles.",
+    "style": "B+",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s7 b2"
+    ]
+  },
+  {
+    "key": "14gta23",
+    "text": "Those 65 are still to paint. The painted ones say 35 percent done.",
+    "style": "B+",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t1 s7 b3"
+    ]
+  },
+  {
+    "key": "16jsb0d",
+    "text": "Three fourths, zero point seven five and 75 percent. Even the digits don't match.",
+    "style": "B",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s2 b1"
+    ]
+  },
+  {
+    "key": "jyezhx",
+    "text": "So can they really be the same amount?",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s2 b2"
+    ]
+  },
+  {
+    "key": "1eic6v3",
+    "text": "Let's put all three on one grid of 100 and see.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s2 b3"
+    ]
+  },
+  {
+    "key": "aqlie8",
+    "text": "Make an amount out of 100, and you can write it three ways that all mean the same.",
+    "style": "B",
+    "chars": 82,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s3 b1 + g6m4-t2 bigIdea"
+    ]
+  },
+  {
+    "key": "1lmjd39",
+    "text": "Cut the 100 squares into 4 equal parts.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s4 b1"
+    ]
+  },
+  {
+    "key": "17kzge1",
+    "text": "How big is each part? 100 divided by 4 equals 25, so 25 squares.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s4 b2"
+    ]
+  },
+  {
+    "key": "sv59ne",
+    "text": "Take 3 parts. That's 75 squares, so three fourths is 75 hundredths.",
+    "style": "B",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s4 b3"
+    ]
+  },
+  {
+    "key": "1on48yy",
+    "text": "Now slide the same 75 squares into columns.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s5 b1"
+    ]
+  },
+  {
+    "key": "wxtfij",
+    "text": "7 full columns and 5 more.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s5 b2"
+    ]
+  },
+  {
+    "key": "150ozpv",
+    "text": "75 hundredths, with a point, is zero point seven five.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s5 b3"
+    ]
+  },
+  {
+    "key": "1ub4uc4",
+    "text": "And the percent? 75 out of 100 is 75 percent.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s6 b1"
+    ]
+  },
+  {
+    "key": "1lb2sal",
+    "text": "So three fourths, zero point seven five and 75 percent are one amount.",
+    "style": "B",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s6 b2"
+    ]
+  },
+  {
+    "key": "5m0uzi",
+    "text": "All three screens were right.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s6 b3"
+    ]
+  },
+  {
+    "key": "1rjp332",
+    "text": "Don't just join the 3 and the 4. three fourths is not 34 percent.",
+    "style": "B+",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s7 b2"
+    ]
+  },
+  {
+    "key": "12rjs4l",
+    "text": "Make it out of 100 first. That's 75 hundredths, or 75 percent.",
+    "style": "B+",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t2 s7 b3"
+    ]
+  },
+  {
+    "key": "14afp3j",
+    "text": "30 percent means 30 out of every 100.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s2 b1"
+    ]
+  },
+  {
+    "key": "l3zrzf",
+    "text": "With 100 dollars, that's easy. It's just 30 dollars.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s2 b2"
+    ]
+  },
+  {
+    "key": "b83onx",
+    "text": "But you have 80 dollars. So how do you take 30 percent of that?",
+    "style": "B",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s2 b3"
+    ]
+  },
+  {
+    "key": "1l9ovjh",
+    "text": "Cut the whole into 10 equal parts, each worth 10 percent, then take as many parts as the percent needs.",
+    "style": "B",
+    "chars": 103,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s3 b1 + g6m4-t3 bigIdea"
+    ]
+  },
+  {
+    "key": "r0xmgd",
+    "text": "Cut the 80 dollars into 10 equal parts.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s4 b1"
+    ]
+  },
+  {
+    "key": "410ydl",
+    "text": "What is each part? 80 divided by 10 equals 8, so each part is 8 dollars.",
+    "style": "B",
+    "chars": 72,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s4 b2"
+    ]
+  },
+  {
+    "key": "w4evoz",
+    "text": "One part is 10 percent, so 10 percent of 80 dollars is 8 dollars.",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s4 b3"
+    ]
+  },
+  {
+    "key": "1knrn7i",
+    "text": "30 percent is 3 of those parts.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s5 b1"
+    ]
+  },
+  {
+    "key": "yv3var",
+    "text": "Count the money in them. 8, 16, 24.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s5 b2"
+    ]
+  },
+  {
+    "key": "1videjl",
+    "text": "So 30 percent of 80 dollars is 24 dollars, for the shelter.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s6 b1"
+    ]
+  },
+  {
+    "key": "1f54swi",
+    "text": "Is 24 dollars less than 30 dollars? Yes, just like it should be.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s6 b2"
+    ]
+  },
+  {
+    "key": "78huxg",
+    "text": "Don't read the 30 as dollars.",
+    "style": "B+",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s7 b2"
+    ]
+  },
+  {
+    "key": "84h11v",
+    "text": "30 dollars would be 30 percent of 100 dollars. You have less, so you give less, 24 dollars.",
+    "style": "B+",
+    "chars": 91,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t3 s7 b3"
+    ]
+  },
+  {
+    "key": "tdvgu1",
+    "text": "The 15 dollars is not the price. It's only part of it.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s2 b1"
+    ]
+  },
+  {
+    "key": "1xdk772",
+    "text": "So is the helmet more than 15 dollars, or less?",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s2 b2"
+    ]
+  },
+  {
+    "key": "rb1egr",
+    "text": "More. 15 dollars is just 25 percent, and the price is the whole 100 percent.",
+    "style": "B",
+    "chars": 76,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s2 b3"
+    ]
+  },
+  {
+    "key": "qvqkog",
+    "text": "Find what one equal piece is worth, then count pieces all the way up to 100 percent.",
+    "style": "B",
+    "chars": 84,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s3 b1 + g6m4-t4 bigIdea"
+    ]
+  },
+  {
+    "key": "bt5ew4",
+    "text": "How many 25 percent pieces make 100 percent?",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s4 b1 + g6m4-t4 hint1"
+    ]
+  },
+  {
+    "key": "6p0bvl",
+    "text": "Count by 25. 25, 50, 75, 100. That's 4 pieces.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s4 b2"
+    ]
+  },
+  {
+    "key": "2s9rjx",
+    "text": "So the price is 4 equal pieces, and your 15 dollars is one of them.",
+    "style": "B",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s4 b3"
+    ]
+  },
+  {
+    "key": "1o43878",
+    "text": "The pieces are all equal.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s5 b1"
+    ]
+  },
+  {
+    "key": "w7hit0",
+    "text": "Yours is 15 dollars, so every piece is 15 dollars.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s5 b2"
+    ]
+  },
+  {
+    "key": "17pfism",
+    "text": "Now count all 4 pieces. 15, 30, 45, 60.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s6 b1"
+    ]
+  },
+  {
+    "key": "16snj9p",
+    "text": "So the helmet costs 60 dollars.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s6 b2"
+    ]
+  },
+  {
+    "key": "1cdw612",
+    "text": "Don't take 25 percent of the 15 dollars.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s7 b2"
+    ]
+  },
+  {
+    "key": "1910ry4",
+    "text": "That gives 3 dollars and 75 cents, less than you saved. The 15 dollars is one piece, so count 4 of them.",
+    "style": "B+",
+    "chars": 104,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t4 s7 b3"
+    ]
+  },
+  {
+    "key": "9soxbh",
+    "text": "The sign gives a percent, not dollars.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s2 b1"
+    ]
+  },
+  {
+    "key": "1bup510",
+    "text": "So how many dollars come off the 40 dollars?",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "13jqwzr",
+    "text": "We have to find that before we can pay.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s2 b3"
+    ]
+  },
+  {
+    "key": "2rx2dg",
+    "text": "First find the money you save, then take it away from the price.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s3 b1 + g6m4-t5 bigIdea"
+    ]
+  },
+  {
+    "key": "f0wrlz",
+    "text": "Look at the 40 dollars as 4 equal pieces.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s4 b1"
+    ]
+  },
+  {
+    "key": "nk6cgf",
+    "text": "Why 4? Because 25 percent four times makes 100 percent.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s4 b2"
+    ]
+  },
+  {
+    "key": "qqj5gc",
+    "text": "40 divided by 4 equals 10, so each piece is 10 dollars.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s5 b1"
+    ]
+  },
+  {
+    "key": "1j5b2yt",
+    "text": "25 percent off takes one piece away. You save 10 dollars.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s5 b2"
+    ]
+  },
+  {
+    "key": "1i8b1cv",
+    "text": "Now take the saving off the price. 40 dollars minus 10 dollars equals 30 dollars.",
+    "style": "B",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s6 b1"
+    ]
+  },
+  {
+    "key": "1621zal",
+    "text": "So you pay 30 dollars for the jacket.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s6 b2"
+    ]
+  },
+  {
+    "key": "1yq2qsv",
+    "text": "25 percent off does not mean 25 dollars off.",
+    "style": "B+",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s7 b2"
+    ]
+  },
+  {
+    "key": "l6sqe0",
+    "text": "It means 25 out of every 100 dollars. On 40 dollars, that's only 10 dollars.",
+    "style": "B+",
+    "chars": 76,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t5 s7 b3"
+    ]
+  },
+  {
+    "key": "1ytobqz",
+    "text": "The tag says 25 dollars. But is that what you pay?",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s2 b1"
+    ]
+  },
+  {
+    "key": "mahyft",
+    "text": "No. The store adds 8 percent on top.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s2 b2"
+    ]
+  },
+  {
+    "key": "1i7bwmn",
+    "text": "And how many dollars is 8 percent? We don't know yet.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s2 b3"
+    ]
+  },
+  {
+    "key": "14ib784",
+    "text": "Find the tax first, then add it to the price, so you pay more than the tag.",
+    "style": "B",
+    "chars": 75,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s3 b1 + g6m4-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "1xfn613",
+    "text": "The 25 dollars is the whole price. That's 100 percent.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s4 b1"
+    ]
+  },
+  {
+    "key": "124mt86",
+    "text": "So what is 1 percent? 25 divided by 100 is 25 cents. That's one quarter.",
+    "style": "B",
+    "chars": 72,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s4 b2"
+    ]
+  },
+  {
+    "key": "1q3rguv",
+    "text": "8 percent is 8 of those quarters.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s5 b1"
+    ]
+  },
+  {
+    "key": "1keovc6",
+    "text": "8 times 25 cents is 2 dollars. So the tax is 2 dollars.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s5 b2"
+    ]
+  },
+  {
+    "key": "yhpcd5",
+    "text": "Now add the tax to the price.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s6 b1"
+    ]
+  },
+  {
+    "key": "irel2c",
+    "text": "25 dollars plus 2 dollars equals 27 dollars. That's what you pay at the register.",
+    "style": "B",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s6 b2"
+    ]
+  },
+  {
+    "key": "9zwesr",
+    "text": "8 percent does not mean 8 dollars of tax.",
+    "style": "B+",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s7 b2"
+    ]
+  },
+  {
+    "key": "y83u9f",
+    "text": "8 percent of 25 dollars is only 2 dollars. So you pay 27 dollars, not 33 dollars.",
+    "style": "B+",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t6 s7 b3"
+    ]
+  },
+  {
+    "key": "1433av",
+    "text": "The bank pays 4 percent of your 500 dollars, every year.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s2 b1"
+    ]
+  },
+  {
+    "key": "1oisvtw",
+    "text": "So how many dollars is that? And there are 3 years, not one.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s2 b2"
+    ]
+  },
+  {
+    "key": "1k2u483",
+    "text": "Find what the bank pays for one year, then multiply by the number of years.",
+    "style": "B",
+    "chars": 75,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s3 b1 + g6m4-t7 bigIdea"
+    ]
+  },
+  {
+    "key": "1brvooz",
+    "text": "Start with one year. What's 1 percent of 500 dollars?",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s4 b1"
+    ]
+  },
+  {
+    "key": "xruqfh",
+    "text": "500 divided by 100 equals 5, so 1 percent is 5 dollars.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s4 b2"
+    ]
+  },
+  {
+    "key": "13htbln",
+    "text": "4 percent is 4 of those. 4 times 5 dollars equals 20 dollars a year.",
+    "style": "B",
+    "chars": 68,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s4 b3"
+    ]
+  },
+  {
+    "key": "afw5c6",
+    "text": "Year 2 pays 4 percent of the same 500 dollars. So it's 20 dollars again.",
+    "style": "B",
+    "chars": 72,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s5 b1"
+    ]
+  },
+  {
+    "key": "ckaa3q",
+    "text": "Year 3 pays 20 dollars too.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s5 b2"
+    ]
+  },
+  {
+    "key": "1v6cly4",
+    "text": "3 years of 20 dollars is 3 times 20 dollars equals 60 dollars.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s6 b1"
+    ]
+  },
+  {
+    "key": "kmzad6",
+    "text": "So the bank pays you 60 dollars.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s6 b2"
+    ]
+  },
+  {
+    "key": "121smv7",
+    "text": "With your 500 dollars, that's 560 dollars in all.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s6 b3"
+    ]
+  },
+  {
+    "key": "16l4hdh",
+    "text": "Don't stop at one year. 20 dollars is only year 1.",
+    "style": "B+",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s7 b2"
+    ]
+  },
+  {
+    "key": "1s41q21",
+    "text": "3 years pays 3 times as much, 60 dollars.",
+    "style": "B+",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m4-t7 s7 b3"
+    ]
+  },
+  {
     "key": "hxmia9",
     "text": "Cookies on plates. There are 4 plates. Each plate has 3 cookies. How many cookies are there?",
     "style": "A",
@@ -23090,6 +25170,156 @@
     ]
   },
   {
+    "key": "1yzngkj",
+    "text": "Beads on a bracelet. A bracelet repeats the same set again and again, 3 red beads, then 2 blue beads. How can you describe the beads?",
+    "style": "A",
+    "chars": 133,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t1 s1"
+    ]
+  },
+  {
+    "key": "1apyd08",
+    "text": "Pancakes for a crowd. A pancake recipe uses 3 cups of flour for every 2 eggs. You want to make a lot more pancakes. How much of each do you need?",
+    "style": "A",
+    "chars": 145,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t2 s1"
+    ]
+  },
+  {
+    "key": "q99hki",
+    "text": "Notebooks for school. At the store, a pack of 4 notebooks costs 5 dollars. How much does one notebook cost?",
+    "style": "A",
+    "chars": 107,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t3 s1"
+    ]
+  },
+  {
+    "key": "zrpmu9",
+    "text": "Snacks for movie night. 3 bags of popcorn cost 12 dollars. Your friends are coming, so you need 5 bags. How much do 5 bags cost?",
+    "style": "A",
+    "chars": 128,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t4 s1"
+    ]
+  },
+  {
+    "key": "hzxxu6",
+    "text": "Trail mix for a camp trip. Trail mix uses 3 cups of nuts for every 5 cups of cereal. For a camp trip you have 15 cups of nuts. How much cereal do you need?",
+    "style": "A",
+    "chars": 155,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t5 s1"
+    ]
+  },
+  {
+    "key": "svjzx6",
+    "text": "A class photo. A class has 2 boys for every 3 girls. There are 30 students in all. How many girls are in the class?",
+    "style": "A",
+    "chars": 115,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t6 s1"
+    ]
+  },
+  {
+    "key": "ui61la",
+    "text": "A shelf for your room. A shelf is 4 feet long. Your tape measure only shows inches. How many inches long is the shelf?",
+    "style": "A",
+    "chars": 118,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t7 s1"
+    ]
+  },
+  {
+    "key": "1qxe7eh",
+    "text": "A long bike ride. You ride 36 miles in 3 hours, at a steady pace the whole way. How far do you ride in one hour?",
+    "style": "A",
+    "chars": 112,
+    "kind": "screen1",
+    "sources": [
+      "g6m1-t8 s1"
+    ]
+  },
+  {
+    "key": "1asbmwl",
+    "text": "Painting a mural. A school wall has 100 equal tiles. Your class has painted 35 of them. How much of the wall is done?",
+    "style": "A",
+    "chars": 117,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t1 s1"
+    ]
+  },
+  {
+    "key": "d1js43",
+    "text": "Three screens, one download. A game is downloading. One screen says three fourths done. Another says zero point seven five. A third says 75 percent. Do they agree?",
+    "style": "A",
+    "chars": 163,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t2 s1"
+    ]
+  },
+  {
+    "key": "11lcchb",
+    "text": "Money for the shelter. Your class raised 80 dollars at a bake sale. 30 percent of it goes to an animal shelter. How much money is that?",
+    "style": "A",
+    "chars": 135,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t3 s1"
+    ]
+  },
+  {
+    "key": "qf036c",
+    "text": "Saving for a helmet. You have saved 15 dollars. That is 25 percent of the price of a bike helmet. How much does the helmet cost?",
+    "style": "A",
+    "chars": 128,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t4 s1"
+    ]
+  },
+  {
+    "key": "wbfagg",
+    "text": "A jacket on sale. A jacket costs 40 dollars. The sign says 25 percent off. How much do you pay?",
+    "style": "A",
+    "chars": 95,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t5 s1"
+    ]
+  },
+  {
+    "key": "14aa1tg",
+    "text": "At the register. A soccer ball has a price tag of 25 dollars. The store adds 8 percent sales tax at the register. How much do you pay in all?",
+    "style": "A",
+    "chars": 141,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t6 s1"
+    ]
+  },
+  {
+    "key": "1xiw0yk",
+    "text": "Money in the bank. You put 500 dollars in a bank. Each year the bank pays you 4 percent of the 500 dollars. How much does the bank pay you in 3 years?",
+    "style": "A",
+    "chars": 150,
+    "kind": "screen1",
+    "sources": [
+      "g6m4-t7 s1"
+    ]
+  },
+  {
     "key": "kjbipn",
     "text": "Now you try. 3 plates. 5 cookies on each plate. How many cookies? Find how many groups and how many in each. Then count by groups.",
     "style": "A",
@@ -24597,6 +26827,156 @@
     "kind": "turn",
     "sources": [
       "g5m6-t6 turn"
+    ]
+  },
+  {
+    "key": "g0cpcq",
+    "text": "Now you try. A bracelet pattern has 4 green beads for every 3 yellow beads. Green beads are 4 out of every how many beads? The whole means every bead in one set, both colors.",
+    "style": "A",
+    "chars": 174,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t1 turn"
+    ]
+  },
+  {
+    "key": "ssa4eu",
+    "text": "Now you try. A lemonade recipe uses 2 lemons for every 5 cups of water. How many cups of water go with 6 lemons? Find what the lemons were multiplied by. Do the same to the water.",
+    "style": "A",
+    "chars": 179,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t2 turn"
+    ]
+  },
+  {
+    "key": "agovxn",
+    "text": "Now you try. A pack of 4 pens costs 7 dollars. How much does one pen cost? Split the total into one equal part for each pen.",
+    "style": "A",
+    "chars": 124,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t3 turn"
+    ]
+  },
+  {
+    "key": "1fxn91m",
+    "text": "Now you try. 4 movie tickets cost 18 dollars. How much do 6 tickets cost? Find the price of one ticket first. Then multiply.",
+    "style": "A",
+    "chars": 124,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t4 turn"
+    ]
+  },
+  {
+    "key": "7s1j8g",
+    "text": "Now you try. A smoothie uses 2 cups of berries for every 3 cups of yogurt. How many cups of yogurt go with 10 cups of berries? Use the columns you already have. Multiply one, or add two together.",
+    "style": "A",
+    "chars": 195,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t5 turn"
+    ]
+  },
+  {
+    "key": "ucka8u",
+    "text": "Now you try. A club has 3 boys for every 4 girls. There are 28 members. How many girls are in the club? Count all the boxes first. Then find what one box holds.",
+    "style": "A",
+    "chars": 160,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t6 turn"
+    ]
+  },
+  {
+    "key": "17ctzx8",
+    "text": "Now you try. A rug is 5 yards long. 1 yard is 3 feet. How many feet long is the rug? Start from one yard. Smaller units means more of them.",
+    "style": "A",
+    "chars": 139,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t7 turn"
+    ]
+  },
+  {
+    "key": "1ejch4i",
+    "text": "Now you try. A train goes 150 miles in 3 hours. How many miles does it go in one hour? Cut the trip into one equal jump for each hour.",
+    "style": "A",
+    "chars": 134,
+    "kind": "turn",
+    "sources": [
+      "g6m1-t8 turn"
+    ]
+  },
+  {
+    "key": "vl0ulc",
+    "text": "Now you try. This grid has 100 equal squares. What percent of the grid is shaded? Count the shaded squares. Out of 100, that count is the percent.",
+    "style": "A",
+    "chars": 146,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t1 turn"
+    ]
+  },
+  {
+    "key": "arrtzn",
+    "text": "Now you try. What percent is one fourth? Make the fraction out of 100. Then read the percent.",
+    "style": "A",
+    "chars": 93,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t2 turn"
+    ]
+  },
+  {
+    "key": "fq0jeq",
+    "text": "Now you try. What is 40 percent of 70? Find 10 percent first. Then take the parts you need.",
+    "style": "A",
+    "chars": 91,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t3 turn"
+    ]
+  },
+  {
+    "key": "1eenme5",
+    "text": "Now you try. 12 is 25 percent of what number? Find how many equal pieces make 100 percent. Then count them all.",
+    "style": "A",
+    "chars": 111,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t4 turn"
+    ]
+  },
+  {
+    "key": "1y5k7yz",
+    "text": "Now you try. Shoes cost 60 dollars. They are 20 percent off. What is the sale price, in dollars? Find the money you save. Then take it away from the price.",
+    "style": "A",
+    "chars": 155,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t5 turn"
+    ]
+  },
+  {
+    "key": "97t75h",
+    "text": "Now you try. A jacket costs 50 dollars. The sales tax is 6 percent. What is the total, in dollars? Find the tax. Then add it to the price.",
+    "style": "A",
+    "chars": 138,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t6 turn"
+    ]
+  },
+  {
+    "key": "1aewgh2",
+    "text": "Now you try. You put 600 dollars in a bank that pays 3 percent a year. How many dollars does the bank pay you in 2 years? Just what the bank pays, not the 600 dollars. Find one year first. Then multiply by the years.",
+    "style": "A",
+    "chars": 216,
+    "kind": "turn",
+    "sources": [
+      "g6m4-t7 turn"
     ]
   },
   {
@@ -27906,7 +30286,7 @@
     "chars": 36,
     "kind": "hint",
     "sources": [
-      "g4m6-t2 twin hint1"
+      "g4m6-t2 twin hint1 + g6m4-t1 twin hint1"
     ]
   },
   {
@@ -27916,7 +30296,7 @@
     "chars": 71,
     "kind": "hint",
     "sources": [
-      "g4m6-t2 twin hint2"
+      "g4m6-t2 twin hint2 + g6m4-t1 hint2"
     ]
   },
   {
@@ -30350,6 +32730,576 @@
     ]
   },
   {
+    "key": "14p36j",
+    "text": "Does the question ask about one color, or all the beads?",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t1 hint1"
+    ]
+  },
+  {
+    "key": "1aaz41z",
+    "text": "Put the green beads and the yellow beads of one set together.",
+    "style": "A",
+    "chars": 61,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t1 hint2"
+    ]
+  },
+  {
+    "key": "3ggfjm",
+    "text": "Does the question ask about one snack, or all the pieces?",
+    "style": "A",
+    "chars": 57,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t1 twin hint1"
+    ]
+  },
+  {
+    "key": "9gartd",
+    "text": "Put the pretzels and the crackers of one set together.",
+    "style": "A",
+    "chars": 54,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t1 twin hint2"
+    ]
+  },
+  {
+    "key": "zuwp4o",
+    "text": "What do you multiply 2 by to get 6?",
+    "style": "A",
+    "chars": 35,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t2 hint1"
+    ]
+  },
+  {
+    "key": "xj3qzt",
+    "text": "Multiply the 5 cups of water by that same number.",
+    "style": "A",
+    "chars": 49,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t2 hint2"
+    ]
+  },
+  {
+    "key": "1g3lm2z",
+    "text": "What do you multiply 4 by to get 16?",
+    "style": "A",
+    "chars": 36,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t2 twin hint1"
+    ]
+  },
+  {
+    "key": "23q0zy",
+    "text": "Multiply the 3 cans of blue by that same number.",
+    "style": "A",
+    "chars": 48,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t2 twin hint2"
+    ]
+  },
+  {
+    "key": "j5lqoq",
+    "text": "How many pens share the 7 dollars?",
+    "style": "A",
+    "chars": 34,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t3 hint1"
+    ]
+  },
+  {
+    "key": "1hdz1iu",
+    "text": "Divide the dollars by the number of pens.",
+    "style": "A",
+    "chars": 41,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t3 hint2"
+    ]
+  },
+  {
+    "key": "vjv4yn",
+    "text": "How many gallons share the 150 miles?",
+    "style": "A",
+    "chars": 37,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t3 twin hint1"
+    ]
+  },
+  {
+    "key": "1c5hlih",
+    "text": "Divide the miles by the number of gallons.",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t3 twin hint2"
+    ]
+  },
+  {
+    "key": "1msytrl",
+    "text": "What does one ticket cost? Split 18 dollars into 4 equal parts.",
+    "style": "A",
+    "chars": 63,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t4 hint1"
+    ]
+  },
+  {
+    "key": "10gyqvz",
+    "text": "Now multiply the price of one ticket by 6.",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t4 hint2"
+    ]
+  },
+  {
+    "key": "1bfrzgx",
+    "text": "How many bottles does it fill in one minute? Split 120 into 8 equal parts.",
+    "style": "A",
+    "chars": 74,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t4 twin hint1"
+    ]
+  },
+  {
+    "key": "1cdfwc",
+    "text": "Now multiply the bottles for one minute by 5.",
+    "style": "A",
+    "chars": 45,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t4 twin hint2"
+    ]
+  },
+  {
+    "key": "1lnbe47",
+    "text": "Which two columns of berries add up to 10?",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t5 hint1"
+    ]
+  },
+  {
+    "key": "1msebzk",
+    "text": "Add the yogurt in those same two columns.",
+    "style": "A",
+    "chars": 41,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t5 hint2"
+    ]
+  },
+  {
+    "key": "ivnpjf",
+    "text": "How do you get from 8 cups to 4 cups? Do the same to the eggs.",
+    "style": "A",
+    "chars": 62,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t5 twin hint1"
+    ]
+  },
+  {
+    "key": "weflr8",
+    "text": "Now go from 4 cups to 2 cups. Do the same to the 6 eggs.",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t5 twin hint2"
+    ]
+  },
+  {
+    "key": "1j542gw",
+    "text": "How many boxes are there for boys and girls together?",
+    "style": "A",
+    "chars": 53,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t6 hint1"
+    ]
+  },
+  {
+    "key": "179cjmt",
+    "text": "Share 28 among all the boxes. Then count the girls’ boxes.",
+    "style": "A",
+    "chars": 58,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t6 hint2"
+    ]
+  },
+  {
+    "key": "1wox0gb",
+    "text": "How many boxes are there for red and blue together?",
+    "style": "A",
+    "chars": 51,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t6 twin hint1"
+    ]
+  },
+  {
+    "key": "8ifolm",
+    "text": "Share 42 among all the boxes. Then count the red boxes.",
+    "style": "A",
+    "chars": 55,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t6 twin hint2"
+    ]
+  },
+  {
+    "key": "lvvfwg",
+    "text": "How many feet are in one yard?",
+    "style": "A",
+    "chars": 30,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t7 hint1"
+    ]
+  },
+  {
+    "key": "nzoa1k",
+    "text": "Feet are smaller than yards, so you get more of them. Multiply the 5 yards by the feet in one yard.",
+    "style": "A",
+    "chars": 99,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t7 hint2"
+    ]
+  },
+  {
+    "key": "11t0l02",
+    "text": "Are hours bigger or smaller than minutes? Will you get more hours or fewer?",
+    "style": "A",
+    "chars": 75,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t7 twin hint1"
+    ]
+  },
+  {
+    "key": "1nado6u",
+    "text": "Divide 150 by the number of minutes in one hour.",
+    "style": "A",
+    "chars": 48,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t7 twin hint2"
+    ]
+  },
+  {
+    "key": "lv491e",
+    "text": "How many hours does the trip take?",
+    "style": "A",
+    "chars": 34,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t8 hint1"
+    ]
+  },
+  {
+    "key": "ct6lp4",
+    "text": "Divide the miles by the hours.",
+    "style": "A",
+    "chars": 30,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t8 hint2"
+    ]
+  },
+  {
+    "key": "6l834n",
+    "text": "How many hours does the drive take?",
+    "style": "A",
+    "chars": 35,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t8 twin hint1"
+    ]
+  },
+  {
+    "key": "1gr9eg0",
+    "text": "Divide the 220 miles by the hours.",
+    "style": "A",
+    "chars": 34,
+    "kind": "hint",
+    "sources": [
+      "g6m1-t8 twin hint2"
+    ]
+  },
+  {
+    "key": "1gqlqlp",
+    "text": "Count the full shaded columns by 10s first.",
+    "style": "A",
+    "chars": 43,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t1 hint1"
+    ]
+  },
+  {
+    "key": "1gushgn",
+    "text": "After the full columns, count the squares in the column that is only part full.",
+    "style": "A",
+    "chars": 79,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t1 twin hint2"
+    ]
+  },
+  {
+    "key": "1071tn7",
+    "text": "How many squares are in each of the 4 equal parts?",
+    "style": "A",
+    "chars": 50,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t2 hint1"
+    ]
+  },
+  {
+    "key": "12toy6r",
+    "text": "Split 100 into 4 equal parts. One part, out of 100, is the percent.",
+    "style": "A",
+    "chars": 67,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t2 hint2"
+    ]
+  },
+  {
+    "key": "2pdz8e",
+    "text": "How many squares out of 100 make one fifth?",
+    "style": "A",
+    "chars": 43,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t2 twin hint1"
+    ]
+  },
+  {
+    "key": "c9268x",
+    "text": "Find one fifth of 100 first. Then take 2 of those parts.",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t2 twin hint2"
+    ]
+  },
+  {
+    "key": "b8vli8",
+    "text": "How much is one 10 percent part of 70?",
+    "style": "A",
+    "chars": 38,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t3 hint1"
+    ]
+  },
+  {
+    "key": "14uvxxj",
+    "text": "Find 10 percent first, 70 divided by 10. Then take 4 of those parts.",
+    "style": "A",
+    "chars": 68,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t3 hint2"
+    ]
+  },
+  {
+    "key": "1h3lf39",
+    "text": "How much is 10 percent of 90?",
+    "style": "A",
+    "chars": 29,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t3 twin hint1"
+    ]
+  },
+  {
+    "key": "1dztv1l",
+    "text": "Find one 10 percent part first. Then take 6 of those parts.",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t3 twin hint2"
+    ]
+  },
+  {
+    "key": "1hdqutm",
+    "text": "Every piece is 12. How much are all the pieces together?",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t4 hint2"
+    ]
+  },
+  {
+    "key": "5uw7jo",
+    "text": "How many 10 percent pieces make 100 percent?",
+    "style": "A",
+    "chars": 44,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t4 twin hint1"
+    ]
+  },
+  {
+    "key": "9chgri",
+    "text": "Each piece is 7. Count all the pieces that make 100 percent.",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t4 twin hint2"
+    ]
+  },
+  {
+    "key": "wme8hc",
+    "text": "How much money do you save? Find 10 percent of 60 dollars first.",
+    "style": "A",
+    "chars": 64,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t5 hint1"
+    ]
+  },
+  {
+    "key": "ppj81r",
+    "text": "20 percent off is 12 dollars off. Take that away from the price.",
+    "style": "A",
+    "chars": 64,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t5 hint2"
+    ]
+  },
+  {
+    "key": "orbssa",
+    "text": "How much is one 25 percent piece of 80 dollars?",
+    "style": "A",
+    "chars": 47,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t5 twin hint1"
+    ]
+  },
+  {
+    "key": "k495p8",
+    "text": "Find the money you save, then take it away from 80 dollars.",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t5 twin hint2"
+    ]
+  },
+  {
+    "key": "ufoyk8",
+    "text": "Find 1 percent of 50 dollars first.",
+    "style": "A",
+    "chars": 35,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t6 hint1"
+    ]
+  },
+  {
+    "key": "x9da8r",
+    "text": "The tax is 6 of those 1 percent pieces. Add it to the price.",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t6 hint2"
+    ]
+  },
+  {
+    "key": "1rowgj0",
+    "text": "Find 10 percent of 40 dollars first. 5 percent is half of that.",
+    "style": "A",
+    "chars": 63,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t6 twin hint1"
+    ]
+  },
+  {
+    "key": "1bnbqse",
+    "text": "Work out the tax, then add it to 40 dollars.",
+    "style": "A",
+    "chars": 44,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t6 twin hint2"
+    ]
+  },
+  {
+    "key": "63em0q",
+    "text": "How much is 1 percent of 600 dollars?",
+    "style": "A",
+    "chars": 37,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t7 hint1"
+    ]
+  },
+  {
+    "key": "pqgi9d",
+    "text": "Find the pay for one year. Every year pays the same.",
+    "style": "A",
+    "chars": 52,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t7 hint2"
+    ]
+  },
+  {
+    "key": "r52z2u",
+    "text": "How much is 1 percent of 200 dollars?",
+    "style": "A",
+    "chars": 37,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t7 twin hint1"
+    ]
+  },
+  {
+    "key": "1xpnusi",
+    "text": "Find the pay for one year. Then do it for all 4 years.",
+    "style": "A",
+    "chars": 54,
+    "kind": "hint",
+    "sources": [
+      "g6m4-t7 twin hint2"
+    ]
+  },
+  {
     "key": "1efmy5v",
     "text": "Try a new one. 5 plates. 2 cookies on each plate. How many cookies?",
     "style": "A",
@@ -31850,6 +34800,156 @@
     ]
   },
   {
+    "key": "1blal5d",
+    "text": "Try a new one. A snack mix has 5 pretzels for every 4 crackers. Crackers are 4 out of every how many pieces?",
+    "style": "A",
+    "chars": 108,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t1 twin"
+    ]
+  },
+  {
+    "key": "ptdj4o",
+    "text": "Try a new one. A paint mix uses 3 cans of blue for every 4 cans of white. How many cans of blue go with 16 cans of white?",
+    "style": "A",
+    "chars": 121,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t2 twin"
+    ]
+  },
+  {
+    "key": "11n3ep3",
+    "text": "Try a new one. A car goes 150 miles on 4 gallons of gas. How many miles does it go on one gallon?",
+    "style": "A",
+    "chars": 97,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t3 twin"
+    ]
+  },
+  {
+    "key": "19crrau",
+    "text": "Try a new one. A machine fills 120 bottles in 8 minutes. How many bottles does it fill in 5 minutes?",
+    "style": "A",
+    "chars": 100,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t4 twin"
+    ]
+  },
+  {
+    "key": "1xndxj",
+    "text": "Try a new one. A bakery uses 12 eggs for every 8 cups of flour. How many eggs go with 2 cups of flour?",
+    "style": "A",
+    "chars": 102,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t5 twin"
+    ]
+  },
+  {
+    "key": "2c5mdt",
+    "text": "Try a new one. A bag has 5 red marbles for every 2 blue marbles. There are 42 marbles. How many red marbles are there?",
+    "style": "A",
+    "chars": 118,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t6 twin"
+    ]
+  },
+  {
+    "key": "90r73l",
+    "text": "Try a new one. A movie is 150 minutes long. 60 minutes is 1 hour. How many hours long is the movie?",
+    "style": "A",
+    "chars": 99,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t7 twin"
+    ]
+  },
+  {
+    "key": "1rtk45p",
+    "text": "Try a new one. A car drives 220 miles in 4 hours. How many miles per hour is that?",
+    "style": "A",
+    "chars": 82,
+    "kind": "twin",
+    "sources": [
+      "g6m1-t8 twin"
+    ]
+  },
+  {
+    "key": "1vskb1h",
+    "text": "Try a new one. This grid has 100 equal squares. What percent of the grid is shaded?",
+    "style": "A",
+    "chars": 83,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t1 twin"
+    ]
+  },
+  {
+    "key": "36ziw9",
+    "text": "Try a new one. What percent is two fifths?",
+    "style": "A",
+    "chars": 42,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t2 twin"
+    ]
+  },
+  {
+    "key": "1ej7983",
+    "text": "Try a new one. What is 60 percent of 90?",
+    "style": "A",
+    "chars": 40,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t3 twin"
+    ]
+  },
+  {
+    "key": "111850d",
+    "text": "Try a new one. 7 is 10 percent of what number?",
+    "style": "A",
+    "chars": 46,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t4 twin"
+    ]
+  },
+  {
+    "key": "waq1es",
+    "text": "Try a new one. A game costs 80 dollars. It is 25 percent off. What is the sale price, in dollars?",
+    "style": "A",
+    "chars": 97,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t5 twin"
+    ]
+  },
+  {
+    "key": "jfe5b4",
+    "text": "Try a new one. A lamp costs 40 dollars. The sales tax is 5 percent. What is the total, in dollars?",
+    "style": "A",
+    "chars": 98,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t6 twin"
+    ]
+  },
+  {
+    "key": "ftjt06",
+    "text": "Try a new one. You put 200 dollars in a bank that pays 6 percent a year. How many dollars does the bank pay you in 4 years? Just what the bank pays.",
+    "style": "A",
+    "chars": 148,
+    "kind": "twin",
+    "sources": [
+      "g6m4-t7 twin"
+    ]
+  },
+  {
     "key": "1kowovu",
     "text": "You counted by groups instead of one by one. That is multiplication.",
     "style": "A",
@@ -31866,7 +34966,7 @@
     "chars": 81,
     "kind": "won",
     "sources": [
-      "g3m1-t1 keep practicing + g3m1-t2 keep practicing + g3m1-t3 keep practicing + g3m1-t4 keep practicing + g3m1-t5 keep practicing + g3m1-t6 keep practicing + g3m1-t7 keep practicing + g3m1-t8 keep practicing + g3m2-t1 keep practicing + g3m2-t2 keep practicing + g3m2-t3 keep practicing + g3m2-t4 keep practicing + g3m2-t5 keep practicing + g3m2-t6 keep practicing + g3m2-t7 keep practicing + g3m2-t8 keep practicing + g3m2-t9 keep practicing + g3m3-t1 keep practicing + g3m3-t2 keep practicing + g3m3-t3 keep practicing + g3m3-t4 keep practicing + g3m3-t5 keep practicing + g3m3-t6 keep practicing + g3m3-t7 keep practicing + g3m3-t8 keep practicing + g3m3-t9 keep practicing + g3m4-t1 keep practicing + g3m4-t2 keep practicing + g3m4-t3 keep practicing + g3m4-t4 keep practicing + g3m5-t1 keep practicing + g3m5-t2 keep practicing + g3m5-t3 keep practicing + g3m5-t4 keep practicing + g3m5-t5 keep practicing + g3m5-t6 keep practicing + g3m5-t7 keep practicing + g3m5-t8 keep practicing + g3m6-t1 keep practicing + g3m6-t2 keep practicing + g3m6-t3 keep practicing + g3m6-t4 keep practicing + g3m6-t5 keep practicing + g3m6-t6 keep practicing + g3m6-t7 keep practicing + g4m1-t1 keep practicing + g4m1-t2 keep practicing + g4m1-t3 keep practicing + g4m1-t4 keep practicing + g4m1-t5 keep practicing + g4m1-t6 keep practicing + g4m1-t7 keep practicing + g4m1-t8 keep practicing + g4m2-t1 keep practicing + g4m2-t2 keep practicing + g4m2-t3 keep practicing + g4m2-t4 keep practicing + g4m2-t5 keep practicing + g4m2-t6 keep practicing + g4m2-t7 keep practicing + g4m2-t8 keep practicing + g4m3-t1 keep practicing + g4m3-t2 keep practicing + g4m3-t3 keep practicing + g4m3-t4 keep practicing + g4m3-t5 keep practicing + g4m3-t6 keep practicing + g4m3-t7 keep practicing + g4m3-t8 keep practicing + g4m4-t1 keep practicing + g4m4-t2 keep practicing + g4m4-t3 keep practicing + g4m4-t4 keep practicing + g4m4-t5 keep practicing + g4m4-t6 keep practicing + g4m4-t7 keep practicing + g4m4-t8 keep practicing + g4m4-t9 keep practicing + g4m5-t1 keep practicing + g4m5-t2 keep practicing + g4m5-t3 keep practicing + g4m5-t4 keep practicing + g4m5-t5 keep practicing + g4m5-t6 keep practicing + g4m5-t7 keep practicing + g4m5-t8 keep practicing + g4m6-t1 keep practicing + g4m6-t2 keep practicing + g4m6-t3 keep practicing + g4m6-t4 keep practicing + g4m6-t5 keep practicing + g4m6-t6 keep practicing + g4m6-t7 keep practicing + g5m1-t1 keep practicing + g5m1-t2 keep practicing + g5m1-t3 keep practicing + g5m1-t4 keep practicing + g5m1-t5 keep practicing + g5m1-t6 keep practicing + g5m1-t7 keep practicing + g5m1-t8 keep practicing + g5m1-t9 keep practicing + g5m1-t10 keep practicing + g5m1-t11 keep practicing + g5m1-t12 keep practicing + g5m1-t13 keep practicing + g5m1-t14 keep practicing + g5m1-t15 keep practicing + g5m1-t16 keep practicing + g5m1-t17 keep practicing + g5m1-t18 keep practicing + g5m1-t19 keep practicing + g5m1-t20 keep practicing + g5m2-t1 keep practicing + g5m2-t2 keep practicing + g5m2-t3 keep practicing + g5m2-t4 keep practicing + g5m2-t5 keep practicing + g5m2-t6 keep practicing + g5m2-t7 keep practicing + g5m2-t8 keep practicing + g5m3-t1 keep practicing + g5m3-t2 keep practicing + g5m3-t3 keep practicing + g5m3-t4 keep practicing + g5m3-t5 keep practicing + g5m3-t6 keep practicing + g5m3-t7 keep practicing + g5m3-t8 keep practicing + g5m4-t1 keep practicing + g5m4-t2 keep practicing + g5m4-t3 keep practicing + g5m4-t4 keep practicing + g5m4-t5 keep practicing + g5m4-t6 keep practicing + g5m4-t7 keep practicing + g5m4-t8 keep practicing + g5m4-t9 keep practicing + g5m5-t1 keep practicing + g5m5-t2 keep practicing + g5m5-t3 keep practicing + g5m5-t4 keep practicing + g5m5-t5 keep practicing + g5m5-t6 keep practicing + g5m5-t7 keep practicing + g5m6-t1 keep practicing + g5m6-t2 keep practicing + g5m6-t3 keep practicing + g5m6-t4 keep practicing + g5m6-t5 keep practicing + g5m6-t6 keep practicing"
+      "g3m1-t1 keep practicing + g3m1-t2 keep practicing + g3m1-t3 keep practicing + g3m1-t4 keep practicing + g3m1-t5 keep practicing + g3m1-t6 keep practicing + g3m1-t7 keep practicing + g3m1-t8 keep practicing + g3m2-t1 keep practicing + g3m2-t2 keep practicing + g3m2-t3 keep practicing + g3m2-t4 keep practicing + g3m2-t5 keep practicing + g3m2-t6 keep practicing + g3m2-t7 keep practicing + g3m2-t8 keep practicing + g3m2-t9 keep practicing + g3m3-t1 keep practicing + g3m3-t2 keep practicing + g3m3-t3 keep practicing + g3m3-t4 keep practicing + g3m3-t5 keep practicing + g3m3-t6 keep practicing + g3m3-t7 keep practicing + g3m3-t8 keep practicing + g3m3-t9 keep practicing + g3m4-t1 keep practicing + g3m4-t2 keep practicing + g3m4-t3 keep practicing + g3m4-t4 keep practicing + g3m5-t1 keep practicing + g3m5-t2 keep practicing + g3m5-t3 keep practicing + g3m5-t4 keep practicing + g3m5-t5 keep practicing + g3m5-t6 keep practicing + g3m5-t7 keep practicing + g3m5-t8 keep practicing + g3m6-t1 keep practicing + g3m6-t2 keep practicing + g3m6-t3 keep practicing + g3m6-t4 keep practicing + g3m6-t5 keep practicing + g3m6-t6 keep practicing + g3m6-t7 keep practicing + g4m1-t1 keep practicing + g4m1-t2 keep practicing + g4m1-t3 keep practicing + g4m1-t4 keep practicing + g4m1-t5 keep practicing + g4m1-t6 keep practicing + g4m1-t7 keep practicing + g4m1-t8 keep practicing + g4m2-t1 keep practicing + g4m2-t2 keep practicing + g4m2-t3 keep practicing + g4m2-t4 keep practicing + g4m2-t5 keep practicing + g4m2-t6 keep practicing + g4m2-t7 keep practicing + g4m2-t8 keep practicing + g4m3-t1 keep practicing + g4m3-t2 keep practicing + g4m3-t3 keep practicing + g4m3-t4 keep practicing + g4m3-t5 keep practicing + g4m3-t6 keep practicing + g4m3-t7 keep practicing + g4m3-t8 keep practicing + g4m4-t1 keep practicing + g4m4-t2 keep practicing + g4m4-t3 keep practicing + g4m4-t4 keep practicing + g4m4-t5 keep practicing + g4m4-t6 keep practicing + g4m4-t7 keep practicing + g4m4-t8 keep practicing + g4m4-t9 keep practicing + g4m5-t1 keep practicing + g4m5-t2 keep practicing + g4m5-t3 keep practicing + g4m5-t4 keep practicing + g4m5-t5 keep practicing + g4m5-t6 keep practicing + g4m5-t7 keep practicing + g4m5-t8 keep practicing + g4m6-t1 keep practicing + g4m6-t2 keep practicing + g4m6-t3 keep practicing + g4m6-t4 keep practicing + g4m6-t5 keep practicing + g4m6-t6 keep practicing + g4m6-t7 keep practicing + g5m1-t1 keep practicing + g5m1-t2 keep practicing + g5m1-t3 keep practicing + g5m1-t4 keep practicing + g5m1-t5 keep practicing + g5m1-t6 keep practicing + g5m1-t7 keep practicing + g5m1-t8 keep practicing + g5m1-t9 keep practicing + g5m1-t10 keep practicing + g5m1-t11 keep practicing + g5m1-t12 keep practicing + g5m1-t13 keep practicing + g5m1-t14 keep practicing + g5m1-t15 keep practicing + g5m1-t16 keep practicing + g5m1-t17 keep practicing + g5m1-t18 keep practicing + g5m1-t19 keep practicing + g5m1-t20 keep practicing + g5m2-t1 keep practicing + g5m2-t2 keep practicing + g5m2-t3 keep practicing + g5m2-t4 keep practicing + g5m2-t5 keep practicing + g5m2-t6 keep practicing + g5m2-t7 keep practicing + g5m2-t8 keep practicing + g5m3-t1 keep practicing + g5m3-t2 keep practicing + g5m3-t3 keep practicing + g5m3-t4 keep practicing + g5m3-t5 keep practicing + g5m3-t6 keep practicing + g5m3-t7 keep practicing + g5m3-t8 keep practicing + g5m4-t1 keep practicing + g5m4-t2 keep practicing + g5m4-t3 keep practicing + g5m4-t4 keep practicing + g5m4-t5 keep practicing + g5m4-t6 keep practicing + g5m4-t7 keep practicing + g5m4-t8 keep practicing + g5m4-t9 keep practicing + g5m5-t1 keep practicing + g5m5-t2 keep practicing + g5m5-t3 keep practicing + g5m5-t4 keep practicing + g5m5-t5 keep practicing + g5m5-t6 keep practicing + g5m5-t7 keep practicing + g5m6-t1 keep practicing + g5m6-t2 keep practicing + g5m6-t3 keep practicing + g5m6-t4 keep practicing + g5m6-t5 keep practicing + g5m6-t6 keep practicing + g6m1-t1 keep practicing + g6m1-t2 keep practicing + g6m1-t3 keep practicing + g6m1-t4 keep practicing + g6m1-t5 keep practicing + g6m1-t6 keep practicing + g6m1-t7 keep practicing + g6m1-t8 keep practicing + g6m4-t1 keep practicing + g6m4-t2 keep practicing + g6m4-t3 keep practicing + g6m4-t4 keep practicing + g6m4-t5 keep practicing + g6m4-t6 keep practicing + g6m4-t7 keep practicing"
     ]
   },
   {
@@ -34800,13 +37900,313 @@
     ]
   },
   {
+    "key": "1o7w4df",
+    "text": "You compared one part to the whole set.",
+    "style": "A",
+    "chars": 39,
+    "kind": "won",
+    "sources": [
+      "g6m1-t1 won"
+    ]
+  },
+  {
+    "key": "17xmlj7",
+    "text": "You added 5 pretzels and 4 crackers, crackers are 4 out of every 9 pieces.",
+    "style": "A",
+    "chars": 74,
+    "kind": "won",
+    "sources": [
+      "g6m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1rhnw36",
+    "text": "You multiplied both parts by the same number, so the lemonade tastes the same.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g6m1-t2 won"
+    ]
+  },
+  {
+    "key": "dcj3ey",
+    "text": "You multiplied 3 and 4 by the same number, 12 cans of blue for 16 cans of white.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g6m1-t2 twinWon"
+    ]
+  },
+  {
+    "key": "g08ct8",
+    "text": "You split the price into equal parts and found the cost of one.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g6m1-t3 won"
+    ]
+  },
+  {
+    "key": "1g2dlxw",
+    "text": "You split 150 miles into 4 equal parts, 37 and a half miles for each gallon.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g6m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "fjki27",
+    "text": "You found the price of one ticket, then multiplied.",
+    "style": "A",
+    "chars": 51,
+    "kind": "won",
+    "sources": [
+      "g6m1-t4 won"
+    ]
+  },
+  {
+    "key": "fiwr6s",
+    "text": "You found the bottles for one minute, then found 75 bottles in 5 minutes.",
+    "style": "A",
+    "chars": 73,
+    "kind": "won",
+    "sources": [
+      "g6m1-t4 twinWon"
+    ]
+  },
+  {
+    "key": "74ov2h",
+    "text": "You added two columns you already had to make the one you needed.",
+    "style": "A",
+    "chars": 65,
+    "kind": "won",
+    "sources": [
+      "g6m1-t5 won"
+    ]
+  },
+  {
+    "key": "8jlg4a",
+    "text": "You halved 12 eggs and 8 cups of flour, then halved again, 3 eggs for 2 cups.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g6m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "h42zfx",
+    "text": "You counted all the boxes, found one box, then counted the girls.",
+    "style": "A",
+    "chars": 65,
+    "kind": "won",
+    "sources": [
+      "g6m1-t6 won"
+    ]
+  },
+  {
+    "key": "1np4wln",
+    "text": "You shared 42 marbles into equal boxes and found 30 red marbles.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g6m1-t6 twinWon"
+    ]
+  },
+  {
+    "key": "c1wdxk",
+    "text": "You started from one yard and multiplied to get feet.",
+    "style": "A",
+    "chars": 53,
+    "kind": "won",
+    "sources": [
+      "g6m1-t7 won"
+    ]
+  },
+  {
+    "key": "1t09ki8",
+    "text": "You divided 150 minutes by 60 and got two and a half hours.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g6m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "1vsapi6",
+    "text": "You split the trip into hours and found the miles in one hour.",
+    "style": "A",
+    "chars": 62,
+    "kind": "won",
+    "sources": [
+      "g6m1-t8 won"
+    ]
+  },
+  {
+    "key": "v1eddm",
+    "text": "You split 220 miles into 4 hours, 55 miles per hour.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g6m1-t8 twinWon"
+    ]
+  },
+  {
+    "key": "bqpta8",
+    "text": "You counted the shaded squares out of 100.",
+    "style": "A",
+    "chars": 42,
+    "kind": "won",
+    "sources": [
+      "g6m4-t1 won"
+    ]
+  },
+  {
+    "key": "1n7k1ob",
+    "text": "You counted 76 squares out of 100 and wrote 76 percent.",
+    "style": "A",
+    "chars": 55,
+    "kind": "won",
+    "sources": [
+      "g6m4-t1 twinWon"
+    ]
+  },
+  {
+    "key": "19p0t7v",
+    "text": "You made the fraction out of 100 and read the percent.",
+    "style": "A",
+    "chars": 54,
+    "kind": "won",
+    "sources": [
+      "g6m4-t2 won"
+    ]
+  },
+  {
+    "key": "emfulp",
+    "text": "You made two fifths out of 100 and found 40 percent.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g6m4-t2 twinWon"
+    ]
+  },
+  {
+    "key": "15dfztk",
+    "text": "You found 10 percent first, then took 4 parts.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g6m4-t3 won"
+    ]
+  },
+  {
+    "key": "1h135cn",
+    "text": "You found 10 percent of 90 first, then built up 60 percent to get 54.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g6m4-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1nt2pi5",
+    "text": "You found one piece, then counted up to 100 percent.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g6m4-t4 won"
+    ]
+  },
+  {
+    "key": "12qcqw",
+    "text": "You saw that 7 is one 10 percent piece, so the whole is 70.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g6m4-t4 twinWon"
+    ]
+  },
+  {
+    "key": "1dbjjj2",
+    "text": "You found the money you save, then took it away.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g6m4-t5 won"
+    ]
+  },
+  {
+    "key": "11b22pi",
+    "text": "You took 25 percent off 80 dollars and found the sale price, 60 dollars.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g6m4-t5 twinWon"
+    ]
+  },
+  {
+    "key": "12tfnaz",
+    "text": "You found the tax, then added it to the price.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g6m4-t6 won"
+    ]
+  },
+  {
+    "key": "1w2rdls",
+    "text": "You found the 5 percent tax on 40 dollars and a total of 42 dollars.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g6m4-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1ck06w1",
+    "text": "You found one year, then multiplied by the years.",
+    "style": "A",
+    "chars": 49,
+    "kind": "won",
+    "sources": [
+      "g6m4-t7 won"
+    ]
+  },
+  {
+    "key": "3a1ry3",
+    "text": "You found one year of pay on 200 dollars, then all 4 years, 48 dollars.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g6m4-t7 twinWon"
+    ]
+  },
+  {
     "key": "1nundpo",
     "text": "Right!",
     "style": "A",
     "chars": 6,
     "kind": "feedback",
     "sources": [
-      "g3m1-t1 right + g3m1-t2 right + g3m1-t3 right + g3m1-t4 right + g3m1-t5 right + g3m1-t6 right + g3m1-t7 right + g3m1-t8 right + g3m2-t1 right + g3m2-t2 right + g3m2-t3 right + g3m2-t4 right + g3m2-t5 right + g3m2-t6 right + g3m2-t7 right + g3m2-t8 right + g3m2-t9 right + g3m3-t1 right + g3m3-t2 right + g3m3-t3 right + g3m3-t4 right + g3m3-t5 right + g3m3-t6 right + g3m3-t7 right + g3m3-t8 right + g3m3-t9 right + g3m4-t1 right + g3m4-t2 right + g3m4-t3 right + g3m4-t4 right + g3m5-t1 right + g3m5-t2 right + g3m5-t3 right + g3m5-t4 right + g3m5-t5 right + g3m5-t6 right + g3m5-t7 right + g3m5-t8 right + g3m6-t1 right + g3m6-t2 right + g3m6-t3 right + g3m6-t4 right + g3m6-t5 right + g3m6-t6 right + g3m6-t7 right + g4m1-t1 right + g4m1-t2 right + g4m1-t3 right + g4m1-t4 right + g4m1-t5 right + g4m1-t6 right + g4m1-t7 right + g4m1-t8 right + g4m2-t1 right + g4m2-t2 right + g4m2-t3 right + g4m2-t4 right + g4m2-t5 right + g4m2-t6 right + g4m2-t7 right + g4m2-t8 right + g4m3-t1 right + g4m3-t2 right + g4m3-t3 right + g4m3-t4 right + g4m3-t5 right + g4m3-t6 right + g4m3-t7 right + g4m3-t8 right + g4m4-t1 right + g4m4-t2 right + g4m4-t3 right + g4m4-t4 right + g4m4-t5 right + g4m4-t6 right + g4m4-t7 right + g4m4-t8 right + g4m4-t9 right + g4m5-t1 right + g4m5-t2 right + g4m5-t3 right + g4m5-t4 right + g4m5-t5 right + g4m5-t6 right + g4m5-t7 right + g4m5-t8 right + g4m6-t1 right + g4m6-t2 right + g4m6-t3 right + g4m6-t4 right + g4m6-t5 right + g4m6-t6 right + g4m6-t7 right + g5m1-t1 right + g5m1-t2 right + g5m1-t3 right + g5m1-t4 right + g5m1-t5 right + g5m1-t6 right + g5m1-t7 right + g5m1-t8 right + g5m1-t9 right + g5m1-t10 right + g5m1-t11 right + g5m1-t12 right + g5m1-t13 right + g5m1-t14 right + g5m1-t15 right + g5m1-t16 right + g5m1-t17 right + g5m1-t18 right + g5m1-t19 right + g5m1-t20 right + g5m2-t1 right + g5m2-t2 right + g5m2-t3 right + g5m2-t4 right + g5m2-t5 right + g5m2-t6 right + g5m2-t7 right + g5m2-t8 right + g5m3-t1 right + g5m3-t2 right + g5m3-t3 right + g5m3-t4 right + g5m3-t5 right + g5m3-t6 right + g5m3-t7 right + g5m3-t8 right + g5m4-t1 right + g5m4-t2 right + g5m4-t3 right + g5m4-t4 right + g5m4-t5 right + g5m4-t6 right + g5m4-t7 right + g5m4-t8 right + g5m4-t9 right + g5m5-t1 right + g5m5-t2 right + g5m5-t3 right + g5m5-t4 right + g5m5-t5 right + g5m5-t6 right + g5m5-t7 right + g5m6-t1 right + g5m6-t2 right + g5m6-t3 right + g5m6-t4 right + g5m6-t5 right + g5m6-t6 right"
+      "g3m1-t1 right + g3m1-t2 right + g3m1-t3 right + g3m1-t4 right + g3m1-t5 right + g3m1-t6 right + g3m1-t7 right + g3m1-t8 right + g3m2-t1 right + g3m2-t2 right + g3m2-t3 right + g3m2-t4 right + g3m2-t5 right + g3m2-t6 right + g3m2-t7 right + g3m2-t8 right + g3m2-t9 right + g3m3-t1 right + g3m3-t2 right + g3m3-t3 right + g3m3-t4 right + g3m3-t5 right + g3m3-t6 right + g3m3-t7 right + g3m3-t8 right + g3m3-t9 right + g3m4-t1 right + g3m4-t2 right + g3m4-t3 right + g3m4-t4 right + g3m5-t1 right + g3m5-t2 right + g3m5-t3 right + g3m5-t4 right + g3m5-t5 right + g3m5-t6 right + g3m5-t7 right + g3m5-t8 right + g3m6-t1 right + g3m6-t2 right + g3m6-t3 right + g3m6-t4 right + g3m6-t5 right + g3m6-t6 right + g3m6-t7 right + g4m1-t1 right + g4m1-t2 right + g4m1-t3 right + g4m1-t4 right + g4m1-t5 right + g4m1-t6 right + g4m1-t7 right + g4m1-t8 right + g4m2-t1 right + g4m2-t2 right + g4m2-t3 right + g4m2-t4 right + g4m2-t5 right + g4m2-t6 right + g4m2-t7 right + g4m2-t8 right + g4m3-t1 right + g4m3-t2 right + g4m3-t3 right + g4m3-t4 right + g4m3-t5 right + g4m3-t6 right + g4m3-t7 right + g4m3-t8 right + g4m4-t1 right + g4m4-t2 right + g4m4-t3 right + g4m4-t4 right + g4m4-t5 right + g4m4-t6 right + g4m4-t7 right + g4m4-t8 right + g4m4-t9 right + g4m5-t1 right + g4m5-t2 right + g4m5-t3 right + g4m5-t4 right + g4m5-t5 right + g4m5-t6 right + g4m5-t7 right + g4m5-t8 right + g4m6-t1 right + g4m6-t2 right + g4m6-t3 right + g4m6-t4 right + g4m6-t5 right + g4m6-t6 right + g4m6-t7 right + g5m1-t1 right + g5m1-t2 right + g5m1-t3 right + g5m1-t4 right + g5m1-t5 right + g5m1-t6 right + g5m1-t7 right + g5m1-t8 right + g5m1-t9 right + g5m1-t10 right + g5m1-t11 right + g5m1-t12 right + g5m1-t13 right + g5m1-t14 right + g5m1-t15 right + g5m1-t16 right + g5m1-t17 right + g5m1-t18 right + g5m1-t19 right + g5m1-t20 right + g5m2-t1 right + g5m2-t2 right + g5m2-t3 right + g5m2-t4 right + g5m2-t5 right + g5m2-t6 right + g5m2-t7 right + g5m2-t8 right + g5m3-t1 right + g5m3-t2 right + g5m3-t3 right + g5m3-t4 right + g5m3-t5 right + g5m3-t6 right + g5m3-t7 right + g5m3-t8 right + g5m4-t1 right + g5m4-t2 right + g5m4-t3 right + g5m4-t4 right + g5m4-t5 right + g5m4-t6 right + g5m4-t7 right + g5m4-t8 right + g5m4-t9 right + g5m5-t1 right + g5m5-t2 right + g5m5-t3 right + g5m5-t4 right + g5m5-t5 right + g5m5-t6 right + g5m5-t7 right + g5m6-t1 right + g5m6-t2 right + g5m6-t3 right + g5m6-t4 right + g5m6-t5 right + g5m6-t6 right + g6m1-t1 right + g6m1-t2 right + g6m1-t3 right + g6m1-t4 right + g6m1-t5 right + g6m1-t6 right + g6m1-t7 right + g6m1-t8 right + g6m4-t1 right + g6m4-t2 right + g6m4-t3 right + g6m4-t4 right + g6m4-t5 right + g6m4-t6 right + g6m4-t7 right"
     ]
   },
   {
@@ -34816,7 +38216,7 @@
     "chars": 27,
     "kind": "feedback",
     "sources": [
-      "g3m1-t1 worked + g3m1-t2 worked + g3m1-t3 worked + g3m1-t4 worked + g3m1-t5 worked + g3m1-t6 worked + g3m1-t7 worked + g3m1-t8 worked + g3m2-t1 worked + g3m2-t2 worked + g3m2-t3 worked + g3m2-t4 worked + g3m2-t5 worked + g3m2-t6 worked + g3m2-t7 worked + g3m2-t8 worked + g3m2-t9 worked + g3m3-t1 worked + g3m3-t2 worked + g3m3-t3 worked + g3m3-t4 worked + g3m3-t5 worked + g3m3-t6 worked + g3m3-t7 worked + g3m3-t8 worked + g3m3-t9 worked + g3m4-t1 worked + g3m4-t2 worked + g3m4-t3 worked + g3m4-t4 worked + g3m5-t1 worked + g3m5-t2 worked + g3m5-t3 worked + g3m5-t4 worked + g3m5-t5 worked + g3m5-t6 worked + g3m5-t7 worked + g3m5-t8 worked + g3m6-t1 worked + g3m6-t2 worked + g3m6-t3 worked + g3m6-t4 worked + g3m6-t5 worked + g3m6-t6 worked + g3m6-t7 worked + g4m1-t1 worked + g4m1-t2 worked + g4m1-t3 worked + g4m1-t4 worked + g4m1-t5 worked + g4m1-t6 worked + g4m1-t7 worked + g4m1-t8 worked + g4m2-t1 worked + g4m2-t2 worked + g4m2-t3 worked + g4m2-t4 worked + g4m2-t5 worked + g4m2-t6 worked + g4m2-t7 worked + g4m2-t8 worked + g4m3-t1 worked + g4m3-t2 worked + g4m3-t3 worked + g4m3-t4 worked + g4m3-t5 worked + g4m3-t6 worked + g4m3-t7 worked + g4m3-t8 worked + g4m4-t1 worked + g4m4-t2 worked + g4m4-t3 worked + g4m4-t4 worked + g4m4-t5 worked + g4m4-t6 worked + g4m4-t7 worked + g4m4-t8 worked + g4m4-t9 worked + g4m5-t1 worked + g4m5-t2 worked + g4m5-t3 worked + g4m5-t4 worked + g4m5-t5 worked + g4m5-t6 worked + g4m5-t7 worked + g4m5-t8 worked + g4m6-t1 worked + g4m6-t2 worked + g4m6-t3 worked + g4m6-t4 worked + g4m6-t5 worked + g4m6-t6 worked + g4m6-t7 worked + g5m1-t1 worked + g5m1-t2 worked + g5m1-t3 worked + g5m1-t4 worked + g5m1-t5 worked + g5m1-t6 worked + g5m1-t7 worked + g5m1-t8 worked + g5m1-t9 worked + g5m1-t10 worked + g5m1-t11 worked + g5m1-t12 worked + g5m1-t13 worked + g5m1-t14 worked + g5m1-t15 worked + g5m1-t16 worked + g5m1-t17 worked + g5m1-t18 worked + g5m1-t19 worked + g5m1-t20 worked + g5m2-t1 worked + g5m2-t2 worked + g5m2-t3 worked + g5m2-t4 worked + g5m2-t5 worked + g5m2-t6 worked + g5m2-t7 worked + g5m2-t8 worked + g5m3-t1 worked + g5m3-t2 worked + g5m3-t3 worked + g5m3-t4 worked + g5m3-t5 worked + g5m3-t6 worked + g5m3-t7 worked + g5m3-t8 worked + g5m4-t1 worked + g5m4-t2 worked + g5m4-t3 worked + g5m4-t4 worked + g5m4-t5 worked + g5m4-t6 worked + g5m4-t7 worked + g5m4-t8 worked + g5m4-t9 worked + g5m5-t1 worked + g5m5-t2 worked + g5m5-t3 worked + g5m5-t4 worked + g5m5-t5 worked + g5m5-t6 worked + g5m5-t7 worked + g5m6-t1 worked + g5m6-t2 worked + g5m6-t3 worked + g5m6-t4 worked + g5m6-t5 worked + g5m6-t6 worked"
+      "g3m1-t1 worked + g3m1-t2 worked + g3m1-t3 worked + g3m1-t4 worked + g3m1-t5 worked + g3m1-t6 worked + g3m1-t7 worked + g3m1-t8 worked + g3m2-t1 worked + g3m2-t2 worked + g3m2-t3 worked + g3m2-t4 worked + g3m2-t5 worked + g3m2-t6 worked + g3m2-t7 worked + g3m2-t8 worked + g3m2-t9 worked + g3m3-t1 worked + g3m3-t2 worked + g3m3-t3 worked + g3m3-t4 worked + g3m3-t5 worked + g3m3-t6 worked + g3m3-t7 worked + g3m3-t8 worked + g3m3-t9 worked + g3m4-t1 worked + g3m4-t2 worked + g3m4-t3 worked + g3m4-t4 worked + g3m5-t1 worked + g3m5-t2 worked + g3m5-t3 worked + g3m5-t4 worked + g3m5-t5 worked + g3m5-t6 worked + g3m5-t7 worked + g3m5-t8 worked + g3m6-t1 worked + g3m6-t2 worked + g3m6-t3 worked + g3m6-t4 worked + g3m6-t5 worked + g3m6-t6 worked + g3m6-t7 worked + g4m1-t1 worked + g4m1-t2 worked + g4m1-t3 worked + g4m1-t4 worked + g4m1-t5 worked + g4m1-t6 worked + g4m1-t7 worked + g4m1-t8 worked + g4m2-t1 worked + g4m2-t2 worked + g4m2-t3 worked + g4m2-t4 worked + g4m2-t5 worked + g4m2-t6 worked + g4m2-t7 worked + g4m2-t8 worked + g4m3-t1 worked + g4m3-t2 worked + g4m3-t3 worked + g4m3-t4 worked + g4m3-t5 worked + g4m3-t6 worked + g4m3-t7 worked + g4m3-t8 worked + g4m4-t1 worked + g4m4-t2 worked + g4m4-t3 worked + g4m4-t4 worked + g4m4-t5 worked + g4m4-t6 worked + g4m4-t7 worked + g4m4-t8 worked + g4m4-t9 worked + g4m5-t1 worked + g4m5-t2 worked + g4m5-t3 worked + g4m5-t4 worked + g4m5-t5 worked + g4m5-t6 worked + g4m5-t7 worked + g4m5-t8 worked + g4m6-t1 worked + g4m6-t2 worked + g4m6-t3 worked + g4m6-t4 worked + g4m6-t5 worked + g4m6-t6 worked + g4m6-t7 worked + g5m1-t1 worked + g5m1-t2 worked + g5m1-t3 worked + g5m1-t4 worked + g5m1-t5 worked + g5m1-t6 worked + g5m1-t7 worked + g5m1-t8 worked + g5m1-t9 worked + g5m1-t10 worked + g5m1-t11 worked + g5m1-t12 worked + g5m1-t13 worked + g5m1-t14 worked + g5m1-t15 worked + g5m1-t16 worked + g5m1-t17 worked + g5m1-t18 worked + g5m1-t19 worked + g5m1-t20 worked + g5m2-t1 worked + g5m2-t2 worked + g5m2-t3 worked + g5m2-t4 worked + g5m2-t5 worked + g5m2-t6 worked + g5m2-t7 worked + g5m2-t8 worked + g5m3-t1 worked + g5m3-t2 worked + g5m3-t3 worked + g5m3-t4 worked + g5m3-t5 worked + g5m3-t6 worked + g5m3-t7 worked + g5m3-t8 worked + g5m4-t1 worked + g5m4-t2 worked + g5m4-t3 worked + g5m4-t4 worked + g5m4-t5 worked + g5m4-t6 worked + g5m4-t7 worked + g5m4-t8 worked + g5m4-t9 worked + g5m5-t1 worked + g5m5-t2 worked + g5m5-t3 worked + g5m5-t4 worked + g5m5-t5 worked + g5m5-t6 worked + g5m5-t7 worked + g5m6-t1 worked + g5m6-t2 worked + g5m6-t3 worked + g5m6-t4 worked + g5m6-t5 worked + g5m6-t6 worked + g6m1-t1 worked + g6m1-t2 worked + g6m1-t3 worked + g6m1-t4 worked + g6m1-t5 worked + g6m1-t6 worked + g6m1-t7 worked + g6m1-t8 worked + g6m4-t1 worked + g6m4-t2 worked + g6m4-t3 worked + g6m4-t4 worked + g6m4-t5 worked + g6m4-t6 worked + g6m4-t7 worked"
     ]
   }
 ]
