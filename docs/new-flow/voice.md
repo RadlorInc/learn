@@ -25,6 +25,9 @@ They replace the 2026-09-19 pilot's four styles. **g5m1-t1 and g5m1-t2 are rewri
 - `.` full stop, `,` a breath, `?` lift and wait, a new beat is a new move, `—` only for a real turn in thought.
 - **No `...`, no stacked `!`, no emoji, no ALL-CAPS sentence.** CAPS on one or two words, only the warning word
   ("does not mean ADD 10", "don't slide LEFT").
+- ⚠️ **CAPS are for the SCREEN only.** Chatterbox reads a capitalised word letter by letter (`ADD` → "A-D-D"; founder,
+  2026-09-22), so `speakable()` lowercases every CAPS word before the voice sees it (AM/PM excepted) and the gate fails
+  on any that remain.
 - **No tags at all** — no `[happy]`, `[sigh]`, `[pause:…]`, no SSML. `[happy]` is not a Chatterbox command and may be
   read out loud.
 

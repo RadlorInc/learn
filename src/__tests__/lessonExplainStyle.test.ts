@@ -4,7 +4,8 @@
  *
  * WHAT IT HOLDS EVERY TOPIC TO
  * - Every line the voice will read (renderOf(...).say) is words, digits and plain punctuation: no symbol Chatterbox
- *   might read aloud as "slash" or "colon", no `...`, no [tag], no stacked `!`, no run of CAPS words.
+ *   might read aloud as "slash" or "colon", no `...`, no [tag], no stacked `!`, and no word in CAPS at all — Chatterbox
+ *   spells a capitalised word letter by letter (ADD -> "A-D-D"). CAPS stay on the SCREEN, for the eye.
  * - Screens 2–7 (the teach): no ellipsis, at most one `!` per screen, no banned lecture phrases, at least one real
  *   question somewhere in Screens 2–6, a one-sentence big idea, and Screen 7 opening "Here's the part people mix up."
  *   and ending "Okay. Your turn." with exactly one or two CAPS warning words.
@@ -38,7 +39,9 @@ export function explainProblems(l: Lesson): string[] {
     const say = renderOf(line).say
     if (!SPEAKABLE.test(say)) bad.push(`voice reads a symbol — row key ${JSON.stringify(line)} is read as ${JSON.stringify(say)} (give it a \`say\` in content/voice/<module>.ts)`)
     if (/\.\.\.|…|\[|!!/.test(say)) bad.push(`voice line has ... / [tag] / !!: "${say}"`)
-    if (capsWords(say).length > 2) bad.push(`more than two CAPS words: "${say}"`)
+    // Chatterbox reads a word in capitals letter by letter (ADD -> "A-D-D"; founder, 2026-09-22). CAPS belong on the screen only.
+    const caps = capsWords(say).filter(w => w !== 'AM' && w !== 'PM')
+    if (caps.length) bad.push(`voice would spell ${caps.join(', ')} letter by letter: "${say}"`)
   }
   const teach = l.screens.slice(1, 7)
   if (teach.length !== 6) bad.push(`expected 6 teaching screens, found ${teach.length}`)

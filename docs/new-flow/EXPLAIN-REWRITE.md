@@ -32,6 +32,8 @@ Keep the lesson's worked example — the same numbers as Screen 1. The math must
 - **Screen 7** is exactly: beat 1 `Here's the part people mix up.` · the usual wrong move in plain words with ONE (at most
   two) CAPS warning word ("does not mean ADD 10", "don't slide LEFT") · why / what to do instead · last beat `Okay. Your turn.`
 - Punctuation is the performance: `.` full stop, `,` a breath, `?` lift. `—` only for a real turn in thought.
+  ⚠️ The CAPS word is for the child's EYE: the voice is given it in lowercase (Chatterbox spells capitals: ADD → "A-D-D"),
+  which `speakable()` does for you — never put CAPS in a `say`.
   **No `...`, no emoji, no stacked `!`, at most one `!` per screen** (the teach usually needs none). No CAPS outside Screen 7.
 - About **80–160 words** for Screens 1–7 together; longer is split into beats, never a wall. 2–4 beats a screen.
 - AUTHORING.md still holds: numerals on screen (`37 × 10`), no math-vocabulary words on Screens 1–7, never "wrong",

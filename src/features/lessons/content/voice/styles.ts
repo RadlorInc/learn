@@ -79,7 +79,9 @@ export const speakable = (t: string) =>
     .replace(/ = \?/g, ' equals what?').replace(/ = /g, ' equals ').replace(/ ≈ /g, ' is about ')
     .replace(/ < /g, ' is less than ').replace(/ > /g, ' is greater than ').replace(/ ≤ /g, ' is less than or equal to ').replace(/ ≥ /g, ' is greater than or equal to ')
     .replace(/["“”]/g, '').replace(/([^\d]):\s/g, '$1, ').replace(/;\s/g, ', ')
-    .replace(/✕s\b/g, 'Xs').replace(/✕/g, 'X').replace(/π/g, 'pi').replace(/√(\d+)/g, 'the square root of $1')
+    .replace(/✕s\b/g, 'Xs').replace(/✕/g, 'X')
+    .replace(/\b[A-Z]{2,}\b/g, w => (w === 'AM' || w === 'PM' ? w : w.toLowerCase()))   // Chatterbox SPELLS a word in caps: ADD -> A-D-D
+    .replace(/π/g, 'pi').replace(/√(\d+)/g, 'the square root of $1')
 
 /** What the voice model may be given, and nothing else: words, digits, and the punctuation that is the performance. */
 export const SPEAKABLE = /^[A-Za-z0-9 ,.?!'’—-]*$/
