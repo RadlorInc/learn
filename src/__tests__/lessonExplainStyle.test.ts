@@ -40,6 +40,9 @@ export function explainProblems(l: Lesson): string[] {
     const say = renderOf(line).say
     if (!SPEAKABLE.test(say)) bad.push(`voice reads a symbol — row key ${JSON.stringify(line)} is read as ${JSON.stringify(say)} (give it a \`say\` in content/voice/<module>.ts)`)
     if (/\.\.\.|…|\[|!!/.test(say)) bad.push(`voice line has ... / [tag] / !!: "${say}"`)
+    // speakable() does not spell decimals, and Chatterbox reads "0.25" however it guesses — each line says it in words:
+    // the digits ("zero point two five") where the topic is the written form, the value ("twenty-five hundredths") where it is how much.
+    if (/\d\.\d/.test(say)) bad.push(`voice reads a raw decimal — row key ${JSON.stringify(line)} is read as ${JSON.stringify(say)} (give it a \`say\` with the decimal in words)`)
     // Chatterbox reads a word in capitals letter by letter (ADD -> "A-D-D"; founder, 2026-09-22). CAPS belong on the screen only.
     const caps = capsWords(say).filter(w => w !== 'AM' && w !== 'PM')
     if (caps.length) bad.push(`voice would spell ${caps.join(', ')} letter by letter: "${say}"`)
