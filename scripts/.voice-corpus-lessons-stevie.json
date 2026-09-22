@@ -121,9 +121,9 @@
   },
   {
     "key": "k0d7xg",
-    "text": "Red to blue is 3 , 2. Flip the words and you flip the numbers, so blue to red is 2 , 3.",
+    "text": "Red to blue is 3 to 2. Flip the words and you flip the numbers, so blue to red is 2 to 3.",
     "style": "A",
-    "chars": 87,
+    "chars": 89,
     "kind": "beat",
     "sources": [
       "g6m1-t1 s6 b2"
@@ -161,9 +161,9 @@
   },
   {
     "key": "4w8w7",
-    "text": "Red out of all the beads is 3 out of 5, not 3 , 2.",
+    "text": "Red out of all the beads is 3 out of 5, not 3 to 2.",
     "style": "A",
-    "chars": 50,
+    "chars": 51,
     "kind": "beat",
     "sources": [
       "g6m1-t1 s7 b3"
@@ -331,9 +331,9 @@
   },
   {
     "key": "12n3pjk",
-    "text": "Adding 2 to each gives 5 , 4, and that is a different recipe. Times 2 gives 6 , 4, and that is the same one.",
+    "text": "Adding 2 to each gives 5 to 4, and that is a different recipe. Times 2 gives 6 to 4, and that is the same one.",
     "style": "A",
-    "chars": 108,
+    "chars": 110,
     "kind": "beat",
     "sources": [
       "g6m1-t2 s7 b3"
@@ -431,9 +431,9 @@
   },
   {
     "key": "1d3cgg4",
-    "text": "5 dollars divided by 4 equals 1 dollars and 25 cents.",
+    "text": "5 dollars divided by 4 equals 1 dollar and 25 cents.",
     "style": "A",
-    "chars": 53,
+    "chars": 52,
     "kind": "beat",
     "sources": [
       "g6m1-t3 s5 b2"
@@ -441,9 +441,9 @@
   },
   {
     "key": "1vvqrcr",
-    "text": "So each of those parts is 1 dollars and 25 cents, and that is what one notebook costs.",
+    "text": "So each of those parts is 1 dollar and 25 cents, and that is what one notebook costs.",
     "style": "A",
-    "chars": 86,
+    "chars": 85,
     "kind": "beat",
     "sources": [
       "g6m1-t3 s5 b3"
@@ -461,9 +461,9 @@
   },
   {
     "key": "16vu434",
-    "text": "If 4 notebooks cost 1 dollars and 25 cents each, then 4 times 1 dollars and 25 cents equals 5 dollars.",
+    "text": "If 4 notebooks cost 1 dollar and 25 cents each, then 4 times 1 dollar and 25 cents equals 5 dollars.",
     "style": "A",
-    "chars": 102,
+    "chars": 100,
     "kind": "beat",
     "sources": [
       "g6m1-t3 s6 b2"
@@ -471,9 +471,9 @@
   },
   {
     "key": "6yppad",
-    "text": "That matches the tag exactly, so one notebook costs 1 dollars and 25 cents.",
+    "text": "That matches the tag exactly, so one notebook costs 1 dollar and 25 cents.",
     "style": "A",
-    "chars": 75,
+    "chars": 74,
     "kind": "beat",
     "sources": [
       "g6m1-t3 s6 b3"
@@ -521,9 +521,9 @@
   },
   {
     "key": "i8rn9i",
-    "text": "But each bag costs a lot more than 1 dollars.",
+    "text": "But each bag costs a lot more than 1 dollar.",
     "style": "A",
-    "chars": 45,
+    "chars": 44,
     "kind": "beat",
     "sources": [
       "g6m1-t4 s2 b2"
@@ -16651,9 +16651,9 @@
   },
   {
     "key": "4t0yaa",
-    "text": "So the line crosses the y-axis at (0, 1). That is the 1 dollars to get in.",
+    "text": "So the line crosses the y-axis at (0, 1). That is the 1 dollar to get in.",
     "style": "A",
-    "chars": 74,
+    "chars": 73,
     "kind": "beat",
     "sources": [
       "g8m2-t3 s4 b3"
@@ -24011,9 +24011,9 @@
   },
   {
     "key": "12k9mev",
-    "text": "A taxi ride. A taxi charges 1 dollars to get in, plus 2 dollars for each mile. The cost is y equals 2x plus 1. Where can you see the 2 and the 1 on its graph?",
+    "text": "A taxi ride. A taxi charges 1 dollar to get in, plus 2 dollars for each mile. The cost is y equals 2x plus 1. Where can you see the 2 and the 1 on its graph?",
     "style": "A",
-    "chars": 158,
+    "chars": 157,
     "kind": "screen1",
     "sources": [
       "g8m2-t3 s1"
