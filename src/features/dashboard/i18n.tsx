@@ -316,6 +316,23 @@ export const ES: Record<string, string> = {
   'Set up a new child': 'Configurar a un niño nuevo',
   'Add them, give them a login, choose their lessons.': 'Agréguelo, créele un inicio de sesión y elija sus lecciones.',
   'Add a child': 'Agregar un niño',
+
+  /**
+   * ⚠️ THE COPPA NOTICE ON THE ADD-A-CHILD SHEET, IN SPANISH. The English is shortened from
+   * `docs/legal/02-coppa-direct-notice-to-parents.md` and was approved in that exact form; this is
+   * a faithful translation of it and NOT a second, looser version. If the English changes, this
+   * changes in the same commit — two different statements about what we collect from a child, in
+   * two languages, is the failure mode, and `dashboardSpanish.test.ts` is what forces the pair.
+   *
+   * ⚠️ NOT REVIEWED BY A SPANISH-SPEAKING LAWYER. The drafts in docs/legal/ are English-only, so
+   * this translation has the same status as the English: draft, pending review. Flagged in the
+   * session report rather than left to be discovered.
+   */
+  'What we collect about your child: the first name or nickname you choose, their avatar and grade, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.':
+    'Lo que recopilamos sobre su hijo: el nombre o apodo que usted elija, su avatar y su grado, y su trabajo en la aplicación: respuestas, puntuaciones y progreso. Lo usamos para enseñar a su hijo y para mostrarle a usted cómo va. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, una dirección postal ni una fotografía.',
+  'Read the Privacy Policy': 'Lea la Política de privacidad (en inglés)',
+  'By adding a child you confirm you are their parent or legal guardian, or have that person’s permission.':
+    'Al agregar un niño, usted confirma que es su padre, madre o tutor legal, o que cuenta con el permiso de esa persona.',
   'Their name, and the modules they should see.': 'Su nombre y los módulos que debe ver.',
   'Give them a login': 'Crearle un inicio de sesión',
   'With a username and password they can sign in on any device, on their own.': 'Con un usuario y una contraseña puede entrar por su cuenta en cualquier dispositivo.',

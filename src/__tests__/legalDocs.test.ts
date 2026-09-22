@@ -139,7 +139,16 @@ describe('a draft legal page never renders as live', () => {
     const html = renderToStaticMarkup(await LegalPage({ params: Promise.resolve({ slug: 'terms' }) }))
     const text = html.replace(/<[^>]*>/g, ' ')
     for (const p of OPEN) expect(text, `${p} is not visible on the rendered page`).toContain(p)
-    expect(text).toContain('has not been reviewed by a lawyer')
+    /**
+     * ⚠️ THIS EXPECTATION MOVED WITH THE BANNER, AND IT WENT RED FIRST — which is the gate working.
+     * It used to read 'has not been reviewed by a lawyer'. The banner was rewritten on 2026-09-22
+     * from a 14px caveat to a red block headed "DRAFT — NOT IN FORCE", and this assertion caught
+     * the change rather than sleeping through it. Re-anchored on the STRONGER of the two claims:
+     * "not final" is what the old line said, and it is too weak for a document whose first body
+     * word is PLACEHOLDER. If a future edit softens this back to a caveat, this goes red again.
+     */
+    expect(text).toContain('DRAFT — NOT IN FORCE')
+    expect(text).toContain('No lawyer has reviewed it')
   })
 })
 
@@ -469,15 +478,28 @@ describe('a draft legal document never reaches published content', () => {
       expect(text, `${doc.slug} renders "${MARKER}" — a draft has been pasted into a live page`)
         .not.toContain(MARKER)
       expect(text, `${doc.slug} renders the drafts' "STATUS: DRAFT" banner`).not.toContain('STATUS: DRAFT')
-      /**
-       * Capitalised, as the drafts write it. The page's own banner says "⚠️ Draft — this text has
-       * not been reviewed by a lawyer", which is this repo's deliberate and correct warning and
-       * must keep passing; `docs/legal/*.md` shout "STATUS: DRAFT — NOT LEGAL ADVICE", which must
-       * not. Matching case is what tells those two apart, and it is the whole reason this rule
-       * reads rendered text rather than source.
-       */
-      expect(text, `${doc.slug} renders the word DRAFT in capitals, which is how the unpublished ` +
-        `documents in docs/legal/ mark themselves`).not.toMatch(/\bDRAFT\b/)
+    }
+  })
+
+  it('no legal DOCUMENT shouts DRAFT, though the page furniture may', () => {
+    /**
+     * ⚠️ THIS RULE MOVED, AND WHY IT MOVED IS THE POINT. It used to forbid capitalised DRAFT
+     * anywhere in the RENDERED page. Then the banner was rewritten to read "⚠️ DRAFT — NOT IN
+     * FORCE", because a 14px "Draft —" line was being skimmed past on a document whose first body
+     * word is PLACEHOLDER — and the gate went red on the correct fix. A check that fires on the
+     * right answer is spent exactly like one that never fires, so the rule was re-aimed rather
+     * than deleted or weakened.
+     *
+     * The risk was never the page's own furniture; it is draft TEXT being pasted into a document.
+     * So the page may shout DRAFT as loudly as it likes, and the three fields that carry document
+     * content may not. `docs/legal/*.md` open with "STATUS: DRAFT — NOT LEGAL ADVICE"; the check
+     * on the rendered page above still catches that exact string wherever it lands.
+     */
+    for (const doc of DOCS) {
+      const content = `${doc.title}\n${doc.updated}\n${doc.body}`
+      expect(content, `${doc.slug}'s document text carries the word DRAFT in capitals, which is ` +
+        `how the unpublished documents in docs/legal/ mark themselves — the page's banner may ` +
+        `say it, the document may not`).not.toMatch(/\bDRAFT\b/)
     }
   })
 })

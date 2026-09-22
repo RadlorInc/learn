@@ -21,6 +21,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!doc) return { title: 'AdaptiveLearn' }
   return {
     title: doc.title,
+    /**
+     * ⚠️ A DRAFT POLICY MUST NOT BE INDEXED. Before this, both documents sat in `PUBLIC_ROUTES`,
+     * which feeds `sitemap.ts` — so the app was actively submitting an unreviewed policy full of
+     * unresolved markers to every crawler, and a search result for "AdaptiveLearn privacy policy"
+     * could have returned a page whose first body line is the word PLACEHOLDER. Checked rather
+     * than assumed: there was no `robots` key here and no `/legal` entry in `robots.ts`.
+     *
+     * ⚠️ GATED ON `DRAFT`, NOT HARD-CODED, so it lifts itself the day the documents are finished
+     * — a structure with no flag to remember beats a checklist item that has to be. `follow` stays
+     * true: the links out of these pages are ordinary app links and there is no reason to burn
+     * them. The pages remain in the sitemap, which noindex overrides; see the session report.
+     */
+    robots: DRAFT ? { index: false, follow: true } : undefined,
     // ⚠️ Without this every legal page inherited the landing page's marketing description, so all
     // of them advertised a placement check instead of saying what the document is.
     description: `${doc.title} for AdaptiveLearn by Radlor — what we store about a child, who can see it, and how to have it deleted.`,
@@ -52,11 +65,31 @@ export default async function LegalPage({ params }: { params: Promise<{ slug: st
           * false before launch.
           */}
         {DRAFT && (
-          <div style={{
-            background: '#FEF2F2', border: '2px solid #FCA5A5', borderRadius: 14,
-            padding: '12px 14px', marginBottom: 20, color: '#991B1B', fontSize: 14, fontWeight: 700,
+          /**
+           * ⚠️ THIS IS A STATEMENT OF FACT, NOT A CAVEAT, AND IT IS SIZED LIKE ONE. The previous
+           * version was one 14px line reading "Draft — this text has not been reviewed by a lawyer
+           * and is not final", set below the title in the same weight as a subtitle. A parent
+           * skimming for "do they sell my child's data" reads past that. The document it sits on
+           * opens with the word PLACEHOLDER and carries unresolved markers in its body, so the
+           * honest claim is not "not final" — it is NOT IN FORCE, do not rely on this.
+           *
+           * ⚠️ IT MUST NOT BE SOFTENED INTO GOOD NEWS. No "we're working on it", no "coming soon".
+           * The page exists only because /auth links to it and a dead link from the sign-up screen
+           * is worse than a visible draft; that is the whole justification for rendering it at all.
+           */
+          <div role="alert" style={{
+            background: '#991B1B', border: '3px solid #7F1D1D', borderRadius: 14,
+            padding: '16px 18px', marginBottom: 24, color: '#fff',
           }}>
-            ⚠️ Draft — this text has not been reviewed by a lawyer and is not final.
+            <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.3, marginBottom: 6 }}>
+              ⚠️ DRAFT — NOT IN FORCE
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.55 }}>
+              This is not our published policy and you should not rely on it. No lawyer has
+              reviewed it, and parts of it are unfinished and left marked in the text below. It is
+              shown here so the links from sign-up are not broken. For anything that matters, email{' '}
+              <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#fff', fontWeight: 800 }}>{SUPPORT_EMAIL}</a>.
+            </div>
           </div>
         )}
 

@@ -922,9 +922,41 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
           <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
         </div>
 
-        <p style={{ fontSize:11.5, color:P.ink3, margin:'14px 0 0', lineHeight:1.45 }}>
-          {t('Progress is private to this account. No public profiles and no comparisons with other children.')}
-        </p>
+        {/**
+          * ⚠️ WHAT WE COLLECT, ON THE SCREEN THAT COLLECTS IT. Until 2026-09-22 this sheet took a
+          * child's name, avatar and grade behind one reassurance line and NO LINK AT ALL — a
+          * render of it returned `allLinks: []`. That is the COPPA gap: a parent could create a
+          * child profile without ever being told what is kept or being shown the policy.
+          *
+          * ⚠️ THE WORDING IS NOT MINE AND MUST NOT BE REWRITTEN CASUALLY. It is shortened from
+          * `docs/legal/02-coppa-direct-notice-to-parents.md` (its table rows 1–3, its "What we do
+          * with it", and its "We do not ask your child for" list) plus the guardian sentence from
+          * §2 of the Terms, and the founder approved this exact shortening. **It has to keep saying
+          * the same thing as the Privacy Policy it links to** — two different statements about what
+          * we collect from a child is the failure, not a style inconsistency. The avatar is named
+          * here because the live policy names it; draft 02's table omits it, which is a gap in the
+          * DRAFT and is flagged for the attorney rather than papered over here.
+          *
+          * ⚠️ THIS IS NOT CONSENT, AND NOTHING HERE MAY IMPLY IT IS. Verifiable parental consent —
+          * card or email-plus, with a consent record that gates collection — is
+          * `docs/legal/03-consent-and-checkout-screen-copy.md` and is not built. The guardian line
+          * is a confirmation the adult makes, which is what the Terms already say; it is not a
+          * claim that consent was properly obtained.
+          */}
+        <div style={{ color:P.ink3, margin:'14px 0 0' }}>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:0 }}>
+            {t('What we collect about your child: the first name or nickname you choose, their avatar and grade, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.')}
+          </p>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+            <Link href="/legal/privacy" style={{ color:P.accent, fontWeight:700 }}>{t('Read the Privacy Policy')}</Link>
+          </p>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+            {t('By adding a child you confirm you are their parent or legal guardian, or have that person’s permission.')}
+          </p>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+            {t('Progress is private to this account. No public profiles and no comparisons with other children.')}
+          </p>
+        </div>
         <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading?P.edge:P.accent, color:loading?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer', boxShadow:loading?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
           {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>
