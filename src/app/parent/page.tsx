@@ -53,6 +53,7 @@ import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dash
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
 import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
+import { LangContext, loadLang, saveLang, makeT, useT, type Lang } from '@/features/dashboard/i18n'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -117,6 +118,9 @@ function Dashboard() {
   const [tour, setTour] = useState<(Tour & { id?: string }) | null>(null)
   const [now] = useState(() => Date.now())
   const [autoDone, setAutoDone] = useState(false)   // the one automatic pop-up of this visit has been shown and closed
+  // English or Spanish, chosen in Account → Language. PARENTS ONLY (founder, 2026-09-22): a teacher's dashboard stays English.
+  // Per device, like the helpers' prefs — a parent on a new device picks it again.
+  const [chosenLang, setChosenLang] = useState<Lang>('en')
 
   // `quiet`: refresh the data without the full-screen splash, so an open panel (a class's new passwords) stays on screen.
   async function loadAll(quiet?: boolean) {
@@ -129,6 +133,7 @@ function Dashboard() {
       if (!user) { router.replace('/auth'); return }
       setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')
       setUid(user.id)
+      setChosenLang(loadLang())
       // This device's helper choices, read once per visit; the visit BEFORE this one is what "since your last visit" means.
       setPrefsState(prev => {
         if (prev) return prev
@@ -211,11 +216,11 @@ function Dashboard() {
     setAcceptingId(inviteId)
     const result = await acceptInvite(inviteId)
     if (result.ok) {
-      setInviteMsg('Access granted! Learner added to your dashboard.')
+      setInviteMsg(t('Access granted! Learner added to your dashboard.'))
       setInvites(prev => prev.filter(i => i.id !== inviteId))
       await loadAll()
     } else {
-      setInviteMsg(result.error ?? 'Something went wrong')
+      setInviteMsg(result.error ?? t('Something went wrong'))
     }
     setAcceptingId(null)
   }
@@ -230,28 +235,28 @@ function Dashboard() {
     if (childLogins === null || childLogins[learnerId]) {
       const r = await removeChildLogin(learnerId)
       // not_configured = this server cannot have made a login, so there is none to outlive the learner.
-      if (!r.ok && r.error !== 'not_configured') { setActionMsg("Could not remove this learner's login, so nothing was deleted. Try again."); return }
+      if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
     }
     const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
-      setActionMsg('Learner deleted.')
+      setActionMsg(t('Learner deleted.'))
       setConfirming(null)
       router.push('/parent')
       await loadAll()
     } else {
-      setActionMsg(result.error ?? 'Failed to delete')
+      setActionMsg(result.error ?? t('Failed to delete'))
     }
   }
 
   async function handleRemoveSelf(learnerId: string) {
     const result = await removeMyselfFromLearner(learnerId)
     if (result.ok) {
-      setActionMsg('You have been removed from this learner.')
+      setActionMsg(t('You have been removed from this learner.'))
       setConfirming(null)
       router.push('/parent')
       await loadAll()
     } else {
-      setActionMsg(result.error ?? 'Failed to remove')
+      setActionMsg(result.error ?? t('Failed to remove'))
     }
   }
 
@@ -273,6 +278,9 @@ function Dashboard() {
   }
 
   const tea = role === 'teacher'
+  const lang: Lang = tea ? 'en' : chosenLang
+  const t = makeT(lang)
+  useEffect(() => { document.documentElement.lang = lang; return () => { document.documentElement.lang = 'en' } }, [lang])
   const today = localDay(new Date(now))
 
   // ── Reminders: worked out from what is already loaded; the adult's snoozes / hides / switched-off kinds applied. ──
@@ -303,9 +311,9 @@ function Dashboard() {
         lastProblemAt: x?.points === undefined || x.points === null ? undefined : (problems?.at(-1)?.created_at ?? null),
         createdAt: d.learner.created_at,
         stuck: stuck ? { lessonId: stuck.lessonId, title: findLesson(stuck.lessonId)?.lesson.title ?? stuck.lessonId } : undefined,
-      }, today, new Date(now), id => findLesson(id)?.lesson.title ?? id)
+      }, today, new Date(now), id => findLesson(id)?.lesson.title ?? id, lang)
     }))
-  }, [tea, classes, learners, classResults, paid, childLogins, extra, wallets, today, now])
+  }, [tea, classes, learners, classResults, paid, childLogins, extra, wallets, today, now, lang])
   const shown = prefs ? all.filter(r => isShown(prefs, r, now)) : all
   const snoozed = prefs ? all.filter(r => (prefs.snoozed[r.id] ?? 0) > now && !prefs.hidden.includes(r.id)).length : 0
 
@@ -343,20 +351,20 @@ function Dashboard() {
 
   function tourFor(id: string): Tour | null {
     const first = learners[0]?.learner.id, cls = classes[0]?.id
-    const helpStep = { target: 'nav-help', title: 'Not sure how?', text: 'Help has step-by-step walkthroughs: pick what you want to do.' }
+    const helpStep = { target: 'nav-help', title: t('Not sure how?'), text: t('Help has step-by-step walkthroughs: pick what you want to do.') }
     if (id === 'first') return tea
       ? { title: 'Quick tour', steps: [
           { url: '/parent', target: 'upnext', title: 'The one thing to do next', text: 'We’ll always put the most useful thing here.' },
           { target: cls ? `class-${cls}` : 'new-class', title: 'One card per class', text: 'Open a class and everything about it is inside: students, lessons, exercises, results.' },
           { target: 'bell', title: 'Reminders', text: 'Results to read, students without a login, and more wait here.' }, helpStep] }
-      : { title: 'Quick tour', steps: [
-          { url: '/parent', target: 'upnext', title: 'The one thing to do next', text: 'We’ll always put the most useful thing here.' },
-          { target: first ? `child-${first}` : 'add-child', title: 'One card per child', text: 'Open a child and everything about them is inside: progress, lessons, game time, login.' },
-          { target: 'bell', title: 'Reminders', text: 'Anything else worth a look waits here.' }, helpStep] }
-    if (id === 'inside-child') return { title: 'Inside a child', steps: [
-      { target: 'tab-progress', title: 'Progress', text: 'How they’re doing, and what they find hard.' },
-      { target: 'tab-lessons', title: 'Lessons', text: 'Choose what they learn, and give a lesson a due date.' },
-      { target: 'tab-game,tab-login', title: 'Game time and Login', text: 'Their daily game limit, their sign-in, and their data.' }] }
+      : { title: t('Quick tour'), steps: [
+          { url: '/parent', target: 'upnext', title: t('The one thing to do next'), text: t('We’ll always put the most useful thing here.') },
+          { target: first ? `child-${first}` : 'add-child', title: t('One card per child'), text: t('Open a child and everything about them is inside: progress, lessons, game time, login.') },
+          { target: 'bell', title: t('Reminders'), text: t('Anything else worth a look waits here.') }, helpStep] }
+    if (id === 'inside-child') return { title: t('Inside a child'), steps: [
+      { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
+      { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
+      { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }
     if (id === 'inside-class') return { title: 'Inside a class', steps: [
       { target: 'tab-students', title: 'Students', text: 'Add students, and give a new password to anyone who can’t sign in.' },
       { target: 'tab-lessons', title: 'Lessons', text: 'Choose the class’s modules. New students get them too.' },
@@ -383,18 +391,18 @@ function Dashboard() {
   if (loadError) return (
     <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, background:'#FCEAB6', padding:24, textAlign:'center' }}>
       <div style={{ fontSize:56 }}>🦊</div>
-      <p style={{ fontSize:18, fontWeight:700, color:'#3D2516', margin:0 }}>Hmm, we couldn&apos;t load your dashboard.</p>
-      <p style={{ fontSize:14, color:'#7a6a55', margin:0 }}>Check your connection and try again.</p>
-      <button onClick={() => loadAll()} style={{ padding:'14px 28px', background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>Try again</button>
+      <p style={{ fontSize:18, fontWeight:700, color:'#3D2516', margin:0 }}>{t('Hmm, we couldn’t load your dashboard.')}</p>
+      <p style={{ fontSize:14, color:'#7a6a55', margin:0 }}>{t('Check your connection and try again.')}</p>
+      <button onClick={() => loadAll()} style={{ padding:'14px 28px', background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>{t('Try again')}</button>
     </div>
   )
 
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  const greeting = t(hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening')
   const nav = [
-    { label: tea ? 'Classes' : 'Home', href: '/parent', on: home || !!childId || !!classId },
-    { label: 'Help', href: '/parent?view=help', on: view === 'help', tour: 'nav-help' },
-    { label: 'Account', href: '/parent?view=account', on: view === 'account' },
+    { label: tea ? 'Classes' : t('Home'), href: '/parent', on: home || !!childId || !!classId },
+    { label: t('Help'), href: '/parent?view=help', on: view === 'help', tour: 'nav-help' },
+    { label: t('Account'), href: '/parent?view=account', on: view === 'account' },
   ]
   const child = childId ? learners.find(d => d.learner.id === childId) : undefined
   const cls = classId ? classes.find(c => c.id === classId) : undefined
@@ -405,7 +413,7 @@ function Dashboard() {
     {actionMsg && (
       <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, fontWeight:600, color:'#166534', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         ✅ {actionMsg}
-        <button onClick={() => setActionMsg(null)} aria-label="Dismiss" style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:P.ink3, minWidth:44, minHeight:44 }}>×</button>
+        <button onClick={() => setActionMsg(null)} aria-label={t('Dismiss')} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:P.ink3, minWidth:44, minHeight:44 }}>×</button>
       </div>
     )}
     {invites.length > 0 && (
@@ -413,11 +421,11 @@ function Dashboard() {
         {inviteMsg && <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:12, fontSize:14, fontWeight:600, color:'#166534' }}>✅ {inviteMsg}</div>}
         {invites.map(inv => (
           <div key={inv.id} style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:12, boxShadow:'0 4px 20px rgba(242,107,44,0.15)', border:'2px solid #F26B2C' }}>
-            <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>You&apos;ve been invited!</div>
-            <div style={{ fontSize:13, color:P.ink3, margin:'2px 0 14px' }}>Access to: <strong>{inv.learner_name ?? 'a learner'}</strong></div>
+            <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>{t('You’ve been invited!')}</div>
+            <div style={{ fontSize:13, color:P.ink3, margin:'2px 0 14px' }}>{t('Access to:')} <strong>{inv.learner_name ?? t('a learner')}</strong></div>
             <div style={{ display:'flex', gap:10 }}>
-              <button onClick={() => handleAcceptInvite(inv.id)} disabled={acceptingId === inv.id} style={{ ...dbtn, flex:1, justifyContent:'center' }}>{acceptingId === inv.id ? 'Accepting...' : '✓ Accept'}</button>
-              <button onClick={() => handleDeclineInvite(inv.id)} style={{ ...dghost, flex:1, justifyContent:'center' }}>✕ Decline</button>
+              <button onClick={() => handleAcceptInvite(inv.id)} disabled={acceptingId === inv.id} style={{ ...dbtn, flex:1, justifyContent:'center' }}>{acceptingId === inv.id ? t('Accepting…') : `✓ ${t('Accept')}`}</button>
+              <button onClick={() => handleDeclineInvite(inv.id)} style={{ ...dghost, flex:1, justifyContent:'center' }}>✕ {t('Decline')}</button>
             </div>
           </div>
         ))}
@@ -426,15 +434,15 @@ function Dashboard() {
   </>
 
   const upNext = <UpNext top={shown[0]} rest={shown.length - 1} onAct={act} onSnooze={snooze} onHide={hide} onOpenAll={() => setBell(true)}
-    allClear={tea ? 'We’ll let you know when results come in.' : 'We’ll let you know when something changes.'} />
+    allClear={tea ? 'We’ll let you know when results come in.' : t('We’ll let you know when something changes.')} />
 
   let page
   if (childId) {
-    page = !child ? <div style={dcard}><p style={{ margin:0 }}>We couldn’t find that child. <Link href="/parent">Back to Home</Link></p></div> : (() => {
+    page = !child ? <div style={dcard}><p style={{ margin:0 }}>{t('We couldn’t find that child.')} <Link href="/parent">{t('Back to Home')}</Link></p></div> : (() => {
       const d = child, klass = classes.find(c => c.id === d.learner.grade_id)
       const tab = (CHILD_TABS.some(([k]) => k === tabParam) ? tabParam : 'progress') as ChildTab
       return <ChildPage id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} tab={tab}
-        crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : 'Home' }}
+        crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
         onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
@@ -451,7 +459,7 @@ function Dashboard() {
         }}
         onSaveGame={async (enabled, minutes) => {
           const ok = await setGameSettings(d.learner.id, enabled, minutes)
-          if (!ok) setActionMsg('Could not save the game time settings. Try again.')
+          if (!ok) setActionMsg(t('Could not save the game time settings. Try again.'))
           const w = await getWallet(d.learner.id)
           setWallets(prev => ({ ...prev, [d.learner.id]: w }))
         }}
@@ -463,21 +471,21 @@ function Dashboard() {
               <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:16, padding:'16px', marginBottom:16 }}>
                 <p style={{ fontSize:14, fontWeight:700, color:'#991B1B', margin:'0 0 12px' }}>
                   {d.accessRole === 'owner'
-                    ? `⚠️ Permanently delete ${d.learner.display_name}? This cannot be undone. All progress, sessions and data will be lost.`
-                    : `Remove yourself from ${d.learner.display_name}'s profile? You will lose access.`}
+                    ? `⚠️ ${t('Permanently delete {name}? This cannot be undone. All progress, sessions and data will be lost.', { name: d.learner.display_name })}`
+                    : t('Remove yourself from {name}’s profile? You will lose access.', { name: d.learner.display_name })}
                 </p>
                 <div style={{ display:'flex', gap:10 }}>
                   <button onClick={() => d.accessRole === 'owner' ? handleDelete(d.learner.id) : handleRemoveSelf(d.learner.id)}
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
-                    {d.accessRole === 'owner' ? 'Yes, delete' : 'Yes, remove me'}
+                    {d.accessRole === 'owner' ? t('Yes, delete') : t('Yes, remove me')}
                   </button>
-                  <button onClick={() => setConfirming(null)} style={{ flex:1, padding:'12px', background:'#fff', color:'#888', border:'1.5px solid #e5e7eb', borderRadius:50, fontSize:14, fontWeight:700, cursor:'pointer' }}>Cancel</button>
+                  <button onClick={() => setConfirming(null)} style={{ flex:1, padding:'12px', background:'#fff', color:'#888', border:'1.5px solid #e5e7eb', borderRadius:50, fontSize:14, fontWeight:700, cursor:'pointer' }}>{t('Cancel')}</button>
                 </div>
               </div>
             ) : (
               <button onClick={() => setConfirming(d.learner.id)}
                 style={{ width:'100%', padding:'12px', minHeight:44, background:'none', border:'1.5px solid #FCA5A5', borderRadius:50, fontSize:13, fontWeight:700, color:'#DC2626', cursor:'pointer', marginBottom:16 }}>
-                {d.accessRole === 'owner' ? `🗑 Delete ${d.learner.display_name}'s profile` : `✕ Remove myself from ${d.learner.display_name}'s profile`}
+                {d.accessRole === 'owner' ? `🗑 ${t('Delete {name}’s profile', { name: d.learner.display_name })}` : `✕ ${t('Remove myself from {name}’s profile', { name: d.learner.display_name })}`}
               </button>
             )}
           </DataRights>
@@ -495,21 +503,31 @@ function Dashboard() {
     })()
   } else if (view === 'account') {
     page = <>
-      <h1 style={{ ...h1, marginBottom: 18 }}>Account</h1>
+      <h1 style={{ ...h1, marginBottom: 18 }}>{t('Account')}</h1>
       <div className="card-grid">
+        {!tea && <section style={dcard} data-tour="language-card">
+          <h2 style={h2}>{t('Language')} · Idioma</h2>
+          <p style={{ margin:'4px 0 12px', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('The language of this dashboard. Lessons stay in English. Saved on this device.')}</p>
+          <div role="group" aria-label={t('Language')} style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {([['en', 'English'], ['es', 'Español']] as const).map(([l, label]) => (
+              <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => { saveLang(l); setChosenLang(l) }}
+                style={{ padding:'8px 18px', minHeight:44, borderRadius:999, border:'2px solid', borderColor: lang === l ? P.accent : P.edge, background: lang === l ? 'var(--milo-orange-soft)' : P.card, fontWeight:800, fontSize:15, fontFamily:'inherit', cursor:'pointer', color:P.ink }}>{label}</button>
+            ))}
+          </div>
+        </section>}
         <section style={dcard} data-tour="reminders-card">
-          <h2 style={h2}>Reminders</h2>
-          <p style={{ margin:'4px 0 6px', fontSize:13, color:P.ink3, fontWeight:700 }}>Choose what we point out. You can also snooze or hide one reminder with ⋯. Saved on this device.</p>
-          {([['setup', 'Setup steps', 'Things not set up yet: logins, game time, modules, exercises.'],
-             ['help', 'Where help is needed', tea ? 'A question most of a class got wrong.' : 'A topic a child keeps missing.'],
-             ['nudge', 'Gentle nudges', tea ? 'An exercise not everyone has taken.' : 'A child who hasn’t practised for a while, or a due date that passed.'],
-             ...(tea ? [] : [['good', 'Celebrations', 'When a child masters a topic.'], ['recap', 'Weekly recap', 'A short summary on your first visit each week.']]),
-          ] as [Kind | 'good' | 'recap', string, string][]).map(([k, t, d]) => {
+          <h2 style={h2}>{t('Reminders')}</h2>
+          <p style={{ margin:'4px 0 6px', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Choose what we point out. You can also snooze or hide one reminder with ⋯. Saved on this device.')}</p>
+          {([['setup', t('Setup steps'), t('Things not set up yet: logins, game time, modules, exercises.')],
+             ['help', t('Where help is needed'), tea ? 'A question most of a class got wrong.' : t('A topic a child keeps missing.')],
+             ['nudge', t('Gentle nudges'), tea ? 'An exercise not everyone has taken.' : t('A child who hasn’t practised for a while, or a due date that passed.')],
+             ...(tea ? [] : [['good', t('Celebrations'), t('When a child masters a topic.')], ['recap', t('Weekly recap'), t('A short summary on your first visit each week.')]]),
+          ] as [Kind | 'good' | 'recap', string, string][]).map(([k, title, d]) => {
             const on = !prefs?.off.includes(k)
             return (
               <div key={k} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, padding:'10px 0', borderTop:`1px solid ${P.edge}` }}>
-                <div><b style={{ color:P.ink }}>{t}</b><div style={{ fontSize:13.5, color:P.ink2 }}>{d}</div></div>
-                <button type="button" role="switch" aria-checked={on} aria-label={t} onClick={() => setPrefs(p => ({ ...p, off: on ? [...p.off, k] : p.off.filter(x => x !== k) }))}
+                <div><b style={{ color:P.ink }}>{title}</b><div style={{ fontSize:13.5, color:P.ink2 }}>{d}</div></div>
+                <button type="button" role="switch" aria-checked={on} aria-label={title} onClick={() => setPrefs(p => ({ ...p, off: on ? [...p.off, k] : p.off.filter(x => x !== k) }))}
                   style={{ width:52, height:30, borderRadius:99, border:0, flexShrink:0, cursor:'pointer', position:'relative', background: on ? '#157347' : '#d9ccb8' }}>
                   <span style={{ position:'absolute', top:3, left: on ? 25 : 3, width:24, height:24, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
                 </button>
@@ -519,21 +537,21 @@ function Dashboard() {
         </section>
         {tea
           ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
-          : <section style={dcard} data-tour="plan-card"><h2 style={h2}>Plan & billing</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Your plan and what it costs.</p><Link href="/parent/plan" style={dghost}>See plans</Link></section>}
-        {!tea && <section style={dcard}><h2 style={h2}>Share access</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Let another parent or guardian see a child’s progress.</p><Link href="/parent/invites" style={dghost}>Share access</Link></section>}
+          : <section style={dcard} data-tour="plan-card"><h2 style={h2}>{t('Plan & billing')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Your plan and what it costs.')}</p><Link href="/parent/plan" style={dghost}>{t('See plans')}</Link></section>}
+        {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
         {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
             /parent. The page itself carries the real guards. */}
-        <section style={dcard} data-tour="close-card"><h2 style={h2}>Close your account</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>Deletes your account and every {tea ? 'student' : 'child'} profile you added.</p>
-          <a href="/parent/account" style={{ ...dghost, color:'#B42318' }}>Close your account</a></section>
+        <section style={dcard} data-tour="close-card"><h2 style={h2}>{t('Close your account')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{tea ? 'Deletes your account and every student profile you added.' : t('Deletes your account and every child profile you added.')}</p>
+          <a href="/parent/account" style={{ ...dghost, color:'#B42318' }}>{t('Close your account')}</a></section>
       </div>
     </>
   } else if (view === 'help') {
     page = <>
-      <h1 style={{ ...h1, marginBottom: 18 }}>Help</h1>
+      <h1 style={{ ...h1, marginBottom: 18 }}>{t('Help')}</h1>
       <section style={{ ...dcard, maxWidth: 640, display:'flex', flexDirection:'column', gap:8 }}>
-        <h2 style={{ ...h2, marginBottom: 4 }}>Show me how to…</h2>
-        {helpGoals({ tea, paid, c: learners[0]?.learner.id, k: classes[0]?.id }).map(g => (
+        <h2 style={{ ...h2, marginBottom: 4 }}>{t('Show me how to…')}</h2>
+        {helpGoals({ tea, paid, c: learners[0]?.learner.id, k: classes[0]?.id, lang }).map(g => (
           <div key={g.h} style={{ display:'flex', flexDirection:'column', gap:8 }}>
             <h3 style={{ margin:'10px 0 0', fontSize:13, fontWeight:900, color:P.ink3, textTransform:'uppercase', letterSpacing:'.06em' }}>{g.h}</h3>
             {g.items.map(i => (
@@ -545,8 +563,8 @@ function Dashboard() {
           </div>
         ))}
         <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginTop:6 }}>
-          <button type="button" style={dlink} onClick={() => startTour('first')}>Take the 1-minute tour again</button>
-          <Link href="/help" style={{ ...dlink, display:'inline-flex', alignItems:'center' }}>Questions and answers</Link>
+          <button type="button" style={dlink} onClick={() => startTour('first')}>{t('Take the 1-minute tour again')}</button>
+          <Link href="/help" style={{ ...dlink, display:'inline-flex', alignItems:'center' }}>{t('Questions and answers')}</Link>
         </div>
       </section>
     </>
@@ -578,7 +596,7 @@ function Dashboard() {
     page = <>
       <div style={{ marginBottom:18 }}>
         <h1 style={h1}>{greeting}, {parentName}</h1>
-        <p style={{ margin:'4px 0 0', color:P.ink2 }}>Tap a child to see their progress, choose their lessons, or set game time.</p>
+        <p style={{ margin:'4px 0 0', color:P.ink2 }}>{t('Tap a child to see their progress, choose their lessons, or set game time.')}</p>
       </div>
       {notices}
       {learners.length === 0 ? <EmptyDashboard onAdd={() => setShowAddModal(true)} /> : (
@@ -590,11 +608,11 @@ function Dashboard() {
               const done = lessons.filter(l => lessonDone(d.learner.id, l.id)).length
               const next = lessons.find(l => !lessonDone(d.learner.id, l.id))
               return <ChildCard key={d.learner.id} id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]}
-                lastPlayed={d.stats?.last_played_at ? new Date(d.stats.last_played_at).toLocaleDateString() : '—'}
+                lastPlayed={d.stats?.last_played_at ? new Date(d.stats.last_played_at).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
                 next={next?.title ?? null} done={done} total={lessons.length} onStart={() => launchGame(d)} />
             })}
             <button type="button" data-tour="add-child" onClick={() => setShowAddModal(true)}
-              style={{ border:`2px dashed ${P.edge}`, background:'transparent', borderRadius:16, minHeight:180, fontWeight:900, fontSize:15, color:P.ink2, cursor:'pointer' }}>+ Add a child</button>
+              style={{ border:`2px dashed ${P.edge}`, background:'transparent', borderRadius:16, minHeight:180, fontWeight:900, fontSize:15, color:P.ink2, cursor:'pointer' }}>{t('+ Add a child')}</button>
           </div>
         </div>
       )}
@@ -609,6 +627,7 @@ function Dashboard() {
   })
 
   return (
+    <LangContext.Provider value={lang}>
     <div className="home-app" style={{ fontFamily:'var(--font-body)' }}>
       <DashNav items={nav} reminders={shown.length} onBell={() => setBell(true)} onSignOut={signOut} />
 
@@ -621,9 +640,9 @@ function Dashboard() {
           <SupportPanel learnerId={childId ?? undefined} />
           {/* ⚠️ BOTH DOCUMENTS, REACHABLE FROM INSIDE THE APP: a parent who agreed at signup must be able to read what they agreed to. */}
           <p style={{ margin:'18px 0 0', fontSize:12, color:'#9a8b78' }}>
-            <Link href="/legal/terms" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Terms of Service</Link>
+            <Link href="/legal/terms" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>{t('Terms of Service')}</Link>
             <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
-            <Link href="/legal/privacy" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>Privacy Policy</Link>
+            <Link href="/legal/privacy" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>{t('Privacy Policy')}</Link>
           </p>
         </div>
       </div>
@@ -631,32 +650,32 @@ function Dashboard() {
       <RemindersSheet open={bell} onClose={() => setBell(false)} list={shown} snoozedCount={snoozed} settingsHref="/parent?view=account"
         onAct={act} onSnooze={snooze} onHide={hide} onUnsnooze={() => setPrefs(p => ({ ...p, snoozed: {} }))} />
 
-      <Sheet open={shownPopup === 'celebrate'} onClose={closePopup} label="Well done">
+      <Sheet open={shownPopup === 'celebrate'} onClose={closePopup} label={t('Well done')}>
         {mastered[0] && <div style={{ textAlign:'center' }}>
           <div style={{ fontSize:64, lineHeight:1 }} aria-hidden>⭐</div>
-          <h2 style={{ ...h2, fontSize:22, marginTop:10 }}>{mastered[0].name} mastered “{mastered[0].title}”</h2>
-          <p style={{ color:P.ink2, margin:'6px 0 16px' }}>Since your last visit{mastered.length > 1 ? `, with ${mastered.length - 1} more topic${mastered.length === 2 ? '' : 's'}` : ''}. A “well done” from you goes a long way.</p>
+          <h2 style={{ ...h2, fontSize:22, marginTop:10 }}>{t('{name} mastered “{title}”', { name: mastered[0].name, title: mastered[0].title })}</h2>
+          <p style={{ color:P.ink2, margin:'6px 0 16px' }}>{mastered.length === 1 ? t('Since your last visit.') : t(mastered.length === 2 ? 'Since your last visit, with 1 more topic.' : 'Since your last visit, with {n} more topics.', { n: mastered.length - 1 })} {t('A “well done” from you goes a long way.')}</p>
           <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
-            <button type="button" style={dbtn} onClick={() => { closePopup(); router.push(`/parent?child=${mastered[0].id}&tab=progress`) }}>See {mastered[0].name}&apos;s progress</button>
-            <button type="button" style={dghost} onClick={closePopup}>Nice!</button>
+            <button type="button" style={dbtn} onClick={() => { closePopup(); router.push(`/parent?child=${mastered[0].id}&tab=progress`) }}>{t('See {name}’s progress', { name: mastered[0].name })}</button>
+            <button type="button" style={dghost} onClick={closePopup}>{t('Nice!')}</button>
           </div>
         </div>}
       </Sheet>
 
-      <Sheet open={shownPopup === 'recap'} onClose={closePopup} label="This week">
-        <h2 style={{ ...h2, fontSize:22, marginBottom:8 }}>This week</h2>
+      <Sheet open={shownPopup === 'recap'} onClose={closePopup} label={t('This week')}>
+        <h2 style={{ ...h2, fontSize:22, marginBottom:8 }}>{t('This week')}</h2>
         {recapRows.map(({ d, problems, mastered7, stuck }) => (
           <div key={d.learner.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'12px 0', borderBottom:`1px solid ${P.edge}` }}>
             <div><b style={{ color:P.ink }}>{d.learner.display_name}</b>
-              <div style={{ fontSize:13.5, color:P.ink2 }}>{problems} problem{problems === 1 ? '' : 's'} answered{mastered7 ? ` · ${mastered7} topic${mastered7 === 1 ? '' : 's'} mastered` : ''}{stuck ? ` · finding “${stuck}” hard` : ''}</div></div>
-            <Link href={`/parent?child=${d.learner.id}&tab=progress`} onClick={closePopup} style={dlink}>Open</Link>
+              <div style={{ fontSize:13.5, color:P.ink2 }}>{t(problems === 1 ? '1 problem answered' : '{n} problems answered', { n: problems })}{mastered7 ? ` · ${t(mastered7 === 1 ? '1 topic mastered' : '{n} topics mastered', { n: mastered7 })}` : ''}{stuck ? ` · ${t('finding “{title}” hard', { title: stuck })}` : ''}</div></div>
+            <Link href={`/parent?child=${d.learner.id}&tab=progress`} onClick={closePopup} style={dlink}>{t('Open')}</Link>
           </div>
         ))}
         {shown[0] && <div style={{ ...dcard, background:'#fff', marginTop:14 }}>
-          <div style={{ fontSize:13, color:P.ink3, fontWeight:700 }}>One thing to try this week</div>
+          <div style={{ fontSize:13, color:P.ink3, fontWeight:700 }}>{t('One thing to try this week')}</div>
           <p style={{ margin:'4px 0 10px', fontWeight:800, color:P.ink }}>{shown[0].title}</p>
           <button type="button" style={dbtn} onClick={() => { closePopup(); act(shown[0]) }}>{shown[0].action}</button></div>}
-        <p style={{ margin:'14px 0 0', fontSize:13, color:P.ink3, fontWeight:700 }}>Shown on your first visit each week. Turn it off in Account → Reminders.</p>
+        <p style={{ margin:'14px 0 0', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Shown on your first visit each week. Turn it off in Account → Reminders.')}</p>
       </Sheet>
 
       <TourRunner tour={activeTour} onEnd={endTour} />
@@ -683,6 +702,7 @@ function Dashboard() {
         />
       )}
     </div>
+    </LangContext.Provider>
   )
 }
 
@@ -695,6 +715,7 @@ const h2 = { margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' } as 
  * where the misses live.
  */
 export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
+  const t = useT()
   return (
     <div style={{
         background:P.card, border:`2px solid ${P.edge}`, borderRadius:24,
@@ -703,12 +724,12 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
         textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14,
       }}>
         <div style={{ fontSize:60 }}>🦊</div>
-        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>Welcome to AdaptiveLearn!</h2>
+        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>{t('Welcome to AdaptiveLearn!')}</h2>
         <p style={{ fontSize:15, color:P.ink2, margin:0, maxWidth:340, lineHeight:1.5 }}>
-          Add your first learner and we&apos;ll find where to start.
+          {t('Add your first learner and we’ll find where to start.')}
         </p>
         <button onClick={onAdd} style={{ marginTop:4, background:P.accent, color:'#fff', border:'none', borderRadius:50, padding:'16px 34px', minHeight:44, fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(242,107,44,0.28)' }}>
-          + Add your first learner
+          {t('+ Add your first learner')}
         </button>
         {/* ⚠️ BOTH OF THESE ARE TRUE AS OF 2026-08-25 AND ONLY BECAUSE OF THAT DATE. The check
             became OPTIONAL then (a one-tap "Skip for now" issues a grade-start plan), so
@@ -717,12 +738,12 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
             copy correctly calls "about ten minutes". If the check is ever re-forced, the first
             of these two chips becomes a lie and has to come out with it. */}
         <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginTop:2 }}>
-          {['Takes about 2 minutes', 'No diagnostic tests required'].map(t => (
-            <span key={t} style={{ background:P.page, border:`1.5px solid ${P.edge}`, borderRadius:999, padding:'7px 13px', fontSize:12, fontWeight:700, color:P.ink2 }}>{t}</span>
+          {[t('Takes about 2 minutes'), t('No diagnostic tests required')].map(chip => (
+            <span key={chip} style={{ background:P.page, border:`1.5px solid ${P.edge}`, borderRadius:999, padding:'7px 13px', fontSize:12, fontWeight:700, color:P.ink2 }}>{chip}</span>
           ))}
         </div>
         <p style={{ fontSize:12.5, color:P.ink3, margin:'6px 0 0', lineHeight:1.5 }}>
-          …or wait for someone to share access with you.
+          {t('…or wait for someone to share access with you.')}
         </p>
       </div>
   )
@@ -823,6 +844,7 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
 }
 
 export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+  const t = useT()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
   // Which modules the child gets — asked, never assumed (founder, 2026-09-19: a new child was silently given every module).
@@ -833,15 +855,15 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
 
   async function handleAdd() {
     const trimmed = name.trim()
-    if (!trimmed || trimmed.length < 2) { setError('Please enter a name (at least 2 characters)'); return }
-    if (pick.size === 0) { setError('Choose at least one module for this learner.'); return }
+    if (!trimmed || trimmed.length < 2) { setError(t('Please enter a name (at least 2 characters)')); return }
+    if (pick.size === 0) { setError(t('Choose at least one module for this learner.')); return }
     const chosen = MODULES.filter(m => pick.has(m.id))
     // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19).
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
     const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) })
-    if (!learner) { setError('Something went wrong. Please try again.'); setLoading(false); return }
+    if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     /**
      * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
      * find nothing here — no stars, and a plan whose first step is the chapter their child just
@@ -877,13 +899,13 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
      `.sheet-card` carry the switch, including the two entrance animations and the
      `prefers-reduced-motion` opt-out. */
   return (
-    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label="Add a learner" style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(61,37,22,0.45)' }} onClick={onClose}>
+    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label={t('Add a learner')} style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(61,37,22,0.45)' }} onClick={onClose}>
       <div className="sheet-card" style={{ background:P.card, padding:'28px 24px 40px', overflowY:'auto', WebkitOverflowScrolling:'touch', boxSizing:'border-box' }} onClick={e => e.stopPropagation()}>
-        <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 4px', color:P.ink, fontFamily:'var(--font-display)' }}>Add a learner</h3>
-        <p style={{ fontSize:13, color:P.ink2, margin:'0 0 18px', lineHeight:1.45 }}>Quiet, private progress tracking for home or class.</p>
+        <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 4px', color:P.ink, fontFamily:'var(--font-display)' }}>{t('Add a learner')}</h3>
+        <p style={{ fontSize:13, color:P.ink2, margin:'0 0 18px', lineHeight:1.45 }}>{t('Quiet, private progress tracking for home or class.')}</p>
         <div style={{ display:'flex', gap:12, marginBottom:20, justifyContent:'center' }}>
           {AVATARS.map((emoji, i) => (
-            <button key={i} onClick={() => setAvatarIndex(i)} aria-pressed={avatarIndex===i} aria-label={`Avatar ${i + 1}`} style={{ position:'relative', width:64, height:64, fontSize:32, borderRadius:16, cursor:'pointer', background:avatarIndex===i?'var(--milo-orange-soft)':P.page, border:avatarIndex===i?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
+            <button key={i} onClick={() => setAvatarIndex(i)} aria-pressed={avatarIndex===i} aria-label={t('Avatar {n}', { n: i + 1 })} style={{ position:'relative', width:64, height:64, fontSize:32, borderRadius:16, cursor:'pointer', background:avatarIndex===i?'var(--milo-orange-soft)':P.page, border:avatarIndex===i?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
               {emoji}
               {avatarIndex===i && (
                 <span aria-hidden="true" style={{ position:'absolute', top:-4, right:-4, width:20, height:20, borderRadius:'50%', background:P.accent, color:'#fff', fontSize:11, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' }}>✓</span>
@@ -891,20 +913,20 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
             </button>
           ))}
         </div>
-        <label htmlFor="learner-name" style={{ display:'block', fontSize:13, fontWeight:700, color:P.ink2, margin:'0 0 6px' }}>Child&apos;s name</label>
-        <input id="learner-name" type="text" placeholder="First name is plenty" value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
+        <label htmlFor="learner-name" style={{ display:'block', fontSize:13, fontWeight:700, color:P.ink2, margin:'0 0 6px' }}>{t('Child’s name')}</label>
+        <input id="learner-name" type="text" placeholder={t('First name is plenty')} value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
-        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>Which modules can they see?</p>
+        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{t('Which modules can they see?')}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
         </div>
 
         <p style={{ fontSize:11.5, color:P.ink3, margin:'14px 0 0', lineHeight:1.45 }}>
-          Progress is private to this account. No public profiles and no comparisons with other children.
+          {t('Progress is private to this account. No public profiles and no comparisons with other children.')}
         </p>
         <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading?P.edge:P.accent, color:loading?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer', boxShadow:loading?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
-          {loading ? 'Adding...' : pick.size ? `Add learner with ${pick.size} module${pick.size === 1 ? '' : 's'}` : 'Add learner'}
+          {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>
       </div>
     </div>

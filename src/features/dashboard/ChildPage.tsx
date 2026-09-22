@@ -10,14 +10,16 @@ import { Performance } from '@/features/lessons/Performance'
 import type { Wallet } from '@/data/repositories'
 import { LessonsTab, type SaveResult } from './LessonsTab'
 import { dbtn, dghost, dcard } from './Helpers'
+import { useT } from './i18n'
 
 export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['login', 'Login & data']] as const
 export type ChildTab = typeof CHILD_TABS[number][0]
 
 export function Tabs({ base, tabs, on }: { base: string; tabs: readonly (readonly [string, string])[]; on: string }) {
+  const t = useT()
   return (
-    <nav className="dash-tabs" aria-label="Sections" style={{ '--cols': tabs.length === 4 ? 2 : 3 } as CSSProperties}>
-      {tabs.map(([k, t]) => <Link key={k} href={`${base}&tab=${k}`} data-tour={`tab-${k}`} aria-current={k === on ? 'page' : undefined}>{t}</Link>)}
+    <nav className="dash-tabs" aria-label={t('Sections')} style={{ '--cols': tabs.length === 4 ? 2 : 3 } as CSSProperties}>
+      {tabs.map(([k, label]) => <Link key={k} href={`${base}&tab=${k}`} data-tour={`tab-${k}`} aria-current={k === on ? 'page' : undefined}>{t(label)}</Link>)}
     </nav>
   )
 }
@@ -31,6 +33,7 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
   /** Download + delete, rendered by the page (it owns the delete flow and the export bundle). */
   dataRights: ReactNode
 }) {
+  const t = useT()
   const base = `/parent?child=${id}`
   return <>
     <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 800 }}>
@@ -41,7 +44,7 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
         <img src={avatar} alt="" width={48} height={48} style={{ borderRadius: 14, objectFit: 'cover', background: 'var(--milo-orange-soft)' }} />
         <h1 style={{ margin: 0, fontSize: 30, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>{name}</h1>
       </div>
-      <button type="button" style={dbtn} data-tour="start-learning" onClick={onLaunch}>▶ Start learning</button>
+      <button type="button" style={dbtn} data-tour="start-learning" onClick={onLaunch}>▶ {t('Start learning')}</button>
     </div>
     <Tabs base={base} tabs={CHILD_TABS} on={tab} />
 
@@ -51,19 +54,19 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
     {tab === 'login' && (
       <div className="card-grid">
         <section style={dcard} data-tour="login-card">
-          <h2 style={h2}>{name}&apos;s login</h2>
+          <h2 style={h2}>{t('{name}’s login', { name })}</h2>
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>
-            {login ? <>Username <b style={{ color: 'var(--ink)' }}>{login}</b>. {name} signs in with it on any device and goes straight to their lessons.</>
-              : login === undefined ? `${name} has no login yet. With one, they can sign in on any device and go straight to their lessons.`
-              : 'Set a username and password so they can sign in on any device.'}
+            {login ? <>{t('Username')} <b style={{ color: 'var(--ink)' }}>{login}</b>. {t('{name} signs in with it on any device and goes straight to their lessons.', { name })}</>
+              : login === undefined ? t('{name} has no login yet. With one, they can sign in on any device and go straight to their lessons.', { name })
+              : t('Set a username and password so they can sign in on any device.')}
           </p>
-          {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? 'Set a login' : 'Change login or password'}</button>
-            : <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>Only the adult who added {name} can change it.</p>}
+          {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? t('Set a login') : t('Change login or password')}</button>
+            : <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>{t('Only the adult who added {name} can change it.', { name })}</p>}
         </section>
         <section style={dcard} data-tour="share-card">
-          <h2 style={h2}>Share with another adult</h2>
-          <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>Let a partner or grandparent see {name}&apos;s progress with their own sign-in.</p>
-          <Link href="/parent/invites" style={dghost}>Invite someone</Link>
+          <h2 style={h2}>{t('Share with another adult')}</h2>
+          <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Let a partner or grandparent see {name}’s progress with their own sign-in.', { name })}</p>
+          <Link href="/parent/invites" style={dghost}>{t('Invite someone')}</Link>
         </section>
         <section style={dcard} data-tour="data-card">{dataRights}</section>
       </div>
@@ -77,39 +80,40 @@ const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'va
 function GameTimeCard({ name, wallet, canEdit, onSave }: {
   name: string; wallet: Wallet | 'unavailable' | null | undefined; canEdit: boolean; onSave: (enabled: boolean, minutes: number) => Promise<void>
 }) {
+  const t = useT()
   const [saving, setSaving] = useState(false)
   const save = async (enabled: boolean, minutes: number) => { setSaving(true); await onSave(enabled, minutes); setSaving(false) }
   const P = { ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', edge: 'var(--card-border)', page: 'var(--paper)' }
   return (
     <div style={{ ...dcard, maxWidth: 640 }} data-tour="game-card">
-      <h2 style={{ ...h2, marginBottom: 10 }}>🎮 Game time</h2>
-      {wallet === undefined ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>Loading…</p>
-        : wallet === 'unavailable' ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>Points and game time are coming soon.</p>
-        : wallet === null ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>Could not load {name}&apos;s points. Refresh to try again.</p>
+      <h2 style={{ ...h2, marginBottom: 10 }}>🎮 {t('Game time')}</h2>
+      {wallet === undefined ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Loading…')}</p>
+        : wallet === 'unavailable' ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Points and game time are coming soon.')}</p>
+        : wallet === null ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Could not load {name}’s points. Refresh to try again.', { name })}</p>
         : <>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
-            <div><div style={{ fontSize: 26, fontWeight: 900, color: P.ink }}>{wallet.balance}</div><div style={{ fontSize: 12, color: P.ink3, fontWeight: 600 }}>points</div></div>
-            <div><div style={{ fontSize: 26, fontWeight: 900, color: P.ink }}>{wallet.minutes_used_today} / {wallet.minutes_per_day}</div><div style={{ fontSize: 12, color: P.ink3, fontWeight: 600 }}>minutes played today</div></div>
+            <div><div style={{ fontSize: 26, fontWeight: 900, color: P.ink }}>{wallet.balance}</div><div style={{ fontSize: 12, color: P.ink3, fontWeight: 600 }}>{t('points')}</div></div>
+            <div><div style={{ fontSize: 26, fontWeight: 900, color: P.ink }}>{wallet.minutes_used_today} / {wallet.minutes_per_day}</div><div style={{ fontSize: 12, color: P.ink3, fontWeight: 600 }}>{t('minutes played today')}</div></div>
           </div>
           <p style={{ margin: '0 0 12px', fontSize: 14, color: P.ink2, lineHeight: 1.45 }}>
-            {name} earns points by practising and spends {wallet.points_per_minute} points for each minute of game.
+            {t('{name} earns points by practising and spends {n} points for each minute of game.', { name, n: wallet.points_per_minute })}
           </p>
           {canEdit ? (
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <button disabled={saving} onClick={() => save(!wallet.enabled, wallet.minutes_per_day)}
                 style={{ padding: '10px 14px', minHeight: 44, borderRadius: 10, border: `1.5px solid ${P.edge}`, background: wallet.enabled ? '#d9f7e6' : P.page, color: P.ink, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
-                Game time: {wallet.enabled ? 'On' : 'Off'}
+                {t('Game time')}: {wallet.enabled ? t('On') : t('Off')}
               </button>
               <label style={{ fontSize: 14, fontWeight: 700, color: P.ink, display: 'flex', alignItems: 'center', gap: 8 }}>
-                Most per day
+                {t('Most per day')}
                 <select disabled={saving} value={wallet.minutes_per_day} onChange={e => save(wallet.enabled, Number(e.target.value))}
                   style={{ minHeight: 44, borderRadius: 10, border: `1.5px solid ${P.edge}`, padding: '0 10px', fontSize: 14, fontWeight: 700 }}>
-                  {[...new Set([10, 15, 20, 30, 45, 60, wallet.minutes_per_day])].sort((a, b) => a - b).map(m => <option key={m} value={m}>{m} minutes</option>)}
+                  {[...new Set([10, 15, 20, 30, 45, 60, wallet.minutes_per_day])].sort((a, b) => a - b).map(m => <option key={m} value={m}>{t('{n} minutes', { n: m })}</option>)}
                 </select>
               </label>
             </div>
           ) : (
-            <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>Game time is {wallet.enabled ? 'on' : 'off'}. The adult who added {name} can change it.</p>
+            <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{wallet.enabled ? t('Game time is on.') : t('Game time is off.')} {t('The adult who added {name} can change it.', { name })}</p>
           )}
         </>}
     </div>
@@ -120,23 +124,24 @@ function GameTimeCard({ name, wallet, canEdit, onSave }: {
 export function ChildCard({ id, name, avatar, lastPlayed, next, done, total, onStart }: {
   id: string; name: string; avatar: string; lastPlayed: string; next: string | null; done: number; total: number; onStart: () => void
 }) {
+  const t = useT()
   const dt: CSSProperties = { color: 'var(--ink-muted)', fontWeight: 800 }, dd: CSSProperties = { margin: 0, fontWeight: 700, color: 'var(--ink)' }
   return (
     <article style={dcard} data-tour={`child-${id}`}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
         <img src={avatar} alt="" width={48} height={48} style={{ borderRadius: 14, objectFit: 'cover', background: 'var(--milo-orange-soft)' }} />
-        <div><h2 style={{ ...h2, fontSize: 20 }}>{name}</h2><span style={{ fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>last played {lastPlayed}</span></div>
+        <div><h2 style={{ ...h2, fontSize: 20 }}>{name}</h2><span style={{ fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>{t('last played {day}', { day: lastPlayed })}</span></div>
       </div>
       <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', margin: '12px 0', fontSize: 14 }}>
-        <dt style={dt}>Next lesson</dt><dd style={dd}>{next ?? 'All finished 🎉'}</dd>
-        <dt style={dt}>Done</dt><dd style={dd}>{done} of {total} lessons</dd>
+        <dt style={dt}>{t('Next lesson')}</dt><dd style={dd}>{next ?? t('All finished 🎉')}</dd>
+        <dt style={dt}>{t('Done|lessons')}</dt><dd style={dd}>{t('{done} of {total} lessons', { done, total })}</dd>
       </dl>
-      <div role="img" aria-label={`${done} of ${total} lessons done`} style={{ height: 10, background: '#f1e6d3', borderRadius: 99, overflow: 'hidden' }}>
+      <div role="img" aria-label={t('{done} of {total} lessons done', { done, total })} style={{ height: 10, background: '#f1e6d3', borderRadius: 99, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${total ? Math.round(100 * done / total) : 0}%`, background: 'var(--milo-orange)', borderRadius: 99 }} />
       </div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
-        <button type="button" style={dbtn} onClick={onStart}>▶ Start learning</button>
-        <Link href={`/parent?child=${id}`} style={dghost}>Open {name}</Link>
+        <button type="button" style={dbtn} onClick={onStart}>▶ {t('Start learning')}</button>
+        <Link href={`/parent?child=${id}`} style={dghost}>{t('Open {name}', { name })}</Link>
       </div>
     </article>
   )

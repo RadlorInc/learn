@@ -42,7 +42,7 @@ export function assignmentStatus(done: boolean, due: Day | undefined, today: Day
 }
 
 /** "Sep 20" — short, in English, the way the rest of the adult screens write dates. */
-export const showDay = (d: Day) => new Date(`${d}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+export const showDay = (d: Day, lang: 'en' | 'es' = 'en') => new Date(`${d}T12:00:00`).toLocaleDateString(lang === 'es' ? 'es-US' : 'en-US', { month: 'short', day: 'numeric' })
 
 export interface PointRow { lesson_id: string | null; reason: string; points: number; created_at: string }
 export interface ProgressRow { lesson_id: string; done: boolean; mastered: boolean }

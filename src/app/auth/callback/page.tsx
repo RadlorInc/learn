@@ -5,9 +5,11 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getCurrentSession, onAuthStateChange } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
+import { makeT, useSavedLang } from '@/features/dashboard/i18n'
 
 export default function AuthCallbackPage() {
   const router = useRouter()
+  const t      = makeT(useSavedLang())
   const ran    = useRef(false)
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function AuthCallbackPage() {
         priority
         style={{ objectFit: 'contain', animation: 'bounce 1s ease-in-out infinite' }}
       />
-      <p style={{ fontSize: 16, fontWeight: 600, color: '#888' }}>Signing you in...</p>
+      <p style={{ fontSize: 16, fontWeight: 600, color: '#888' }}>{t('Signing you in…')}</p>
       <style>{`@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }`}</style>
     </div>
   )

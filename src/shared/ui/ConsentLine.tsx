@@ -14,9 +14,19 @@
  */
 import Link from 'next/link'
 
-export function ConsentLine({ align = 'center', color = '#8a7a63', linkColor = '#F26B2C' }: {
-  align?: 'center' | 'left'; color?: string; linkColor?: string
+export function ConsentLine({ align = 'center', color = '#8a7a63', linkColor = '#F26B2C', lang = 'en' }: {
+  align?: 'center' | 'left'; color?: string; linkColor?: string; lang?: 'en' | 'es'
 }) {
+  // ⚠️ In Spanish the sentence SAYS the documents are in English — they are, and consent to a document the reader
+  // was not told is in another language is weaker than consent to one they were.
+  if (lang === 'es') return (
+    <p style={{ margin: '10px 0 0', fontSize: 12, lineHeight: 1.5, color, textAlign: align }}>
+      Al continuar, acepta nuestros{' '}
+      <Link href="/legal/terms" style={{ color: linkColor, fontWeight: 700 }}>Términos</Link>
+      {' '}y nuestra{' '}
+      <Link href="/legal/privacy" style={{ color: linkColor, fontWeight: 700 }}>Política de privacidad</Link> (en inglés).
+    </p>
+  )
   return (
     <p style={{
       margin: '10px 0 0', fontSize: 12, lineHeight: 1.5, color, textAlign: align,

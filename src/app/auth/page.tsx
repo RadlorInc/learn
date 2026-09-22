@@ -9,6 +9,7 @@ import { loginEmail } from '@/core/childLogin'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
+import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
 
 type Mode = 'login' | 'signup'
 
@@ -36,6 +37,7 @@ const field: React.CSSProperties = {
 
 /** A password box with a show/hide eye. Each box has its own toggle, so revealing one never reveals the other. */
 function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const t = makeT(useSavedLang())
   const [shown, setShown] = useState(false)
   return (
     <div style={{ position: 'relative' }}>
@@ -43,7 +45,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
       <button
         type="button"
         onClick={() => setShown(s => !s)}
-        aria-label={shown ? 'Hide password' : 'Show password'}
+        aria-label={shown ? t('Hide password') : t('Show password')}
         aria-pressed={shown}
         aria-controls={props.id}
         style={{
@@ -64,6 +66,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
 
 export default function AuthPage() {
   const router = useRouter()
+  const lang = useSavedLang(), t = makeT(lang)
   const [mode,     setMode]     = useState<Mode>('login')
   const [email,    setEmail]    = useState(() => getLeadEmail() ?? '')   // prefill from the checkup lead capture
   const [password, setPassword] = useState('')
@@ -76,15 +79,15 @@ export default function AuthPage() {
 
   async function handleEmailAuth() {
     if (!email.trim() || !password.trim()) {
-      setError(mode === 'login' ? 'Please enter your email or username, and your password' : 'Please enter your email and password')
+      setError(mode === 'login' ? t('Please enter your email or username, and your password') : t('Please enter your email and password'))
       return
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError(t('Password must be at least 6 characters'))
       return
     }
     if (mode === 'signup' && confirm !== password) {
-      setError('Passwords do not match')
+      setError(t('Passwords do not match'))
       return
     }
 
@@ -109,11 +112,11 @@ export default function AuthPage() {
           : data.user?.identities?.length === 0
         if (exists) {
           setMode('login'); setConfirm('')
-          setError('This email already has an account. Sign in below, or tap "Forgot password?"')
+          setError(t('This email already has an account. Sign in below, or tap “Forgot password?”'))
         } else if (error) {
           setError(error.message)
         } else {
-          setSuccess('Check your email for a confirmation link!')
+          setSuccess(t('Check your email for a confirmation link!'))
         }
       } else {
         // A child types a username; `loginEmail` turns it into their account's address (core/childLogin.ts).
@@ -121,7 +124,7 @@ export default function AuthPage() {
         if (error) {
           setError(
             error.message.includes('Invalid login')
-              ? 'Incorrect email, username or password'
+              ? t('Incorrect email, username or password')
               : error.message
           )
         } else {
@@ -137,7 +140,7 @@ export default function AuthPage() {
     } catch {
       // A genuine network failure (offline / Supabase unreachable) throws rather than
       // returning { error } — without this the spinner would hang forever.
-      setError("Couldn't connect — check your connection and try again")
+      setError(t('Couldn’t connect — check your connection and try again'))
     } finally {
       setLoading(false)
     }
@@ -150,7 +153,7 @@ export default function AuthPage() {
       if (error) { setError(error.message); setLoading(false) }
       // On success the browser navigates to Google — leave loading true.
     } catch {
-      setError("Couldn't connect — check your connection and try again")
+      setError(t('Couldn’t connect — check your connection and try again'))
       setLoading(false)
     }
   }
@@ -161,14 +164,14 @@ export default function AuthPage() {
    * and it is worse on this control, because it needs no password to probe with.
    */
   async function forgotPassword() {
-    if (!email.trim()) { setError('Enter your email address first, then tap this again'); return }
+    if (!email.trim()) { setError(t('Enter your email address first, then tap this again')); return }
     // A child's account has no mailbox; only the adult who set their login can change the password.
-    if (!email.includes('@')) { setError('Children: ask your parent or teacher to set a new password for you.'); return }
+    if (!email.includes('@')) { setError(t('Children: ask your parent or teacher to set a new password for you.')); return }
     setLoading(true); reset()
     try {
       await sendPasswordReset(email.trim(), `${window.location.origin}/auth/set-password`)
     } catch { /* fall through to the same line: a thrown network error must not confirm the address either */ }
-    setSuccess('If that email has an account, a reset link is on its way.')
+    setSuccess(t('If that email has an account, a reset link is on its way.'))
     setLoading(false)
   }
 
@@ -189,29 +192,36 @@ export default function AuthPage() {
             display: 'inline-block', background: 'var(--milo-orange-soft)', color: C.ink,
             borderRadius: 999, padding: '6px 14px', fontSize: 12, fontWeight: 800,
             letterSpacing: 0.3, textTransform: 'uppercase',
-          }}>Adaptive math · grades 3 to 8</span>
+          }}>{t('Adaptive math · grades 3 to 8')}</span>
           <h2 style={{
             fontSize: 38, lineHeight: 1.15, fontWeight: 900, color: C.ink,
             margin: '18px 0 14px', fontFamily: 'var(--font-display)', maxWidth: 520,
           }}>
-            Quiet insight into how your child actually learns.
+            {t('Quiet insight into how your child actually learns.')}
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: C.ink2, margin: 0, maxWidth: 480 }}>
-            No vanity streaks or frantic countdowns. We track mathematical intuition step by step
-            and report the real milestones straight to you.
+            {t('No vanity streaks or frantic countdowns. We track mathematical intuition step by step and report the real milestones straight to you.')}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 26 }}>
-            {['Curriculum aligned UK & US', 'Private by default — no public profiles'].map(t => (
-              <span key={t} style={{
+            {[t('Curriculum aligned UK & US'), t('Private by default — no public profiles')].map(chip => (
+              <span key={chip} style={{
                 background: C.card, border: `1.5px solid ${C.edge}`, borderRadius: 999,
                 padding: '8px 14px', fontSize: 12.5, fontWeight: 700, color: C.ink2,
-              }}>{t}</span>
+              }}>{chip}</span>
             ))}
           </div>
         </aside>
 
         {/* The form half */}
         <div>
+          {/* English or Spanish (founder, 2026-09-22). The same device setting as the parent dashboard's Account → Language. */}
+          <div role="group" aria-label="Language · Idioma" style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 14 }}>
+            {([['en', 'English'], ['es', 'Español']] as const).map(([l, label]) => (
+              <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => { saveLang(l); reset() }}
+                style={{ padding: '6px 16px', minHeight: 44, borderRadius: 999, border: '2px solid', borderColor: lang === l ? C.accent : C.edge,
+                  background: lang === l ? 'var(--milo-orange-soft)' : C.card, color: C.ink, fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>{label}</button>
+            ))}
+          </div>
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <Image
@@ -229,7 +239,7 @@ export default function AuthPage() {
               fontFamily: 'var(--font-display)',
             }}>AdaptiveLearn</h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
-              Adaptive math for grades 3 to 8
+              {t('Adaptive math for grades 3 to 8')}
             </p>
           </div>
 
@@ -266,7 +276,7 @@ export default function AuthPage() {
                     transition: 'all 0.15s',
                   }}
                 >
-                  {m === 'login' ? 'Sign in' : 'Create account'}
+                  {m === 'login' ? t('Sign in') : t('Create account')}
                 </button>
               ))}
             </div>
@@ -290,12 +300,12 @@ export default function AuthPage() {
             {/* Email input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <label htmlFor="auth-email" style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>
-                {mode === 'login' ? 'Email or username' : 'Email address'}
+                {mode === 'login' ? t('Email or username') : t('Email address')}
               </label>
               <input
                 id="auth-email"
                 type={mode === 'login' ? 'text' : 'email'}
-                placeholder={mode === 'login' ? 'you@example.com or username' : 'you@example.com'}
+                placeholder={mode === 'login' ? t('you@example.com or username') : 'you@example.com'}
                 autoCapitalize="none"
                 spellCheck={false}
                 value={email}
@@ -312,7 +322,7 @@ export default function AuthPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
                 <label htmlFor="auth-password" style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>
-                  Password
+                  {t('Password')}
                 </label>
                 {mode === 'login' && (
                   <button
@@ -329,12 +339,12 @@ export default function AuthPage() {
                       fontSize: 12.5, fontWeight: 700, color: C.accent,
                       cursor: loading ? 'wait' : 'pointer', textDecoration: 'underline',
                     }}
-                  >Forgot password?</button>
+                  >{t('Forgot password?')}</button>
                 )}
               </div>
               <PasswordInput
                 id="auth-password"
-                placeholder={mode === 'signup' ? 'At least 6 characters' : '••••••••'}
+                placeholder={mode === 'signup' ? t('At least 6 characters') : '••••••••'}
                 value={password}
                 onChange={e => { setPassword(e.target.value); reset() }}
                 onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
@@ -349,16 +359,16 @@ export default function AuthPage() {
             {mode === 'signup' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label htmlFor="auth-confirm" style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>
-                  Confirm password
+                  {t('Confirm password')}
                 </label>
                 <PasswordInput
                   id="auth-confirm"
-                  placeholder="Type it again"
+                  placeholder={t('Type it again')}
                   value={confirm}
                   onChange={e => { setConfirm(e.target.value); reset() }}
                   onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
                   autoComplete="new-password"
-                  aria-label="Confirm password"
+                  aria-label={t('Confirm password')}
                   onFocus={e => { e.target.style.borderColor = C.accent }}
                   onBlur={e => { e.target.style.borderColor = C.edge }}
                 />
@@ -368,7 +378,7 @@ export default function AuthPage() {
             {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
                 adult commits rather than after. This is the consent record — without it we cannot show
                 that anyone was told what they were agreeing to. */}
-            <ConsentLine />
+            <ConsentLine lang={lang} />
             {/* Email auth button */}
             <button
               onClick={handleEmailAuth}
@@ -386,7 +396,7 @@ export default function AuthPage() {
               onMouseEnter={e => { if (!loading) e.currentTarget.style.background = C.hover }}
               onMouseLeave={e => { if (!loading) e.currentTarget.style.background = C.accent }}
             >
-              {loading ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}
+              {loading ? t('Please wait…') : mode === 'login' ? t('Sign in') : t('Create account')}
             </button>
 
             {/* Divider */}
@@ -395,7 +405,7 @@ export default function AuthPage() {
               color: C.ink3, fontSize: 13,
             }}>
               <div style={{ flex: 1, height: 1, background: C.edge }} />
-              or
+              {t('or')}
               <div style={{ flex: 1, height: 1, background: C.edge }} />
             </div>
 
@@ -420,11 +430,11 @@ export default function AuthPage() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Continue with Google
+              {t('Continue with Google')}
             </button>
 
             <p style={{ textAlign: 'center', fontSize: 12, color: C.ink3, margin: 0 }}>
-              Your child&apos;s progress is saved securely to your account
+              {t('Your child’s progress is saved securely to your account')}
             </p>
           </div>
 

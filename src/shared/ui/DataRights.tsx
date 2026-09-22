@@ -17,6 +17,7 @@
  */
 import React from 'react'
 import { getLearnerExportExtras, type ExportExtras } from '@/data/repositories'
+import { useT } from '@/features/dashboard/i18n'
 
 export interface ExportBundle {
   learner: unknown
@@ -85,6 +86,7 @@ export function DataRights({ name, learnerId, bundle, children }: {
   bundle: ExportBundle
   children?: React.ReactNode
 }) {
+  const t = useT()
   const [done, setDone] = React.useState(false)
   const [busy, setBusy] = React.useState(false)
 
@@ -112,13 +114,13 @@ export function DataRights({ name, learnerId, bundle, children }: {
       background: 'rgba(255,255,255,.6)', border: '2px solid rgba(61,37,22,.12)',
     }}>
       <h3 style={{ margin: '0 0 4px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>
-        {name}&apos;s data
+        {t('{name}’s data', { name })}
       </h3>
       <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        You can take a copy of everything Milo has stored, or delete it for good. Deleting cannot be undone.
+        {t('You can take a copy of everything Milo has stored, or delete it for good. Deleting cannot be undone.')}
       </p>
       <button onClick={download} disabled={busy} style={btn}>
-        {busy ? '… Gathering' : done ? '✓ Downloaded' : '⬇ Download a copy'}
+        {busy ? `… ${t('Gathering')}` : done ? `✓ ${t('Downloaded')}` : `⬇ ${t('Download a copy')}`}
       </button>
       {children}
     </section>

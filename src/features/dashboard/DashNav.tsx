@@ -6,12 +6,14 @@
  */
 import Link from 'next/link'
 import { useRef } from 'react'
+import { useT } from './i18n'
 
 export interface NavItem { label: string; href: string; on: boolean; tour?: string }
 
 export function DashNav({ items, reminders, onBell, onSignOut }: {
   items: NavItem[]; reminders: number; onBell: () => void; onSignOut: () => void
 }) {
+  const t = useT()
   const drawer = useRef<HTMLDialogElement>(null)
   const close = () => drawer.current?.close()
   const links = (inDrawer: boolean) => <>
@@ -20,26 +22,26 @@ export function DashNav({ items, reminders, onBell, onSignOut }: {
         data-tour={inDrawer ? undefined : i.tour} onClick={inDrawer ? close : undefined}>{i.label}</Link>
     ))}
     <button type="button" data-tour={inDrawer ? undefined : 'bell'} onClick={() => { close(); onBell() }}>
-      <Bell /> Reminders {reminders > 0 && <span className="dash-count">{reminders}</span>}
+      <Bell /> {t('Reminders')} {reminders > 0 && <span className="dash-count">{reminders}</span>}
     </button>
-    <button type="button" onClick={onSignOut} className="home-nav-end">Sign out</button>
+    <button type="button" onClick={onSignOut} className="home-nav-end">{t('Sign out')}</button>
   </>
   return <>
-    <nav className="home-nav" aria-label="Dashboard">
+    <nav className="home-nav" aria-label={t('Dashboard')}>
       <span className="home-logo">🦊 AdaptiveLearn</span>
       {links(false)}
     </nav>
     <header className="dash-top">
-      <button type="button" aria-label="Open menu" aria-haspopup="dialog" data-tour="menu" onClick={() => drawer.current?.showModal()}><Burger /></button>
+      <button type="button" aria-label={t('Open menu')} aria-haspopup="dialog" data-tour="menu" onClick={() => drawer.current?.showModal()}><Burger /></button>
       <span className="dash-top-logo">🦊 AdaptiveLearn</span>
-      <button type="button" aria-label={`Reminders, ${reminders} waiting`} data-tour="bell" onClick={onBell}>
+      <button type="button" aria-label={t('Reminders, {n} waiting', { n: reminders })} data-tour="bell" onClick={onBell}>
         <Bell />{reminders > 0 && <span className="dash-count">{reminders}</span>}
       </button>
     </header>
-    <dialog ref={drawer} className="dash-drawer" aria-label="Menu" onClick={e => { if (e.target === e.currentTarget) close() }}>
-      <nav className="dash-drawer-panel" aria-label="Dashboard">
+    <dialog ref={drawer} className="dash-drawer" aria-label={t('Menu')} onClick={e => { if (e.target === e.currentTarget) close() }}>
+      <nav className="dash-drawer-panel" aria-label={t('Dashboard')}>
         <span className="home-logo">🦊 AdaptiveLearn
-          <button type="button" aria-label="Close menu" onClick={close} className="dash-x">×</button></span>
+          <button type="button" aria-label={t('Close menu')} onClick={close} className="dash-x">×</button></span>
         {links(true)}
       </nav>
     </dialog>
