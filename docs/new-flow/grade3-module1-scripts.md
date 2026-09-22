@@ -37,39 +37,39 @@ Module 1 only uses the units **2, 3, 4, 5 and 10**.
 **Screen 2 — Why we don't count one by one**
 - **Title:** Counting one by one is slow
 - **Picture:** The same cookies, with a small number appearing on each one: 1, 2, 3 … 12.
-- **Text:** You could count every cookie. That works, but it is slow, and it is easy to lose your place.
+- **Text:** You could count every cookie. That works. But it's slow, and it's easy to lose your place. Is there a faster way? Yes. Look at the plates.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
 - **Title:** The big idea
 - **Picture:** The same 4 plates, sitting still.
-- **Text:** When every group has the same number, count by groups. Multiplication means equal groups.
+- **Text:** When every group has the same number, you can count a whole group at a time.
 - **Button:** Next
 - **Note:** This sentence should appear again later if they get a practice problem wrong.
 
 **Screen 4 — Find the groups**
 - **Title:** How many groups? How many in each?
 - **Picture:** A ring is drawn around each plate, one at a time. Label under the rings: "4 groups". One plate glows with the label "3 in each".
-- **Text:** There are 4 plates, so there are 4 groups. Each plate has 3 cookies, so there are 3 in each group.
+- **Text:** Look. Each plate is a group. There are 4 plates, so there are 4 groups. And each plate has 3 cookies. That's 3 in each group.
 - **Button:** Next
 - **Motion:** The rings should appear one plate at a time. Do not skip this.
 
 **Screen 5 — Count by groups**
 - **Title:** Count by 3s
 - **Picture:** The plates light up one at a time. A running total appears above each: 3, 6, 9, 12.
-- **Text:** Count one whole plate at a time: 3, 6, 9, 12.
+- **Text:** Now count one whole plate at a time. 3, 6, 9, 12. So there are 12 cookies.
 - **Button:** Next
 
 **Screen 6 — Write it down**
 - **Title:** 4 groups of 3
 - **Picture:** Under the plates: **4 × 3 = 12**. An arrow from 4 says "groups". An arrow from 3 says "in each".
-- **Text:** 4 groups of 3 make 12. We write 4 × 3 = 12. The first number is how many groups. The second number is how many in each group.
+- **Text:** 4 groups of 3 make 12. We write that as 4 × 3 = 12. The first number is the groups. The second is how many in each.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 4 × 3 = 7 with an X. Next to it, the right card: 4 × 3 = 12 with a check.
-- **Text:** Don't add the numbers. 4 + 3 = 7 is one plate of 3 and 4 more cookies. 4 × 3 means 4 whole plates of 3.
+- **Text:** Here's the part people mix up. 4 × 3 does not mean ADD 4 and 3. That gives 7, just one plate and 4 more cookies. 4 × 3 is 4 whole plates of 3. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -119,7 +119,7 @@ Answers: 6 · 10 · 20 · 20 · 12
 **Screen 2 — Why rows help**
 - **Title:** A jumble is hard to count
 - **Picture:** On the left, the same 15 chairs in a messy pile. On the right, the neat rows.
-- **Text:** When things are jumbled, you have to count every one, and it is easy to miss some. Neat rows are easier.
+- **Text:** When chairs are jumbled, you have to count every one. And it's easy to miss some. What if they stand in neat rows? Then it's much faster.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
@@ -132,26 +132,26 @@ Answers: 6 · 10 · 20 · 20 · 12
 **Screen 4 — Count the rows**
 - **Title:** How many rows?
 - **Picture:** Each row lights up in turn, with 1, 2, 3 appearing at its left end.
-- **Text:** Rows go across. There are 3 rows.
+- **Text:** Look. Rows go across, from left to right. Count them. 1, 2, 3. There are 3 rows.
 - **Button:** Next
 - **Motion:** Light the rows one at a time. Do not skip this.
 
 **Screen 5 — Count one row**
 - **Title:** How many in a row?
 - **Picture:** Only the top row glows. Its chairs are numbered 1 to 5.
-- **Text:** Every row is the same, so count just one. Each row has 5 chairs.
+- **Text:** Every row is the same, so you only need to count one. 1, 2, 3, 4, 5. Each row has 5 chairs.
 - **Button:** Next
 
 **Screen 6 — Count by rows**
 - **Title:** 3 rows of 5
 - **Picture:** Row by row lights up with a running total: 5, 10, 15. Under the chairs: **3 × 5 = 15**.
-- **Text:** Count one whole row at a time: 5, 10, 15. 3 rows of 5 is 15. We write 3 × 5 = 15.
+- **Text:** Now count one whole row at a time. 5, 10, 15. 3 rows of 5 is 15. We write it as 3 × 5 = 15.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: rows of 5, 5 and 4 chairs (one chair missing) labelled 3 × 5, with an X. Next to it, the right card: three full rows of 5, with a check.
-- **Text:** Every row must have the same number. If one row is missing a chair, it is not 3 × 5 any more.
+- **Text:** Here's the part people mix up. If one row is missing a chair, it is NOT 3 × 5 any more. Every row must have the same number. Count each row to check. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -201,39 +201,39 @@ Answers: 12 · 10 · 20 · 25 · 16
 **Screen 2 — It looks different**
 - **Title:** It looks like a new problem
 - **Picture:** The same tray turned sideways: now 5 rows of 2 muffins.
-- **Text:** After turning, there are 5 rows of 2. It looks different. Did the number of muffins change?
+- **Text:** Turn the tray, and now there are 5 rows of 2. It looks different. So did the number of muffins change?
 - **Button:** Next
 
 **Screen 3 — The one big idea**
 - **Title:** The big idea
 - **Picture:** The tray, both ways, side by side.
-- **Text:** Turning the rows around does not change how many there are. 2 × 5 and 5 × 2 make the same total.
+- **Text:** Turning the rows around does not change how many there are, so 2 × 5 and 5 × 2 make the same total.
 - **Button:** Next
 - **Note:** This sentence should appear again later if they get a practice problem wrong.
 
 **Screen 4 — Count the first way**
 - **Title:** 2 rows of 5
 - **Picture:** The tray as it started. Rows light up: 5, 10. Label: **2 × 5 = 10**.
-- **Text:** Count by rows: 5, 10. 2 × 5 = 10.
+- **Text:** First, the tray as it started. 2 rows of 5. Count by rows. 5, 10. So 2 × 5 = 10.
 - **Button:** Next
 
 **Screen 5 — Turn it**
 - **Title:** Turn the tray
 - **Picture:** The tray slowly turns a quarter turn. No muffin is added or taken away.
-- **Text:** Watch the tray turn. Nothing falls off and nothing is added.
+- **Text:** Now watch the tray turn. Does any muffin fall off? No. Is any muffin added? No. Every muffin just moves to a new spot.
 - **Button:** Next
 - **Motion:** The turn should animate. Do not skip this.
 
 **Screen 6 — Count the new way**
 - **Title:** 5 rows of 2
 - **Picture:** The turned tray. Rows light up: 2, 4, 6, 8, 10. Label: **5 × 2 = 10**.
-- **Text:** Count by rows: 2, 4, 6, 8, 10. 5 × 2 = 10. Same muffins, same total.
+- **Text:** Now count the turned tray by rows. 2, 4, 6, 8, 10. So 5 × 2 = 10. Same muffins, same total.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 5 − 2 = 2 − 5 with an X. Next to it, the right card: 5 × 2 = 2 × 5 with a check.
-- **Text:** This turn-around trick works for times. It does not work for take away. 5 − 2 is not the same as 2 − 5.
+- **Text:** Here's the part people mix up. This turn-around trick works for times. It does NOT work for take away. 5 − 2 leaves 3. But 2 − 5 does not leave 3, so they are not the same. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -283,39 +283,39 @@ Answers: 8 · 30 · 20 · 2 · 12
 **Screen 2 — Why we don't count one by one**
 - **Title:** One by one is slow
 - **Picture:** A number appears on every single sock: 1, 2, 3 … 12.
-- **Text:** You could count every sock. But socks come in pairs, so there is a faster way.
+- **Text:** You could count every sock, one at a time. But socks come in pairs. Is there a faster way? Yes.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
 - **Title:** The big idea
 - **Picture:** The 6 pairs, sitting still.
-- **Text:** When the groups are the same size, jump by that size. Each jump counts a whole group.
+- **Text:** When the groups are the same size, jump by that size, and each jump counts a whole group.
 - **Button:** Next
 - **Note:** This sentence should appear again later if they get a practice problem wrong.
 
 **Screen 4 — Jump by 2s**
 - **Title:** Jump by 2s
 - **Picture:** A number line from 0 to 12 under the socks. One jump of 2 for each pair, landing on 2, 4, 6, 8, 10, 12.
-- **Text:** Each pair is a jump of 2: 2, 4, 6, 8, 10, 12.
+- **Text:** Look at the number line. Each pair is one jump of 2. 2, 4, 6, 8, 10, 12.
 - **Button:** Next
 - **Motion:** Each jump should animate as its pair of socks lights up. Do not skip this.
 
 **Screen 5 — Count the jumps**
 - **Title:** How many jumps?
 - **Picture:** The same jumps, numbered 1 to 6 above the arcs. Label: **6 × 2 = 12**.
-- **Text:** We made 6 jumps of 2, and we landed on 12. 6 × 2 = 12.
+- **Text:** How many jumps did we make? Count them. 6 jumps of 2. And we landed on 12. So 6 × 2 = 12.
 - **Button:** Next
 
 **Screen 6 — 5s and 10s work the same way**
 - **Title:** Hands and bundles
 - **Picture:** Top: 3 hands, with 5, 10, 15 appearing. Bottom: 4 bundles of 10 straws, with 10, 20, 30, 40 appearing.
-- **Text:** Hands count by 5s: 5, 10, 15. Bundles of ten count by 10s: 10, 20, 30, 40.
+- **Text:** 5s work the same way. Each hand is a jump of 5. 5, 10, 15. And bundles of ten jump by 10s. 10, 20, 30, 40.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 4 hands → 5, 10, 15, with an X. Next to it, the right card: 4 hands → 5, 10, 15, 20, with a check.
-- **Text:** Don't stop too early. 4 hands means 4 jumps. Hold up a finger for each jump.
+- **Text:** Here's the part people mix up. 4 hands means 4 jumps. Don't STOP at 15. Hold up a finger for each jump. 5, 10, 15, 20. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -365,39 +365,39 @@ Answers: 8 · 50 · 40 · 18 · 30
 **Screen 2 — Why this feels harder**
 - **Title:** 3s are new
 - **Picture:** The tricycles, with a question mark above the wheels.
-- **Text:** You already know how to count by 2s, 5s and 10s. Counting by 3s is new, so it doesn't come as easily yet.
+- **Text:** You already count by 2s, 5s and 10s. Counting by 3s is new, so it doesn't come as easily yet. Can you do it the same way? Yes.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
 - **Title:** The big idea
 - **Picture:** The 4 tricycles, sitting still.
-- **Text:** 3s and 4s work just like 2s and 5s. Add the same number every time you jump.
+- **Text:** 3s and 4s work just like 2s and 5s, so add the same number every time you jump.
 - **Button:** Next
 - **Note:** This sentence should appear again later if they get a practice problem wrong.
 
 **Screen 4 — Jump by 3s**
 - **Title:** Jump by 3s
 - **Picture:** A number line from 0 to 12. One jump of 3 for each tricycle, landing on 3, 6, 9, 12.
-- **Text:** Each tricycle is a jump of 3: 3, 6, 9, 12. 4 jumps of 3 make 12.
+- **Text:** Each tricycle has 3 wheels, so each is a jump of 3. Three, six, nine, twelve. 4 jumps of 3 make 12.
 - **Button:** Next
 - **Motion:** Each jump should animate as its tricycle lights up. Do not skip this.
 
 **Screen 5 — Jump by 4s**
 - **Title:** Now cars
 - **Picture:** 3 cars. A number line from 0 to 12 with jumps of 4, landing on 4, 8, 12.
-- **Text:** A car has 4 wheels. Jump by 4s: 4, 8, 12. 3 jumps of 4 make 12.
+- **Text:** A car has 4 wheels. Jump by 4s. Four, eight, twelve. 3 jumps of 4 make 12.
 - **Button:** Next
 
 **Screen 6 — Write them down**
 - **Title:** Two facts
 - **Picture:** Tricycles with **4 × 3 = 12**. Cars with **3 × 4 = 12**.
-- **Text:** 4 tricycles have 12 wheels: 4 × 3 = 12. 3 cars have 12 wheels: 3 × 4 = 12.
+- **Text:** Now write them down. 4 tricycles have 12 wheels, so 4 × 3 = 12. 3 cars have 12 wheels, so 3 × 4 = 12.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 3, 4, 5, 6 with an X. Next to it, the right card: 3, 6, 9, 12 with a check.
-- **Text:** Don't add 1 each time. Every jump adds a whole group of 3.
+- **Text:** Here's the part people mix up. Counting by 3s does not mean ADD 1 each time. That gives 3, 4, 5, 6. Every jump adds a whole group of 3, so it goes 3, 6, 9, 12. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -447,39 +447,39 @@ Answers: 9 · 16 · 24 · 21 · 20
 **Screen 2 — What fair means**
 - **Title:** Fair means the same
 - **Picture:** A share that is not fair: plates with 6, 4 and 2 apples, and a sad face on the last friend.
-- **Text:** If one friend gets 6 and another gets 2, that isn't fair. Every friend must get the same number.
+- **Text:** What does fair mean here? If one friend gets 6 and another gets 2, that isn't fair. Every friend must get the same number.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
 - **Title:** The big idea
 - **Picture:** The basket of 12 and the 3 empty plates, sitting still.
-- **Text:** Division starts with the total and shares it into equal groups. Here we know how many groups, and we find how many in each.
+- **Text:** Division shares a total into equal groups, and here we know how many groups, so we find how many in each.
 - **Button:** Next
 - **Note:** This sentence should appear again later if they get a practice problem wrong.
 
 **Screen 4 — Deal them out**
 - **Title:** One for you, one for you …
 - **Picture:** Apples move from the basket, one to each plate in turn.
-- **Text:** Give one apple to each friend. Then go round again.
+- **Text:** Give one apple to each friend. That is one round. Then go round again. Now each friend has 2.
 - **Button:** Next
 - **Motion:** The apples should move one at a time, round and round. Do not skip this.
 
 **Screen 5 — Until none are left**
 - **Title:** Keep going
 - **Picture:** The basket is empty. Each plate has 4 apples.
-- **Text:** Keep going until the basket is empty. Now each friend has 4 apples. It is fair.
+- **Text:** Keep going, round and round, until the basket is empty. Now count the first friend's apples. One, two, three, four. Each friend has 4 apples, and it is fair.
 - **Button:** Next
 
 **Screen 6 — Write it down**
 - **Title:** 12 shared by 3
 - **Picture:** Under the plates: **12 ÷ 3 = 4**. An arrow from 12 says "total". An arrow from 3 says "friends". An arrow from 4 says "each".
-- **Text:** 12 shared by 3 friends is 4 each. We write 12 ÷ 3 = 4. The first number is the total.
+- **Text:** 12 shared by 3 friends is 4 each. We write 12 ÷ 3 = 4. The first number is the total, then the friends, then how many each.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 3 ÷ 12 with an X. Next to it, the right card: 12 ÷ 3 = 4 with a check.
-- **Text:** The first number is the total. Don't flip it to 3 ÷ 12. You are sharing 12 apples, not 3.
+- **Text:** Here's the part people mix up. Don't FLIP it to 3 ÷ 12. You are sharing 12 apples, not 3, so the total goes first. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -529,7 +529,7 @@ Answers: 4 · 5 · 3 · 6 · 4
 **Screen 2 — A different question**
 - **Title:** This time it's different
 - **Picture:** One bag holding 3 apples, and question marks where more bags might go.
-- **Text:** When we shared apples, we knew how many friends. This time we know how many go in each bag. We don't know how many bags.
+- **Text:** When we shared apples, we knew how many friends. This time we know how many go in each bag. So what is missing? The number of bags.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
@@ -542,26 +542,26 @@ Answers: 4 · 5 · 3 · 6 · 4
 **Screen 4 — Make one group**
 - **Title:** Fill one bag
 - **Picture:** A ring is drawn around 3 apples, and they drop into a bag.
-- **Text:** Take 3 apples and put them in a bag. That is one bag.
+- **Text:** Take 3 apples and put them in a bag. That is one bag. 9 apples are left.
 - **Button:** Next
 - **Motion:** The ring and the drop should animate. Do not skip this.
 
 **Screen 5 — Until none are left**
 - **Title:** Keep filling
 - **Picture:** Rings around 3 more, 3 more, 3 more, until the table is empty. 4 full bags.
-- **Text:** Keep making bags of 3 until no apples are left.
+- **Text:** Keep making bags of 3. Two bags, three bags, four bags. Now no apples are left.
 - **Button:** Next
 
 **Screen 6 — Count the bags**
 - **Title:** How many bags?
 - **Picture:** The 4 bags numbered 1 to 4. Under them: **12 ÷ 3 = 4**.
-- **Text:** We filled 4 bags. 12 ÷ 3 = 4, because 4 bags of 3 make 12.
+- **Text:** Count the bags. We filled 4 bags. We write 12 ÷ 3 = 4. It works, because 4 bags of 3 make 12.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: "3 bags" with an X. Next to it, the right card: "4 bags" with a check.
-- **Text:** Don't answer with the number in each bag. We already know that is 3. The question is how many bags.
+- **Text:** Here's the part people mix up. The answer is NOT the number in each bag. We already know that is 3. The question is how many bags, and that is 4. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
@@ -611,39 +611,39 @@ Answers: 5 · 2 · 3 · 6 · 5
 **Screen 2 — One number is missing**
 - **Title:** A number is missing
 - **Picture:** The sentence **4 × ? = 20**, with a glowing box where the question mark is.
-- **Text:** We know there are 4 rows. We know there are 20 chairs. The number in each row is missing.
+- **Text:** We know there are 4 rows. We know there are 20 chairs. So which number is missing? The number in each row.
 - **Button:** Next
 
 **Screen 3 — The one big idea**
 - **Title:** The big idea
 - **Picture:** The 4 empty rows and 20 chairs, sitting still.
-- **Text:** Multiplication and division are partners. A times fact you know can find a missing number.
+- **Text:** Multiplication and division are partners, so a times fact you know can find a missing number.
 - **Button:** Next
 - **Note:** This sentence should appear again later if they get a practice problem wrong.
 
 **Screen 4 — Try the fact**
 - **Title:** Count by 4s
 - **Picture:** A number line from 0 to 20 with jumps of 4, landing on 4, 8, 12, 16, 20. The jumps are numbered 1 to 5.
-- **Text:** Count by 4s until you reach 20: 4, 8, 12, 16, 20. That is 5 jumps.
+- **Text:** Count by 4s until you reach 20. Four, eight, twelve, sixteen, twenty. That is 5 jumps.
 - **Button:** Next
 - **Motion:** Each jump should animate. Do not skip this.
 
 **Screen 5 — Fill the gap**
 - **Title:** The missing number is 5
 - **Picture:** The chairs fill the 4 rows, 5 in each row. The sentence becomes **4 × 5 = 20**.
-- **Text:** 4 rows of 5 make 20. So each row has 5 chairs.
+- **Text:** Put the chairs in 4 rows, 5 in each row. 4 rows of 5 make 20. So 4 × 5 = 20, and the missing number is 5.
 - **Button:** Next
 
 **Screen 6 — Partner facts**
 - **Title:** One picture, four facts
 - **Picture:** A triangle with 20 at the top and 4 and 5 at the bottom corners. Beside it: 4 × 5 = 20, 5 × 4 = 20, 20 ÷ 4 = 5, 20 ÷ 5 = 4.
-- **Text:** The same three numbers make four facts. If 4 × 5 = 20, then 20 ÷ 4 = 5.
+- **Text:** The same three numbers, 4, 5 and 20, make four facts. 4 × 5 = 20, and 5 × 4 = 20. 20 ÷ 4 = 5, and 20 ÷ 5 = 4.
 - **Button:** Next
 
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 5 ÷ 20 = 4 with an X. Next to it, the right card: 20 ÷ 5 = 4 with a check.
-- **Text:** The biggest number is the total. It is the answer when you multiply, and it comes first when you divide.
+- **Text:** Here's the part people mix up. When you divide, don't put the 20 LAST. The biggest number is the total, and it comes first, like 20 ÷ 5 = 4. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**

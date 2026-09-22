@@ -28,19 +28,20 @@ export const BAND_VOICE: Partial<Record<string, string>> = { '3-5': 'XjGYkUkzth8
 export const JOSH = 'nzFihrBIvB34imQBuxub'
 
 /**
- * Lessons that speak in a voice of their own, whatever their grade would give them. A lesson joins this map once its
- * clips in that voice are merged, never before, or it plays browser speech. Founder, 2026-09-22: g5m1-t1 and t2 move
- * from Stevie to Josh (their Stevie clips stay on disk, so moving them back is one line).
+ * Modules rewritten to the founder's explanation documents and voiced in Josh (founder, 2026-09-22: every module moves,
+ * one at a time). A module joins in the same PR that brings its Josh clips — its lines are queued for Kaggle from the
+ * moment it is listed, and the PR is not merged until they are rendered, or it plays browser speech.
  */
-const LESSON_VOICE: Record<string, string> = { 'g5m1-t1': JOSH, 'g5m1-t2': JOSH }
+export const JOSH_MODULES = new Set(['g5m1', 'g3m1', 'g3m2', 'g3m3', 'g3m4', 'g3m5', 'g3m6'])
 
 /**
- * A new-flow lesson's voice: its LESSON_VOICE row if it has one, else Stevie for Grades 6–8 and Teddy for Grades 3–5. The
- * SAME function scripts/lesson-voice-corpus.mts cuts the render corpus on — the lesson asks exactly the voice its clips
- * were rendered in.
+ * A new-flow lesson's voice: Josh for a JOSH_MODULES module, else Stevie for Grades 6–8 and Teddy for Grades 3–5. The SAME
+ * function scripts/lesson-voice-corpus.mts cuts the render corpus on — the lesson asks exactly the voice its clips were
+ * rendered in. Teddy's and Stevie's clips stay on disk, so moving a module back is one line.
  */
 export const lessonVoice = (lessonId: string): string =>
-  LESSON_VOICE[lessonId] ?? (Number(lessonId.match(/^g(\d)/)?.[1] ?? 3) <= 5 ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT')
+  JOSH_MODULES.has(lessonId.split('-')[0]) ? JOSH
+    : Number(lessonId.match(/^g(\d)/)?.[1] ?? 3) <= 5 ? 'XjGYkUkzth8BPs29fmcV' : 'IvUJKFyjVb5hItY9dJAT'
 
 export type VoiceId = (typeof VOICES)[number]['id'] | 'device'
 
