@@ -4,7 +4,7 @@
  * already said are up; the current beat's marks are drawn as she says them, each at its word, one after another:
  * a line is traced over its own length, writing goes on letter by letter (outline, then chalk fills it), a wash fades in.
  */
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, type CSSProperties } from 'react'
 import { CHALK, wordMs, type ChalkMark } from './chalk'
 
 /** `still`: no drawing, everything already up (the preview page). */
@@ -80,5 +80,12 @@ export function Chalkboard({ marks, says, shown, label, still }: { marks: ChalkM
  *  face misdraws two of them on a board: its ÷ has dots so small it reads as + ("3,000 + 1,000 = 3"), and its > is
  *  a curve that reads as ) ("207 ) 184"). Both are wrong statements on a maths board, not just ugly ones. */
 const SIGNS = new Set(['÷', '×', '>', '<'])
-const chalkLetters = (t: string) =>
-  [...t].map((ch, i) => <tspan key={i} data-c="" style={SIGNS.has(ch) ? { fontFamily: 'var(--font-display)' } : undefined}>{ch}</tspan>)
+/** A variable x — an "x" with no letter either side ("3x", "x + 2", not "box") — is drawn in an italic serif, the way a
+ *  textbook prints it: in the chalk face a lone x and the × sign are near twins, and "3x" beside "3 × 8" is a real misread
+ *  (found writing g6m5, 2026-09-22). The x inside a word stays in the chalk face. */
+const VARIABLE_X: CSSProperties = { fontFamily: 'Georgia, "Times New Roman", serif', fontStyle: 'italic', fontWeight: 400 }
+const isVariableX = (cs: string[], i: number) => cs[i] === 'x' && !/\p{L}/u.test(cs[i - 1] ?? '') && !/\p{L}/u.test(cs[i + 1] ?? '')
+const chalkLetters = (t: string) => {
+  const cs = [...t]
+  return cs.map((ch, i) => <tspan key={i} data-c="" style={SIGNS.has(ch) ? { fontFamily: 'var(--font-display)' } : isVariableX(cs, i) ? VARIABLE_X : undefined}>{ch}</tspan>)
+}
