@@ -4,8 +4,10 @@
 > This document must not render as a live page while any `[PLACEHOLDER — ...]` remains unresolved.
 > Placeholders are to be filled by Radlor Inc., not by an AI assistant.
 
+> **DORMANT — Milo is free during the soft launch (decision of 22 Sep 2026).** Nothing is charged, so there is nothing to renew, cancel or refund, and this policy must **not** be published while that is true. Publishing a refund policy for a product that takes no money describes a service we do not offer. It is kept here, finished, so that it is ready the day paid plans launch — and on that day it must be published *before* the first payment is taken, not after. The price placeholders below stay empty until then.
+
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** [PLACEHOLDER — product name as it appears to customers]
+**Product:** Milo
 **Effective date:** [PLACEHOLDER — effective date]
 **Last updated:** [PLACEHOLDER — last updated date]
 
@@ -13,7 +15,7 @@
 
 ## 1. What this policy covers
 
-This policy explains how subscriptions to [PLACEHOLDER — product name] are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, [PLACEHOLDER — state which document controls].
+This policy explains how subscriptions to Milo are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, [PLACEHOLDER — state which document controls].
 
 ## 2. Our plans
 
@@ -34,7 +36,7 @@ Prices are in US dollars and exclude any applicable sales tax. Sales tax, where 
 
 - Your payment method is charged on the day you subscribe, and then on the same day of each subsequent billing period.
 - The renewal amount is the price shown in the table above, unless we have notified you of a price change in advance as described in Section 6.
-- We will send you a reminder email before each annual renewal, at least [PLACEHOLDER — number of days; several state statutes require a reminder window for annual terms] days before the renewal date.
+- We will send you a reminder email before each annual renewal, at least 30 days before the renewal date.
 - You can cancel at any time before the renewal date to avoid the next charge.
 
 We will send you an acknowledgement after you subscribe that sets out the terms of your subscription, the cancellation policy, and how to cancel. You can retain that acknowledgement for your records.
@@ -45,9 +47,9 @@ You can cancel your subscription at any time, and cancelling is designed to take
 
 **Online, in the app:** Sign in → [PLACEHOLDER — exact in-app path, e.g. Account → Subscription → Cancel subscription]. The cancellation takes effect immediately upon confirmation and you will receive a confirmation email.
 
-**By email:** Write to [PLACEHOLDER — support email address]. We will action the cancellation within [PLACEHOLDER — number of business days] business days of receipt and confirm by email.
+**By email:** Write to support@radlor.com. We will action the cancellation within [PLACEHOLDER — number of business days] business days of receipt and confirm by email.
 
-**By post:** [PLACEHOLDER — company mailing address].
+**By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
 You do not need to call us, chat with an agent, or explain why you are cancelling in order to cancel.
 
@@ -55,38 +57,32 @@ You do not need to call us, chat with an agent, or explain why you are cancellin
 
 - Your subscription remains active until the end of the billing period you have already paid for.
 - You will not be charged again.
-- After the period ends, your account moves to [PLACEHOLDER — describe the post-cancellation state: closed, or limited free access].
+- After the period ends, your account is closed.
 - Your child's learning data is handled as described in Section 8.
 
 ## 5. Refunds
 
-[PLACEHOLDER — Radlor Inc. must choose a refund stance here and state it plainly. Two workable options are set out below; delete the one not adopted. An attorney should confirm the chosen stance against the laws of the states where customers are located, and against the rules of the app stores if the product is ever distributed through them.]
+**Satisfaction window — 14 days.** (Stance adopted by Radlor Inc. on 22 September 2026: a satisfaction window rather than a no-refund default. The attorney should confirm it against the laws of the states where customers are located, and against app-store rules if the product is ever distributed through them.)
 
-**Option A — Satisfaction window.**
-If you are not satisfied, you may request a full refund within [PLACEHOLDER — number] days of your first payment on a new subscription. Renewal payments are refundable within [PLACEHOLDER — number] days of the renewal charge if the account has not been used since that charge. Request a refund by emailing [PLACEHOLDER — support email address] from the email address on the account. Approved refunds are returned to the original payment method within [PLACEHOLDER — number] business days.
+If you are not satisfied, you may request a full refund within **14 days** of your first payment on a new subscription. Renewal payments are refundable within **14 days** of the renewal charge if the account has not been used since that charge. Request a refund by emailing support@radlor.com from the email address on the account. Approved refunds are returned to the original payment method within **10 business days**.
 
-**Option B — No refunds after use, with exceptions.**
-Payments are non-refundable except where required by law, and except in the circumstances listed below, where we will refund you without requiring a reason:
-- You were charged after cancelling.
-- You were charged the wrong amount.
-- A technical fault on our side prevented your child from using the service for more than [PLACEHOLDER — number] consecutive days and we could not resolve it.
-- You are a resident of a state whose law gives you a cancellation or refund right that exceeds this policy. In that case, the law applies.
+You are also a resident of a state whose law may give you a cancellation or refund right that goes beyond this policy. Where it does, the law applies.
 
 ### Circumstances in which we will always refund
 
-Regardless of which option applies above:
+In every case:
 - **Withdrawal of parental consent.** If you withdraw your permission for us to collect your child's information, we close the account and refund the unused part of your subscription, calculated from the date we action the withdrawal to the end of the period you have paid for. You are never charged for exercising a privacy right.
 - **Duplicate charges** are refunded in full.
 - **Charges after a valid cancellation** are refunded in full.
-- **Unauthorised charges made by a child** — if a child completed a purchase without your permission, contact us at [PLACEHOLDER — support email address] and we will [PLACEHOLDER — state the remedy].
+- **Unauthorised charges made by a child** — if a child completed a purchase without your permission, contact us at support@radlor.com and we will [PLACEHOLDER — state the remedy].
 
 ## 6. Price changes
 
-If we change the price of your plan, we will tell you by email at least [PLACEHOLDER — number of days] days before the change takes effect, and the email will say clearly what the new price is, when it starts, and how to cancel if you do not want to continue. A price change never applies to a billing period you have already paid for.
+If we change the price of your plan, we will tell you by email at least 30 days before the change takes effect, and the email will say clearly what the new price is, when it starts, and how to cancel if you do not want to continue. A price change never applies to a billing period you have already paid for.
 
 ## 7. Failed payments
 
-If a renewal payment fails, we will try again over the following [PLACEHOLDER — number] days and email you. If payment still fails, your subscription will [PLACEHOLDER — state what happens: pause, downgrade, or close].
+If a renewal payment fails, we will try again over the following 7 days and email you. If payment still fails, your subscription is paused — your account stays open, but lessons are unavailable until payment succeeds or you cancel.
 
 ## 8. Your child's data after cancellation
 
@@ -94,9 +90,9 @@ Cancelling your subscription is not the same as deleting your child's data. If y
 
 ## 9. Contact
 
-[PLACEHOLDER — company legal name and mailing address]
-Email: [PLACEHOLDER — support email address]
-[PLACEHOLDER — telephone number, if one is offered; several state statutes and payment-network rules expect a contact method to be published]
+Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+Email: support@radlor.com
+We do not currently offer a telephone contact.
 
 ---
 

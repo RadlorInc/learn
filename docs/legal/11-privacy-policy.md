@@ -5,8 +5,10 @@
 >
 > **This draft assumes Path A**: the product collects a limited amount of information about each child, discloses it honestly, and obtains verifiable parental consent. Every statement below is written to be true of the product as described on 22 September 2026 — a child's first name or nickname, grade level, and learning progress. **Before publication, each factual statement must be checked against the running application.** Where the application does something this policy does not describe, the policy is wrong, not the application.
 
+> **Milo is free during the soft launch (decision of 22 Sep 2026).** While that is true, this policy must not claim to take payment. Before publishing: delete the billing row in Section 4 and the payment bullet in Section 6, and delete the words "including what happens to a subscription" in Section 5. Restore all three on the day paid plans launch. A policy describing billing we do not do is inaccurate in the same way as one hiding collection we do do — the direction of the error does not make it safe.
+
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** [PLACEHOLDER — product name as shown to customers]
+**Product:** Milo
 **Effective date:** [PLACEHOLDER — date]
 **Last updated:** [PLACEHOLDER — date]
 
@@ -26,12 +28,11 @@ This summary is here to be useful, not to replace what follows.
 
 ## 1. Who we are
 
-[PLACEHOLDER — Radlor Inc. full legal name]
-[PLACEHOLDER — mailing address]
-[PLACEHOLDER — contact email]
-[PLACEHOLDER — telephone number, if offered]
+Radlor Inc.
+254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+support@radlor.com
 
-We are the operator of [PLACEHOLDER — product name]. [PLACEHOLDER — if any other company operates any part of the service such that it collects information through it, COPPA requires that operator to be named here.]
+We are the operator of Milo. [PLACEHOLDER — if any other company operates any part of the service such that it collects information through it, COPPA requires that operator to be named here.]
 
 ## 2. Who this policy is for
 
@@ -75,10 +76,10 @@ At any time, you can:
 
 Using any of these is free. We will confirm that the request comes from you before we act on it — usually by sending a link to the email address on the account — and we will not demand a government ID or any sensitive document for a routine request.
 
-**How to ask:** [PLACEHOLDER — in-app path] · [PLACEHOLDER — email address] · [PLACEHOLDER — mailing address]
-**How long we take:** [PLACEHOLDER — number] days.
+**How to ask:** [PLACEHOLDER — in-app path] · support@radlor.com · 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+**How long we take:** 10 days.
 
-Full details, including what happens to a subscription if you withdraw consent, are on our Parent Rights page at [PLACEHOLDER — URL].
+Full details, including what happens to a subscription if you withdraw consent, are on our Parent Rights page at https://adaptivelearn.radlor.com/legal/parent-rights.
 
 ## 6. How we use information
 
@@ -104,7 +105,7 @@ We use what we collect only to:
 
 We do not sell information and we do not disclose a child's information to anyone for their own purposes.
 
-We do use service providers who process information on our instructions and for no purpose of their own — hosting, database, email delivery, and payment processing. The current list, and exactly what each one receives, is published at [PLACEHOLDER — URL of the subprocessors page].
+We do use service providers who process information on our instructions and for no purpose of their own — hosting, database, email delivery, and payment processing. The current list, and exactly what each one receives, is published at https://adaptivelearn.radlor.com/legal/subprocessors.
 
 We may also disclose information where we are legally required to — for example, in response to a valid legal process — or to protect the safety of a person. If we are ever required to do so in relation to a child, we will tell the parent unless the law forbids it.
 
@@ -112,7 +113,7 @@ If the company is ever sold or merged, information may transfer as part of that 
 
 ## 8. Cookies and similar storage
 
-We use only what the app needs to work: to keep you signed in, to remember settings, and to keep the service secure. We do not use advertising cookies and we do not allow cross-site tracking. The detailed list is in our Cookie and Tracking Notice at [PLACEHOLDER — URL].
+We use only what the app needs to work: to keep you signed in, to remember settings, and to keep the service secure. We do not use advertising cookies and we do not allow cross-site tracking. The detailed list is in our Cookie and Tracking Notice at https://adaptivelearn.radlor.com/legal/cookies.
 
 ## 9. How long we keep information
 
@@ -126,7 +127,7 @@ We keep a child's information only as long as we need it to provide the service,
 | Technical logs | [PLACEHOLDER — period] |
 | Backups | Expire on a rolling [PLACEHOLDER — period] cycle |
 
-If you ask us to delete your child's information, we delete it from our live systems straight away; copies in backups disappear when those backups expire, and we never restore a deleted child's record from a backup. Our full retention schedule is at [PLACEHOLDER — URL].
+If you ask us to delete your child's information, we delete it from our live systems straight away; copies in backups disappear when those backups expire, and we never restore a deleted child's record from a backup. Our full retention schedule is at https://adaptivelearn.radlor.com/legal/retention.
 
 ## 10. How we protect information
 
@@ -148,12 +149,11 @@ If we make a material change to how we handle a child's information, we will not
 
 ## 14. Contact us
 
-[PLACEHOLDER — company legal name]
-[PLACEHOLDER — mailing address]
-[PLACEHOLDER — email address]
-[PLACEHOLDER — telephone number, if offered]
+Radlor Inc.
+254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+support@radlor.com
 
-We answer privacy questions within [PLACEHOLDER — number] days.
+We answer privacy questions within 10 days.
 
 ---
 

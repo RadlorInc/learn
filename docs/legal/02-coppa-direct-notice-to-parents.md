@@ -5,7 +5,7 @@
 > This is the notice COPPA requires us to give a parent **directly**, before we collect anything at all from their child. It is separate from, and shorter than, the Privacy Policy. It is delivered on screen during sign-up and again by email.
 
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** [PLACEHOLDER — product name]
+**Product:** Milo
 **Version:** [PLACEHOLDER — version and date]
 
 ---
@@ -23,6 +23,7 @@ You are setting up an account for a child under 13. United States law (the Child
 | What | Why we need it | Is it required? |
 |---|---|---|
 | Your child's first name (or a nickname you choose) | So the app can address your child and so you can tell your children's profiles apart | Required — you may use a nickname instead of a real name |
+| The avatar you pick for your child | So your child recognises their own profile | Required — chosen from a set we provide; it is not a photograph |
 | Grade level | To give your child work at the right level | Required |
 | Answers to maths questions, scores, and progress | This is the product: it is how the app decides what to teach next and how it shows you progress | Required |
 | Basic technical information from the device — [PLACEHOLDER — list exactly: IP address, device or browser type, session identifier, cookies or local storage keys] | To keep the app working, keep the account secure, and keep your child signed in | Required for the app to function |
@@ -31,7 +32,7 @@ You are setting up an account for a child under 13. United States law (the Child
 
 ### What we do with it
 
-We use this information only to run [PLACEHOLDER — product name] for your child: to teach, to track progress, to show you reports, and to keep the service secure and working. 
+We use this information only to run Milo for your child: to teach, to track progress, to show you reports, and to keep the service secure and working. 
 
 [PLACEHOLDER — Radlor must state here, truthfully and specifically, whether any of the child's information is disclosed to any third party, and if so to whom and for what purpose. The list of service providers in the Subprocessors document must match this statement exactly. If nothing about the child is disclosed to anyone beyond our service providers acting on our instructions, say that.]
 
@@ -62,7 +63,7 @@ To do any of these, [PLACEHOLDER — exact mechanism: in-app path AND email addr
 
 ### How long we keep it
 
-We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at [PLACEHOLDER — URL].
+We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at https://adaptivelearn.radlor.com/legal/retention.
 
 ### How we protect it
 
@@ -70,14 +71,13 @@ We keep your child's information only as long as we need it to provide the servi
 
 ### Full details
 
-Our Privacy Policy at [PLACEHOLDER — URL] has the complete picture, including how to reach us.
+Our Privacy Policy at https://adaptivelearn.radlor.com/legal/privacy has the complete picture, including how to reach us.
 
 ### Contact us
 
-[PLACEHOLDER — company legal name]
-[PLACEHOLDER — mailing address]
-[PLACEHOLDER — email address]
-[PLACEHOLDER — telephone number, if offered]
+Radlor Inc.
+254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+support@radlor.com
 
 ---
 
@@ -96,3 +96,4 @@ Our Privacy Policy at [PLACEHOLDER — URL] has the complete picture, including 
 3. **Which technical identifiers are "personal information."** Persistent identifiers used for support of internal operations are treated differently. Please review the technical list once the engineering team confirms the exact identifiers in use.
 4. **Delivery.** Please confirm the combination of on-screen notice plus email satisfies the "direct notice" requirement, and advise on record-keeping of consents.
 5. **Age gate.** Please advise on how the product should establish that the user is under 13, and what happens for users aged 13–17, who fall outside COPPA but inside several state privacy statutes.
+6. **Language.** The product ships in English and Spanish, and gates every string on having a Spanish version. That means this notice, the consent screens, the Privacy Policy and the Parent Rights page all have to exist in Spanish too. Consent is only meaningful if the parent giving it can read what they are agreeing to. The Spanish text currently in the product was translated by the engineering agent and has not been reviewed by anyone who speaks Spanish. Please advise on the standard we need to meet, and note that translation review is a real line item, not a formality.

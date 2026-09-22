@@ -9,7 +9,7 @@
 
 ## Plain version
 
-We use a small number of cookies and similar storage to make [PLACEHOLDER — product name] work — to keep you signed in, to remember settings, and to keep the service secure. **We do not use advertising cookies, and we do not allow anyone to track your child across other websites or apps.**
+We use a small number of cookies and similar storage to make Milo work — to keep you signed in, to remember settings, and to keep the service secure. **We do not use advertising cookies, and we do not allow anyone to track your child across other websites or apps.**
 
 ## What we set
 
@@ -37,7 +37,7 @@ Because the storage we use is necessary for the app to work or to remember your 
 
 ## Questions
 
-[PLACEHOLDER — email address]
+support@radlor.com
 
 ---
 

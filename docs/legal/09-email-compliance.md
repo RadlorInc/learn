@@ -31,13 +31,13 @@ We do not send marketing email to children. We do not collect a child's email ad
 ## 4. Standard footer — commercial email
 
 ```
-You are receiving this because you have a [PLACEHOLDER — product name] account.
+You are receiving this because you have a Milo account.
 
 Unsubscribe from updates like this: [one-click unsubscribe link]
 Manage your email preferences: [preferences link]
 
-[PLACEHOLDER — Radlor Inc. full legal name]
-[PLACEHOLDER — full postal address, city, state, ZIP]
+Radlor Inc.
+254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 We will still send you essential messages about your account and your
 subscription, such as receipts and renewal reminders.
@@ -46,11 +46,11 @@ subscription, such as receipts and renewal reminders.
 ## 5. Standard footer — transactional email
 
 ```
-This is a service message about your [PLACEHOLDER — product name] account.
+This is a service message about your Milo account.
 
-[PLACEHOLDER — Radlor Inc. full legal name]
-[PLACEHOLDER — full postal address, city, state, ZIP]
-Questions: [PLACEHOLDER — support email address]
+Radlor Inc.
+254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+Questions: support@radlor.com
 ```
 
 ## 6. Before any send to more than one person — checklist

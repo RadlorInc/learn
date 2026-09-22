@@ -9,11 +9,11 @@
 
 **Effective:** [PLACEHOLDER — date]
 
-If your child uses [PLACEHOLDER — product name], you are in control of their information. You have four rights, and you can use any of them at any time, for free.
+If your child uses Milo, you are in control of their information. You have four rights, and you can use any of them at any time, for free.
 
 ### 1. See what we hold
 
-You can ask us for a copy of everything we have collected from your child. We will send it to you in a readable format within [PLACEHOLDER — number] days.
+You can ask us for a copy of everything we have collected from your child. We will send it to you in a readable format within 10 days.
 
 ### 2. Correct it
 
@@ -21,7 +21,7 @@ If something is wrong — your child's name, their grade level — you can chang
 
 ### 3. Delete it
 
-You can ask us to delete your child's information. We will delete it from our live systems within [PLACEHOLDER — number] days. Copies in our backups disappear when those backups expire, within [PLACEHOLDER — number] days, and we never restore a deleted child's record from a backup.
+You can ask us to delete your child's information. We will delete it from our live systems within 10 days. Copies in our backups disappear when those backups expire, within [PLACEHOLDER — number] days, and we never restore a deleted child's record from a backup.
 
 ### 4. Withdraw your permission
 
@@ -34,14 +34,14 @@ You can withdraw the permission you gave us. If you do, we stop collecting anyth
 ### How to make a request
 
 **In the app:** [PLACEHOLDER — exact path]
-**By email:** [PLACEHOLDER — email address], from the email address on the account
-**By post:** [PLACEHOLDER — mailing address]
+**By email:** support@radlor.com, from the email address on the account
+**By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 **How we check it's really you.** Before we show or delete anything, we confirm the request came from the parent on the account. We will [PLACEHOLDER — describe the verification step actually used, e.g. send a confirmation link to the account email]. We ask for this to protect your child — it stops anyone else getting their information. We will not ask you for a government ID or any sensitive document to make a routine request.
 
 **If we can't help.** If we refuse a request, we will tell you why, in writing. [PLACEHOLDER — state whether there is an appeal route, and what it is.]
 
-**Questions:** [PLACEHOLDER — email address]
+**Questions:** support@radlor.com
 
 ---
 
@@ -64,11 +64,11 @@ Every request is logged the day it arrives with: date received, requester email,
 
 | Request | Steps | Target |
 |---|---|---|
-| **See the data** | Export from [PLACEHOLDER — table list] for that child only. Check that no other family's data is in the export before sending. Send by [PLACEHOLDER — method]. | [PLACEHOLDER] days |
-| **Correct** | Apply the change; confirm by email. | [PLACEHOLDER] days |
-| **Delete** | Hard delete the child's rows from [PLACEHOLDER — exact table list]. Then re-query for the child's identifier across every table in that list and confirm zero rows return. Confirm by email. | [PLACEHOLDER] days |
-| **Withdraw consent** | Delete as above for **every** child on the account, mark the consent record as withdrawn with a timestamp, close the account, stop all collection, cancel the subscription and issue the pro-rata refund. Confirm by email, stating the refund amount. | [PLACEHOLDER] days |
-| **Remove one child** (account continues) | Delete that child's rows only, verify as above, leave the subscription and the other profiles untouched. Confirm by email. | [PLACEHOLDER] days |
+| **See the data** | Export from [PLACEHOLDER — table list] for that child only. Check that no other family's data is in the export before sending. Send by [PLACEHOLDER — method]. | 10 days |
+| **Correct** | Apply the change; confirm by email. | 10 days |
+| **Delete** | Hard delete the child's rows from [PLACEHOLDER — exact table list]. Then re-query for the child's identifier across every table in that list and confirm zero rows return. Confirm by email. | 10 days |
+| **Withdraw consent** | Delete as above for **every** child on the account, mark the consent record as withdrawn with a timestamp, close the account, stop all collection, cancel the subscription and issue the pro-rata refund. Confirm by email, stating the refund amount. | 10 days |
+| **Remove one child** (account continues) | Delete that child's rows only, verify as above, leave the subscription and the other profiles untouched. Confirm by email. | 10 days |
 
 **Deletion verification rule.** A deletion is not complete because the delete statement ran without error. It is complete when a fresh query for that child's identifier, run separately, returns nothing — and when that same query has been seen returning rows *before* the deletion. If we have not seen the query find the child first, a zero result proves nothing.
 
@@ -81,7 +81,7 @@ Reply to the parent in plain language saying what we did and when. Record the co
 All of these must route to the same log — a request does not have to use the official form to be valid:
 
 - the in-app request button
-- [PLACEHOLDER — support email address]
+- support@radlor.com
 - any reply to a Radlor email
 - post
 - [PLACEHOLDER — any other channel, e.g. app store reviews, social media DMs]

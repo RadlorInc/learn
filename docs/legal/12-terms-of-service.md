@@ -4,8 +4,10 @@
 > This document must not render as a live page while any `[PLACEHOLDER — ...]` remains unresolved.
 > Structure: **the parent is the account holder and the only party to this contract. The child is not.** That single decision fixes the age contradiction that ordinary consumer terms fall into when the actual user is a child.
 
+> **Milo is free during the soft launch (decision of 22 Sep 2026).** Before publishing, Section 5 must be replaced with a short statement that the Service is currently provided free of charge, that no payment is taken, and that paid plans will be introduced with notice and separate terms. The full Section 5 below is kept for that day. Do not publish auto-renewal terms for a product that charges nothing.
+
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** [PLACEHOLDER — product name]
+**Product:** Milo
 **Effective date:** [PLACEHOLDER — date]
 **Last updated:** [PLACEHOLDER — date]
 
@@ -13,9 +15,9 @@
 
 ## 1. This agreement
 
-These Terms are an agreement between you and Radlor Inc., a Delaware corporation ("Radlor", "we", "us"). They govern your use of [PLACEHOLDER — product name] (the "Service").
+These Terms are an agreement between you and Radlor Inc., a Delaware corporation ("Radlor", "we", "us"). They govern your use of Milo (the "Service").
 
-By creating an account or using the Service, you agree to these Terms and to our [Privacy Policy]([PLACEHOLDER — URL]). If you do not agree, do not use the Service.
+By creating an account or using the Service, you agree to these Terms and to our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy). If you do not agree, do not use the Service.
 
 ## 2. Who may hold an account
 
@@ -27,7 +29,7 @@ You confirm that the information you give us at sign-up is accurate, and that yo
 
 ## 3. What the Service is
 
-[PLACEHOLDER — product name] is an adaptive learning tool. It presents lessons, questions and practice, adapts to how a child answers, and reports progress to you.
+Milo is an adaptive learning tool. It presents lessons, questions and practice, adapts to how a child answers, and reports progress to you.
 
 **It is an educational support tool and nothing more.** It is not schooling, not tutoring by a licensed professional, and not any form of assessment, diagnosis or treatment — educational, psychological or medical. It does not identify learning disabilities or any other condition. If you have a concern about your child's learning, speak to a teacher or a qualified professional.
 
@@ -38,17 +40,17 @@ You confirm that the information you give us at sign-up is accurate, and that yo
 Because the Service is used by children, additional rules apply:
 
 - Before we collect anything about your child, we give you a **direct notice** telling you exactly what we collect, and we obtain your **verifiable consent**.
-- You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page]([PLACEHOLDER — URL]).
+- You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://adaptivelearn.radlor.com/legal/parent-rights).
 - If you withdraw consent, we stop collecting, delete what we hold about your child, and close the profile. Your subscription is cancelled and we refund the unused part of it — you are never charged for exercising a privacy right. If more than one child is set up on the account, withdrawing consent closes the whole account; to remove a single child without ending the account, use the *Remove this child* function instead.
 
-Our [Privacy Policy]([PLACEHOLDER — URL]) describes all of this in full and forms part of these Terms.
+Our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) describes all of this in full and forms part of these Terms.
 
 ## 5. Subscriptions, renewal and cancellation
 
 - Plans, prices and billing periods are shown at checkout before you pay.
 - **Subscriptions renew automatically** until you cancel. The renewal amount and date are disclosed to you before you subscribe and repeated in the confirmation email we send you.
 - **You can cancel at any time**, online, in the same number of steps it took to subscribe. Cancelling stops all future charges; your access continues until the end of the period you have paid for.
-- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy]([PLACEHOLDER — URL]), which forms part of these Terms.
+- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds), which forms part of these Terms.
 - You are responsible for any applicable taxes.
 
 ## 6. Acceptable use
@@ -58,7 +60,7 @@ You agree not to, and not to let anyone else:
 - use the Service for any unlawful purpose;
 - copy, scrape, resell, sublicense or redistribute the content or the questions;
 - reverse-engineer, decompile, or attempt to extract the models, algorithms or source code;
-- share your account credentials, or use the Service on behalf of anyone other than your own household [PLACEHOLDER — confirm the intended household/seat limit];
+- share your account credentials, or use the Service on behalf of anyone other than your own household; one subscription covers up to four children;
 - upload anything unlawful, harmful or infringing;
 - interfere with, overload or probe the Service or its security;
 - use automated means to access the Service except as we expressly permit;
@@ -85,7 +87,7 @@ Parts of the Service use artificial intelligence to adapt what a child sees and 
 - AI systems are probabilistic. They can produce content that is **wrong, incomplete, or unsuitable**, even when everything is working as designed.
 - We check content before it reaches a child [PLACEHOLDER — describe the actual review process. Do not claim a level of human review that is not performed.], but we cannot guarantee that every item is correct or appropriate.
 - The Service gives no professional advice of any kind.
-- If you see something wrong, please tell us at [PLACEHOLDER — email address] — this genuinely helps.
+- If you see something wrong, please tell us at support@radlor.com — this genuinely helps.
 
 ## 9. Availability and changes
 
@@ -129,7 +131,7 @@ If you believe material on the Service infringes your copyright, contact our des
 
 These Terms are governed by the laws of the State of Delaware, without regard to conflict-of-law rules. Nothing here deprives you of the protection of any mandatory consumer law of the state where you live.
 
-Before starting formal proceedings, we both agree to try to resolve the dispute by contacting each other first — write to [PLACEHOLDER — email address] and we will respond within [PLACEHOLDER — number] days.
+Before starting formal proceedings, we both agree to try to resolve the dispute by contacting each other first — write to support@radlor.com and we will respond within [PLACEHOLDER — number] days.
 
 [PLACEHOLDER — ARBITRATION AND CLASS ACTION WAIVER. This is a deliberate business decision, not a blank to be filled casually. If Radlor wants binding arbitration and a class-action waiver, the attorney must draft it, including the opt-out right and the notice formatting several courts require. If Radlor does not want it, the clause below applies instead and this note is deleted.]
 
@@ -146,9 +148,9 @@ If a dispute is not resolved informally, it will be brought exclusively in the s
 
 ## 17. Contact
 
-[PLACEHOLDER — company legal name]
-[PLACEHOLDER — mailing address]
-[PLACEHOLDER — email address]
+Radlor Inc.
+254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+support@radlor.com
 
 ---
 

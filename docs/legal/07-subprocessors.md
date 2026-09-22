@@ -17,7 +17,7 @@ A **service provider** processes data on our instructions and for no purpose of 
 
 | Vendor | What it does for us | Does it receive information about a child? | If yes, what exactly | Where | Basis |
 |---|---|---|---|---|---|
-| [PLACEHOLDER — hosting provider] | Hosting and content delivery for the web app | [PLACEHOLDER — yes/no] | [PLACEHOLDER — e.g. IP address and request logs] | [PLACEHOLDER — US] | Service provider, integral to delivering the service |
+| [PLACEHOLDER — hosting provider] | Hosting and content delivery for the web app | [PLACEHOLDER — yes/no] | [PLACEHOLDER — e.g. IP address and request logs] | [PLACEHOLDER — region, confirmed from the provider's own dashboard] | Service provider, integral to delivering the service |
 | [PLACEHOLDER — database/backend provider] | Database, authentication, file storage | [PLACEHOLDER — yes/no] | [PLACEHOLDER — child first name, grade, learning events] | [PLACEHOLDER] | Service provider |
 | [PLACEHOLDER — payment provider] | Subscription billing | [PLACEHOLDER — should be no; payments concern the parent] | [PLACEHOLDER] | [PLACEHOLDER] | Service provider, parent data only |
 | [PLACEHOLDER — email provider] | Transactional email to parents | [PLACEHOLDER — no, unless a child's name appears in a progress email] | [PLACEHOLDER] | [PLACEHOLDER] | Service provider |

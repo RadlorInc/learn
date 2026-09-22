@@ -5,6 +5,15 @@
 
 ---
 
+> **Soft launch is free (decision of 22 Sep 2026), and that removes one of the two consent paths.**
+>
+> Verifiable consent by payment card works because a card transaction notifies the account holder. **No payment, no card path.** During the free soft launch, **Path B (email-plus) is not a fallback — it is the only consent method available**, and everything in Path A is dormant until paid plans exist.
+>
+> Two consequences follow, and both are hard requirements rather than preferences:
+>
+> 1. **Email-plus is only permissible where the child's information is not disclosed to third parties.** That is no longer a footnote to check later — the entire consent basis for the soft launch rests on it. The vendor review in document 07 has to be finished, and come back clean, before a single child signs up.
+> 2. **Build Path B properly, not as a placeholder.** It was the secondary path when this was drafted. It is now the whole mechanism.
+
 ## Flow overview
 
 ```
@@ -43,12 +52,12 @@ Parent creates account
 > - Plan: [PLACEHOLDER — plan name]
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
-> - You can cancel any time at [PLACEHOLDER — in-app path] or by emailing [PLACEHOLDER — support email]. Cancelling stops all future charges.
-> - Full terms: [Refund and Cancellation Policy]([PLACEHOLDER — URL])
+> - You can cancel any time at [PLACEHOLDER — in-app path] or by emailing support@radlor.com. Cancelling stops all future charges.
+> - Full terms: [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds)
 
 **Checkbox — unticked by default, and the button must stay disabled until it is ticked:**
 
-> ☐ I am the parent or legal guardian of the child I am setting up. I have read the [Privacy Policy]([PLACEHOLDER — URL]) and [Terms of Service]([PLACEHOLDER — URL]), I give permission for the information described to be collected from my child, and I agree to the automatic renewal terms shown above.
+> ☐ I am the parent or legal guardian of the child I am setting up. I have read the [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) and [Terms of Service](https://adaptivelearn.radlor.com/legal/terms), I give permission for the information described to be collected from my child, and I agree to the automatic renewal terms shown above.
 
 **Button:** `Subscribe — [PLACEHOLDER — amount] today`
 
@@ -60,7 +69,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### A3. Acknowledgement email — sent immediately
 
-**Subject:** `Your [PLACEHOLDER — product name] subscription — confirmation and how to cancel`
+**Subject:** `Your Milo subscription — confirmation and how to cancel`
 
 **Body:**
 
@@ -75,9 +84,9 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **How to cancel:** sign in and go to [PLACEHOLDER — in-app path], or reply to this email. Cancelling stops all future charges. Your access continues until the end of the period you have paid for.
 >
-> **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: [PLACEHOLDER — URL of the parent rights page]. You can see everything we hold, delete it, or withdraw permission at any time.
+> **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: https://adaptivelearn.radlor.com/legal/parent-rights. You can see everything we hold, delete it, or withdraw permission at any time.
 >
-> [PLACEHOLDER — company legal name, mailing address]
+> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 ---
 
@@ -87,13 +96,13 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B1. Consent request email — sent when the parent asks to start
 
-**Subject:** `Please confirm: permission for your child to use [PLACEHOLDER — product name]`
+**Subject:** `Please confirm: permission for your child to use Milo`
 
 **Body:**
 
 > Hi,
 >
-> Someone — we believe you — asked to set up a [PLACEHOLDER — product name] account for a child under 13.
+> Someone — we believe you — asked to set up a Milo account for a child under 13.
 >
 > Before we collect anything from your child, US law requires your permission. Here is exactly what we would collect:
 >
@@ -108,8 +117,8 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > If you did nothing, you can ignore this email and nothing will happen.
 >
-> Full details: [Privacy Policy]([PLACEHOLDER — URL])
-> [PLACEHOLDER — company legal name, mailing address]
+> Full details: [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy)
+> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 ### B2. Confirmation screen after the parent clicks
 
@@ -131,15 +140,15 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > Hi,
 >
-> Yesterday you gave permission for your child to use [PLACEHOLDER — product name], and for us to collect their first name, grade level, and maths progress.
+> Yesterday you gave permission for your child to use Milo, and for us to collect their first name, grade level, and maths progress.
 >
 > **If that was you, you don't need to do anything.**
 >
 > **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting, delete everything we hold about the child, and close the account.
 >
-> You can withdraw permission at any time in future, too: [PLACEHOLDER — URL of the parent rights page].
+> You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.
 >
-> [PLACEHOLDER — company legal name, mailing address]
+> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 ---
 
@@ -151,7 +160,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > If you withdraw permission, we will stop collecting information from your child, delete what we already hold about them, and close their profile. This cannot be undone.
 >
-> **Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within [PLACEHOLDER — number] business days.
+> **Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within 10 business days.
 >
 > **If you have more than one child on this account, withdrawing permission closes the whole account, including your other children's profiles.** If you only want to remove one child, use *Remove this child* instead.
 

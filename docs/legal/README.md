@@ -60,7 +60,9 @@ If any of these three change, the affected documents change with them.
 - **radlor.com Terms are live without attorney review.** The decision between putting a "draft" banner back on the page and taking the page down is still open. This is the one thing in the set that is already public.
 - **Two questions must be answered the same way in both document 11 and document 12:** whether children's work is ever used to train or evaluate models, and what happens to a paid subscription when a parent withdraws consent.
 - **Content Contributor Agreement — not yet drafted.** People are being paid per topic to write curriculum modules now. Without a written agreement assigning copyright to Radlor and warranting the work is original, the copyright in that content stays with the writer and any copying becomes Radlor's problem. This is live, not future.
-- **Provenance of the Grade 4–8 curriculum.** The topic structure was derived from a curriculum PDF. Whose it is, and what it permits, has not been checked.
+- **Provenance of the Grade 4–8 curriculum.** The topic structure was derived from a curriculum PDF, including some Grade 5 Module 1 topic names taken from Eureka Math². See document 15.
+- **Spanish.** The product ships bilingual and gates every string on having a Spanish entry. Every parent-facing legal document in this set therefore needs a Spanish version, reviewed by someone who speaks Spanish — a consent a parent cannot read is not a consent. The Spanish text now in the product was machine-translated and is unreviewed. This affects documents 02, 03, 06, 08, 11 and 12, and it is not currently costed or scheduled.
+- **Interns.** Unpaid, on academic credit, currently testing content. See document 15 — a one-page placement agreement is needed before the next session, and it must be verified that they cannot reach real children's data.
 
 ---
 

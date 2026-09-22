@@ -69,7 +69,7 @@ If we suspect that children's information has been accessed or disclosed without
 4. **Notify** — counsel determines the notification obligations, which vary by state and can be strict on timing. Parents are told plainly and quickly where notification is required.
 5. **Remediate and record** — fix the cause, write it down, and update this program.
 
-Contact for reporting a suspected incident: [PLACEHOLDER — email address and phone].
+Contact for reporting a suspected incident: support@radlor.com.
 
 ## 7. People
 
