@@ -136,7 +136,7 @@
     "chars": 30,
     "kind": "beat",
     "sources": [
-      "g3m1-t1 s7 b1 + g3m1-t2 s7 b1 + g3m1-t3 s7 b1 + g3m1-t4 s7 b1 + g3m1-t5 s7 b1 + g3m1-t6 s7 b1 + g3m1-t7 s7 b1 + g3m1-t8 s7 b1 + g3m2-t1 s7 b1 + g3m2-t2 s7 b1 + g3m2-t3 s7 b1 + g3m2-t4 s7 b1 + g3m2-t5 s7 b1 + g3m2-t6 s7 b1 + g3m2-t7 s7 b1 + g3m2-t8 s7 b1 + g3m2-t9 s7 b1 + g3m3-t1 s7 b1 + g3m3-t2 s7 b1 + g3m3-t3 s7 b1 + g3m3-t4 s7 b1 + g3m3-t5 s7 b1 + g3m3-t6 s7 b1 + g3m3-t7 s7 b1 + g3m3-t8 s7 b1 + g3m3-t9 s7 b1 + g3m4-t1 s7 b1 + g3m4-t2 s7 b1 + g3m4-t3 s7 b1 + g3m4-t4 s7 b1 + g3m5-t1 s7 b1 + g3m5-t2 s7 b1 + g3m5-t3 s7 b1 + g3m5-t4 s7 b1 + g3m5-t5 s7 b1 + g3m5-t6 s7 b1 + g3m5-t7 s7 b1 + g3m5-t8 s7 b1 + g3m6-t1 s7 b1 + g3m6-t2 s7 b1 + g3m6-t3 s7 b1 + g3m6-t4 s7 b1 + g3m6-t5 s7 b1 + g3m6-t6 s7 b1 + g3m6-t7 s7 b1 + g4m1-t1 s7 b1 + g4m1-t2 s7 b1 + g4m1-t3 s7 b1 + g4m1-t4 s7 b1 + g4m1-t5 s7 b1 + g4m1-t6 s7 b1 + g4m1-t7 s7 b1 + g4m1-t8 s7 b1 + g4m2-t1 s7 b1 + g4m2-t2 s7 b1 + g4m2-t3 s7 b1 + g4m2-t4 s7 b1 + g4m2-t5 s7 b1 + g4m2-t6 s7 b1 + g4m2-t7 s7 b1 + g4m2-t8 s7 b1 + g4m3-t1 s7 b1 + g4m3-t2 s7 b1 + g4m3-t3 s7 b1 + g4m3-t4 s7 b1 + g4m3-t5 s7 b1 + g4m3-t6 s7 b1 + g4m3-t7 s7 b1 + g4m3-t8 s7 b1 + g4m4-t1 s7 b1 + g4m4-t2 s7 b1 + g4m4-t3 s7 b1 + g4m4-t4 s7 b1 + g4m4-t5 s7 b1 + g4m4-t6 s7 b1 + g4m4-t7 s7 b1 + g4m4-t8 s7 b1 + g4m4-t9 s7 b1 + g4m5-t1 s7 b1 + g4m5-t2 s7 b1 + g4m5-t3 s7 b1 + g4m5-t4 s7 b1 + g4m5-t5 s7 b1 + g4m5-t6 s7 b1 + g4m5-t7 s7 b1 + g4m5-t8 s7 b1 + g4m6-t1 s7 b1 + g4m6-t2 s7 b1 + g4m6-t3 s7 b1 + g4m6-t4 s7 b1 + g4m6-t5 s7 b1 + g4m6-t6 s7 b1 + g4m6-t7 s7 b1 + g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1 + g5m2-t1 s7 b1 + g5m2-t2 s7 b1 + g5m2-t3 s7 b1 + g5m2-t4 s7 b1 + g5m2-t5 s7 b1 + g5m2-t6 s7 b1 + g5m2-t7 s7 b1 + g5m2-t8 s7 b1 + g5m3-t1 s7 b1 + g5m3-t2 s7 b1 + g5m3-t3 s7 b1 + g5m3-t4 s7 b1 + g5m3-t5 s7 b1 + g5m3-t6 s7 b1 + g5m3-t7 s7 b1 + g5m3-t8 s7 b1 + g5m4-t1 s7 b1 + g5m4-t2 s7 b1 + g5m4-t3 s7 b1 + g5m4-t4 s7 b1 + g5m4-t5 s7 b1 + g5m4-t6 s7 b1 + g5m4-t7 s7 b1 + g5m4-t8 s7 b1 + g5m4-t9 s7 b1 + g5m5-t1 s7 b1 + g5m5-t2 s7 b1 + g5m5-t3 s7 b1 + g5m5-t4 s7 b1 + g5m5-t5 s7 b1 + g5m5-t6 s7 b1 + g5m5-t7 s7 b1 + g5m6-t1 s7 b1 + g5m6-t2 s7 b1 + g5m6-t3 s7 b1 + g5m6-t4 s7 b1 + g5m6-t5 s7 b1 + g5m6-t6 s7 b1 + g6m1-t1 s7 b1 + g6m1-t2 s7 b1 + g6m1-t3 s7 b1 + g6m1-t4 s7 b1 + g6m1-t5 s7 b1 + g6m1-t6 s7 b1 + g6m1-t7 s7 b1 + g6m1-t8 s7 b1 + g6m2-t1 s7 b1 + g6m2-t2 s7 b1 + g6m2-t3 s7 b1 + g6m2-t4 s7 b1 + g6m2-t5 s7 b1 + g6m2-t6 s7 b1 + g6m2-t7 s7 b1 + g6m3-t1 s7 b1 + g6m3-t2 s7 b1 + g6m3-t3 s7 b1 + g6m3-t4 s7 b1 + g6m3-t5 s7 b1 + g6m3-t6 s7 b1 + g6m4-t1 s7 b1 + g6m4-t2 s7 b1 + g6m4-t3 s7 b1 + g6m4-t4 s7 b1 + g6m4-t5 s7 b1 + g6m4-t6 s7 b1 + g6m4-t7 s7 b1"
+      "g3m1-t1 s7 b1 + g3m1-t2 s7 b1 + g3m1-t3 s7 b1 + g3m1-t4 s7 b1 + g3m1-t5 s7 b1 + g3m1-t6 s7 b1 + g3m1-t7 s7 b1 + g3m1-t8 s7 b1 + g3m2-t1 s7 b1 + g3m2-t2 s7 b1 + g3m2-t3 s7 b1 + g3m2-t4 s7 b1 + g3m2-t5 s7 b1 + g3m2-t6 s7 b1 + g3m2-t7 s7 b1 + g3m2-t8 s7 b1 + g3m2-t9 s7 b1 + g3m3-t1 s7 b1 + g3m3-t2 s7 b1 + g3m3-t3 s7 b1 + g3m3-t4 s7 b1 + g3m3-t5 s7 b1 + g3m3-t6 s7 b1 + g3m3-t7 s7 b1 + g3m3-t8 s7 b1 + g3m3-t9 s7 b1 + g3m4-t1 s7 b1 + g3m4-t2 s7 b1 + g3m4-t3 s7 b1 + g3m4-t4 s7 b1 + g3m5-t1 s7 b1 + g3m5-t2 s7 b1 + g3m5-t3 s7 b1 + g3m5-t4 s7 b1 + g3m5-t5 s7 b1 + g3m5-t6 s7 b1 + g3m5-t7 s7 b1 + g3m5-t8 s7 b1 + g3m6-t1 s7 b1 + g3m6-t2 s7 b1 + g3m6-t3 s7 b1 + g3m6-t4 s7 b1 + g3m6-t5 s7 b1 + g3m6-t6 s7 b1 + g3m6-t7 s7 b1 + g4m1-t1 s7 b1 + g4m1-t2 s7 b1 + g4m1-t3 s7 b1 + g4m1-t4 s7 b1 + g4m1-t5 s7 b1 + g4m1-t6 s7 b1 + g4m1-t7 s7 b1 + g4m1-t8 s7 b1 + g4m2-t1 s7 b1 + g4m2-t2 s7 b1 + g4m2-t3 s7 b1 + g4m2-t4 s7 b1 + g4m2-t5 s7 b1 + g4m2-t6 s7 b1 + g4m2-t7 s7 b1 + g4m2-t8 s7 b1 + g4m3-t1 s7 b1 + g4m3-t2 s7 b1 + g4m3-t3 s7 b1 + g4m3-t4 s7 b1 + g4m3-t5 s7 b1 + g4m3-t6 s7 b1 + g4m3-t7 s7 b1 + g4m3-t8 s7 b1 + g4m4-t1 s7 b1 + g4m4-t2 s7 b1 + g4m4-t3 s7 b1 + g4m4-t4 s7 b1 + g4m4-t5 s7 b1 + g4m4-t6 s7 b1 + g4m4-t7 s7 b1 + g4m4-t8 s7 b1 + g4m4-t9 s7 b1 + g4m5-t1 s7 b1 + g4m5-t2 s7 b1 + g4m5-t3 s7 b1 + g4m5-t4 s7 b1 + g4m5-t5 s7 b1 + g4m5-t6 s7 b1 + g4m5-t7 s7 b1 + g4m5-t8 s7 b1 + g4m6-t1 s7 b1 + g4m6-t2 s7 b1 + g4m6-t3 s7 b1 + g4m6-t4 s7 b1 + g4m6-t5 s7 b1 + g4m6-t6 s7 b1 + g4m6-t7 s7 b1 + g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1 + g5m2-t1 s7 b1 + g5m2-t2 s7 b1 + g5m2-t3 s7 b1 + g5m2-t4 s7 b1 + g5m2-t5 s7 b1 + g5m2-t6 s7 b1 + g5m2-t7 s7 b1 + g5m2-t8 s7 b1 + g5m3-t1 s7 b1 + g5m3-t2 s7 b1 + g5m3-t3 s7 b1 + g5m3-t4 s7 b1 + g5m3-t5 s7 b1 + g5m3-t6 s7 b1 + g5m3-t7 s7 b1 + g5m3-t8 s7 b1 + g5m4-t1 s7 b1 + g5m4-t2 s7 b1 + g5m4-t3 s7 b1 + g5m4-t4 s7 b1 + g5m4-t5 s7 b1 + g5m4-t6 s7 b1 + g5m4-t7 s7 b1 + g5m4-t8 s7 b1 + g5m4-t9 s7 b1 + g5m5-t1 s7 b1 + g5m5-t2 s7 b1 + g5m5-t3 s7 b1 + g5m5-t4 s7 b1 + g5m5-t5 s7 b1 + g5m5-t6 s7 b1 + g5m5-t7 s7 b1 + g5m6-t1 s7 b1 + g5m6-t2 s7 b1 + g5m6-t3 s7 b1 + g5m6-t4 s7 b1 + g5m6-t5 s7 b1 + g5m6-t6 s7 b1 + g6m1-t1 s7 b1 + g6m1-t2 s7 b1 + g6m1-t3 s7 b1 + g6m1-t4 s7 b1 + g6m1-t5 s7 b1 + g6m1-t6 s7 b1 + g6m1-t7 s7 b1 + g6m1-t8 s7 b1 + g6m2-t1 s7 b1 + g6m2-t2 s7 b1 + g6m2-t3 s7 b1 + g6m2-t4 s7 b1 + g6m2-t5 s7 b1 + g6m2-t6 s7 b1 + g6m2-t7 s7 b1 + g6m3-t1 s7 b1 + g6m3-t2 s7 b1 + g6m3-t3 s7 b1 + g6m3-t4 s7 b1 + g6m3-t5 s7 b1 + g6m3-t6 s7 b1 + g6m4-t1 s7 b1 + g6m4-t2 s7 b1 + g6m4-t3 s7 b1 + g6m4-t4 s7 b1 + g6m4-t5 s7 b1 + g6m4-t6 s7 b1 + g6m4-t7 s7 b1 + g6m5-t1 s7 b1 + g6m5-t2 s7 b1 + g6m5-t3 s7 b1 + g6m5-t4 s7 b1 + g6m5-t5 s7 b1 + g6m5-t6 s7 b1 + g6m5-t7 s7 b1 + g6m5-t8 s7 b1 + g6m5-t9 s7 b1 + g6m6-t1 s7 b1 + g6m6-t2 s7 b1 + g6m6-t3 s7 b1 + g6m6-t4 s7 b1 + g6m6-t5 s7 b1 + g6m6-t6 s7 b1 + g6m7-t1 s7 b1 + g6m7-t2 s7 b1 + g6m7-t3 s7 b1 + g6m7-t4 s7 b1 + g6m7-t5 s7 b1 + g6m7-t6 s7 b1 + g6m7-t7 s7 b1 + g6m7-t8 s7 b1"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "chars": 16,
     "kind": "beat",
     "sources": [
-      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g3m2-t1 s7 b4 + g3m2-t2 s7 b4 + g3m2-t3 s7 b4 + g3m2-t4 s7 b4 + g3m2-t5 s7 b4 + g3m2-t6 s7 b4 + g3m2-t7 s7 b4 + g3m2-t8 s7 b4 + g3m2-t9 s7 b4 + g3m3-t1 s7 b4 + g3m3-t2 s7 b4 + g3m3-t3 s7 b4 + g3m3-t4 s7 b4 + g3m3-t5 s7 b4 + g3m3-t6 s7 b4 + g3m3-t7 s7 b4 + g3m3-t8 s7 b4 + g3m3-t9 s7 b4 + g3m4-t1 s7 b4 + g3m4-t2 s7 b4 + g3m4-t3 s7 b4 + g3m4-t4 s7 b4 + g3m5-t1 s7 b4 + g3m5-t2 s7 b4 + g3m5-t3 s7 b4 + g3m5-t4 s7 b4 + g3m5-t5 s7 b4 + g3m5-t6 s7 b4 + g3m5-t7 s7 b4 + g3m5-t8 s7 b4 + g3m6-t1 s7 b4 + g3m6-t2 s7 b4 + g3m6-t3 s7 b4 + g3m6-t4 s7 b4 + g3m6-t5 s7 b4 + g3m6-t6 s7 b4 + g3m6-t7 s7 b4 + g4m1-t1 s7 b4 + g4m1-t2 s7 b4 + g4m1-t3 s7 b5 + g4m1-t4 s7 b4 + g4m1-t5 s7 b4 + g4m1-t6 s7 b4 + g4m1-t7 s7 b4 + g4m1-t8 s7 b4 + g4m2-t1 s7 b4 + g4m2-t2 s7 b4 + g4m2-t3 s7 b4 + g4m2-t4 s7 b4 + g4m2-t5 s7 b4 + g4m2-t6 s7 b4 + g4m2-t7 s7 b4 + g4m2-t8 s7 b4 + g4m3-t1 s7 b4 + g4m3-t2 s7 b4 + g4m3-t3 s7 b4 + g4m3-t4 s7 b4 + g4m3-t5 s7 b4 + g4m3-t6 s7 b4 + g4m3-t7 s7 b4 + g4m3-t8 s7 b4 + g4m4-t1 s7 b4 + g4m4-t2 s7 b4 + g4m4-t3 s7 b4 + g4m4-t4 s7 b4 + g4m4-t5 s7 b4 + g4m4-t6 s7 b4 + g4m4-t7 s7 b4 + g4m4-t8 s7 b4 + g4m4-t9 s7 b4 + g4m5-t1 s7 b4 + g4m5-t2 s7 b4 + g4m5-t3 s7 b4 + g4m5-t4 s7 b4 + g4m5-t5 s7 b4 + g4m5-t6 s7 b4 + g4m5-t7 s7 b4 + g4m5-t8 s7 b4 + g4m6-t1 s7 b4 + g4m6-t2 s7 b4 + g4m6-t3 s7 b4 + g4m6-t4 s7 b4 + g4m6-t5 s7 b4 + g4m6-t6 s7 b4 + g4m6-t7 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4 + g5m2-t1 s7 b4 + g5m2-t2 s7 b4 + g5m2-t3 s7 b4 + g5m2-t4 s7 b4 + g5m2-t5 s7 b4 + g5m2-t6 s7 b4 + g5m2-t7 s7 b4 + g5m2-t8 s7 b4 + g5m3-t1 s7 b4 + g5m3-t2 s7 b4 + g5m3-t3 s7 b4 + g5m3-t4 s7 b4 + g5m3-t5 s7 b4 + g5m3-t6 s7 b4 + g5m3-t7 s7 b4 + g5m3-t8 s7 b4 + g5m4-t1 s7 b4 + g5m4-t2 s7 b4 + g5m4-t3 s7 b4 + g5m4-t4 s7 b4 + g5m4-t5 s7 b4 + g5m4-t6 s7 b4 + g5m4-t7 s7 b4 + g5m4-t8 s7 b4 + g5m4-t9 s7 b4 + g5m5-t1 s7 b4 + g5m5-t2 s7 b4 + g5m5-t3 s7 b4 + g5m5-t4 s7 b4 + g5m5-t5 s7 b4 + g5m5-t6 s7 b5 + g5m5-t7 s7 b5 + g5m6-t1 s7 b4 + g5m6-t2 s7 b4 + g5m6-t3 s7 b4 + g5m6-t4 s7 b4 + g5m6-t5 s7 b4 + g5m6-t6 s7 b4 + g6m1-t1 s7 b4 + g6m1-t2 s7 b4 + g6m1-t3 s7 b4 + g6m1-t4 s7 b4 + g6m1-t5 s7 b4 + g6m1-t6 s7 b4 + g6m1-t7 s7 b4 + g6m1-t8 s7 b4 + g6m2-t1 s7 b4 + g6m2-t2 s7 b4 + g6m2-t3 s7 b4 + g6m2-t4 s7 b4 + g6m2-t5 s7 b4 + g6m2-t6 s7 b4 + g6m2-t7 s7 b4 + g6m3-t1 s7 b4 + g6m3-t2 s7 b4 + g6m3-t3 s7 b4 + g6m3-t4 s7 b4 + g6m3-t5 s7 b4 + g6m3-t6 s7 b4 + g6m4-t1 s7 b4 + g6m4-t2 s7 b4 + g6m4-t3 s7 b4 + g6m4-t4 s7 b4 + g6m4-t5 s7 b4 + g6m4-t6 s7 b4 + g6m4-t7 s7 b4"
+      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g3m2-t1 s7 b4 + g3m2-t2 s7 b4 + g3m2-t3 s7 b4 + g3m2-t4 s7 b4 + g3m2-t5 s7 b4 + g3m2-t6 s7 b4 + g3m2-t7 s7 b4 + g3m2-t8 s7 b4 + g3m2-t9 s7 b4 + g3m3-t1 s7 b4 + g3m3-t2 s7 b4 + g3m3-t3 s7 b4 + g3m3-t4 s7 b4 + g3m3-t5 s7 b4 + g3m3-t6 s7 b4 + g3m3-t7 s7 b4 + g3m3-t8 s7 b4 + g3m3-t9 s7 b4 + g3m4-t1 s7 b4 + g3m4-t2 s7 b4 + g3m4-t3 s7 b4 + g3m4-t4 s7 b4 + g3m5-t1 s7 b4 + g3m5-t2 s7 b4 + g3m5-t3 s7 b4 + g3m5-t4 s7 b4 + g3m5-t5 s7 b4 + g3m5-t6 s7 b4 + g3m5-t7 s7 b4 + g3m5-t8 s7 b4 + g3m6-t1 s7 b4 + g3m6-t2 s7 b4 + g3m6-t3 s7 b4 + g3m6-t4 s7 b4 + g3m6-t5 s7 b4 + g3m6-t6 s7 b4 + g3m6-t7 s7 b4 + g4m1-t1 s7 b4 + g4m1-t2 s7 b4 + g4m1-t3 s7 b5 + g4m1-t4 s7 b4 + g4m1-t5 s7 b4 + g4m1-t6 s7 b4 + g4m1-t7 s7 b4 + g4m1-t8 s7 b4 + g4m2-t1 s7 b4 + g4m2-t2 s7 b4 + g4m2-t3 s7 b4 + g4m2-t4 s7 b4 + g4m2-t5 s7 b4 + g4m2-t6 s7 b4 + g4m2-t7 s7 b4 + g4m2-t8 s7 b4 + g4m3-t1 s7 b4 + g4m3-t2 s7 b4 + g4m3-t3 s7 b4 + g4m3-t4 s7 b4 + g4m3-t5 s7 b4 + g4m3-t6 s7 b4 + g4m3-t7 s7 b4 + g4m3-t8 s7 b4 + g4m4-t1 s7 b4 + g4m4-t2 s7 b4 + g4m4-t3 s7 b4 + g4m4-t4 s7 b4 + g4m4-t5 s7 b4 + g4m4-t6 s7 b4 + g4m4-t7 s7 b4 + g4m4-t8 s7 b4 + g4m4-t9 s7 b4 + g4m5-t1 s7 b4 + g4m5-t2 s7 b4 + g4m5-t3 s7 b4 + g4m5-t4 s7 b4 + g4m5-t5 s7 b4 + g4m5-t6 s7 b4 + g4m5-t7 s7 b4 + g4m5-t8 s7 b4 + g4m6-t1 s7 b4 + g4m6-t2 s7 b4 + g4m6-t3 s7 b4 + g4m6-t4 s7 b4 + g4m6-t5 s7 b4 + g4m6-t6 s7 b4 + g4m6-t7 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4 + g5m2-t1 s7 b4 + g5m2-t2 s7 b4 + g5m2-t3 s7 b4 + g5m2-t4 s7 b4 + g5m2-t5 s7 b4 + g5m2-t6 s7 b4 + g5m2-t7 s7 b4 + g5m2-t8 s7 b4 + g5m3-t1 s7 b4 + g5m3-t2 s7 b4 + g5m3-t3 s7 b4 + g5m3-t4 s7 b4 + g5m3-t5 s7 b4 + g5m3-t6 s7 b4 + g5m3-t7 s7 b4 + g5m3-t8 s7 b4 + g5m4-t1 s7 b4 + g5m4-t2 s7 b4 + g5m4-t3 s7 b4 + g5m4-t4 s7 b4 + g5m4-t5 s7 b4 + g5m4-t6 s7 b4 + g5m4-t7 s7 b4 + g5m4-t8 s7 b4 + g5m4-t9 s7 b4 + g5m5-t1 s7 b4 + g5m5-t2 s7 b4 + g5m5-t3 s7 b4 + g5m5-t4 s7 b4 + g5m5-t5 s7 b4 + g5m5-t6 s7 b5 + g5m5-t7 s7 b5 + g5m6-t1 s7 b4 + g5m6-t2 s7 b4 + g5m6-t3 s7 b4 + g5m6-t4 s7 b4 + g5m6-t5 s7 b4 + g5m6-t6 s7 b4 + g6m1-t1 s7 b4 + g6m1-t2 s7 b4 + g6m1-t3 s7 b4 + g6m1-t4 s7 b4 + g6m1-t5 s7 b4 + g6m1-t6 s7 b4 + g6m1-t7 s7 b4 + g6m1-t8 s7 b4 + g6m2-t1 s7 b4 + g6m2-t2 s7 b4 + g6m2-t3 s7 b4 + g6m2-t4 s7 b4 + g6m2-t5 s7 b4 + g6m2-t6 s7 b4 + g6m2-t7 s7 b4 + g6m3-t1 s7 b4 + g6m3-t2 s7 b4 + g6m3-t3 s7 b4 + g6m3-t4 s7 b4 + g6m3-t5 s7 b4 + g6m3-t6 s7 b4 + g6m4-t1 s7 b4 + g6m4-t2 s7 b4 + g6m4-t3 s7 b4 + g6m4-t4 s7 b4 + g6m4-t5 s7 b4 + g6m4-t6 s7 b4 + g6m4-t7 s7 b4 + g6m5-t1 s7 b4 + g6m5-t2 s7 b4 + g6m5-t3 s7 b4 + g6m5-t4 s7 b4 + g6m5-t5 s7 b4 + g6m5-t6 s7 b4 + g6m5-t7 s7 b5 + g6m5-t8 s7 b5 + g6m5-t9 s7 b4 + g6m6-t1 s7 b4 + g6m6-t2 s7 b4 + g6m6-t3 s7 b4 + g6m6-t4 s7 b5 + g6m6-t5 s7 b5 + g6m6-t6 s7 b4 + g6m7-t1 s7 b4 + g6m7-t2 s7 b4 + g6m7-t3 s7 b4 + g6m7-t4 s7 b4 + g6m7-t5 s7 b4 + g6m7-t6 s7 b4 + g6m7-t7 s7 b4 + g6m7-t8 s7 b4"
     ]
   },
   {
@@ -4046,7 +4046,7 @@
     "chars": 33,
     "kind": "beat",
     "sources": [
-      "g3m4-t3 s6 b1"
+      "g3m4-t3 s6 b1 + g6m6-t3 s6 b1"
     ]
   },
   {
@@ -25530,6 +25530,3376 @@
     ]
   },
   {
+    "key": "19ger0q",
+    "text": "You can count the loose ones, 3.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s2 b1"
+    ]
+  },
+  {
+    "key": "147mx1a",
+    "text": "But how many are in the closed bag?",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s2 b2"
+    ]
+  },
+  {
+    "key": "n3mx41",
+    "text": "You can't tell, so the total isn't one number yet.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s2 b3"
+    ]
+  },
+  {
+    "key": "1dh37lt",
+    "text": "A letter can stand for a number you don't know yet, and once you know it, you put it where the letter is.",
+    "style": "B",
+    "chars": 105,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s3 b1 + g6m5-t1 bigIdea"
+    ]
+  },
+  {
+    "key": "1d3ovab",
+    "text": "So give the bag a name, n.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s4 b1"
+    ]
+  },
+  {
+    "key": "rr0jjl",
+    "text": "It stands for how many marbles are inside.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s4 b2"
+    ]
+  },
+  {
+    "key": "1dn4zj4",
+    "text": "You have n, and 3 more. That's n plus 3.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s4 b3"
+    ]
+  },
+  {
+    "key": "x91hhn",
+    "text": "Now open the bag and count. There are 5.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s5 b1"
+    ]
+  },
+  {
+    "key": "19h4w8j",
+    "text": "So this time, n is 5.",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s5 b2"
+    ]
+  },
+  {
+    "key": "1y2307u",
+    "text": "Wherever you see n, put a 5.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s5 b3"
+    ]
+  },
+  {
+    "key": "1smpxva",
+    "text": "So n plus 3 becomes 5 plus 3.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s6 b1"
+    ]
+  },
+  {
+    "key": "12qevge",
+    "text": "And 5 plus 3 is 8. You have 8 marbles.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s6 b2"
+    ]
+  },
+  {
+    "key": "t47yq4",
+    "text": "n does not mean marbles.",
+    "style": "B+",
+    "chars": 24,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s7 b2"
+    ]
+  },
+  {
+    "key": "1c2ilzc",
+    "text": "n is a number, how many are in the bag.",
+    "style": "B+",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t1 s7 b3"
+    ]
+  },
+  {
+    "key": "3d5gt7",
+    "text": "You say the 5 first. But do you write it first?",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s2 b1"
+    ]
+  },
+  {
+    "key": "v1my9r",
+    "text": "Look at the strips.",
+    "style": "B",
+    "chars": 19,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s2 b2"
+    ]
+  },
+  {
+    "key": "15bktw4",
+    "text": "Jon starts with Mia's n, then 5 more go on the end.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s2 b3"
+    ]
+  },
+  {
+    "key": "ckx854",
+    "text": "Each phrase hides an action, more than adds, less than takes away, and times multiplies.",
+    "style": "B",
+    "chars": 88,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s3 b1 + g6m5-t2 bigIdea"
+    ]
+  },
+  {
+    "key": "k494j7",
+    "text": "So Jon has n, then 5 more.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s4 b1"
+    ]
+  },
+  {
+    "key": "61mtly",
+    "text": "More than means add, n plus 5.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s4 b2"
+    ]
+  },
+  {
+    "key": "gra5hq",
+    "text": "Ali has 3 times as many as Mia, three strips of n.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s5 b1"
+    ]
+  },
+  {
+    "key": "on0q7b",
+    "text": "So you write 3 times n, or just 3 n.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s5 b2"
+    ]
+  },
+  {
+    "key": "1tqmume",
+    "text": "Zoe has 2 less than Mia. Start with n, then take 2 away.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s6 b1"
+    ]
+  },
+  {
+    "key": "qfs7zm",
+    "text": "So it's n minus 2.",
+    "style": "B",
+    "chars": 18,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s6 b2"
+    ]
+  },
+  {
+    "key": "1xddmk7",
+    "text": "The n goes first, even though you said 2 first.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s6 b3"
+    ]
+  },
+  {
+    "key": "197z4lk",
+    "text": "2 less than n is not 2 minus n.",
+    "style": "B+",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s7 b2"
+    ]
+  },
+  {
+    "key": "1op9x0x",
+    "text": "Start with n, then take 2 away.",
+    "style": "B+",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t2 s7 b3"
+    ]
+  },
+  {
+    "key": "vxey7j",
+    "text": "Look at 3 n plus 2. Can you work it out yet?",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s2 b1"
+    ]
+  },
+  {
+    "key": "ej7zw8",
+    "text": "No. While n is a letter, 3 n is not a number you know.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s2 b2"
+    ]
+  },
+  {
+    "key": "12vqdxm",
+    "text": "So first, find n.",
+    "style": "B",
+    "chars": 17,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s2 b3"
+    ]
+  },
+  {
+    "key": "1obf2lg",
+    "text": "Put each number in place of its letter, then do the math.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s3 b1 + g6m5-t3 bigIdea"
+    ]
+  },
+  {
+    "key": "1glebpj",
+    "text": "You're buying 4 cupcakes, so n is 4.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s4 b1"
+    ]
+  },
+  {
+    "key": "17g8jwm",
+    "text": "3 n means 3 times n.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s4 b2"
+    ]
+  },
+  {
+    "key": "16ysevk",
+    "text": "So put 4 in, 3 times 4 plus 2.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s4 b3"
+    ]
+  },
+  {
+    "key": "d20de2",
+    "text": "Multiply first. 3 times 4 is 12.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s5 b1"
+    ]
+  },
+  {
+    "key": "1323ob2",
+    "text": "Then add 2. 12 plus 2 is 14.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s5 b2"
+    ]
+  },
+  {
+    "key": "1oibvw2",
+    "text": "You pay 14 dollars.",
+    "style": "B",
+    "chars": 19,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s5 b3"
+    ]
+  },
+  {
+    "key": "sqrzof",
+    "text": "Two letters work the same way.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s6 b1"
+    ]
+  },
+  {
+    "key": "1i4qj5p",
+    "text": "For a plus b, with a equals 6 and b equals 5, it's 6 plus 5, which is 11.",
+    "style": "B",
+    "chars": 73,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s6 b2"
+    ]
+  },
+  {
+    "key": "1d1qs3d",
+    "text": "When n equals 4, 3 n is not 34.",
+    "style": "B+",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s7 b2"
+    ]
+  },
+  {
+    "key": "xls9pi",
+    "text": "It's 3 times 4, which is 12.",
+    "style": "B+",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t3 s7 b3"
+    ]
+  },
+  {
+    "key": "1cej5z0",
+    "text": "You could write 4 times 4 times 4.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s2 b1"
+    ]
+  },
+  {
+    "key": "brayza",
+    "text": "But what about six fours? Would you write them all?",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s2 b2"
+    ]
+  },
+  {
+    "key": "59qjez",
+    "text": "That's slow, and easy to lose count.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s2 b3"
+    ]
+  },
+  {
+    "key": "p1kr7i",
+    "text": "The small raised number says how many of the big number to multiply, so 4 with a small 3 is 4 times 4 times 4.",
+    "style": "B",
+    "chars": 110,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s3 b1 + g6m5-t4 bigIdea"
+    ]
+  },
+  {
+    "key": "1rjpcz0",
+    "text": "So write 4 with a small 3 up high.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s4 b1"
+    ]
+  },
+  {
+    "key": "1awkw5r",
+    "text": "The 4 is what you multiply.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s4 b2"
+    ]
+  },
+  {
+    "key": "yjge7k",
+    "text": "The 3 says how many, 4 times 4 times 4.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s4 b3"
+    ]
+  },
+  {
+    "key": "ybuw7u",
+    "text": "Multiply two at a time. 4 times 4 is 16.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s5 b1"
+    ]
+  },
+  {
+    "key": "twi6ou",
+    "text": "Then 16 times 4 is 64. So the shop has 64 toys.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s5 b2"
+    ]
+  },
+  {
+    "key": "117yo29",
+    "text": "Two have names.",
+    "style": "B",
+    "chars": 15,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s6 b1"
+    ]
+  },
+  {
+    "key": "1pstx47",
+    "text": "5 with a small 2 is 5 times 5, or 25. We say five squared.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s6 b2"
+    ]
+  },
+  {
+    "key": "rgsokt",
+    "text": "2 with a small 3 is 2 times 2 times 2, or 8. We say two cubed.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s6 b3"
+    ]
+  },
+  {
+    "key": "148a931",
+    "text": "4 cubed does not mean 4 times 3.",
+    "style": "B+",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s7 b2"
+    ]
+  },
+  {
+    "key": "d88jfp",
+    "text": "It means 4 times 4 times 4, which is 64.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t4 s7 b3"
+    ]
+  },
+  {
+    "key": "1l7vbmp",
+    "text": "One friend adds first, 2 plus 3 is 5, 4 squared is 16, and 5 times 16 is 80.",
+    "style": "B",
+    "chars": 76,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s2 b1"
+    ]
+  },
+  {
+    "key": "8vyvfo",
+    "text": "But is that right?",
+    "style": "B",
+    "chars": 18,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "1fla0rg",
+    "text": "We all need one order.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s2 b3"
+    ]
+  },
+  {
+    "key": "90qgam",
+    "text": "Parentheses first, then exponents, then times and divide, then plus and minus, each pair from left to right.",
+    "style": "B",
+    "chars": 108,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s3 b1 + g6m5-t5 bigIdea"
+    ]
+  },
+  {
+    "key": "7yxsbh",
+    "text": "Any parentheses? No.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s4 b1"
+    ]
+  },
+  {
+    "key": "4pa983",
+    "text": "So 4 squared goes first. 4 times 4 is 16.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s4 b2"
+    ]
+  },
+  {
+    "key": "1tl8zde",
+    "text": "Now it's 2 plus 3 times 16.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s4 b3"
+    ]
+  },
+  {
+    "key": "1ai4skj",
+    "text": "Multiply next. 3 times 16 is 48.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s5 b1"
+    ]
+  },
+  {
+    "key": "1e4dugc",
+    "text": "Add last. 2 plus 48 is 50.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s5 b2"
+    ]
+  },
+  {
+    "key": "gzyfjd",
+    "text": "The friend with 50 is right.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s5 b3"
+    ]
+  },
+  {
+    "key": "1t15tlq",
+    "text": "Now put parentheses around 2 plus 3. They go first, 5.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s6 b1"
+    ]
+  },
+  {
+    "key": "1v6t0bd",
+    "text": "Then 4 squared is 16, and 5 times 16 is 80.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s6 b2"
+    ]
+  },
+  {
+    "key": "1u75zcl",
+    "text": "Same numbers, new answer.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s6 b3"
+    ]
+  },
+  {
+    "key": "1q13462",
+    "text": "Don't add first just because plus comes first.",
+    "style": "B+",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s7 b2"
+    ]
+  },
+  {
+    "key": "vp5pwh",
+    "text": "Multiply first, 2 plus 3 times 16 is 50, not 80.",
+    "style": "B+",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s7 b3"
+    ]
+  },
+  {
+    "key": "ll0949",
+    "text": "One bag holds x pens and 2 erasers. That's x plus 2.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s2 b1"
+    ]
+  },
+  {
+    "key": "1u7g1tu",
+    "text": "You don't know x, so x and 2 can't join into one number.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s2 b2"
+    ]
+  },
+  {
+    "key": "11htiqi",
+    "text": "So how do you write three bags?",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s2 b3"
+    ]
+  },
+  {
+    "key": "1cvytuz",
+    "text": "The number outside the parentheses multiplies every part inside, so 3 times x plus 2, all together, is the same amount as 3 x plus 6.",
+    "style": "B",
+    "chars": 133,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s3 b1 + g6m5-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "dhtnie",
+    "text": "Put parentheses around x plus 2.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s4 b1"
+    ]
+  },
+  {
+    "key": "1fcu6ng",
+    "text": "Now x and 2 stay together, one whole bag.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s4 b2"
+    ]
+  },
+  {
+    "key": "1gez2na",
+    "text": "Three bags? Write a 3 in front. That's 3 times x plus 2, all together.",
+    "style": "B",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s4 b3"
+    ]
+  },
+  {
+    "key": "5a0rgr",
+    "text": "Now open the bags and count.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s5 b1"
+    ]
+  },
+  {
+    "key": "uv65re",
+    "text": "Every bag has an x, so that's 3 x's, which we write 3 x.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s5 b2"
+    ]
+  },
+  {
+    "key": "1c6fc79",
+    "text": "Every bag has 2 erasers, so 3 times 2 equals 6 erasers.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s5 b3"
+    ]
+  },
+  {
+    "key": "1bmtp9h",
+    "text": "So 3 times x plus 2, all together, equals 3 x plus 6.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s5 b4"
+    ]
+  },
+  {
+    "key": "unz20i",
+    "text": "Does it really match? Try x equals 4.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s6 b1"
+    ]
+  },
+  {
+    "key": "19xxumq",
+    "text": "One bag is 4 plus 2 equals 6, and 3 bags is 3 times 6 equals 18.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s6 b2"
+    ]
+  },
+  {
+    "key": "hwbbd1",
+    "text": "The other way, 3 x is 3 times 4 equals 12, and 12 plus 6 equals 18.",
+    "style": "B",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s6 b3"
+    ]
+  },
+  {
+    "key": "17wumx",
+    "text": "Same amount.",
+    "style": "B",
+    "chars": 12,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s6 b4"
+    ]
+  },
+  {
+    "key": "1uszqvi",
+    "text": "Don't multiply only the x.",
+    "style": "B+",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s7 b2"
+    ]
+  },
+  {
+    "key": "721eo3",
+    "text": "3 times x plus 2, all together, is not 3 x plus 2. The 3 multiplies the 2 too, so it's 3 x plus 6.",
+    "style": "B+",
+    "chars": 98,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t6 s7 b3"
+    ]
+  },
+  {
+    "key": "1se8719",
+    "text": "You could guess. Try 3. 3 plus 4 is 7, too light.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s2 b1"
+    ]
+  },
+  {
+    "key": "10w6xlt",
+    "text": "Try 6. 6 plus 4 is 10, too heavy.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s2 b2"
+    ]
+  },
+  {
+    "key": "4gxcaf",
+    "text": "Is there a way with no guessing? Yes.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s2 b3"
+    ]
+  },
+  {
+    "key": "150q7dq",
+    "text": "To get x alone, take the same amount off both sides, so the scale stays level.",
+    "style": "B",
+    "chars": 78,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s3 b1 + g6m5-t7 bigIdea"
+    ]
+  },
+  {
+    "key": "17g5zwk",
+    "text": "The 4 is in the way of x. So take 4 off the left.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s4 b1"
+    ]
+  },
+  {
+    "key": "1a5ouvo",
+    "text": "But if that's all you do, the scale tips.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s4 b2"
+    ]
+  },
+  {
+    "key": "10qr42k",
+    "text": "So take 4 off the right too, and it stays level.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s4 b3"
+    ]
+  },
+  {
+    "key": "1u5e36v",
+    "text": "Now look at each side.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s5 b1"
+    ]
+  },
+  {
+    "key": "1qxcfyu",
+    "text": "On the left, 4 minus 4 leaves nothing, so x is alone.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s5 b2"
+    ]
+  },
+  {
+    "key": "sj86x4",
+    "text": "On the right, 9 minus 4 equals 5.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s5 b3"
+    ]
+  },
+  {
+    "key": "1azct2j",
+    "text": "So x equals 5.",
+    "style": "B",
+    "chars": 14,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s5 b4"
+    ]
+  },
+  {
+    "key": "v882bj",
+    "text": "Does 5 really work? Put 5 back where x was.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s6 b1"
+    ]
+  },
+  {
+    "key": "1c57j2l",
+    "text": "5 plus 4 equals 9, and the other side is 9.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s6 b2"
+    ]
+  },
+  {
+    "key": "fedvff",
+    "text": "Both sides match, so the bag holds 5 marbles.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s6 b3"
+    ]
+  },
+  {
+    "key": "1omha60",
+    "text": "Don't add the 4 to the other side.",
+    "style": "B+",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s7 b2"
+    ]
+  },
+  {
+    "key": "1ie79dl",
+    "text": "x plus 4 equals 9 does not make x equals 13.",
+    "style": "B+",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s7 b3"
+    ]
+  },
+  {
+    "key": "fbyjy",
+    "text": "Take 4 off both sides, so x equals 5.",
+    "style": "B+",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t7 s7 b4"
+    ]
+  },
+  {
+    "key": "bypu8c",
+    "text": "Three tickets, each x dollars, cost 24 dollars.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s2 b1"
+    ]
+  },
+  {
+    "key": "79zgo4",
+    "text": "Nothing is added to x this time, so taking something away won't help.",
+    "style": "B",
+    "chars": 69,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s2 b2"
+    ]
+  },
+  {
+    "key": "1ps4y35",
+    "text": "So how do you find one x?",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s2 b3"
+    ]
+  },
+  {
+    "key": "wasnth",
+    "text": "3 x is 3 equal parts, so divide both sides by 3 to find one x.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s3 b1 + g6m5-t8 bigIdea"
+    ]
+  },
+  {
+    "key": "1nib1x9",
+    "text": "Draw it. Three equal parts of x make 24.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s4 b1"
+    ]
+  },
+  {
+    "key": "vk0lfu",
+    "text": "Three groups of x is written 3 x.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s4 b2"
+    ]
+  },
+  {
+    "key": "1oxwwol",
+    "text": "So 3 x equals 24.",
+    "style": "B",
+    "chars": 17,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s4 b3"
+    ]
+  },
+  {
+    "key": "h3p3ef",
+    "text": "Split both sides into 3 equal parts.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s5 b1"
+    ]
+  },
+  {
+    "key": "nbbgv4",
+    "text": "3 x divided by 3 is one x.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s5 b2"
+    ]
+  },
+  {
+    "key": "1gagbyi",
+    "text": "24 divided by 3 equals 8.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s5 b3"
+    ]
+  },
+  {
+    "key": "1j9rh6i",
+    "text": "So x equals 8.",
+    "style": "B",
+    "chars": 14,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s5 b4"
+    ]
+  },
+  {
+    "key": "12y9chx",
+    "text": "Does 8 really work? Put 8 back where x was.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s6 b1"
+    ]
+  },
+  {
+    "key": "13ntcp9",
+    "text": "3 times 8 equals 24, and that matches.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s6 b2"
+    ]
+  },
+  {
+    "key": "1b4zvj2",
+    "text": "So one ticket costs 8 dollars.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s6 b3"
+    ]
+  },
+  {
+    "key": "5hrll9",
+    "text": "Don't subtract the 3.",
+    "style": "B+",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s7 b2"
+    ]
+  },
+  {
+    "key": "4sb5dd",
+    "text": "3 x equals 24 does not make x equals 21.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s7 b3"
+    ]
+  },
+  {
+    "key": "vrhn69",
+    "text": "The 3 multiplies x, so divide by 3 instead. That gives 8.",
+    "style": "B+",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t8 s7 b4"
+    ]
+  },
+  {
+    "key": "7vxr1k",
+    "text": "Try listing them. 4, 5, 6, and 3 and a half.",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s2 b1"
+    ]
+  },
+  {
+    "key": "11nnc20",
+    "text": "They never stop, even past 100.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s2 b2"
+    ]
+  },
+  {
+    "key": "1oje3fm",
+    "text": "So how can you show every one at once? On a number line.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s2 b3"
+    ]
+  },
+  {
+    "key": "1prfy79",
+    "text": "x is greater than 3 means every number bigger than 3, so draw an open dot at 3 and an arrow to the right.",
+    "style": "B",
+    "chars": 105,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s3 b1 + g6m5-t9 bigIdea"
+    ]
+  },
+  {
+    "key": "b4ka44",
+    "text": "Start at 3. Does 3 itself work?",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s4 b1"
+    ]
+  },
+  {
+    "key": "y0lolt",
+    "text": "No, 3 is not more than 3.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s4 b2"
+    ]
+  },
+  {
+    "key": "1310tl9",
+    "text": "So the dot at 3 stays open, an empty circle.",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s4 b3"
+    ]
+  },
+  {
+    "key": "ltxkgf",
+    "text": "Bigger numbers are to the right.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s5 b1"
+    ]
+  },
+  {
+    "key": "3yg669",
+    "text": "So color the line from 3 all the way right.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s5 b2"
+    ]
+  },
+  {
+    "key": "2kyz8v",
+    "text": "Then add an arrow, because it never stops.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s5 b3"
+    ]
+  },
+  {
+    "key": "1qu33im",
+    "text": "Now a new one. x is less than or equal to 5 means 5 or less.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s6 b1"
+    ]
+  },
+  {
+    "key": "lnlpa5",
+    "text": "5 works this time, so fill the dot in.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s6 b2"
+    ]
+  },
+  {
+    "key": "1iebfvd",
+    "text": "Less means smaller, so color the line to the left.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s6 b3"
+    ]
+  },
+  {
+    "key": "1005mck",
+    "text": "Don't fill the dot for x greater than 3.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s7 b2"
+    ]
+  },
+  {
+    "key": "8glds3",
+    "text": "The 3 does not work, so its dot stays open.",
+    "style": "B+",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t9 s7 b3"
+    ]
+  },
+  {
+    "key": "12l65c9",
+    "text": "Could you count square tiles?",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s2 b1"
+    ]
+  },
+  {
+    "key": "1sgh565",
+    "text": "The ends lean, so the tiles there break into bits.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s2 b2"
+    ]
+  },
+  {
+    "key": "ucp2wt",
+    "text": "Is there a better way? Yes.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s2 b3"
+    ]
+  },
+  {
+    "key": "kgwueu",
+    "text": "Cut a triangle off one end, slide it to the other end, and you get a rectangle, so the area is base times height.",
+    "style": "B",
+    "chars": 113,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s3 b1 + g6m6-t1 bigIdea"
+    ]
+  },
+  {
+    "key": "1635m0w",
+    "text": "The base is the bottom edge, 6 centimeters.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s4 b1"
+    ]
+  },
+  {
+    "key": "6u2l4s",
+    "text": "The height is how tall it stands, straight up. That's 4 centimeters.",
+    "style": "B",
+    "chars": 68,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s4 b2"
+    ]
+  },
+  {
+    "key": "uwyt8y",
+    "text": "Cut along the dashed line.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s5 b1"
+    ]
+  },
+  {
+    "key": "1ek9744",
+    "text": "Slide that triangle to the other end.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s5 b2"
+    ]
+  },
+  {
+    "key": "12eu2n7",
+    "text": "Nothing is lost or added.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s5 b3"
+    ]
+  },
+  {
+    "key": "16mna81",
+    "text": "Now it's a rectangle, 6 centimeters by 4 centimeters.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s6 b1"
+    ]
+  },
+  {
+    "key": "1o5804p",
+    "text": "So 6 times 4 equals 24 square centimeters.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s6 b2"
+    ]
+  },
+  {
+    "key": "nru2kt",
+    "text": "Don't use the slanted side, 5 centimeters. That gives 30, too much.",
+    "style": "B+",
+    "chars": 67,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s7 b2"
+    ]
+  },
+  {
+    "key": "1d8t8mc",
+    "text": "Use the straight-up height, 6 times 4 equals 24.",
+    "style": "B+",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t1 s7 b3"
+    ]
+  },
+  {
+    "key": "euokh2",
+    "text": "What about 6 times 4?",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s2 b1"
+    ]
+  },
+  {
+    "key": "i44hj",
+    "text": "That's cloth for a whole rectangle, and the flag fills only part of it.",
+    "style": "B",
+    "chars": 71,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s2 b2"
+    ]
+  },
+  {
+    "key": "1jx6z2y",
+    "text": "So how much of it is flag? Exactly half. Here's why.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s2 b3"
+    ]
+  },
+  {
+    "key": "9ef1tj",
+    "text": "Two copies of a triangle make a leaning four-sided shape, so one triangle is half of it, one half times base times height.",
+    "style": "B",
+    "chars": 122,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s3 b1 + g6m6-t2 bigIdea"
+    ]
+  },
+  {
+    "key": "1r8cpa4",
+    "text": "The base is the bottom edge, 6 inches.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s4 b1"
+    ]
+  },
+  {
+    "key": "t6chyc",
+    "text": "The height goes straight up to the top point. That's 4 inches.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s4 b2"
+    ]
+  },
+  {
+    "key": "681k1q",
+    "text": "Turn a copy of the flag upside down.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s5 b1"
+    ]
+  },
+  {
+    "key": "1epcdqy",
+    "text": "Fit it onto the slanted side.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s5 b2"
+    ]
+  },
+  {
+    "key": "1d4epua",
+    "text": "Two flags make one leaning shape, 6 inches by 4.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s5 b3"
+    ]
+  },
+  {
+    "key": "kx1t7w",
+    "text": "That shape is 6 times 4 equals 24 square inches.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s6 b1"
+    ]
+  },
+  {
+    "key": "jf4aih",
+    "text": "It's two flags, so take half, 24 divided by 2 equals 12 square inches.",
+    "style": "B",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s6 b2"
+    ]
+  },
+  {
+    "key": "r3wtwg",
+    "text": "Don't stop at 6 times 4 equals 24.",
+    "style": "B+",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s7 b2"
+    ]
+  },
+  {
+    "key": "1df6qmz",
+    "text": "That's two flags. Take half, one half times 6 times 4 equals 12.",
+    "style": "B+",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t2 s7 b3"
+    ]
+  },
+  {
+    "key": "onz6wj",
+    "text": "Is this wall a rectangle? No.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s2 b1"
+    ]
+  },
+  {
+    "key": "1voyr5z",
+    "text": "Is it a triangle? No again.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s2 b2"
+    ]
+  },
+  {
+    "key": "1e7pona",
+    "text": "So no one rule fits the whole wall.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s2 b3"
+    ]
+  },
+  {
+    "key": "mo0y8r",
+    "text": "Cut the shape into pieces you know, find each piece's area, and add them.",
+    "style": "B",
+    "chars": 73,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s3 b1 + g6m6-t3 bigIdea"
+    ]
+  },
+  {
+    "key": "sxjksh",
+    "text": "Cut straight across, right where the roof starts.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s4 b1"
+    ]
+  },
+  {
+    "key": "1g3g6a",
+    "text": "Now there's a rectangle at the bottom and a triangle on top.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s4 b2"
+    ]
+  },
+  {
+    "key": "pizc4e",
+    "text": "The rectangle is 6 times 4 equals 24 square meters.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s5 b1"
+    ]
+  },
+  {
+    "key": "1g9p8xh",
+    "text": "The triangle is half of 6 times 3. That's 9 square meters.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s5 b2"
+    ]
+  },
+  {
+    "key": "1ptvics",
+    "text": "24 plus 9 equals 33. So there are 33 square meters to paint.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s6 b2"
+    ]
+  },
+  {
+    "key": "mddscz",
+    "text": "Don't draw one big box around the wall. 6 times 7 equals 42 counts the empty corners too.",
+    "style": "B+",
+    "chars": 89,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s7 b2"
+    ]
+  },
+  {
+    "key": "y0l540",
+    "text": "Find each piece, then add, 24 plus 9 equals 33.",
+    "style": "B+",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t3 s7 b3"
+    ]
+  },
+  {
+    "key": "1lz900j",
+    "text": "Length times width times height counts the cubes inside.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s2 b1"
+    ]
+  },
+  {
+    "key": "1epwb5q",
+    "text": "But paper doesn't go inside. It wraps the outside.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s2 b2"
+    ]
+  },
+  {
+    "key": "1iv4tei",
+    "text": "So what do we add up? Every flat side.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s2 b3"
+    ]
+  },
+  {
+    "key": "1ny6g2y",
+    "text": "Unfold the box flat, then add up the areas of all 6 of its flat sides.",
+    "style": "B",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s3 b1 + g6m6-t4 bigIdea"
+    ]
+  },
+  {
+    "key": "brt4zc",
+    "text": "Cut some edges and fold the box open, flat.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s4 b1"
+    ]
+  },
+  {
+    "key": "1bx6gdd",
+    "text": "A bottom, a front, a top, a back, and an end on each side.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s4 b2"
+    ]
+  },
+  {
+    "key": "1rkdw3z",
+    "text": "That's 6 flat sides.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s4 b3"
+    ]
+  },
+  {
+    "key": "1eqpoy9",
+    "text": "The top and the bottom are both 4 times 3 equals 12.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s5 b1"
+    ]
+  },
+  {
+    "key": "k376id",
+    "text": "The front and the back are both 4 times 2 equals 8.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s5 b2"
+    ]
+  },
+  {
+    "key": "fdb7v8",
+    "text": "The two ends are both 3 times 2 equals 6.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s5 b3"
+    ]
+  },
+  {
+    "key": "1j7dbv6",
+    "text": "Now add all six. 12 plus 12 plus 8 plus 8 plus 6 plus 6 equals 52.",
+    "style": "B",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s6 b1"
+    ]
+  },
+  {
+    "key": "43tin",
+    "text": "So the paper is 52 square centimeters.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s6 b2"
+    ]
+  },
+  {
+    "key": "1l7m9jg",
+    "text": "Don't add only the 3 sides you see.",
+    "style": "B+",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s7 b2"
+    ]
+  },
+  {
+    "key": "14lp4rg",
+    "text": "12 plus 8 plus 6 is just 26, half the paper.",
+    "style": "B+",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s7 b3"
+    ]
+  },
+  {
+    "key": "i7dml8",
+    "text": "Each has a partner at the back or underneath. Count each one twice, and you get 52.",
+    "style": "B+",
+    "chars": 83,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t4 s7 b4"
+    ]
+  },
+  {
+    "key": "5hv07v",
+    "text": "Let's try filling it with 1-foot cubes.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s2 b1"
+    ]
+  },
+  {
+    "key": "wz5j57",
+    "text": "Along the length, 2 fit, and then half a foot is left.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "1dek1tc",
+    "text": "Does a whole cube fit in that gap? No.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s2 b3"
+    ]
+  },
+  {
+    "key": "9xju4",
+    "text": "So counting whole cubes would miss space.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s2 b4"
+    ]
+  },
+  {
+    "key": "m9hhso",
+    "text": "Multiply length times width times height, even when the edges are fractions.",
+    "style": "B",
+    "chars": 76,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s3 b1 + g6m6-t5 bigIdea"
+    ]
+  },
+  {
+    "key": "1qw5ms1",
+    "text": "Mixed numbers are hard to multiply, so first I rewrite them.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s4 b1"
+    ]
+  },
+  {
+    "key": "1gl9npq",
+    "text": "2 and one half feet is 5 half feet. We write five halves.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s4 b2"
+    ]
+  },
+  {
+    "key": "uym7bo",
+    "text": "1 and one half feet is 3 half feet, so three halves.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s4 b3"
+    ]
+  },
+  {
+    "key": "1a990ts",
+    "text": "Same chest, same edges, just easier to multiply.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s4 b4"
+    ]
+  },
+  {
+    "key": "12wvrdy",
+    "text": "Now multiply, two edges at a time.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s5 b1"
+    ]
+  },
+  {
+    "key": "1s85ang",
+    "text": "Length times width first. five halves times 2 equals ten halves, and that's 5.",
+    "style": "B",
+    "chars": 78,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s5 b2"
+    ]
+  },
+  {
+    "key": "a79mai",
+    "text": "Then times the height. 5 times three halves equals fifteen halves.",
+    "style": "B",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s5 b3"
+    ]
+  },
+  {
+    "key": "zy2txu",
+    "text": "fifteen halves means 15 halves. How many wholes is that?",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s6 b1"
+    ]
+  },
+  {
+    "key": "jfo7o9",
+    "text": "2 halves make 1 whole, so 14 halves make 7, and 1 half is left.",
+    "style": "B",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s6 b2"
+    ]
+  },
+  {
+    "key": "12c2i6g",
+    "text": "So the chest holds 7 and one half cubic feet.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s6 b3"
+    ]
+  },
+  {
+    "key": "qxuuhk",
+    "text": "Don't drop the halves.",
+    "style": "B+",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s7 b2"
+    ]
+  },
+  {
+    "key": "axlvvo",
+    "text": "2 times 2 times 1 is only 4. That leaves out a big chunk of the chest.",
+    "style": "B+",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s7 b3"
+    ]
+  },
+  {
+    "key": "r4wofu",
+    "text": "Keep them, five halves times 2 times three halves equals 7 and one half.",
+    "style": "B+",
+    "chars": 72,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t5 s7 b4"
+    ]
+  },
+  {
+    "key": "xjmxjj",
+    "text": "You could get a protractor and measure the other angle.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s2 b1"
+    ]
+  },
+  {
+    "key": "1ronbfc",
+    "text": "But do you need one? No.",
+    "style": "B",
+    "chars": 24,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s2 b2"
+    ]
+  },
+  {
+    "key": "1uic4bm",
+    "text": "The floor is a straight line, and that line already tells you.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s2 b3"
+    ]
+  },
+  {
+    "key": "1gso0f9",
+    "text": "Angles that sit side by side on a straight line add up to 180 degrees.",
+    "style": "B",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s3 b1 + g6m6-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "1ghhs13",
+    "text": "Here's why. Face one way, then turn until you face the other way.",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s4 b1"
+    ]
+  },
+  {
+    "key": "o7jkhy",
+    "text": "That's a half turn, and a half turn is 180 degrees.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s4 b2"
+    ]
+  },
+  {
+    "key": "u5h6tr",
+    "text": "A straight line opens exactly that much.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s4 b3"
+    ]
+  },
+  {
+    "key": "1kr09f8",
+    "text": "Now the board splits the line into two angles, 55 degrees and the one we want.",
+    "style": "B",
+    "chars": 78,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s5 b1"
+    ]
+  },
+  {
+    "key": "w91xqm",
+    "text": "They fill the whole line, with no gap and no overlap.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s5 b2"
+    ]
+  },
+  {
+    "key": "ooeocz",
+    "text": "So together, the two make 180 degrees.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s5 b3"
+    ]
+  },
+  {
+    "key": "9r2ute",
+    "text": "One part is 55 degrees, so the other is what's left of 180.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s6 b1"
+    ]
+  },
+  {
+    "key": "1u9a0xx",
+    "text": "Take it away. 180 minus 55 equals 125.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s6 b2"
+    ]
+  },
+  {
+    "key": "fc0zqa",
+    "text": "The angle on the other side of the board is 125 degrees.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s6 b3"
+    ]
+  },
+  {
+    "key": "1g0ut07",
+    "text": "Don't take it away from 90. That gives 35.",
+    "style": "B+",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s7 b2"
+    ]
+  },
+  {
+    "key": "k0grp",
+    "text": "A straight line is not a square corner. It's two of them, 180 degrees.",
+    "style": "B+",
+    "chars": 70,
+    "kind": "beat",
+    "sources": [
+      "g6m6-t6 s7 b3"
+    ]
+  },
+  {
+    "key": "18aae88",
+    "text": "Look at these four towers.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s2 b1"
+    ]
+  },
+  {
+    "key": "9lj7ea",
+    "text": "Pick the tallest, 6? Or the shortest, 2?",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s2 b2"
+    ]
+  },
+  {
+    "key": "cqgkci",
+    "text": "Neither one is fair to every tower. We need one number that treats all four the same.",
+    "style": "B",
+    "chars": 85,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s2 b3"
+    ]
+  },
+  {
+    "key": "1wt94fn",
+    "text": "Put it all together, then share it out equally, the total divided by how many is the fair share.",
+    "style": "B",
+    "chars": 96,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s3 b1 + g6m7-t1 bigIdea"
+    ]
+  },
+  {
+    "key": "190kkr5",
+    "text": "So push every tower into one pile.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s4 b1"
+    ]
+  },
+  {
+    "key": "1ti2myu",
+    "text": "2 plus 6 plus 3 plus 5 equals 16 cubes in all.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s4 b2"
+    ]
+  },
+  {
+    "key": "neejrc",
+    "text": "There are 4 towers, so share the 16 cubes into 4 equal towers.",
+    "style": "B",
+    "chars": 62,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s5 b1"
+    ]
+  },
+  {
+    "key": "ruwk96",
+    "text": "16 divided by 4 equals 4.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s5 b2"
+    ]
+  },
+  {
+    "key": "v9o0qc",
+    "text": "Every tower is 4 tall.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s5 b3"
+    ]
+  },
+  {
+    "key": "1ovs3d1",
+    "text": "Let's check it.",
+    "style": "B",
+    "chars": 15,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s6 b1"
+    ]
+  },
+  {
+    "key": "1v0dcz0",
+    "text": "Take 2 cubes off the 6 and give them to the 2.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s6 b2"
+    ]
+  },
+  {
+    "key": "1cotor8",
+    "text": "Take 1 off the 5 and give it to the 3.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s6 b3"
+    ]
+  },
+  {
+    "key": "1owpo3j",
+    "text": "Now every tower is 4, and no cube was added.",
+    "style": "B",
+    "chars": 44,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s6 b4"
+    ]
+  },
+  {
+    "key": "12rvx5u",
+    "text": "Don't stop at the total. 16 is the whole pile, not one tower.",
+    "style": "B+",
+    "chars": 61,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s7 b2"
+    ]
+  },
+  {
+    "key": "1hdqgkj",
+    "text": "Divide it by 4 towers. 16 divided by 4 equals 4.",
+    "style": "B+",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t1 s7 b3"
+    ]
+  },
+  {
+    "key": "zgpq4x",
+    "text": "The middle spot of this list holds 9.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s2 b1"
+    ]
+  },
+  {
+    "key": "bylyj5",
+    "text": "But 9 is the tallest seedling. Can the tallest be the middle? No.",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s2 b2"
+    ]
+  },
+  {
+    "key": "lorgl8",
+    "text": "This list is jumbled.",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s2 b3"
+    ]
+  },
+  {
+    "key": "aqwt0i",
+    "text": "Put the numbers in order, and the one in the very middle splits them in half.",
+    "style": "B",
+    "chars": 77,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s3 b1 + g6m7-t2 bigIdea"
+    ]
+  },
+  {
+    "key": "hkzqmi",
+    "text": "So the first job, every time, is to sort them.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s4 b1"
+    ]
+  },
+  {
+    "key": "4iv2h6",
+    "text": "Smallest to biggest, that's 3, 4, 6, 7, 9.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s4 b2"
+    ]
+  },
+  {
+    "key": "zc1is0",
+    "text": "Now cross off one from each end.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s5 b1"
+    ]
+  },
+  {
+    "key": "11qb8ef",
+    "text": "3 and 9 go. Then 4 and 7 go.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s5 b2"
+    ]
+  },
+  {
+    "key": "1ao3a1s",
+    "text": "The one left is 6, so the middle height is 6 inches.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s5 b3"
+    ]
+  },
+  {
+    "key": "z57lax",
+    "text": "What if there's no single middle?",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s6 b1"
+    ]
+  },
+  {
+    "key": "13gh9dv",
+    "text": "Add a seedling that's 10 inches tall.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s6 b2"
+    ]
+  },
+  {
+    "key": "16cn438",
+    "text": "Now two numbers share the middle, 6 and 7.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s6 b3"
+    ]
+  },
+  {
+    "key": "1hiagkw",
+    "text": "Halfway between them is six and a half.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s6 b4"
+    ]
+  },
+  {
+    "key": "17lohlr",
+    "text": "Don't grab the middle spot before you sort. That gives 9.",
+    "style": "B+",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s7 b2"
+    ]
+  },
+  {
+    "key": "a7cmxo",
+    "text": "Sort first, and the middle is 6.",
+    "style": "B+",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t2 s7 b3"
+    ]
+  },
+  {
+    "key": "javjqr",
+    "text": "You could add up all the pets.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s2 b1"
+    ]
+  },
+  {
+    "key": "9r8979",
+    "text": "Would that show which answer came up most? No.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s2 b2"
+    ]
+  },
+  {
+    "key": "u9z97d",
+    "text": "It only tells how many pets there are in all.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s2 b3"
+    ]
+  },
+  {
+    "key": "qrh2s8",
+    "text": "The most common value is the one that shows up most often, so find the tallest stack and read the number under it.",
+    "style": "B",
+    "chars": 114,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s3 b1 + g6m7-t3 bigIdea"
+    ]
+  },
+  {
+    "key": "jasmyc",
+    "text": "Here's how this picture is made.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s4 b1"
+    ]
+  },
+  {
+    "key": "5hm1g6",
+    "text": "Each kid puts one X above their number of pets.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s4 b2"
+    ]
+  },
+  {
+    "key": "jzw0m7",
+    "text": "Watch the stacks grow.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s4 b3"
+    ]
+  },
+  {
+    "key": "nsjjd5",
+    "text": "Which stack is the tallest?",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s5 b1"
+    ]
+  },
+  {
+    "key": "1fg1cqp",
+    "text": "Count each one, 3, 5, 2, 1, 1.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s5 b2"
+    ]
+  },
+  {
+    "key": "bkz79o",
+    "text": "The tallest has 5 Xs, more than any other.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s5 b3"
+    ]
+  },
+  {
+    "key": "100j9xp",
+    "text": "Now look under that stack.",
+    "style": "B",
+    "chars": 26,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s6 b1"
+    ]
+  },
+  {
+    "key": "1gd3swz",
+    "text": "It sits above 1.",
+    "style": "B",
+    "chars": 16,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s6 b2"
+    ]
+  },
+  {
+    "key": "1pgozqj",
+    "text": "So the most common number of pets is 1.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s6 b3"
+    ]
+  },
+  {
+    "key": "1kaiet1",
+    "text": "The answer is not how tall the stack is.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s7 b2"
+    ]
+  },
+  {
+    "key": "1ky33z4",
+    "text": "It holds 5 kids, but the most common answer is 1 pet.",
+    "style": "B+",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t3 s7 b3"
+    ]
+  },
+  {
+    "key": "1tuq3xg",
+    "text": "Sam's best game was 15 points.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s2 b1"
+    ]
+  },
+  {
+    "key": "1uxk7kj",
+    "text": "But does one number show how far apart his games are? No.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s2 b2"
+    ]
+  },
+  {
+    "key": "19vrrsu",
+    "text": "A player who scores 15 every game is very different.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s2 b3"
+    ]
+  },
+  {
+    "key": "1pgzc3v",
+    "text": "To see how spread out numbers are, take the biggest number minus the smallest number.",
+    "style": "B",
+    "chars": 85,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s3 b1 + g6m7-t4 bigIdea"
+    ]
+  },
+  {
+    "key": "p0bpwp",
+    "text": "Start at the two ends.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s4 b1"
+    ]
+  },
+  {
+    "key": "1vo544r",
+    "text": "His smallest score is 4. His biggest is 15.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s4 b2"
+    ]
+  },
+  {
+    "key": "b89ila",
+    "text": "Every other game sits in between.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s4 b3"
+    ]
+  },
+  {
+    "key": "16mheqm",
+    "text": "How far is it from 4 up to 15?",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s5 b1"
+    ]
+  },
+  {
+    "key": "9m7rmi",
+    "text": "15 minus 4 equals 11.",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s5 b2"
+    ]
+  },
+  {
+    "key": "11it8ho",
+    "text": "So his scores are spread over 11 points.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s5 b3"
+    ]
+  },
+  {
+    "key": "jz1ku",
+    "text": "Now Kim. She scored 9, 10, 8, 11 and 10.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s6 b1"
+    ]
+  },
+  {
+    "key": "168lth8",
+    "text": "Her gap is 11 minus 8 equals 3.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s6 b2"
+    ]
+  },
+  {
+    "key": "1w0lxbv",
+    "text": "See how her scores huddle close together?",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s6 b3"
+    ]
+  },
+  {
+    "key": "13gu3u4",
+    "text": "Don't subtract the first number from the last one. That gives 9 minus 4 equals 5.",
+    "style": "B+",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s7 b2"
+    ]
+  },
+  {
+    "key": "zwxqom",
+    "text": "Find the smallest and the biggest instead. 15 minus 4 equals 11.",
+    "style": "B+",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t4 s7 b3"
+    ]
+  },
+  {
+    "key": "jl7nya",
+    "text": "Try the mean first. Add all five ages, and you get 80.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s2 b1"
+    ]
+  },
+  {
+    "key": "89tggp",
+    "text": "Share it by 5. 80 divided by 5 equals 16.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "ia5ak2",
+    "text": "But who at this party is 16? Nobody.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s2 b3"
+    ]
+  },
+  {
+    "key": "1vkh2sh",
+    "text": "One number far from the rest pulls the mean toward it, so the median fits the group better.",
+    "style": "B",
+    "chars": 91,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s3 b1 + g6m7-t5 bigIdea"
+    ]
+  },
+  {
+    "key": "bdsm0w",
+    "text": "Look at the four kids on their own. 9, 10, 10 and 11 make 40.",
+    "style": "B",
+    "chars": 61,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s4 b1"
+    ]
+  },
+  {
+    "key": "sj8wr2",
+    "text": "40 divided by 4 equals 10. So their mean is 10.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s4 b2"
+    ]
+  },
+  {
+    "key": "1383kig",
+    "text": "Now put the grown-up back in. The mean jumps to 16, pulled up by one person.",
+    "style": "B",
+    "chars": 76,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s4 b3"
+    ]
+  },
+  {
+    "key": "13y1in3",
+    "text": "Now try the median. Put the ages in order, 9, 10, 10, 11, 40.",
+    "style": "B",
+    "chars": 61,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s5 b1"
+    ]
+  },
+  {
+    "key": "olgqwu",
+    "text": "The one in the middle is 10.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s5 b2"
+    ]
+  },
+  {
+    "key": "1ogaxbl",
+    "text": "The 40 is still in the list, and the median is still 10.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s5 b3"
+    ]
+  },
+  {
+    "key": "cgnyhh",
+    "text": "So which number fits this party? Almost everyone is about 10.",
+    "style": "B",
+    "chars": 61,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s6 b1"
+    ]
+  },
+  {
+    "key": "469a1v",
+    "text": "The median says 10. The mean says 16, and that fits nobody.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s6 b2"
+    ]
+  },
+  {
+    "key": "1wkuonj",
+    "text": "When one number sits far from the rest, pick the median.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s6 b3"
+    ]
+  },
+  {
+    "key": "of7uip",
+    "text": "Don't reach for the mean every time.",
+    "style": "B+",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s7 b2"
+    ]
+  },
+  {
+    "key": "nia9f6",
+    "text": "One far number pulls it away from the group. Then the median fits better.",
+    "style": "B+",
+    "chars": 73,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t5 s7 b3"
+    ]
+  },
+  {
+    "key": "1mv82en",
+    "text": "You could read a long list of names and times, one kid at a time.",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s2 b1"
+    ]
+  },
+  {
+    "key": "iu6ksw",
+    "text": "That works. But it's slow, and it's easy to lose count.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s2 b2"
+    ]
+  },
+  {
+    "key": "2f8olr",
+    "text": "Is there a faster way? Yes. A picture sorts the kids for us.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s2 b3"
+    ]
+  },
+  {
+    "key": "ejl0ih",
+    "text": "Each X stands for one thing, and each bar counts everything in its group.",
+    "style": "B",
+    "chars": 73,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s3 b1 + g6m7-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "gchbuw",
+    "text": "Look. Every X here is one kid.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s4 b1"
+    ]
+  },
+  {
+    "key": "v9xztl",
+    "text": "Above 30 I count 5. Above 40, 3. Above 50, just 1.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s4 b2"
+    ]
+  },
+  {
+    "key": "lqcxkq",
+    "text": "The question says 30 minutes or more. Does 30 itself count? Yes.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s5 b1"
+    ]
+  },
+  {
+    "key": "1oqwzot",
+    "text": "So add the stacks over 30, 40 and 50.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s5 b2"
+    ]
+  },
+  {
+    "key": "25ugue",
+    "text": "5 plus 3 plus 1 equals 9. So 9 kids practiced that long.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s5 b3"
+    ]
+  },
+  {
+    "key": "1q3w12n",
+    "text": "Sometimes every time is different, so every stack is just 1 tall.",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s6 b1"
+    ]
+  },
+  {
+    "key": "ybkpjb",
+    "text": "So we put the times in groups, and draw one bar for each group.",
+    "style": "B",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s6 b2"
+    ]
+  },
+  {
+    "key": "11cdki9",
+    "text": "This bar is over 20 to 29. It reaches 8, so 8 kids practiced 20 to 29 minutes.",
+    "style": "B",
+    "chars": 78,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s6 b3"
+    ]
+  },
+  {
+    "key": "bsq28e",
+    "text": "Don't count the numbers along the bottom.",
+    "style": "B+",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s7 b2"
+    ]
+  },
+  {
+    "key": "1hfhki",
+    "text": "30, 40 and 50 give you 3. Count the X's instead, and you get 9.",
+    "style": "B+",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t6 s7 b3"
+    ]
+  },
+  {
+    "key": "ryfyyg",
+    "text": "Only two things can happen. You win, or you lose.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s2 b1"
+    ]
+  },
+  {
+    "key": "pw50kc",
+    "text": "So is your chance one half? No.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s2 b2"
+    ]
+  },
+  {
+    "key": "dofxly",
+    "text": "Look at the spinner. Red covers only some of the parts.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s2 b3"
+    ]
+  },
+  {
+    "key": "qn1a6c",
+    "text": "The chance of something is the number of ways it can happen over the number of all the ways.",
+    "style": "B",
+    "chars": 92,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s3 b1 + g6m7-t7 bigIdea"
+    ]
+  },
+  {
+    "key": "1geb2yt",
+    "text": "First, count the ways to win. Count the red parts with me.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s4 b1"
+    ]
+  },
+  {
+    "key": "1rnien5",
+    "text": "1, 2, 3. So there are 3 ways to win.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s4 b2"
+    ]
+  },
+  {
+    "key": "1rp1wei",
+    "text": "Next, count every part. The arrow could stop on any one of them.",
+    "style": "B",
+    "chars": 64,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s5 b1"
+    ]
+  },
+  {
+    "key": "2pd3ut",
+    "text": "3 red, 3 blue, 1 green and 1 yellow. That's 8 parts in all.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s5 b2"
+    ]
+  },
+  {
+    "key": "b3ojz2",
+    "text": "Now make a fraction. The ways to win go on top.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s6 b1"
+    ]
+  },
+  {
+    "key": "14nez36",
+    "text": "All the ways go on the bottom.",
+    "style": "B",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s6 b2"
+    ]
+  },
+  {
+    "key": "1vn227e",
+    "text": "So the chance of red is three eighths.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s6 b3"
+    ]
+  },
+  {
+    "key": "1yyimob",
+    "text": "Don't put red over the parts that are not red.",
+    "style": "B+",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s7 b2"
+    ]
+  },
+  {
+    "key": "1t44u24",
+    "text": "That gives three fifths. Red goes over every part, all 8, so it's three eighths.",
+    "style": "B+",
+    "chars": 80,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t7 s7 b3"
+    ]
+  },
+  {
+    "key": "15o710k",
+    "text": "You might say maybe. A friend might say probably.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s2 b1"
+    ]
+  },
+  {
+    "key": "o6aqf4",
+    "text": "Which one is right? Words mean different things to different people.",
+    "style": "B",
+    "chars": 68,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s2 b2"
+    ]
+  },
+  {
+    "key": "1x6xrt0",
+    "text": "So we put every chance on one line, from 0 to 1.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s2 b3"
+    ]
+  },
+  {
+    "key": "1xawzz7",
+    "text": "Every chance is a number from 0 to 1, where 0 is impossible, 1 is certain and one half is right in the middle.",
+    "style": "B",
+    "chars": 110,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s3 b1 + g6m7-t8 bigIdea"
+    ]
+  },
+  {
+    "key": "nn9yx9",
+    "text": "Start with the two ends. Can you pull out a green marble? No.",
+    "style": "B",
+    "chars": 61,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s4 b1"
+    ]
+  },
+  {
+    "key": "e2lngp",
+    "text": "That's 0 ways out of 4. Its chance is 0.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s4 b2"
+    ]
+  },
+  {
+    "key": "128sl2i",
+    "text": "Any marble at all is 4 ways out of 4. Its chance is 1.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s4 b3"
+    ]
+  },
+  {
+    "key": "1wle5og",
+    "text": "Now the middle. Flip a coin. Heads is 1 way out of 2, so one half.",
+    "style": "B",
+    "chars": 66,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s5 b1"
+    ]
+  },
+  {
+    "key": "yqjqo",
+    "text": "Heads and tails have the same chance, so one half sits exactly halfway.",
+    "style": "B",
+    "chars": 71,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s5 b2"
+    ]
+  },
+  {
+    "key": "14v1qx9",
+    "text": "Back to the bag. Red is 3 ways out of 4, so three fourths.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s6 b1"
+    ]
+  },
+  {
+    "key": "10a0wes",
+    "text": "Is three fourths past the middle? Yes, so red is likely.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s6 b2"
+    ]
+  },
+  {
+    "key": "wz65nv",
+    "text": "Blue is 1 way out of 4, so one fourth. That's below the middle, so blue is unlikely.",
+    "style": "B",
+    "chars": 84,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s6 b3"
+    ]
+  },
+  {
+    "key": "1qdh8y0",
+    "text": "Don't call blue likely just because it can happen.",
+    "style": "B+",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s7 b2"
+    ]
+  },
+  {
+    "key": "5jxyvf",
+    "text": "One fourth is below one half, so blue is unlikely.",
+    "style": "B+",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g6m7-t8 s7 b3"
+    ]
+  },
+  {
     "key": "hxmia9",
     "text": "Cookies on plates. There are 4 plates. Each plate has 3 cookies. How many cookies are there?",
     "style": "A",
@@ -27320,6 +30690,236 @@
     ]
   },
   {
+    "key": "g9ajg5",
+    "text": "How many marbles?. You have a closed bag of marbles and 3 loose marbles. You cannot see inside the bag. How can you write how many marbles you have?",
+    "style": "A",
+    "chars": 148,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t1 s1"
+    ]
+  },
+  {
+    "key": "1thphnh",
+    "text": "Say it with a letter. Mia has n stickers. Jon has 5 more than Mia. How can you write how many stickers Jon has?",
+    "style": "A",
+    "chars": 111,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t2 s1"
+    ]
+  },
+  {
+    "key": "bsvt1c",
+    "text": "Party shopping. Cupcakes cost 3 dollars each, and a card costs 2 dollars. For n cupcakes and a card you pay 3 n plus 2 dollars. What do you pay for 4 cupcakes?",
+    "style": "A",
+    "chars": 159,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t3 s1"
+    ]
+  },
+  {
+    "key": "1hku5m2",
+    "text": "A shop full of toys. A toy shop has 4 shelves. Each shelf has 4 boxes. Each box holds 4 toys. How many toys are there?",
+    "style": "A",
+    "chars": 118,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t4 s1"
+    ]
+  },
+  {
+    "key": "atdja2",
+    "text": "Two different answers. Two friends work out 2 plus 3 times 4 squared. One gets 80. The other gets 50. They cannot both be right. Who is?",
+    "style": "A",
+    "chars": 136,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t5 s1"
+    ]
+  },
+  {
+    "key": "19g3hx5",
+    "text": "Three gift bags. Each gift bag holds x pens and 2 erasers. You pack 3 bags. How can you write how many things you packed?",
+    "style": "A",
+    "chars": 121,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t6 s1"
+    ]
+  },
+  {
+    "key": "194l5lt",
+    "text": "A level scale. A bag of x marbles and 4 loose marbles balance 9 marbles on the other side. How many marbles are in the bag?",
+    "style": "A",
+    "chars": 123,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t7 s1"
+    ]
+  },
+  {
+    "key": "9jowo9",
+    "text": "Movie tickets. 3 movie tickets cost 24 dollars in all. Every ticket costs the same, x dollars. How much is one ticket?",
+    "style": "A",
+    "chars": 118,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t8 s1"
+    ]
+  },
+  {
+    "key": "e0jfq3",
+    "text": "Old enough to join. To join a club, you must be more than 3 years old. 4 works. 7 works. Even 3 and a half works. How can you show every age that works?",
+    "style": "A",
+    "chars": 152,
+    "kind": "screen1",
+    "sources": [
+      "g6m5-t9 s1"
+    ]
+  },
+  {
+    "key": "1u4778q",
+    "text": "A leaning garden bed. On a plan, a garden bed leans to one side. It is 6 centimeters along the bottom and stands 4 centimeters tall. How much ground does it cover?",
+    "style": "A",
+    "chars": 163,
+    "kind": "screen1",
+    "sources": [
+      "g6m6-t1 s1"
+    ]
+  },
+  {
+    "key": "1lvkkc0",
+    "text": "A triangle flag. A triangle flag is 6 inches along the bottom and 4 inches tall. How much cloth does it need?",
+    "style": "A",
+    "chars": 109,
+    "kind": "screen1",
+    "sources": [
+      "g6m6-t2 s1"
+    ]
+  },
+  {
+    "key": "1ovyzcq",
+    "text": "A wall to paint. The end wall of a shed is shaped like a house, a rectangle with a triangle roof on top. How much wall is there to paint?",
+    "style": "A",
+    "chars": 137,
+    "kind": "screen1",
+    "sources": [
+      "g6m6-t3 s1"
+    ]
+  },
+  {
+    "key": "1ug5k3c",
+    "text": "Wrapping a gift. A gift box is 4 centimeters long, 3 centimeters wide and 2 centimeters tall. How much paper covers the outside, with no overlap?",
+    "style": "A",
+    "chars": 145,
+    "kind": "screen1",
+    "sources": [
+      "g6m6-t4 s1"
+    ]
+  },
+  {
+    "key": "okegbh",
+    "text": "A toy chest. A toy chest is 2 and one half feet long, 2 feet wide and 1 and one half feet tall. How much space is inside?",
+    "style": "A",
+    "chars": 121,
+    "kind": "screen1",
+    "sources": [
+      "g6m6-t5 s1"
+    ]
+  },
+  {
+    "key": "5bmq56",
+    "text": "A board on the floor. A board leans on a flat floor. On one side it makes a 55-degree angle with the floor. What is the angle on the other side?",
+    "style": "A",
+    "chars": 144,
+    "kind": "screen1",
+    "sources": [
+      "g6m6-t6 s1"
+    ]
+  },
+  {
+    "key": "j5ldgl",
+    "text": "Four towers of cubes. Four friends built towers of cubes. The towers are all different heights. If they shared the cubes fairly, how tall would each tower be?",
+    "style": "A",
+    "chars": 158,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t1 s1"
+    ]
+  },
+  {
+    "key": "82t4si",
+    "text": "Five seedlings. Five seedlings are 7, 3, 9, 4 and 6 inches tall. Which height is right in the middle?",
+    "style": "A",
+    "chars": 101,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t2 s1"
+    ]
+  },
+  {
+    "key": "82d36",
+    "text": "How many pets?. 12 kids said how many pets they have. Each X is one kid. Which number of pets is the most common?",
+    "style": "A",
+    "chars": 113,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t3 s1"
+    ]
+  },
+  {
+    "key": "a5stam",
+    "text": "Sam's basketball games. Sam scored 4, 11, 7, 15 and 9 points in five games. How spread out are his scores?",
+    "style": "A",
+    "chars": 106,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t4 s1"
+    ]
+  },
+  {
+    "key": "17c6kw1",
+    "text": "Ages at a party. Five people are at a party. Four kids are 9, 10, 10 and 11. One grown-up is 40. Which one number describes their ages best?",
+    "style": "A",
+    "chars": 140,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t5 s1"
+    ]
+  },
+  {
+    "key": "8y70ph",
+    "text": "How long did you practice?. Kids in a band wrote down how many minutes they practiced. How many kids practiced 30 minutes or more?",
+    "style": "A",
+    "chars": 130,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t6 s1"
+    ]
+  },
+  {
+    "key": "t3kee7",
+    "text": "Spin for a prize. This spinner has 8 equal parts. You win a prize if it lands on red. What is your chance of winning?",
+    "style": "A",
+    "chars": 117,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t7 s1"
+    ]
+  },
+  {
+    "key": "1gh4sgl",
+    "text": "Reach into the bag. A bag has 4 marbles, 3 red and 1 blue. You reach in without looking. Are you likely to pull out red?",
+    "style": "A",
+    "chars": 120,
+    "kind": "screen1",
+    "sources": [
+      "g6m7-t8 s1"
+    ]
+  },
+  {
     "key": "kjbipn",
     "text": "Now you try. 3 plates. 5 cookies on each plate. How many cookies? Find how many groups and how many in each. Then count by groups.",
     "style": "A",
@@ -29107,6 +32707,236 @@
     "kind": "turn",
     "sources": [
       "g6m4-t7 turn"
+    ]
+  },
+  {
+    "key": "1risgfu",
+    "text": "Now you try. A box holds n pencils. You also have 4 more pencils, so you have n plus 4 pencils. How many pencils is that when n equals 6? Find what n stands for. Put that number where the n is.",
+    "style": "A",
+    "chars": 193,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t1 turn"
+    ]
+  },
+  {
+    "key": "1i02dyl",
+    "text": "Now you try. Which shows 7 more than n? Find the action word. Then write it with n.",
+    "style": "A",
+    "chars": 83,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t2 turn"
+    ]
+  },
+  {
+    "key": "8ulmv3",
+    "text": "Now you try. What is 2 n plus 5 when n equals 6? Put the number where the letter is. Then do the math.",
+    "style": "A",
+    "chars": 102,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t3 turn"
+    ]
+  },
+  {
+    "key": "19vwdfe",
+    "text": "Now you try. What is 3 cubed? Write the big number as many times as the small number says. Then multiply.",
+    "style": "A",
+    "chars": 105,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t4 turn"
+    ]
+  },
+  {
+    "key": "wg0g5q",
+    "text": "Now you try. What is 5 plus 2 times 3 squared? Parentheses, then exponents, then times and divide, then plus and minus.",
+    "style": "A",
+    "chars": 119,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t5 turn"
+    ]
+  },
+  {
+    "key": "i0spzv",
+    "text": "Now you try. Which is the same as 4 times x plus 3, all together? Multiply the number outside by every part inside.",
+    "style": "A",
+    "chars": 115,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t6 turn"
+    ]
+  },
+  {
+    "key": "1utqfdc",
+    "text": "Now you try. Solve x plus 6 equals 15. What is x? Take the same amount off both sides until x is alone.",
+    "style": "A",
+    "chars": 103,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t7 turn"
+    ]
+  },
+  {
+    "key": "1xtatbc",
+    "text": "Now you try. Solve 4 x equals 28. What is x? Divide both sides by the number in front of x.",
+    "style": "A",
+    "chars": 91,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t8 turn"
+    ]
+  },
+  {
+    "key": "xau8hn",
+    "text": "Now you try. Which number line shows x is less than 6? Decide the dot first, does the number itself work? Then decide which way the arrow goes.",
+    "style": "A",
+    "chars": 143,
+    "kind": "turn",
+    "sources": [
+      "g6m5-t9 turn"
+    ]
+  },
+  {
+    "key": "bgnk25",
+    "text": "Now you try. This shape has a base of 7 centimeters and a height of 4 centimeters. Its slanted side is 5 centimeters. What is its area in square centimeters? Multiply the base by the straight-up height.",
+    "style": "A",
+    "chars": 202,
+    "kind": "turn",
+    "sources": [
+      "g6m6-t1 turn"
+    ]
+  },
+  {
+    "key": "t1mob3",
+    "text": "Now you try. A triangle has a base of 8 centimeters and a height of 5 centimeters. What is its area in square centimeters? Multiply the base by the height. Then take half.",
+    "style": "A",
+    "chars": 171,
+    "kind": "turn",
+    "sources": [
+      "g6m6-t2 turn"
+    ]
+  },
+  {
+    "key": "1emdy2h",
+    "text": "Now you try. A wall is a rectangle 8 feet wide and 5 feet tall with a triangle roof 3 feet tall on top. What is its area in square feet? Cut it into a rectangle and a triangle. Find each area, then add.",
+    "style": "A",
+    "chars": 202,
+    "kind": "turn",
+    "sources": [
+      "g6m6-t3 turn"
+    ]
+  },
+  {
+    "key": "1r9lm6a",
+    "text": "Now you try. This box is 5 centimeters long, 3 centimeters wide and 2 centimeters tall. It is unfolded flat below. How many square centimeters of paper cover it? Find the area of every flat side, then add all six.",
+    "style": "A",
+    "chars": 213,
+    "kind": "turn",
+    "sources": [
+      "g6m6-t4 turn"
+    ]
+  },
+  {
+    "key": "1m7wwkk",
+    "text": "Now you try. A box is 3 and one half ft long, 2 feet wide and 1 and one half ft tall. What is its volume in cubic feet? Change the mixed numbers to fractions. Then multiply all three edges.",
+    "style": "A",
+    "chars": 189,
+    "kind": "turn",
+    "sources": [
+      "g6m6-t5 turn"
+    ]
+  },
+  {
+    "key": "1e2l8eq",
+    "text": "Now you try. Two angles sit side by side on a straight line. One is 65 degrees. How many degrees is the other? The angles on a straight line add up to 180 degrees. Take away the one you know.",
+    "style": "A",
+    "chars": 191,
+    "kind": "turn",
+    "sources": [
+      "g6m6-t6 turn"
+    ]
+  },
+  {
+    "key": "19ylw27",
+    "text": "Now you try. Four towers have 3, 7, 4 and 6 cubes. If the cubes are shared fairly, how many cubes are in each tower? Add all the cubes. Then share the total into equal towers.",
+    "style": "A",
+    "chars": 175,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t1 turn"
+    ]
+  },
+  {
+    "key": "1kyjoyk",
+    "text": "Now you try. Five seedlings are 8, 2, 5, 9 and 4 inches tall. What is the middle height? Sort the heights first. Then find the one in the middle.",
+    "style": "A",
+    "chars": 145,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t2 turn"
+    ]
+  },
+  {
+    "key": "zaw840",
+    "text": "Now you try. 12 kids said how many brothers and sisters they have. Which number is the most common? Find the tallest stack. Read the number under it.",
+    "style": "A",
+    "chars": 149,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t3 turn"
+    ]
+  },
+  {
+    "key": "kyh0a0",
+    "text": "Now you try. Leo scored 6, 13, 8, 17 and 10 points in five games. What is the biggest score minus the smallest score? Find the smallest and the biggest. Then subtract.",
+    "style": "A",
+    "chars": 167,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t4 turn"
+    ]
+  },
+  {
+    "key": "15on0bc",
+    "text": "Now you try. Five kids get 6 dollars, 5 dollars, 7 dollars, 6 dollars and 36 dollars a week. Which middle describes these amounts best? Look for a number far from the rest.",
+    "style": "A",
+    "chars": 172,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t5 turn"
+    ]
+  },
+  {
+    "key": "1759l1k",
+    "text": "Now you try. Kids marked how many books they read this month. How many kids read 3 or more books? Find the stacks you need. Count their Xs and add.",
+    "style": "A",
+    "chars": 147,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t6 turn"
+    ]
+  },
+  {
+    "key": "6yj7td",
+    "text": "Now you try. This spinner has 8 equal parts. What is the chance of landing on blue? Ways it can happen on top. All the ways on the bottom.",
+    "style": "A",
+    "chars": 138,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t7 turn"
+    ]
+  },
+  {
+    "key": "1a17bid",
+    "text": "Now you try. A bag has 5 marbles, 1 yellow and 4 purple. You pick one without looking. How likely is yellow? Find the chance as a fraction. Then see where it sits on the line.",
+    "style": "A",
+    "chars": 175,
+    "kind": "turn",
+    "sources": [
+      "g6m7-t8 turn"
     ]
   },
   {
@@ -35950,6 +39780,906 @@
     ]
   },
   {
+    "key": "w4twpq",
+    "text": "What number does n stand for this time?",
+    "style": "A",
+    "chars": 39,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t1 hint1 + g6m5-t1 twin hint1"
+    ]
+  },
+  {
+    "key": "1faeuyo",
+    "text": "Put 6 in place of n. Then add the 4.",
+    "style": "A",
+    "chars": 36,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t1 hint2"
+    ]
+  },
+  {
+    "key": "tf7qwc",
+    "text": "Put 9 in place of n. Then take 2 away.",
+    "style": "A",
+    "chars": 38,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t1 twin hint2"
+    ]
+  },
+  {
+    "key": "134gms3",
+    "text": "Which action does more than mean?",
+    "style": "A",
+    "chars": 33,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t2 hint1"
+    ]
+  },
+  {
+    "key": "1dabdyx",
+    "text": "More than means you add. Start with n.",
+    "style": "A",
+    "chars": 38,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t2 hint2"
+    ]
+  },
+  {
+    "key": "lfhyp1",
+    "text": "Which action does times mean?",
+    "style": "A",
+    "chars": 29,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t2 twin hint1"
+    ]
+  },
+  {
+    "key": "17mvhpm",
+    "text": "You multiply n by 4. How do you write a number times a letter?",
+    "style": "A",
+    "chars": 62,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t2 twin hint2"
+    ]
+  },
+  {
+    "key": "1v0360q",
+    "text": "What does 2 n mean?",
+    "style": "A",
+    "chars": 19,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t3 hint1"
+    ]
+  },
+  {
+    "key": "qoxjjy",
+    "text": "Put 6 in place of n. Multiply before you add.",
+    "style": "A",
+    "chars": 45,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t3 hint2"
+    ]
+  },
+  {
+    "key": "h8ot60",
+    "text": "What does 4 n mean?",
+    "style": "A",
+    "chars": 19,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t3 twin hint1"
+    ]
+  },
+  {
+    "key": "1fbw0tt",
+    "text": "Put 7 in place of n. Multiply before you take away.",
+    "style": "A",
+    "chars": 51,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t3 twin hint2"
+    ]
+  },
+  {
+    "key": "gl7veh",
+    "text": "How many threes does the small number say to multiply?",
+    "style": "A",
+    "chars": 54,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t4 hint1"
+    ]
+  },
+  {
+    "key": "4svjwf",
+    "text": "Write 3 times 3 times 3. Multiply the first two, then multiply by 3 again.",
+    "style": "A",
+    "chars": 74,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t4 hint2"
+    ]
+  },
+  {
+    "key": "wxel5y",
+    "text": "How many twos does the small number say to multiply?",
+    "style": "A",
+    "chars": 52,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t4 twin hint1"
+    ]
+  },
+  {
+    "key": "vgvj3d",
+    "text": "Write five twos with times signs between them. Keep doubling.",
+    "style": "A",
+    "chars": 61,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t4 twin hint2"
+    ]
+  },
+  {
+    "key": "b5v2oo",
+    "text": "There are no parentheses. Which part do you work out first?",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t5 hint1"
+    ]
+  },
+  {
+    "key": "raalup",
+    "text": "Work out 3 squared first. Then multiply before you add.",
+    "style": "A",
+    "chars": 55,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t5 hint2"
+    ]
+  },
+  {
+    "key": "1h1uo7r",
+    "text": "Which part do you work out first?",
+    "style": "A",
+    "chars": 33,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t5 twin hint1"
+    ]
+  },
+  {
+    "key": "l0w90z",
+    "text": "Start inside the parentheses. Then square what you get.",
+    "style": "A",
+    "chars": 55,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t5 twin hint2"
+    ]
+  },
+  {
+    "key": "z083v5",
+    "text": "Does the 4 multiply only the x, or both parts?",
+    "style": "A",
+    "chars": 46,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t6 hint1"
+    ]
+  },
+  {
+    "key": "1r2hn67",
+    "text": "Multiply 4 by x. Then multiply 4 by 3.",
+    "style": "A",
+    "chars": 38,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t6 hint2"
+    ]
+  },
+  {
+    "key": "5md508",
+    "text": "Which parts does the 5 multiply?",
+    "style": "A",
+    "chars": 32,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t6 twin hint1"
+    ]
+  },
+  {
+    "key": "atw5p1",
+    "text": "Multiply 5 by x. Then multiply 5 by 1.",
+    "style": "A",
+    "chars": 38,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t6 twin hint2"
+    ]
+  },
+  {
+    "key": "uaygs3",
+    "text": "What is added to x on the left side?",
+    "style": "A",
+    "chars": 36,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t7 hint1"
+    ]
+  },
+  {
+    "key": "dhjs6k",
+    "text": "Take 6 off both sides. What is left on the right?",
+    "style": "A",
+    "chars": 49,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t7 hint2"
+    ]
+  },
+  {
+    "key": "edyybw",
+    "text": "What number is added to x?",
+    "style": "A",
+    "chars": 26,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t7 twin hint1"
+    ]
+  },
+  {
+    "key": "16xx0z7",
+    "text": "Take 8 away from both sides to get x alone.",
+    "style": "A",
+    "chars": 43,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t7 twin hint2"
+    ]
+  },
+  {
+    "key": "1v9ye8g",
+    "text": "Is x added to 4, or multiplied by 4?",
+    "style": "A",
+    "chars": 36,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t8 hint1"
+    ]
+  },
+  {
+    "key": "zdvf4t",
+    "text": "Split 28 into 4 equal parts. How big is one part?",
+    "style": "A",
+    "chars": 49,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t8 hint2"
+    ]
+  },
+  {
+    "key": "oi00ko",
+    "text": "How many equal parts of x are there?",
+    "style": "A",
+    "chars": 36,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t8 twin hint1"
+    ]
+  },
+  {
+    "key": "1d81oj5",
+    "text": "Divide 54 by 6 to find one part.",
+    "style": "A",
+    "chars": 32,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t8 twin hint2"
+    ]
+  },
+  {
+    "key": "31wjb1",
+    "text": "Are the numbers that work bigger or smaller than 6?",
+    "style": "A",
+    "chars": 51,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t9 hint1"
+    ]
+  },
+  {
+    "key": "11q0he",
+    "text": "Does 6 itself make x is less than 6 true? If not, the dot is open.",
+    "style": "A",
+    "chars": 66,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t9 hint2"
+    ]
+  },
+  {
+    "key": "m10xx2",
+    "text": "Does 9 itself make x is less than 9 true?",
+    "style": "A",
+    "chars": 41,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t9 twin hint1"
+    ]
+  },
+  {
+    "key": "2z51xr",
+    "text": "Count down one whole number from 9.",
+    "style": "A",
+    "chars": 35,
+    "kind": "hint",
+    "sources": [
+      "g6m5-t9 twin hint2"
+    ]
+  },
+  {
+    "key": "piaevb",
+    "text": "Which line shows how tall the shape stands? Look for the dashed one.",
+    "style": "A",
+    "chars": 68,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t1 hint1"
+    ]
+  },
+  {
+    "key": "65v9wt",
+    "text": "The base is 7 centimeters and the height is 4 centimeters. Leave the slanted side out.",
+    "style": "A",
+    "chars": 86,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t1 hint2"
+    ]
+  },
+  {
+    "key": "1oc6e6p",
+    "text": "Find the dashed line. That is how tall the shape stands.",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t1 twin hint1"
+    ]
+  },
+  {
+    "key": "yrm1nr",
+    "text": "The base is 10 feet. The height is 6 feet. Multiply those two.",
+    "style": "A",
+    "chars": 62,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t1 twin hint2"
+    ]
+  },
+  {
+    "key": "zhqyjw",
+    "text": "Base times height gives two triangles. What do you do next?",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t2 hint1"
+    ]
+  },
+  {
+    "key": "o054s9",
+    "text": "Find 8 times 5, then take half of it.",
+    "style": "A",
+    "chars": 37,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t2 hint2"
+    ]
+  },
+  {
+    "key": "n9tvgn",
+    "text": "Base times height makes two triangles. You only need one.",
+    "style": "A",
+    "chars": 57,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t2 twin hint1"
+    ]
+  },
+  {
+    "key": "1rptf71",
+    "text": "Multiply 7 times 4. Then split it in half.",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t2 twin hint2"
+    ]
+  },
+  {
+    "key": "1ux1n9u",
+    "text": "Where can you cut the shape into a rectangle and a triangle?",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t3 hint1"
+    ]
+  },
+  {
+    "key": "15a293d",
+    "text": "The rectangle is 8 times 5. The triangle is half of 8 times 3. Add them.",
+    "style": "A",
+    "chars": 72,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t3 hint2"
+    ]
+  },
+  {
+    "key": "suc04k",
+    "text": "Cut the L into two rectangles.",
+    "style": "A",
+    "chars": 30,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t3 twin hint1"
+    ]
+  },
+  {
+    "key": "1budbh9",
+    "text": "The bottom piece is 7 feet by 3 feet. The top piece is 3 feet by 3 feet.",
+    "style": "A",
+    "chars": 72,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t3 twin hint2"
+    ]
+  },
+  {
+    "key": "1oghxx0",
+    "text": "Unfold the box. How many flat sides are there?",
+    "style": "A",
+    "chars": 46,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t4 hint1"
+    ]
+  },
+  {
+    "key": "13bkd0v",
+    "text": "Top and bottom are 5 times 3. Front and back are 5 times 2. The ends are 3 times 2. Count each one twice.",
+    "style": "A",
+    "chars": 105,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t4 hint2"
+    ]
+  },
+  {
+    "key": "1hq0zs3",
+    "text": "There are 6 flat sides. They come in matching pairs.",
+    "style": "A",
+    "chars": 52,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t4 twin hint1"
+    ]
+  },
+  {
+    "key": "1o479j5",
+    "text": "Top and bottom are 6 times 2. Front and back are 6 times 3. The ends are 2 times 3.",
+    "style": "A",
+    "chars": 83,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t4 twin hint2"
+    ]
+  },
+  {
+    "key": "au7qrw",
+    "text": "Write each mixed number as a fraction first.",
+    "style": "A",
+    "chars": 44,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t5 hint1"
+    ]
+  },
+  {
+    "key": "j7rezl",
+    "text": "3 and one half is seven halves and 1 and one half is three halves. Multiply them with the 2.",
+    "style": "A",
+    "chars": 92,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t5 hint2"
+    ]
+  },
+  {
+    "key": "17fz1cy",
+    "text": "Change the mixed numbers into fractions.",
+    "style": "A",
+    "chars": 40,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t5 twin hint1"
+    ]
+  },
+  {
+    "key": "mk3xg2",
+    "text": "1 and one half is three halves and 2 and one half is five halves. Multiply them with the 4.",
+    "style": "A",
+    "chars": 91,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t5 twin hint2"
+    ]
+  },
+  {
+    "key": "14r3yws",
+    "text": "What do angles on a straight line add up to?",
+    "style": "A",
+    "chars": 44,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t6 hint1"
+    ]
+  },
+  {
+    "key": "ss4xiw",
+    "text": "Start at 180 and take away 65.",
+    "style": "A",
+    "chars": 30,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t6 hint2"
+    ]
+  },
+  {
+    "key": "1a58cq1",
+    "text": "A straight line is a half turn. How many degrees is that?",
+    "style": "A",
+    "chars": 57,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t6 twin hint1"
+    ]
+  },
+  {
+    "key": "k2zo7l",
+    "text": "Start at 180 and take away 130.",
+    "style": "A",
+    "chars": 31,
+    "kind": "hint",
+    "sources": [
+      "g6m6-t6 twin hint2"
+    ]
+  },
+  {
+    "key": "v3tcsu",
+    "text": "First add up the cubes in all four towers.",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t1 hint1"
+    ]
+  },
+  {
+    "key": "1rp3hsc",
+    "text": "The total is 20. Now share it into 4 equal towers.",
+    "style": "A",
+    "chars": 50,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t1 hint2"
+    ]
+  },
+  {
+    "key": "15xcdva",
+    "text": "First add up the cubes in all five towers.",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t1 twin hint1"
+    ]
+  },
+  {
+    "key": "1avj88w",
+    "text": "Now share that total into equal towers, one for each tower.",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t1 twin hint2"
+    ]
+  },
+  {
+    "key": "1ixin93",
+    "text": "Put the heights in order, smallest to biggest.",
+    "style": "A",
+    "chars": 46,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t2 hint1"
+    ]
+  },
+  {
+    "key": "qiz48k",
+    "text": "Cross off one number from each end until only one is left.",
+    "style": "A",
+    "chars": 58,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t2 hint2"
+    ]
+  },
+  {
+    "key": "19q7k10",
+    "text": "Put the weights in order, smallest to biggest.",
+    "style": "A",
+    "chars": 46,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t2 twin hint1"
+    ]
+  },
+  {
+    "key": "xv3izm",
+    "text": "Cross off one weight from each end, again and again, until one is left.",
+    "style": "A",
+    "chars": 71,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t2 twin hint2"
+    ]
+  },
+  {
+    "key": "1mtlgyq",
+    "text": "Which stack of Xs is the tallest?",
+    "style": "A",
+    "chars": 33,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t3 hint1 + g6m7-t3 twin hint1"
+    ]
+  },
+  {
+    "key": "x321pc",
+    "text": "Read the number under the tallest stack, not how tall it is.",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t3 hint2"
+    ]
+  },
+  {
+    "key": "74elpp",
+    "text": "Say the shoe size under that stack, not how many Xs it has.",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t3 twin hint2"
+    ]
+  },
+  {
+    "key": "a0f97v",
+    "text": "Find the smallest score and the biggest score first.",
+    "style": "A",
+    "chars": 52,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t4 hint1"
+    ]
+  },
+  {
+    "key": "nmatqm",
+    "text": "Take the biggest score minus the smallest score.",
+    "style": "A",
+    "chars": 48,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t4 hint2"
+    ]
+  },
+  {
+    "key": "11nlizt",
+    "text": "Look through all seven for the smallest and the biggest.",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t4 twin hint1"
+    ]
+  },
+  {
+    "key": "1169ebk",
+    "text": "Take the biggest temperature minus the smallest one.",
+    "style": "A",
+    "chars": 52,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t4 twin hint2"
+    ]
+  },
+  {
+    "key": "ysqyil",
+    "text": "Is any amount far away from the others?",
+    "style": "A",
+    "chars": 39,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t5 hint1"
+    ]
+  },
+  {
+    "key": "1mzqgzm",
+    "text": "A far-away number pulls the mean toward it. Which middle does not move much?",
+    "style": "A",
+    "chars": 76,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t5 hint2"
+    ]
+  },
+  {
+    "key": "7x8j56",
+    "text": "Is one score far from the rest?",
+    "style": "A",
+    "chars": 31,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t5 twin hint1"
+    ]
+  },
+  {
+    "key": "1cdo5q",
+    "text": "Which middle gets pulled by that score, and which one stays put?",
+    "style": "A",
+    "chars": 64,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t5 twin hint2"
+    ]
+  },
+  {
+    "key": "jr0ffv",
+    "text": "Which numbers count as 3 or more?",
+    "style": "A",
+    "chars": 33,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t6 hint1"
+    ]
+  },
+  {
+    "key": "9yjul9",
+    "text": "Count the Xs above 3, 4 and 5, then add them.",
+    "style": "A",
+    "chars": 45,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t6 hint2"
+    ]
+  },
+  {
+    "key": "1ul15nr",
+    "text": "Which numbers of goals count as 2 or more?",
+    "style": "A",
+    "chars": 42,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t6 twin hint1"
+    ]
+  },
+  {
+    "key": "19lpvis",
+    "text": "Each X is one game. Count the Xs in those stacks and add.",
+    "style": "A",
+    "chars": 57,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t6 twin hint2"
+    ]
+  },
+  {
+    "key": "797bd5",
+    "text": "How many parts are blue?",
+    "style": "A",
+    "chars": 24,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t7 hint1"
+    ]
+  },
+  {
+    "key": "1biluzr",
+    "text": "Now count every part. Put blue on top and all the parts on the bottom.",
+    "style": "A",
+    "chars": 70,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t7 hint2"
+    ]
+  },
+  {
+    "key": "ga9h05",
+    "text": "How many parts are yellow?",
+    "style": "A",
+    "chars": 26,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t7 twin hint1"
+    ]
+  },
+  {
+    "key": "1o4jdxj",
+    "text": "Put the yellow parts on top and all the parts on the bottom.",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t7 twin hint2"
+    ]
+  },
+  {
+    "key": "1e53ied",
+    "text": "How many ways out of all the ways give yellow?",
+    "style": "A",
+    "chars": 46,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t8 hint1"
+    ]
+  },
+  {
+    "key": "jpvzl0",
+    "text": "Is that chance less than one half or more than one half?",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t8 hint2"
+    ]
+  },
+  {
+    "key": "vpszfu",
+    "text": "How many of the marbles are green?",
+    "style": "A",
+    "chars": 34,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t8 twin hint1"
+    ]
+  },
+  {
+    "key": "12fpv2p",
+    "text": "Is 5 out of 6 more than half or less than half?",
+    "style": "A",
+    "chars": 47,
+    "kind": "hint",
+    "sources": [
+      "g6m7-t8 twin hint2"
+    ]
+  },
+  {
     "key": "1efmy5v",
     "text": "Try a new one. 5 plates. 2 cookies on each plate. How many cookies?",
     "style": "A",
@@ -37730,6 +42460,236 @@
     ]
   },
   {
+    "key": "k5pxxp",
+    "text": "Try a new one. A jar holds n cookies. You eat 2 of them, so n minus 2 cookies are left. How many are left when n equals 9?",
+    "style": "A",
+    "chars": 122,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t1 twin"
+    ]
+  },
+  {
+    "key": "iyev1d",
+    "text": "Try a new one. Which shows 4 times a number n?",
+    "style": "A",
+    "chars": 46,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t2 twin"
+    ]
+  },
+  {
+    "key": "1ayqvxr",
+    "text": "Try a new one. What is 4 n minus 3 when n equals 7?",
+    "style": "A",
+    "chars": 51,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t3 twin"
+    ]
+  },
+  {
+    "key": "1wgvf3n",
+    "text": "Try a new one. What is 2 to the fifth?",
+    "style": "A",
+    "chars": 38,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t4 twin"
+    ]
+  },
+  {
+    "key": "ao1axy",
+    "text": "Try a new one. What is 1 plus 3, all in parentheses, squared, minus 2 times 5?",
+    "style": "A",
+    "chars": 78,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t5 twin"
+    ]
+  },
+  {
+    "key": "9jxd9i",
+    "text": "Try a new one. Which is the same as 5 times x plus 1, all together?",
+    "style": "A",
+    "chars": 67,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t6 twin"
+    ]
+  },
+  {
+    "key": "dftm2l",
+    "text": "Try a new one. Solve x plus 8 equals 20. What is x?",
+    "style": "A",
+    "chars": 51,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t7 twin"
+    ]
+  },
+  {
+    "key": "6is7bb",
+    "text": "Try a new one. Solve 6 x equals 54. What is x?",
+    "style": "A",
+    "chars": 46,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t8 twin"
+    ]
+  },
+  {
+    "key": "1rcyjwt",
+    "text": "Try a new one. What is the greatest whole number that makes x is less than 9 true?",
+    "style": "A",
+    "chars": 82,
+    "kind": "twin",
+    "sources": [
+      "g6m5-t9 twin"
+    ]
+  },
+  {
+    "key": "12psvcn",
+    "text": "Try a new one. This shape has a base of 10 feet and a height of 6 feet. Its slanted side is 10 feet. What is its area in square feet?",
+    "style": "A",
+    "chars": 133,
+    "kind": "twin",
+    "sources": [
+      "g6m6-t1 twin"
+    ]
+  },
+  {
+    "key": "1xwwdxg",
+    "text": "Try a new one. A triangle has a base of 7 in and a height of 4 in. What is its area in square inches?",
+    "style": "A",
+    "chars": 101,
+    "kind": "twin",
+    "sources": [
+      "g6m6-t2 twin"
+    ]
+  },
+  {
+    "key": "h0j1t9",
+    "text": "Try a new one. An L-shaped rug is drawn below. What is its area in square feet?",
+    "style": "A",
+    "chars": 79,
+    "kind": "twin",
+    "sources": [
+      "g6m6-t3 twin"
+    ]
+  },
+  {
+    "key": "13q7hh5",
+    "text": "Try a new one. This box is 6 in long, 2 in wide and 3 in tall. It is unfolded flat below. How many square inches of paper cover it?",
+    "style": "A",
+    "chars": 131,
+    "kind": "twin",
+    "sources": [
+      "g6m6-t4 twin"
+    ]
+  },
+  {
+    "key": "v84bvq",
+    "text": "Try a new one. A box is 1 and one half in long, 4 in wide and 2 and one half in tall. What is its volume in cubic inches?",
+    "style": "A",
+    "chars": 121,
+    "kind": "twin",
+    "sources": [
+      "g6m6-t5 twin"
+    ]
+  },
+  {
+    "key": "r2aum2",
+    "text": "Try a new one. Two angles sit side by side on a straight line. One is 130 degrees. How many degrees is the other?",
+    "style": "A",
+    "chars": 113,
+    "kind": "twin",
+    "sources": [
+      "g6m6-t6 twin"
+    ]
+  },
+  {
+    "key": "1ypofx1",
+    "text": "Try a new one. Five towers have 2, 8, 4, 9 and 7 cubes. If the cubes are shared fairly, how many cubes are in each tower?",
+    "style": "A",
+    "chars": 121,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t1 twin"
+    ]
+  },
+  {
+    "key": "66leyy",
+    "text": "Try a new one. These 7 dogs weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?",
+    "style": "A",
+    "chars": 97,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t2 twin"
+    ]
+  },
+  {
+    "key": "so1n2",
+    "text": "Try a new one. These 13 kids marked their shoe size. Which shoe size is the most common?",
+    "style": "A",
+    "chars": 88,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t3 twin"
+    ]
+  },
+  {
+    "key": "1czuyl1",
+    "text": "Try a new one. The low temperatures one week were 41, 36, 45, 50, 38, 43 and 47 degrees Fahrenheit. What is the biggest minus the smallest?",
+    "style": "A",
+    "chars": 139,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t4 twin"
+    ]
+  },
+  {
+    "key": "15u2tw8",
+    "text": "Try a new one. Six test scores are 88, 91, 85, 90, 87 and 30. Which middle describes these scores best?",
+    "style": "A",
+    "chars": 103,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t5 twin"
+    ]
+  },
+  {
+    "key": "fiycun",
+    "text": "Try a new one. A team marked how many goals it scored in each game. In how many games did it score 2 or more goals?",
+    "style": "A",
+    "chars": 115,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t6 twin"
+    ]
+  },
+  {
+    "key": "1n3itxr",
+    "text": "Try a new one. This spinner has 6 equal parts. What is the chance of landing on yellow?",
+    "style": "A",
+    "chars": 87,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t7 twin"
+    ]
+  },
+  {
+    "key": "eiz9yg",
+    "text": "Try a new one. A bag has 6 marbles, 5 green and 1 white. You pick one without looking. How likely is green?",
+    "style": "A",
+    "chars": 107,
+    "kind": "twin",
+    "sources": [
+      "g6m7-t8 twin"
+    ]
+  },
+  {
     "key": "1kowovu",
     "text": "You counted by groups instead of one by one. That is multiplication.",
     "style": "A",
@@ -37746,7 +42706,7 @@
     "chars": 81,
     "kind": "won",
     "sources": [
-      "g3m1-t1 keep practicing + g3m1-t2 keep practicing + g3m1-t3 keep practicing + g3m1-t4 keep practicing + g3m1-t5 keep practicing + g3m1-t6 keep practicing + g3m1-t7 keep practicing + g3m1-t8 keep practicing + g3m2-t1 keep practicing + g3m2-t2 keep practicing + g3m2-t3 keep practicing + g3m2-t4 keep practicing + g3m2-t5 keep practicing + g3m2-t6 keep practicing + g3m2-t7 keep practicing + g3m2-t8 keep practicing + g3m2-t9 keep practicing + g3m3-t1 keep practicing + g3m3-t2 keep practicing + g3m3-t3 keep practicing + g3m3-t4 keep practicing + g3m3-t5 keep practicing + g3m3-t6 keep practicing + g3m3-t7 keep practicing + g3m3-t8 keep practicing + g3m3-t9 keep practicing + g3m4-t1 keep practicing + g3m4-t2 keep practicing + g3m4-t3 keep practicing + g3m4-t4 keep practicing + g3m5-t1 keep practicing + g3m5-t2 keep practicing + g3m5-t3 keep practicing + g3m5-t4 keep practicing + g3m5-t5 keep practicing + g3m5-t6 keep practicing + g3m5-t7 keep practicing + g3m5-t8 keep practicing + g3m6-t1 keep practicing + g3m6-t2 keep practicing + g3m6-t3 keep practicing + g3m6-t4 keep practicing + g3m6-t5 keep practicing + g3m6-t6 keep practicing + g3m6-t7 keep practicing + g4m1-t1 keep practicing + g4m1-t2 keep practicing + g4m1-t3 keep practicing + g4m1-t4 keep practicing + g4m1-t5 keep practicing + g4m1-t6 keep practicing + g4m1-t7 keep practicing + g4m1-t8 keep practicing + g4m2-t1 keep practicing + g4m2-t2 keep practicing + g4m2-t3 keep practicing + g4m2-t4 keep practicing + g4m2-t5 keep practicing + g4m2-t6 keep practicing + g4m2-t7 keep practicing + g4m2-t8 keep practicing + g4m3-t1 keep practicing + g4m3-t2 keep practicing + g4m3-t3 keep practicing + g4m3-t4 keep practicing + g4m3-t5 keep practicing + g4m3-t6 keep practicing + g4m3-t7 keep practicing + g4m3-t8 keep practicing + g4m4-t1 keep practicing + g4m4-t2 keep practicing + g4m4-t3 keep practicing + g4m4-t4 keep practicing + g4m4-t5 keep practicing + g4m4-t6 keep practicing + g4m4-t7 keep practicing + g4m4-t8 keep practicing + g4m4-t9 keep practicing + g4m5-t1 keep practicing + g4m5-t2 keep practicing + g4m5-t3 keep practicing + g4m5-t4 keep practicing + g4m5-t5 keep practicing + g4m5-t6 keep practicing + g4m5-t7 keep practicing + g4m5-t8 keep practicing + g4m6-t1 keep practicing + g4m6-t2 keep practicing + g4m6-t3 keep practicing + g4m6-t4 keep practicing + g4m6-t5 keep practicing + g4m6-t6 keep practicing + g4m6-t7 keep practicing + g5m1-t1 keep practicing + g5m1-t2 keep practicing + g5m1-t3 keep practicing + g5m1-t4 keep practicing + g5m1-t5 keep practicing + g5m1-t6 keep practicing + g5m1-t7 keep practicing + g5m1-t8 keep practicing + g5m1-t9 keep practicing + g5m1-t10 keep practicing + g5m1-t11 keep practicing + g5m1-t12 keep practicing + g5m1-t13 keep practicing + g5m1-t14 keep practicing + g5m1-t15 keep practicing + g5m1-t16 keep practicing + g5m1-t17 keep practicing + g5m1-t18 keep practicing + g5m1-t19 keep practicing + g5m1-t20 keep practicing + g5m2-t1 keep practicing + g5m2-t2 keep practicing + g5m2-t3 keep practicing + g5m2-t4 keep practicing + g5m2-t5 keep practicing + g5m2-t6 keep practicing + g5m2-t7 keep practicing + g5m2-t8 keep practicing + g5m3-t1 keep practicing + g5m3-t2 keep practicing + g5m3-t3 keep practicing + g5m3-t4 keep practicing + g5m3-t5 keep practicing + g5m3-t6 keep practicing + g5m3-t7 keep practicing + g5m3-t8 keep practicing + g5m4-t1 keep practicing + g5m4-t2 keep practicing + g5m4-t3 keep practicing + g5m4-t4 keep practicing + g5m4-t5 keep practicing + g5m4-t6 keep practicing + g5m4-t7 keep practicing + g5m4-t8 keep practicing + g5m4-t9 keep practicing + g5m5-t1 keep practicing + g5m5-t2 keep practicing + g5m5-t3 keep practicing + g5m5-t4 keep practicing + g5m5-t5 keep practicing + g5m5-t6 keep practicing + g5m5-t7 keep practicing + g5m6-t1 keep practicing + g5m6-t2 keep practicing + g5m6-t3 keep practicing + g5m6-t4 keep practicing + g5m6-t5 keep practicing + g5m6-t6 keep practicing + g6m1-t1 keep practicing + g6m1-t2 keep practicing + g6m1-t3 keep practicing + g6m1-t4 keep practicing + g6m1-t5 keep practicing + g6m1-t6 keep practicing + g6m1-t7 keep practicing + g6m1-t8 keep practicing + g6m2-t1 keep practicing + g6m2-t2 keep practicing + g6m2-t3 keep practicing + g6m2-t4 keep practicing + g6m2-t5 keep practicing + g6m2-t6 keep practicing + g6m2-t7 keep practicing + g6m3-t1 keep practicing + g6m3-t2 keep practicing + g6m3-t3 keep practicing + g6m3-t4 keep practicing + g6m3-t5 keep practicing + g6m3-t6 keep practicing + g6m4-t1 keep practicing + g6m4-t2 keep practicing + g6m4-t3 keep practicing + g6m4-t4 keep practicing + g6m4-t5 keep practicing + g6m4-t6 keep practicing + g6m4-t7 keep practicing"
+      "g3m1-t1 keep practicing + g3m1-t2 keep practicing + g3m1-t3 keep practicing + g3m1-t4 keep practicing + g3m1-t5 keep practicing + g3m1-t6 keep practicing + g3m1-t7 keep practicing + g3m1-t8 keep practicing + g3m2-t1 keep practicing + g3m2-t2 keep practicing + g3m2-t3 keep practicing + g3m2-t4 keep practicing + g3m2-t5 keep practicing + g3m2-t6 keep practicing + g3m2-t7 keep practicing + g3m2-t8 keep practicing + g3m2-t9 keep practicing + g3m3-t1 keep practicing + g3m3-t2 keep practicing + g3m3-t3 keep practicing + g3m3-t4 keep practicing + g3m3-t5 keep practicing + g3m3-t6 keep practicing + g3m3-t7 keep practicing + g3m3-t8 keep practicing + g3m3-t9 keep practicing + g3m4-t1 keep practicing + g3m4-t2 keep practicing + g3m4-t3 keep practicing + g3m4-t4 keep practicing + g3m5-t1 keep practicing + g3m5-t2 keep practicing + g3m5-t3 keep practicing + g3m5-t4 keep practicing + g3m5-t5 keep practicing + g3m5-t6 keep practicing + g3m5-t7 keep practicing + g3m5-t8 keep practicing + g3m6-t1 keep practicing + g3m6-t2 keep practicing + g3m6-t3 keep practicing + g3m6-t4 keep practicing + g3m6-t5 keep practicing + g3m6-t6 keep practicing + g3m6-t7 keep practicing + g4m1-t1 keep practicing + g4m1-t2 keep practicing + g4m1-t3 keep practicing + g4m1-t4 keep practicing + g4m1-t5 keep practicing + g4m1-t6 keep practicing + g4m1-t7 keep practicing + g4m1-t8 keep practicing + g4m2-t1 keep practicing + g4m2-t2 keep practicing + g4m2-t3 keep practicing + g4m2-t4 keep practicing + g4m2-t5 keep practicing + g4m2-t6 keep practicing + g4m2-t7 keep practicing + g4m2-t8 keep practicing + g4m3-t1 keep practicing + g4m3-t2 keep practicing + g4m3-t3 keep practicing + g4m3-t4 keep practicing + g4m3-t5 keep practicing + g4m3-t6 keep practicing + g4m3-t7 keep practicing + g4m3-t8 keep practicing + g4m4-t1 keep practicing + g4m4-t2 keep practicing + g4m4-t3 keep practicing + g4m4-t4 keep practicing + g4m4-t5 keep practicing + g4m4-t6 keep practicing + g4m4-t7 keep practicing + g4m4-t8 keep practicing + g4m4-t9 keep practicing + g4m5-t1 keep practicing + g4m5-t2 keep practicing + g4m5-t3 keep practicing + g4m5-t4 keep practicing + g4m5-t5 keep practicing + g4m5-t6 keep practicing + g4m5-t7 keep practicing + g4m5-t8 keep practicing + g4m6-t1 keep practicing + g4m6-t2 keep practicing + g4m6-t3 keep practicing + g4m6-t4 keep practicing + g4m6-t5 keep practicing + g4m6-t6 keep practicing + g4m6-t7 keep practicing + g5m1-t1 keep practicing + g5m1-t2 keep practicing + g5m1-t3 keep practicing + g5m1-t4 keep practicing + g5m1-t5 keep practicing + g5m1-t6 keep practicing + g5m1-t7 keep practicing + g5m1-t8 keep practicing + g5m1-t9 keep practicing + g5m1-t10 keep practicing + g5m1-t11 keep practicing + g5m1-t12 keep practicing + g5m1-t13 keep practicing + g5m1-t14 keep practicing + g5m1-t15 keep practicing + g5m1-t16 keep practicing + g5m1-t17 keep practicing + g5m1-t18 keep practicing + g5m1-t19 keep practicing + g5m1-t20 keep practicing + g5m2-t1 keep practicing + g5m2-t2 keep practicing + g5m2-t3 keep practicing + g5m2-t4 keep practicing + g5m2-t5 keep practicing + g5m2-t6 keep practicing + g5m2-t7 keep practicing + g5m2-t8 keep practicing + g5m3-t1 keep practicing + g5m3-t2 keep practicing + g5m3-t3 keep practicing + g5m3-t4 keep practicing + g5m3-t5 keep practicing + g5m3-t6 keep practicing + g5m3-t7 keep practicing + g5m3-t8 keep practicing + g5m4-t1 keep practicing + g5m4-t2 keep practicing + g5m4-t3 keep practicing + g5m4-t4 keep practicing + g5m4-t5 keep practicing + g5m4-t6 keep practicing + g5m4-t7 keep practicing + g5m4-t8 keep practicing + g5m4-t9 keep practicing + g5m5-t1 keep practicing + g5m5-t2 keep practicing + g5m5-t3 keep practicing + g5m5-t4 keep practicing + g5m5-t5 keep practicing + g5m5-t6 keep practicing + g5m5-t7 keep practicing + g5m6-t1 keep practicing + g5m6-t2 keep practicing + g5m6-t3 keep practicing + g5m6-t4 keep practicing + g5m6-t5 keep practicing + g5m6-t6 keep practicing + g6m1-t1 keep practicing + g6m1-t2 keep practicing + g6m1-t3 keep practicing + g6m1-t4 keep practicing + g6m1-t5 keep practicing + g6m1-t6 keep practicing + g6m1-t7 keep practicing + g6m1-t8 keep practicing + g6m2-t1 keep practicing + g6m2-t2 keep practicing + g6m2-t3 keep practicing + g6m2-t4 keep practicing + g6m2-t5 keep practicing + g6m2-t6 keep practicing + g6m2-t7 keep practicing + g6m3-t1 keep practicing + g6m3-t2 keep practicing + g6m3-t3 keep practicing + g6m3-t4 keep practicing + g6m3-t5 keep practicing + g6m3-t6 keep practicing + g6m4-t1 keep practicing + g6m4-t2 keep practicing + g6m4-t3 keep practicing + g6m4-t4 keep practicing + g6m4-t5 keep practicing + g6m4-t6 keep practicing + g6m4-t7 keep practicing + g6m5-t1 keep practicing + g6m5-t2 keep practicing + g6m5-t3 keep practicing + g6m5-t4 keep practicing + g6m5-t5 keep practicing + g6m5-t6 keep practicing + g6m5-t7 keep practicing + g6m5-t8 keep practicing + g6m5-t9 keep practicing + g6m6-t1 keep practicing + g6m6-t2 keep practicing + g6m6-t3 keep practicing + g6m6-t4 keep practicing + g6m6-t5 keep practicing + g6m6-t6 keep practicing + g6m7-t1 keep practicing + g6m7-t2 keep practicing + g6m7-t3 keep practicing + g6m7-t4 keep practicing + g6m7-t5 keep practicing + g6m7-t6 keep practicing + g6m7-t7 keep practicing + g6m7-t8 keep practicing"
     ]
   },
   {
@@ -41240,13 +46200,473 @@
     ]
   },
   {
+    "key": "17is4vf",
+    "text": "You put the number in place of the letter.",
+    "style": "A",
+    "chars": 42,
+    "kind": "won",
+    "sources": [
+      "g6m5-t1 won"
+    ]
+  },
+  {
+    "key": "12tqszv",
+    "text": "You put 9 in place of n and found 7 cookies left.",
+    "style": "A",
+    "chars": 49,
+    "kind": "won",
+    "sources": [
+      "g6m5-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1vnokcy",
+    "text": "You found the action word and wrote it with n.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g6m5-t2 won"
+    ]
+  },
+  {
+    "key": "12lxu3",
+    "text": "You saw times and wrote 4 n.",
+    "style": "A",
+    "chars": 28,
+    "kind": "won",
+    "sources": [
+      "g6m5-t2 twinWon"
+    ]
+  },
+  {
+    "key": "15qwnoq",
+    "text": "You put the number in place of the letter, then did the math.",
+    "style": "A",
+    "chars": 61,
+    "kind": "won",
+    "sources": [
+      "g6m5-t3 won"
+    ]
+  },
+  {
+    "key": "z838uc",
+    "text": "You put 7 in for n and worked out 4 n minus 3.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g6m5-t3 twinWon"
+    ]
+  },
+  {
+    "key": "18s2w0i",
+    "text": "You multiplied the number by itself as many times as the small number said.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g6m5-t4 won"
+    ]
+  },
+  {
+    "key": "uulxp0",
+    "text": "You multiplied five twos and got 32.",
+    "style": "A",
+    "chars": 36,
+    "kind": "won",
+    "sources": [
+      "g6m5-t4 twinWon"
+    ]
+  },
+  {
+    "key": "17d0pwo",
+    "text": "You followed the order, one step at a time.",
+    "style": "A",
+    "chars": 43,
+    "kind": "won",
+    "sources": [
+      "g6m5-t5 won"
+    ]
+  },
+  {
+    "key": "1dnech5",
+    "text": "You did the parentheses first and got 6.",
+    "style": "A",
+    "chars": 40,
+    "kind": "won",
+    "sources": [
+      "g6m5-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1rm0oup",
+    "text": "You multiplied the number outside by every part inside.",
+    "style": "A",
+    "chars": 55,
+    "kind": "won",
+    "sources": [
+      "g6m5-t6 won"
+    ]
+  },
+  {
+    "key": "16udidz",
+    "text": "You multiplied the 5 by both parts to get 5 x plus 5.",
+    "style": "A",
+    "chars": 53,
+    "kind": "won",
+    "sources": [
+      "g6m5-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1wtyp5q",
+    "text": "You took the same amount off both sides until x was alone.",
+    "style": "A",
+    "chars": 58,
+    "kind": "won",
+    "sources": [
+      "g6m5-t7 won"
+    ]
+  },
+  {
+    "key": "tcjqls",
+    "text": "You took 8 off both sides and found x equals 12.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g6m5-t7 twinWon"
+    ]
+  },
+  {
+    "key": "vfgqe0",
+    "text": "You divided both sides to find one x.",
+    "style": "A",
+    "chars": 37,
+    "kind": "won",
+    "sources": [
+      "g6m5-t8 won"
+    ]
+  },
+  {
+    "key": "100mpe8",
+    "text": "You divided 54 by 6 and found x equals 9.",
+    "style": "A",
+    "chars": 41,
+    "kind": "won",
+    "sources": [
+      "g6m5-t8 twinWon"
+    ]
+  },
+  {
+    "key": "g8h03v",
+    "text": "You chose the right dot and the right arrow.",
+    "style": "A",
+    "chars": 44,
+    "kind": "won",
+    "sources": [
+      "g6m5-t9 won"
+    ]
+  },
+  {
+    "key": "1t8hvhe",
+    "text": "You saw that 9 does not work, so the greatest whole number is 8.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g6m5-t9 twinWon"
+    ]
+  },
+  {
+    "key": "1kalh6w",
+    "text": "You used the base and the straight-up height, and skipped the slanted side.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g6m6-t1 won"
+    ]
+  },
+  {
+    "key": "hdx5kl",
+    "text": "You used the 6 feet height, not the slanted side, and got 60 square feet.",
+    "style": "A",
+    "chars": 73,
+    "kind": "won",
+    "sources": [
+      "g6m6-t1 twinWon"
+    ]
+  },
+  {
+    "key": "7rq08d",
+    "text": "You found base times height, then took half for one triangle.",
+    "style": "A",
+    "chars": 61,
+    "kind": "won",
+    "sources": [
+      "g6m6-t2 won"
+    ]
+  },
+  {
+    "key": "uv223o",
+    "text": "You took half of 7 times 4 and got 14 square inches.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g6m6-t2 twinWon"
+    ]
+  },
+  {
+    "key": "1wisao3",
+    "text": "You cut the shape into a rectangle and a triangle, then added their areas.",
+    "style": "A",
+    "chars": 74,
+    "kind": "won",
+    "sources": [
+      "g6m6-t3 won"
+    ]
+  },
+  {
+    "key": "1uoprmh",
+    "text": "You cut the L into two rectangles and added them to get 30 square feet.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g6m6-t3 twinWon"
+    ]
+  },
+  {
+    "key": "11i05lm",
+    "text": "You unfolded the box and added the areas of all six flat sides.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g6m6-t4 won"
+    ]
+  },
+  {
+    "key": "1qabz1u",
+    "text": "You added all six sides of the 6 by 2 by 3 box and got 72 square inches.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g6m6-t4 twinWon"
+    ]
+  },
+  {
+    "key": "14ypzmg",
+    "text": "You changed the edges to fractions and multiplied all three.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g6m6-t5 won"
+    ]
+  },
+  {
+    "key": "1nrzvn0",
+    "text": "You changed 1 and one half and 2 and one half into fractions and got 15 cubic inches.",
+    "style": "A",
+    "chars": 85,
+    "kind": "won",
+    "sources": [
+      "g6m6-t5 twinWon"
+    ]
+  },
+  {
+    "key": "egn578",
+    "text": "You took the angle you know away from 180 degrees.",
+    "style": "A",
+    "chars": 50,
+    "kind": "won",
+    "sources": [
+      "g6m6-t6 won"
+    ]
+  },
+  {
+    "key": "1o1vb7k",
+    "text": "You took 130 degrees away from 180 degrees to find the other angle.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g6m6-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1fvm7jc",
+    "text": "You put all the cubes together, then shared them out fairly.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g6m7-t1 won"
+    ]
+  },
+  {
+    "key": "jlg5v1",
+    "text": "You added 2, 8, 4, 9 and 7, then shared the total fairly.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g6m7-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1dxmhqz",
+    "text": "You sorted the heights, then found the one in the middle.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g6m7-t2 won"
+    ]
+  },
+  {
+    "key": "hd42ld",
+    "text": "You sorted all 7 weights and found the one in the middle.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g6m7-t2 twinWon"
+    ]
+  },
+  {
+    "key": "1aq32e4",
+    "text": "You found the tallest stack and read the number under it.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g6m7-t3 won"
+    ]
+  },
+  {
+    "key": "z5f65",
+    "text": "You found the tallest stack and read the shoe size under it.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g6m7-t3 twinWon"
+    ]
+  },
+  {
+    "key": "nmtk1f",
+    "text": "You found the two ends and took the biggest minus the smallest.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g6m7-t4 won"
+    ]
+  },
+  {
+    "key": "mbrek8",
+    "text": "You took 50 minus 36 to find how spread out the week was.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g6m7-t4 twinWon"
+    ]
+  },
+  {
+    "key": "1rt626w",
+    "text": "You spotted the far-away number and chose the middle it does not pull.",
+    "style": "A",
+    "chars": 70,
+    "kind": "won",
+    "sources": [
+      "g6m7-t5 won"
+    ]
+  },
+  {
+    "key": "jnkpvy",
+    "text": "You spotted the 30 far below the rest and chose the median.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g6m7-t5 twinWon"
+    ]
+  },
+  {
+    "key": "8705nh",
+    "text": "You found the stacks you needed and added their Xs.",
+    "style": "A",
+    "chars": 51,
+    "kind": "won",
+    "sources": [
+      "g6m7-t6 won"
+    ]
+  },
+  {
+    "key": "o9o579",
+    "text": "You found every game with 2 or more goals and added them up.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g6m7-t6 twinWon"
+    ]
+  },
+  {
+    "key": "k6jgyb",
+    "text": "You put the ways to win over all the ways.",
+    "style": "A",
+    "chars": 42,
+    "kind": "won",
+    "sources": [
+      "g6m7-t7 won"
+    ]
+  },
+  {
+    "key": "1y0qdye",
+    "text": "You put the yellow parts over all the parts.",
+    "style": "A",
+    "chars": 44,
+    "kind": "won",
+    "sources": [
+      "g6m7-t7 twinWon"
+    ]
+  },
+  {
+    "key": "hgep67",
+    "text": "You found the chance and saw which side of the middle it sits on.",
+    "style": "A",
+    "chars": 65,
+    "kind": "won",
+    "sources": [
+      "g6m7-t8 won"
+    ]
+  },
+  {
+    "key": "w67b5q",
+    "text": "You saw that 5 out of 6 is more than half, so green is likely.",
+    "style": "A",
+    "chars": 62,
+    "kind": "won",
+    "sources": [
+      "g6m7-t8 twinWon"
+    ]
+  },
+  {
     "key": "1nundpo",
     "text": "Right!",
     "style": "A",
     "chars": 6,
     "kind": "feedback",
     "sources": [
-      "g3m1-t1 right + g3m1-t2 right + g3m1-t3 right + g3m1-t4 right + g3m1-t5 right + g3m1-t6 right + g3m1-t7 right + g3m1-t8 right + g3m2-t1 right + g3m2-t2 right + g3m2-t3 right + g3m2-t4 right + g3m2-t5 right + g3m2-t6 right + g3m2-t7 right + g3m2-t8 right + g3m2-t9 right + g3m3-t1 right + g3m3-t2 right + g3m3-t3 right + g3m3-t4 right + g3m3-t5 right + g3m3-t6 right + g3m3-t7 right + g3m3-t8 right + g3m3-t9 right + g3m4-t1 right + g3m4-t2 right + g3m4-t3 right + g3m4-t4 right + g3m5-t1 right + g3m5-t2 right + g3m5-t3 right + g3m5-t4 right + g3m5-t5 right + g3m5-t6 right + g3m5-t7 right + g3m5-t8 right + g3m6-t1 right + g3m6-t2 right + g3m6-t3 right + g3m6-t4 right + g3m6-t5 right + g3m6-t6 right + g3m6-t7 right + g4m1-t1 right + g4m1-t2 right + g4m1-t3 right + g4m1-t4 right + g4m1-t5 right + g4m1-t6 right + g4m1-t7 right + g4m1-t8 right + g4m2-t1 right + g4m2-t2 right + g4m2-t3 right + g4m2-t4 right + g4m2-t5 right + g4m2-t6 right + g4m2-t7 right + g4m2-t8 right + g4m3-t1 right + g4m3-t2 right + g4m3-t3 right + g4m3-t4 right + g4m3-t5 right + g4m3-t6 right + g4m3-t7 right + g4m3-t8 right + g4m4-t1 right + g4m4-t2 right + g4m4-t3 right + g4m4-t4 right + g4m4-t5 right + g4m4-t6 right + g4m4-t7 right + g4m4-t8 right + g4m4-t9 right + g4m5-t1 right + g4m5-t2 right + g4m5-t3 right + g4m5-t4 right + g4m5-t5 right + g4m5-t6 right + g4m5-t7 right + g4m5-t8 right + g4m6-t1 right + g4m6-t2 right + g4m6-t3 right + g4m6-t4 right + g4m6-t5 right + g4m6-t6 right + g4m6-t7 right + g5m1-t1 right + g5m1-t2 right + g5m1-t3 right + g5m1-t4 right + g5m1-t5 right + g5m1-t6 right + g5m1-t7 right + g5m1-t8 right + g5m1-t9 right + g5m1-t10 right + g5m1-t11 right + g5m1-t12 right + g5m1-t13 right + g5m1-t14 right + g5m1-t15 right + g5m1-t16 right + g5m1-t17 right + g5m1-t18 right + g5m1-t19 right + g5m1-t20 right + g5m2-t1 right + g5m2-t2 right + g5m2-t3 right + g5m2-t4 right + g5m2-t5 right + g5m2-t6 right + g5m2-t7 right + g5m2-t8 right + g5m3-t1 right + g5m3-t2 right + g5m3-t3 right + g5m3-t4 right + g5m3-t5 right + g5m3-t6 right + g5m3-t7 right + g5m3-t8 right + g5m4-t1 right + g5m4-t2 right + g5m4-t3 right + g5m4-t4 right + g5m4-t5 right + g5m4-t6 right + g5m4-t7 right + g5m4-t8 right + g5m4-t9 right + g5m5-t1 right + g5m5-t2 right + g5m5-t3 right + g5m5-t4 right + g5m5-t5 right + g5m5-t6 right + g5m5-t7 right + g5m6-t1 right + g5m6-t2 right + g5m6-t3 right + g5m6-t4 right + g5m6-t5 right + g5m6-t6 right + g6m1-t1 right + g6m1-t2 right + g6m1-t3 right + g6m1-t4 right + g6m1-t5 right + g6m1-t6 right + g6m1-t7 right + g6m1-t8 right + g6m2-t1 right + g6m2-t2 right + g6m2-t3 right + g6m2-t4 right + g6m2-t5 right + g6m2-t6 right + g6m2-t7 right + g6m3-t1 right + g6m3-t2 right + g6m3-t3 right + g6m3-t4 right + g6m3-t5 right + g6m3-t6 right + g6m4-t1 right + g6m4-t2 right + g6m4-t3 right + g6m4-t4 right + g6m4-t5 right + g6m4-t6 right + g6m4-t7 right"
+      "g3m1-t1 right + g3m1-t2 right + g3m1-t3 right + g3m1-t4 right + g3m1-t5 right + g3m1-t6 right + g3m1-t7 right + g3m1-t8 right + g3m2-t1 right + g3m2-t2 right + g3m2-t3 right + g3m2-t4 right + g3m2-t5 right + g3m2-t6 right + g3m2-t7 right + g3m2-t8 right + g3m2-t9 right + g3m3-t1 right + g3m3-t2 right + g3m3-t3 right + g3m3-t4 right + g3m3-t5 right + g3m3-t6 right + g3m3-t7 right + g3m3-t8 right + g3m3-t9 right + g3m4-t1 right + g3m4-t2 right + g3m4-t3 right + g3m4-t4 right + g3m5-t1 right + g3m5-t2 right + g3m5-t3 right + g3m5-t4 right + g3m5-t5 right + g3m5-t6 right + g3m5-t7 right + g3m5-t8 right + g3m6-t1 right + g3m6-t2 right + g3m6-t3 right + g3m6-t4 right + g3m6-t5 right + g3m6-t6 right + g3m6-t7 right + g4m1-t1 right + g4m1-t2 right + g4m1-t3 right + g4m1-t4 right + g4m1-t5 right + g4m1-t6 right + g4m1-t7 right + g4m1-t8 right + g4m2-t1 right + g4m2-t2 right + g4m2-t3 right + g4m2-t4 right + g4m2-t5 right + g4m2-t6 right + g4m2-t7 right + g4m2-t8 right + g4m3-t1 right + g4m3-t2 right + g4m3-t3 right + g4m3-t4 right + g4m3-t5 right + g4m3-t6 right + g4m3-t7 right + g4m3-t8 right + g4m4-t1 right + g4m4-t2 right + g4m4-t3 right + g4m4-t4 right + g4m4-t5 right + g4m4-t6 right + g4m4-t7 right + g4m4-t8 right + g4m4-t9 right + g4m5-t1 right + g4m5-t2 right + g4m5-t3 right + g4m5-t4 right + g4m5-t5 right + g4m5-t6 right + g4m5-t7 right + g4m5-t8 right + g4m6-t1 right + g4m6-t2 right + g4m6-t3 right + g4m6-t4 right + g4m6-t5 right + g4m6-t6 right + g4m6-t7 right + g5m1-t1 right + g5m1-t2 right + g5m1-t3 right + g5m1-t4 right + g5m1-t5 right + g5m1-t6 right + g5m1-t7 right + g5m1-t8 right + g5m1-t9 right + g5m1-t10 right + g5m1-t11 right + g5m1-t12 right + g5m1-t13 right + g5m1-t14 right + g5m1-t15 right + g5m1-t16 right + g5m1-t17 right + g5m1-t18 right + g5m1-t19 right + g5m1-t20 right + g5m2-t1 right + g5m2-t2 right + g5m2-t3 right + g5m2-t4 right + g5m2-t5 right + g5m2-t6 right + g5m2-t7 right + g5m2-t8 right + g5m3-t1 right + g5m3-t2 right + g5m3-t3 right + g5m3-t4 right + g5m3-t5 right + g5m3-t6 right + g5m3-t7 right + g5m3-t8 right + g5m4-t1 right + g5m4-t2 right + g5m4-t3 right + g5m4-t4 right + g5m4-t5 right + g5m4-t6 right + g5m4-t7 right + g5m4-t8 right + g5m4-t9 right + g5m5-t1 right + g5m5-t2 right + g5m5-t3 right + g5m5-t4 right + g5m5-t5 right + g5m5-t6 right + g5m5-t7 right + g5m6-t1 right + g5m6-t2 right + g5m6-t3 right + g5m6-t4 right + g5m6-t5 right + g5m6-t6 right + g6m1-t1 right + g6m1-t2 right + g6m1-t3 right + g6m1-t4 right + g6m1-t5 right + g6m1-t6 right + g6m1-t7 right + g6m1-t8 right + g6m2-t1 right + g6m2-t2 right + g6m2-t3 right + g6m2-t4 right + g6m2-t5 right + g6m2-t6 right + g6m2-t7 right + g6m3-t1 right + g6m3-t2 right + g6m3-t3 right + g6m3-t4 right + g6m3-t5 right + g6m3-t6 right + g6m4-t1 right + g6m4-t2 right + g6m4-t3 right + g6m4-t4 right + g6m4-t5 right + g6m4-t6 right + g6m4-t7 right + g6m5-t1 right + g6m5-t2 right + g6m5-t3 right + g6m5-t4 right + g6m5-t5 right + g6m5-t6 right + g6m5-t7 right + g6m5-t8 right + g6m5-t9 right + g6m6-t1 right + g6m6-t2 right + g6m6-t3 right + g6m6-t4 right + g6m6-t5 right + g6m6-t6 right + g6m7-t1 right + g6m7-t2 right + g6m7-t3 right + g6m7-t4 right + g6m7-t5 right + g6m7-t6 right + g6m7-t7 right + g6m7-t8 right"
     ]
   },
   {
@@ -41256,7 +46676,7 @@
     "chars": 27,
     "kind": "feedback",
     "sources": [
-      "g3m1-t1 worked + g3m1-t2 worked + g3m1-t3 worked + g3m1-t4 worked + g3m1-t5 worked + g3m1-t6 worked + g3m1-t7 worked + g3m1-t8 worked + g3m2-t1 worked + g3m2-t2 worked + g3m2-t3 worked + g3m2-t4 worked + g3m2-t5 worked + g3m2-t6 worked + g3m2-t7 worked + g3m2-t8 worked + g3m2-t9 worked + g3m3-t1 worked + g3m3-t2 worked + g3m3-t3 worked + g3m3-t4 worked + g3m3-t5 worked + g3m3-t6 worked + g3m3-t7 worked + g3m3-t8 worked + g3m3-t9 worked + g3m4-t1 worked + g3m4-t2 worked + g3m4-t3 worked + g3m4-t4 worked + g3m5-t1 worked + g3m5-t2 worked + g3m5-t3 worked + g3m5-t4 worked + g3m5-t5 worked + g3m5-t6 worked + g3m5-t7 worked + g3m5-t8 worked + g3m6-t1 worked + g3m6-t2 worked + g3m6-t3 worked + g3m6-t4 worked + g3m6-t5 worked + g3m6-t6 worked + g3m6-t7 worked + g4m1-t1 worked + g4m1-t2 worked + g4m1-t3 worked + g4m1-t4 worked + g4m1-t5 worked + g4m1-t6 worked + g4m1-t7 worked + g4m1-t8 worked + g4m2-t1 worked + g4m2-t2 worked + g4m2-t3 worked + g4m2-t4 worked + g4m2-t5 worked + g4m2-t6 worked + g4m2-t7 worked + g4m2-t8 worked + g4m3-t1 worked + g4m3-t2 worked + g4m3-t3 worked + g4m3-t4 worked + g4m3-t5 worked + g4m3-t6 worked + g4m3-t7 worked + g4m3-t8 worked + g4m4-t1 worked + g4m4-t2 worked + g4m4-t3 worked + g4m4-t4 worked + g4m4-t5 worked + g4m4-t6 worked + g4m4-t7 worked + g4m4-t8 worked + g4m4-t9 worked + g4m5-t1 worked + g4m5-t2 worked + g4m5-t3 worked + g4m5-t4 worked + g4m5-t5 worked + g4m5-t6 worked + g4m5-t7 worked + g4m5-t8 worked + g4m6-t1 worked + g4m6-t2 worked + g4m6-t3 worked + g4m6-t4 worked + g4m6-t5 worked + g4m6-t6 worked + g4m6-t7 worked + g5m1-t1 worked + g5m1-t2 worked + g5m1-t3 worked + g5m1-t4 worked + g5m1-t5 worked + g5m1-t6 worked + g5m1-t7 worked + g5m1-t8 worked + g5m1-t9 worked + g5m1-t10 worked + g5m1-t11 worked + g5m1-t12 worked + g5m1-t13 worked + g5m1-t14 worked + g5m1-t15 worked + g5m1-t16 worked + g5m1-t17 worked + g5m1-t18 worked + g5m1-t19 worked + g5m1-t20 worked + g5m2-t1 worked + g5m2-t2 worked + g5m2-t3 worked + g5m2-t4 worked + g5m2-t5 worked + g5m2-t6 worked + g5m2-t7 worked + g5m2-t8 worked + g5m3-t1 worked + g5m3-t2 worked + g5m3-t3 worked + g5m3-t4 worked + g5m3-t5 worked + g5m3-t6 worked + g5m3-t7 worked + g5m3-t8 worked + g5m4-t1 worked + g5m4-t2 worked + g5m4-t3 worked + g5m4-t4 worked + g5m4-t5 worked + g5m4-t6 worked + g5m4-t7 worked + g5m4-t8 worked + g5m4-t9 worked + g5m5-t1 worked + g5m5-t2 worked + g5m5-t3 worked + g5m5-t4 worked + g5m5-t5 worked + g5m5-t6 worked + g5m5-t7 worked + g5m6-t1 worked + g5m6-t2 worked + g5m6-t3 worked + g5m6-t4 worked + g5m6-t5 worked + g5m6-t6 worked + g6m1-t1 worked + g6m1-t2 worked + g6m1-t3 worked + g6m1-t4 worked + g6m1-t5 worked + g6m1-t6 worked + g6m1-t7 worked + g6m1-t8 worked + g6m2-t1 worked + g6m2-t2 worked + g6m2-t3 worked + g6m2-t4 worked + g6m2-t5 worked + g6m2-t6 worked + g6m2-t7 worked + g6m3-t1 worked + g6m3-t2 worked + g6m3-t3 worked + g6m3-t4 worked + g6m3-t5 worked + g6m3-t6 worked + g6m4-t1 worked + g6m4-t2 worked + g6m4-t3 worked + g6m4-t4 worked + g6m4-t5 worked + g6m4-t6 worked + g6m4-t7 worked"
+      "g3m1-t1 worked + g3m1-t2 worked + g3m1-t3 worked + g3m1-t4 worked + g3m1-t5 worked + g3m1-t6 worked + g3m1-t7 worked + g3m1-t8 worked + g3m2-t1 worked + g3m2-t2 worked + g3m2-t3 worked + g3m2-t4 worked + g3m2-t5 worked + g3m2-t6 worked + g3m2-t7 worked + g3m2-t8 worked + g3m2-t9 worked + g3m3-t1 worked + g3m3-t2 worked + g3m3-t3 worked + g3m3-t4 worked + g3m3-t5 worked + g3m3-t6 worked + g3m3-t7 worked + g3m3-t8 worked + g3m3-t9 worked + g3m4-t1 worked + g3m4-t2 worked + g3m4-t3 worked + g3m4-t4 worked + g3m5-t1 worked + g3m5-t2 worked + g3m5-t3 worked + g3m5-t4 worked + g3m5-t5 worked + g3m5-t6 worked + g3m5-t7 worked + g3m5-t8 worked + g3m6-t1 worked + g3m6-t2 worked + g3m6-t3 worked + g3m6-t4 worked + g3m6-t5 worked + g3m6-t6 worked + g3m6-t7 worked + g4m1-t1 worked + g4m1-t2 worked + g4m1-t3 worked + g4m1-t4 worked + g4m1-t5 worked + g4m1-t6 worked + g4m1-t7 worked + g4m1-t8 worked + g4m2-t1 worked + g4m2-t2 worked + g4m2-t3 worked + g4m2-t4 worked + g4m2-t5 worked + g4m2-t6 worked + g4m2-t7 worked + g4m2-t8 worked + g4m3-t1 worked + g4m3-t2 worked + g4m3-t3 worked + g4m3-t4 worked + g4m3-t5 worked + g4m3-t6 worked + g4m3-t7 worked + g4m3-t8 worked + g4m4-t1 worked + g4m4-t2 worked + g4m4-t3 worked + g4m4-t4 worked + g4m4-t5 worked + g4m4-t6 worked + g4m4-t7 worked + g4m4-t8 worked + g4m4-t9 worked + g4m5-t1 worked + g4m5-t2 worked + g4m5-t3 worked + g4m5-t4 worked + g4m5-t5 worked + g4m5-t6 worked + g4m5-t7 worked + g4m5-t8 worked + g4m6-t1 worked + g4m6-t2 worked + g4m6-t3 worked + g4m6-t4 worked + g4m6-t5 worked + g4m6-t6 worked + g4m6-t7 worked + g5m1-t1 worked + g5m1-t2 worked + g5m1-t3 worked + g5m1-t4 worked + g5m1-t5 worked + g5m1-t6 worked + g5m1-t7 worked + g5m1-t8 worked + g5m1-t9 worked + g5m1-t10 worked + g5m1-t11 worked + g5m1-t12 worked + g5m1-t13 worked + g5m1-t14 worked + g5m1-t15 worked + g5m1-t16 worked + g5m1-t17 worked + g5m1-t18 worked + g5m1-t19 worked + g5m1-t20 worked + g5m2-t1 worked + g5m2-t2 worked + g5m2-t3 worked + g5m2-t4 worked + g5m2-t5 worked + g5m2-t6 worked + g5m2-t7 worked + g5m2-t8 worked + g5m3-t1 worked + g5m3-t2 worked + g5m3-t3 worked + g5m3-t4 worked + g5m3-t5 worked + g5m3-t6 worked + g5m3-t7 worked + g5m3-t8 worked + g5m4-t1 worked + g5m4-t2 worked + g5m4-t3 worked + g5m4-t4 worked + g5m4-t5 worked + g5m4-t6 worked + g5m4-t7 worked + g5m4-t8 worked + g5m4-t9 worked + g5m5-t1 worked + g5m5-t2 worked + g5m5-t3 worked + g5m5-t4 worked + g5m5-t5 worked + g5m5-t6 worked + g5m5-t7 worked + g5m6-t1 worked + g5m6-t2 worked + g5m6-t3 worked + g5m6-t4 worked + g5m6-t5 worked + g5m6-t6 worked + g6m1-t1 worked + g6m1-t2 worked + g6m1-t3 worked + g6m1-t4 worked + g6m1-t5 worked + g6m1-t6 worked + g6m1-t7 worked + g6m1-t8 worked + g6m2-t1 worked + g6m2-t2 worked + g6m2-t3 worked + g6m2-t4 worked + g6m2-t5 worked + g6m2-t6 worked + g6m2-t7 worked + g6m3-t1 worked + g6m3-t2 worked + g6m3-t3 worked + g6m3-t4 worked + g6m3-t5 worked + g6m3-t6 worked + g6m4-t1 worked + g6m4-t2 worked + g6m4-t3 worked + g6m4-t4 worked + g6m4-t5 worked + g6m4-t6 worked + g6m4-t7 worked + g6m5-t1 worked + g6m5-t2 worked + g6m5-t3 worked + g6m5-t4 worked + g6m5-t5 worked + g6m5-t6 worked + g6m5-t7 worked + g6m5-t8 worked + g6m5-t9 worked + g6m6-t1 worked + g6m6-t2 worked + g6m6-t3 worked + g6m6-t4 worked + g6m6-t5 worked + g6m6-t6 worked + g6m7-t1 worked + g6m7-t2 worked + g6m7-t3 worked + g6m7-t4 worked + g6m7-t5 worked + g6m7-t6 worked + g6m7-t7 worked + g6m7-t8 worked"
     ]
   }
 ]
