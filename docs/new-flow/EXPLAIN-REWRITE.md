@@ -45,7 +45,8 @@ One row per teaching line and the big idea: `'<line exactly>': { style: 'B' }` �
 `Okay. Your turn.`** (which is `B`). Add `say` only when the line has something `speakable()` (in `voice/styles.ts`)
 cannot say — the gate names it: "voice reads a symbol: …". Then `say` is the same words with the math spoken:
 `2/8` → "two eighths", `4:15` → "four fifteen", `(x + 2)` → "x plus 2, all together", `3²` is handled, `km/h` → "kilometers
-per hour". Never "slash", "over" (unless teaching the fraction bar), "open parenthesis". **Lines outside the teach**
+per hour". `( )` are **"parentheses"** (US), never "brackets" — on screen too; where a topic's title says "brackets",
+change it in `docs/new-flow/curriculum.md` as well (a shelf bracket is an object and stays). Never "slash", "over" (unless teaching the fraction bar), "open parenthesis". **Lines outside the teach**
 (Screen 1, the Screen 8 question, hints, Screen 9) are spoken too and the same gate checks them — give any that fail a
 row with style `A` and a `say`. A line said in two topics needs ONE row (a repeated key is a TypeScript error).
 

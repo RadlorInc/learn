@@ -2321,9 +2321,9 @@
   },
   {
     "key": "19pdlrj",
-    "text": "The brackets keep one bag together, so 3 times 4 plus 2, all together, means 3 times as much as 4 plus 2.",
+    "text": "The parentheses keep one bag together, so 3 times 4 plus 2, all together, means 3 times as much as 4 plus 2.",
     "style": "B",
-    "chars": 105,
+    "chars": 108,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s3 b1 + g5m1-t17 bigIdea"
@@ -2341,9 +2341,9 @@
   },
   {
     "key": "ig99b7",
-    "text": "Put brackets around it. Now the whole bag stays together.",
+    "text": "Put parentheses around it. Now the whole bag stays together.",
     "style": "B",
-    "chars": 57,
+    "chars": 60,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s4 b2"
@@ -2411,9 +2411,9 @@
   },
   {
     "key": "1pe8hbc",
-    "text": "Don't drop the brackets.",
+    "text": "Don't drop the parentheses.",
     "style": "B+",
-    "chars": 24,
+    "chars": 27,
     "kind": "beat",
     "sources": [
       "g5m1-t17 s7 b2"
@@ -2461,9 +2461,9 @@
   },
   {
     "key": "35wqdx",
-    "text": "Give every number and sign a job in the story, and let the part in brackets happen first.",
+    "text": "Give every number and sign a job in the story, and let the part in parentheses happen first.",
     "style": "B",
-    "chars": 89,
+    "chars": 92,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s3 b1 + g5m1-t18 bigIdea"
@@ -2471,9 +2471,9 @@
   },
   {
     "key": "1uyj4h5",
-    "text": "The part in brackets happens first, so it's one thing.",
+    "text": "The part in parentheses happens first, so it's one thing.",
     "style": "B",
-    "chars": 54,
+    "chars": 57,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s4 b1"
@@ -2551,9 +2551,9 @@
   },
   {
     "key": "u8hze8",
-    "text": "4 bags of 6 red, plus 3 green, is 4 times 6, plus 3. The brackets put 3 green in every bag.",
+    "text": "4 bags of 6 red, plus 3 green, is 4 times 6, plus 3. The parentheses put 3 green in every bag.",
     "style": "B+",
-    "chars": 91,
+    "chars": 94,
     "kind": "beat",
     "sources": [
       "g5m1-t18 s7 b3"
@@ -3181,9 +3181,9 @@
   },
   {
     "key": "dxszj6",
-    "text": "Now you try. A fruit stand packs 3 bags. Each bag has 4 apples and 5 pears. Which number sentence shows all the fruit? Keep one bag together inside the brackets. Then show how many bags.",
+    "text": "Now you try. A fruit stand packs 3 bags. Each bag has 4 apples and 5 pears. Which number sentence shows all the fruit? Keep one bag together inside the parentheses. Then show how many bags.",
     "style": "A",
-    "chars": 186,
+    "chars": 189,
     "kind": "turn",
     "sources": [
       "g5m1-t17 turn"
@@ -3191,9 +3191,9 @@
   },
   {
     "key": "1v7vri4",
-    "text": "Now you try. The board shows 4 times 6 plus 5, all together. A class makes this story, 4 bags, each with 6 red marbles and 5 green marbles. How many marbles are in the story? Do the part in the brackets first. Then do the rest of the story.",
+    "text": "Now you try. The board shows 4 times 6 plus 5, all together. A class makes this story, 4 bags, each with 6 red marbles and 5 green marbles. How many marbles are in the story? Do the part in the parentheses first. Then do the rest of the story.",
     "style": "A",
-    "chars": 240,
+    "chars": 243,
     "kind": "turn",
     "sources": [
       "g5m1-t18 turn"
@@ -3861,9 +3861,9 @@
   },
   {
     "key": "pos21r",
-    "text": "What is in one bag? That part goes inside the brackets.",
+    "text": "What is in one bag? That part goes inside the parentheses.",
     "style": "A",
-    "chars": 55,
+    "chars": 58,
     "kind": "hint",
     "sources": [
       "g5m1-t17 hint1"
@@ -3881,9 +3881,9 @@
   },
   {
     "key": "152pqbj",
-    "text": "What is in one bag? Keep it together inside the brackets.",
+    "text": "What is in one bag? Keep it together inside the parentheses.",
     "style": "A",
-    "chars": 57,
+    "chars": 60,
     "kind": "hint",
     "sources": [
       "g5m1-t17 twin hint1"
@@ -3901,9 +3901,9 @@
   },
   {
     "key": "1y0b50k",
-    "text": "Start with the brackets. How many marbles are in one bag?",
+    "text": "Start with the parentheses. How many marbles are in one bag?",
     "style": "A",
-    "chars": 57,
+    "chars": 60,
     "kind": "hint",
     "sources": [
       "g5m1-t18 hint1"
@@ -3921,9 +3921,9 @@
   },
   {
     "key": "yoyyj4",
-    "text": "Start with the brackets. How many crayons are in one box?",
+    "text": "Start with the parentheses. How many crayons are in one box?",
     "style": "A",
-    "chars": 57,
+    "chars": 60,
     "kind": "hint",
     "sources": [
       "g5m1-t18 twin hint1"
@@ -4541,9 +4541,9 @@
   },
   {
     "key": "1rp83lb",
-    "text": "You kept each bag together with brackets, then showed how many bags.",
+    "text": "You kept each bag together with parentheses, then showed how many bags.",
     "style": "A",
-    "chars": 68,
+    "chars": 71,
     "kind": "won",
     "sources": [
       "g5m1-t17 won"
@@ -4551,9 +4551,9 @@
   },
   {
     "key": "1ue0215",
-    "text": "You kept 5 apples and 3 pears together in the brackets, then showed 4 bags of them.",
+    "text": "You kept 5 apples and 3 pears together in the parentheses, then showed 4 bags of them.",
     "style": "A",
-    "chars": 83,
+    "chars": 86,
     "kind": "won",
     "sources": [
       "g5m1-t17 twinWon"
@@ -4561,9 +4561,9 @@
   },
   {
     "key": "1tw7yvt",
-    "text": "You did the part in the brackets first, then the rest of the story.",
+    "text": "You did the part in the parentheses first, then the rest of the story.",
     "style": "A",
-    "chars": 67,
+    "chars": 70,
     "kind": "won",
     "sources": [
       "g5m1-t18 won"
