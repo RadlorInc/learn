@@ -18,6 +18,9 @@
  * 401 is still the thing worth doing — see the PR.
  */
 import { notFound } from 'next/navigation'
+import { LangContext, useLang, makeT } from '@/features/dashboard/i18n'
+import { childReminders } from '@/features/dashboard/reminders'
+import { localDay } from '@/features/lessons/progressReport'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
@@ -38,6 +41,11 @@ const DEMO_CLASSES: ClassRow[] = [
   { id: 'c1', name: '5-A', grade: 5, lesson_ids: null, exercises: [{ id: 'x1', module: 'g5m2', level: 2, count: 10, seed: 42, open: true }, { id: 'x2', module: 'g5m3', level: 3, count: 5, seed: 7, open: false }] },
   { id: 'c2', name: 'Room 12 (Grade 3)', grade: 3, lesson_ids: null, exercises: [] },
 ]
+
+/** `&lang=es`: the parent dashboard's parts in Spanish (features/dashboard/i18n). */
+function WithLang() {
+  return <LangContext.Provider value={useSearchParams().get('lang') === 'es' ? 'es' : 'en'}><Surfaces /></LangContext.Provider>
+}
 
 function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
@@ -99,7 +107,7 @@ function Surfaces() {
 
 export default function UiPreviewPage() {
   if (process.env.NODE_ENV === 'production') notFound()   // dev scaffolding — 404 in the shipped app
-  return <Suspense><Surfaces /></Suspense>
+  return <Suspense><WithLang /></Suspense>
 }
 
 const DEMO_REMINDERS: Reminder[] = [
@@ -116,13 +124,19 @@ function DashPreview({ p }: { p: string }) {
   const [bell, setBell] = useState(false)
   const [tour, setTour] = useState<null | { title: string; steps: { target: string; title: string; text: string }[] }>(null)
   const save = async (i: string[] | null, d: Record<string, string>) => { setIds(i); setDue(i ? d : {}); return 'ok' as const }
-  const nav = [{ label: p === 'teacher' || p === 'class' ? 'Classes' : 'Home', href: '/ui-preview?p=home', on: true }, { label: 'Help', href: '/ui-preview?p=home', on: false, tour: 'nav-help' }, { label: 'Account', href: '/ui-preview?p=home', on: false }]
+  const lang = useLang(), t = makeT(lang)
+  // In Spanish the demo reminders come from the real rules, so what is previewed is what a parent would read.
+  const reminders = lang === 'en' ? DEMO_REMINDERS : [
+    ...childReminders({ id: 'b', name: 'Maya', owner: true, login: undefined, gameEnabled: true, lessonIds: null, due: {}, isDone: () => false, lastProblemAt: '2026-09-15T12:00:00Z', createdAt: '2026-09-01T00:00:00Z' }, localDay(new Date()), new Date(), id => id, lang),
+    ...childReminders({ id: 'a', name: 'Aarav', owner: true, login: 'aarav7', gameEnabled: true, lessonIds: ids, due, isDone: () => false, lastProblemAt: null, createdAt: '2026-09-01T00:00:00Z', stuck: { lessonId: 'g5m1-t3', title: 'Divide by 10, 100, 1,000' } }, localDay(new Date()), new Date(), id => id, lang),
+  ]
+  const nav = [{ label: p === 'teacher' || p === 'class' ? 'Classes' : t('Home'), href: '/ui-preview?p=home', on: true }, { label: t('Help'), href: '/ui-preview?p=home', on: false, tour: 'nav-help' }, { label: t('Account'), href: '/ui-preview?p=home', on: false }]
   return (
     <div className="home-app" style={{ alignSelf: 'stretch', margin: -16 }}>
-      <DashNav items={nav} reminders={DEMO_REMINDERS.length} onBell={() => setBell(true)} onSignOut={() => {}} />
+      <DashNav items={nav} reminders={reminders.length} onBell={() => setBell(true)} onSignOut={() => {}} />
       <div style={{ minWidth: 0 }}><main className="adult-shell" data-t="dash">
         {p === 'home' && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <UpNext top={DEMO_REMINDERS[0]} rest={2} allClear="" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onOpenAll={() => setBell(true)} />
+          <UpNext top={reminders[0]} rest={2} allClear="" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onOpenAll={() => setBell(true)} />
           <div className="card-grid">
             <ChildCard id="a" name="Aarav" avatar="/assets/objects/fox.png" lastPlayed="yesterday" next="Estimate products and quotients" done={3} total={20} onStart={() => {}} />
             <ChildCard id="b" name="Maya" avatar="/assets/objects/bunny.png" lastPlayed="—" next="Hundreds, tens and ones" done={0} total={8} onStart={() => {}} />
@@ -137,7 +151,7 @@ function DashPreview({ p }: { p: string }) {
           logins={{ a: 'aarav7' }} onLogin={() => {}} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />}
         {p === 'lessons' && <LessonsTab name="Aarav" ids={ids} due={due} canEdit isDone={() => false} onSave={save} />}
       </main></div>
-      <RemindersSheet open={bell} onClose={() => setBell(false)} list={DEMO_REMINDERS} snoozedCount={1} settingsHref="#" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onUnsnooze={() => {}} />
+      <RemindersSheet open={bell} onClose={() => setBell(false)} list={reminders} snoozedCount={1} settingsHref="#" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onUnsnooze={() => {}} />
       <TourRunner tour={tour} onEnd={() => setTour(null)} />
     </div>
   )

@@ -21,6 +21,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { getCurrentSession, verifyEmailToken, setPassword } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
+import { makeT, useSavedLang } from '@/features/dashboard/i18n'
 
 const MIN = 6
 
@@ -112,6 +113,7 @@ function Rule({ met, children }: { met: boolean; children: React.ReactNode }) {
 function SetPasswordForm() {
   const router = useRouter()
   const params = useSearchParams()
+  const t = makeT(useSavedLang())
 
   const [ready,    setReady]    = useState(false)
   const [invitee,  setInvitee]  = useState<string | null>(null)   // whose invite this link is
@@ -137,7 +139,7 @@ function SetPasswordForm() {
       const tokenHash = params.get('token_hash')
       const type      = params.get('type') as EmailOtpType | null
       if (!tokenHash || !type) {
-        setError('This link is missing its token. Ask for a fresh invite.')
+        setError(t('This link is missing its token. Ask for a fresh invite.'))
         setDead(true)
         return
       }
@@ -146,8 +148,8 @@ function SetPasswordForm() {
       if (error) {
         setError(
           error.message.toLowerCase().includes('expired')
-            ? 'This invite link has expired. Ask for a fresh one.'
-            : 'This invite link is not valid any more. Ask for a fresh one.',
+            ? t('This invite link has expired. Ask for a fresh one.')
+            : t('This invite link is not valid any more. Ask for a fresh one.'),
         )
         setDead(true)
         return
@@ -158,12 +160,13 @@ function SetPasswordForm() {
       setReady(true)
     }
 
-    establish().catch(() => setError("Couldn't connect — check your connection and try again"))
+    establish().catch(() => setError(t('Couldn’t connect — check your connection and try again')))
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once: a token_hash is single-use (above)
   }, [params])
 
   async function submit() {
-    if (password.length < MIN)  { setError(`Password must be at least ${MIN} characters`); return }
-    if (password !== confirm)   { setError('The two passwords do not match'); return }
+    if (password.length < MIN)  { setError(t('Password must be at least {n} characters', { n: MIN })); return }
+    if (password !== confirm)   { setError(t('The two passwords do not match')); return }
 
     setLoading(true); setError(null)
     try {
@@ -172,7 +175,7 @@ function SetPasswordForm() {
       // logged by the global listener (infra/AuthEventLogger) — see auth.ts
       router.replace(homeForRole(await getMyRole()))
     } catch {
-      setError("Couldn't connect — check your connection and try again")
+      setError(t('Couldn’t connect — check your connection and try again'))
       setLoading(false)
     }
   }
@@ -187,14 +190,13 @@ function SetPasswordForm() {
    * this reader has to do (get a new invite) was the one thing the screen did not offer.
    */
   if (dead) return (
-    <Frame subtitle="This link can no longer be used">
+    <Frame subtitle={t('This link can no longer be used')}>
       <div role="alert" style={{
         background: '#FFF1F0', border: '1.5px solid #F0B4AE', borderRadius: 12,
         padding: '14px 16px', fontSize: 13.5, color: '#93000A', fontWeight: 600, lineHeight: 1.5,
       }}>{error}</div>
       <p style={{ fontSize: 12.5, color: C.ink3, margin: 0, lineHeight: 1.5 }}>
-        Invite and reset links expire so that an old email in somebody&apos;s inbox cannot be used
-        to reach your family&apos;s account later.
+        {t('Invite and reset links expire so that an old email in somebody’s inbox cannot be used to reach your family’s account later.')}
       </p>
       <Link
         href="/auth"
@@ -204,12 +206,12 @@ function SetPasswordForm() {
           background: C.accent, color: '#fff', borderRadius: 50,
           fontSize: 16, fontWeight: 800,
         }}
-      >Back to sign in</Link>
+      >{t('Back to sign in')}</Link>
     </Frame>
   )
 
   return (
-    <Frame subtitle="Choose a password for your account">
+    <Frame subtitle={t('Choose a password for your account')}>
       {error && (
         <div role="alert" style={{
           background: '#FFF1F0', border: '1.5px solid #F0B4AE',
@@ -220,9 +222,9 @@ function SetPasswordForm() {
 
       {!ready && !error && (
         <div style={{ fontSize: 14, color: C.ink2, fontWeight: 600, textAlign: 'center', padding: '8px 0' }}>
-          Checking your invite…
+          {t('Checking your invite…')}
           <span style={{ display: 'block', fontSize: 12.5, color: C.ink3, fontWeight: 500, marginTop: 6, lineHeight: 1.5 }}>
-            Connecting with your school or family portal. This only takes a moment.
+            {t('Connecting with your school or family portal. This only takes a moment.')}
           </span>
         </div>
       )}
@@ -234,13 +236,13 @@ function SetPasswordForm() {
           background: C.page, border: `1.5px solid ${C.edge}`, borderRadius: 12,
           padding: '10px 14px', fontSize: 12.5, color: C.ink2, fontWeight: 600,
         }}>
-          Setting a password for <strong style={{ color: C.ink, wordBreak: 'break-all' }}>{invitee}</strong>
+          {t('Setting a password for')} <strong style={{ color: C.ink, wordBreak: 'break-all' }}>{invitee}</strong>
         </div>
       )}
 
       {[
-        { id: 'sp-new',     label: 'New password',     value: password, set: setPasswordV, ph: `At least ${MIN} characters` },
-        { id: 'sp-confirm', label: 'Confirm password', value: confirm,  set: setConfirm,   ph: 'Type it again' },
+        { id: 'sp-new',     label: t('New password'),     value: password, set: setPasswordV, ph: t('At least {n} characters', { n: MIN }) },
+        { id: 'sp-confirm', label: t('Confirm password'), value: confirm,  set: setConfirm,   ph: t('Type it again') },
       ].map(f => (
         <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <label htmlFor={f.id} style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>{f.label}</label>
@@ -263,8 +265,8 @@ function SetPasswordForm() {
       {/* The two rules, live. They are the SAME two conditions `submit` enforces — stated where
           they can be read before the button is pressed rather than only after it is. */}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
-        <Rule met={longEnough}>{MIN} or more characters</Rule>
-        <Rule met={matches}>Both passwords match</Rule>
+        <Rule met={longEnough}>{t('{n} or more characters', { n: MIN })}</Rule>
+        <Rule met={matches}>{t('Both passwords match')}</Rule>
       </ul>
 
       <button
@@ -283,11 +285,11 @@ function SetPasswordForm() {
         onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = C.hover }}
         onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = C.accent }}
       >
-        {loading ? 'Please wait...' : 'Set password and continue'}
+        {loading ? t('Please wait…') : t('Set password and continue')}
       </button>
 
       <p style={{ textAlign: 'center', fontSize: 12, color: C.ink3, margin: 0 }}>
-        Your child&apos;s progress is saved securely to your account
+        {t('Your child’s progress is saved securely to your account')}
       </p>
     </Frame>
   )

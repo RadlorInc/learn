@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reminder } from './reminders'
+import { useT } from './i18n'
 
 const ink: CSSProperties = { color: 'var(--ink)' }
 export const dbtn: CSSProperties = { background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 16px', minHeight: 44, fontSize: 14, fontWeight: 900, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }
@@ -18,11 +19,12 @@ export const dlink: CSSProperties = { background: 'none', border: 0, padding: '6
 
 export function MoreMenu({ onSnooze, onHide }: { onSnooze: () => void; onHide: () => void }) {
   const ref = useRef<HTMLDetailsElement>(null)
+  const t = useT()
   const pick = (f: () => void) => () => { if (ref.current) ref.current.open = false; f() }
   return (
     <details className="dash-more" ref={ref}>
-      <summary aria-label="More options">⋯</summary>
-      <div><button type="button" onClick={pick(onSnooze)}>Remind me in 3 days</button><button type="button" onClick={pick(onHide)}>Not needed</button></div>
+      <summary aria-label={t('More options')}>⋯</summary>
+      <div><button type="button" onClick={pick(onSnooze)}>{t('Remind me in 3 days')}</button><button type="button" onClick={pick(onHide)}>{t('Not needed')}</button></div>
     </details>
   )
 }
@@ -32,21 +34,22 @@ export function UpNext({ top, rest, allClear, onAct, onSnooze, onHide, onOpenAll
   top: Reminder | undefined; rest: number; allClear: string
   onAct: (r: Reminder) => void; onSnooze: (r: Reminder) => void; onHide: (r: Reminder) => void; onOpenAll: () => void
 }) {
+  const t = useT()
   const box: CSSProperties = { ...dcard, background: '#fff', border: '2px solid var(--milo-orange-soft)', display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }
   const k: CSSProperties = { fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 900, color: 'var(--milo-orange-hover)' }
   if (!top) return (
-    <section style={box} aria-label="Up next" data-tour="upnext">
-      <div><div style={k}>All caught up</div><h2 style={{ margin: '2px 0 0', fontSize: 20, ...ink }}>Nothing needs you right now</h2>
+    <section style={box} aria-label={t('Up next')} data-tour="upnext">
+      <div><div style={k}>{t('All caught up')}</div><h2 style={{ margin: '2px 0 0', fontSize: 20, ...ink }}>{t('Nothing needs you right now')}</h2>
         <p style={{ margin: '4px 0 0', color: 'var(--ink-soft)' }}>{allClear}</p></div>
     </section>
   )
   return (
-    <section style={box} aria-label="Up next" data-tour="upnext">
+    <section style={box} aria-label={t('Up next')} data-tour="upnext">
       <div style={{ flex: 1, minWidth: 220 }}>
-        <div style={k}>{top.kind === 'setup' ? 'Getting started' : 'Up next'}</div>
+        <div style={k}>{top.kind === 'setup' ? t('Getting started') : t('Up next')}</div>
         <h2 style={{ margin: '2px 0 0', fontSize: 20, ...ink }}>{top.title}</h2>
         <p style={{ margin: '4px 0 0', color: 'var(--ink-soft)' }}>{top.detail}</p>
-        {rest > 0 && <button type="button" style={dlink} onClick={onOpenAll}>{rest} more in Reminders</button>}
+        {rest > 0 && <button type="button" style={dlink} onClick={onOpenAll}>{t('{n} more in Reminders', { n: rest })}</button>}
       </div>
       <div className="dash-act" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button type="button" style={dbtn} onClick={() => onAct(top)}>{top.action}</button>
@@ -58,6 +61,7 @@ export function UpNext({ top, rest, allClear, onAct, onSnooze, onHide, onOpenAll
 
 /** A native dialog: focus, Esc and the backdrop come with it. `side` slides it in from the right (the reminders list). */
 export function Sheet({ open, onClose, side, label, children }: { open: boolean; onClose: () => void; side?: boolean; label: string; children: ReactNode }) {
+  const t = useT()
   const ref = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const d = ref.current
@@ -69,7 +73,7 @@ export function Sheet({ open, onClose, side, label, children }: { open: boolean;
     <dialog ref={ref} className={side ? 'dash-sheet side' : 'dash-sheet'} aria-label={label} onClose={onClose}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div>
-        <button type="button" aria-label="Close" onClick={onClose} style={{ float: 'right', border: 0, background: 'none', fontSize: 24, minWidth: 44, minHeight: 44, margin: '-10px -10px 0 0', color: 'var(--ink-muted)', cursor: 'pointer' }}>×</button>
+        <button type="button" aria-label={t('Close')} onClick={onClose} style={{ float: 'right', border: 0, background: 'none', fontSize: 24, minWidth: 44, minHeight: 44, margin: '-10px -10px 0 0', color: 'var(--ink-muted)', cursor: 'pointer' }}>×</button>
         {children}
       </div>
     </dialog>
@@ -81,22 +85,23 @@ export function RemindersSheet({ open, onClose, list, snoozedCount, settingsHref
   open: boolean; onClose: () => void; list: Reminder[]; snoozedCount: number; settingsHref: string
   onAct: (r: Reminder) => void; onSnooze: (r: Reminder) => void; onHide: (r: Reminder) => void; onUnsnooze: () => void
 }) {
+  const t = useT()
   const [who, setWho] = useState('all')
   const whos = [...new Map(list.map(r => [r.who, r.whoName])).entries()]
   const shown = who === 'all' || !whos.some(([w]) => w === who) ? list : list.filter(r => r.who === who)
   const chip = (on: boolean): CSSProperties => ({ padding: '6px 14px', minHeight: 40, borderRadius: 999, border: '2px solid', borderColor: on ? 'var(--milo-orange)' : 'var(--card-border)', background: on ? 'var(--milo-orange-soft)' : 'var(--paper-soft)', fontWeight: 800, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' })
   return (
-    <Sheet open={open} onClose={() => { setWho('all'); onClose() }} side label="Reminders">
-      <h2 style={{ margin: '0 0 4px', fontSize: 22, ...ink }}>Reminders</h2>
-      <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>Snooze or hide any of them with ⋯.</p>
+    <Sheet open={open} onClose={() => { setWho('all'); onClose() }} side label={t('Reminders')}>
+      <h2 style={{ margin: '0 0 4px', fontSize: 22, ...ink }}>{t('Reminders')}</h2>
+      <p style={{ margin: '0 0 14px', fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>{t('Snooze or hide any of them with ⋯.')}</p>
       {whos.length > 1 && (
-        <div role="group" aria-label="Show reminders for" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          <button type="button" aria-pressed={who === 'all'} style={chip(who === 'all')} onClick={() => setWho('all')}>All · {list.length}</button>
+        <div role="group" aria-label={t('Show reminders for')} style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          <button type="button" aria-pressed={who === 'all'} style={chip(who === 'all')} onClick={() => setWho('all')}>{t('All')} · {list.length}</button>
           {whos.map(([w, name]) => <button key={w} type="button" aria-pressed={who === w} style={chip(who === w)} onClick={() => setWho(w)}>{name} · {list.filter(r => r.who === w).length}</button>)}
         </div>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {shown.length === 0 && <p style={{ margin: 0, color: 'var(--ink-soft)' }}>All caught up.</p>}
+        {shown.length === 0 && <p style={{ margin: 0, color: 'var(--ink-soft)' }}>{t('All caught up.')}</p>}
         {shown.map(r => (
           <div key={r.id} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '12px 14px', borderRadius: 14, background: '#fff', border: '1.5px solid var(--card-border)' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -109,9 +114,9 @@ export function RemindersSheet({ open, onClose, list, snoozedCount, settingsHref
         ))}
       </div>
       {snoozedCount > 0 && <p style={{ margin: '16px 0 0', fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>
-        {snoozedCount} snoozed. <button type="button" style={dlink} onClick={onUnsnooze}>Show them now</button></p>}
+        {t('{n} snoozed.', { n: snoozedCount })} <button type="button" style={dlink} onClick={onUnsnooze}>{t('Show them now')}</button></p>}
       <p style={{ margin: '16px 0 0', fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>
-        Choose which kinds you get in <a href={settingsHref} onClick={onClose} style={{ color: 'var(--ink-soft)' }}>Account → Reminders</a>.</p>
+        {t('Choose which kinds you get in')} <a href={settingsHref} onClick={onClose} style={{ color: 'var(--ink-soft)' }}>{t('Account → Reminders')}</a>.</p>
     </Sheet>
   )
 }
@@ -128,6 +133,7 @@ function visible(key: string): Element | null {
 }
 
 export function TourRunner({ tour, onEnd }: { tour: Tour | null; onEnd: (finished: boolean) => void }) {
+  const t = useT()
   const router = useRouter()
   const [i, setI] = useState(0)
   const [box, setBox] = useState<{ l: number; t: number; w: number; h: number } | null>(null)
@@ -176,13 +182,13 @@ export function TourRunner({ tour, onEnd }: { tour: Tour | null; onEnd: (finishe
     <div ref={coach} className="dash-coach" role="dialog" aria-live="polite" aria-label={tour.title}
       style={{ top: fitsBelow ? below : Math.max(12 + inset('top'), box.t - 234), left: Math.max(minL, Math.min(box.l, maxL)) }}>
       <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>{tour.steps.map((_, k) => <i key={k} style={{ height: 5, flex: 1, borderRadius: 9, background: k <= i ? 'var(--milo-orange)' : 'var(--card-border)' }} />)}</div>
-      <div style={{ color: 'var(--milo-orange)', fontWeight: 900, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em' }}>{tour.title} · {i + 1} of {n}</div>
+      <div style={{ color: 'var(--milo-orange)', fontWeight: 900, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em' }}>{tour.title} · {t('{i} of {n}', { i: i + 1, n })}</div>
       <h3 style={{ margin: '4px 0', fontSize: 19, fontFamily: 'var(--font-display)', ...ink }}>{step.title}</h3>
       <p style={{ margin: '0 0 12px', color: 'var(--ink-soft)' }}>{step.text}</p>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        {i > 0 && <button type="button" style={dghost} onClick={() => { setBox(null); setI(i - 1) }}>Back</button>}
-        <button type="button" data-next style={dbtn} onClick={() => { if (last) onEnd(true); else { setBox(null); setI(i + 1) } }}>{last ? 'Done' : 'Next'}</button>
-        <button type="button" style={dlink} onClick={() => onEnd(false)}>Stop</button>
+        {i > 0 && <button type="button" style={dghost} onClick={() => { setBox(null); setI(i - 1) }}>{t('Back')}</button>}
+        <button type="button" data-next style={dbtn} onClick={() => { if (last) onEnd(true); else { setBox(null); setI(i + 1) } }}>{last ? t('Done') : t('Next')}</button>
+        <button type="button" style={dlink} onClick={() => onEnd(false)}>{t('Stop')}</button>
       </div>
     </div>
   </>
