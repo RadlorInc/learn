@@ -187,11 +187,11 @@ export const GRADE3_MODULE1: Lesson[] = [
           { say: 'Same muffins, same total.' },
         ],
         pictures: [{ kind: 'array', rows: 5, cols: 2, obj: 'muffin', show: 'running', motion: true }, { kind: 'eq', text: '5 × 2 = 10' }] },
-      { title: 'One thing not to do', text: "Here's the part people mix up. This turn-around trick works for times. It does NOT work for take away. 5 − 2 leaves 3. But you can't take 5 away from 2, so they are not the same. Okay. Your turn.",
+      { title: 'One thing not to do', text: "Here's the part people mix up. This turn-around trick works for times. It does NOT work for take away. 5 − 2 leaves 3. But 2 − 5 does not leave 3, so they are not the same. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: 'This turn-around trick works for times. It does NOT work for take away.', pic: 0 },
-          { say: "5 − 2 leaves 3. But you can't take 5 away from 2, so they are not the same." },
+          { say: "5 − 2 leaves 3. But 2 − 5 does not leave 3, so they are not the same." },
           { say: 'Okay. Your turn.' },
         ],
         pictures: [{ kind: 'cards', wrong: '5 − 2 = 2 − 5', right: '5 × 2 = 2 × 5' }] },

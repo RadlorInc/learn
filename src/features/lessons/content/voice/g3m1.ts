@@ -56,7 +56,7 @@ export const G3M1_VOICE: Record<string, VoiceLine> = {
   "So 5 × 2 = 10.": { style: 'B' },
   "Same muffins, same total.": { style: 'B' },
   "This turn-around trick works for times. It does NOT work for take away.": { style: 'B+' },
-  "5 − 2 leaves 3. But you can't take 5 away from 2, so they are not the same.": { style: 'B+' },
+  "5 − 2 leaves 3. But 2 − 5 does not leave 3, so they are not the same.": { style: 'B+' },
   // ── g3m1-t4 ──
   "You could count every sock, one at a time.": { style: 'B' },
   "But socks come in pairs. Is there a faster way? Yes.": { style: 'B' },

@@ -66,8 +66,8 @@ export const T1: (ChalkMark[] | undefined)[] = [
     write([0, '3'], '4 groups of 3', 240, 150, 30), write([0, '12'], 'make 12', 430, 150, 30, 'y'),
     write([1, 'write'], '4', 190, 235, 50), write([1, 'write'], '×', 245, 235, 50), write([1, 'write'], '3', 300, 235, 50),
     write([1, '12'], '= 12', 385, 235, 50, 'y'),
-    arrow([2, 'first'], [190, 268], [160, 318], 'b'), write([2, 'groups'], 'groups', 145, 350, 30, 'b'),
-    arrow([2, 'second'], [300, 268], [330, 318], 'y'), write([2, 'each'], 'in each', 360, 350, 30, 'y'),
+    arrow([2, 'first'], [190, 268], [160, 318], 'y'), write([2, 'groups'], 'groups', 145, 350, 30, 'y'),
+    arrow([2, 'second'], [300, 268], [330, 318], 'b'), write([2, 'each'], 'in each', 360, 350, 30, 'b'),
   ],
   // One thing not to do
   [

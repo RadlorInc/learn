@@ -18,7 +18,7 @@ assert n > 0, f'nothing queued for {module}'
 
 md = f"""# Milo voice — {module} in Josh
 
-Clones branch `{branch}` and renders every Josh line of **{module}** that has no clip yet — **{n} lines**.
+Clones branch `{branch}` and renders every Josh line of **{module}** that has no clip yet — **{n} lines** (a few fewer if lines shared with another module were rendered first).
 Styles: B (0.5/0.5) and B+ (0.7/0.3) with the original Chatterbox, A with Turbo. Rules: `docs/new-flow/voice.md`.
 
 **Before Run All:** Settings → Accelerator → **GPU T4 x2** (or P100), Internet **On**. At the end, download
@@ -37,7 +37,8 @@ todo = [r for r in rows if any(s.startswith(MODULE + '-') for s in r['sources'])
         and not (REPO / 'public/audio' / VOICE / f"{{r['key']}}.mp3").exists()]
 json.dump(todo, open(WORK / 'todo.json', 'w'))
 print(len(todo), 'lines to render ·', {{s: sum(r['style'] == s for r in todo) for s in ['A', 'B', 'B+']}})
-assert len(todo) == {n}, f'expected {n} lines for {module} — is the branch right?'"""
+# At most {n}: lines shared with another module ("Okay. Your turn.") may already be rendered by the time this runs.
+assert 0 < len(todo) <= {n}, f'expected up to {n} lines for {module} — is the branch right?'"""
 
 venv = """# Chatterbox pins torch 2.6, which breaks Kaggle's own torchvision — so it gets its own venv (uv: Kaggle's python has no ensurepip).
 VENV = WORK / 'venv'; PY = VENV / 'bin' / 'python'; READY = VENV / '.ready'

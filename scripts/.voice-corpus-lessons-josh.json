@@ -1,5 +1,1135 @@
 [
   {
+    "key": "fkn1sl",
+    "text": "You could count every cookie.",
+    "style": "B",
+    "chars": 29,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s2 b1"
+    ]
+  },
+  {
+    "key": "42irnf",
+    "text": "That works. But it's slow, and it's easy to lose your place.",
+    "style": "B",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s2 b2"
+    ]
+  },
+  {
+    "key": "46qeik",
+    "text": "Is there a faster way? Yes. Look at the plates.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s2 b3"
+    ]
+  },
+  {
+    "key": "szaja5",
+    "text": "When every group has the same number, you can count a whole group at a time.",
+    "style": "B",
+    "chars": 76,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s3 b1 + g3m1-t1 bigIdea"
+    ]
+  },
+  {
+    "key": "o6hdsn",
+    "text": "Look. Each plate is a group.",
+    "style": "B",
+    "chars": 28,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s4 b1"
+    ]
+  },
+  {
+    "key": "1jecimc",
+    "text": "There are 4 plates, so there are 4 groups.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s4 b2"
+    ]
+  },
+  {
+    "key": "vtr56o",
+    "text": "And each plate has 3 cookies. That's 3 in each group.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s4 b3"
+    ]
+  },
+  {
+    "key": "15w07ii",
+    "text": "Now count one whole plate at a time.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s5 b1"
+    ]
+  },
+  {
+    "key": "1bjgqvq",
+    "text": "3, 6, 9, 12.",
+    "style": "B",
+    "chars": 12,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s5 b2"
+    ]
+  },
+  {
+    "key": "svl521",
+    "text": "So there are 12 cookies.",
+    "style": "B",
+    "chars": 24,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s5 b3"
+    ]
+  },
+  {
+    "key": "1ptlwvs",
+    "text": "4 groups of 3 make 12.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s6 b1"
+    ]
+  },
+  {
+    "key": "a3638p",
+    "text": "We write that as 4 times 3 equals 12.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s6 b2"
+    ]
+  },
+  {
+    "key": "16ejuxq",
+    "text": "The first number is the groups. The second is how many in each.",
+    "style": "B",
+    "chars": 63,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s6 b3"
+    ]
+  },
+  {
+    "key": "rbphfx",
+    "text": "Here's the part people mix up.",
+    "style": "B+",
+    "chars": 30,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s7 b1 + g3m1-t2 s7 b1 + g3m1-t3 s7 b1 + g3m1-t4 s7 b1 + g3m1-t5 s7 b1 + g3m1-t6 s7 b1 + g3m1-t7 s7 b1 + g3m1-t8 s7 b1 + g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1"
+    ]
+  },
+  {
+    "key": "1qybw1p",
+    "text": "4 times 3 does not mean add 4 and 3.",
+    "style": "B+",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s7 b2"
+    ]
+  },
+  {
+    "key": "sd6ngq",
+    "text": "That gives 7, just one plate and 4 more cookies. 4 times 3 is 4 whole plates of 3.",
+    "style": "B+",
+    "chars": 82,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s7 b3"
+    ]
+  },
+  {
+    "key": "uwkn3j",
+    "text": "Okay. Your turn.",
+    "style": "B",
+    "chars": 16,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4"
+    ]
+  },
+  {
+    "key": "ec3v6a",
+    "text": "When chairs are jumbled, you have to count every one.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s2 b1"
+    ]
+  },
+  {
+    "key": "1w3e8j8",
+    "text": "And it's easy to miss some.",
+    "style": "B",
+    "chars": 27,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s2 b2"
+    ]
+  },
+  {
+    "key": "lv05wv",
+    "text": "What if they stand in neat rows? Then it's much faster.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s2 b3"
+    ]
+  },
+  {
+    "key": "sausx3",
+    "text": "When every row has the same number, count the rows, count one row, then multiply.",
+    "style": "B",
+    "chars": 81,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s3 b1 + g3m1-t2 bigIdea"
+    ]
+  },
+  {
+    "key": "121j9bo",
+    "text": "Look. Rows go across, from left to right.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s4 b1"
+    ]
+  },
+  {
+    "key": "9m6cey",
+    "text": "Count them. 1, 2, 3.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s4 b2"
+    ]
+  },
+  {
+    "key": "1cvbotz",
+    "text": "There are 3 rows.",
+    "style": "B",
+    "chars": 17,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s4 b3"
+    ]
+  },
+  {
+    "key": "1e7q79c",
+    "text": "Every row is the same, so you only need to count one.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s5 b1"
+    ]
+  },
+  {
+    "key": "1tvuhi2",
+    "text": "1, 2, 3, 4, 5.",
+    "style": "B",
+    "chars": 14,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s5 b2"
+    ]
+  },
+  {
+    "key": "fdpc57",
+    "text": "Each row has 5 chairs.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s5 b3"
+    ]
+  },
+  {
+    "key": "1wnyfzg",
+    "text": "Now count one whole row at a time. 5, 10, 15.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s6 b1"
+    ]
+  },
+  {
+    "key": "1ku5ijp",
+    "text": "3 rows of 5 is 15.",
+    "style": "B",
+    "chars": 18,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s6 b2"
+    ]
+  },
+  {
+    "key": "16ep7tp",
+    "text": "We write it as 3 times 5 equals 15.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s6 b3"
+    ]
+  },
+  {
+    "key": "1lxjcsy",
+    "text": "If one row is missing a chair, it is not 3 times 5 any more.",
+    "style": "B+",
+    "chars": 60,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s7 b2"
+    ]
+  },
+  {
+    "key": "ev0q42",
+    "text": "Every row must have the same number. Count each row to check.",
+    "style": "B+",
+    "chars": 61,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t2 s7 b3"
+    ]
+  },
+  {
+    "key": "140lkef",
+    "text": "Turn the tray, and now there are 5 rows of 2.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s2 b1"
+    ]
+  },
+  {
+    "key": "wku3yy",
+    "text": "It looks different. So did the number of muffins change?",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s2 b2"
+    ]
+  },
+  {
+    "key": "pw0e8u",
+    "text": "Turning the rows around does not change how many there are, so 2 times 5 and 5 times 2 make the same total.",
+    "style": "B",
+    "chars": 107,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s3 b1 + g3m1-t3 bigIdea"
+    ]
+  },
+  {
+    "key": "18yiegx",
+    "text": "First, the tray as it started. 2 rows of 5.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s4 b1"
+    ]
+  },
+  {
+    "key": "gs7osk",
+    "text": "Count by rows. 5, 10.",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s4 b2"
+    ]
+  },
+  {
+    "key": "iaie7x",
+    "text": "So 2 times 5 equals 10.",
+    "style": "B",
+    "chars": 23,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s4 b3"
+    ]
+  },
+  {
+    "key": "1dsl1ga",
+    "text": "Now watch the tray turn.",
+    "style": "B",
+    "chars": 24,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s5 b1"
+    ]
+  },
+  {
+    "key": "10mbeiu",
+    "text": "Does any muffin fall off? No. Is any muffin added? No.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s5 b2"
+    ]
+  },
+  {
+    "key": "r3cu1b",
+    "text": "Every muffin just moves to a new spot.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s5 b3"
+    ]
+  },
+  {
+    "key": "fezxbe",
+    "text": "Now count the turned tray by rows. 2, 4, 6, 8, 10.",
+    "style": "B",
+    "chars": 50,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s6 b1"
+    ]
+  },
+  {
+    "key": "18ya13x",
+    "text": "So 5 times 2 equals 10.",
+    "style": "B",
+    "chars": 23,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s6 b2"
+    ]
+  },
+  {
+    "key": "luu4hp",
+    "text": "Same muffins, same total.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s6 b3"
+    ]
+  },
+  {
+    "key": "c5u38a",
+    "text": "This turn-around trick works for times. It does not work for take away.",
+    "style": "B+",
+    "chars": 71,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s7 b2"
+    ]
+  },
+  {
+    "key": "184y063",
+    "text": "5 minus 2 leaves 3. But 2 minus 5 does not leave 3, so they are not the same.",
+    "style": "B+",
+    "chars": 77,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t3 s7 b3"
+    ]
+  },
+  {
+    "key": "xyf0vg",
+    "text": "You could count every sock, one at a time.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s2 b1"
+    ]
+  },
+  {
+    "key": "13fd5ay",
+    "text": "But socks come in pairs. Is there a faster way? Yes.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s2 b2"
+    ]
+  },
+  {
+    "key": "6wat4k",
+    "text": "When the groups are the same size, jump by that size, and each jump counts a whole group.",
+    "style": "B",
+    "chars": 89,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s3 b1 + g3m1-t4 bigIdea"
+    ]
+  },
+  {
+    "key": "130hxxh",
+    "text": "Look at the number line. Each pair is one jump of 2.",
+    "style": "B",
+    "chars": 52,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s4 b1"
+    ]
+  },
+  {
+    "key": "i2uof3",
+    "text": "2, 4, 6, 8, 10, 12.",
+    "style": "B",
+    "chars": 19,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s4 b2"
+    ]
+  },
+  {
+    "key": "1ykycgs",
+    "text": "How many jumps did we make? Count them. 6 jumps of 2.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s5 b1"
+    ]
+  },
+  {
+    "key": "iw1iro",
+    "text": "And we landed on 12.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s5 b2"
+    ]
+  },
+  {
+    "key": "1nr1tny",
+    "text": "So 6 times 2 equals 12.",
+    "style": "B",
+    "chars": 23,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s5 b3"
+    ]
+  },
+  {
+    "key": "4okzg3",
+    "text": "5s work the same way. Each hand is a jump of 5. 5, 10, 15.",
+    "style": "B",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s6 b1"
+    ]
+  },
+  {
+    "key": "s2tni8",
+    "text": "And bundles of ten jump by 10s. 10, 20, 30, 40.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s6 b2"
+    ]
+  },
+  {
+    "key": "px8adb",
+    "text": "4 hands means 4 jumps. Don't stop at 15.",
+    "style": "B+",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s7 b2"
+    ]
+  },
+  {
+    "key": "ojy0kp",
+    "text": "Hold up a finger for each jump. 5, 10, 15, 20.",
+    "style": "B+",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t4 s7 b3"
+    ]
+  },
+  {
+    "key": "1faijka",
+    "text": "You already count by 2s, 5s and 10s.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s2 b1"
+    ]
+  },
+  {
+    "key": "1syq36l",
+    "text": "Counting by 3s is new, so it doesn't come as easily yet.",
+    "style": "B",
+    "chars": 56,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "1cr4p8o",
+    "text": "Can you do it the same way? Yes.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s2 b3"
+    ]
+  },
+  {
+    "key": "tykp3n",
+    "text": "3s and 4s work just like 2s and 5s, so add the same number every time you jump.",
+    "style": "B",
+    "chars": 79,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s3 b1 + g3m1-t5 bigIdea"
+    ]
+  },
+  {
+    "key": "1r9728g",
+    "text": "Each tricycle has 3 wheels, so each is a jump of 3.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s4 b1"
+    ]
+  },
+  {
+    "key": "1fch2o6",
+    "text": "Three, six, nine, twelve.",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s4 b2"
+    ]
+  },
+  {
+    "key": "cgqsaf",
+    "text": "4 jumps of 3 make 12.",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s4 b3"
+    ]
+  },
+  {
+    "key": "jqeuc0",
+    "text": "A car has 4 wheels. Jump by 4s.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s5 b1"
+    ]
+  },
+  {
+    "key": "mm1s5d",
+    "text": "Four, eight, twelve.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s5 b2"
+    ]
+  },
+  {
+    "key": "1hnqkel",
+    "text": "3 jumps of 4 make 12.",
+    "style": "B",
+    "chars": 21,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s5 b3"
+    ]
+  },
+  {
+    "key": "mnsm2s",
+    "text": "Now write them down.",
+    "style": "B",
+    "chars": 20,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s6 b1"
+    ]
+  },
+  {
+    "key": "sysweq",
+    "text": "4 tricycles have 12 wheels, so 4 times 3 equals 12.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s6 b2"
+    ]
+  },
+  {
+    "key": "19jaj4u",
+    "text": "3 cars have 12 wheels, so 3 times 4 equals 12.",
+    "style": "B",
+    "chars": 46,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s6 b3"
+    ]
+  },
+  {
+    "key": "4b94ig",
+    "text": "Counting by 3s does not mean add 1 each time.",
+    "style": "B+",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s7 b2"
+    ]
+  },
+  {
+    "key": "1o7iig2",
+    "text": "That gives 3, 4, 5, 6. Every jump adds a whole group of 3, so it goes 3, 6, 9, 12.",
+    "style": "B+",
+    "chars": 82,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t5 s7 b3"
+    ]
+  },
+  {
+    "key": "17fp2d8",
+    "text": "What does fair mean here?",
+    "style": "B",
+    "chars": 25,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s2 b1"
+    ]
+  },
+  {
+    "key": "1pdrt2a",
+    "text": "If one friend gets 6 and another gets 2, that isn't fair.",
+    "style": "B",
+    "chars": 57,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s2 b2"
+    ]
+  },
+  {
+    "key": "x2e6fd",
+    "text": "Every friend must get the same number.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s2 b3"
+    ]
+  },
+  {
+    "key": "yif3gs",
+    "text": "Division shares a total into equal groups, and here we know how many groups, so we find how many in each.",
+    "style": "B",
+    "chars": 105,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s3 b1 + g3m1-t6 bigIdea"
+    ]
+  },
+  {
+    "key": "1c3xg23",
+    "text": "Give one apple to each friend. That is one round.",
+    "style": "B",
+    "chars": 49,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s4 b1"
+    ]
+  },
+  {
+    "key": "arrz9r",
+    "text": "Then go round again. Now each friend has 2.",
+    "style": "B",
+    "chars": 43,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s4 b2"
+    ]
+  },
+  {
+    "key": "1vevdtt",
+    "text": "Keep going, round and round, until the basket is empty.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s5 b1"
+    ]
+  },
+  {
+    "key": "1jgzpzw",
+    "text": "Now count the first friend's apples. One, two, three, four.",
+    "style": "B",
+    "chars": 59,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s5 b2"
+    ]
+  },
+  {
+    "key": "1al1dxh",
+    "text": "Each friend has 4 apples, and it is fair.",
+    "style": "B",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s5 b3"
+    ]
+  },
+  {
+    "key": "1swimc5",
+    "text": "12 shared by 3 friends is 4 each.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s6 b1"
+    ]
+  },
+  {
+    "key": "o9e3sc",
+    "text": "We write 12 divided by 3 equals 4.",
+    "style": "B",
+    "chars": 34,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s6 b2 + g3m1-t7 s6 b2"
+    ]
+  },
+  {
+    "key": "1sgmyhu",
+    "text": "The first number is the total, then the friends, then how many each.",
+    "style": "B",
+    "chars": 68,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s6 b3"
+    ]
+  },
+  {
+    "key": "81keep",
+    "text": "Don't flip it to 3 divided by 12.",
+    "style": "B+",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s7 b2"
+    ]
+  },
+  {
+    "key": "czl7pf",
+    "text": "You are sharing 12 apples, not 3, so the total goes first.",
+    "style": "B+",
+    "chars": 58,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t6 s7 b3"
+    ]
+  },
+  {
+    "key": "1xotf08",
+    "text": "When we shared apples, we knew how many friends.",
+    "style": "B",
+    "chars": 48,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s2 b1"
+    ]
+  },
+  {
+    "key": "e0dzfg",
+    "text": "This time we know how many go in each bag.",
+    "style": "B",
+    "chars": 42,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s2 b2"
+    ]
+  },
+  {
+    "key": "11ba2y8",
+    "text": "So what is missing? The number of bags.",
+    "style": "B",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s2 b3"
+    ]
+  },
+  {
+    "key": "psq88s",
+    "text": "Division can also mean, how many groups of this size can we make?",
+    "style": "B",
+    "chars": 65,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s3 b1 + g3m1-t7 bigIdea"
+    ]
+  },
+  {
+    "key": "10s28ym",
+    "text": "Take 3 apples and put them in a bag.",
+    "style": "B",
+    "chars": 36,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s4 b1"
+    ]
+  },
+  {
+    "key": "12icht3",
+    "text": "That is one bag. 9 apples are left.",
+    "style": "B",
+    "chars": 35,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s4 b2"
+    ]
+  },
+  {
+    "key": "13ib9sm",
+    "text": "Keep making bags of 3.",
+    "style": "B",
+    "chars": 22,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s5 b1"
+    ]
+  },
+  {
+    "key": "19qu9do",
+    "text": "Two bags, three bags, four bags.",
+    "style": "B",
+    "chars": 32,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s5 b2"
+    ]
+  },
+  {
+    "key": "11ftd8k",
+    "text": "Now no apples are left.",
+    "style": "B",
+    "chars": 23,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s5 b3"
+    ]
+  },
+  {
+    "key": "1ytkyiv",
+    "text": "Count the bags. We filled 4 bags.",
+    "style": "B",
+    "chars": 33,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s6 b1"
+    ]
+  },
+  {
+    "key": "iwvjbw",
+    "text": "It works, because 4 bags of 3 make 12.",
+    "style": "B",
+    "chars": 38,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s6 b3"
+    ]
+  },
+  {
+    "key": "1xuvkr7",
+    "text": "The answer is not the number in each bag.",
+    "style": "B+",
+    "chars": 41,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s7 b2"
+    ]
+  },
+  {
+    "key": "yoctkr",
+    "text": "We already know that is 3. The question is how many bags, and that is 4.",
+    "style": "B+",
+    "chars": 72,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t7 s7 b3"
+    ]
+  },
+  {
+    "key": "1wpdfo8",
+    "text": "We know there are 4 rows. We know there are 20 chairs.",
+    "style": "B",
+    "chars": 54,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s2 b1"
+    ]
+  },
+  {
+    "key": "15s3qig",
+    "text": "So which number is missing? The number in each row.",
+    "style": "B",
+    "chars": 51,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s2 b2"
+    ]
+  },
+  {
+    "key": "z6z690",
+    "text": "Multiplication and division are partners, so a times fact you know can find a missing number.",
+    "style": "B",
+    "chars": 93,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s3 b1 + g3m1-t8 bigIdea"
+    ]
+  },
+  {
+    "key": "168uf6q",
+    "text": "Count by 4s until you reach 20.",
+    "style": "B",
+    "chars": 31,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s4 b1"
+    ]
+  },
+  {
+    "key": "e781qw",
+    "text": "Four, eight, twelve, sixteen, twenty.",
+    "style": "B",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s4 b2"
+    ]
+  },
+  {
+    "key": "1ntjkns",
+    "text": "That is 5 jumps.",
+    "style": "B",
+    "chars": 16,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s4 b3"
+    ]
+  },
+  {
+    "key": "1pts23m",
+    "text": "Put the chairs in 4 rows, 5 in each row.",
+    "style": "B",
+    "chars": 40,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s5 b1"
+    ]
+  },
+  {
+    "key": "1bmyoov",
+    "text": "4 rows of 5 make 20. So 4 times 5 equals 20, and the missing number is 5.",
+    "style": "B",
+    "chars": 73,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s5 b2"
+    ]
+  },
+  {
+    "key": "kzjx7t",
+    "text": "The same three numbers, 4, 5 and 20, make four facts.",
+    "style": "B",
+    "chars": 53,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s6 b1"
+    ]
+  },
+  {
+    "key": "q92v8",
+    "text": "4 times 5 equals 20, and 5 times 4 equals 20.",
+    "style": "B",
+    "chars": 45,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s6 b2"
+    ]
+  },
+  {
+    "key": "1xmtuk4",
+    "text": "20 divided by 4 equals 5, and 20 divided by 5 equals 4.",
+    "style": "B",
+    "chars": 55,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s6 b3"
+    ]
+  },
+  {
+    "key": "q3h5mn",
+    "text": "When you divide, don't put the 20 last.",
+    "style": "B+",
+    "chars": 39,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s7 b2"
+    ]
+  },
+  {
+    "key": "ybpfnq",
+    "text": "The biggest number is the total, and it comes first, like 20 divided by 5 equals 4.",
+    "style": "B+",
+    "chars": 83,
+    "kind": "beat",
+    "sources": [
+      "g3m1-t8 s7 b3"
+    ]
+  },
+  {
     "key": "f6hzkf",
     "text": "You could add 40, ten times.",
     "style": "B",
@@ -130,16 +1260,6 @@
     ]
   },
   {
-    "key": "rbphfx",
-    "text": "Here's the part people mix up.",
-    "style": "B+",
-    "chars": 30,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s7 b1 + g5m1-t2 s7 b1 + g5m1-t3 s7 b1 + g5m1-t4 s7 b1 + g5m1-t5 s7 b1 + g5m1-t6 s7 b1 + g5m1-t7 s7 b1 + g5m1-t8 s7 b1 + g5m1-t9 s7 b1 + g5m1-t10 s7 b1 + g5m1-t11 s7 b1 + g5m1-t12 s7 b1 + g5m1-t13 s7 b1 + g5m1-t14 s7 b1 + g5m1-t15 s7 b1 + g5m1-t16 s7 b1 + g5m1-t17 s7 b1 + g5m1-t18 s7 b1 + g5m1-t19 s7 b1 + g5m1-t20 s7 b1"
-    ]
-  },
-  {
     "key": "bju0ms",
     "text": "Ten times as much does not mean add 10.",
     "style": "B+",
@@ -157,16 +1277,6 @@
     "kind": "beat",
     "sources": [
       "g5m1-t1 s7 b3"
-    ]
-  },
-  {
-    "key": "uwkn3j",
-    "text": "Okay. Your turn.",
-    "style": "B",
-    "chars": 16,
-    "kind": "beat",
-    "sources": [
-      "g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4"
     ]
   },
   {
@@ -2820,6 +3930,86 @@
     ]
   },
   {
+    "key": "hxmia9",
+    "text": "Cookies on plates. There are 4 plates. Each plate has 3 cookies. How many cookies are there?",
+    "style": "A",
+    "chars": 92,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t1 s1"
+    ]
+  },
+  {
+    "key": "hm5u0q",
+    "text": "Chairs in a hall. The chairs are set out in 3 rows. Each row has 5 chairs. How many chairs are there?",
+    "style": "A",
+    "chars": 101,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t2 s1"
+    ]
+  },
+  {
+    "key": "1dps3oo",
+    "text": "A tray of muffins. This tray has 2 rows of 5 muffins. What happens if we turn the tray around?",
+    "style": "A",
+    "chars": 94,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t3 s1"
+    ]
+  },
+  {
+    "key": "14o7pec",
+    "text": "Socks on the line. There are 6 pairs of socks on the line. Each pair has 2 socks. How many socks are there?",
+    "style": "A",
+    "chars": 107,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t4 s1"
+    ]
+  },
+  {
+    "key": "pmlpyq",
+    "text": "Tricycles in the park. There are 4 tricycles. Each tricycle has 3 wheels. How many wheels are there?",
+    "style": "A",
+    "chars": 100,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t5 s1"
+    ]
+  },
+  {
+    "key": "ahuti",
+    "text": "Sharing apples. 12 apples are shared fairly by 3 friends. How many apples does each friend get?",
+    "style": "A",
+    "chars": 95,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t6 s1"
+    ]
+  },
+  {
+    "key": "1oy3ih6",
+    "text": "Filling bags. There are 12 apples. We put 3 apples in each bag. How many bags can we fill?",
+    "style": "A",
+    "chars": 90,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t7 s1"
+    ]
+  },
+  {
+    "key": "1uyxb5n",
+    "text": "Setting out chairs. 20 chairs are set out in 4 equal rows. How many chairs go in each row?",
+    "style": "A",
+    "chars": 90,
+    "kind": "screen1",
+    "sources": [
+      "g3m1-t8 s1"
+    ]
+  },
+  {
     "key": "180l9pp",
     "text": "A carton of pencils. A box holds 40 pencils. A carton holds 10 boxes. How many pencils are in a carton?",
     "style": "A",
@@ -3020,6 +4210,86 @@
     ]
   },
   {
+    "key": "kjbipn",
+    "text": "Now you try. 3 plates. 5 cookies on each plate. How many cookies? Find how many groups and how many in each. Then count by groups.",
+    "style": "A",
+    "chars": 130,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t1 turn"
+    ]
+  },
+  {
+    "key": "1azle07",
+    "text": "Now you try. A garden has 4 rows. Each row has 3 tomato plants. How many plants? Count the rows. Count one row. Then multiply.",
+    "style": "A",
+    "chars": 126,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t2 turn"
+    ]
+  },
+  {
+    "key": "io2bf8",
+    "text": "Now you try. 4 times 10 equals 40. What is 10 times 4? Turn the rows around. Does the total change?",
+    "style": "A",
+    "chars": 99,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t3 turn"
+    ]
+  },
+  {
+    "key": "18rw5sl",
+    "text": "Now you try. 7 hands. How many fingers? Jump by 5s. Count one jump for each hand.",
+    "style": "A",
+    "chars": 81,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t4 turn"
+    ]
+  },
+  {
+    "key": "1kr89ov",
+    "text": "Now you try. 5 cars. Each car has 4 wheels. How many wheels? Jump by 4s. Count one jump for each car.",
+    "style": "A",
+    "chars": 101,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t5 turn"
+    ]
+  },
+  {
+    "key": "1vpzobg",
+    "text": "Now you try. 10 cookies are shared fairly by 2 friends. How many does each friend get? Share them out one at a time until none are left.",
+    "style": "A",
+    "chars": 136,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t6 turn"
+    ]
+  },
+  {
+    "key": "z5r47f",
+    "text": "Now you try. 15 stickers. 5 stickers go in each pack. How many packs? Make packs of 5 until none are left. Then count the packs.",
+    "style": "A",
+    "chars": 128,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t7 turn"
+    ]
+  },
+  {
+    "key": "x3tmx2",
+    "text": "Now you try. 3 times ? equals 30 Use a times fact you know to find the missing number.",
+    "style": "A",
+    "chars": 86,
+    "kind": "turn",
+    "sources": [
+      "g3m1-t8 turn"
+    ]
+  },
+  {
     "key": "yqkw4y",
     "text": "Now you try. In 70, the 7 is in the tens place. What is the 7 worth if it slides one place to the left? Find the place one step to the left. It's worth 10 times as much.",
     "style": "A",
@@ -3217,6 +4487,296 @@
     "kind": "turn",
     "sources": [
       "g5m1-t20 turn"
+    ]
+  },
+  {
+    "key": "qeentt",
+    "text": "How many plates are there? How many cookies are on each plate?",
+    "style": "A",
+    "chars": 62,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t1 hint1"
+    ]
+  },
+  {
+    "key": "cbsdvt",
+    "text": "There are 3 groups of 5. Count by 5s, one plate at a time. 5, 10, and keep going.",
+    "style": "A",
+    "chars": 81,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t1 hint2"
+    ]
+  },
+  {
+    "key": "pnu69c",
+    "text": "How many groups are there? How many are in each group?",
+    "style": "A",
+    "chars": 54,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t1 twin hint1 + g3m1-t2 twin hint1 + g3m1-t4 twin hint1 + g3m1-t5 twin hint1"
+    ]
+  },
+  {
+    "key": "16ng9g2",
+    "text": "There are 5 groups of 2. Count by 2s. 2, 4, and keep going.",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t1 twin hint2"
+    ]
+  },
+  {
+    "key": "1hzv27d",
+    "text": "How many rows are there? How many plants are in one row?",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t2 hint1"
+    ]
+  },
+  {
+    "key": "5817om",
+    "text": "There are 4 rows of 3. Count by 3s, one row at a time. 3, 6, and keep going.",
+    "style": "A",
+    "chars": 76,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t2 hint2"
+    ]
+  },
+  {
+    "key": "1x6u7qa",
+    "text": "There are 2 groups of 5. Count by 5s. 5, and keep going.",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t2 twin hint2"
+    ]
+  },
+  {
+    "key": "1l2frbj",
+    "text": "Tap turn. Were any dots added or taken away?",
+    "style": "A",
+    "chars": 44,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t3 hint1"
+    ]
+  },
+  {
+    "key": "utetxr",
+    "text": "10 times 4 is the same dots turned around, so it has the same total as 4 times 10.",
+    "style": "A",
+    "chars": 82,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t3 hint2"
+    ]
+  },
+  {
+    "key": "1vge6vp",
+    "text": "Turn the rows around. Were any added or taken away?",
+    "style": "A",
+    "chars": 51,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t3 twin hint1"
+    ]
+  },
+  {
+    "key": "1ch5huo",
+    "text": "5 times 3 is the same rows as 3 times 5, turned around.",
+    "style": "A",
+    "chars": 55,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t3 twin hint2"
+    ]
+  },
+  {
+    "key": "1e8fprv",
+    "text": "Count by 5s. Hold up one finger for each hand you count.",
+    "style": "A",
+    "chars": 56,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t4 hint1"
+    ]
+  },
+  {
+    "key": "i4vv50",
+    "text": "5, 10, 15, 20, 25, 30 is 6 hands. Make one more jump.",
+    "style": "A",
+    "chars": 53,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t4 hint2"
+    ]
+  },
+  {
+    "key": "1t8iv9u",
+    "text": "There are 6 groups of 10. Count by 10s. 10, 20, and keep going.",
+    "style": "A",
+    "chars": 63,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t4 twin hint2"
+    ]
+  },
+  {
+    "key": "bvtbmm",
+    "text": "Each car has 4 wheels. Jump by 4s, one jump for each car.",
+    "style": "A",
+    "chars": 57,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t5 hint1"
+    ]
+  },
+  {
+    "key": "yj2gv9",
+    "text": "4, 8, 12, 16 is 4 cars. Make one more jump.",
+    "style": "A",
+    "chars": 43,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t5 hint2"
+    ]
+  },
+  {
+    "key": "1doycxq",
+    "text": "There are 6 groups of 3. Count by 3s, 3, 6, and so on.",
+    "style": "A",
+    "chars": 54,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t5 twin hint2"
+    ]
+  },
+  {
+    "key": "vijc52",
+    "text": "Give one cookie to each friend. Then go round again until none are left.",
+    "style": "A",
+    "chars": 72,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t6 hint1"
+    ]
+  },
+  {
+    "key": "8hryfu",
+    "text": "After 4 rounds, each plate has 4 cookies and 2 are left. Give one more to each friend.",
+    "style": "A",
+    "chars": 86,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t6 hint2"
+    ]
+  },
+  {
+    "key": "a7vuv",
+    "text": "Give one to each group. Then go round again until none are left.",
+    "style": "A",
+    "chars": 64,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t6 twin hint1"
+    ]
+  },
+  {
+    "key": "jt478g",
+    "text": "Share 15 into 5 equal groups. How many does each group get?",
+    "style": "A",
+    "chars": 59,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t6 twin hint2"
+    ]
+  },
+  {
+    "key": "haufv8",
+    "text": "Ring 5 stickers to make one pack. Keep going until none are left.",
+    "style": "A",
+    "chars": 65,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t7 hint1"
+    ]
+  },
+  {
+    "key": "13252jt",
+    "text": "2 packs of 5 use 10 stickers. 5 are left. That makes one more pack.",
+    "style": "A",
+    "chars": 67,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t7 hint2"
+    ]
+  },
+  {
+    "key": "f6t6re",
+    "text": "Make a group of 4. Keep going until none are left.",
+    "style": "A",
+    "chars": 50,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t7 twin hint1"
+    ]
+  },
+  {
+    "key": "a1n4a8",
+    "text": "Count by 4s until you reach 20, 4, 8, and so on. How many groups?",
+    "style": "A",
+    "chars": 65,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t7 twin hint2"
+    ]
+  },
+  {
+    "key": "mzah3e",
+    "text": "3 groups of what number make 30?",
+    "style": "A",
+    "chars": 32,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t8 hint1"
+    ]
+  },
+  {
+    "key": "l1kwrc",
+    "text": "Count by 10s three times, 10, 20, 30. What did you count by?",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t8 hint2"
+    ]
+  },
+  {
+    "key": "15sed7e",
+    "text": "5 times what number makes 15?",
+    "style": "A",
+    "chars": 29,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t8 twin hint1"
+    ]
+  },
+  {
+    "key": "13mrsz8",
+    "text": "Count by 5s until you reach 15. How many jumps did you make?",
+    "style": "A",
+    "chars": 60,
+    "kind": "hint",
+    "sources": [
+      "g3m1-t8 twin hint2"
     ]
   },
   {
@@ -4010,6 +5570,86 @@
     ]
   },
   {
+    "key": "1efmy5v",
+    "text": "Try a new one. 5 plates. 2 cookies on each plate. How many cookies?",
+    "style": "A",
+    "chars": 67,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t1 twin"
+    ]
+  },
+  {
+    "key": "18x27da",
+    "text": "Try a new one. A garden has 2 rows. Each row has 5 plants. How many plants?",
+    "style": "A",
+    "chars": 75,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t2 twin"
+    ]
+  },
+  {
+    "key": "dje4v7",
+    "text": "Try a new one. 3 times 5 equals 15. What is 5 times 3?",
+    "style": "A",
+    "chars": 54,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t3 twin"
+    ]
+  },
+  {
+    "key": "5wd5z8",
+    "text": "Try a new one. 6 bundles of 10 straws. How many straws?",
+    "style": "A",
+    "chars": 55,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t4 twin"
+    ]
+  },
+  {
+    "key": "6v6pge",
+    "text": "Try a new one. 6 tricycles. Each tricycle has 3 wheels. How many wheels?",
+    "style": "A",
+    "chars": 72,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t5 twin"
+    ]
+  },
+  {
+    "key": "af8yrw",
+    "text": "Try a new one. 15 stickers are shared fairly by 5 friends. How many does each friend get?",
+    "style": "A",
+    "chars": 89,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t6 twin"
+    ]
+  },
+  {
+    "key": "oi2w50",
+    "text": "Try a new one. 20 wheels. 4 wheels go on each car. How many cars?",
+    "style": "A",
+    "chars": 65,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t7 twin"
+    ]
+  },
+  {
+    "key": "1tcrj4r",
+    "text": "Try a new one. 5 times ? equals 15",
+    "style": "A",
+    "chars": 34,
+    "kind": "twin",
+    "sources": [
+      "g3m1-t8 twin"
+    ]
+  },
+  {
     "key": "pi734c",
     "text": "Try a new one. In 300, the 3 is in the hundreds place. What is the 3 worth if it slides one place to the left?",
     "style": "A",
@@ -4210,6 +5850,106 @@
     ]
   },
   {
+    "key": "1kowovu",
+    "text": "You counted by groups instead of one by one. That is multiplication.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g3m1-t1 won + g3m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1jt5x3w",
+    "text": "You watched how it works, step by step. The practice problems will help it stick.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g3m1-t1 keep practicing + g3m1-t2 keep practicing + g3m1-t3 keep practicing + g3m1-t4 keep practicing + g3m1-t5 keep practicing + g3m1-t6 keep practicing + g3m1-t7 keep practicing + g3m1-t8 keep practicing + g5m1-t1 keep practicing + g5m1-t2 keep practicing + g5m1-t3 keep practicing + g5m1-t4 keep practicing + g5m1-t5 keep practicing + g5m1-t6 keep practicing + g5m1-t7 keep practicing + g5m1-t8 keep practicing + g5m1-t9 keep practicing + g5m1-t10 keep practicing + g5m1-t11 keep practicing + g5m1-t12 keep practicing + g5m1-t13 keep practicing + g5m1-t14 keep practicing + g5m1-t15 keep practicing + g5m1-t16 keep practicing + g5m1-t17 keep practicing + g5m1-t18 keep practicing + g5m1-t19 keep practicing + g5m1-t20 keep practicing"
+    ]
+  },
+  {
+    "key": "3y7qd5",
+    "text": "You counted the rows and one row, then multiplied. That is the whole trick.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g3m1-t2 won + g3m1-t2 twinWon"
+    ]
+  },
+  {
+    "key": "tweovg",
+    "text": "You turned the rows around and the total stayed the same. That is the whole trick.",
+    "style": "A",
+    "chars": 82,
+    "kind": "won",
+    "sources": [
+      "g3m1-t3 won + g3m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "uah46k",
+    "text": "You jumped a whole group at a time. Counting by jumps is multiplying.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g3m1-t4 won + g3m1-t4 twinWon"
+    ]
+  },
+  {
+    "key": "jmjgz7",
+    "text": "You added the same group every jump. That is the whole trick.",
+    "style": "A",
+    "chars": 61,
+    "kind": "won",
+    "sources": [
+      "g3m1-t5 won + g3m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "bkeeup",
+    "text": "You shared the total fairly. That is division.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g3m1-t6 won + g3m1-t6 twinWon"
+    ]
+  },
+  {
+    "key": "u60i6b",
+    "text": "You made groups of the same size and counted them. Check it, 3 packs of 5 is 15.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g3m1-t7 won"
+    ]
+  },
+  {
+    "key": "1qx7m2z",
+    "text": "You made groups of the same size and counted them. Check it, 5 cars with 4 wheels each is 20.",
+    "style": "A",
+    "chars": 93,
+    "kind": "won",
+    "sources": [
+      "g3m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "evbd1y",
+    "text": "You used a times fact to find the missing number. That is the whole trick.",
+    "style": "A",
+    "chars": 74,
+    "kind": "won",
+    "sources": [
+      "g3m1-t8 won + g3m1-t8 twinWon"
+    ]
+  },
+  {
     "key": "1rp04ti",
     "text": "You did it! You slid the 7 one place to the left, and now it's worth 10 times as much.",
     "style": "B",
@@ -4227,16 +5967,6 @@
     "kind": "won",
     "sources": [
       "g5m1-t1 twinWon"
-    ]
-  },
-  {
-    "key": "1jt5x3w",
-    "text": "You watched how it works, step by step. The practice problems will help it stick.",
-    "style": "A",
-    "chars": 81,
-    "kind": "won",
-    "sources": [
-      "g5m1-t1 keep practicing + g5m1-t2 keep practicing + g5m1-t3 keep practicing + g5m1-t4 keep practicing + g5m1-t5 keep practicing + g5m1-t6 keep practicing + g5m1-t7 keep practicing + g5m1-t8 keep practicing + g5m1-t9 keep practicing + g5m1-t10 keep practicing + g5m1-t11 keep practicing + g5m1-t12 keep practicing + g5m1-t13 keep practicing + g5m1-t14 keep practicing + g5m1-t15 keep practicing + g5m1-t16 keep practicing + g5m1-t17 keep practicing + g5m1-t18 keep practicing + g5m1-t19 keep practicing + g5m1-t20 keep practicing"
     ]
   },
   {
@@ -4626,7 +6356,7 @@
     "chars": 6,
     "kind": "feedback",
     "sources": [
-      "g5m1-t1 right + g5m1-t2 right + g5m1-t3 right + g5m1-t4 right + g5m1-t5 right + g5m1-t6 right + g5m1-t7 right + g5m1-t8 right + g5m1-t9 right + g5m1-t10 right + g5m1-t11 right + g5m1-t12 right + g5m1-t13 right + g5m1-t14 right + g5m1-t15 right + g5m1-t16 right + g5m1-t17 right + g5m1-t18 right + g5m1-t19 right + g5m1-t20 right"
+      "g3m1-t1 right + g3m1-t2 right + g3m1-t3 right + g3m1-t4 right + g3m1-t5 right + g3m1-t6 right + g3m1-t7 right + g3m1-t8 right + g5m1-t1 right + g5m1-t2 right + g5m1-t3 right + g5m1-t4 right + g5m1-t5 right + g5m1-t6 right + g5m1-t7 right + g5m1-t8 right + g5m1-t9 right + g5m1-t10 right + g5m1-t11 right + g5m1-t12 right + g5m1-t13 right + g5m1-t14 right + g5m1-t15 right + g5m1-t16 right + g5m1-t17 right + g5m1-t18 right + g5m1-t19 right + g5m1-t20 right"
     ]
   },
   {
@@ -4636,7 +6366,7 @@
     "chars": 27,
     "kind": "feedback",
     "sources": [
-      "g5m1-t1 worked + g5m1-t2 worked + g5m1-t3 worked + g5m1-t4 worked + g5m1-t5 worked + g5m1-t6 worked + g5m1-t7 worked + g5m1-t8 worked + g5m1-t9 worked + g5m1-t10 worked + g5m1-t11 worked + g5m1-t12 worked + g5m1-t13 worked + g5m1-t14 worked + g5m1-t15 worked + g5m1-t16 worked + g5m1-t17 worked + g5m1-t18 worked + g5m1-t19 worked + g5m1-t20 worked"
+      "g3m1-t1 worked + g3m1-t2 worked + g3m1-t3 worked + g3m1-t4 worked + g3m1-t5 worked + g3m1-t6 worked + g3m1-t7 worked + g3m1-t8 worked + g5m1-t1 worked + g5m1-t2 worked + g5m1-t3 worked + g5m1-t4 worked + g5m1-t5 worked + g5m1-t6 worked + g5m1-t7 worked + g5m1-t8 worked + g5m1-t9 worked + g5m1-t10 worked + g5m1-t11 worked + g5m1-t12 worked + g5m1-t13 worked + g5m1-t14 worked + g5m1-t15 worked + g5m1-t16 worked + g5m1-t17 worked + g5m1-t18 worked + g5m1-t19 worked + g5m1-t20 worked"
     ]
   }
 ]

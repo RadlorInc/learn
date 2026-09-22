@@ -233,7 +233,7 @@ Answers: 12 · 10 · 20 · 25 · 16
 **Screen 7 — Watch out**
 - **Title:** One thing not to do
 - **Picture:** A small "wrong" card: 5 − 2 = 2 − 5 with an X. Next to it, the right card: 5 × 2 = 2 × 5 with a check.
-- **Text:** Here's the part people mix up. This turn-around trick works for times. It does NOT work for take away. 5 − 2 leaves 3. But you can't take 5 away from 2, so they are not the same. Okay. Your turn.
+- **Text:** Here's the part people mix up. This turn-around trick works for times. It does NOT work for take away. 5 − 2 leaves 3. But 2 − 5 does not leave 3, so they are not the same. Okay. Your turn.
 - **Button:** Next
 
 **Screen 8 — Your turn**
