@@ -81,7 +81,15 @@ describe('the consent gate', () => {
     const r = await asOwner(`insert into public.learners
       (display_name, avatar_index, age_group, created_by)
       values ('Unconsented', 0, '6-8', '${PARENT}') returning id`)
-    expect(r.err ?? 'ALLOWED').toContain('no granted parental consent')
+    /**
+     * ⚠️ ANCHORED ON THE LEARNERS GATE'S OWN WORDS ('refusing to create them'), NOT on the generic
+     * phrase — and that precision was bought by `npm run break`. With the INSERT branch deliberately
+     * opened, this test still PASSED on the broken state: the insert went through, `init_learner_stats`
+     * fired AFTER INSERT, and the child-table gate refused the learner_stats write instead. Two
+     * independent layers is good news for the system and bad news for a check that cannot tell them
+     * apart — a gate that "passes because something else caught it" cannot report which half broke.
+     */
+    expect(r.err ?? 'ALLOWED').toContain('refusing to create them')
     expect(r.code, 'the refusal must carry the consent SQLSTATE, not a generic one').toBe('P0C01')
 
     // …and a PENDING consent is not a granted one. Without this, "has a consent row" would pass
@@ -91,7 +99,7 @@ describe('the consent gate', () => {
     const r2 = await asOwner(`insert into public.learners
       (display_name, avatar_index, age_group, created_by, consent_id)
       values ('Pending', 0, '6-8', '${PARENT}', '${pending}') returning id`)
-    expect(r2.err ?? 'ALLOWED').toContain('no granted parental consent')
+    expect(r2.err ?? 'ALLOWED').toContain('refusing to create them')
 
     // Positive control on the corpus itself: nothing was created by either attempt.
     const n = await asOwner(`select count(*)::int as n from public.learners where created_by = '${PARENT}'`)
