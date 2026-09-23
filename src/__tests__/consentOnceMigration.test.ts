@@ -80,7 +80,7 @@ describe('consent-once migration, on production\'s shape', () => {
       update public.parental_consents set notice_version = 'notice-v99' where id = '${consent}';
       alter table public.parental_consents enable trigger trg_consent_guard_update;`)
     const err = await apply(db)
-    expect(err).toMatch(/consent-once: 1 child\(ren\) would fail the gate — rolled back/)
+    expect(err ?? 'APPLIED — nothing rolled back').toMatch(/consent-once: 1 child\(ren\) would fail the gate — rolled back/)
     // Nothing of the file survived: no scope column, no versions table, the old unique index is still there.
     const [s] = (await db.query<{ scope: number; versions: number; idx: number }>(`
       select (select count(*) from information_schema.columns where table_name = 'parental_consents' and column_name = 'scope')::int as scope,
