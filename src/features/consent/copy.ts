@@ -28,7 +28,7 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v2'
+export const NOTICE_VERSION = 'notice-v3'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
@@ -97,8 +97,8 @@ export const NOTICE = {
     { en: '**See** everything we hold about your child;', es: '**Ver** todo lo que tenemos sobre su hijo;' },
     { en: "**Delete** your child's information;", es: '**Eliminar** la información de su hijo;' },
     // The document's line ends in a drafters' placeholder (deletion is to be restored once built) — not rendered.
-    { en: '**Withdraw your consent** and stop any further collection — if you do, your child will no longer be able to use the app.',
-      es: '**Retirar su consentimiento** y detener cualquier recopilación posterior — si lo hace, su hijo ya no podrá usar la aplicación.' },
+    { en: "**Withdraw your consent** — we stop any further collection and delete your child's information. Your account stays open.",
+      es: '**Retirar su consentimiento** — dejamos de recopilar y eliminamos la información de su hijo. Su cuenta sigue abierta.' },
   ] as L[],
   rightsHow: { en: "To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.",
                es: 'Para hacer cualquiera de estas cosas, abra su panel de padres, elija la tarjeta de su hijo y luego **Inicio de sesión y datos** — desde ahí puede descargar una copia de todo lo que tenemos y eliminar el perfil — o use **Cuenta → Cerrar su cuenta** para eliminarlo todo a la vez. También puede simplemente escribir a support@radlor.com. Verificaremos que la solicitud proviene de usted antes de actuar, y completaremos la solicitud en un plazo de 10 días.' },
@@ -147,8 +147,8 @@ export const B2 = {
   heading: { en: 'Thank you — permission recorded', es: 'Gracias — permiso registrado' },
   body: [
     { en: 'We have recorded your permission and your child can start now.', es: 'Hemos registrado su permiso y su hijo ya puede empezar.' },
-    { en: "We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything.",
-      es: 'Dentro de un rato le enviaremos un correo más para confirmar que realmente fue usted. Si no lo fue, ese correo le permitirá cancelar de inmediato y eliminaremos todo.' },
+    { en: "We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about your child.",
+      es: 'Dentro de un rato le enviaremos un correo más para confirmar que realmente fue usted. Si no lo fue, ese correo le permitirá cancelar de inmediato y eliminaremos todo lo que tenemos sobre su hijo.' },
   ] as L[],
 }
 
@@ -161,8 +161,8 @@ export const B3 = {
   yesterday: { en: 'Yesterday you gave permission for your child to use Milo, and for us to collect their first name, grade level, and maths progress.',
                es: 'Ayer usted dio permiso para que su hijo use Milo y para que recopilemos su nombre de pila, su nivel de grado y su progreso en matemáticas.' },
   ifYou: { en: "**If that was you, you don't need to do anything.**", es: '**Si fue usted, no tiene que hacer nada.**' },
-  ifNot: { en: "**If it wasn't you, [click here](%WITHDRAW%) to withdraw permission.** We will immediately stop collecting, delete everything we hold about the child, and close the account.",
-           es: '**Si no fue usted, [haga clic aquí](%WITHDRAW%) para retirar el permiso.** Dejaremos de recopilar de inmediato, eliminaremos todo lo que tenemos sobre el niño y cerraremos la cuenta.' },
+  ifNot: { en: "**If it wasn't you, [click here](%WITHDRAW%) to withdraw permission.** We will immediately stop collecting and delete everything we hold about the child. Your account stays open.",
+           es: '**Si no fue usted, [haga clic aquí](%WITHDRAW%) para retirar el permiso.** Dejaremos de recopilar de inmediato y eliminaremos todo lo que tenemos sobre el niño. Su cuenta sigue abierta.' },
   anyTime: { en: 'You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.',
              es: 'También puede retirar el permiso en cualquier momento en el futuro: https://adaptivelearn.radlor.com/legal/parent-rights (en inglés).' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
@@ -176,8 +176,8 @@ export const WITHDRAW = {
       es: 'Si retira el permiso, dejaremos de recopilar información de su hijo, eliminaremos lo que ya tenemos sobre él y cerraremos su perfil. Esto no se puede deshacer.' },
     // The document's refund paragraph is WITHHELD: its own ⛔ table says it "must not be said" until
     // billing is live. `consentCopy.test.ts` names it in WITHHELD, so it cannot silently return or vanish.
-    { en: '**If you have more than one child on this account, withdrawing permission closes the whole account, including your other children\'s profiles.** If you only want to remove one child, use *Delete {name}\'s profile* instead.',
-      es: '**Si tiene más de un hijo en esta cuenta, retirar el permiso cierra toda la cuenta, incluidos los perfiles de sus otros hijos.** Si solo quiere quitar a un hijo, use *Eliminar el perfil de {name}* en su lugar.' },
+    { en: '**This applies only to this child.** Your account stays open, and any other children on it are not affected.',
+      es: '**Esto se aplica solo a este hijo.** Su cuenta sigue abierta y los demás hijos que tenga en ella no se ven afectados.' },
   ] as L[],
   confirm: { en: "Withdraw permission and delete my child's data", es: 'Retirar el permiso y eliminar los datos de mi hijo' },
   keep:    { en: 'Keep my settings', es: 'Mantener mi configuración' },
@@ -187,8 +187,8 @@ export const WITHDRAW = {
  * ⚠️⚠️ NOT FROM THE DOCUMENTS — PROPOSED WORDING, AWAITING THE FOUNDER'S APPROVAL.
  * Documents 02 and 03 have no text for these moments, and each one is a screen a parent will see.
  * They are kept deliberately flat and factual, and each is checked against what the system does:
- * `withdrawn` does NOT say anything was deleted, because this build stops collection and deletes
- * nothing (that is the withdrawal/deletion build). The drift test excludes this block by name, and
+ * `withdrawn` says the child's data was deleted: it is only reachable once `20260923140000` is applied,
+ * and from then `consent_withdraw` deletes the child (every cascade) and keeps the consent record. The drift test excludes this block by name, and
  * the report lists every string in it.
  */
 export const PROPOSED = {
@@ -202,7 +202,7 @@ export const PROPOSED = {
   declinedHeading: { en: 'Request cancelled', es: 'Solicitud cancelada' },
   declinedBody: { en: 'Nothing about your child has been collected.', es: 'No se ha recopilado nada sobre su hijo.' },
   withdrawnHeading: { en: 'Permission withdrawn', es: 'Permiso retirado' },
-  withdrawnBody: { en: 'We have stopped collecting information about your child.', es: 'Hemos dejado de recopilar información sobre su hijo.' },
+  withdrawnBody: { en: 'We have stopped collecting information about your child and deleted what we held about them. Your account stays open.', es: 'Hemos dejado de recopilar información sobre su hijo y hemos eliminado lo que teníamos sobre él. Su cuenta sigue abierta.' },
   expiredHeading: { en: 'This link has expired', es: 'Este enlace ha caducado' },
   expiredBody: { en: 'Ask again from your parent dashboard.', es: 'Vuelva a solicitarlo desde su panel de padres.' },
   usedHeading: { en: 'This link has already been used', es: 'Este enlace ya se ha usado' },

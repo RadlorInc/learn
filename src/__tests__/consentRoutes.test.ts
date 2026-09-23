@@ -134,7 +134,7 @@ describe('request', () => {
     expect(log).toEqual([])
   })
   it('sends B1 to the ACCOUNT\'s address with both links, then records that it went', async () => {
-    const r = await req({ noticeVersion: 'notice-v2', lang: 'en' })
+    const r = await req({ noticeVersion: 'notice-v3', lang: 'en' })
     expect(r.status).toBe(200)
     expect(log).toEqual(['rpc:consent_request', 'send:Please confi', 'rpc:consent_record_request_sent'])
     expect(sent[0].to).toBe('p@x.test')

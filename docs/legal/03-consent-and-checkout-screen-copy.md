@@ -148,7 +148,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > We have recorded your permission and your child can start now.
 >
-> We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything.
+> We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about your child.
 
 ### B3. Second confirmation email — sent after a delay
 
@@ -164,7 +164,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **If that was you, you don't need to do anything.**
 >
-> **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting, delete everything we hold about the child, and close the account.
+> **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting and delete everything we hold about the child. Your account stays open.
 >
 > You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.
 >
@@ -182,7 +182,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within 10 business days.
 >
-> **If you have more than one child on this account, withdrawing permission closes the whole account, including your other children's profiles.** If you only want to remove one child, use *Delete <name>'s profile* instead. [PLACEHOLDER — this control's name must match the product exactly; check it on the day this ships, and keep them matching afterwards.]
+> **This applies only to this child.** Your account stays open, and any other children on it are not affected. [PLACEHOLDER — this control's name must match the product exactly; check it on the day this ships, and keep them matching afterwards.]
 
 **Buttons:** `Withdraw permission and delete my child's data` · `Keep my settings`
 

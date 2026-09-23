@@ -135,6 +135,8 @@ describe('the consent copy is the documents, verbatim', () => {
       'notice-v1': '7e15d9f398ee',
       // v2, 2026-09-23: the v4 export — "your child" not "under 13", username/points/game/feedback rows, one consent path.
       'notice-v2': '366370ec6729',
+      // v3, 2026-09-23 (deploy loop D1): withdrawing deletes that child's information and the account stays open.
+      'notice-v3': '9631b50821a5',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()
