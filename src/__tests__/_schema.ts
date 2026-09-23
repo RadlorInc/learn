@@ -123,16 +123,26 @@ export async function foreignKeys(db: PGlite): Promise<Fk[]> {
  * red commits on main in `adminMetrics.test.ts`. They create a real consent instead, because that
  * is what the application will do.
  */
-export async function grantedConsent(db: PGlite, parentId: string): Promise<string> {
+/** The notice version fixtures consent to and attest against (consent-once: a child's
+ *  `attested_notice_version` must equal its account consent's `notice_version`). */
+export const FIXTURE_NOTICE = 'notice-v1'
+
+/**
+ * Consent-once (2026-09-24): the parent's ACCOUNT consent — one, covering every child they add. A child is then
+ * created with `consent_id = <this id>` and `attested_notice_version = FIXTURE_NOTICE` (the attestation); the
+ * database stamps who and when. `scope = 'child'` gives the pre-consent-once per-child record, which can no
+ * longer create a child and exists only so suites can build the legacy shape the migration must carry over.
+ */
+export async function grantedConsent(db: PGlite, parentId: string, scope: 'account' | 'child' = 'account'): Promise<string> {
   const { rows } = await db.query<{ id: string }>(`
     insert into public.parental_consents
       (parent_id, method, state, notice_version, privacy_version, terms_version,
        email_address, confirmed_at, token_hash, expires_at,
        request_email_provider_id, request_email_sent_at,
-       second_email_provider_id, second_notice_scheduled_for)
-    values ('${parentId}', 'email_plus', 'granted', 'notice-v1', 'privacy-v1', 'terms-v1',
+       second_email_provider_id, second_notice_scheduled_for, scope)
+    values ('${parentId}', 'email_plus', 'granted', '${FIXTURE_NOTICE}', 'privacy-v1', 'terms-v1',
             'fixture@x.test', now(), md5(random()::text), now() + interval '7 days',
-            're_fixture_b1', now(), 're_fixture_b3', now() + interval '1 day')
+            're_fixture_b1', now(), 're_fixture_b3_' || md5(random()::text), now() + interval '1 day', '${scope}')
     returning id`)
   return rows[0].id
 }

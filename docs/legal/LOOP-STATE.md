@@ -409,3 +409,92 @@ assertion; the tree was byte-identical afterwards). **The founder's work list is
 - Phase A and B1–B2 merged by Rafi; `migrate-prod` applied `20260923180000`, `20260923180100` (#194) and `20260923190000` (#197), read from each job's log.
 - **#192 turned `main` red** (Deploy #428, `5ab91bd`): `withdrawExportE2e` (from #189) failed. **Mechanism, logged:** its fake Supabase routed only `/[a-z_]+/` names, so R3's `consent_b3_due` threw `stand-in: … not implemented`, the route's best-effort drain swallowed it, and no cancel happened. Each PR was green alone (#189 predates the drain; #192 lacked #189's test). **A cross-PR combination only `main` ever ran**, which is the thing stacked, separately-green PRs cannot see. Fixed in **#201** (test-only), which also carries a comment-only note in `20260923200000` so its merge push offers that migration to `migrate-prod`.
 - Phase C (#190, #199, #200) simulated on `main` + #201: merges clean, touches no migration, full suite run on that tree (see #201).
+
+---
+
+## Consent-once (started 24 September 2026)
+
+Founder's decision: **one verifiable (email-plus) consent per parent account**, given once; each later child gets a
+short in-app **parental attestation** instead of a new email. Rules: no production, no merges, the gate must not
+weaken, evidence kept, B3 cancellation on every path, legal text = build. The founder's work list is
+[`CONSENT-ONCE-ROUND2.md`](CONSENT-ONCE-ROUND2.md).
+
+### C0 — design (written before any code)
+
+**Record: reuse `parental_consents`, add a scope.** The email-plus machinery (B1/B3, tokens, `consent_lookup`/`grant`/
+`decline`/`withdraw`, the state guard, R3's B3 queue) already produces exactly the evidence an account consent needs,
+so a second table would duplicate it.
+- New column `parental_consents.scope text not null default 'child' check (scope in ('child','account'))`. Every
+  existing row stays `'child'` (what the parent actually agreed to). The new flow writes `'account'`. `scope` joins the
+  fields the guard freezes once recorded.
+- New column `parental_consents.parent_ack_at timestamptz`: when the parent ticked "I'm a parent or legal guardian,
+  I've read what we collect, and I agree" (on the signup page, possibly before the account existed, or in the app).
+  The notice they ticked is the row's own `notice_version`.
+- An account consent's `learner_id` stays null for ever. `consent_bind_learner` only binds `'child'` rows, and the
+  one-consent-one-child unique index on `learners.consent_id` is replaced by the same rule in the gate, for child scope only.
+
+**Attestation: on the child row itself, NOT NULL.** `learners` gains `attested_by uuid not null`, `attested_at
+timestamptz not null`, `attested_notice_version text not null`, and `attestation_method text not null check in
+('checkbox','per_child_consent')`. Being on the row makes the attestation structurally impossible to be missing, it
+is exported with the child (the export already carries the learner row), and it is deleted with the child (C1 asks
+for this). The account consent is the evidence that survives.
+
+**The gate rule (database, trigger — same pattern as D4/D6):**
+- `learners` **INSERT** is refused (`P0C01`) unless all of these hold:
+  1. `consent_id` names a `granted`, **`account`**-scope consent of `created_by`;
+  2. that consent is **current**: no notice version marked `reconsent_required` is newer than its `notice_version`;
+  3. the client supplied `attested_notice_version` and it equals that consent's `notice_version` (this proves the
+     checkbox showed the notice the parent agreed to);
+  4. `auth.uid()` is null (the service role) or equals `created_by`.
+  The trigger itself sets `attested_by = created_by`, `attested_at = now()`, `attestation_method = 'checkbox'`, whatever
+  the client sent. A new child can **never** be created under a `'child'`-scope consent again.
+- `learners` **UPDATE** and every child-data table (the 14 gated since D4): `consent_ok(child)` requires the child's
+  `consent_id` to be `granted` **and current**, and the attestation columns to be non-null. The attestation columns are
+  immutable after insert.
+- ⚠️ **One deliberate reading of rule 2, for the legacy child.** A `'child'`-scope consent that is `granted` and bound
+  to **this** child still satisfies `consent_ok` for that child only. It is email-plus for that one child, which is
+  stronger than an account consent plus a tick. It cannot create any other child. Without this, the one existing
+  child would freeze until the parent re-consents. The alternative (the founder's choice): clear that one test child
+  in the migration, as D6 did. Recorded in CONSENT-ONCE-ROUND2 §3.
+- `learners.consent_id` stays **NOT NULL**. The DB-level assertion at the end of the migration checks every child row
+  against the rule and rolls everything back if any fails.
+
+**Re-consent on a material notice change.** New table `consent_notice_versions(version text pk, seq int unique not
+null, reconsent_required boolean not null default false, note text)`, seeded with `notice-v1…notice-v5`, **none**
+requiring re-consent (the founder: all accounts are test). `consent_request` refuses a version not in the table
+(`P0C04`), so a new notice version cannot ship without its row. A test pins `NOTICE_VERSION` ∈ the seed. Marking a
+version `reconsent_required` makes every older account consent non-current: new children and new child data are
+refused, and `/parent` shows a re-ask screen (the same notice + tick + B1). A new grant supersedes: the old consent is
+closed as `withdrawn` (see below) **only after** the new one is granted, so children are never stranded.
+
+**Every path that sets or ends consent:**
+
+| path | before | after |
+|---|---|---|
+| Signup (email or Google) | nothing | notice summary + unticked checkbox on `/auth`; both signup buttons disabled until ticked; the tick is kept on the device (and in the email-signup user metadata, so it survives opening the confirmation link on another device) with its notice version and time |
+| First visit as a confirmed parent | — | if a tick exists and no account consent: `POST /api/consent/request` (scope account, `parent_ack_at`) → B1. No tick (Google in *login* mode, another device, teacher who later adds a child): the notice + tick in the app, then B1. **Signup is never blocked; only adding a child is** |
+| Waiting | — | "Waiting for your permission — check <email>" + **Resend**. A new request expires the parent's older pending account requests (`pending → expired`) |
+| Grant (B1 link) | per child: B3 scheduled, then granted | same route. If the parent already holds a granted account consent → `already_granted`, and the just-scheduled B3 is cancelled (as today for a lost race) |
+| Add a child | notice + email per child | account consent granted and current → the add sheet with one unticked checkbox: "I'm this child's parent or legal guardian. The permission I gave on {date} applies to this child too." plus a link to the notice. Not granted → the account flow above |
+| Delete one child | `delete_child_data` | unchanged. It ends only a **child**-scope consent bound to that child (and so queues its B3). The account consent and its B3 continue: the permission still stands for the other children |
+| Withdraw the account (new) | — | Account settings **and** B3's link: `consent_withdraw_account` / `consent_withdraw` on an account-scope token → every child `created_by` the parent through `delete_child_data`, every granted consent of the parent → `withdrawn` (R3's trigger queues each future B3; the route drains). Idempotent (a second call finds nothing granted and returns `withdrawn`). The account stays open with no children; adding one needs a fresh account consent |
+| Close the account | `delete_my_account` | unchanged; R3's delete trigger still queues B3 before the cascade |
+| Expire | pending only | unchanged |
+
+**Teacher roster: stays paused.** A teacher is not a child's parent, so neither the account consent nor the
+attestation can cover roster children. The design does not change that. Teachers are not blocked at signup: `/auth`
+offers "Signing up as a teacher?", which enables the buttons without the parent tick (decision 3.x in the Round-2 file).
+
+**Deploy order.** The client and migration ship in one PR. Merging deploys the client at once, while the migration
+waits for approval. **In the gap (minutes), adding a child is refused.** The new client asks for an account consent
+the old schema cannot record (`PGRST202` → "not ready"). All accounts are test accounts, so the gap is acceptable and
+is stated in the PR. After the migration, an old bundle cannot create a child (no attestation → `P0C01`); the R1
+network-first worker makes old bundles rare.
+
+**Proposal, not built — the signup email as the consent email.** Not safe to merge them:
+1. **Google parents get no confirmation email**, so they would need B1 anyway: two flows instead of one.
+2. The auth mailer's templates live in the Supabase dashboard (not versioned in the repo), and it cannot schedule B3.
+3. A confirmation click proves control of an inbox, not agreement. Email-plus needs the notice's content in the
+   message and an affirmative "I give permission".
+4. The confirmation email is also resent for password resets and email changes, which blurs the evidence.
+It would save one email for email/password parents only. Recommendation: keep B1.
