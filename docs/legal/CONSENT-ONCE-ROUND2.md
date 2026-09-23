@@ -9,7 +9,7 @@ approval, **after a Backup run has finished**. Never `supabase link` or `supabas
 
 ## 1. Merge — one PR, and it carries the migration, so it gets the full pattern
 
-**PR [#__PR__](https://github.com/RadlorInc/learn/pull/__PR__) — consent once per account.** The migration
+**PR [#202](https://github.com/RadlorInc/learn/pull/202) — consent once per account.** The migration
 (`20260924100000_consent_once.sql`), the signup notice and tick, one account-wide email-plus consent, the add-a-child
 attestation, whole-account withdrawal, the re-consent switch, the new notice (`notice-v5`), and docs 02, 03, 06, 11
 and 12 (EN + unreviewed ES drafts). It is one PR because the client and the schema cannot land apart without
