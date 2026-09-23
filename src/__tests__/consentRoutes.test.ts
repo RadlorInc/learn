@@ -33,7 +33,8 @@ vi.mock('@/features/consent/server', async orig => {
       if (fn === 'consent_request') return [{ consent_id: 'c1', email: 'p@x.test' }]
       return null
     }),
-    sendEmail: vi.fn(async (to: string, m: { subject: string; html: string }, key: string, at?: Date) => {
+    sendEmail: vi.fn(async (kind: string, to: string, m: { subject: string; html: string }, key: string, at?: Date) => {
+      if (kind !== 'transactional') throw new Error(`consent emails are transactional (docs/legal/09 §1), sent as ${kind}`)
       log.push(`send:${m.subject.slice(0, 12)}`); sent.push({ to, subject: m.subject, html: m.html, key, at }); return `re_${sent.length}`
     }),
     cancelEmail: vi.fn(async (id: string) => { log.push(`cancel:${id}`); return true }),

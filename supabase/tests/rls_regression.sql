@@ -327,6 +327,25 @@ begin
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL B7: authenticated user wrote to billing_events'; end if;
 
+  -- E1: the CAN-SPAM suppression list (email_suppressions) is unreadable — it holds addresses and the
+  -- tokens that unsubscribe them. RLS on, ZERO policies, every client privilege revoked.
+  v_blocked := false;
+  begin
+    perform * from public.email_suppressions limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL E1: authenticated user can read email_suppressions'; end if;
+
+  -- E2: nor writable — a client that could clear suppressed_at could re-subscribe someone who left.
+  v_blocked := false;
+  begin
+    update public.email_suppressions set suppressed_at = null;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL E2: authenticated user can write email_suppressions'; end if;
+
   -- B8: a stranger cannot read another account's seats (who is in them is family information).
   select count(*) into v_cnt from public.subscription_seats where subscription_id = v_subid;
   v_asserts := v_asserts + 1;

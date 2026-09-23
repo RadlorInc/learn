@@ -75,6 +75,11 @@
 --                                                  the adult who gave it (parent_id = auth.uid()). NO DELETE
 --                                                  policy and none intended: a withdrawn consent is evidence
 --                                                  and is kept as state='withdrawn'. anon has no grant.
+--   email_suppressions         rls=t  policies=0   2026-09-23 (20260923190000): INTENTIONAL deny-all, the
+--                                                  error_events precedent. CAN-SPAM suppression list (address,
+--                                                  opaque unsubscribe token, suppressed_at). Every privilege
+--                                                  revoked from public/anon/authenticated; service_role holds
+--                                                  SELECT/INSERT/UPDATE explicitly. NOT YET APPLIED TO PRODUCTION.
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
 --                                                  only) for the learner's creator or a learner_access row. Reasons
 --                                                  are a fixed list (check constraint), no free text. No update/delete.
