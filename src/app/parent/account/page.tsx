@@ -110,6 +110,11 @@ export default function AccountPage() {
   return (
     <Shell title="Close your account">
       <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: '#8a7a63', textDecoration: 'none' }}>← Back to the dashboard</Link>
+      <p style={{ ...p, marginTop: 10, fontSize: 13 }}>
+        <Link href="/legal/parent-rights" style={{ color: '#F26B2C', fontWeight: 700 }}>Your rights as a parent</Link>
+        {' · '}
+        <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
+      </p>
 
       <p style={{ ...p, marginTop: 14 }}>
         Deleting your account removes it and <strong>every child profile you created</strong>, with all of

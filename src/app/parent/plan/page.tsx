@@ -134,8 +134,10 @@ function PlanInner() {
           {usd(totalCents(seats, cadence))} {cadence === 'monthly' ? 'per month' : 'per year'}, renewing
           until you cancel. See the{' '}
           <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700 }}>Terms of Service</Link>
+          ,{' '}
+          <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
           {' '}and{' '}
-          <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>.
+          <Link href="/legal/refunds" style={{ color: '#F26B2C', fontWeight: 700 }}>Refund and Cancellation Policy</Link>.
         </p>
 
         {error && <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 700, margin: '0 0 12px' }}>{error}</p>}

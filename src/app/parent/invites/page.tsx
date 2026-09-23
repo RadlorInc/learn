@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 
 import BackButton from '@/shared/ui/BackButton'
 import { useEffect, useState } from 'react'
@@ -231,6 +232,10 @@ export default function InvitesPage() {
           >
             {sending ? 'Sending...' : `Send invite for ${selectedLearner?.display_name ?? 'learner'}`}
           </button>
+          {/* The email typed above is someone else's: the policy covering it is one tap away. */}
+          <p style={{ margin: '10px 0 0', fontSize: 13, textAlign: 'center' }}>
+            <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
+          </p>
         </div>
 
         {/* Sent invites */}

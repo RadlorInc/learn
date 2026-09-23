@@ -117,6 +117,9 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
                 No passwords and no personal details about your child are included.
               </p>
             </details>
+            <p style={{ margin: 0, fontSize: 12 }}>
+              <a href="/legal/privacy" style={{ color: '#6b7280', fontWeight: 700 }}>Privacy Policy</a>
+            </p>
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <a

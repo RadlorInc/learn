@@ -128,6 +128,9 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
             </>}
           </section>
         </div>
+        <p style={{ margin: 0, padding: '0 0 16px', textAlign: 'center', fontSize: 14, fontWeight: 700 }}>
+          <Link href="/legal/privacy" style={{ color: INK }}>Privacy</Link>
+        </p>
       </div>
     </div>
   )

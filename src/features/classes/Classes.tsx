@@ -240,6 +240,7 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
         <p style={{ margin: 0, fontSize: 13.5, color: P.ink2, lineHeight: 1.5 }}>
           One student per line: a <strong>username</strong>, or <strong>name, username</strong>. A CSV from Excel or Google Sheets works too
           (a header row with “username” and “name”). Each student gets a temporary password.
+          {' '}<a href="/legal/privacy" style={{ color: P.ink, fontWeight: 700 }}>Privacy Policy</a>
         </p>
         <label style={{ ...ghost, display: 'inline-flex', alignItems: 'center', alignSelf: 'flex-start' }}>
           Choose a CSV file

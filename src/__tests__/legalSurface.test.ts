@@ -171,5 +171,13 @@ describe('every point of collection links where the manifest says it must — re
     } else {
       expect(missing.length, `${row.surface} now links everything it must — mark it present in SURFACE.md`).toBeGreaterThan(0)
     }
+    // …and every legal link on it goes to a page that exists: a dark page is honest, a 404 is not.
+    const { pageBySlug } = await import('@/app/legal/registry')
+    const dead = [...got].filter(u => u.startsWith('/legal/') && !pageBySlug(u.slice(7)))
+    expect(dead, `${row.surface} links to legal pages that do not exist`).toEqual([])
+  })
+
+  it('no gap is left — every manifest row is present (item 8: the definition of done)', () => {
+    expect([...PAGES, ...LINKS].filter(r => r.state !== 'present').map(r => r.id ?? r.slug)).toEqual([])
   })
 })

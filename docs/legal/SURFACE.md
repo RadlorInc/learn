@@ -38,16 +38,16 @@ click is clicked first).
 |---|---|---|---|---|---|
 | home | Homepage | `/` | — (COPPA: prominent link on the home page) | privacy, terms | present |
 | signup | Sign-up / sign-in | `/auth` | adult email, password, Google identity | privacy, terms | present |
-| checkout | Checkout | `/parent/plan` | payment (via Stripe) | privacy, terms, refunds | GAP |
+| checkout | Checkout | `/parent/plan` | payment (via Stripe) | privacy, terms, refunds | present |
 | add-child | Add a child | `AddLearnerModal` in `/parent` | child's name, avatar, grade | privacy | present |
 | notice | Direct notice (consent) | `AddChildFlow` in `/parent` | — (the notice itself) | privacy, subprocessors, retention | present |
 | consent-email | B1 consent request email | `renderB1` | — | privacy | present |
 | withdraw-email | B3 second email | `renderB3` | — | parent-rights | present |
-| account | Account / close account | `/parent/account` | adult email (re-typed to confirm) | privacy, parent-rights | GAP |
-| invites | Invite another adult | `/parent/invites` | **a third party's email** | privacy | GAP |
-| support | Support form | `SupportPanel` (opened) | free text from an adult, may name a child | privacy | GAP |
-| child-home | The child's home | `/modules` | the child area: answers, points, game saves, feedback | privacy | GAP |
-| roster | Teacher adds students | `AddStudents` in the class page | students' names and usernames | privacy | GAP |
+| account | Account / close account | `/parent/account` | adult email (re-typed to confirm) | privacy, parent-rights | present |
+| invites | Invite another adult | `/parent/invites` | **a third party's email** | privacy | present |
+| support | Support form | `SupportPanel` (opened) | free text from an adult, may name a child | privacy | present |
+| child-home | The child's home | `/modules` | the child area: answers, points, game saves, feedback | privacy | present |
+| roster | Teacher adds students | `AddStudents` in the class page | students' names and usernames | privacy | present |
 
 ### Found in the product and not in the brief's list
 

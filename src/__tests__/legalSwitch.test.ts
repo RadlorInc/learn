@@ -64,3 +64,28 @@ describe('every real page is refused today, and says why', () => {
     vi.doUnmock('@/app/legal/registry')
   })
 })
+
+describe('the published view renders the real documents — so flipping the switch needs nothing built', () => {
+  it.each(LEGAL_PAGES.map(p => [p.slug] as const))('%s: tables, headings and emphasis come out as HTML, not markdown', async slug => {
+    vi.resetModules()
+    // Everything the switch would refuse today is stubbed OUT here — this drives the renderer only.
+    vi.doMock('@/app/legal/registry', async orig => {
+      const m = await orig<typeof import('@/app/legal/registry')>()
+      return { ...m, publishRefusals: () => [], assertRenderable: () => {}, pageBySlug: (s: string) => ({ ...m.pageBySlug(s)!, published: true }) }
+    })
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: View } = await import('@/app/legal/[slug]/page')
+    const html = renderToStaticMarkup(await View({ params: Promise.resolve({ slug }) }))
+    vi.doUnmock('@/app/legal/registry')
+    expect(html).toContain('data-legal="published"')
+    expect(html).not.toContain('DRAFT — NOT IN FORCE')
+    const text = html.replace(/<[^>]*>/g, '\n')
+    expect(text.length, 'the published view rendered almost nothing').toBeGreaterThan(1500)
+    expect(text, 'markdown bold leaked through as asterisks').not.toMatch(/\*\*\S/)
+    expect(text.split('\n').filter(l => /^\s*\|.*\|\s*$/.test(l)), 'a markdown table leaked through as pipes').toEqual([])
+    expect(html).toMatch(/<h2/)
+    const { readDoc } = await import('@/app/legal/source')
+    const { pageBySlug, publicBody } = await import('@/app/legal/registry')
+    if (/^\|/m.test(publicBody(pageBySlug(slug)!, readDoc(pageBySlug(slug)!.source)))) expect(html).toContain('<table')
+  })
+})
