@@ -24,6 +24,7 @@ import { localDay } from '@/features/lessons/progressReport'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
+import { AddChildFlow } from '@/features/consent/AddChildFlow'
 import { useState } from 'react'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { ParentPinGate } from '@/shared/ui/ParentPinGate'
@@ -65,6 +66,9 @@ function Surfaces() {
       {p === 'role'  && <div data-t="role" style={{ width: '100%' }}><RolePicker name="Sarah" onPick={() => {}} /></div>}
       {p === 'empty' && <div data-t="empty" className="adult-shell"><EmptyDashboard onAdd={() => {}} /></div>}
       {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
+      {/* The consent flow as "+ Add a child" opens it — NOT fake data: it reads and writes the signed-in
+          parent's real consents, so it can be driven end to end without the dashboard's PIN screen. */}
+      {p === 'consent' && <ConsentPreview />}
       {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'mhex' && <div style={{ width: '100%' }}><ModuleHome learnerId={null} grade={5} exercises={{ count: 1, onOpen: () => {} }} /></div>}
@@ -146,7 +150,7 @@ function DashPreview({ p }: { p: string }) {
         {p === 'teacher' && <div className="card-grid">{DEMO_CLASSES.map(c => <ClassCard key={c.id} cls={c} paid students={3} />)}</div>}
         {p === 'child' && <ChildPage id="a" name="Aarav" avatar="/assets/objects/fox.png" tab={(tab ?? 'lessons') as ChildTab} crumb={{ href: '/ui-preview?p=home', label: 'Home' }} owner
           lessonIds={ids} due={due} isDone={() => false} login={undefined} wallet={{ balance: 140, minutes_used_today: 5, minutes_per_day: 20, points_per_minute: 10, enabled: true } as never}
-          onLaunch={() => {}} onSaveLessons={save} onSaveGame={async () => {}} onLogin={() => {}} dataRights={<p>Download / delete (the real DataRights needs a session)</p>} />}
+          onLaunch={() => {}} onSaveLessons={save} onSaveGame={async () => {}} onLogin={() => {}} onCorrect={async () => 'ok'} dataRights={<p>Download / delete (the real DataRights needs a session)</p>} />}
         {p === 'class' && <ClassPage cls={DEMO_CLASSES[0]} tab={(tab ?? 'students') as ClassTab} paid students={[{ id: 'a', name: 'Aarav', lessonIds: null, due: {} }, { id: 'b', name: 'Maya', lessonIds: null, due: {} }]}
           logins={{ a: 'aarav7' }} onLogin={() => {}} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />}
         {p === 'lessons' && <LessonsTab name="Aarav" ids={ids} due={due} canEdit isDone={() => false} onSave={save} />}
@@ -155,4 +159,11 @@ function DashPreview({ p }: { p: string }) {
       <TourRunner tour={tour} onEnd={() => setTour(null)} />
     </div>
   )
+}
+
+function ConsentPreview() {
+  const lang = useLang()
+  return <div data-t="consent"><AddChildFlow lang={lang} onClose={() => {}} renderAdd={id => (
+    <div data-consent-id={id ?? 'none'}><AddLearnerModal consentId={id} onClose={() => {}} onAdded={() => { document.body.dataset.added = 'yes' }} /></div>
+  )} /></div>
 }

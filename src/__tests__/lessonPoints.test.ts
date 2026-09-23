@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema } from './_schema'
+import { loadSchema, grantedConsent } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const CHILD = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'     // the child's own login
@@ -17,10 +17,14 @@ let db: PGlite
 
 beforeAll(async () => {
   ({ db } = await loadSchema())
+  // ⚠️ THREE STATEMENTS, NOT ONE. `await grantedConsent(...)` inside a template literal is evaluated
+  // BEFORE the exec it sits in, so folding these together inserts the consent before the parent's
+  // auth.users row exists and trips the foreign key. Order the awaits, not just the SQL.
+  await db.exec(`insert into auth.users (id, email, email_confirmed_at) values
+      ('${PARENT}', 'p@x.test', now()), ('${CHILD}', 'kid@learner.adaptivelearn.invalid', now()), ('${OTHER}', 'o@x.test', now())`)
+  const consent = await grantedConsent(db, PARENT)
   await db.exec(`
-    insert into auth.users (id, email, email_confirmed_at) values
-      ('${PARENT}', 'p@x.test', now()), ('${CHILD}', 'kid@learner.adaptivelearn.invalid', now()), ('${OTHER}', 'o@x.test', now());
-    insert into public.learners (id, display_name, created_by, age_group) values ('${KID}', 'Kid', '${PARENT}', '3-5');
+    insert into public.learners (id, display_name, created_by, age_group, consent_id) values ('${KID}', 'Kid', '${PARENT}', '3-5', '${consent}');
     insert into public.learner_access (learner_id, parent_id, access_role) values ('${KID}', '${CHILD}', 'self');
   `)
 }, 120_000)

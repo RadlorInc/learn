@@ -3,6 +3,10 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // The consent routes hash the Privacy Policy and Terms out of docs/legal/ at request time (the
+  // version a consent row records), so those files must travel with the serverless function.
+  outputFileTracingIncludes: { '/api/consent/*': ['./docs/legal/*.md'] },
+
   typescript: {
     ignoreBuildErrors: false,
   },

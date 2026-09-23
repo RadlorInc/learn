@@ -19,7 +19,7 @@ import { PUBLIC_ROUTES } from '@/app/site'
 import { metadata as home } from '@/app/page'
 import { metadata as help } from '@/app/help/page'
 import { generateMetadata as legalMeta } from '@/app/legal/[slug]/page'
-import { DOCS } from '@/app/legal/content'
+import { LEGAL_PAGES } from '@/app/legal/registry'
 
 const canonicalOf = (m: Metadata) => m.alternates?.canonical
 
@@ -41,7 +41,7 @@ describe('every public route declares its own search surface', () => {
     expect(canonicalOf(m)).toBe(route)
   })
 
-  it.each(DOCS.map(d => [d.slug] as const))('/legal/%s declares its own canonical', async slug => {
+  it.each(LEGAL_PAGES.map(d => [d.slug] as const))('/legal/%s declares its own canonical', async slug => {
     const m = await legalMeta({ params: Promise.resolve({ slug }) })
     expect(canonicalOf(m)).toBe(`/legal/${slug}`)
   })
@@ -58,7 +58,7 @@ describe('every public route declares its own search surface', () => {
     expect(m.title).toBeTruthy()
   })
 
-  it.each(DOCS.map(d => [d.slug] as const))('/legal/%s declares its own description', async slug => {
+  it.each(LEGAL_PAGES.map(d => [d.slug] as const))('/legal/%s declares its own description', async slug => {
     const m = await legalMeta({ params: Promise.resolve({ slug }) })
     expect(m.description).toBeTruthy()
   })
@@ -66,7 +66,7 @@ describe('every public route declares its own search surface', () => {
   /** Two pages sharing a description is the same defect as inheriting one, one step along. */
   it('no two public pages share a description', async () => {
     const legal = await Promise.all(
-      DOCS.map(d => legalMeta({ params: Promise.resolve({ slug: d.slug }) })),
+      LEGAL_PAGES.map(d => legalMeta({ params: Promise.resolve({ slug: d.slug }) })),
     )
     const all = [help, ...legal].map(m => m.description)
     expect(new Set(all).size).toBe(all.length)
@@ -77,7 +77,7 @@ describe('every public route declares its own search surface', () => {
    * the shape of every "the unit was fine, nothing called it" bug in this repo. Count them.
    */
   it('covers every route in PUBLIC_ROUTES', () => {
-    const covered = new Set([...pages.map(([r]) => r), ...DOCS.map(d => `/legal/${d.slug}`)])
+    const covered = new Set([...pages.map(([r]) => r), ...LEGAL_PAGES.map(d => `/legal/${d.slug}`)])
     expect([...PUBLIC_ROUTES].filter(r => !covered.has(r))).toEqual([])
   })
 })

@@ -59,6 +59,10 @@ export async function createLearner(
   ageGroup: AgeGroup,
   /** What the child starts with: a class (its lessons), or just the modules chosen when adding them. */
   inClass?: { classId?: string; lessonIds: string[] | null },
+  /** The granted parental consent this child is created under. Required by the database once the
+   *  consent migration is applied (trg_enforce_learner_consent); absent before it, when there is no
+   *  gate — see AddChildFlow for why both shapes are tolerated. */
+  consentId?: string,
 ): Promise<Learner | null> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
@@ -75,6 +79,7 @@ export async function createLearner(
     if (inClass.classId) payload.grade_id = inClass.classId
     payload.lesson_ids = inClass.lessonIds
   }
+  if (consentId) payload.consent_id = consentId
 
   const { data, error } = await supabase
     .from('learners')
@@ -127,6 +132,18 @@ export async function setLearnerAssignments(learnerId: string, lessonIds: string
   return data && data.length > 0 ? 'ok' : 'error'
 }
 
+/**
+ * The parent's right to CORRECT (docs/legal/02, 06): the child's name or nickname, and their grade.
+ * ⚠️ The grade is stored only as a band (`age_group`, via `bandOf`), so moving a child between two grades
+ * in the same band changes nothing in the database. Owner only, by the existing "learners: update" policy;
+ * RLS refuses by returning no rows, which is reported as an error rather than a silent success.
+ */
+export async function correctLearner(learnerId: string, fields: { display_name?: string; age_group?: string }): Promise<'ok' | 'error'> {
+  const { data, error } = await db().from('learners').update(fields as never).eq('id', learnerId).select('id')
+  if (error) { console.error('[correctLearner]', error.code, error.message); return 'error' }
+  return data && data.length > 0 ? 'ok' : 'error'
+}
+
 export async function deleteLearner(learnerId: string) {
   const supabase = db()
   const { error } = await supabase
@@ -155,19 +172,37 @@ export async function getMyAccessRole(
   return (data as { access_role: 'owner' | 'viewer' } | null)?.access_role ?? null
 }
 
-/** Owner only: permanently delete the learner and all their data */
+/** Returned by `deleteLearnerPermanently` when the database predates `delete_learner`. */
+export const LEGACY_DELETE = 'legacy_delete'
+
+/**
+ * Owner only: permanently delete the learner and everything about them — the set docs/legal/06
+ * lists, their own login and crash records included — in ONE database call (`delete_learner`, the same
+ * deletion a withdrawal runs).
+ *
+ * ⚠️ EXPAND/CONTRACT. `main` deploys the client the moment it is pushed and migrations are applied by
+ * hand, so this ships BEFORE 20260923140000 exists. PostgREST answers an unknown RPC with PGRST202;
+ * on that one code the caller falls back to the old two-step path (login, then the row). Delete the
+ * fallback once the migration is applied everywhere.
+ */
 export async function deleteLearnerPermanently(
+  learnerId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = db()
+  const { error } = await supabase.rpc('delete_learner', { p_learner_id: learnerId })
+  if (!error) return { ok: true }
+  if (error.code === 'PGRST202') return { ok: false, error: LEGACY_DELETE }
+  return { ok: false, error: /not_owner/.test(error.message) ? 'Only the owner can delete a learner' : error.message }
+}
+
+/** The pre-20260923140000 path: the row only (its cascades), after the caller removed the login. */
+export async function deleteLearnerRowLegacy(
   learnerId: string
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = db()
   const role = await getMyAccessRole(learnerId)
   if (role !== 'owner') return { ok: false, error: 'Only the owner can delete a learner' }
-
-  const { error } = await supabase
-    .from('learners')
-    .delete()
-    .eq('id', learnerId)
-
+  const { error } = await supabase.from('learners').delete().eq('id', learnerId)
   if (error) return { ok: false, error: error.message }
   return { ok: true }
 }

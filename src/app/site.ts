@@ -56,11 +56,14 @@ export const APP_ID = 'https://adaptivelearn.radlor.com/#app'
  * ⚠️ This is NOT the access control — RLS is. It stops a bot spending crawl budget on an app shell
  * and stops those URLs appearing in results; it protects nothing on its own.
  */
-export const PUBLIC_ROUTES = ['/', '/help', '/legal/privacy', '/legal/terms'] as const
+export const PUBLIC_ROUTES = ['/', '/help'] as const
+// ⚠️ The legal pages join these only once PUBLISHED (`PUBLISHED_LEGAL_ROUTES` in app/legal/registry.ts):
+// a dark page is noindex and must not be advertised by the sitemap or llms.txt.
 
 /** Signed-in surfaces, kept out of results. `/api/` is here because an endpoint in an index is
  *  noise for everyone. */
 export const PRIVATE_ROUTES = [
   '/api/', '/parent', '/admin', '/play', '/shop', '/menu', '/game', '/story',
   '/auth', '/practice', '/lesson', '/modules',
+  '/consent',   // token-bearing pages reached from a consent email; also noindex in their layout
 ] as const

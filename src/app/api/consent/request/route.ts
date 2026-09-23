@@ -1,0 +1,62 @@
+import { NextResponse } from 'next/server'
+import { callerKey, overLimit } from '../../_rateLimit'
+import { SITE_URL } from '@/app/site'
+import { NOTICE_VERSION } from '@/features/consent/copy'
+import { PENDING_TTL_DAYS } from '@/features/consent/config'
+import { renderB1 } from '@/features/consent/email'
+import {
+  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, userFromBearer, type RpcError,
+} from '@/features/consent/server'
+
+/**
+ * The parent has read the notice (document 02) and pressed "I'm the parent or legal guardian —
+ * continue". Record a PENDING consent stamped with what they were shown, and send B1.
+ *
+ * ⚠️ THE NOTICE VERSION IS THE BROWSER'S, CHECKED — NOT THE SERVER'S, ASSUMED. The app's pages are
+ * cached by a service worker, so a parent can be reading yesterday's notice from yesterday's bundle.
+ * Stamping the server's current version would record a notice they never saw; stamping whatever the
+ * browser claims would let it write any string into the evidence. So the browser says what it
+ * rendered, and anything but the current version is refused with "reload and read it again".
+ */
+export async function POST(req: Request) {
+  if (overLimit(callerKey(req, 'consent-request'), 5, 10 * 60_000)) {
+    return NextResponse.json({ error: 'rate_limited' }, { status: 429 })
+  }
+  const body = await req.json().catch(() => ({}))
+  if (body?.noticeVersion !== NOTICE_VERSION) return NextResponse.json({ error: 'stale_notice' }, { status: 409 })
+  const lang = body?.lang === 'es' ? 'es' : 'en'
+
+  try {
+    requireConfig()
+    const parent = await userFromBearer(req)
+    if (!parent) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+
+    const token = newToken()
+    let row: { consent_id: string; email: string }
+    try {
+      ;[row] = await rpc<{ consent_id: string; email: string }[]>('consent_request', {
+        p_parent: parent, p_notice_version: NOTICE_VERSION, p_privacy_version: PRIVACY_VERSION,
+        p_terms_version: TERMS_VERSION, p_lang: lang, p_token_hash: hashToken(token), p_ttl: `${PENDING_TTL_DAYS} days`,
+      })
+    } catch (e) {
+      if ((e as RpcError).code === 'P0C03') return NextResponse.json({ error: 'not_eligible' }, { status: 403 })
+      throw e
+    }
+
+    // The token lives only in the URL FRAGMENT: never sent to a server, so never in an access log or
+    // a Referer header. The page reads it and POSTs it; a mail scanner that prefetches the link sees a
+    // page with buttons and changes nothing.
+    const link = `${SITE_URL}/consent/respond#t=${token}`
+    const id = await sendEmail(row.email, renderB1(lang, link, `${link}&choice=decline`), `consent-${row.consent_id}-b1`)
+    await rpc('consent_record_request_sent', { p_id: row.consent_id, p_provider_id: id })
+    return NextResponse.json({ ok: true, email: row.email, days: PENDING_TTL_DAYS })
+  } catch (e) {
+    if (e instanceof ConfigMissing) {
+      console.error('[consent/request] not configured: missing', e.message)
+      return NextResponse.json({ error: 'not_configured', missing: e.message }, { status: 503 })
+    }
+    // console, not reportCrash: see server.ts. The pending row without a send record simply expires.
+    console.error('[consent/request] failed', e)
+    return NextResponse.json({ error: 'failed' }, { status: 502 })
+  }
+}

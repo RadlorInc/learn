@@ -7,6 +7,7 @@
  * A finished attempt is sent to the teacher (`exercise_results`); if that fails (offline), it waits on this device and
  * is sent the next time this screen opens. "Done ✓" is remembered on this device too.
  */
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { saveExerciseResult, type ExerciseOutcome } from '@/data/repositories'
 import { ModulePractice } from '@/features/lessons/ModulePractice'
@@ -86,6 +87,9 @@ export function ExerciseHome({ learnerId, classId, className, exercises, back }:
             )
           })}
         </div>
+        <p style={{ margin: 0, padding: '0 0 16px', textAlign: 'center', fontSize: 14, fontWeight: 700 }}>
+          <Link href="/legal/privacy" style={{ color: INK }}>Privacy</Link>
+        </p>
       </div>
     </div>
   )

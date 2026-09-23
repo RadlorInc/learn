@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema } from './_schema'
+import { loadSchema, grantedConsent } from './_schema'
 
 const TEACHER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const OTHER_TEACHER = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -26,8 +26,8 @@ beforeAll(async () => {
   CLASS = (await db.query<{ id: string }>(`insert into public.grades (name, grade, created_by, exercises) values ('5-A', 5, '${TEACHER}', '${ex}') returning id`)).rows[0].id
   OTHER_CLASS = (await db.query<{ id: string }>(`insert into public.grades (name, grade, created_by, exercises) values ('5-B', 5, '${TEACHER}', '${ex}') returning id`)).rows[0].id
   const learner = async (kid: string) => {
-    const id = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, grade_id)
-      values ('Kid', 0, '9-11', '${TEACHER}', '${CLASS}') returning id`)).rows[0].id
+    const id = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, grade_id, consent_id)
+      values ('Kid', 0, '9-11', '${TEACHER}', '${CLASS}', '${await grantedConsent(db, TEACHER)}') returning id`)).rows[0].id
     await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${id}', '${kid}', 'self')`)
     return id
   }

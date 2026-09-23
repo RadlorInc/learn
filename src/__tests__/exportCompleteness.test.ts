@@ -54,16 +54,18 @@ const EXPORTED: Record<string, string> = {
   game_settings:            'gameSettings',
   exercise_results:         'classExerciseResults',
   lesson_feedback:          'lessonFeedback',
+  // docs/legal/06 B3 lists both; read through the owner-only export_child_records (2026-09-23).
+  error_events:             'crashRecords',
+  learner_access:           'adultsWithAccess',
 }
 
 /** Deliberately out, each with the reason it is out. Adding to this list is a decision. */
 const EXCLUDED: Record<string, string> = {
-  // Crash telemetry, not child work. RLS on with zero policies, so a parent CANNOT read it even
-  // with their own token — exporting it would need the service-role key and a second access path.
-  // Pruned at 90 days, and its learner_id gains an ON DELETE SET NULL fkey in Stage 1.
-  error_events: 'service-role only; a parent cannot read it, and it is crash telemetry not child data',
-  // The access-control edge itself (which adult may see this child), not data about the child.
-  learner_access: 'an authorisation edge between adults, not child data',
+  // The record of the ADULT's consent — their email, the versions they were shown, when they
+  // confirmed. It covers a child but is not data the child produced, and it holds the parent's own
+  // contact address. A parent reads it directly (RLS: parent_id = auth.uid()); folding it into a
+  // child-data export would put an adult's email inside a file about a seven-year-old.
+  parental_consents: 'the adult\'s own consent record, readable directly by them; not child data',
   // ⚠️ Flagged by this gate on its first run, which is the gate working. It carries learner_id,
   // but a row is an invitation from the owner to ANOTHER ADULT and holds that adult's email —
   // third-party PII. Handing it out inside a child-data export would disclose someone else's
@@ -87,12 +89,23 @@ describe('the data export covers every child-data table', () => {
     expect(undecided, `these carry child data and are neither exported nor excluded — decide, do not ignore:\n  ${undecided.join('\n  ')}`).toEqual([])
   })
 
+  it('covers every table docs/legal/06 lists under "See the data" — written out by hand', () => {
+    // ⚠️ From the document, not the schema: the promise a parent reads is the list, so the list is the expectation.
+    const DOC06_SEE = ['learners', 'learner_access', 'lesson_progress', 'point_events', 'learner_stats',
+      'learner_events', 'lesson_feedback', 'game_settings', 'error_events']
+    const doc = readFileSync(join(ROOT, 'docs/legal/06-parent-rights-procedure.md'), 'utf8')
+    const row = doc.split('\n').find(l => l.startsWith('| **See the data**'))
+    expect(row, 'control: document 06 no longer has its "See the data" row').toBeDefined()
+    for (const t of DOC06_SEE) expect(row, `document 06 no longer names ${t}`).toContain('`' + t + '`')
+    expect(DOC06_SEE.filter(t => !(t in EXPORTED)), 'named by document 06 and not in the export').toEqual([])
+  })
+
   it('actually emits every key it claims to', () => {
     // ⚠️ The list above is a claim about buildExport. Drive the real function so the claim cannot
     // drift from the code — a table mapped to a key that no longer exists would otherwise pass.
     const out = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: {}, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], notes: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], crashRecords: [], access: [], notes: [],
     })
     const missing = Object.entries(EXPORTED).filter(([, key]) => !(key in out)).map(([t, k]) => `${t} → ${k}`)
     expect(missing, `buildExport does not emit:\n  ${missing.join('\n  ')}`).toEqual([])
@@ -105,13 +118,13 @@ describe('the data export covers every child-data table', () => {
     // events are 96% of the payload, so they are the section that can actually blow the timeout.
     const whole = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], notes: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], crashRecords: [], access: [], notes: [],
     }) as { completeness: { complete: boolean; notes: string[] } }
     expect(whole.completeness.complete, 'a whole export must not claim to be partial').toBe(true)
 
     const partial = buildExport('Test', { learner: {}, stats: {}, progress: [], sessions: [] }, {
       learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
-      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [],
+      diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [], lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [], crashRecords: [], access: [],
       notes: ['the activity log was capped'],
     }) as { completeness: { complete: boolean; notes: string[] } }
     expect(partial.completeness.complete, 'a capped export must not claim to be complete').toBe(false)

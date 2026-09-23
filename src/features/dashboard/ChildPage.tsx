@@ -24,12 +24,14 @@ export function Tabs({ base, tabs, on }: { base: string; tabs: readonly (readonl
   )
 }
 
-export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due, isDone, login, wallet, onLaunch, onSaveLessons, onSaveGame, onLogin, dataRights }: {
+export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due, isDone, login, wallet, onLaunch, onSaveLessons, onSaveGame, onLogin, onCorrect, dataRights }: {
   id: string; name: string; avatar: string; tab: ChildTab; crumb: { href: string; label: string }; owner: boolean
   lessonIds: string[] | null; due: Record<string, string>; isDone: (lessonId: string) => boolean
   login: string | null | undefined; wallet: Wallet | 'unavailable' | null | undefined
   onLaunch: () => void; onSaveLessons: (ids: string[] | null, due: Record<string, string>) => Promise<SaveResult>
   onSaveGame: (enabled: boolean, minutes: number) => Promise<void>; onLogin: () => void
+  /** The parent's right to correct: a new name, and/or a grade (null = leave it). */
+  onCorrect: (name: string, grade: number | null) => Promise<'ok' | 'error'>
   /** Download + delete, rendered by the page (it owns the delete flow and the export bundle). */
   dataRights: ReactNode
 }) {
@@ -68,6 +70,7 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Let a partner or grandparent see {name}’s progress with their own sign-in.', { name })}</p>
           <Link href="/parent/invites" style={dghost}>{t('Invite someone')}</Link>
         </section>
+        {owner && <section style={dcard} data-tour="correct-card"><CorrectCard key={name} name={name} onCorrect={onCorrect} /></section>}
         <section style={dcard} data-tour="data-card">{dataRights}</section>
       </div>
     )}
@@ -75,6 +78,36 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
 }
 
 const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' }
+
+/** Correct a child's name or grade — the parent right the documents promise and the app did not have. */
+function CorrectCard({ name, onCorrect }: { name: string; onCorrect: (name: string, grade: number | null) => Promise<'ok' | 'error'> }) {
+  const t = useT()
+  const [value, setValue] = useState(name)
+  const [grade, setGrade] = useState('')
+  const [msg, setMsg] = useState('')
+  const [busy, setBusy] = useState(false)
+  const field: CSSProperties = { minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 15, width: '100%', boxSizing: 'border-box' }
+  async function save() {
+    const trimmed = value.trim()
+    if (!trimmed) return
+    setBusy(true)
+    const r = await onCorrect(trimmed, grade ? Number(grade) : null)
+    setBusy(false)
+    setMsg(r === 'ok' ? t('Saved.') : t('Could not save. Check your connection and try again.'))
+  }
+  return <>
+    <h2 style={h2}>{t('Correct {name}’s details', { name })}</h2>
+    <label style={{ display: 'block', margin: '10px 0', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Name or nickname')}
+      <input value={value} maxLength={30} onChange={e => setValue(e.target.value)} style={{ ...field, marginTop: 4 }} /></label>
+    <label style={{ display: 'block', margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Grade')}
+      <select value={grade} onChange={e => setGrade(e.target.value)} style={{ ...field, marginTop: 4 }}>
+        <option value="">{t('Keep the grade as it is')}</option>
+        {[3, 4, 5, 6, 7, 8].map(g => <option key={g} value={g}>{t('Grade {n}', { n: g })}</option>)}
+      </select></label>
+    <button type="button" disabled={busy || !value.trim()} onClick={save} style={dbtn}>{t('Save')}</button>
+    {msg && <p role="status" style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-soft)', fontWeight: 700 }}>{msg}</p>}
+  </>
+}
 
 /** Points and the parent's game-time rules for one child. Only the owning adult can change the rules (the database checks). */
 function GameTimeCard({ name, wallet, canEdit, onSave }: {

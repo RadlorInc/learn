@@ -76,8 +76,15 @@ function PlanInner() {
         <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: P.ink2, textDecoration: 'none' }}>← Back</Link>
         <h1 style={{ fontSize: 26, margin: '12px 0 6px', color: P.ink, fontFamily: 'var(--font-display)', fontWeight: 900 }}>Milo for your family</h1>
         <p style={{ fontSize: 14, lineHeight: 1.55, color: P.ink2, margin: '0 0 20px' }}>
-          One subscription covers up to {MAX_SEATS} children. The check that finds your child&rsquo;s
-          starting point is always free, and so is the first chapter of every level.
+          {/* ⚠️ THIS PARAGRAPH ONCE SOLD A FEATURE THAT NO LONGER EXISTS. It read "The check that
+              finds your child's starting point is always free, and so is the first chapter of
+              every level." The placement check was deleted on 2026-09-20 (#145) — /diagnostic
+              404s in production — so that was an advertisement, on the screen where money is
+              taken, for something a parent cannot get. The second clause went with it because the
+              two were one sentence and every legacy chapter is hidden behind
+              LEGACY_CHAPTERS_HIDDEN, so it is equally unreachable. Nothing replaced them: new
+              copy here is a product decision, not a tidy-up. */}
+          One subscription covers up to {MAX_SEATS} children.
         </p>
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
@@ -126,7 +133,11 @@ function PlanInner() {
         <p style={{ fontSize: 12, color: '#8a7a63', margin: '0 0 14px', lineHeight: 1.5, textAlign: 'center' }}>
           {usd(totalCents(seats, cadence))} {cadence === 'monthly' ? 'per month' : 'per year'}, renewing
           until you cancel. See the{' '}
-          <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700 }}>Terms of Service</Link>.
+          <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700 }}>Terms of Service</Link>
+          ,{' '}
+          <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
+          {' '}and{' '}
+          <Link href="/legal/refunds" style={{ color: '#F26B2C', fontWeight: 700 }}>Refund and Cancellation Policy</Link>.
         </p>
 
         {error && <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 700, margin: '0 0 12px' }}>{error}</p>}

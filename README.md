@@ -54,3 +54,7 @@ built and verified. The old chapters are hidden while lessons are rebuilt in thi
 [docs/handoff-archive.md](docs/handoff-archive.md), which is not loaded by default — grep it.
 [docs/lessons.md](docs/lessons.md) lists the defect classes that have reached `main` and the gate
 that now catches each.
+
+[docs/legal/](docs/legal/README.md) holds the US legal document set — **every one of them is an
+unpublished DRAFT full of `[PLACEHOLDER — …]` markers, and none of it is wired to a route**; a gate
+in `src/__tests__/legalDocs.test.ts` fails the build if any of it reaches published content.

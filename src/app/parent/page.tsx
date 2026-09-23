@@ -19,7 +19,7 @@ import {
   getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
-  deleteLearnerPermanently, removeMyselfFromLearner,
+  deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, correctLearner, removeMyselfFromLearner,
   getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
   getRecentPoints, getLessonRows, getExerciseResults,
@@ -54,6 +54,7 @@ import { childReminders, classReminders, hardestQuestion, byPriority, type Remin
 import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
 import { LangContext, loadLang, saveLang, makeT, useT, type Lang } from '@/features/dashboard/i18n'
+import { AddChildFlow } from '@/features/consent/AddChildFlow'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -96,7 +97,9 @@ function Dashboard() {
   const [loadError,    setLoadError]    = useState(false)
   const [parentName,   setParentName]   = useState('')
   const [uid,          setUid]          = useState<string | null>(null)
-  const [showAddModal, setShowAddModal] = useState(false)
+  // ?add=1 opens the add-a-child flow — where B2 ("permission recorded") sends the parent, so the consent they just
+  // gave is used straight away instead of waiting behind a second press of "Add a child".
+  const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
   const [acceptingId,  setAcceptingId]  = useState<string | null>(null)
   const [inviteMsg,    setInviteMsg]    = useState<string | null>(null)
@@ -230,14 +233,18 @@ function Dashboard() {
   }
 
   async function handleDelete(learnerId: string) {
-    // The child's own account first: deleting the learner removes its access row but NOT the auth user,
-    // which would outlive the child as a login that signs in to nothing.
-    if (childLogins === null || childLogins[learnerId]) {
-      const r = await removeChildLogin(learnerId)
-      // not_configured = this server cannot have made a login, so there is none to outlive the learner.
-      if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
+    // One call deletes the child, their login and every record about them (delete_learner).
+    let result = await deleteLearnerPermanently(learnerId)
+    if (result.error === LEGACY_DELETE) {
+      // Before 20260923140000: the child's own account first — deleting the learner removes its access
+      // row but NOT the auth user, which would outlive the child as a login that signs in to nothing.
+      if (childLogins === null || childLogins[learnerId]) {
+        const r = await removeChildLogin(learnerId)
+        // not_configured = this server cannot have made a login, so there is none to outlive the learner.
+        if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
+      }
+      result = await deleteLearnerRowLegacy(learnerId)
     }
-    const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
       setActionMsg(t('Learner deleted.'))
       setConfirming(null)
@@ -446,6 +453,11 @@ function Dashboard() {
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
         onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
+        onCorrect={async (display_name, grade) => {
+          const r = await correctLearner(d.learner.id, grade === null ? { display_name } : { display_name, age_group: bandOf(grade) })
+          if (r === 'ok') await loadAll()
+          return r
+        }}
         onSaveLessons={async (ids, due) => {
           const r = await setLearnerAssignments(d.learner.id, ids, due)
           if (r === 'ok') {
@@ -695,11 +707,15 @@ function Dashboard() {
       )}
 
       {/* Add learner modal */}
+      {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
       {showAddModal && (
-        <AddLearnerModal
-          onClose={() => setShowAddModal(false)}
-          onAdded={async () => { setShowAddModal(false); await loadAll() }}
-        />
+        <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={consentId => (
+          <AddLearnerModal
+            consentId={consentId}
+            onClose={() => setShowAddModal(false)}
+            onAdded={async () => { setShowAddModal(false); await loadAll() }}
+          />
+        )} />
       )}
     </div>
     </LangContext.Provider>
@@ -843,7 +859,7 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
   )
 }
 
-export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+export function AddLearnerModal({ onClose, onAdded, consentId }: { onClose: () => void; onAdded: () => void; consentId?: string }) {
   const t = useT()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
@@ -862,7 +878,7 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) })
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, consentId)
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     /**
      * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
@@ -922,9 +938,41 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
           <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
         </div>
 
-        <p style={{ fontSize:11.5, color:P.ink3, margin:'14px 0 0', lineHeight:1.45 }}>
-          {t('Progress is private to this account. No public profiles and no comparisons with other children.')}
-        </p>
+        {/**
+          * ⚠️ WHAT WE COLLECT, ON THE SCREEN THAT COLLECTS IT. Until 2026-09-22 this sheet took a
+          * child's name, avatar and grade behind one reassurance line and NO LINK AT ALL — a
+          * render of it returned `allLinks: []`. That is the COPPA gap: a parent could create a
+          * child profile without ever being told what is kept or being shown the policy.
+          *
+          * ⚠️ THE WORDING IS NOT MINE AND MUST NOT BE REWRITTEN CASUALLY. It is shortened from
+          * `docs/legal/02-coppa-direct-notice-to-parents.md` (its table rows 1–3, its "What we do
+          * with it", and its "We do not ask your child for" list) plus the guardian sentence from
+          * §2 of the Terms, and the founder approved this exact shortening. **It has to keep saying
+          * the same thing as the Privacy Policy it links to** — two different statements about what
+          * we collect from a child is the failure, not a style inconsistency. The avatar is named
+          * here because the live policy names it; draft 02's table omits it, which is a gap in the
+          * DRAFT and is flagged for the attorney rather than papered over here.
+          *
+          * ⚠️ THIS IS NOT CONSENT, AND NOTHING HERE MAY IMPLY IT IS. Verifiable parental consent —
+          * card or email-plus, with a consent record that gates collection — is
+          * `docs/legal/03-consent-and-checkout-screen-copy.md` and is not built. The guardian line
+          * is a confirmation the adult makes, which is what the Terms already say; it is not a
+          * claim that consent was properly obtained.
+          */}
+        <div style={{ color:P.ink3, margin:'14px 0 0' }}>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:0 }}>
+            {t('What we collect about your child: the first name or nickname you choose, their avatar and grade, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.')}
+          </p>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+            <Link href="/legal/privacy" style={{ color:P.accent, fontWeight:700 }}>{t('Read the Privacy Policy')}</Link>
+          </p>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+            {t('By adding a child you confirm you are their parent or legal guardian, or have that person’s permission.')}
+          </p>
+          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+            {t('Progress is private to this account. No public profiles and no comparisons with other children.')}
+          </p>
+        </div>
         <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading?P.edge:P.accent, color:loading?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer', boxShadow:loading?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
           {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>

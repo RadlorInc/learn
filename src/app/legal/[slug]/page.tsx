@@ -1,37 +1,57 @@
 /**
- * /legal/privacy and /legal/terms — one page component, two documents.
+ * /legal/<slug> — one page component for every legal document in `registry.ts`.
  *
- * ⚠️ A SERVER COMPONENT with `generateStaticParams`, so both are static HTML: a policy page must
- * render for someone who is not signed in, on a bad connection, with JS blocked. Nothing here
- * needs the client.
+ * ⚠️ A SERVER COMPONENT with `generateStaticParams`, so every page is static HTML: a policy must
+ * render for someone who is not signed in, on a bad connection, with JS blocked.
+ *
+ * ⚠️ DARK UNTIL A HUMAN FLIPS ITS SWITCH. An unpublished page renders its title and the banner and
+ * NOTHING of the document — not a preview, not a draft under a warning. It is `noindex` and it is not in
+ * the sitemap. The route exists anyway because the consent emails and the collection screens link to
+ * it, and a link to a page that says "not yet in force" is honest where a 404 is not.
  */
 import { SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { DOCS, DRAFT } from '../content'
+import { segments } from '@/features/consent/marks'
+import { LEGAL_PAGES, pageBySlug, assertRenderable, publishRefusals, type LegalPage } from '../registry'
+import { readDoc, readPublic } from '../source'
+
+export const dynamicParams = false
 
 export function generateStaticParams() {
-  return DOCS.map(d => ({ slug: d.slug }))
+  return LEGAL_PAGES.map(p => ({ slug: p.slug }))
+}
+
+/** A published page that should not be: the build stops here, naming every reason. */
+function publishedBody(page: LegalPage): string | null {
+  if (!page.published) return null
+  const es = page.spanish ? readDoc(page.spanish.source) : null
+  const why = publishRefusals(page, readDoc(page.source), es)
+  if (why.length) throw new Error(`/legal/${page.slug} is switched on but must not be published:\n  - ${why.join('\n  - ')}`)
+  const body = readPublic(page)
+  assertRenderable(page, body)
+  return body
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
-  const doc = DOCS.find(d => d.slug === slug)
-  if (!doc) return { title: 'AdaptiveLearn' }
+  const page = pageBySlug(slug)
+  if (!page) return { title: 'AdaptiveLearn' }
   return {
-    title: doc.title,
-    // ⚠️ Without this every legal page inherited the landing page's marketing description, so all
-    // of them advertised a placement check instead of saying what the document is.
-    description: `${doc.title} for AdaptiveLearn by Radlor — what we store about a child, who can see it, and how to have it deleted.`,
-    alternates: { canonical: `/legal/${doc.slug}` },
+    title: page.title,
+    // ⚠️ A dark page must not be indexed; gated on the switch so it lifts itself when a human flips it.
+    robots: page.published ? undefined : { index: false, follow: true },
+    description: `${page.title} for AdaptiveLearn by Radlor.`,
+    alternates: { canonical: `/legal/${page.slug}` },
   }
 }
 
-export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function LegalPageView({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const doc = DOCS.find(d => d.slug === slug)
-  if (!doc) notFound()
+  const page = pageBySlug(slug)
+  if (!page) notFound()
+  const body = publishedBody(page)
 
   return (
     <main style={{
@@ -41,28 +61,34 @@ export default async function LegalPage({ params }: { params: Promise<{ slug: st
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← AdaptiveLearn</Link>
 
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 4px' }}>
-          {doc.title}
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 20px' }}>
+          {page.title}
         </h1>
-        <p style={{ fontSize: 13, color: '#8a7a63', margin: '0 0 20px' }}>Last updated: {doc.updated}</p>
 
-        {/**
-          * ⚠️ LOUD, NOT SUBTLE. A placeholder policy that looks finished is worse than no page — a
-          * parent would believe it. This banner is why `DRAFT` exists and why a gate asserts it is
-          * false before launch.
-          */}
-        {DRAFT && (
-          <div style={{
-            background: '#FEF2F2', border: '2px solid #FCA5A5', borderRadius: 14,
-            padding: '12px 14px', marginBottom: 20, color: '#991B1B', fontSize: 14, fontWeight: 700,
+        {body === null ? (
+          /**
+           * ⚠️ A STATEMENT OF FACT, SIZED LIKE ONE, AND NOT SOFTENED INTO GOOD NEWS — no "coming soon".
+           * PROPOSED wording (2026-09-23), awaiting the founder: it replaces "parts of it are unfinished
+           * and left marked in the text below", which stopped being true when the body stopped rendering.
+           */
+          <div role="alert" data-legal="dark" style={{
+            background: '#991B1B', border: '3px solid #7F1D1D', borderRadius: 14,
+            padding: '16px 18px', marginBottom: 24, color: '#fff',
           }}>
-            ⚠️ Draft — this text has not been reviewed by a lawyer and is not final.
+            <div style={{ fontSize: 17, fontWeight: 900, letterSpacing: 0.3, marginBottom: 6 }}>
+              ⚠️ DRAFT — NOT IN FORCE
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.55 }}>
+              This document has not been published yet, so nothing is shown here and nothing here is
+              in force. For anything that matters, email{' '}
+              <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#fff', fontWeight: 800 }}>{SUPPORT_EMAIL}</a>.
+            </div>
+          </div>
+        ) : (
+          <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516' }}>
+            {renderDoc(body)}
           </div>
         )}
-
-        <div style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516' }}>
-          {renderDoc(doc.body)}
-        </div>
 
         <p style={{ marginTop: 28, fontSize: 14, color: '#6b5c47' }}>
           Questions about your child&apos;s data? Email{' '}
@@ -76,22 +102,22 @@ export default async function LegalPage({ params }: { params: Promise<{ slug: st
 }
 
 /**
- * The four markdown constructs the legal copy actually uses — headings, bold, bullets, blockquote —
- * and a rule. Not a markdown library: these documents are two strings in one file, and a dependency
- * that can render tables and images is a dependency that can also render a link somebody pasted.
+ * The markdown the legal documents use — headings, bold, italic, links, bullets and numbered lists,
+ * blockquotes, tables, rules. Not a library: a dependency that can render images and raw HTML is one
+ * that can also render something pasted into a draft. Inline marks come from the consent copy's own
+ * parser (`segments`), so a link is a link in both places.
  *
- * ⚠️ IT MUST NOT SWALLOW A PLACEHOLDER. `[DATE]`, `[NN]`, `[URL]` and `[LAWYER REVIEW — …]` are
- * bracketed, which is markdown link syntax territory; nothing here touches `[`, so they render as
- * the literal text they are. `legalDraft.test.ts` drives this function and asserts exactly that —
- * a renderer that quietly ate a marker would defeat the whole draft banner.
+ * It never sees a placeholder: `assertRenderable` refuses the text before it gets here.
  */
 function inline(text: string, key: string) {
-  // Split on **bold** and keep the delimiters, so the emphasis a legal sentence carries survives.
-  return text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) =>
-    part.startsWith('**') && part.endsWith('**')
-      ? <strong key={`${key}-${i}`}>{part.slice(2, -2)}</strong>
-      : <span key={`${key}-${i}`}>{part}</span>,
-  )
+  return segments(text).map((x, i) => {
+    let n: React.ReactNode = x.href
+      ? <a key={`${key}-${i}`} href={x.href.replace('https://adaptivelearn.radlor.com', '')} style={{ color: '#F26B2C' }}>{x.text}</a>
+      : x.text
+    if (x.em) n = <em key={`${key}-${i}`}>{n}</em>
+    if (x.bold) n = <strong key={`${key}-${i}`}>{n}</strong>
+    return <span key={`${key}-${i}`}>{n}</span>
+  })
 }
 
 function renderDoc(body: string) {
@@ -109,7 +135,7 @@ function renderDoc(body: string) {
       out.push(<hr key={k} style={{ border: 0, borderTop: '1px solid #e7d9bc', margin: '26px 0' }} />)
       return
     }
-    const h = /^(#{1,3})\s+(.*)$/.exec(block.split('\n')[0])
+    const h = /^(#{1,4})\s+(.*)$/.exec(block.split('\n')[0])
     if (h) {
       const rest = block.split('\n').slice(1).join(' ').trim()
       const size = h[1].length === 1 ? 26 : h[1].length === 2 ? 20 : 17
@@ -131,11 +157,27 @@ function renderDoc(body: string) {
       )
       return
     }
-    if (/^[-*]\s/.test(block)) {
+    if (block.startsWith('|')) {
+      // A table: header row, a --- row, then body rows. Rendered as a real table that scrolls sideways
+      // inside itself on a phone, so the page never does.
+      const rows = block.split('\n').filter(l => l.startsWith('|') && !/^\|\s*-{3,}/.test(l))
+        .map(l => l.split('|').slice(1, -1).map(c => c.trim()))
+      const [hd, ...rs] = rows
+      out.push(
+        <div key={k} style={{ overflowX: 'auto', margin: '0 0 18px' }}>
+          <table style={{ borderCollapse: 'collapse', fontSize: 14, minWidth: '100%' }}>
+            <thead><tr>{hd.map((c, i) => <th key={i} style={cell(true)}>{inline(c, `${k}-h${i}`)}</th>)}</tr></thead>
+            <tbody>{rs.map((r, j) => <tr key={j}>{r.map((c, i) => <td key={i} style={cell(false)}>{inline(c, `${k}-${j}-${i}`)}</td>)}</tr>)}</tbody>
+          </table>
+        </div>,
+      )
+      return
+    }
+    if (/^([-*]|\d+\.)\s/.test(block)) {
       // A bullet continues onto the next line until the next line that starts one.
       const items: string[] = []
       for (const line of block.split('\n')) {
-        if (/^[-*]\s/.test(line)) items.push(line.replace(/^[-*]\s+/, ''))
+        if (/^([-*]|\d+\.)\s/.test(line)) items.push(line.replace(/^([-*]|\d+\.)\s+/, ''))
         else if (items.length) items[items.length - 1] += ' ' + line.trim()
       }
       out.push(
@@ -150,3 +192,8 @@ function renderDoc(body: string) {
 
   return out
 }
+
+const cell = (head: boolean): React.CSSProperties => ({
+  border: '1px solid #e7d9bc', padding: '8px 10px', textAlign: 'left', verticalAlign: 'top',
+  background: head ? '#FFF9E8' : undefined, fontWeight: head ? 800 : 400,
+})

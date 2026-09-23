@@ -13,6 +13,8 @@
 import { kv } from '@/infra/storage/kv'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { createClient } from '@/data/supabase/client'
+import { isConsentRefusal } from '@/infra/consentError'
+import { recordError } from '@/infra/storage/lastError'
 
 const QUEUE_KEY = 'milo_events_queue'
 const MAX_QUEUE = 500   // cap so a persistently-failing flush can't grow unbounded
@@ -33,6 +35,11 @@ function writeQueue(q: LearnerEvent[]): void {
 }
 
 let _flushing = false
+/** Set when the database refused a write for want of consent. Never cleared by a retry, because a
+ *  retry cannot change the answer; it clears when the process does, or when consent is granted and
+ *  the app reloads. Read it to tell a parent why nothing is being saved. */
+let _consentBlocked = false
+export const isConsentBlocked = (): boolean => _consentBlocked
 export async function flushEvents(): Promise<number> {
   if (_flushing || typeof navigator === 'undefined' || !navigator.onLine) return 0
   const q = readQueue()
@@ -47,7 +54,29 @@ export async function flushEvents(): Promise<number> {
     const { error } = await supabase
       .from('learner_events')
       .upsert(q, { onConflict: 'client_id', ignoreDuplicates: true })
-    if (error) return 0          // keep queued; try again later
+
+    /**
+     * ⚠️ A CONSENT REFUSAL IS NOT A NETWORK BLIP, AND TREATING THEM ALIKE IS THE DEFECT THIS BRANCH
+     * EXISTS FOR. Everything else here is best-effort by design: a dropped connection keeps the
+     * queue so the events arrive later. A refusal can NEVER be accepted — there is no granted
+     * consent for this child — so the same "keep and retry" would spin for ever while nothing was
+     * stored and nothing surfaced anywhere. Three differences, all deliberate:
+     *   · the queue is DROPPED, not kept, so the retry loop stops;
+     *   · a breadcrumb is written LOCALLY, which is what the support diagnostic block reads;
+     *   · `_consentBlocked` is set, so a screen can say so rather than showing a working app.
+     *
+     * ⚠️ AND IT IS RECORDED LOCALLY RATHER THAN THROUGH `reportCrash`, on purpose: that path posts
+     * to `/api/report-error`, which writes `error_events` WITH a `learner_id` — a table this same
+     * gate refuses for this same child. Reporting the refusal through it would be refused by it.
+     */
+    if (isConsentRefusal(error)) {
+      _consentBlocked = true
+      kv.remove(QUEUE_KEY)
+      recordError(`${q.length} event(s) dropped: no granted parental consent for this child`, 'analytics.consent')
+      console.error('[analytics] consent refused — events dropped, not retried.', error)
+      return 0
+    }
+    if (error) return 0          // transient — keep queued; try again later
     kv.remove(QUEUE_KEY)
     return q.length
   } catch {
