@@ -132,6 +132,18 @@ export async function setLearnerAssignments(learnerId: string, lessonIds: string
   return data && data.length > 0 ? 'ok' : 'error'
 }
 
+/**
+ * The parent's right to CORRECT (docs/legal/02, 06): the child's name or nickname, and their grade.
+ * ⚠️ The grade is stored only as a band (`age_group`, via `bandOf`), so moving a child between two grades
+ * in the same band changes nothing in the database. Owner only, by the existing "learners: update" policy;
+ * RLS refuses by returning no rows, which is reported as an error rather than a silent success.
+ */
+export async function correctLearner(learnerId: string, fields: { display_name?: string; age_group?: string }): Promise<'ok' | 'error'> {
+  const { data, error } = await db().from('learners').update(fields as never).eq('id', learnerId).select('id')
+  if (error) { console.error('[correctLearner]', error.code, error.message); return 'error' }
+  return data && data.length > 0 ? 'ok' : 'error'
+}
+
 export async function deleteLearner(learnerId: string) {
   const supabase = db()
   const { error } = await supabase

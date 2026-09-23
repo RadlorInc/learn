@@ -150,7 +150,7 @@ function DashPreview({ p }: { p: string }) {
         {p === 'teacher' && <div className="card-grid">{DEMO_CLASSES.map(c => <ClassCard key={c.id} cls={c} paid students={3} />)}</div>}
         {p === 'child' && <ChildPage id="a" name="Aarav" avatar="/assets/objects/fox.png" tab={(tab ?? 'lessons') as ChildTab} crumb={{ href: '/ui-preview?p=home', label: 'Home' }} owner
           lessonIds={ids} due={due} isDone={() => false} login={undefined} wallet={{ balance: 140, minutes_used_today: 5, minutes_per_day: 20, points_per_minute: 10, enabled: true } as never}
-          onLaunch={() => {}} onSaveLessons={save} onSaveGame={async () => {}} onLogin={() => {}} dataRights={<p>Download / delete (the real DataRights needs a session)</p>} />}
+          onLaunch={() => {}} onSaveLessons={save} onSaveGame={async () => {}} onLogin={() => {}} onCorrect={async () => 'ok'} dataRights={<p>Download / delete (the real DataRights needs a session)</p>} />}
         {p === 'class' && <ClassPage cls={DEMO_CLASSES[0]} tab={(tab ?? 'students') as ClassTab} paid students={[{ id: 'a', name: 'Aarav', lessonIds: null, due: {} }, { id: 'b', name: 'Maya', lessonIds: null, due: {} }]}
           logins={{ a: 'aarav7' }} onLogin={() => {}} onChanged={() => {}} onStudentsAdded={() => {}} onUpdate={() => {}} onDeleted={() => {}} />}
         {p === 'lessons' && <LessonsTab name="Aarav" ids={ids} due={due} canEdit isDone={() => false} onSave={save} />}

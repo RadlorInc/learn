@@ -33,6 +33,9 @@ export interface ExportExtras {
   gameSettings:      unknown
   classExerciseResults: unknown[]
   lessonFeedback:    unknown[]
+  /** error_events and learner_access, through `export_child_records` (owner only). */
+  crashRecords:      unknown[]
+  access:            unknown[]
   /** Empty when everything came back whole. Anything in here is printed IN the file. */
   notes:             string[]
 }
@@ -61,6 +64,7 @@ const EMPTY: ExportExtras = {
   learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
   diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
   lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [],
+  crashRecords: [], access: [],
   notes: ['We could not read part of this data. Nothing has been deleted — please try again, or write to us and we will send it.'],
 }
 
@@ -74,7 +78,7 @@ const EMPTY: ExportExtras = {
 export async function getLearnerExportExtras(learnerId: string): Promise<ExportExtras> {
   const supabase = db()
   try {
-    const [state, events, sessions, plans, rechecks, lessons, points, game, exercises, feedback] = await Promise.all([
+    const [state, events, sessions, plans, rechecks, lessons, points, game, exercises, feedback, records] = await Promise.all([
       supabase.from('learner_state').select('*').eq('learner_id', learnerId).maybeSingle(),
       supabase.from('learner_events').select('*').eq('learner_id', learnerId).order('created_at').limit(EVENTS_CAP),
       supabase.from('diagnostic_sessions').select('*').eq('learner_id', learnerId).order('started_at'),
@@ -85,6 +89,7 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       supabase.from('game_settings').select('*').eq('learner_id', learnerId).maybeSingle(),
       supabase.from('exercise_results' as never).select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.from('lesson_feedback' as never).select('*').eq('learner_id', learnerId).order('created_at'),
+      supabase.rpc('export_child_records' as never, { p_learner_id: learnerId } as never),
     ])
 
     const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
@@ -106,6 +111,10 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
     if (eventRows.length >= EVENTS_CAP) {
       notes.push(`The activity log here is the most recent ${EVENTS_CAP} entries and there may be more. Activity older than 90 days is deleted automatically. Write to us if you need the rest.`)
     }
+    // ⚠️ The crash records and the access list come from one owner-only function. Before it is applied
+    // (PGRST202), or for an adult who is not the owner, the file SAYS those two sections are missing.
+    const rec = (records.data ?? null) as { crashRecords?: unknown[]; access?: unknown[] } | null
+    if (records.error || !rec) notes.push('Crash records and the list of adults who can see this child could not be read here. Write to us and we will send them.')
 
     return {
       notes,
@@ -121,6 +130,8 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       gameSettings:           game.data ?? null,
       classExerciseResults:   (exercises.data as unknown[] | null) ?? [],
       lessonFeedback:         (feedback.data as unknown[] | null) ?? [],
+      crashRecords:           rec?.crashRecords ?? [],
+      access:                 rec?.access ?? [],
     }
   } catch {
     // A parent exercising a data right must still get a file. An empty section is visibly

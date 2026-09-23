@@ -60,6 +60,8 @@ export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras)
     gameSettings:           extra?.gameSettings            ?? null,
     classExerciseResults:   extra?.classExerciseResults    ?? [],
     lessonFeedback:         extra?.lessonFeedback          ?? [],
+    crashRecords:           extra?.crashRecords            ?? [],
+    adultsWithAccess:       extra?.access                  ?? [],
     // ⚠️ SAYS WHAT IT RETURNED. Empty on the normal path; populated when a section was capped or
     // could not be read. A "download everything" file that quietly holds less is worse than one
     // that returns slightly less and tells the parent so — they can act on the second.

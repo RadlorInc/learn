@@ -19,7 +19,7 @@ import {
   getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
-  deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, removeMyselfFromLearner,
+  deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, correctLearner, removeMyselfFromLearner,
   getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
   getRecentPoints, getLessonRows, getExerciseResults,
@@ -451,6 +451,11 @@ function Dashboard() {
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
         onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
+        onCorrect={async (display_name, grade) => {
+          const r = await correctLearner(d.learner.id, grade === null ? { display_name } : { display_name, age_group: bandOf(grade) })
+          if (r === 'ok') await loadAll()
+          return r
+        }}
         onSaveLessons={async (ids, due) => {
           const r = await setLearnerAssignments(d.learner.id, ids, due)
           if (r === 'ok') {
