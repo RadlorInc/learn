@@ -47,7 +47,7 @@ Started 2026-09-23. Rafi approves every step that touches production. Rules: no 
 | step | state | proof / what it waits on |
 |---|---|---|
 | D0 preflight | **done** — was BLOCKED on §2/§3/§5; founder decided each (below) | read-only; measured 2026-09-23 |
-| D1 merge `origin/main` + the founder's four fixes | **in progress** | merge `8c0e5a3d` (no conflicts); `94edc0b2` deploy.yml; `a8a55234` consent copy; `2f02a1d2` roster pause — CI results below |
+| D1 merge `origin/main` + the founder's four fixes | **done** | merge `8c0e5a3d` (**no conflicts**: main brought package.json/lock, 874 Josh clips, the Kaggle notebooks, `lessonVoiceClips.test.ts`); `94edc0b2` deploy.yml; `a8a55234` consent copy; `2f02a1d2` roster pause; `5eee2bf3` records. **CI steps on Node 20.20.2, clean tree at `5eee2bf3`:** `npm ci` 0 · `tsc` 0 · vitest **102 files, 3,499 passed, 11 skipped** · `next build` 0 · `npm audit --audit-level=high` **0 vulnerabilities**. Legal/consent guard files alone: **15/15, 135 tests**. Real placeholders **73** (`[PLACEHOLDER —` in the 16 numbered docs; control: the grep on a planted line → 1). Breaks this step, each red on its own assertion, tree byte-identical: B3's old sentence in doc 03 → consentCopy red ×3; roster always-paused → rosterPaused red ×2; never-paused → red ×1. |
 | D2 deploy the app | not started | — |
 | D3 before-migration checks | not started | — |
 | D4 apply the four migrations | not started | — |
