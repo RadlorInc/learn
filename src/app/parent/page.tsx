@@ -48,7 +48,7 @@ import { lessonDone } from '@/infra/storage/lessonProgress'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { DashNav } from '@/features/dashboard/DashNav'
 import { UpNext, RemindersSheet, Sheet, TourRunner, dbtn, dghost, dcard, dlink, type Tour } from '@/features/dashboard/Helpers'
-import { ChildPage, ChildCard, CHILD_TABS, type ChildTab } from '@/features/dashboard/ChildPage'
+import { ChildPage, ChildCard, CHILD_TABS, AVATAR_SRCS, type ChildTab } from '@/features/dashboard/ChildPage'
 import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dashboard/ClassPage'
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
 import { helpGoals } from '@/features/dashboard/helpGoals'
@@ -57,7 +57,6 @@ import { LangContext, loadLang, saveLang, makeT, useT, type Lang } from '@/featu
 import { AddChildFlow } from '@/features/consent/AddChildFlow'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
-const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
 
 /* The adult surface's palette, from globals.css. */
 const P = {
@@ -448,13 +447,13 @@ function Dashboard() {
     page = !child ? <div style={dcard}><p style={{ margin:0 }}>{t('We couldn’t find that child.')} <Link href="/parent">{t('Back to Home')}</Link></p></div> : (() => {
       const d = child, klass = classes.find(c => c.id === d.learner.grade_id)
       const tab = (CHILD_TABS.some(([k]) => k === tabParam) ? tabParam : 'progress') as ChildTab
-      return <ChildPage id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} tab={tab}
+      return <ChildPage id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
         crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
         onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
-        onCorrect={async (display_name, grade) => {
-          const r = await correctLearner(d.learner.id, grade === null ? { display_name } : { display_name, age_group: bandOf(grade) })
+        onCorrect={async (display_name, band, avatar_index) => {
+          const r = await correctLearner(d.learner.id, band === null ? { display_name, avatar_index } : { display_name, avatar_index, age_group: band })
           if (r === 'ok') await loadAll()
           return r
         }}

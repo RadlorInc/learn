@@ -79,9 +79,8 @@ At any time, you can:
 
 Using any of these is free. We will confirm that the request comes from you before we act on it — usually by sending a link to the email address on the account — and we will not demand a government ID or any sensitive document for a routine request.
 
-**How to ask:** in the app — your parent dashboard → your child's card → **Login & data**, where you can download a copy of everything we hold and delete the profile; and **Account → Close your account** to delete everything. Or write to support@radlor.com, or to 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
+**How to ask:** in the app — your parent dashboard → your child's card → **Login & data**, where you can correct your child's name or nickname, avatar and grade band, download a copy of everything we hold, and delete the profile; and **Account → Close your account** to delete everything. Or write to support@radlor.com, or to 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
-**One thing we cannot yet do in the app:** correct a child's name or grade. Email us and we will do it for you. [PLACEHOLDER — remove this paragraph once an edit function exists.]
 **How long we take:** 10 days.
 
 Full details, including what happens to a subscription if you withdraw consent, are on our Parent Rights page at https://adaptivelearn.radlor.com/legal/parent-rights.
