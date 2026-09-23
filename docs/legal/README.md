@@ -31,7 +31,7 @@
 
 Taken from Rafi, 2026-09-22:
 
-- **Child data collected:** first name (or nickname), grade level, maths progress and scores. No voice recording, no photos, no contact details from the child.
+- **Child data collected:** first name (or nickname), the lessons chosen and a grade band worked out from them (stored as the age range 9–11 or 12–14), maths progress and scores. No voice recording, no photos, no contact details from the child.
 - **Parental consent method:** both — payment card for paid subscribers, email-plus for anyone starting without a payment method.
 - **Billing:** monthly and annual plans, both auto-renewing. No free trial in the current plan. *(If a free trial is added later, documents 01 and 03 must both be revised — trials are where auto-renewal law bites hardest.)*
 
