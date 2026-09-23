@@ -6,7 +6,7 @@
  * ⚠️ Every refusal has its positive twin in the same test — a sheet that can never add, or signup buttons
  * that are always disabled, would pass a refusal-only check.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import { createElement, act } from 'react'
 import { createRoot } from 'react-dom/client'
 
@@ -64,6 +64,12 @@ vi.mock('@/data/supabase/client', () => {
     }),
   }
 })
+
+// The pages are big modules: importing them cold on a loaded machine has taken >20s once, and a timeout
+// inside an act() leaves React mid-render and fails every test after it for the wrong reason. Pay it once, here.
+beforeAll(async () => {
+  await Promise.all([import('@/app/parent/page'), import('@/app/auth/page'), import('@/app/parent/account/page'), import('@/features/consent/ConsentLink')])
+}, 120_000)
 
 const fetchLog: { url: string; body: unknown }[] = []
 let fetchAnswer: (url: string, body: Record<string, unknown>) => unknown = () => ({})
