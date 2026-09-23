@@ -53,8 +53,8 @@ begin
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
 
   -- email_confirmed_at set: both are CONFIRMED accounts, so handle_new_user() creates their
-  -- profiles either way (production creates a profile at signup; the HELD supabase/held/20260908120000
-  -- would defer it to confirmation — this fixture is valid under both). Without it the
+  -- profiles either way (before 20260923180000 a profile is created at signup; from it, only on
+  -- confirmation — this fixture is valid under both). Without it the
   -- learners insert below fails learners_created_by_fkey — there is no owner profile to point at.
   insert into auth.users (id, email, email_confirmed_at) values
     (v_owner,    'owner.rlstest@milo.invalid',    now()),
