@@ -172,7 +172,14 @@ begin
     new.attestation_method := 'checkbox';
   else
     -- UPDATE: every child needs live consent; withdrawing it freezes the row (withdrawal deletes it).
-    if not public.consent_ok(new.id) then
+    -- ⚠️ JUDGED ON THE NEW ROW, NOT THE STORED ONE. consent_ok(new.id) re-reads the table, which in a BEFORE
+    -- UPDATE still holds the OLD consent_id — so the re-consent path (consent_grant moving the children onto
+    -- the new, current consent) was refused and rolled back, freezing every parent with children the day a
+    -- notice version is marked reconsent_required. Found by the test suite's probe, 2026-09-24.
+    select * into c from public.parental_consents where id = new.consent_id;
+    if not found or c.state <> 'granted' or not public.consent_is_current(c.notice_version)
+       or not ((c.scope = 'account' and c.parent_id = new.created_by)
+            or (c.scope = 'child'   and c.learner_id = new.id)) then
       raise exception 'no granted parental consent for learner % — refusing to change their record', new.id
         using errcode = 'P0C01',
               hint = 'This is not a transient failure.';
@@ -279,8 +286,10 @@ begin
     raise exception 'unknown notice version %', p_notice_version using errcode = 'P0C04';
   end if;
 
+  -- Every older pending request of this parent — per-child ones too: an old per-child B1 could otherwise still
+  -- be granted, creating nothing and scheduling a B3 that says "you gave permission".
   update public.parental_consents set state = 'expired'                                   -- CHANGED
-   where parent_id = p_parent and scope = 'account' and state = 'pending';
+   where parent_id = p_parent and state = 'pending';
 
   return query
   insert into public.parental_consents
