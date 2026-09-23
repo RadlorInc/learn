@@ -25,7 +25,7 @@ const TRAP = 'data:text/javascript,globalThis.fetch=()=>{console.error("TRAP: ne
 
 function seed(env: Record<string, string>) {
   const r = spawnSync(process.execPath, ['--import', TRAP, 'scripts/seed-staging.mjs'], {
-    cwd: ROOT, encoding: 'utf8', env: { PATH: process.env.PATH ?? '', ...env },
+    cwd: ROOT, encoding: 'utf8', env: { PATH: process.env.PATH ?? '', ...env } as unknown as NodeJS.ProcessEnv,
   })
   return { code: r.status, err: r.stderr }
 }
@@ -86,11 +86,10 @@ function run(s: Scenario): [string, Result][] {
       if (!/\b(success|failure|always|cancelled)\(\)/.test(expr)) expr = `success() && (${expr})`
       const js = expr.replace(/needs\.([\w-]+)/g, 'needs["$1"]').replace(/([!=])=/g, '$1==')
       const vars = new Proxy({}, { get: (_t, k) => s.vars[String(k)] ?? '' })
-      // eslint-disable-next-line @typescript-eslint/no-implied-eval
       const go = new Function('needs', 'vars', 'github', 'success', 'cancelled', `return (${js})`)(
         needs, vars, { ref: 'refs/heads/main' }, success, () => false)
       const result: Result = !go ? 'skipped' : s.fail?.includes(name) ? 'failure' : 'success'
-      const outputs = name === 'migrations-changed' && result === 'success' ? { changed: String(s.changed) } : {}
+      const outputs: Record<string, string> = name === 'migrations-changed' && result === 'success' ? { changed: String(s.changed) } : {}
       done.set(name, { result, outputs })
       out.push([name, result])
     }
