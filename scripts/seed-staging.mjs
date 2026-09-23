@@ -62,7 +62,12 @@ if (password.length < 12) refuse('SEED_PASSWORD must be set, 12+ characters. It 
 
 // ── 2. The seed — FAKE people only ──────────────────────────────────────────────────────────────
 const { createClient } = await import('@supabase/supabase-js')
-const db = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+// Realtime is never used here; handing it an inert transport stops supabase-js throwing on Node 20,
+// which has no native WebSocket (CI runs Node 20 — found by the test's positive control).
+const db = createClient(url, key, {
+  auth: { persistSession: false, autoRefreshToken: false },
+  realtime: { transport: class NoRealtime {} },
+})
 
 const must = (what) => ({ data, error }) => {
   if (error) { console.error(`seed failed at ${what}: ${error.code ?? ''} ${error.message}`); process.exit(1) }

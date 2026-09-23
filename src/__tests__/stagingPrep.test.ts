@@ -21,7 +21,8 @@ const ROOT = resolve(__dirname, '../..')
 const PROD = 'wrnjqjhrbnqxornmfisf'
 
 // ── 1. the seed's guard ───────────────────────────────────────────────────────────────────────────
-const TRAP = 'data:text/javascript,globalThis.fetch=()=>{console.error("TRAP: network attempted");process.exit(99)}'
+// `delete globalThis.WebSocket` makes every Node behave like CI's Node 20, which has none.
+const TRAP = 'data:text/javascript,delete globalThis.WebSocket;globalThis.fetch=()=>{console.error("TRAP: network attempted");process.exit(99)}'
 
 function seed(env: Record<string, string>) {
   const r = spawnSync(process.execPath, ['--import', TRAP, 'scripts/seed-staging.mjs'], {
