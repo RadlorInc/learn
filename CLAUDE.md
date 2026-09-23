@@ -1,5 +1,26 @@
 @AGENTS.md
 
+# ⛔ HARD RULE — NEVER POINT THE SUPABASE CLI AT A REMOTE DATABASE FROM A LOCAL CHECKOUT
+
+Founder's rule, 2026-09-23, after an agent's unquoted shell heredoc executed `supabase db push` by accident
+in the main checkout. It failed only because that checkout happened to be linked to nothing.
+
+- **Never run `supabase link`**, and never run any `supabase db …` or `supabase migration …` command against a
+  remote project — no `--linked`, no `--project-ref`, no `--db-url` that is not a throwaway local stack
+  (`127.0.0.1`). Not to read, not to "just check", not with `--dry-run`.
+- **Production's schema and migration ledger change ONLY through GitHub workflows behind the `production-db`
+  environment** (required reviewer, admin bypass off): `deploy.yml`'s `migrate-prod`, or a reviewed one-off
+  workflow such as `ledger-repair.yml`. Production is READ only through SQL the founder runs in the Supabase
+  SQL editor.
+- The local CLI is for throwaway local stacks only (`supabase start` / `db start` in a scratch directory,
+  torn down afterwards). Rehearse a production operation there, against a production-SHAPED copy.
+- **Generated text goes through a QUOTED heredoc (`<<'EOF'`) or a file write, never an unquoted one** — an
+  unquoted heredoc runs every backtick and `$(…)` inside it, and a comment that mentions a command becomes
+  that command.
+- If a checkout is ever found linked (`supabase/.temp/project-ref` exists), unlink it
+  (`supabase unlink`) before doing anything else in it, and say so. Measured 2026-09-23: no checkout under
+  /Users/mrk is linked, and no Supabase CLI login token exists on this machine.
+
 # A CHECK IS NOT A CHECK UNTIL YOU HAVE WATCHED IT FAIL FOR THE RIGHT REASON
 
 **Green is not evidence. Present is not enforcing. Found-nothing is not clean.**
