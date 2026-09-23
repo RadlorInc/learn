@@ -28,6 +28,29 @@ name: Backup (prod database)
 #   psql "$TARGET_DB_URL" --single-transaction -v ON_ERROR_STOP=1 -f schema.sql \
 #     -c 'SET session_replication_role = replica' -f data.sql
 #
+# ⚠️⚠️ BEFORE RESTORING INTO A LOCAL SUPABASE STACK: MATCH PRODUCTION'S AUTH (GoTrue) AND storage-api
+# VERSIONS, AND RESTORE AS supabase_admin. The dump carries ROWS for the auth.* and storage.* schemas
+# but not their tables — those are created by the GoTrue and storage-api services' own migrations. If
+# the local images are older than production's, the single-transaction restore dies on the first
+# table or column they have not created and rolls back everything. Measured on the first restore
+# rehearsal (2026-09-23): the CLI's default GoTrue lacked auth.mfa_recovery_code_sets, auth.scim_*
+# and one_time_tokens.expires_at; its storage-api lacked storage.buckets.lifecycle_configuration.
+#   1. On production (SQL editor, read-only), note each service's newest migration:
+#        select max(version) from auth.schema_migrations;
+#        select id, name from storage.migrations order by id desc limit 1;
+#   2. In the scratch project, pin local images at least that new BEFORE `supabase start`:
+#        echo <gotrue tag>      > supabase/.temp/gotrue-version
+#        echo <storage-api tag> > supabase/.temp/storage-version
+#      e.g. GoTrue v2.197.0 and storage-api v1.79.14 matched production on 2026-09-23. That is an
+#      EXAMPLE, not a pin — production moves on. After starting, run step 1's two queries against the
+#      local database and confirm the same answers before restoring.
+#   3. Start auth AND storage (`supabase start -x <everything else>`). `supabase db start` alone runs
+#      neither service's migrations, and `supabase start` while that database is already up does not
+#      start them either — `supabase stop --no-backup` first.
+#   4. Run both psql commands above as supabase_admin: the local `postgres` role is refused on
+#      storage.buckets_vectors ("permission denied").
+#   Proven = psql exit 0 AND every public table's count equal to its COPY block's row count in data.sql.
+#
 # ⚠️ `supabase db dump` runs pg_dump INSIDE A DOCKER CONTAINER (that is how it strips Supabase-managed
 # schemas). ubuntu-latest ships Docker, so this works on the hosted runner — but it will not work on
 # a self-hosted runner without a Docker daemon.
