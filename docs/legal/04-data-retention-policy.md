@@ -43,6 +43,8 @@ A parent may ask us to delete their child's information at any time, and may wit
 
 **Known defect — deletion is not yet complete.** Crash records carry a child's internal identifier with no database link back to the child, so they do not disappear when the child is deleted. Three such records already point at children who no longer exist, each holding the page they were on and their browser type. Until that link is added, "we delete your child's data" is not fully true, and a parent asking for deletion would have it honoured everywhere except here. This must be fixed before the Parent Rights page is published.
 
+> **Resolved, 23 September 2026 (measured on production).** Crash records now carry a database link to the child that **deletes them with the child** (`error_events.learner_id` → `learners`, on delete cascade — read from the production catalog). The three orphaned records were deleted when that link was added (crash records 9 → 6), and after the test children were cleared **no crash record points at a child who no longer exists** (0 orphaned). Deleting a child from the app was proven on real rows the same day: every one of that child's rows, and the child's own login, was gone afterwards, and another child on the same account was untouched. That child happened to have no crash records, so the crash-record cascade is proven by the catalog and by the clearing of the test children, not by that one deletion.
+
 ## 4. When we keep something longer
 
 We keep information past its scheduled deletion only where we must: to comply with a legal obligation including tax and accounting record-keeping; to establish, exercise or defend a legal claim; to resolve a dispute or enforce our agreements; or to maintain security, where a limited log is necessary. Where we do, we keep the narrowest record necessary and delete it as soon as the reason ends. Every such hold is recorded with its reason and expected end date.
@@ -81,6 +83,6 @@ No aggregate or rollup table exists, so nothing preserves the numbers once a pur
 
 1. Please set the retention periods still open, in particular for sign-in events and for the child profile and progress data, which currently have no scheduled deletion at all.
 2. Please advise how the database provider's own platform logs — IP, browser, approximate location, on every child request — must be described to parents.
-3. Please advise on Section 3's known defect: crash records that survive a child's deletion. We intend to fix it before publishing; please say whether anything more is required.
+3. Please advise on Section 3's known defect: crash records that survive a child's deletion. We intend to fix it before publishing; please say whether anything more is required. *(Fixed and measured on production, 23 September 2026 — see Section 3.)*
 4. Please confirm what must appear in the public Privacy Policy under the amended Rule, and in what words.
 5. Please advise whether de-identified aggregates derived from children's events may be retained indefinitely, and to what standard.

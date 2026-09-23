@@ -34,6 +34,8 @@ This is the most serious finding in the audit, and it is not a documentation gap
 >
 > It also leaves a cleaner option than the one that was built. The consent gate carries an exemption so the existing 26 would not freeze. If none of them is real, that exemption protects nobody, and an exemption that exists for nobody is still a route around the gate. **Clear the test data and apply the gate with zero exemptions**, and from that moment every single child in the system has a consent record behind them — with no special cases to remember, document, or explain later.
 
+> **Done, 23 September 2026 (measured on production).** The consent gate went live on 14 tables with the existing children exempt; then the test children were cleared and the exemption removed. There is now **no exemption and no child without a consent record** — the database will not store one. A test parent added a child end to end afterwards (notice → email → permission → child created).
+
 ### 2. There is no backup.
 
 The nightly encrypted backup succeeded fourteen times, then **failed every night since 10 September — thirteen consecutive failures** — because three of four required secrets are missing. Confirmed independently: zero backup artifacts exist.
@@ -67,6 +69,8 @@ Separately, the database provider's own platform logs record **IP address, brows
 ### 5. Deleting a child does not delete everything.
 
 Crash records carry a child's identifier with no database link back to the child, so they do not disappear when the child is deleted. **Three such orphans already exist**, each holding the page a now-deleted child was on and their browser type.
+
+> **Resolved, 23 September 2026 (measured on production).** Crash records now carry a database link to the child that **deletes them with the child** (`error_events.learner_id` → `learners`, on delete cascade — read from the production catalog). The three orphaned records were deleted when that link was added (crash records 9 → 6), and after the test children were cleared **no crash record points at a child who no longer exists** (0 orphaned). Deleting a child from the app was proven on real rows the same day: every one of that child's rows, and the child's own login, was gone afterwards, and another child on the same account was untouched. That child happened to have no crash records, so the crash-record cascade is proven by the catalog and by the clearing of the test children, not by that one deletion.
 
 **What has to happen:** add the link so it cascades. Until then, the Parent Rights procedure deletes them by hand — and the Parent Rights page must not be published claiming complete deletion while a route exists that does not delete.
 
@@ -113,6 +117,8 @@ Four corrections and one design finding came back before a line of code was writ
 
 2. **The email provider does not exist.** This document and the vendor list both named Resend as the transactional email provider. **It is not installed, has no key, and appears nowhere in the code.** Every email a parent receives today comes from the authentication service's own mailer. The name came from a conversation and was written down as a fact without being checked against the code — exactly the failure the rest of this document is built to avoid. Corrected in documents 07 and 09, and it is now a decision to make rather than a fact to state.
 
+> **Superseded, 23 September 2026.** The consent emails are now sent through Resend, from `noreply@radlor.com`: the first request email arrived that day, and each delayed confirmation email is scheduled with Resend and its identifier stored with the consent record.
+
 3. **The consent gate cannot be a row-level security policy.** The tables are owned by the database role itself and do not force row security, and the functions that write most of a child's data run as definer — so a policy-based gate would be bypassed by precisely the code paths that write the data, while looking correct in the migration. It has to be enforced by triggers, which fire regardless. The schema already has a working example of this pattern. This is a good catch: the wrong choice here would have produced a gate that passed review and enforced nothing.
 
 4. **A blocked write would fail silently.** The event-writing code treats any database error as temporary and keeps the row queued for a later retry. If the gate blocked a child's writes, nothing would error and nothing would surface — a parent would watch their child use the app normally while no progress was saved. Whatever is decided about the existing children, the failure has to be made visible before the gate goes live.
@@ -120,6 +126,8 @@ Four corrections and one design finding came back before a line of code was writ
 5. **The existing children would freeze, not break.** Reads are unaffected, so all twenty-six keep signing in and keep seeing past progress; every write about them fails. There are 35 progress rows and 281 point records in production, so this is live activity. Combined with point 4, the result would be invisible data loss rather than an error anyone notices.
 
 **The decision that follows from 5, and it is not an engineering one:** those eighteen-plus children have no consent record and cannot acquire one retroactively — you cannot backdate a notice a parent was never shown. The practical path is to send the direct notice to the existing parents, ask them to consent now, and set a date after which a profile without consent stops collecting. How long that window is, and what happens at the end of it, is a question for the attorney.
+
+> **Moot as of 23 September 2026.** Every one of those children was a team or intern test profile (founder's statement), and all of them have been cleared. No child without a consent record remains, so there is nobody to ask retroactively.
 
 ---
 
