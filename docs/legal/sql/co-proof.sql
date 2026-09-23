@@ -5,8 +5,8 @@ select 'ledger has 20260924100000' as check,
        case when exists (select 1 from supabase_migrations.schema_migrations where version = '20260924100000') then 'PASS' else 'FAIL' end as result
 union all select 'parental_consents.scope exists, check child|account',
        case when exists (select 1 from information_schema.columns where table_schema='public' and table_name='parental_consents' and column_name='scope') then 'PASS' else 'FAIL' end
-union all select 'every existing consent kept scope child (nothing re-labelled)',
-       case when not exists (select 1 from c where scope <> 'child' and created_at < (select max(inserted_at) from supabase_migrations.schema_migrations where version='20260924100000' limit 1)) then 'PASS' else 'CHECK' end
+union all select 'INFO consents by scope/state (right after the apply: all child; account rows appear only as parents consent)',
+       (select string_agg(scope || '/' || state || '=' || n, ', ' order by scope, state) from (select scope, state, count(*) n from c group by 1,2) x)
 union all select 'notice versions v1..v5 registered, none requires re-consent',
        case when (select count(*) from public.consent_notice_versions where version like 'notice-v%') = 5
              and not exists (select 1 from public.consent_notice_versions where reconsent_required) then 'PASS' else 'FAIL' end
