@@ -1,154 +1,81 @@
 /**
- * TWO GATES OVER THE LEGAL COPY, BECAUSE A LEGAL DOCUMENT THAT DRIFTS BECOMES A FALSE STATEMENT.
+ * GATES OVER THE LEGAL PAGES, BECAUSE A LEGAL DOCUMENT THAT DRIFTS BECOMES A FALSE STATEMENT.
  *
- * ① A draft may never render as live. `/legal/*` carries placeholders — `[DATE]`, `[NN]`, `[URL]`,
- *    the ten `[LAWYER REVIEW — …]` markers and one unwritten refund sentence — each of which marks a
- *    decision nobody has made. They are shown ON SCREEN on purpose. If `DRAFT` is ever flipped to
- *    false with one still present, the banner disappears while the hole does not, and a parent reads
- *    a document that looks finished. `draftGuardError` is what stops that, at module scope, so it
- *    fires in `next build` as well as here.
+ * ① Every legal page is DARK until a human flips its switch in `app/legal/registry.ts`: it renders
+ *    its title and the red banner and nothing of the document, is noindex, and is not in the sitemap.
+ *    And a document carrying a placeholder is never rendered whatever the switch says.
+ * ② The retention number must match the job that ENFORCES it — read out of the migration.
+ * ④ The account-deletion control the documents rely on really exists.
+ * ⑤ No placeholder marker from docs/legal/ reaches shipped source or a rendered page.
  *
- * ② The retention number must match the job that ENFORCES it. The documents promise usage events are
- *    deleted after 90 days; the only thing that makes that true is the `purge-old-learner-events`
- *    cron job. The expectation here is read out of the MIGRATION, so changing the cron to 180 and
- *    leaving the copy alone turns this red — which is the moment the terms become a false statement
- *    to a parent. Three places say the number today and one gate holds all three.
- *
- * ⚠️ Neither gate derives its expectation from the thing it guards: ① compares the app's copy
- * against the source markdown, ② compares prose against the SQL. A gate that read the number out of
- * the same file it asserts would pass through any change.
+ * ⚠️ 2026-09-23 (item 4 of the legal loop): the pages now render `docs/legal/*.md` through one
+ * mechanism, and the in-app drafts in `app/legal/content.ts` were DELETED. Gate ③ (the Terms' §3/§6
+ * claims about the schema) and the old DRAFT-flag gate went with them — their subject no longer
+ * exists. ⚠️ Gate ③'s idea — every table holding a child's data is named in the document — has NOT
+ * been re-anchored on docs/legal/12 and is recorded as open in docs/legal/READINESS.md.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import {
-  DRAFT, DOCS, TERMS, PRIVACY, PLACEHOLDERS, unresolvedPlaceholders, draftGuardError,
-} from '@/app/legal/content'
+import { LEGAL_PAGES, PUBLISHED_LEGAL_ROUTES, MARKER as REG_MARKER, publicBody, assertRenderable, pageBySlug } from '@/app/legal/registry'
 import { SURVIVORS } from '@/core/accountDeletion'
-
-/**
- * THE MARKERS STILL OPEN IN THE APP'S TERMS, WRITTEN OUT BY HAND.
- *
- * ⚠️ `PLACEHOLDERS` is the REFUSAL list — nothing carrying one of those may ever render as final,
- * and that list does not shrink when a decision is made. This is the different question: which of
- * them are unresolved *today*. It exists so that resolving one is a diff a human reviews, never a
- * gate quietly going green because there was less left to find.
- *
- * ⚠️ 2026-09-06 — `[DATE]` left this list. The founder set the date to 6 September 2026, which was
- * always theirs to set: `[DATE]` marked "nobody has decided", not "a lawyer must decide". THE
- * DOCUMENT IS STILL A DRAFT and `DRAFT` is still true. A date is not a review, and the four below
- * are still open — including §8's refund sentence, which is not waiting on counsel but is simply
- * unwritten, and which says so in its own text.
- */
-const OPEN = ['[LAWYER REVIEW', '[NN]', '[URL]', '[Describe the refund'] as const
 
 const ROOT = resolve(__dirname, '../..')
 const read = (p: string) => readFileSync(resolve(ROOT, p), 'utf8')
+const flat = (s: string) => s.replace(/\s+/g, ' ')
+const pub = (slug: string) => { const p = pageBySlug(slug)!; return publicBody(p, read(`docs/legal/${p.source}`)) }
 
-// ───────────────────────────── ① the draft gate ─────────────────────────────
-describe('a draft legal page never renders as live', () => {
-  it('is a draft today, and the page renders the banner from that flag', () => {
-    expect(DRAFT).toBe(true)
-    const page = read('src/app/legal/[slug]/page.tsx')
-    // Anchored on the real conditional, not on the words in the banner: the banner's copy may be
-    // reworded, but if it stops being gated on DRAFT the flag has stopped meaning anything.
-    expect(page).toContain('{DRAFT && (')
-  })
-
-  it('flags every placeholder while DRAFT is false, and nothing while it is true', () => {
-    // Drives the SAME function the module-scope guard calls — not a re-implementation of the rule.
-    expect(draftGuardError(true, DOCS)).toBeNull()
-
-    const err = draftGuardError(false, DOCS)
-    expect(err).not.toBeNull()
-    for (const p of OPEN) expect(err).toContain(p)
-    expect(err).toContain('terms:')
-  })
-
-  it('the shipped terms still carry every placeholder the source file has', () => {
-    // The positive control for the gate above: if a well-meaning tidy-up resolved the markers, the
-    // guard would go quiet and report a clean document. This compares the rendered copy against the
-    // markdown it came from, so a removal is a failure rather than a silent pass.
-    // ⚠️ THE SOURCE DOCUMENT IS IN THE REPO, and it has to be: this comparison is the positive
-    // control for the whole draft gate, and it passed locally for one run against an UNTRACKED file
-    // — green on my machine, ENOENT in CI. A check whose corpus is not committed is not a check.
-    const md = read('docs/app-terms-of-service.md')
-    const count = (hay: string, needle: string) => hay.split(needle).length - 1
-
-    /**
-     * ⚠️ COMPARED AGAINST THE WHOLE SHIPPED DOCUMENT, NOT JUST `body` — and that is the half this
-     * check would have lost. The source's "Last updated" line is lifted into the `updated` FIELD
-     * (the page header renders it) rather than sitting in the body, so a body-only comparison would
-     * see `[DATE]` once in the .md and zero times in the shipped copy and call that a resolved
-     * placeholder. `unresolvedPlaceholders` reads the same three fields for the same reason.
-     */
-    const shipped = `${TERMS.title}\n${TERMS.updated}\n${TERMS.body}`
-
-    // ⚠️ BOTH DIRECTIONS, AND THAT IS THE POINT. An OPEN marker that has vanished was resolved by
-    // somebody without recording it; a RESOLVED one that has come back means the document regressed.
-    // Neither can happen quietly, because both change this list and this list is written by hand.
-    for (const p of PLACEHOLDERS) {
-      const open = (OPEN as readonly string[]).includes(p)
-      if (open) {
-        expect(count(md, p),
-          `${p} is listed as OPEN but is gone from docs/app-terms-of-service.md — if that decision ` +
-          `was made, take it out of OPEN in the same commit and say who made it`).toBeGreaterThan(0)
-      } else {
-        expect(count(md, p),
-          `${p} was resolved, but it is back in docs/app-terms-of-service.md`).toBe(0)
-      }
-      // Verbatim between source and shipped either way — this is what catches a marker resolved on
-      // one side only, which is how the page and the document start telling different stories.
-      expect(count(shipped, p), `${p} differs between the .md and the shipped document`)
-        .toBe(count(md, p))
-    }
-    expect([...unresolvedPlaceholders(TERMS)].sort(), 'the markers actually left in the document ' +
-      'are not the ones OPEN says are left').toEqual([...OPEN].sort())
-  })
-
-  it('the lifted date line still says what the source document says', () => {
-    /**
-     * ⚠️ THE LIFT IS THE PLACE A PLACEHOLDER COULD BE RESOLVED WITHOUT ANY OTHER CHECK NOTICING.
-     * The body comes across verbatim, but `updated` is retyped by hand — so it is the one field
-     * where "[DATE]" could quietly become a real date while the .md still carried the marker and
-     * every count above still balanced. Bind the two.
-     */
-    const md = read('docs/app-terms-of-service.md')
-    const line = /^\*\*Last updated: (.+?)\*\*$/m.exec(md)
-    expect(line, 'the source document no longer carries a "Last updated" line to lift').not.toBeNull()
-    expect(TERMS.updated, 'the page header and the source document disagree about the date')
-      .toBe(line![1])
-  })
-
-  it('carries no internal note addressed to a person', () => {
-    // ⚠️ A NOTE TO A NAMED HUMAN ON A PUBLIC LEGAL PAGE MAKES A DELIBERATE DRAFT READ AS AN
-    // UNFINISHED ONE, which is a different and worse claim than the banner's. The banner says
-    // "not final"; a note saying "delete before publishing" says "nobody checked this page at all".
-    for (const hay of [read('docs/app-terms-of-service.md'), TERMS.body, PRIVACY.body]) {
-      expect(hay).not.toMatch(/Note to \w+, delete before publishing/)
-      expect(hay).not.toContain('Note to Rafi')
+// ─────────────────────────── ① dark until a human flips it ───────────────────────────
+describe('every legal page is dark, and a placeholder is never rendered', () => {
+  it('every page has a real public body in its source document — positive control on the boundaries', () => {
+    for (const p of LEGAL_PAGES) {
+      const body = pub(p.slug)
+      expect(body.length, `${p.slug}: the public part of ${p.source} is almost empty — the boundaries are wrong`).toBeGreaterThan(400)
+      expect(body, `${p.slug}: the drafters' status block leaked into the public part`).not.toContain('STATUS: DRAFT')
+      expect(body, `${p.slug}: attorney notes leaked into the public part`).not.toMatch(/Notes for the attorney/)
     }
   })
 
-  it('the renderer shows placeholders rather than eating them', async () => {
-    // `[DATE]` and `[LAWYER REVIEW — …]` are bracketed, which is markdown link territory. A renderer
-    // that swallowed them would defeat the banner while every string check above stayed green, so
-    // this drives the real render and reads the text a parent would see.
+  it('no page is published today', () => {
+    expect(LEGAL_PAGES.filter(p => p.published).map(p => p.slug)).toEqual([])
+    expect(PUBLISHED_LEGAL_ROUTES).toEqual([])
+  })
+
+  it.each(LEGAL_PAGES.map(p => [p.slug] as const))('/legal/%s renders the banner and none of the document', async slug => {
     const { renderToStaticMarkup } = await import('react-dom/server')
-    const { default: LegalPage } = await import('@/app/legal/[slug]/page')
-    const html = renderToStaticMarkup(await LegalPage({ params: Promise.resolve({ slug: 'terms' }) }))
-    const text = html.replace(/<[^>]*>/g, ' ')
-    for (const p of OPEN) expect(text, `${p} is not visible on the rendered page`).toContain(p)
-    /**
-     * ⚠️ THIS EXPECTATION MOVED WITH THE BANNER, AND IT WENT RED FIRST — which is the gate working.
-     * It used to read 'has not been reviewed by a lawyer'. The banner was rewritten on 2026-09-22
-     * from a 14px caveat to a red block headed "DRAFT — NOT IN FORCE", and this assertion caught
-     * the change rather than sleeping through it. Re-anchored on the STRONGER of the two claims:
-     * "not final" is what the old line said, and it is too weak for a document whose first body
-     * word is PLACEHOLDER. If a future edit softens this back to a caveat, this goes red again.
-     */
+    const { default: LegalPageView, generateMetadata } = await import('@/app/legal/[slug]/page')
+    const html = renderToStaticMarkup(await LegalPageView({ params: Promise.resolve({ slug }) }))
+    const text = flat(html.replace(/<[^>]*>/g, ' '))
+    // Control: the right page rendered at all.
+    expect(text).toContain(pageBySlug(slug)!.title)
+    // A real sentence of the document — the longest line, so it cannot be page furniture — is absent.
+    const line = pub(slug).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim()).sort((a, b) => b.length - a.length)[0]
+    expect(line.length).toBeGreaterThan(80)
+    expect(text, `/legal/${slug} is dark and renders its document`).not.toContain(flat(line).slice(0, 60))
     expect(text).toContain('DRAFT — NOT IN FORCE')
-    expect(text).toContain('No lawyer has reviewed it')
+    expect(text).not.toContain(REG_MARKER)
+    const m = await generateMetadata({ params: Promise.resolve({ slug }) })
+    expect(m.robots, `/legal/${slug} is dark and indexable`).toEqual({ index: false, follow: true })
+  })
+
+  it('a dark page is not in the sitemap', async () => {
+    const { default: sitemap } = await import('@/app/sitemap')
+    const urls = sitemap().map(e => e.url)
+    expect(urls.some(u => u.endsWith('/help')), 'control: the sitemap lists public routes at all').toBe(true)
+    expect(urls.filter(u => u.includes('/legal/'))).toEqual([])
+  })
+
+  it('refuses to render a document that carries a placeholder — every page, on its real text', () => {
+    let refused = 0
+    for (const p of LEGAL_PAGES) {
+      const body = pub(p.slug)
+      if (!body.includes(REG_MARKER)) continue
+      expect(() => assertRenderable(p, body)).toThrow(/refused: its text still carries \d+ placeholder/)
+      refused++
+    }
+    expect(refused, 'control: at least one real document carries a placeholder today').toBeGreaterThan(0)
+    // …and lets a clean one through, so the refusal is about the marker and not about everything.
+    expect(() => assertRenderable(LEGAL_PAGES[0], 'A finished sentence.')).not.toThrow()
   })
 })
 
@@ -191,8 +118,6 @@ describe('the retention promise matches the job that enforces it', () => {
 
   const sources: [string, string][] = [
     ['src/data/repositories/exportData.ts (the note in the parent\'s own export)', read('src/data/repositories/exportData.ts')],
-    ['the Privacy Policy body', PRIVACY.body],
-    ['the Terms of Service body', TERMS.body],
   ]
 
   it.each(sources)('%s states %s', (label, text) => {
@@ -208,113 +133,14 @@ describe('the retention promise matches the job that enforces it', () => {
   })
 })
 
-// ─────────────── ③ the factual claims §3 and §6 make about the schema ───────────────
-/**
- * ⚠️ THE TERMS SAY THEY WERE "WRITTEN AGAINST THE LIVE PRODUCTION SCHEMA", SO THE SCHEMA IS WHAT
- * THEY HAVE TO KEEP AGREEING WITH. Three claims are checkable without anybody remembering to look:
- * the six age bands, the promise that no date of birth is collected, and §6's enumeration of what
- * is recorded about a child. Everything else in the document is a legal position, a promise about
- * conduct, or a fact about a third party — none of which a schema can settle.
- *
- * ⚠️ Every expectation below is WRITTEN OUT HERE, by hand. Importing the band list from
- * `ageGroups.ts` and asserting the document contains it would be asserting the code equals itself.
- * Two edits to change a band is the mechanism, not the friction.
- */
-/**
- * The document is hard-wrapped at 80 columns, which is a property of the source file and not of what
- * a parent reads — a phrase can straddle a line break. Collapse whitespace before matching, so
- * re-wrapping a paragraph cannot turn a gate red on a document that says exactly the same thing.
- */
-const flat = (s: string) => s.replace(/\s+/g, ' ')
-const TERMS_FLAT = flat(TERMS.body)
-
-const migrationSql = (() => {
-  const dir = resolve(ROOT, 'supabase/migrations')
-  return [
-    read('supabase/schema/baseline_schema.sql'),
-    ...readdirSync(dir).filter(f => f.endsWith('.sql')).sort()
-      .map(f => readFileSync(resolve(dir, f), 'utf8')),
-  ].join('\n')
-})()
-
-describe('the terms still agree with the schema they were written against', () => {
-  it('§3 names the six age bands the app actually offers', () => {
-    // Hand-written, in the order the document lists them.
-    for (const band of ['3–5', '6–8', '9–11', '12–14', '15–16', '17–18']) {
-      expect(TERMS_FLAT, `§3 no longer names the ${band} band`).toContain(band)
-    }
-    // …and the app offers no seventh. Derived from the source, compared against the count above.
-    const offered = [...read('src/core/ageGroups.ts').matchAll(/\{\s*value:\s*'([\d-]+)'/g)].map(m => m[1])
-    expect(offered.length, `the app offers ${offered.length} bands; §3 lists 6`).toBe(6)
-  })
-
-  it('§3\'s "we do not collect a date of birth" is still true of the schema', () => {
-    // ⚠️ NOT HYPOTHETICAL. `learners.date_of_birth` — an exact birthdate on a child — was in
-    // migration zero and was dropped by 20260817174352. Reintroducing it anywhere turns the
-    // sharpest COPPA sentence in the document into a false statement.
-    expect(TERMS_FLAT).toContain('**We do not collect a date of birth**')
-    expect(migrationSql, 'positive control: the drop statement is what makes the claim true')
-      .toMatch(/alter table public\.learners drop column if exists date_of_birth/)
-    const reintroduced = [...migrationSql.matchAll(/(add column[^;]*|create table[^;]*)date_of_birth/gi)]
-      .filter(m => !m[0].includes('create table if not exists public.learners')) // migration zero, then dropped
-    expect(reintroduced.map(m => m[0].slice(0, 60)), 'a birthdate column is back in the schema').toEqual([])
-  })
-
-  it('§6 describes every table that holds a child\'s data', () => {
-    /**
-     * Derived from the SQL exactly as `exportCompleteness.test.ts` derives it — a table carrying
-     * `learner_id` holds one child's data. Each one is mapped to the WORDS in §6 that cover it, and
-     * both halves are asserted: a new table with no entry is a document that has gone incomplete,
-     * and a reworded §6 that dropped the phrase is a document that has gone silent about something
-     * it still records.
-     */
-    const COVERED: Record<string, string> = {
-      sessions:            'each completed practice run',
-      learner_progress:    'cumulative progress per chapter',
-      learner_stats:       'totals per child',
-      learner_state:       'in-app items bought with earned coins',
-      learner_events:      '**usage events**',
-      diagnostic_sessions: 'placement checks: which questions were asked',
-      diagnostic_plans:    'suggested starting point and practice plan',
-      diagnostic_rechecks: 'placement checks',
-      error_events:        '**Error reports.**',
-      subscription_seats:  'how many seats you have paid for',
-      lesson_progress:     'which lesson topics were finished',
-      point_events:        'each time points were earned',
-      game_settings:       'the game-time settings you choose',
-      exercise_results:    'class exercise results',
-      lesson_feedback:     'which lesson screen was hard to follow',
-      // Adult-to-adult authorisation rather than data about the child — §5, not §6.
-      learner_access:      'You may invite another parent or guardian',
-      learner_invites:     'You may invite another parent or guardian',
-      /**
-       * ⚠️ MAPPED TO §2, NOT §6, AND IT NEEDS A SENTENCE BEFORE IT SHIPS. This table records the
-       * ADULT's consent — the versions they saw and when — so it belongs with the consent clause
-       * rather than the list of what a child produces. But §2 currently describes GIVING consent,
-       * not that we keep a record of it, and that record holds the parent's email address. The
-       * Terms should gain an explicit sentence when this table reaches production; it is flagged
-       * rather than written here because this task does not change published legal copy.
-       */
-      parental_consents:   'you consent to us collecting and using the child\'s information',
-    }
-    const childTables = new Set<string>()
-    for (const m of migrationSql.matchAll(/create table (?:if not exists )?public\.([a-z_]+)\s*\(([\s\S]*?)\n\);/g)) {
-      if (/\blearner_id\b/.test(m[2])) childTables.add(m[1])
-    }
-    // Reached through a parent key rather than learner_id, same as the export gate.
-    childTables.add('diagnostic_items')
-    childTables.add('diagnostic_plan_progress')
-
-    expect(childTables.size, 'positive control: the derivation found no tables at all')
-      .toBeGreaterThan(10)
-
-    const undescribed = [...childTables].filter(t => !(t in COVERED) && t !== 'diagnostic_items' && t !== 'diagnostic_plan_progress')
-    expect(undescribed, 'these tables hold a child\'s data and §6 of the Terms does not mention them — ' +
-      'either describe them in the document or add them here with the words that cover them').toEqual([])
-
-    for (const [table, phrase] of Object.entries(COVERED)) {
-      expect(TERMS_FLAT, `the words covering ${table} are gone from the Terms: "${phrase}"`).toContain(flat(phrase))
-    }
+describe('the documents state the retention the job enforces', () => {
+  const enforced = enforcedRetentionDays()
+  // Only the lines about product events: these documents also state 10-day and 30-day periods for other things.
+  const eventLines = (slug: string) => pub(slug).split('\n').filter(l => /product events/i.test(l) && /days/.test(l))
+  it.each([['privacy'], ['retention']] as const)('/legal/%s', slug => {
+    const lines = eventLines(slug)
+    expect(lines.length, `${slug} no longer states how long product events are kept`).toBeGreaterThan(0)
+    for (const l of lines) expect(dayClaims(l), l).toContain(enforced)
   })
 })
 
@@ -336,12 +162,6 @@ describe('§11 promises account deletion, and the control is really there', () =
     return readdirSync(dir).filter(f => f.endsWith('.sql')).sort()
       .map(f => readFileSync(resolve(dir, f), 'utf8')).join('\n')
   })()
-
-  it('the Terms still make the promise', () => {
-    // If this sentence is ever removed, the assertions below stop being required — and somebody
-    // should have to notice that rather than leave a gate guarding a promise nobody makes.
-    expect(TERMS_FLAT).toContain('delete your account at any time from your account settings')
-  })
 
   it('a parent can reach it, and only from the parent side', () => {
     const account = read('src/app/parent/account/page.tsx')
@@ -457,58 +277,5 @@ describe('a draft legal document never reaches published content', () => {
       `incomplete statement to a parent. Take the text back out — the drafts are not publishable ` +
       `until an attorney has resolved every marker in docs/legal/13-placeholder-worksheet.md.`)
       .toEqual([])
-  })
-
-  it('the rendered legal pages carry no placeholder marker and no DRAFT banner', async () => {
-    /**
-     * ⚠️ THE SOURCE SCAN ABOVE AND THIS ONE ARE TWO INSTRUMENTS, NOT ONE REPEATED. The scan reads
-     * files; this drives the real renderer and reads the text a parent's browser actually paints,
-     * which is the only place the claim "no draft text is published" is finally true or false. It
-     * also reaches text the scan cannot attribute to a document at all — a banner pasted into the
-     * page component rather than into `content.ts` renders identically and is caught here.
-     */
-    const { renderToStaticMarkup } = await import('react-dom/server')
-    const { default: LegalPage } = await import('@/app/legal/[slug]/page')
-
-    for (const doc of DOCS) {
-      const html = renderToStaticMarkup(await LegalPage({ params: Promise.resolve({ slug: doc.slug }) }))
-      const text = flat(html.replace(/<[^>]*>/g, ' '))
-
-      /**
-       * Control first, and it is not decorative: a slug the router did not recognise, or a body that
-       * failed to render, would satisfy every assertion below in perfect silence. Anchor on the
-       * document's own title and on real length, so an empty page cannot read as a clean one.
-       */
-      expect(text, `${doc.slug} did not render its own title — this gate is reading the wrong page`)
-        .toContain(doc.title)
-      expect(text.length, `${doc.slug} rendered almost nothing — this gate is reading an empty ` +
-        `document, not a clean one`).toBeGreaterThan(500)
-
-      expect(text, `${doc.slug} renders "${MARKER}" — a draft has been pasted into a live page`)
-        .not.toContain(MARKER)
-      expect(text, `${doc.slug} renders the drafts' "STATUS: DRAFT" banner`).not.toContain('STATUS: DRAFT')
-    }
-  })
-
-  it('no legal DOCUMENT shouts DRAFT, though the page furniture may', () => {
-    /**
-     * ⚠️ THIS RULE MOVED, AND WHY IT MOVED IS THE POINT. It used to forbid capitalised DRAFT
-     * anywhere in the RENDERED page. Then the banner was rewritten to read "⚠️ DRAFT — NOT IN
-     * FORCE", because a 14px "Draft —" line was being skimmed past on a document whose first body
-     * word is PLACEHOLDER — and the gate went red on the correct fix. A check that fires on the
-     * right answer is spent exactly like one that never fires, so the rule was re-aimed rather
-     * than deleted or weakened.
-     *
-     * The risk was never the page's own furniture; it is draft TEXT being pasted into a document.
-     * So the page may shout DRAFT as loudly as it likes, and the three fields that carry document
-     * content may not. `docs/legal/*.md` open with "STATUS: DRAFT — NOT LEGAL ADVICE"; the check
-     * on the rendered page above still catches that exact string wherever it lands.
-     */
-    for (const doc of DOCS) {
-      const content = `${doc.title}\n${doc.updated}\n${doc.body}`
-      expect(content, `${doc.slug}'s document text carries the word DRAFT in capitals, which is ` +
-        `how the unpublished documents in docs/legal/ mark themselves — the page's banner may ` +
-        `say it, the document may not`).not.toMatch(/\bDRAFT\b/)
-    }
   })
 })

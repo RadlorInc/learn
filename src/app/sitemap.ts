@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next'
 import { SITE_URL, PUBLIC_ROUTES } from './site'
+import { PUBLISHED_LEGAL_ROUTES } from './legal/registry'
 
 /** /sitemap.xml — the routes that have something to say to someone who is not signed in. */
 export default function sitemap(): MetadataRoute.Sitemap {
-  return PUBLIC_ROUTES.map(path => ({
+  return [...PUBLIC_ROUTES, ...PUBLISHED_LEGAL_ROUTES].map(path => ({
     url: `${SITE_URL}${path}`,
     changeFrequency: 'monthly' as const,
     priority: path === '/' ? 1 : 0.5,

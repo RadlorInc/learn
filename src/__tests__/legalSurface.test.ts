@@ -147,8 +147,12 @@ describe('the manifest is readable — positive control', () => {
 
 describe('every legal page the manifest lists has a route', () => {
   it.each(PAGES.map(p => [p.slug, p.state] as const))('%s — %s', async (slug, state) => {
-    const { DOCS } = await import('@/app/legal/content')
-    const exists = DOCS.some(d => d.slug === slug)
+    // Exists = the one legal page component renders it (its title), rather than notFound().
+    const { pageBySlug } = await import('@/app/legal/registry')
+    const { default: View } = await import('@/app/legal/[slug]/page')
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const p = pageBySlug(slug)
+    const exists = !!p && renderToStaticMarkup(await View({ params: Promise.resolve({ slug }) })).includes(p.title)
     expect(exists, state === 'present'
       ? `${route(slug)} is in the manifest as present and does not exist`
       : `${route(slug)} exists but the manifest still says GAP — update SURFACE.md`).toBe(state === 'present')

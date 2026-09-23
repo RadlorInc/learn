@@ -13,7 +13,8 @@
  * `learner_id`, which the consent gate refuses for exactly the children whose consent is missing.
  */
 import { createHash, randomBytes } from 'node:crypto'
-import { DOCS, type LegalDoc } from '@/app/legal/content'
+import { pageBySlug, type LegalPage } from '@/app/legal/registry'
+import { readPublic } from '@/app/legal/source'
 import { EMAIL_FROM, EMAIL_REPLY_TO } from './config'
 import type { Rendered } from './email'
 
@@ -37,15 +38,15 @@ export const hashToken = (t: string) => createHash('sha256').update(t).digest('h
 export const looksLikeToken = (t: unknown): t is string => typeof t === 'string' && /^[A-Za-z0-9_-]{43}$/.test(t)
 
 /**
- * The live Privacy Policy and Terms have no version numbers (the Privacy Policy's own "updated" line
- * reads "not yet published"), so what the parent could open is identified by its CONTENT: slug, the
- * date line it shows, and a hash of every word. Change a word and the version changes with it — the
- * one version scheme that cannot drift from the text it names.
+ * The Privacy Policy and Terms have no version numbers, so what the parent could open is identified by
+ * its CONTENT and its switch: slug, `dark` or `live`, and a hash of the public text in docs/legal/.
+ * ⚠️ While a page is dark the parent could open only its banner — the `@dark` is how a consent row
+ * says so, rather than recording a document nobody could read. Change a word and the version changes.
  */
-const docVersion = (d: LegalDoc) =>
-  `${d.slug}@${d.updated}#${createHash('sha256').update(`${d.title}\n${d.updated}\n${d.body}`).digest('hex').slice(0, 12)}`
-export const PRIVACY_VERSION = docVersion(DOCS.find(d => d.slug === 'privacy')!)
-export const TERMS_VERSION = docVersion(DOCS.find(d => d.slug === 'terms')!)
+const docVersion = (p: LegalPage) =>
+  `${p.slug}@${p.published ? 'live' : 'dark'}#${createHash('sha256').update(readPublic(p)).digest('hex').slice(0, 12)}`
+export const PRIVACY_VERSION = docVersion(pageBySlug('privacy')!)
+export const TERMS_VERSION = docVersion(pageBySlug('terms')!)
 
 // ── Supabase, as the service role ──
 export interface RpcError { status: number; code?: string; message?: string }

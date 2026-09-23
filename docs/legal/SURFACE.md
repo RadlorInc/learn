@@ -17,11 +17,11 @@ switch (item 5); every page ships dark.
 |---|---|---|---|---|
 | privacy | /legal/privacy | 11-privacy-policy.md | dark | present |
 | terms | /legal/terms | 12-terms-of-service.md | dark | present |
-| refunds | /legal/refunds | 01-refund-and-cancellation-policy.md | dark | GAP |
-| parent-rights | /legal/parent-rights | 06-parent-rights-procedure.md | dark | GAP |
-| subprocessors | /legal/subprocessors | 07-subprocessors.md | dark | GAP |
-| cookies | /legal/cookies | 08-cookie-and-tracking-notice.md | dark | GAP |
-| retention | /legal/retention | 04-data-retention-policy.md | dark | GAP |
+| refunds | /legal/refunds | 01-refund-and-cancellation-policy.md | dark | present |
+| parent-rights | /legal/parent-rights | 06-parent-rights-procedure.md | dark | present |
+| subprocessors | /legal/subprocessors | 07-subprocessors.md | dark | present |
+| cookies | /legal/cookies | 08-cookie-and-tracking-notice.md | dark | present |
+| retention | /legal/retention | 04-data-retention-policy.md | dark | present |
 
 ⚠️ **`retention` is a seventh page the brief did not list.** Document 02 (the direct notice) links
 `/legal/retention` by name, so without it the notice points a parent at a 404.

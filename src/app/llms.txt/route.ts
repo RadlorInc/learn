@@ -1,4 +1,5 @@
 import { APP_NAME, COMPANY, COMPANY_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL } from '@/app/site'
+import { LEGAL_PAGES } from '@/app/legal/registry'
 
 /**
  * llms.txt — the plain-text summary an answer engine reads instead of inferring from markup.
@@ -16,8 +17,6 @@ export const dynamic = 'force-static'
 const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
   '/': 'what AdaptiveLearn is and who it is for',
   '/help': 'questions parents ask: lost progress, how lessons adapt, what is stored, child logins, game time',
-  '/legal/privacy': 'what is stored about a child, who can see it, and how to delete it',
-  '/legal/terms': 'terms of service',
 }
 
 export function GET() {
@@ -47,6 +46,7 @@ called Milo until August 2026.
 
 ## Pages
 ${PUBLIC_ROUTES.map(r => `- [${BLURB[r]}](${SITE_URL}${r === '/' ? '' : r})`).join('\n')}
+${LEGAL_PAGES.filter(p => p.published).map(p => `- [${p.title}](${SITE_URL}/legal/${p.slug})`).join('\n')}
 
 Everything else on this origin is a signed-in surface and renders nothing useful without an account.
 
