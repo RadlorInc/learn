@@ -39,6 +39,9 @@ SKIP = {skip!r}
 VOICE = 'nzFihrBIvB34imQBuxub'   # Josh
 WORK = pathlib.Path('/kaggle/working' if os.path.isdir('/kaggle/working') else '/content')
 REPO = WORK / 'learn'
+# A Kaggle session outlives a notebook: a copy cloned by ANOTHER grade's notebook would be read as this one's (0 lines).
+if REPO.exists() and subprocess.run(['git', '-C', str(REPO), 'rev-parse', '--abbrev-ref', 'HEAD'], capture_output=True, text=True).stdout.strip() != BRANCH:
+    shutil.rmtree(REPO)
 if not REPO.exists():
     subprocess.run(['git', 'clone', '--depth', '1', '--branch', BRANCH, 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
 rows = json.load(open(REPO / 'scripts/.voice-corpus-lessons-josh.json'))
