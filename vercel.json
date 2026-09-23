@@ -4,5 +4,8 @@
     "deploymentEnabled": {
       "main": false
     }
-  }
+  },
+  "crons": [
+    { "path": "/api/consent/cancel-second-notice", "schedule": "23 6 * * *" }
+  ]
 }
