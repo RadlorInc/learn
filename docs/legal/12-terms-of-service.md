@@ -52,7 +52,7 @@ Our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) describes a
 
 - Plans, prices and billing periods are shown at checkout before you pay.
 - **Subscriptions renew automatically** until you cancel. The renewal amount and date are disclosed to you before you subscribe and repeated in the confirmation email we send you.
-- **You can cancel at any time**, online, in the same number of steps it took to subscribe. Cancelling stops all future charges; your access continues until the end of the period you have paid for.
+- **You can cancel at any time**, online, in the same number of steps it took to subscribe: in the app, under **Account → Plan & billing**. Cancelling stops all future charges; your access continues until the end of the period you have paid for, and we email you a confirmation with that date.
 - Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds), which forms part of these Terms.
 - You are responsible for any applicable taxes.
 
