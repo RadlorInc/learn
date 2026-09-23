@@ -7,7 +7,8 @@
  *   granted & current      → the caller's `granted` render (the add sheet), or nothing on the dashboard
  *   pending, link working  → WAITING, with "Send the email again"
  *   granted, not current   → REASK + the notice → a new account request
- *   none                   → with a signup tick for the CURRENT notice and `auto`: B1 at once;
+ *   none, never asked      → with a signup tick for the CURRENT notice and `auto`: B1 at once;
+ *   none, after a withdrawal / decline / expiry → the notice only (never an automatic email)
  *                            otherwise the notice, and B1 only after "I'm the parent… — continue"
  */
 import { useEffect, useRef, useState } from 'react'
@@ -41,7 +42,10 @@ export function useAccountConsent({ lang, auto, ack }: { lang: Lang; auto?: bool
       if (s.k === 'pending') return setView({ k: 'waiting', email: s.email, days: daysLeft(s.until) })
       if (s.k === 'reask') return setView({ k: 'reask' })
       if (s.k === 'error') return setView({ k: 'error' })
-      if (auto && ack) return void ask(ack.at)
+      // ⚠️ ONLY FOR AN ACCOUNT WITH NO CONSENT HISTORY. A parent who withdrew, declined or let a request lapse still
+      // has their signup tick on the device — sending B1 by itself then would email a consent request to someone who
+      // just said no. They see the notice and choose.
+      if (auto && ack && s.fresh) return void ask(ack.at)
       setView({ k: 'notice' })
     })
     return () => { live = false }

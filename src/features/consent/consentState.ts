@@ -20,7 +20,9 @@ export type AccountConsent =
   | { k: 'pending'; email: string; until: string }
   /** Granted, but a later notice version requires asking again. */
   | { k: 'reask' }
-  | { k: 'none' }
+  /** No granted or pending consent. `fresh`: this account has NO consent history at all — never asked, never
+   *  withdrew, never declined. Only then may a signup tick send B1 by itself. */
+  | { k: 'none'; fresh: boolean }
   | { k: 'error' }
 
 interface Row { id: string; state: string; notice_version: string; confirmed_at: string | null; expires_at: string; email_address: string }
@@ -42,7 +44,7 @@ export async function readAccountConsent(): Promise<AccountConsent> {
   }
   const pending = rows.find(r => r.state === 'pending' && new Date(r.expires_at) > new Date())
   if (pending) return { k: 'pending', email: pending.email_address, until: pending.expires_at }
-  return granted ? { k: 'reask' } : { k: 'none' }
+  return granted ? { k: 'reask' } : { k: 'none', fresh: rows.length === 0 }
 }
 
 export type AskResult = { ok: true; email: string; days: number } | { ok: false; error: 'stale' | 'not_ready' | 'failed' }

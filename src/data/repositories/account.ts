@@ -58,6 +58,7 @@ export async function deleteMyAccount(confirmEmail: string): Promise<DeleteOutco
  */
 export async function withdrawAllConsent(): Promise<{ ok: true } | { ok: false; reason: 'not_deployed' | 'failed' }> {
   const { error } = await db().rpc('withdraw_my_consent' as never)
-  if (!error) { await cancelQueuedSecondNotices(); return { ok: true } }
+  // The signup tick has been spent: withdrawing means a later child needs a fresh, deliberate consent.
+  if (!error) { try { localStorage.removeItem('consent-signup-ack') } catch { /* private mode */ } await cancelQueuedSecondNotices(); return { ok: true } }
   return { ok: false, reason: error.code === 'PGRST202' ? 'not_deployed' : 'failed' }
 }
