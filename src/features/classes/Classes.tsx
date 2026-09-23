@@ -10,7 +10,8 @@
  * by the teacher (./exercise.ts). A PAID teacher's students get the modules AND the exercises; a FREE teacher's (no
  * paid row in `teacher_plans`) get the exercises only.
  */
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createClient } from '@/data/supabase/client'
 import {
   createClass, updateClass, createLearner, deleteLearner, setChildLogin, setClassLessons,
   type ClassRow,
@@ -170,6 +171,19 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
   const [oneUser, setOneUser] = useState('')
   const [made, setMade] = useState<Made[] | null>(null)
   const [progress, setProgress] = useState<string | null>(null)
+  // ⚠️ ADDING STUDENTS IS PAUSED ONCE THE CONSENT GATE IS LIVE (founder, deploy loop D1). From
+  // migration 20260923120000 every new child needs a parent's granted consent, and no consent route
+  // fits a school yet — so every roster add would be refused (P0C01). The signal is the same one
+  // AddChildFlow uses: the consent table exists ⇒ the gate exists. Before that, adds work as they
+  // always have. Any other error falls through to the form, whose per-row errors stay visible.
+  const [paused, setPaused] = useState<boolean | null>(null)
+  useEffect(() => {
+    let live = true
+    void createClient().from('parental_consents').select('id', { head: true, count: 'exact' }).limit(1)
+      // paused only when the table answered; a missing table, or any other error, leaves the form
+      .then(({ error }) => { if (live) setPaused(!error) })
+    return () => { live = false }
+  }, [])
 
   // The list is parsed; one student's two boxes are taken as they are — no guessing which box is which.
   const parsed = useMemo(() => {
@@ -193,6 +207,15 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
     // Roster and results already count the new students if the teacher goes straight to another button.
     if (out.some(m => m.password)) onAdded()
   }
+
+  if (paused === null) return <p style={{ marginTop: 14, fontSize: 13.5, color: P.ink3 }}>Loading…</p>
+  if (paused) return (
+    <div data-roster="paused" style={{ marginTop: 14, fontSize: 14, color: P.ink, background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 10, padding: '12px 14px', lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontWeight: 800 }}>Adding students is paused for now.</p>
+      <p style={{ margin: '6px 0 0' }}>We are still setting up how a school gives permission for a child to use Milo. Until that is ready, new students cannot be added to a class. Students already in your class are not affected.</p>
+      <button onClick={onDone} style={{ ...ghost, marginTop: 10 }}>Close</button>
+    </div>
+  )
 
   if (made) {
     const good = made.filter(m => m.password)

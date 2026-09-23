@@ -28,12 +28,17 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
 }))
 // Every query answers "nothing": the add-a-child flow then shows the notice, which is the state it collects in.
+// ⚠️ EXCEPT `parental_consents` while painting the ROSTER: AddStudents shows "adding students is paused"
+// whenever that table answers (the consent gate is live), and the paused state collects nothing. The
+// roster is checked in the state where it DOES collect — the table missing, as on production before D4.
+const db = vi.hoisted(() => ({ consentTable: true }))
 vi.mock('@/data/supabase/client', () => {
-  const empty = { data: [], error: null }
-  const chain: unknown = new Proxy(() => {}, {
-    get: (_t, k) => (k === 'then' ? (r: (v: unknown) => void) => r(empty) : chain),
-    apply: () => chain,
+  const answer = (v: unknown): unknown => new Proxy(() => {}, {
+    get: (_t, k) => (k === 'then' ? (r: (x: unknown) => void) => r(v) : answer(v)),
+    apply: () => answer(v),
   })
+  const chain = answer({ data: [], error: null })
+  const missing = answer({ data: null, error: { code: 'PGRST205', message: "Could not find the table 'public.parental_consents' in the schema cache" } })
   return {
     createClient: () => ({
       auth: {
@@ -41,7 +46,7 @@ vi.mock('@/data/supabase/client', () => {
         getSession: async () => ({ data: { session: null } }),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
       },
-      from: () => chain,
+      from: (t: string) => (t === 'parental_consents' && !db.consentTable ? missing : chain),
       rpc: () => chain,
     }),
   }
@@ -116,8 +121,13 @@ const SURFACES: Record<string, { paint: () => Promise<string>; control: string }
   },
   'child-home': { paint: async () => paint(await h(import('@/app/modules/page'))), control: '/lesson?module=' },
   roster: {
-    paint: async () => paint(await h(import('@/features/classes/Classes'), 'AddStudents',
-      { cls: { id: 'c', name: 'Room 12', grade: 5 }, onAdded() {}, onDone() {} })),
+    paint: async () => {
+      db.consentTable = false
+      try {
+        return await paint(await h(import('@/features/classes/Classes'), 'AddStudents',
+          { cls: { id: 'c', name: 'Room 12', grade: 5 }, onAdded() {}, onDone() {} }))
+      } finally { db.consentTable = true }
+    },
     control: 'One student per line',
   },
 }
