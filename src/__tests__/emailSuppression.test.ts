@@ -235,11 +235,13 @@ describe('the table is service-role only (RLS on, no policies, no client privile
     await db.exec(`set role ${role}`)
     try { return await db.query<T>(sql) } finally { await db.exec('reset role') }
   }
+  /** The SQLSTATE a statement ends with — 'ok' when it runs. An assertion on this names the refusal. */
+  const outcome = (role: string, sql: string) => as(role, sql).then(() => 'ok', (e: { code?: string }) => e.code ?? String(e))
   for (const role of ['anon', 'authenticated']) {
     it(`${role} can neither read nor write it`, async () => {
-      await expect(as(role, 'select * from public.email_suppressions')).rejects.toMatchObject({ code: '42501' })
-      await expect(as(role, `insert into public.email_suppressions (email, token) values ('z@x.test', '${'C'.repeat(43)}')`)).rejects.toMatchObject({ code: '42501' })
-      await expect(as(role, `update public.email_suppressions set suppressed_at = now()`)).rejects.toMatchObject({ code: '42501' })
+      expect(await outcome(role, 'select * from public.email_suppressions'), `${role} could read the list`).toBe('42501')
+      expect(await outcome(role, `insert into public.email_suppressions (email, token) values ('z@x.test', '${'C'.repeat(43)}')`), `${role} could add to the list`).toBe('42501')
+      expect(await outcome(role, 'update public.email_suppressions set suppressed_at = null'), `${role} could re-subscribe someone`).toBe('42501')
     })
   }
   it('…and service_role, the real caller, can (the positive twin)', async () => {
