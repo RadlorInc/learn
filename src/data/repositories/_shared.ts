@@ -15,7 +15,7 @@ export function db(): any {
  * After a deletion that may have ended a granted consent — "Delete <name>'s profile", "Close your
  * account" — ask the server to cancel the queued B3 ("Yesterday you gave permission…") now rather
  * than at the daily backstop. The DATABASE captured the email's id in the deletion's own transaction
- * (20260923180000), so nothing is lost if this call fails; it only decides how soon. Never throws.
+ * (20260923200000), so nothing is lost if this call fails; it only decides how soon. Never throws.
  */
 export async function cancelQueuedSecondNotices(): Promise<void> {
   try { await fetch('/api/consent/cancel-second-notice', { method: 'POST' }) } catch { /* the cron retries */ }

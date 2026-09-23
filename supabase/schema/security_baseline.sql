@@ -75,7 +75,7 @@
 --                                                  the adult who gave it (parent_id = auth.uid()). NO DELETE
 --                                                  policy and none intended: a withdrawn consent is evidence
 --                                                  and is kept as state='withdrawn'. anon has no grant.
---   consent_b3_cancellations   rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-23, 20260923180000): every
+--   consent_b3_cancellations   rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-23, 20260923200000): every
 --                                                  privilege revoked from public/anon/authenticated; service_role
 --                                                  (the server) reads/updates it via consent_b3_due / consent_b3_record (INVOKER).
 --                                                  Rows are written ONLY by the DEFINER trigger consent_queue_b3_cancel.

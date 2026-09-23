@@ -131,7 +131,7 @@ export async function cancelOutcome(id: string): Promise<string> {
 export const cancelEmail = async (id: string): Promise<boolean> => (await cancelOutcome(id)) === 'cancelled'
 
 /**
- * Cancel every B3 the database has queued and record each outcome (20260923180000). The queue is
+ * Cancel every B3 the database has queued and record each outcome (20260923200000). The queue is
  * filled by a trigger in the same transaction that ends a consent — withdrawal, deleting the child,
  * closing the account — so the id cannot be lost to the cascade that deletes the consent row.
  * Idempotent: a settled row is never picked again, and a second cancel of the same message is

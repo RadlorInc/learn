@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       case 'withdraw': {
         const s = await rpc<string>('consent_withdraw', { p_token_hash: hash })
         // B3 still waiting to go out would tell a parent who has just withdrawn "Yesterday you gave
-        // permission". The withdrawal queued it (20260923180000); the drain cancels and records it.
+        // permission". The withdrawal queued it (20260923200000); the drain cancels and records it.
         // Best-effort: the withdrawal has already committed either way. Before that migration there
         // is no queue (null), so the id read above is cancelled directly, as it always was.
         if (s === 'withdrawn' && await drainB3Cancellations().catch(() => 0) === null
