@@ -53,8 +53,12 @@ import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dash
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
 import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
-import { LangContext, loadLang, saveLang, makeT, useT, type Lang } from '@/features/dashboard/i18n'
-import { AddChildFlow } from '@/features/consent/AddChildFlow'
+import { LangContext, loadLang, saveLang, makeT, useT, useLang, type Lang } from '@/features/dashboard/i18n'
+import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
+import { AccountConsentCard } from '@/features/consent/AccountConsent'
+import { currentAck, longDate, type Ack } from '@/features/consent/consentState'
+import { Notice } from '@/features/consent/Notice'
+import { ATTEST } from '@/features/consent/copy'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 
@@ -123,6 +127,9 @@ function Dashboard() {
   // English or Spanish, chosen in Account → Language. PARENTS ONLY (founder, 2026-09-22): a teacher's dashboard stays English.
   // Per device, like the helpers' prefs — a parent on a new device picks it again.
   const [chosenLang, setChosenLang] = useState<Lang>('en')
+  // Consent-once (C2): the tick the parent gave at signup, on this device or in the account's metadata.
+  // `undefined` until the session is read, so the card never asks before it knows whether a tick exists.
+  const [ack, setAck] = useState<Ack | null | undefined>(undefined)
 
   // `quiet`: refresh the data without the full-screen splash, so an open panel (a class's new passwords) stays on screen.
   async function loadAll(quiet?: boolean) {
@@ -136,6 +143,7 @@ function Dashboard() {
       setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')
       setUid(user.id)
       setChosenLang(loadLang())
+      setAck(currentAck(user.user_metadata))
       // This device's helper choices, read once per visit; the visit BEFORE this one is what "since your last visit" means.
       setPrefsState(prev => {
         if (prev) return prev
@@ -416,6 +424,9 @@ function Dashboard() {
   const h1 = { margin: 0, fontSize: 28, fontWeight: 900, color: P.ink, fontFamily: 'var(--font-display)' } as const
 
   const notices = <>
+    {/* Consent-once (C2): a PARENT with no granted account consent sees the notice, or "waiting", here.
+        Never blocking — the dashboard stays usable; only adding a child waits for the consent. */}
+    {role === 'parent' && ack !== undefined && <AccountConsentCard lang={lang} ack={ack} />}
     {actionMsg && (
       <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, fontWeight:600, color:'#166534', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         ✅ {actionMsg}
@@ -708,9 +719,9 @@ function Dashboard() {
       {/* Add learner modal */}
       {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
       {showAddModal && (
-        <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={consentId => (
+        <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
           <AddLearnerModal
-            consentId={consentId}
+            attest={attest}
             onClose={() => setShowAddModal(false)}
             onAdded={async () => { setShowAddModal(false); await loadAll() }}
           />
@@ -858,8 +869,15 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
   )
 }
 
-export function AddLearnerModal({ onClose, onAdded, consentId }: { onClose: () => void; onAdded: () => void; consentId?: string }) {
-  const t = useT()
+/**
+ * `attest`: the parent's granted, current ACCOUNT consent. Without it there is nothing to attest
+ * against and the sheet cannot add (the database would refuse anyway); with it, "Add" stays disabled
+ * until the ATTEST box is ticked, and the child is created carrying that consent's notice version.
+ */
+export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => void; onAdded: () => void; attest?: Attest }) {
+  const t = useT(), lang = useLang()
+  const [attested,    setAttested]    = useState(false)
+  const [showNotice,  setShowNotice]  = useState(false)
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
   // Which modules the child gets — asked, never assumed (founder, 2026-09-19: a new child was silently given every module).
@@ -872,12 +890,13 @@ export function AddLearnerModal({ onClose, onAdded, consentId }: { onClose: () =
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError(t('Please enter a name (at least 2 characters)')); return }
     if (pick.size === 0) { setError(t('Choose at least one module for this learner.')); return }
+    if (!attest || !attested) return
     const chosen = MODULES.filter(m => pick.has(m.id))
     // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19).
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, consentId)
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion: attest.noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     /**
      * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
@@ -965,14 +984,27 @@ export function AddLearnerModal({ onClose, onAdded, consentId }: { onClose: () =
           <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
             <Link href="/legal/privacy" style={{ color:P.accent, fontWeight:700 }}>{t('Read the Privacy Policy')}</Link>
           </p>
-          <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
+          {!attest && <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
             {t('By adding a child you confirm you are their parent or legal guardian, or have that person’s permission.')}
-          </p>
+          </p>}
           <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
             {t('Progress is private to this account. No public profiles and no comparisons with other children.')}
           </p>
         </div>
-        <button onClick={handleAdd} disabled={loading} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading?P.edge:P.accent, color:loading?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':'pointer', boxShadow:loading?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
+        {/* Consent-once: the parental attestation, one per child, UNTICKED. The account consent is the
+            verifiable consent; this is the parent saying THIS child is theirs to consent for. */}
+        {attest && (
+          <div data-consent="attest" style={{ margin:'14px 0 0', padding:'12px 14px', border:`1.5px solid ${P.edge}`, borderRadius:14, background:P.page }}>
+            <label style={{ display:'flex', gap:10, alignItems:'flex-start', fontSize:14, lineHeight:1.45, color:P.ink, fontWeight:600, cursor:'pointer' }}>
+              <input type="checkbox" checked={attested} onChange={e => setAttested(e.target.checked)} style={{ width:22, height:22, flex:'0 0 auto', marginTop:1, accentColor:'#F26B2C' }} />
+              <span>{ATTEST.tick[lang].replace('{date}', longDate(attest.confirmedAt, lang))}</span>
+            </label>
+            <button type="button" onClick={() => setShowNotice(v => !v)} aria-expanded={showNotice}
+              style={{ background:'none', border:'none', padding:'12px 0 4px', minHeight:44, color:P.accent, fontWeight:700, fontSize:13.5, cursor:'pointer', textDecoration:'underline' }}>{ATTEST.link[lang]}</button>
+            {showNotice && <div style={{ marginTop:8 }}><Notice lang={lang} /></div>}
+          </div>
+        )}
+        <button onClick={handleAdd} disabled={loading || !attest || !attested} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading||!attest||!attested?P.edge:P.accent, color:loading||!attest||!attested?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':!attest||!attested?'not-allowed':'pointer', boxShadow:loading||!attest||!attested?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
           {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>
       </div>

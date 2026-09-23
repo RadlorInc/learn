@@ -49,3 +49,15 @@ export async function deleteMyAccount(confirmEmail: string): Promise<DeleteOutco
   }
   return { ok: false, reason: 'failed', detail: m }
 }
+
+/**
+ * Consent-once, C4(b): "Withdraw permission for all my children". `withdraw_my_consent` deletes every
+ * child this account created (each through delete_child_data), ends every consent it holds and keeps the
+ * records as withdrawn; the account stays open. Idempotent — a second call finds nothing and still says
+ * 'withdrawn'. Then the queued B3s are cancelled, as after every other path that ends a consent.
+ */
+export async function withdrawAllConsent(): Promise<{ ok: true } | { ok: false; reason: 'not_deployed' | 'failed' }> {
+  const { error } = await db().rpc('withdraw_my_consent' as never)
+  if (!error) { await cancelQueuedSecondNotices(); return { ok: true } }
+  return { ok: false, reason: error.code === 'PGRST202' ? 'not_deployed' : 'failed' }
+}
