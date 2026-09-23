@@ -117,6 +117,12 @@ describe('a redefinition never drops a guard an earlier one added', () => {
       { fn: 'enforce_learner_consent', raises: 'consent_exempt_at may not be set on a new child — it marks the children that ',
         by: '20260923170000_consent_zero_exemptions.sql',
         why: 'the consent_exempt_at column is dropped by that migration, so no insert can set it' },
+      { fn: 'enforce_learner_consent', raises: 'no granted parental consent for this child — refusing to create them',
+        by: '20260924100000_consent_once.sql',
+        why: 'consent-once: a child is no longer created under a consent of its own, so the refusal now names the '
+           + 'ACCOUNT ("no granted parental consent for this account — refusing to create a child") and its predicate is '
+           + 'stricter (account scope, current version, the parent\'s own) — plus a second raise for a missing attestation. '
+           + 'parentalConsent.test.ts ① drives both.' },
     ]
     const lost: string[] = []
     for (const [fn, ds] of Object.entries(defs)) {
@@ -126,7 +132,10 @@ describe('a redefinition never drops a guard an earlier one added', () => {
       for (const d of ds.slice(0, -1)) for (const c of conditions(d.body)) earlier.add(c)
       for (const c of earlier) {
         if (newest.body.includes(c)) continue
-        const r = RETIRED.find(x => x.fn === fn && x.raises === c && x.by === newest.file)
+        // A guard retired by a migration stays retired through every LATER redefinition — so the retiring
+        // migration must be the newest or older, never newer (which would pre-authorise a future drop).
+        const r = RETIRED.find(x => x.fn === fn && x.raises === c && x.by <= newest.file
+          && ds.some(d => d.file === x.by))
         if (r) { r.why = ''; continue }            // consumed: this retirement is real
         lost.push(`${fn} (newest: ${newest.file}) no longer raises "${c}"`)
       }

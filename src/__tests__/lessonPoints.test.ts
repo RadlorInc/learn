@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, grantedConsent } from './_schema'
+import { loadSchema, grantedConsent, FIXTURE_NOTICE } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const CHILD = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'     // the child's own login
@@ -24,7 +24,7 @@ beforeAll(async () => {
       ('${PARENT}', 'p@x.test', now()), ('${CHILD}', 'kid@learner.adaptivelearn.invalid', now()), ('${OTHER}', 'o@x.test', now())`)
   const consent = await grantedConsent(db, PARENT)
   await db.exec(`
-    insert into public.learners (id, display_name, created_by, age_group, consent_id) values ('${KID}', 'Kid', '${PARENT}', '3-5', '${consent}');
+    insert into public.learners (id, display_name, created_by, age_group, consent_id, attested_notice_version) values ('${KID}', 'Kid', '${PARENT}', '3-5', '${consent}', '${FIXTURE_NOTICE}');
     insert into public.learner_access (learner_id, parent_id, access_role) values ('${KID}', '${CHILD}', 'self');
   `)
 }, 120_000)
