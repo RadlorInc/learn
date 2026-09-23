@@ -9,6 +9,17 @@ written and on no other day.
 reasons (placeholders, the document's own `STATUS: DRAFT` line, no attorney sign-off recorded, no Spanish
 version). "Content ready" is therefore **no** everywhere; the column says what else is missing.
 
+## ⛔ Launch blocker — no real family until the legal pages can publish
+
+**Founder's decision, 2026-09-23 (deploy loop).** The deploy loop ships the app with every `/legal/*` page
+DARK (title + banner, no body) and every point of collection linking to them. That is accepted **only
+because every account on production is a team or intern test account** (founder's statement, not a
+measurement — the database cannot tell an intern from a parent). **No real family is invited until every
+page a family can reach publishes** — i.e. until the switch above stops refusing them. Also owed before
+the first real family: a **staging database** (`deploy.yml` applies production migrations without one
+since D1; see `LOOP-STATE.md`), and the attorney's answer on withdrawal (doc 06 still says it closes the
+whole account; the consent copy says it deletes the one child).
+
 ## Pages
 
 | Document | Route built | Linked from | Content ready | Blocking on | Publishable? |

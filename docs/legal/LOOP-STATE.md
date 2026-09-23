@@ -46,8 +46,8 @@ Started 2026-09-23. Rafi approves every step that touches production. Rules: no 
 
 | step | state | proof / what it waits on |
 |---|---|---|
-| D0 preflight | **BLOCKED** — §2, §3 and §5 are not as the brief describes (below) | read-only; measured 2026-09-23 |
-| D1 merge `origin/main` | not started — waits on D0 | — |
+| D0 preflight | **done** — was BLOCKED on §2/§3/§5; founder decided each (below) | read-only; measured 2026-09-23 |
+| D1 merge `origin/main` + the founder's four fixes | **in progress** | merge `8c0e5a3d` (no conflicts); `94edc0b2` deploy.yml; `a8a55234` consent copy; `2f02a1d2` roster pause — CI results below |
 | D2 deploy the app | not started | — |
 | D3 before-migration checks | not started | — |
 | D4 apply the four migrations | not started | — |
@@ -92,3 +92,38 @@ select (select count(*) from supabase_migrations.schema_migrations) as ledger_ro
        (select count(*) from repo) as repo_total,
        (select string_agg(v, ', ' order by v) from repo where v not in (select version from supabase_migrations.schema_migrations)) as repo_missing_from_production;
 ```
+
+## D0 → decisions (founder, 2026-09-23)
+
+1. **`deploy.yml`:** `migrate-prod` runs when CI is green and staging is skipped, still behind `production-db`; staging-first returns automatically once `STAGING_PROJECT_REF` is set. Done in `94edc0b2` (plus a `migrations-changed` job so a push with no migration does not wait for approval). ⚠️ **Unproven until its first run on `main`** — GitHub's expression engine cannot be run locally. ⚠️⚠️ **A STAGING DATABASE IS OWED BEFORE THE FIRST REAL FAMILY.** Until then production migrations are tested only in CI's throwaway Postgres.
+2. **§5:** dark legal links accepted while every account is a test account; losing the draft Privacy text accepted. **No real family is invited until the legal pages can publish** — recorded as the launch blocker in `READINESS.md`. The false promise fixed first (`a8a55234`, below).
+3. **D5:** prove deletion on real rows after D4. `WITHDRAWAL_DELETES` stays `false`; it flips only when the parent-rights page can publish.
+4. **§4 confirmed by Rafi:** `RESEND_API_KEY` set in Vercel Production (sensitive), `RESEND_API_URL` does not exist, `SUPABASE_SERVICE_ROLE_KEY` set in Production (being removed from Preview). D4 still waits on the migration-ledger query result.
+5. **Teacher roster:** refusal after D4 accepted until school consent is resolved; the roster shows a plain pause message instead of an error (`2f02a1d2`).
+
+### The false promise — before → after (`a8a55234`, docs 02/03 and `copy.ts` together, `NOTICE_VERSION` → `notice-v3`, hash `9631b50821a5`)
+
+| where | before | after |
+|---|---|---|
+| notice (doc 02), rights list | **Withdraw your consent** and stop any further collection — if you do, your child will no longer be able to use the app. | **Withdraw your consent** — we stop any further collection and delete your child's information. Your account stays open. |
+| B2 (doc 03) | …that email will let you cancel immediately and we will delete everything. | …that email will let you cancel immediately and we will delete everything we hold about your child. |
+| B3 (doc 03) | We will immediately stop collecting, delete everything we hold about the child, and close the account. | We will immediately stop collecting and delete everything we hold about the child. Your account stays open. |
+| withdrawal screen (doc 03) | **If you have more than one child on this account, withdrawing permission closes the whole account, including your other children's profiles.** If you only want to remove one child, use *Delete \<name\>'s profile* instead. | **This applies only to this child.** Your account stays open, and any other children on it are not affected. |
+| after withdrawing (PROPOSED, not from a doc) | We have stopped collecting information about your child. | We have stopped collecting information about your child and deleted what we held about them. Your account stays open. |
+
+"Everything we hold about the child" was checked against the schema: the consent record that survives withdrawal holds the parent's email, versions and timestamps — no field about the child. **Proof:** `consentCopy` 13/13 green; break (B3's old sentence put back into doc 03 only) → red on its own 3 assertions ("nothing in the document is missing from the screen", "…absent from the document", "B3 text part"), tree byte-identical.
+
+**Doc 03's ⛔ list, re-checked against the changed copy:**
+| ⛔ row | now |
+|---|---|
+| Withdrawal deletes the child's data and closes the account | **Copy fixed** — no longer says "close the account"; says the account stays open. The deletion it promises is true **once `20260923140000` is applied (D4)**; the consent flow cannot appear before D4 (no table → old add sheet), so the notice is never shown while it is false. |
+| Withdrawal refunds the unused subscription | Still withheld by exact text (`WITHHELD` in `consentCopy.test.ts`). Unchanged. |
+| Use *Remove this child* | The screen no longer names a control at all. ⚠️ Doc 06 §32 still says *Remove this child* — the open attorney question, left. |
+| Consent can be given by payment card | Unchanged (one consent path, email-plus, in the notice since v2). |
+| Links to subprocessor, retention, parent-rights pages | The pages exist but are **DARK** — accepted by the founder for a test-only system (launch blocker in READINESS). |
+| "Full details in our Privacy Policy" | Privacy is **DARK** — same acceptance. |
+| "a child under 13" | Unchanged since v2 ("your child"). |
+| The list of what we collect | Unchanged since v2. |
+
+⚠️ **Two placeholders are now stale but were left, to keep the count at 73 as instructed:** doc 02's rights line still carries "[PLACEHOLDER — the earlier wording promised deletion here … Restore the promise once deletion is built…]" (it has now been restored), and doc 03's withdrawal paragraph still carries the placeholder about the control's name (the paragraph no longer names a control). Neither renders. Rafi's call whether to resolve them.
+⚠️ **Doc 06 contradicts the new copy** (withdrawal "closes the whole account" and refunds) — the open attorney question, deliberately untouched.
