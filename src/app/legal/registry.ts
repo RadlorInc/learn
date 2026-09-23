@@ -84,9 +84,35 @@ export function assertRenderable(page: LegalPage, body: string): void {
   if (n) throw new Error(`/legal/${page.slug} refused: its text still carries ${n} placeholder(s) from docs/legal/${page.source}. A placeholder is a decision nobody has made; it is never shown to a reader.`)
 }
 
-// ─────────────────────────────── the switch (item 5) ───────────────────────────────
-/** Filled in by item 5. Until then a flipped switch is refused outright. */
-export function publishRefusals(page: LegalPage, md: string, _es: string | null): string[] {
-  void md
-  return [`publishRefusals for ${page.slug} is not built yet`]
+// ─────────────────────────────── the switch ───────────────────────────────
+/**
+ * ⚠️ TWO FACTS THE PRODUCT MUST MAKE TRUE BEFORE A PAGE MAY PROMISE THEM. Each is a literal a human
+ * changes in a reviewed commit, never inferred from the environment.
+ *   · BILLING_LIVE — the refund policy promises refunds; nothing has ever been charged
+ *     (`billing_config.enforced = false` on production, measured 2026-09-23).
+ *   · WITHDRAWAL_DELETES — the parent-rights page promises that withdrawing deletes. Set true only
+ *     with the proof `consentDeletion.test.ts` provides (item 6), which asserts it back.
+ */
+export const BILLING_LIVE = false
+export const WITHDRAWAL_DELETES = false
+
+/**
+ * Every reason this page must not be published, in words a person can act on. Empty = the switch
+ * may be flipped. `md` is the whole source file; `es` the Spanish source, if one exists.
+ *
+ * ⚠️ A SWITCH THAT PUBLISHES WHATEVER IT IS GIVEN IS A BUTTON, NOT A SAFEGUARD. Each reason is checked
+ * on its own (`legalSwitch.test.ts`: six pages, each wrong in exactly one way, six refusals).
+ */
+export function publishRefusals(page: LegalPage, md: string, es: string | null, facts = { billing: BILLING_LIVE, deletion: WITHDRAWAL_DELETES }): string[] {
+  const why: string[] = []
+  const holes = md.split(MARKER).length - 1
+  if (holes) why.push(`placeholders: docs/legal/${page.source} still carries ${holes}`)
+  const header = md.split('\n').slice(0, md.split('\n').findIndex(l => l.trim() === '---') + 1 || 12).join('\n')
+  if (/STATUS:\s*DRAFT/.test(header)) why.push(`draft: docs/legal/${page.source} still opens "STATUS: DRAFT"`)
+  if (!page.signoff) why.push('sign-off: no attorney sign-off is recorded in registry.ts')
+  if (!page.spanish || es === null) why.push('spanish: there is no Spanish version')
+  else if (!page.spanish.reviewedBy) why.push(`spanish: ${page.spanish.source} has not been reviewed by a Spanish reader`)
+  if (page.needs === 'deletion' && !facts.deletion) why.push('deletion: withdrawing consent does not yet delete the child\'s data (WITHDRAWAL_DELETES)')
+  if (page.needs === 'billing' && !facts.billing) why.push('billing: billing is not live, so no refund can be given (BILLING_LIVE)')
+  return why
 }
