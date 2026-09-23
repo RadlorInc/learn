@@ -61,16 +61,20 @@ const substitute = (sql: string) =>
     .replace(/\bcitext\b/gi, 'text')
 
 export interface Loaded { db: PGlite; files: number }
+export const applyFile = (db: PGlite, file: string) =>
+  db.exec(substitute(readFileSync(resolve(ROOT, 'supabase/migrations', file), 'utf8')))
 
 /** Applies baseline + every migration. Throws on the first failure — a partly-built schema is not
  *  a schema, and swallowing an error here would make every assertion downstream vacuous. */
-export async function loadSchema(): Promise<Loaded> {
+export async function loadSchema(opts: { before?: string } = {}): Promise<Loaded> {
   const db = new PGlite()
   await db.exec(SUPABASE_PRELUDE)
 
   const files: [string, string][] = [
     ['baseline_schema.sql', readFileSync(resolve(ROOT, 'supabase/schema/baseline_schema.sql'), 'utf8')],
     ...readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql')).sort()
+      // `before`: stop short of one migration, to set up the state it will meet (and then apply it).
+      .filter(f => !opts.before || f < opts.before)
       .map(f => [f, readFileSync(resolve(ROOT, 'supabase/migrations', f), 'utf8')] as [string, string]),
   ]
 

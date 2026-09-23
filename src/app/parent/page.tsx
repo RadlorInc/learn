@@ -19,7 +19,7 @@ import {
   getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
-  deleteLearnerPermanently, removeMyselfFromLearner,
+  deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, removeMyselfFromLearner,
   getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
   getRecentPoints, getLessonRows, getExerciseResults,
@@ -231,14 +231,18 @@ function Dashboard() {
   }
 
   async function handleDelete(learnerId: string) {
-    // The child's own account first: deleting the learner removes its access row but NOT the auth user,
-    // which would outlive the child as a login that signs in to nothing.
-    if (childLogins === null || childLogins[learnerId]) {
-      const r = await removeChildLogin(learnerId)
-      // not_configured = this server cannot have made a login, so there is none to outlive the learner.
-      if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
+    // One call deletes the child, their login and every record about them (delete_learner).
+    let result = await deleteLearnerPermanently(learnerId)
+    if (result.error === LEGACY_DELETE) {
+      // Before 20260923140000: the child's own account first — deleting the learner removes its access
+      // row but NOT the auth user, which would outlive the child as a login that signs in to nothing.
+      if (childLogins === null || childLogins[learnerId]) {
+        const r = await removeChildLogin(learnerId)
+        // not_configured = this server cannot have made a login, so there is none to outlive the learner.
+        if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
+      }
+      result = await deleteLearnerRowLegacy(learnerId)
     }
-    const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
       setActionMsg(t('Learner deleted.'))
       setConfirming(null)
