@@ -15,7 +15,7 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 ## A. Children's consent (COPPA) — decide before the first real family
 
 ### A1. Withdrawal: one child, or the whole account? *(06 note 0, 06 Part A §4, 12 §4)*
-- **Today:** withdrawing consent (the link in the second email) deletes **only the child that consent covers**: every row about them, and their own sign-in. The consent record is kept, marked `withdrawn` and unlinked from the child. The account and any other children stay. Deleting one child from the dashboard has the same effect. Proven on real production rows on 23 September 2026.
+- **Today (after the consent-once change, see A8):** a parent can withdraw for **one child** (deleting that child's profile: every row about them and their own sign-in; the account, its consent and the other children stay) or for **every child** (Account → *Withdraw permission for all my children*, or the second email's link: every child deleted, the consent record kept as `withdrawn`, the account stays open with no children, and a new child needs a new consent). Single-child deletion was proven on real production rows on 23 September 2026; the every-child path is built and tested, not yet run on production.
 - **Draft:** until Round 1, docs 06 and 12 said withdrawal **closes the whole account**, including other children, with a pro-rata refund. They now describe the build (Round 1, PR #195). The notice, both emails and the withdrawal screen already said "your account stays open".
 - **Decide:** (a) Does per-child withdrawal satisfy the revocation right, or must or should withdrawal close the account? (b) What happens to a subscription when consent for one child is withdrawn (see C4)?
 
@@ -43,6 +43,19 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 ### A7. Spanish — the standard *(02 note 6)*
 - **Today:** the consent notice, both consent emails and the withdrawal screen **render in Spanish for a Spanish-language parent**. That text was machine-translated and **no Spanish speaker has reviewed it**. Consent records store the language, so consents given in Spanish can be found and re-asked. Spanish drafts of the seven legal pages were prepared in Round 1 and **cannot render until a named reviewer signs them** (a build guard).
 - **Decide:** (a) What standard must a Spanish legal text meet: certified translation, a qualified reviewer, or something else? (b) Which version controls if they differ (see D6)? (c) May the unreviewed Spanish consent text stay live until review, or should Spanish-language parents see English meanwhile?
+
+### A8. One consent per parent account, plus an attestation for each child *(new, 24 September 2026; docs 02, 03, 06, 11, 12)*
+- **Today (built, not yet on production):** at signup the parent reads the notice (a summary with the full notice one tap away) and ticks *"I'm a parent or legal guardian, I've read what we collect, and I agree."* Both signup buttons stay disabled until they tick. Then **one** email-plus round: B1 with *"I give permission"*, and the automatic B3 a day later. That single consent covers every child the parent adds to the account. For each child added later there is **no email**: the parent ticks an unticked box, *"I'm this child's parent or legal guardian. The permission I gave on {date} applies to this child too."* The database records, on the child, who ticked it, when, and which notice version it referred to, and it refuses to store any child without both the account consent (granted, current) and that tick.
+- **Decide:** (a) **Is one verifiable consent per parent account, plus an in-app parental attestation for each later child, sufficient under COPPA's email-plus method?** (b) **When must we re-obtain consent after a notice change?** The build has a switch per notice version. When it is set, every older consent stops counting and parents are re-asked before any further collection; it is not set for any version today. (c) Is the attestation wording enough, and must a parent be re-notified when they add a child long after consenting?
+
+### A9. "Option B": no click in B1 *(proposed, not built)*
+- **What it would be:** the checkbox before signup, the Google-verified (or confirmed) email address, and the automatic B3 confirmation a day later, with **no** "I give permission" click in B1. That is one fewer step for parents.
+- **Why it is less certain:** email-plus is described as the parent *responding* to an email plus a confirming follow-up. A pre-signup checkbox is a website click, which the FTC has not treated as verifiable on its own. A Google-verified address proves control of the inbox, not agreement to the notice. Without the click, the only step taken from the inbox is the optional withdrawal link.
+- **Decide:** would Option B satisfy § 312.5(b), and if so, with what wording in the (then informational) first email?
+
+### A10. Could the signup confirmation email be the consent email? *(proposed, not built — we recommend against)*
+- It would save one email, and only for email/password parents. **Google sign-in parents get no confirmation email**, so they would need B1 anyway: two flows instead of one. The auth service's templates live in its dashboard (not in our versioned code) and cannot schedule B3. A confirmation click proves control of an inbox, not agreement to the notice. The same email type is also used for password resets and address changes, which muddies the evidence.
+- **Decide:** only if you see an advantage we have missed.
 
 ---
 
