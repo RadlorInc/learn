@@ -46,7 +46,17 @@ Automated tests do not touch production — they use a throwaway local database 
 
 **This is the control to fix first**, and it is urgent for a specific reason: interns are testing content. The rule below cannot be honoured while the only database anyone can point at is the live one.
 
+**Interns test on profiles they create themselves** (Rafi, 23 September 2026). That is better than testing on a real family's account, and it means no intern is reading another child's records. But those profiles are created **in the production database**, so interns are still writing to the live system, and some of the 26 child records may be test profiles rather than real children.
+
+Two things follow. First, staging is still required — "their own profile" and "not production" are different claims, and only the second one protects anything. Second, **it is worth establishing how many of the 26 children are real**, because that is the number of families who need to be asked for consent retroactively, and it may be considerably smaller than 26. [PLACEHOLDER — identify which child records belong to intern and staff test accounts, and record the real count here.]
+
 **Testers and interns.** Anyone reviewing or testing the product — including unpaid interns on academic placements — works against test accounts and seeded data only, never against real children's records. This is a condition of their access and it belongs in their placement agreement. Before a testing session begins, confirm that the environment the tester is pointed at contains no real child data. [PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]
+
+## 4a. Who may create a child profile — an unresolved question
+
+The consent gate assumes a parent. The product also lets a **teacher** add students to a class roster, and those students arrive with no consent record, so every roster add will be refused the moment the gate is applied.
+
+The consent flow cannot honestly serve teachers either: its button says "I'm the parent or legal guardian", and a teacher is neither. School consent under COPPA is a separate mechanism with its own conditions, and it is not built. [PLACEHOLDER — attorney: can a school consent on a parent's behalf here, and under what conditions? Until that is answered, the teacher path and the consent gate cannot both be live.]
 
 ## 5. Vendor management
 
@@ -68,7 +78,9 @@ Report a suspected incident to support@radlor.com.
 
 ## 7. People
 
-Anyone with production access reads this program before they get access and at least annually after. [PLACEHOLDER — record how this is evidenced.] Contractors and freelancers do not receive children's data. [PLACEHOLDER — confirm against every current arrangement.]
+Anyone with production access reads this program before they get access and at least annually after; that reading is recorded in Radlor Ops alongside the annual review.
+
+**Contractors and freelancers do not receive children's data.** Confirmed 23 September 2026: there are no contractors or freelancers with any access. The only outside people working on the product are the unpaid interns described below.
 
 ## 8. Annual evaluation
 

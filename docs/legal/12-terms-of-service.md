@@ -42,6 +42,7 @@ Milo is an adaptive learning tool. It presents lessons, questions and practice, 
 Because the Service is used by children, additional rules apply:
 
 - Before we collect anything about your child, we give you a **direct notice** telling you exactly what we collect, and we obtain your **verifiable consent**.
+- **We keep a record of that consent** — the date, how it was given, your email address, and the version of each document you were shown. We keep it so that we can show, later, exactly what you agreed to. If you close your account, that record is deleted along with everything else. [PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]
 - You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://adaptivelearn.radlor.com/legal/parent-rights).
 - If you withdraw consent, we stop collecting, delete what we hold about your child, and close the profile. Your subscription is cancelled and we refund the unused part of it — you are never charged for exercising a privacy right. If more than one child is set up on the account, withdrawing consent closes the whole account; to remove a single child without ending the account, use the *Remove this child* function instead.
 

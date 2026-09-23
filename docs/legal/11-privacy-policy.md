@@ -65,7 +65,7 @@ We ask a child for no more information than is reasonably necessary to take part
 |---|---|
 | Name and email address | To create the account, to contact you about it, and to verify your identity when you make a request about your child's data |
 | Subscription and billing details | To take payment and manage the subscription. **Payments are processed by our payment provider. We never receive or store your full card number or security code** — we receive a payment reference, your email address, the plan you chose and the number of seats. [PLACEHOLDER — confirm the exact fields returned once billing is switched on.] |
-| Your record of consent — the method, the date, and the version of the documents you were shown | Because the law requires us to be able to show that consent was given |
+| Your record of consent — the method, the date, your email address, and the version of each document you were shown | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is deleted with everything else |
 | Messages you send us | To answer you |
 
 ## 5. Your rights as a parent

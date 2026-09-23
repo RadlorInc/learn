@@ -14,6 +14,23 @@
 > 1. **Email-plus is only permissible where the child's information is not disclosed to third parties.** The vendor review in document 07 has to be finished, from the code, and come back clean before Path B can be relied on for a real child.
 > 2. **Path B is a real mechanism, not a stub.** Any gap between sign-up and first payment is exactly the window where a child has no card-based consent behind them.
 
+> ## ⛔ Before any of this reaches a real parent
+>
+> The copy below was written before the flow existed, and the build has now shown that **eight of its statements are ahead of the product**. They were used verbatim, as instructed, so every one of them renders today. None of these emails or screens may be sent to a real parent until each line is either true or changed.
+>
+> | The copy says | What the product does | Fix |
+> |---|---|---|
+> | Withdrawal deletes the child's data and closes the account | Withdrawal **stops collection only**. Nothing is deleted | Build deletion, or change the wording |
+> | Withdrawal refunds the unused subscription | Billing has never run | True once billing is live; until then it must not be said |
+> | Use *Remove this child* | The real control is *Delete <name>'s profile* | Rename one or the other so they match |
+> | Consent can be given by payment card | That path does not exist yet | Describe only the path that works |
+> | Links to the subprocessor, retention and parent-rights pages | All three return 404 | Build the pages, or drop the links |
+> | "Full details in our Privacy Policy" | That page is bannered **DRAFT — NOT IN FORCE** | Finish the policy first |
+> | "a child under 13" | Grade 8 children are mostly 13–14 | Say "your child"; COPPA's under-13 rule is explained separately |
+> | The list of what we collect | Omits the avatar, points, game saves, the child's username, feedback and product events | Corrected below |
+>
+> A consent given against a notice that overstates what happens is worse than no consent, because it looks like one. **This is the gate on Phase 2 shipping, not a tidy-up afterwards.**
+
 ## Flow overview
 
 ```
@@ -102,13 +119,16 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > Hi,
 >
-> Someone — we believe you — asked to set up a Milo account for a child under 13.
+> Someone — we believe you — asked to set up a Milo account for your child.
 >
 > Before we collect anything from your child, US law requires your permission. Here is exactly what we would collect:
 >
 > - your child's first name or nickname
 > - their grade level
-> - their answers to maths questions, their scores, and their progress
+> - the avatar you pick and the username your child signs in with
+> - their answers to maths questions, their scores, their points and progress, and anything they save in a game
+> - any feedback they send us about a lesson
+> - a small number of product events, such as a lesson starting
 > - basic technical information from the device, to keep the app working and secure
 >
 > We do not ask your child for a last name, email, phone number, address, photo, voice recording, or location. We do not sell your child's information, and we do not use it for advertising.
@@ -162,7 +182,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within 10 business days.
 >
-> **If you have more than one child on this account, withdrawing permission closes the whole account, including your other children's profiles.** If you only want to remove one child, use *Remove this child* instead.
+> **If you have more than one child on this account, withdrawing permission closes the whole account, including your other children's profiles.** If you only want to remove one child, use *Delete <name>'s profile* instead. [PLACEHOLDER — this control's name must match the product exactly; check it on the day this ships, and keep them matching afterwards.]
 
 **Buttons:** `Withdraw permission and delete my child's data` · `Keep my settings`
 

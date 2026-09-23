@@ -20,7 +20,7 @@
 
 ## Body
 
-You are setting up an account for a child under 13. United States law (the Children's Online Privacy Protection Act) requires us to tell you exactly what we collect from your child and to get your permission first. Here it is, in plain language.
+You are setting up a profile for your child. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their child's age. Here it is, in plain language.
 
 ### What we collect from your child
 
@@ -29,7 +29,9 @@ You are setting up an account for a child under 13. United States law (the Child
 | Your child's first name (or a nickname you choose) | So the app can address your child and so you can tell your children's profiles apart | Required — you may use a nickname instead of a real name |
 | The avatar you pick for your child | So your child recognises their own profile | Required — chosen from a set we provide; it is not a photograph |
 | Grade level | To give your child work at the right level | Required |
-| Answers to maths questions, scores, and progress | This is the product: it is how the app decides what to teach next and how it shows you progress | Required |
+| The username your child signs in with | So your child can sign in without needing an email address of their own | Required |
+| Answers to maths questions, scores, points, progress, and anything saved in a game | This is the product: it is how the app decides what to teach next and how it shows you progress | Required |
+| Any feedback your child sends us about a lesson | So we can fix what is not working | Only if they send it |
 | Basic technical information from the device — a sign-in token kept on the device; a per-tab marker of which child's profile is in use; an internal identifier for the child, which appears on every progress and event record; a random identifier per event, used to avoid duplicates; the device's IP address and browser type, and an approximate location — city, region and country — derived from the IP address by our hosting and database providers, who record it for every request; and, if the app crashes, the page being viewed and the browser type. We set no cookies | To keep the app working, keep the account secure, and keep your child signed in | Required for the app to function |
 | A small number of product events, such as a lesson starting | So we can see which parts of the app are used. Tied to an internal identifier, not a name; deleted after 90 days | Required |
 
@@ -50,10 +52,11 @@ We use this information only to run Milo for your child: to teach, to track prog
 
 ### Your permission
 
-Before we collect any of the above, we need your verifiable consent. You will be asked to give it in one of two ways, depending on how you sign up:
+Before we collect any of the above, we need your verifiable consent.
 
-- **If you are subscribing to a paid plan:** we verify you through the payment card you use at checkout. Your card issuer will notify you of the transaction, which confirms an adult account holder approved it.
-- **If you are starting without a payment method:** we send a consent request to your email address, you confirm it, and then we send a second confirmation email a little later to the same address. You can withdraw your consent from either email.
+We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. You can withdraw your consent from either email.
+
+[PLACEHOLDER — a second method, verification through the payment card at checkout, is specified in document 03 and is not built. Add it here only when it exists; describing a choice a parent cannot make is worse than offering one method plainly.]
 
 ### Your rights as a parent
 
@@ -61,7 +64,7 @@ At any time, you can:
 
 - **See** everything we hold about your child;
 - **Delete** your child's information;
-- **Withdraw your consent** and stop any further collection — if you do, we will delete what we hold and your child will no longer be able to use the app;
+- **Withdraw your consent** and stop any further collection — if you do, your child will no longer be able to use the app. [PLACEHOLDER — the earlier wording promised deletion here. The build stops collection but does not yet delete. Restore the promise once deletion is built; until then this line must not claim it.]
 
 To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.
 

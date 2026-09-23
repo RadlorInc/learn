@@ -6,7 +6,7 @@
 
 **Owner:** Rakif [PLACEHOLDER — full name, for the record]
 **Adopted:** [PLACEHOLDER — date]
-**Review cycle:** [PLACEHOLDER — e.g. annually, and on any material change to the product]
+**Review cycle:** annually, and on any material change to the product, the vendor set, or the data collected.
 **Facts in this document were measured on 22 September 2026.**
 
 ---
@@ -33,7 +33,9 @@ We keep children's personal information only for as long as it is reasonably nec
 | Backups | Encrypted build artifact, 30-day expiry by design | **No backup exists today.** See Section 6 | **Broken** |
 | Support correspondence with parents | Email | [PLACEHOLDER — number] months | Not automated |
 
-**Consent records: there is no consent table.** Nothing in the system records that an adult agreed, to what, or when. Until that exists there is no retention period to state, and the row that belongs here cannot be written. See the Security Program and document 16.
+**Consent records — `parental_consents`, built 23 September 2026.** Holds the adult, the child, the method, the timestamps, the version of each document shown, and the state. It is linked to the adult account and **cascades on account deletion**, so closing an account erases the only evidence that consent was ever given or withdrawn.
+
+That is a genuine tension, not an oversight: it is what "we delete everything we hold about you" requires, and it is the opposite of what record-keeping for children's consent usually wants. Resolving it needs an anonymised consent log that survives deletion, plus a sentence in the Privacy Policy describing it — neither exists. [PLACEHOLDER — attorney to decide; until then the cascade stands, because inventing a retention rule for evidence about children would be worse than naming the gap.]
 
 ## 3. Deletion on request
 
@@ -61,7 +63,7 @@ Two things sit outside our deletion jobs, and both must be described honestly to
 | Deletion of expired diagnostic answers, crash rows, lead emails | Three further nightly jobs | Active, no failures, but none has yet had a row old enough to delete — so each is *scheduled* rather than *proven* |
 | Deletion on parent request | Parent Rights procedure | The parent-request log in Radlor Ops |
 | Backups | Nightly encrypted artifact | **FAILING.** Succeeded 14 times to 9 September, then failed **13 consecutive nights** because three of four required secrets are missing. Independently confirmed: zero backup artifacts exist. **There is no restorable copy of this database today** |
-| Annual review of this policy | Owner named above | [PLACEHOLDER — where the review is recorded] |
+| Annual review of this policy | Owner named above | Recorded in Radlor Ops, alongside the parent-request log |
 
 **Verification requirement.** Before any deletion job is trusted it must be watched deleting a seeded test record, and watched *not* deleting a record still in date. A job reporting "0 rows deleted" means nothing until it has first been seen deleting something.
 

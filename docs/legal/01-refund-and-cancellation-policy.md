@@ -15,7 +15,7 @@
 
 ## 1. What this policy covers
 
-This policy explains how subscriptions to Milo are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, [PLACEHOLDER — state which document controls].
+This policy explains how subscriptions to Milo are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, **the Terms of Service control.**
 
 ## 2. Our plans
 

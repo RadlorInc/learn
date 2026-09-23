@@ -18,7 +18,7 @@
 1. **The "From", "Reply-To" and routing information must be accurate** and identify Radlor.
 2. **The subject line must not mislead** about what is inside.
 3. **If it is an advertisement, say so** — clearly, where the reader will see it. [PLACEHOLDER — confirm with the attorney whether this applies to our sends, given the recipient relationship.]
-4. **A valid physical postal address** must appear. A PO box or registered agent address may qualify. [PLACEHOLDER — which address Radlor will use.]
+4. **A valid physical postal address** must appear: 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 — the same address used everywhere else.
 5. **A clear unsubscribe mechanism** must be present, working, and free.
 6. **Unsubscribes are honoured within 10 business days** — and in practice, immediately.
 7. **We never sell, rent or transfer an address** that has unsubscribed.
@@ -75,6 +75,6 @@ Questions: support@radlor.com
 ### Notes for the attorney reviewing this draft
 
 1. Please confirm which of our planned sends are commercial for CAN-SPAM purposes.
-2. Please confirm the postal address we may use.
+2. Please confirm the Newark address qualifies as a valid physical postal address for this purpose.
 3. Please advise whether any state email or marketing statute adds requirements for a child-directed service.
 4. Please advise on SMS, if it is ever added — the rules are different and stricter.
