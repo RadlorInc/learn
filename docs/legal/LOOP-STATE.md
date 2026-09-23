@@ -48,7 +48,7 @@ Started 2026-09-23. Rafi approves every step that touches production. Rules: no 
 |---|---|---|
 | D0 preflight | **done** — was BLOCKED on §2/§3/§5; founder decided each (below) | read-only; measured 2026-09-23 |
 | D1 merge `origin/main` + the founder's four fixes | **done** | merge `8c0e5a3d` (**no conflicts**: main brought package.json/lock, 874 Josh clips, the Kaggle notebooks, `lessonVoiceClips.test.ts`); `94edc0b2` deploy.yml; `a8a55234` consent copy; `2f02a1d2` roster pause; `5eee2bf3` records. **CI steps on Node 20.20.2, clean tree at `5eee2bf3`:** `npm ci` 0 · `tsc` 0 · vitest **102 files, 3,499 passed, 11 skipped** · `next build` 0 · `npm audit --audit-level=high` **0 vulnerabilities**. Legal/consent guard files alone: **15/15, 135 tests**. Real placeholders **73** (`[PLACEHOLDER —` in the 16 numbered docs; control: the grep on a planted line → 1). Breaks this step, each red on its own assertion, tree byte-identical: B3's old sentence in doc 03 → consentCopy red ×3; roster always-paused → rosterPaused red ×2; never-paused → red ×1. |
-| D2 deploy the app | not started | — |
+| D2 deploy the app | **⛔ waiting on Rafi — merge PR #181** (once CI is green) | Branch pushed (secret/PII scan of every added line clean; control caught planted samples). [PR #181](https://github.com/RadlorInc/learn/pull/181). First CI: `verify` green, **`rls-tests` RED — the consent gate refused the RLS suite's own fixture children** (`rls_regression.sql`, P0C01). Reproduced locally on CI's setup (exit 3, same error); fixed by giving each suite child a granted consent (`45ec2be0`) — trigger NOT disabled; locally ALL PASSED, **74 assertions** (unchanged). |
 | D3 before-migration checks | not started | — |
 | D4 apply the four migrations | not started | — |
 | D5 real deletion on real rows | not started | — |
@@ -127,3 +127,8 @@ select (select count(*) from supabase_migrations.schema_migrations) as ledger_ro
 
 ⚠️ **Two placeholders are now stale but were left, to keep the count at 73 as instructed:** doc 02's rights line still carries "[PLACEHOLDER — the earlier wording promised deletion here … Restore the promise once deletion is built…]" (it has now been restored), and doc 03's withdrawal paragraph still carries the placeholder about the control's name (the paragraph no longer names a control). Neither renders. Rafi's call whether to resolve them.
 ⚠️ **Doc 06 contradicts the new copy** (withdrawal "closes the whole account" and refunds) — the open attorney question, deliberately untouched.
+
+## ⛔ D2 HUMAN GATE — what Rafi does, and what I check after
+
+**Rafi:** when PR #181's checks are all green, merge it. Then, in Actions → the Deploy run for that merge: **`migrate-prod` should be WAITING for `production-db` approval — do NOT approve it.** (It carries the four migrations; D3 and the migration-ledger query come first.) While it waits, later pushes to `main` queue behind it.
+**I then check:** the Deploy run's jobs (`ci` green, `promote` green, `migrations-changed` = true, `migrate-prod` waiting — this is also the first proof that the new `deploy.yml` condition works); Vercel production reaches Ready on the merge commit; the live site against D0 §5 screen by screen (landing, `/auth`, `/legal/*` dark with banner + `noindex`, footer links); a string from this PR present in the live bundle (the artefact contains the change). **Signed-in checks are Rafi's** (I do not type passwords): an existing test account signs in; a test child answers a question and earns points; "Add a child" still opens the old sheet (no consent table yet).
