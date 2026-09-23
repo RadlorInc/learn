@@ -15,22 +15,25 @@ import { publishRefusals, LEGAL_PAGES, type LegalPage } from '@/app/legal/regist
 const CLEAN_MD = '# Doc\n\n> **STATUS: FINAL**\n\n---\n\n## 1. Body\n\nA finished sentence.\n'
 const OK: LegalPage = {
   slug: 'x', title: 'X', source: 'x.md', until: '### Notes', published: true,
-  signoff: { by: 'Counsel', date: '2026-10-01' }, spanish: { source: 'x.es.md', reviewedBy: 'Reviewer' },
+  signoff: { by: 'Counsel', date: '2026-10-01' }, spanish: { source: 'es/x.md' },
 }
+/** A Spanish text a reader has signed, and the same text unsigned (the line lives in the file — `legalSpanish.test.ts`). */
+const ES_OK = 'REVIEWED-BY: Revisora, 2026-10-01\n\n---\n\nTexto'
+const ES_UNREVIEWED = 'REVIEWED-BY:\n\n---\n\nTexto'
 const FACTS = { billing: true, deletion: true }
 
 describe('the switch refuses, one reason at a time', () => {
   it('lets a page that is ready through — the control', () => {
-    expect(publishRefusals(OK, CLEAN_MD, 'Texto', FACTS)).toEqual([])
+    expect(publishRefusals(OK, CLEAN_MD, ES_OK, FACTS)).toEqual([])
   })
 
   const cases: [string, LegalPage, string, string | null, typeof FACTS, RegExp][] = [
-    ['a placeholder', OK, CLEAN_MD + '\n[' + 'PLACEHOLDER — date]\n', 'Texto', FACTS, /^placeholders: /],
-    ['a DRAFT banner', OK, CLEAN_MD.replace('STATUS: FINAL', 'STATUS: DRAFT — NOT LEGAL ADVICE'), 'Texto', FACTS, /^draft: /],
-    ['no attorney sign-off', { ...OK, signoff: null }, CLEAN_MD, 'Texto', FACTS, /^sign-off: /],
-    ['Spanish unreviewed', { ...OK, spanish: { source: 'x.es.md', reviewedBy: null } }, CLEAN_MD, 'Texto', FACTS, /^spanish: .*not been reviewed/],
-    ['parent-rights before deletion', { ...OK, needs: 'deletion' }, CLEAN_MD, 'Texto', { ...FACTS, deletion: false }, /^deletion: /],
-    ['refunds before billing', { ...OK, needs: 'billing' }, CLEAN_MD, 'Texto', { ...FACTS, billing: false }, /^billing: /],
+    ['a placeholder', OK, CLEAN_MD + '\n[' + 'PLACEHOLDER — date]\n', ES_OK, FACTS, /^placeholders: /],
+    ['a DRAFT banner', OK, CLEAN_MD.replace('STATUS: FINAL', 'STATUS: DRAFT — NOT LEGAL ADVICE'), ES_OK, FACTS, /^draft: /],
+    ['no attorney sign-off', { ...OK, signoff: null }, CLEAN_MD, ES_OK, FACTS, /^sign-off: /],
+    ['Spanish unreviewed', OK, CLEAN_MD, ES_UNREVIEWED, FACTS, /^spanish: .*not been reviewed/],
+    ['parent-rights before deletion', { ...OK, needs: 'deletion' }, CLEAN_MD, ES_OK, { ...FACTS, deletion: false }, /^deletion: /],
+    ['refunds before billing', { ...OK, needs: 'billing' }, CLEAN_MD, ES_OK, { ...FACTS, billing: false }, /^billing: /],
   ]
   it.each(cases)('refuses %s, and names only that', (_n, page, md, es, facts, reason) => {
     const why = publishRefusals(page, md, es, facts)
@@ -46,7 +49,7 @@ describe('the switch refuses, one reason at a time', () => {
 describe('every real page is refused today, and says why', () => {
   it.each(LEGAL_PAGES.map(p => [p.slug, p] as const))('%s', async (_s, p) => {
     const { readDoc } = await import('@/app/legal/source')
-    const why = publishRefusals(p, readDoc(p.source), null)
+    const why = publishRefusals(p, readDoc(p.source), p.spanish ? readDoc(p.spanish.source) : null)
     for (const r of ['placeholders', 'draft', 'sign-off', 'spanish'])
       expect(why.some(w => w.startsWith(r + ':')), `${p.slug} is not refused for ${r}`).toBe(true)
     if (p.needs) expect(why.some(w => w.startsWith(p.needs + ':'))).toBe(true)
