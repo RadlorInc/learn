@@ -59,10 +59,10 @@ export async function createLearner(
   ageGroup: AgeGroup,
   /** What the child starts with: a class (its lessons), or just the modules chosen when adding them. */
   inClass?: { classId?: string; lessonIds: string[] | null },
-  /** The granted parental consent this child is created under. Required by the database once the
-   *  consent migration is applied (trg_enforce_learner_consent); absent before it, when there is no
-   *  gate — see AddChildFlow for why both shapes are tolerated. */
-  consentId?: string,
+  /** The parent's granted ACCOUNT consent, and the notice version the attestation checkbox showed —
+   *  that consent's own `notice_version`. trg_enforce_learner_consent refuses a child without both
+   *  (consent-once); it stamps who/when/how itself, so nothing else about the attestation is sent. */
+  consent?: { id: string; noticeVersion: string },
 ): Promise<Learner | null> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
@@ -79,7 +79,7 @@ export async function createLearner(
     if (inClass.classId) payload.grade_id = inClass.classId
     payload.lesson_ids = inClass.lessonIds
   }
-  if (consentId) payload.consent_id = consentId
+  if (consent) { payload.consent_id = consent.id; payload.attested_notice_version = consent.noticeVersion }
 
   const { data, error } = await supabase
     .from('learners')

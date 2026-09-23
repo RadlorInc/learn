@@ -5,7 +5,7 @@ import { NOTICE_VERSION } from '@/features/consent/copy'
 import { PENDING_TTL_DAYS } from '@/features/consent/config'
 import { renderB1 } from '@/features/consent/email'
 import {
-  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, userFromBearer, type RpcError,
+  ConfigMissing, requireConfig, ackTime, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, userFromBearer, type RpcError,
 } from '@/features/consent/server'
 
 /**
@@ -25,6 +25,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   if (body?.noticeVersion !== NOTICE_VERSION) return NextResponse.json({ error: 'stale_notice' }, { status: 409 })
   const lang = body?.lang === 'es' ? 'es' : 'en'
+  const ackAt = ackTime(body?.ackAt)
 
   try {
     requireConfig()
@@ -37,9 +38,13 @@ export async function POST(req: Request) {
       ;[row] = await rpc<{ consent_id: string; email: string }[]>('consent_request', {
         p_parent: parent, p_notice_version: NOTICE_VERSION, p_privacy_version: PRIVACY_VERSION,
         p_terms_version: TERMS_VERSION, p_lang: lang, p_token_hash: hashToken(token), p_ttl: `${PENDING_TTL_DAYS} days`,
+        p_scope: 'account', p_ack_at: ackAt,
       })
     } catch (e) {
       if ((e as RpcError).code === 'P0C03') return NextResponse.json({ error: 'not_eligible' }, { status: 403 })
+      // PostgREST resolves an RPC by its parameter NAMES: a database without consent-once (20260924100000)
+      // has no consent_request(…, p_scope, p_ack_at) and answers PGRST202. Nothing was written; say so.
+      if ((e as RpcError).code === 'PGRST202') return NextResponse.json({ error: 'not_ready' }, { status: 503 })
       throw e
     }
 

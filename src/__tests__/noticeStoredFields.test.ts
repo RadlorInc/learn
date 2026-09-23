@@ -32,10 +32,10 @@ import { NOTICE, B1, B3 } from '@/features/consent/copy'
 
 describe('the notice names what a new child row stores', () => {
   it('createLearner writes exactly these fields for a child added through consent', async () => {
-    await createLearner('Bea', 2, '9-11', { lessonIds: ['g3m1-t1'] }, 'consent-1')
+    await createLearner('Bea', 2, '9-11', { lessonIds: ['g3m1-t1'] }, { id: 'consent-1', noticeVersion: 'notice-v5' })
     expect(inserted, 'createLearner never reached the insert — the check saw nothing').not.toBeNull()
     expect(Object.keys(inserted!).sort()).toEqual(
-      ['age_group', 'avatar_index', 'consent_id', 'created_by', 'display_name', 'lesson_ids'],
+      ['age_group', 'attested_notice_version', 'avatar_index', 'consent_id', 'created_by', 'display_name', 'lesson_ids'],
     )
     expect(inserted, 'no exact grade or age is stored').not.toHaveProperty('grade')
   })

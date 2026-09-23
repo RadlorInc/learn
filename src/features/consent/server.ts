@@ -49,6 +49,19 @@ const docVersion = (p: LegalPage) =>
 export const PRIVACY_VERSION = docVersion(pageBySlug('privacy')!)
 export const TERMS_VERSION = docVersion(pageBySlug('terms')!)
 
+/**
+ * When the parent ticked "I'm a parent or legal guardian… and I agree" — as the browser reports it, so
+ * only a plausible time is kept: a real ISO timestamp, not in the future (a minute of clock skew
+ * allowed), and not older than 30 days. Anything else is null, and the database records now() instead.
+ */
+const ACK_MAX_AGE_MS = 30 * 86_400_000
+export function ackTime(v: unknown, now = Date.now()): string | null {
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(v)) return null
+  const t = Date.parse(v)
+  if (!Number.isFinite(t) || t > now + 60_000 || t < now - ACK_MAX_AGE_MS) return null
+  return new Date(t).toISOString()
+}
+
 // ── Supabase, as the service role ──
 export interface RpcError { status: number; code?: string; message?: string }
 

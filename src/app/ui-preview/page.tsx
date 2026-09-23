@@ -25,6 +25,9 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
 import { AddChildFlow } from '@/features/consent/AddChildFlow'
+import { ConsentPanel } from '@/features/consent/AccountConsent'
+import { SignupConsent } from '@/features/consent/SignupConsent'
+import { WithdrawAll } from '@/features/consent/WithdrawAll'
 import { useState } from 'react'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { ParentPinGate } from '@/shared/ui/ParentPinGate'
@@ -69,6 +72,7 @@ function Surfaces() {
       {/* The consent flow as "+ Add a child" opens it — NOT fake data: it reads and writes the signed-in
           parent's real consents, so it can be driven end to end without the dashboard's PIN screen. */}
       {p === 'consent' && <ConsentPreview />}
+      {p.startsWith('co-') && <ConsentOncePreview p={p} />}
       {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'mhex' && <div style={{ width: '100%' }}><ModuleHome learnerId={null} grade={5} exercises={{ count: 1, onOpen: () => {} }} /></div>}
@@ -163,7 +167,24 @@ function DashPreview({ p }: { p: string }) {
 
 function ConsentPreview() {
   const lang = useLang()
-  return <div data-t="consent"><AddChildFlow lang={lang} onClose={() => {}} renderAdd={id => (
-    <div data-consent-id={id ?? 'none'}><AddLearnerModal consentId={id} onClose={() => {}} onAdded={() => { document.body.dataset.added = 'yes' }} /></div>
+  return <div data-t="consent"><AddChildFlow lang={lang} onClose={() => {}} renderAdd={a => (
+    <div data-consent-id={a.id}><AddLearnerModal attest={a} onClose={() => {}} onAdded={() => { document.body.dataset.added = 'yes' }} /></div>
   )} /></div>
+}
+
+/**
+ * Consent-once (C2–C4) screens with MADE-UP states — layout only, nothing read or written. `?p=co-signup[&ticked=1]`,
+ * `co-notice`, `co-waiting`, `co-reask`, `co-attest`, `co-withdraw-all`. The real `/auth` signup is the page itself.
+ */
+function ConsentOncePreview({ p }: { p: string }) {
+  const lang = useLang()
+  const sp = useSearchParams()
+  const [ticked, setTicked] = useState(sp.get('ticked') === '1')
+  const card = (c: React.ReactNode) => <section data-t={p} className="adult-shell" style={{ background: 'var(--paper-soft)', border: '2px solid var(--card-border)', borderRadius: 20, padding: '22px 20px', maxWidth: 560, width: '100%', boxSizing: 'border-box' }}>{c}</section>
+  if (p === 'co-signup') return card(<SignupConsent lang={lang} ticked={ticked} onTick={setTicked} teacher={false} onTeacher={() => {}} />)
+  if (p === 'co-notice') return card(<ConsentPanel lang={lang} view={{ k: 'notice' }} onAsk={() => {}} onClose={() => {}} />)
+  if (p === 'co-waiting') return card(<ConsentPanel lang={lang} view={{ k: 'waiting', email: 'parent@example.com', days: 7 }} onAsk={() => {}} onClose={() => {}} />)
+  if (p === 'co-reask') return card(<ConsentPanel lang={lang} view={{ k: 'reask' }} onAsk={() => {}} onClose={() => {}} />)
+  if (p === 'co-withdraw-all') return card(<WithdrawAll lang={lang} onConfirm={() => {}} onKeep={() => {}} />)
+  return <div data-t="co-attest"><AddLearnerModal attest={{ id: 'demo', noticeVersion: 'notice-v5', confirmedAt: '2026-09-24T10:00:00Z' }} onClose={() => {}} onAdded={() => {}} /></div>
 }
