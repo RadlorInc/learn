@@ -75,15 +75,16 @@ export async function learnerName(id: string): Promise<string | null> {
 }
 
 /** The signed-in adult behind a bearer token, verified by the auth server — never a claim we decode. */
-export async function userFromBearer(req: Request): Promise<string | null> {
+export async function adultFromBearer(req: Request): Promise<{ id: string; email: string | null } | null> {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
   if (!token) return null
   const url = env('NEXT_PUBLIC_SUPABASE_URL'), anon = env('NEXT_PUBLIC_SUPABASE_ANON_KEY')
   const r = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anon, Authorization: `Bearer ${token}` }, cache: 'no-store' })
   if (!r.ok) return null
   const u = await r.json().catch(() => null)
-  return typeof u?.id === 'string' ? u.id : null
+  return typeof u?.id === 'string' ? { id: u.id, email: typeof u.email === 'string' ? u.email : null } : null
 }
+export const userFromBearer = async (req: Request): Promise<string | null> => (await adultFromBearer(req))?.id ?? null
 
 // ── Resend ──
 /** Resend's API unless overridden. The override exists for ONE reason: the local end-to-end run points
