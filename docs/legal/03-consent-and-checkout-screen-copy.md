@@ -69,7 +69,7 @@ Parent creates account
 > - Plan: [PLACEHOLDER — plan name]
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
-> - You can cancel any time at [PLACEHOLDER — in-app path] or by emailing support@radlor.com. Cancelling stops all future charges.
+> - You can cancel any time at **Account → Plan & billing** or by emailing support@radlor.com. Cancelling stops all future charges.
 > - Full terms: [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds)
 
 **Checkbox — unticked by default, and the button must stay disabled until it is ticked:**
@@ -99,7 +99,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 > **Renews:** automatically, [PLACEHOLDER — every month / every 12 months], on [PLACEHOLDER — date]
 > **Renewal amount:** [PLACEHOLDER — amount]
 >
-> **How to cancel:** sign in and go to [PLACEHOLDER — in-app path], or reply to this email. Cancelling stops all future charges. Your access continues until the end of the period you have paid for.
+> **How to cancel:** sign in and go to **Account → Plan & billing → See plans → Cancel subscription**, or reply to this email. Cancelling stops all future charges. Your access continues until the end of the period you have paid for.
 >
 > **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: https://adaptivelearn.radlor.com/legal/parent-rights. You can see everything we hold, delete it, or withdraw permission at any time.
 >
@@ -182,7 +182,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within 10 business days.
 >
-> **This applies only to this child.** Your account stays open, and any other children on it are not affected. [PLACEHOLDER — this control's name must match the product exactly; check it on the day this ships, and keep them matching afterwards.]
+> **This applies only to this child.** Your account stays open, and any other children on it are not affected.
 
 **Buttons:** `Withdraw permission and delete my child's data` · `Keep my settings`
 

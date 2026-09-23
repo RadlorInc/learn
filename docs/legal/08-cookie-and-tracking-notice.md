@@ -19,6 +19,12 @@
 | `milo-kv-migrated` | Local storage | Remembers that your saved data has already been moved to the newer storage format | Until you clear it | Strictly necessary |
 | `milo` database, `kv` store | On-device database | Your child's profile, what they last played, work waiting to sync if you go offline, voice and speed preferences, and the chosen language | Until you clear it | Functional |
 | `milo-shell`, `milo-static`, `milo-assets` | Cache storage | The app itself, its images and its audio, so lessons work offline and use less data. About 7 MB after one lesson, growing with each lesson's audio | Until the app updates to a new version | Strictly necessary |
+| `al-lang` | Local storage | The language you chose for the parent dashboard and the consent screens (English or Spanish) *(read from the code, 24 Sep 2026)* | Until you clear it | Functional |
+| `al-dash-prefs:<account id>` | Local storage | Your dashboard choices: reminders snoozed or hidden, kinds of reminder switched off, when you last visited, which guided tours you have seen. Nothing about a child *(read from the code)* | Until you clear it | Functional |
+| `exercise-done:<child id>:<exercise id>` | Local storage | That a child has finished a class exercise, so it shows as done on this device *(read from the code)* | Until you clear it | Functional |
+| `exercise-results-pending` | Local storage | A child's class-exercise answers that could not be sent yet (for example, offline), kept until they are sent *(read from the code)* | Until they are sent | Strictly necessary |
+| `milo_active_plan_<child id>` | Local storage | An older per-child learning-plan record, still written by some screens *(read from the code)* | Until you clear it | Functional |
+| `milo-pwa-dismissed` | Local storage | That you dismissed the "install the app" banner *(read from the code)* | Until you clear it | Functional |
 | `milo-auth` | Local storage | Keeps you signed in | Until sign-out or expiry | Strictly necessary |
 | `milo_active_learner` | Session storage | Which child's profile this browser tab is using | Until the tab closes | Strictly necessary |
 
