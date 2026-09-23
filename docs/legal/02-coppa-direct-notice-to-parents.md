@@ -64,7 +64,7 @@ At any time, you can:
 
 - **See** everything we hold about your child;
 - **Delete** your child's information;
-- **Withdraw your consent** — we stop any further collection and delete your child's information. Your account stays open. [PLACEHOLDER — the earlier wording promised deletion here. The build stops collection but does not yet delete. Restore the promise once deletion is built; until then this line must not claim it.]
+- **Withdraw your consent** — we stop any further collection and delete your child's information. Your account stays open.
 
 To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.
 
