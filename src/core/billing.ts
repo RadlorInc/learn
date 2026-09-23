@@ -76,7 +76,7 @@ export interface StripeSubscriptionish {
 
 /** Statuses that still hold seats. ⚠️ ALLOW-LIST, so an unfamiliar status from Stripe releases the
  *  seats rather than keeping them — fails CLOSED, exactly as `is_chapter_entitled` does. */
-const HOLDS_SEATS = new Set(['active', 'trialing', 'past_due', 'unpaid'])
+export const HOLDS_SEATS = new Set(['active', 'trialing', 'past_due', 'unpaid'])
 /** The two statuses that get the grace window. Entitlement additionally requires `now <= grace_until`. */
 const IN_GRACE = new Set(['past_due', 'unpaid'])
 export const GRACE_DAYS = 7

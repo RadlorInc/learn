@@ -45,3 +45,37 @@ export async function entitledChapters(
   const verdicts = await Promise.all(chapters.map(c => isChapterEntitled(learnerId, c)))
   return Object.fromEntries(chapters.map((c, i) => [c, verdicts[i]]))
 }
+
+export interface MySubscription {
+  status: string
+  seats_paid: number
+  current_period_end: string | null
+  cancel_at_period_end: boolean
+}
+
+/** This account's subscription row (RLS: owner can read), `null` when there is none, `undefined`
+ *  when we could not find out — the screen must not say "no subscription" because the wifi dropped. */
+export async function getMySubscription(): Promise<MySubscription | null | undefined> {
+  try {
+    const { data, error } = await db().from('subscriptions')
+      .select('status,seats_paid,current_period_end,cancel_at_period_end').maybeSingle()
+    return error ? undefined : (data ?? null)
+  } catch { return undefined }
+}
+
+export type CancelResult =
+  | { ok: true; current_period_end: string | null; emailed: boolean }
+  | { ok: false; error: 'no_subscription' | 'billing_not_configured' | 'unauthenticated' | 'failed' }
+
+/** Asks /api/billing/cancel. Sends no subscription id: the server finds it from the token. */
+export async function cancelMySubscription(): Promise<CancelResult> {
+  const { data: { session } } = await db().auth.getSession()
+  if (!session) return { ok: false, error: 'unauthenticated' }
+  try {
+    const r = await fetch('/api/billing/cancel', { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` } })
+    const j = (await r.json().catch(() => null)) as { ok?: boolean; error?: string; current_period_end?: string | null; emailed?: boolean } | null
+    if (r.ok && j?.ok) return { ok: true, current_period_end: j.current_period_end ?? null, emailed: !!j.emailed }
+    const e = j?.error
+    return { ok: false, error: e === 'no_subscription' || e === 'billing_not_configured' || e === 'unauthenticated' ? e : 'failed' }
+  } catch { return { ok: false, error: 'failed' } }
+}
