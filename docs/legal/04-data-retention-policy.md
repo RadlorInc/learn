@@ -30,7 +30,7 @@ We keep children's personal information only for as long as it is reasonably nec
 | Live sessions, including IP address and browser | `auth.sessions` | Until the session expires | Provider-managed |
 | Provider request logs — IP address, browser, IP-derived city/region/country, account id | Our database provider's own platform logs | **Unknown.** The project is 20 days old and nothing has aged out, so "kept indefinitely" cannot yet be distinguished from "kept at least 20 days" | **Outside our jobs entirely** |
 | Hosting request and console logs | Hosting provider | [PLACEHOLDER — the provider's retention for this plan could not be read from the API; confirm from the dashboard or the provider's documentation] | Provider-managed |
-| Backups | Encrypted build artifact, 30-day expiry by design | **No backup exists today.** See Section 6 | **Broken** |
+| Backups | Encrypted build artifact, 30-day expiry by design | 30 days | **Working — restore proven 23 Sep 2026.** See Section 6 |
 | Support correspondence with parents | Email | [PLACEHOLDER — number] months | Not automated |
 
 **Consent records — `parental_consents`, built 23 September 2026.** Holds the adult, the child, the method, the timestamps, the version of each document shown, and the state. It is linked to the adult account and **cascades on account deletion**, so closing an account erases the only evidence that consent was ever given or withdrawn.
@@ -51,7 +51,7 @@ We keep information past its scheduled deletion only where we must: to comply wi
 
 Two things sit outside our deletion jobs, and both must be described honestly to parents rather than glossed:
 
-**Backups.** Deleting a record from the live database does not remove it from a backup. Backups are designed to expire after 30 days, so a deleted record can survive in a backup for up to that long. We never restore a deleted child's record from a backup. *(Today there is no backup at all — see Section 6 — so this paragraph describes the intended state, not the current one.)*
+**Backups.** Deleting a record from the live database does not remove it from a backup. Backups are designed to expire after 30 days, so a deleted record can survive in a backup for up to that long. We never restore a deleted child's record from a backup. A backup holds everything in the database, including parents' sign-in session tokens, so it is encrypted and the passphrase is held only in the password manager and the code host's secret store.
 
 **The database provider's platform logs.** These record the IP address, browser type and an IP-derived approximate location for every request, including requests made by children's devices. They are the provider's own logs, not our tables, and none of our deletion jobs reach them. [PLACEHOLDER — establish the provider's retention period for these logs and state it here; if it is configurable, configure it.]
 
@@ -62,7 +62,7 @@ Two things sit outside our deletion jobs, and both must be described honestly to
 | Deletion of expired product events | `purge-old-learner-events`, nightly 03:17 | **Proven** — a run reported deleting real rows. 19 runs since 4 September, no failures |
 | Deletion of expired diagnostic answers, crash rows, lead emails | Three further nightly jobs | Active, no failures, but none has yet had a row old enough to delete — so each is *scheduled* rather than *proven* |
 | Deletion on parent request | Parent Rights procedure | The parent-request log in Radlor Ops |
-| Backups | Nightly encrypted artifact | **FAILING.** Succeeded 14 times to 9 September, then failed **13 consecutive nights** because three of four required secrets are missing. Independently confirmed: zero backup artifacts exist. **There is no restorable copy of this database today** |
+| Backups | Nightly encrypted artifact | **Restore proven, 23 September 2026.** The job had failed 13 nights running (10–22 Sep, missing secrets). Secrets fixed; run #39 (manual, dump 06:48:17–06:48:50 UTC) produced an 87,248-byte encrypted artifact. It was decrypted, restored into a throwaway local database, and all **32 public tables** matched production exactly, table by table (968 rows in total) — checked against production, and separately against the row counts recorded in the dump itself. The decrypted copy was destroyed afterwards. **Still to watch:** the first *scheduled* nightly run succeeding on its own. Restoring needs auth and storage service versions matching production and the `supabase_admin` role; the restore note in `backup.yml` must say so |
 | Annual review of this policy | Owner named above | Recorded in Radlor Ops, alongside the parent-request log |
 
 **Verification requirement.** Before any deletion job is trusted it must be watched deleting a seeded test record, and watched *not* deleting a record still in date. A job reporting "0 rows deleted" means nothing until it has first been seen deleting something.

@@ -26,7 +26,13 @@ Twenty adult accounts. Twenty-six children, **at least eighteen of them under 13
 
 This is the most serious finding in the audit, and it is not a documentation gap — it is the thing COPPA is actually about. Every document we have written describes how consent is obtained and recorded. Right now, those documents describe something the system does not do.
 
-**What has to happen:** the consent flow in document 03 gets built, and the hard rule in it holds — no field about a child is written before a consent record exists. Until then, every new child signing up adds to the number.
+**What has to happen:** the consent flow in document 03 gets built, and the hard rule in it holds — no field about a child is written before a consent record exists.
+
+> **Resolved, 23 September 2026 — and this is the best news in this document.** Rafi confirmed that **every account on the service is a test account**: the product has no customers yet, and all 26 child records belong to the team or to interns. The database could only identify 12 of them as tests on its own, so this rests on his word rather than a measurement — but he is the person who would know, and it fits a product that has not launched.
+>
+> **So there is no real child's data in the system, and no family waiting to be asked for consent after the fact.** The retroactive-consent problem — the largest open item in this whole programme, and the one that needed an attorney and a deadline — does not exist.
+>
+> It also leaves a cleaner option than the one that was built. The consent gate carries an exemption so the existing 26 would not freeze. If none of them is real, that exemption protects nobody, and an exemption that exists for nobody is still a route around the gate. **Clear the test data and apply the gate with zero exemptions**, and from that moment every single child in the system has a consent record behind them — with no special cases to remember, document, or explain later.
 
 ### 2. There is no backup.
 
@@ -35,6 +41,10 @@ The nightly encrypted backup succeeded fourteen times, then **failed every night
 **There is no restorable copy of the database holding 26 children's records.** A restore through this path has never been performed end to end even when it was working.
 
 **What has to happen:** fix the secrets, watch a backup succeed, then **actually restore it somewhere and confirm the data is there.** A backup nobody has restored is not a backup — this is exactly the "watched it working" rule, and it is why the failure went unnoticed for thirteen nights.
+
+> **Resolved, 23 September 2026.** Secrets fixed (the database password had to be reset — the remembered one was wrong). Run #39 succeeded. The artifact (87,248 bytes) was decrypted with the passphrase read straight from the Keychain, never printed; restored into a throwaway local database; and **all 32 public tables matched production exactly**, 968 rows, checked against production *and* against the dump's own counts. Everything decrypted was deleted afterwards.
+>
+> Two things this exposed: the restore instructions in `backup.yml` did not work as written (it took four attempts — the local auth and storage services must match production's versions, and the restore must run as `supabase_admin`), and the first *scheduled* nightly run has not yet been watched succeeding. Both are small. Neither changes the answer: **there is now a restorable copy of the database.**
 
 ### 3. Local development points at the live database.
 
