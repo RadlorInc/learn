@@ -25,6 +25,12 @@ REVIEWED-BY:
 | `milo-kv-migrated` | Almacenamiento local | Recuerda que sus datos guardados ya se trasladaron al formato de almacenamiento más reciente | Hasta que usted lo borre | Estrictamente necesario |
 | Base de datos `milo`, almacén `kv` | Base de datos en el dispositivo | El perfil de su hijo, lo último que usó, el trabajo pendiente de sincronizar si usted se queda sin conexión, las preferencias de voz y de velocidad, y el idioma elegido | Hasta que usted lo borre | Funcional |
 | `milo-shell`, `milo-static`, `milo-assets` | Almacenamiento en caché | La propia aplicación, sus imágenes y su audio, para que las lecciones funcionen sin conexión y usen menos datos. Unos 7 MB después de una lección, y aumenta con el audio de cada lección | Hasta que la aplicación se actualice a una versión nueva | Estrictamente necesario |
+| `al-lang` | Almacenamiento local | El idioma que eligió para el panel de padres y las pantallas de consentimiento (inglés o español) *(leído del código, 24 sep 2026)* | Hasta que lo borre | Funcional |
+| `al-dash-prefs:<id de la cuenta>` | Almacenamiento local | Sus preferencias del panel: recordatorios pospuestos u ocultos, tipos de recordatorio desactivados, su última visita y qué recorridos guiados ya vio. Nada sobre un niño *(leído del código)* | Hasta que lo borre | Funcional |
+| `exercise-done:<id del niño>:<id del ejercicio>` | Almacenamiento local | Que un niño terminó un ejercicio de la clase, para mostrarlo como hecho en este dispositivo *(leído del código)* | Hasta que lo borre | Funcional |
+| `exercise-results-pending` | Almacenamiento local | Respuestas de un niño a ejercicios de la clase que aún no se pudieron enviar (por ejemplo, sin conexión), guardadas hasta enviarlas *(leído del código)* | Hasta que se envíen | Estrictamente necesario |
+| `milo_active_plan_<id del niño>` | Almacenamiento local | Un registro antiguo del plan de aprendizaje de cada niño que algunas pantallas aún escriben *(leído del código)* | Hasta que lo borre | Funcional |
+| `milo-pwa-dismissed` | Almacenamiento local | Que usted cerró el aviso de "instalar la aplicación" *(leído del código)* | Hasta que lo borre | Funcional |
 | `milo-auth` | Almacenamiento local | Mantiene su sesión iniciada | Hasta que cierre la sesión o esta caduque | Estrictamente necesario |
 | `milo_active_learner` | Almacenamiento de sesión | Qué perfil de niño está usando esta pestaña del navegador | Hasta que se cierre la pestaña | Estrictamente necesario |
 
