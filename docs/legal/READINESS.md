@@ -1,62 +1,99 @@
-# Legal readiness — what stands between each document and "live"
+# Launch readiness — the one checklist
 
-Pages: as measured 2026-09-23. Flows: **updated 2026-09-23 after the deploy loop (D1–D6)** — see `LOOP-STATE.md` for each proof.
-**Prefer re-measuring to trusting this table:** `npx vitest run src/__tests__/legalSwitch.test.ts` prints
-every page's refusals, and `legalSurface.test.ts` holds the links. A row here is true on the day it was
-written and on no other day.
+**Updated 24 September 2026, at the end of Round 1.** "Launch" means **the first real family**, and separately
+**the first payment**. Every line says where its proof lives. **Prefer re-measuring to trusting this file:**
+`npx vitest run src/__tests__/legalSwitch.test.ts` prints every legal page's refusals,
+`placeholderAudit.test.ts` holds `PLACEHOLDERS.md` to the documents, and `LOOP-STATE.md` has each proof. A line
+here is true on the day it was written and on no other day.
 
-**Nothing below is publishable.** Every page is refused by the switch for at least four independent
-reasons (placeholders, the document's own `STATUS: DRAFT` line, no attorney sign-off recorded, no Spanish
-version). "Content ready" is therefore **no** everywhere; the column says what else is missing.
+**Today: not launchable, by design.** Every `/legal/*` page is dark, and every account on production is a
+team/intern test account (the founder's statement; the database cannot tell). **No real family is invited until
+every box marked 👪 is ticked.** Boxes marked 💳 must be ticked **before any payment**.
 
-## ⛔ Launch blocker — no real family until the legal pages can publish
+---
 
-**Founder's decision, 2026-09-23 (deploy loop).** The deploy loop ships the app with every `/legal/*` page
-DARK (title + banner, no body) and every point of collection linking to them. That is accepted **only
-because every account on production is a team or intern test account** (founder's statement, not a
-measurement — the database cannot tell an intern from a parent). **No real family is invited until every
-page a family can reach publishes** — i.e. until the switch above stops refusing them. Also owed before
-the first real family: a **staging database** (`deploy.yml` applies production migrations without one
-since D1; see `LOOP-STATE.md`), and the attorney's answer on withdrawal (doc 06 still says it closes the
-whole account; the consent copy says it deletes the one child).
+## 1. Done and proven (on production unless marked)
 
-## Pages
+- [x] **Consent gate live, zero exemptions**: `learners.consent_id` NOT NULL, gate on 14 child tables (D4, D6 proofs)
+- [x] **Email-plus consent** end to end from `noreply@radlor.com` (D4, and after D6)
+- [x] **Delete one child**: every row + the child's login gone, sibling untouched (D5, real rows)
+- [x] **Crash records cascade with the child**: 0 orphans (D4/D6)
+- [x] **Nightly encrypted backup** running unattended; restore proven (32 tables / 968 rows) (#40–#42)
+- [x] **No third-party tracking in a child's session**: one origin; CSP `connect-src` limited (23 Sep audit)
+- [x] **Legal surface**: 7 pages routed, dark, `noindex`, linked from every collection point; the publish switch refuses each page for placeholders / draft / sign-off / Spanish (`legalSwitch`, `legalSurface`)
+- [x] **Teacher roster paused** until school consent exists (live since D4)
+- [x] **Secret scanning + push protection on**; **org 2FA required** (measured 24 Sep)
+- [x] **Round 1, proven in code (not yet merged)**: see section 2. Every PR has tests that went red on a planted break, plus green CI.
 
-| Document | Route built | Linked from | Content ready | Blocking on | Publishable? |
-|---|---|---|---|---|---|
-| Privacy Policy (11) | ✅ `/legal/privacy`, dark | home, sign-up, checkout, add-a-child, direct notice, B1, account, invites, support form, child home, teacher roster | ❌ 9 placeholders, `STATUS: DRAFT` | **attorney** — sign-off; consent-record retention period; review against the security program · **Rafi** — effective/updated dates; hosting region (Vercel dashboard); providers' log-retention periods; billing fields once billing is on · **drafter** — drop the "no edit function" paragraph (the edit now exists, item 7) · **Spanish reviewer** — no Spanish version exists | ❌ |
-| Terms of Service (12) | ✅ `/legal/terms`, dark | home, sign-up, checkout | ❌ 12 placeholders, `STATUS: DRAFT` | **attorney** — arbitration and class-action waiver (a business decision); copyright position on AI-generated content; the deletion sentence; remedy for service failure; liability floor; two notice periods · **Rafi** — DMCA designated agent (name, address, email, phone, and US Copyright Office registration); description of the real content-review process; dates · **Spanish reviewer** | ❌ |
-| Refund and Cancellation Policy (01) | ✅ `/legal/refunds`, dark | checkout | ❌ 6 placeholders, `STATUS: DRAFT` | **Rafi** — monthly and annual price (USD); dates · **billing (not this loop)** — there is no in-app cancel path, and the document says it must exist before publication; `BILLING_LIVE = false` · **attorney** — sign-off · **Spanish reviewer** | ❌ |
-| Your rights as a parent (06 Part A) | ✅ `/legal/parent-rights`, dark | account, B3 | ❌ 3 placeholders, `STATUS: DRAFT` | **Rafi** — apply `20260923140000` then flip `WITHDRAWAL_DELETES` (deletion is built, not live); how exports are sent (method); date · **drafter** — replace "once an edit function exists" with the real path (Login & data → Correct *name*'s details) · **attorney** — sign-off; whether withdrawal closes the whole account (item 6) · **Spanish reviewer** | ❌ |
-| Service Providers and Subprocessors (07) | ✅ `/legal/subprocessors`, dark | direct notice | ❌ 6 placeholders, `STATUS: DRAFT` | **Rafi** — regions and plan details from the Vercel and Supabase dashboards; confirm Preview/Development have no crash forwarding; the reviewer's name · **attorney** — sign-off · **Spanish reviewer** | ❌ |
-| Cookie and Tracking Notice (08) | ✅ `/legal/cookies`, dark | nowhere yet (not required at a collection point; the Privacy Policy §8 is the natural link) | ❌ 3 placeholders, `STATUS: DRAFT` | **Rafi** — observe the signed-in storage keys in a real session (they were read from config); date · **attorney** — sign-off · **Spanish reviewer** | ❌ |
-| Data Retention and Deletion Policy (04) | ✅ `/legal/retention` (**added — the brief listed six**), dark | direct notice | ❌ 7 placeholders, `STATUS: DRAFT` | **Rafi** — provider log retention (Supabase, Vercel); the ~1,440 events that left the database by an unknown route (whether to add a deletion audit trail); reviewer's name; date · **attorney** — retention for consent records (evidence about children) · **Spanish reviewer** | ❌ |
+## 2. Built, waiting for a Round-2 step (ROUND-2.md §1–§2)
 
-⚠️ **Public boundaries.** Each page shows only part of its document (`after`/`until` in
-`src/app/legal/registry.ts`, set by engineering). The retention page's public part includes a paragraph
-opening "Known defect — deletion is …". **The attorney signs off the boundary, not just the text.**
+| | item | PR | Round-2 step |
+|---|---|---|---|
+| [ ] 👪 | Returning parents get the new bundle after a deploy (R1) | #185 | merge A3; check 2.2 |
+| [ ] 👪 | The notice says what is stored: lessons + grade band, `notice-v4` (R2) | #186 | merge A5; check 2.1 |
+| [ ] 👪 | Scheduled B3 cancelled on **every** path; outcome recorded; daily backstop (R3) | #192 | Phase B3 + proof 2.7 |
+| [ ] 💳 | In-app **Cancel subscription**, confirmation screen + email (R4) | #188 | merge A8; real Stripe test-mode run (Round 3) |
+| [ ] 👪 | Correct name, **avatar**, grade band in the app (R5) | #191 | merge A6; check 2.3 |
+| [ ] 💳 | Email suppression list + one-click unsubscribe (R6) | #197 | Phase B2 + proof 2.6 |
+| [ ] 👪 | Withdrawal + export proven end to end in code (R7) | #189 | **production run 2.5** (neither has run on production yet) |
+| [ ] 👪 | Doc 06 + Terms describe per-child withdrawal (R8) | #195 | merge A7 |
+| [ ] 👪 | Unconfirmed accounts pruned after 3 days; profile only on confirmation (R9) | #194 | Phase B1 + proof |
+| [ ] | One-shot ledger repair removed (R10) | #196 | merge A4 |
+| [ ] 👪 | Every placeholder tracked and guarded (R11) | #199 | approve ROUND-2 §6 |
+| [ ] 👪 | Spanish drafts, unrenderable until signed (R13) | #190 | merge C1; review job below |
+| [ ] 👪 | Staging prepared: seed, runbook, `deploy.yml` staging-first tested (R14) | #193 | **create staging** (ROUND-2 §4.6) |
+| [ ] | CI `rls-tests` independent of ghcr.io rate limits | #198 | merge A1 |
 
-## Flows
+## 3. Waiting on Rafi, the attorney, a provider, or a reviewer
 
-| Flow | Built | Where | Content ready | Blocking on | Live? |
-|---|---|---|---|---|---|
-| Direct notice (02) | ✅ | Add a child → notice | ✅ copy = doc 02 (`notice-v3` since D1: withdrawal deletes that child, the account stays open), drift-checked both ways | **Spanish reviewer** — machine-translated, unreviewed · **attorney** — the notice links three dark pages; sign-off | ✅ **live 23 Sep** — shown on production in D4 and D6 (test accounts only; no real family until the pages publish) |
-| Email-plus consent (B1 → grant → B2 → B3) | ✅ | `/api/consent/request`, `/consent/respond` | ✅ doc 03, rendered text checked | **attorney** — doc 03 Path B · ⚠️ **follow-up:** a scheduled B3 is cancelled ONLY by the email-link withdrawal — deleting the child in the dashboard or closing the account leaves it to arrive (LOOP-STATE, D6 pre-approval) | ✅ **live 23 Sep** — first B1 arrived from `noreply@radlor.com`; end-to-end creations in D4 and after D6; B3 scheduled with Resend, id stored |
-| Withdrawal | ✅ deletes the child (item 6) | B3 → `/consent/withdraw` | ✅ copy now says what it does (D1) · ⚠️ doc 06 still says withdrawal closes the whole account | **attorney** — doc 06: close the account, or the child only | ✅ deployed · ⚪ **not yet exercised on production** (no withdraw link has been pressed there) |
-| Deletion — one child | ✅ same set as withdrawal | Login & data → Delete *name*'s profile | ✅ | — | ✅ **live, proven on real rows** (D5: every row of the child and its login gone, a sibling untouched; the crash-record cascade proven by the catalog and D6, not by that deletion) |
-| Deletion — everything | ✅ (existing) | Account → Close your account | ✅ | ⚠️ deletes the consent records (the evidence) and does not cancel a scheduled B3 | ✅ live |
-| Parent data export | ✅ nine doc-06 tables | Login & data → Download a copy | ✅ | — | ✅ deployed, `export_child_records` applied (D4) · ⚪ not yet exercised on production |
-| Profile correction (name, grade) | ✅ (item 7) | Login & data → Correct *name*'s details | ⚠️ the grade is stored only as a band — "grade level" in doc 02 overstates what is kept (follow-up 2) | **drafter/attorney** — word it as a band, or store the grade | ✅ deployed with D2 · ⚪ not exercised on production |
-| Teacher / school consent | ❌ | Classes → Add students | — | **attorney** — the school-consent route | ⏸ **paused** — the roster says "Adding students is paused" (live since D4) |
-| In-app cancellation | ❌ | — | — | **billing (not this loop)** | ❌ |
+### Rafi (ROUND-2 §3; placeholders in `PLACEHOLDERS.md`, category *rafi* = 27, *date* = 12)
+- [ ] 💳 **Vercel Hobby → Pro** before taking payment (3.14)
+- [ ] 👪 **Staging database** before the first real family (3.20, §4.6)
+- [ ] 👪 **A second GitHub owner**: the org has 1 member, the only admin and the only `production-db` approver (3.15)
+- [ ] 👪 **Rakif's full name** (docs 04, 05, 07) (3.16)
+- [ ] 💳 **Prices** (monthly, annual; must equal `LADDER`), plan names, the receipt-email design (3.17)
+- [ ] 💳 **Subscription consequence of withdrawal** (3.1, with the attorney)
+- [ ] 💳 **An affirmative auto-renewal consent control at checkout**; none is built (3.7, with the attorney)
+- [ ] 💳 Hide checkout for a parent who already subscribes (3.8)
+- [ ] 👪 **The live Spanish consent text**: show English until reviewed? (3.2)
+- [ ] 👪 Close the `learners: delete` REST bypass (3.9)
+- [ ] 👪 DMCA agent; the real content-review process to describe (3.18)
+- [ ] 👪 Decisions 3.3–3.6, 3.10–3.13, 3.19
+- [ ] 👪 **Publication dates** (12 *date* rows) and the day-of checks: doc 02's version label = `NOTICE_VERSION`; doc 11's security paragraph against doc 05
+- [ ] 👪 Observe the signed-in storage keys in a real session (doc 08: 8 rows are read from the code)
+- [ ] 👪 **Terms §6's "every table holding a child's data is named"** is not gated against `docs/legal/12` (its old gate was bound to the deleted in-app Terms, item 4). Check it against the catalog's child tables (R7's test derives the set) before publication
 
-**The consent gate itself (not a row above):** ✅ **live on production since 23 September 2026 with zero exemptions** — on all 14 tables that hold a field about a child, and `learners.consent_id` NOT NULL, so no child can be stored without a consent record (D4 and D6 proofs, every check PASS).
+### The attorney (`ATTORNEY-PACKET.md`; *attorney* = 15 placeholders)
+- [ ] 👪 **Sign-off on every page, and on its public boundary**
+- [ ] 👪 Withdrawal scope: per-child vs whole account (A1)
+- [ ] 👪 Consent-record retention; closing an account deletes the consent records (A2)
+- [ ] 👪 School/teacher consent. The roster stays paused until then (A3)
+- [ ] 👪 Email-plus availability and the 24 h delay (A4)
+- [ ] 💳 ARL / ROSCA: renewal consent control, cancellation email content, refund stance (C1–C5)
+- [ ] 👪 Arbitration; liability floor; AI-content ownership; DMCA; which document controls; notice periods (D1–D9)
+- [ ] 👪 The Spanish standard (A7)
 
-## Open items that are not a row above
+### Providers (ROUND-2 §4)
+- [ ] 👪 Supabase: encryption at rest (in writing); platform-log retention; free-tier staging limits
+- [ ] 👪 Vercel: log retention; function region; daily cron on Hobby
+- [ ] 💳 Stripe: receipts on/off; data region; a test-mode key for a Preview run of R4
+- [ ] 👪 Resend: data region; DKIM covers `List-Unsubscribe`; cancel semantics
+- [ ] 👪 GitHub: backup-artifact storage and retention
 
-- **Terms §6's "every table holding a child's data is named"** used to be gated against the in-app Terms,
-  which were deleted in item 4. It has **not** been re-anchored on `docs/legal/12`; the drafts' own text
-  should be checked against the table list before publication.
-- **The 26 existing children** are grandfathered by the consent migration. Item 1 found 12 are test
-  profiles and 14 on 7 accounts are unresolved — **Rafi** to name those accounts; **attorney** to decide
-  retroactive consent.
+### Spanish reviewer (ROUND-2 §3, the review job)
+- [ ] 👪 About 10,500 words of legal pages (`docs/legal/es/`) + 104 consent strings. Sign with `REVIEWED-BY: <Full Name>, <YYYY-MM-DD>`.
+
+### Publish
+- [ ] 👪 **Publish the legal pages.** For each page in `src/app/legal/registry.ts`: 0 placeholders in its public part, the `STATUS: DRAFT` line removed, attorney sign-off recorded, and Spanish signed. Then set `published: true` in a reviewed PR. The switch refuses anything short of that. Flip `BILLING_LIVE` only when billing is live (💳).
+
+## 4. Pages at a glance (placeholders in the whole file, after every Round-1 PR)
+
+| page | route | placeholders | also blocked by |
+|---|---|---|---|
+| Privacy Policy (11) | `/legal/privacy` | 8 (1 is the rule's own text) | attorney, dates, providers, Spanish |
+| Terms of Service (12) | `/legal/terms` | 13 (1 is the rule's own text) | attorney (arbitration, liability, AI, DMCA), dates, Spanish |
+| Refund and Cancellation (01) | `/legal/refunds` | 5 (1 is the rule's own text) | prices, dates, `BILLING_LIVE`, attorney, Spanish |
+| Your rights as a parent (06 A) | `/legal/parent-rights` | 3 | subscription-on-withdrawal decision, date, attorney, Spanish |
+| Subprocessors (07) | `/legal/subprocessors` | 6 | provider regions, name, attorney, Spanish |
+| Cookies (08) | `/legal/cookies` | 3 | observe storage, date, attorney, Spanish |
+| Retention (04) | `/legal/retention` | 7 | provider logs, consent-record retention, attorney, Spanish |
