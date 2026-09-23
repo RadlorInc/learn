@@ -403,3 +403,9 @@ assertion; the tree was byte-identical afterwards). **The founder's work list is
 | R15 | Launch checklist | **done** | this PR | `READINESS.md` rewritten: done/proven · built, waiting on Round 2 · waiting on Rafi / attorney / providers / reviewer · publish; 👪 = before the first family, 💳 = before the first payment |
 | — | CI independent of ghcr.io | **done** | #198 | From 17:51 UTC on 23 Sep, **every** `rls-tests` run failed on `toomanyrequests` pulling `supabase/postgres` (sequential reruns too). The pull step now uses `public.ecr.aws`: its own run passed; the fix is on every Round-1 branch |
 | — | D7 records never merged | **done** | #187 | `39f5e57c` was pushed after #182 merged; now its own PR, merged first |
+
+### Round 1 — after merge (24 September 2026)
+
+- Phase A and B1–B2 merged by Rafi; `migrate-prod` applied `20260923180000`, `20260923180100` (#194) and `20260923190000` (#197), read from each job's log.
+- **#192 turned `main` red** (Deploy #428, `5ab91bd`): `withdrawExportE2e` (from #189) failed. **Mechanism, logged:** its fake Supabase routed only `/[a-z_]+/` names, so R3's `consent_b3_due` threw `stand-in: … not implemented`, the route's best-effort drain swallowed it, and no cancel happened. Each PR was green alone (#189 predates the drain; #192 lacked #189's test). **A cross-PR combination only `main` ever ran**, which is the thing stacked, separately-green PRs cannot see. Fixed in **#201** (test-only), which also carries a comment-only note in `20260923200000` so its merge push offers that migration to `migrate-prod`.
+- Phase C (#190, #199, #200) simulated on `main` + #201: merges clean, touches no migration, full suite run on that tree (see #201).
