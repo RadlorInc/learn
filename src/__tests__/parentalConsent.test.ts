@@ -5,8 +5,8 @@
  * ⚠️ WHAT MAKES THIS A PROOF RATHER THAN A DESCRIPTION. Every refusal below is paired with the
  * write that must SUCCEED, and the success is asserted first wherever the order allows. A gate that
  * refuses everything passes a refusal-only suite perfectly and is an outage; that is the failure
- * this file is shaped to catch, and it is why proof ④ (a grandfathered child still saving progress)
- * carries the same weight as proof ①.
+ * this file is shaped to catch. (Until D6 it also held a grandfathered child; D6 removed every child and
+ * the exemption — the migration itself is proven in `consentZeroExemptions.test.ts`.)
  *
  * ⚠️ AND THE GATE IS DRIVEN THROUGH THE PATHS THAT ACTUALLY BYPASS RLS. `record_lesson_progress`
  * and friends are SECURITY DEFINER and owned by postgres, so RLS never applies to them — measured
@@ -18,11 +18,9 @@ import type { PGlite } from '@electric-sql/pglite'
 import { loadSchema } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-const OLD_PARENT = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 const V = { notice: 'notice-v1', privacy: 'privacy-2026-09-06', terms: 'terms-2026-09-06' }
 
 let db: PGlite
-let grandfathered: string
 
 /** Run as the table owner — the privilege level every SECURITY DEFINER write path really has. */
 async function asOwner(sql: string): Promise<{ rows?: Record<string, unknown>[]; err?: string; code?: string }> {
@@ -45,35 +43,8 @@ const newConsent = (state: 'pending' | 'granted') => `
 beforeAll(async () => {
   ({ db } = await loadSchema())
   await db.exec(`insert into auth.users (id, email, email_confirmed_at) values
-    ('${PARENT}', 'p@x.test', now()), ('${OLD_PARENT}', 'old@x.test', now())`)
+    ('${PARENT}', 'p@x.test', now())`)
 
-  /**
-   * ⚠️ A CHILD THAT PRE-DATES THE GATE, MADE THE ONLY WAY ONE HONESTLY CAN: the trigger is dropped,
-   * the row is inserted as it would have been before this migration existed, and the trigger is put
-   * back. Stamping `consent_exempt_at` by hand on a row created AFTER the gate would be testing a
-   * world the migration never produces — the migration's own UPDATE is what stamps the real 26, and
-   * this reproduces a row in exactly that state.
-   */
-  // DISABLE, never drop-and-recreate: re-typing a trigger definition is how a gate silently comes
-  // back different from the one the migration installed. `learner_stats` is disabled too because
-  // `init_learner_stats` fires AFTER INSERT on learners and writes it — before this migration that
-  // row was created freely, and this reproduces that, not a world where the gate half-applied.
-  await db.exec(`alter table public.learners      disable trigger trg_enforce_learner_consent;
-                 alter table public.learner_stats disable trigger trg_enforce_child_consent;`)
-  grandfathered = (await db.query<{ id: string }>(`insert into public.learners
-    (display_name, avatar_index, age_group, created_by) values ('Existing', 0, '6-8', '${OLD_PARENT}')
-    returning id`)).rows[0].id
-  /**
-   * The migration's own §2 UPDATE, run in the same window it runs in: BEFORE the gate exists.
-   * ⚠️ That ordering is not incidental. Once `trg_enforce_learner_consent` is live, this very
-   * statement is refused — a child with neither consent nor exemption cannot be updated into
-   * having one. That is deliberate (the exemption must not be reachable as a post-hoc opt-out) and
-   * it means grandfathering anyone later takes a deliberate migration, not a support action.
-   */
-  await db.exec(`update public.learners set consent_exempt_at = coalesce(consent_exempt_at, now())
-                  where consent_id is null and consent_exempt_at is null`)
-  await db.exec(`alter table public.learners      enable trigger trg_enforce_learner_consent;
-                 alter table public.learner_stats enable trigger trg_enforce_child_consent;`)
 }, 120_000)
 
 describe('the consent gate', () => {
@@ -162,35 +133,28 @@ describe('the consent gate', () => {
     }
   })
 
-  // ─────────────────────────── PROOF ④ ───────────────────────────
-  it('④ a grandfathered child keeps saving progress — the 26 are not frozen', async () => {
-    expect((await asOwner(`select consent_exempt_at is not null as ex, consent_id::text
-      from public.learners where id = '${grandfathered}'`)).rows![0])
-      .toMatchObject({ ex: true, consent_id: null })
-
-    for (const sql of [
-      `insert into public.lesson_progress (learner_id, lesson_id, done) values ('${grandfathered}', 'g3m1-t1', true)`,
-      `insert into public.point_events (learner_id, reason, points) values ('${grandfathered}', 'problem', 3)`,
-      `insert into public.learner_events (learner_id, event, props, client_id) values ('${grandfathered}', 'session_start', '{}', 'gf-1')`,
-      `update public.learners set display_name = 'Renamed Fine' where id = '${grandfathered}'`,
-    ]) {
-      const r = await asOwner(sql)
-      expect(r.err, `a grandfathered child was blocked: ${sql.slice(0, 60)}`).toBeUndefined()
-    }
+  // ─────────────────────────── PROOF ④ (since D6) ───────────────────────────
+  it('④ there is no exemption: no column, no view, no grandfather branch — and consent_id is NOT NULL', async () => {
+    const col = await asOwner(`select count(*)::int as n from information_schema.columns
+      where table_schema = 'public' and table_name = 'learners' and column_name = 'consent_exempt_at'`)
+    expect(col.rows![0].n).toBe(0)
+    expect((await asOwner(`select to_regclass('public.consent_exempt_learners')::text as v`)).rows![0].v).toBeNull()
+    const def = await asOwner(`select pg_get_functiondef('public.consent_ok(uuid)'::regprocedure) as d`)
+    expect(String(def.rows![0].d)).toMatch(/parental_consents/)        // control: we read the real body
+    expect(String(def.rows![0].d)).not.toMatch(/exempt/i)
+    const nn = await asOwner(`select attnotnull as nn from pg_attribute
+      where attrelid = 'public.learners'::regclass and attname = 'consent_id'`)
+    expect(nn.rows![0].nn).toBe(true)
   })
 
-  // ─────────────────────── the exemption is enumerable ───────────────────────
-  it('the grandfathered set can be listed and counted, and a new child can never join it', async () => {
-    const list = await asOwner('select learner_id::text, display_name from public.consent_exempt_learners')
-    expect(list.rows).toHaveLength(1)
-    expect(list.rows![0].display_name).toBe('Renamed Fine')
-
-    // ⚠️ The exemption must not be reachable as an opt-out, or the gate is one column wide.
-    const c = (await db.query<{ id: string }>(newConsent('granted'))).rows[0].id
-    const sneak = await asOwner(`insert into public.learners
-      (display_name, avatar_index, age_group, created_by, consent_id, consent_exempt_at)
-      values ('Sneak', 0, '6-8', '${PARENT}', '${c}', now())`)
-    expect(sneak.err ?? 'ALLOWED').toContain('may not be set on a new child')
+  it('a child with no consent record cannot exist even with the trigger out of the way — by structure', async () => {
+    // The table owner disables the trigger (as a careless migration could); NOT NULL still refuses.
+    await db.exec(`alter table public.learners disable trigger trg_enforce_learner_consent`)
+    const r = await asOwner(`insert into public.learners (display_name, avatar_index, age_group, created_by)
+      values ('No Record', 0, '6-8', '${PARENT}')`)
+    await db.exec(`alter table public.learners enable trigger trg_enforce_learner_consent`)
+    expect(r.err ?? 'ALLOWED').toMatch(/consent_id/)
+    expect(r.code).toBe('23502')                                       // not_null_violation
   })
 
   // ─────────────────────── coverage, derived not trusted ───────────────────────

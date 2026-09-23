@@ -137,7 +137,13 @@ describe('baseline_schema.sql vs supabase/migrations', () => {
       [...all.matchAll(/drop column (?:if exists )?([a-z_][a-z0-9_]*)/gi)].map(m => m[1].toLowerCase()),
     )]
     expect(droppedCols.length, 'no dropped columns found — the regex has rotted').toBeGreaterThan(0)
-    const missing = droppedCols.filter(c => !new RegExp(`^\\s*${c}\\s`, 'mi').test(baseline))
+    // A column that a MIGRATION creates and a later one drops (consent_exempt_at: 20260923120000 adds it,
+    // 20260923170000 drops it) never existed before the migrations, so it does not belong in migration-zero.
+    // Only columns no migration creates must come from the baseline — and those must still be checked:
+    const addedByMigration = new Set([...all.matchAll(/add column (?:if not exists )?([a-z_][a-z0-9_]*)/gi)].map(m => m[1].toLowerCase()))
+    const historical = droppedCols.filter(c => !addedByMigration.has(c))
+    expect(historical.length, 'every dropped column is migration-created — the historical case is no longer being checked').toBeGreaterThan(0)
+    const missing = historical.filter(c => !new RegExp(`^\\s*${c}\\s`, 'mi').test(baseline))
     expect(missing, `a migration drops these, so the baseline must create them first:\n  ${missing.join('\n  ')}`).toEqual([])
   })
 
