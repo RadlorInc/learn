@@ -17,6 +17,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const log: string[] = []
 let lookup: Record<string, unknown> | null
 let grantAnswer = 'granted'
+let drainAnswer: number | null = 1
 const sent: { to: string; subject: string; html: string; key: string; at?: Date }[] = []
 
 vi.mock('@/features/consent/server', async orig => {
@@ -33,10 +34,12 @@ vi.mock('@/features/consent/server', async orig => {
       if (fn === 'consent_request') return [{ consent_id: 'c1', email: 'p@x.test' }]
       return null
     }),
-    sendEmail: vi.fn(async (to: string, m: { subject: string; html: string }, key: string, at?: Date) => {
+    sendEmail: vi.fn(async (kind: string, to: string, m: { subject: string; html: string }, key: string, at?: Date) => {
+      if (kind !== 'transactional') throw new Error(`consent emails are transactional (docs/legal/09 §1), sent as ${kind}`)
       log.push(`send:${m.subject.slice(0, 12)}`); sent.push({ to, subject: m.subject, html: m.html, key, at }); return `re_${sent.length}`
     }),
     cancelEmail: vi.fn(async (id: string) => { log.push(`cancel:${id}`); return true }),
+    drainB3Cancellations: vi.fn(async () => { log.push('drain'); return drainAnswer }),
   }
 })
 
@@ -50,7 +53,7 @@ const pending = (over: Record<string, unknown> = {}) => ({
   learner_id: null, second_email_provider_id: null, second_notice_scheduled_for: null, ...over,
 })
 
-beforeEach(() => { log.length = 0; sent.length = 0; grantAnswer = 'granted'; lookup = pending(); delete process.env.CONSENT_SECOND_NOTICE_DELAY_MINUTES })
+beforeEach(() => { log.length = 0; sent.length = 0; grantAnswer = 'granted'; drainAnswer = 1; lookup = pending(); delete process.env.CONSENT_SECOND_NOTICE_DELAY_MINUTES })
 
 describe('grant', () => {
   it('schedules B3 FIRST, a day ahead, and only then grants — with that B3\'s id', async () => {
@@ -100,15 +103,39 @@ describe('grant', () => {
 })
 
 describe('withdraw', () => {
-  it('withdraws, and cancels a B3 that has not gone out yet', async () => {
-    lookup = pending({ state: 'granted', second_email_provider_id: 're_b3', second_notice_scheduled_for: new Date(Date.now() + 3600_000).toISOString() })
+  const b3Ahead = () => pending({ state: 'granted', second_email_provider_id: 're_b3', second_notice_scheduled_for: new Date(Date.now() + 3600_000).toISOString() })
+  it('withdraws, then drains the queue the withdrawal filled — the drain cancels and records B3 (b3Cancel.test.ts)', async () => {
+    lookup = b3Ahead()
     expect((await post({ t: TOKEN, action: 'withdraw' })).status).toBe('withdrawn')
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'cancel:re_b3'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain'])
+  })
+  it('before the queue migration exists (drain → null), cancels the B3 it read directly, as before', async () => {
+    lookup = b3Ahead(); drainAnswer = null
+    expect((await post({ t: TOKEN, action: 'withdraw' })).status).toBe('withdrawn')
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'cancel:re_b3'])
   })
   it('does not try to cancel a B3 that has already been sent', async () => {
     lookup = pending({ state: 'granted', second_email_provider_id: 're_b3', second_notice_scheduled_for: new Date(Date.now() - 1000).toISOString() })
+    drainAnswer = null
     await post({ t: TOKEN, action: 'withdraw' })
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain'])
+  })
+})
+
+describe('the cancel route — open, because after "Close your account" the caller no longer exists', () => {
+  it('drains on POST (the dashboard) and on GET (the daily cron), without a sign-in', async () => {
+    const r = await import('@/app/api/consent/cancel-second-notice/route')
+    for (const m of ['POST', 'GET'] as const) {
+      log.length = 0
+      const res = await r[m](new Request('http://x/api/consent/cancel-second-notice', { method: m, headers: { 'x-forwarded-for': `10.2.0.${Math.random() * 250 | 0}` } }))
+      expect(res.status).toBe(200)
+      expect(log).toEqual(['drain'])
+    }
+  })
+  it('the daily cron is configured for it', async () => {
+    const { readFileSync } = await import('node:fs')
+    const v = JSON.parse(readFileSync(`${process.cwd()}/vercel.json`, 'utf8')) as { crons?: { path: string }[] }
+    expect(v.crons?.map(c => c.path)).toContain('/api/consent/cancel-second-notice')
   })
 })
 

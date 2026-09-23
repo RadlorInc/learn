@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     // a Referer header. The page reads it and POSTs it; a mail scanner that prefetches the link sees a
     // page with buttons and changes nothing.
     const link = `${SITE_URL}/consent/respond#t=${token}`
-    const id = await sendEmail(row.email, renderB1(lang, link, `${link}&choice=decline`), `consent-${row.consent_id}-b1`)
+    const id = await sendEmail('transactional', row.email, renderB1(lang, link, `${link}&choice=decline`), `consent-${row.consent_id}-b1`)
     await rpc('consent_record_request_sent', { p_id: row.consent_id, p_provider_id: id })
     return NextResponse.json({ ok: true, email: row.email, days: PENDING_TTL_DAYS })
   } catch (e) {
