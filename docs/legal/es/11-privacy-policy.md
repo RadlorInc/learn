@@ -22,7 +22,7 @@ REVIEWED-BY:
 ## En resumen
 
 - La cuenta la tiene un padre, una madre o un tutor. El niño usa un perfil dentro de ella.
-- Recopilamos una pequeña cantidad de información sobre cada niño: un nombre de pila o un apodo, un nivel de grado y su trabajo en la aplicación.
+- Recopilamos una pequeña cantidad de información sobre cada niño: un nombre de pila o un apodo, las lecciones que usted elija y una franja de grados calculada a partir de ellas, y su trabajo en la aplicación.
 - La usamos para enseñar al niño y para mostrar su progreso al padre o la madre. Nada más.
 - **Nunca la vendemos, nunca la compartimos con fines publicitarios y nunca permitimos que nadie haga seguimiento de un niño en otros sitios web o aplicaciones.**
 - El padre o la madre puede ver todo lo que tenemos, eliminarlo o retirar su permiso, en cualquier momento y sin costo.
@@ -53,7 +53,7 @@ El servicio está dirigido a niños, por lo que se le aplica la Ley de Protecci�
 | Qué | Por qué | ¿Es obligatorio? |
 |---|---|---|
 | El nombre de pila o un apodo que usted elija | Para que la aplicación pueda dirigirse a su hijo y para que usted pueda distinguir los perfiles | Obligatorio — un apodo es suficiente |
-| Nivel de grado | Para dar trabajo del nivel adecuado | Obligatorio |
+| Las lecciones que usted elija, y una franja de grados calculada a partir de ellas — grados 3 a 5 o 6 a 8, guardada como la franja de edad 9–11 o 12–14. No es el grado ni la edad exactos del niño | Para dar trabajo del nivel adecuado | Obligatorio |
 | El trabajo del niño: respuestas, puntuaciones, progreso y los temas que usted haya elegido para él | Esto es el servicio. Así decide la aplicación qué enseñar a continuación y cómo le muestra a usted el progreso | Obligatorio |
 | Información técnica del dispositivo — un token de inicio de sesión guardado en el dispositivo; una marca por pestaña que indica qué perfil de niño está en uso; un identificador interno del niño, que aparece en cada registro de progreso y de eventos; un identificador aleatorio por evento, usado para evitar duplicados; la dirección IP y el tipo de navegador del dispositivo, y una ubicación aproximada — ciudad, región y país — derivada de la dirección IP por nuestros proveedores de alojamiento y de base de datos, que la registran en cada solicitud; y, si la aplicación falla, la página que se estaba viendo y el tipo de navegador. No usamos cookies | Para que la aplicación funcione, mantener la cuenta segura y mantener a su hijo con la sesión iniciada | Obligatorio para que la aplicación funcione |
 | Un pequeño número de eventos del producto, como el inicio de una sesión de lección | Para ver qué partes de la aplicación se usan, y así poder mejorarlas. Se guardan en nuestros propios sistemas, vinculados al identificador interno de su hijo y no a su nombre, **se eliminan automáticamente a los 90 días**, nunca se comparten y nunca se usan para publicidad | Obligatorio |
@@ -82,9 +82,8 @@ En cualquier momento, usted puede:
 
 Ejercer cualquiera de estos derechos es gratuito. Confirmaremos que la solicitud proviene de usted antes de actuar — normalmente enviando un enlace a la dirección de correo electrónico de la cuenta — y no le exigiremos una identificación oficial ni ningún documento sensible para una solicitud habitual.
 
-**Cómo solicitarlo:** en la aplicación — su panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos**, donde puede descargar una copia de todo lo que tenemos y eliminar el perfil; y **Cuenta → Cerrar su cuenta** para eliminarlo todo. O escriba a support@radlor.com, o a 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
+**Cómo solicitarlo:** en la aplicación — su panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos**, donde puede corregir el nombre o el apodo de su hijo, su avatar y su franja de grados, descargar una copia de todo lo que tenemos y eliminar el perfil; y **Cuenta → Cerrar su cuenta** para eliminarlo todo. O escriba a support@radlor.com, o a 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
-**Algo que todavía no podemos hacer en la aplicación:** corregir el nombre o el grado de un niño. Escríbanos y lo haremos por usted. [PLACEHOLDER — remove this paragraph once an edit function exists.]
 **Cuánto tardamos:** 10 días.
 
 Todos los detalles, incluido lo que sucede con una suscripción si usted retira su consentimiento, están en nuestra página de Derechos de los padres en https://adaptivelearn.radlor.com/legal/parent-rights.

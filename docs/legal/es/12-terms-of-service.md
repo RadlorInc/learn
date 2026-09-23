@@ -41,7 +41,7 @@ Como el Servicio lo usan niños, se aplican normas adicionales:
 - Antes de recopilar cualquier dato sobre su hijo, le damos un **aviso directo** que le dice exactamente qué recopilamos, y obtenemos su **consentimiento verificable**.
 - **Guardamos un registro de ese consentimiento** — la fecha, cómo se dio, su dirección de correo electrónico y la versión de cada documento que se le mostró. Lo guardamos para poder demostrar, más adelante, exactamente qué aceptó usted. Si usted cierra su cuenta, ese registro se elimina junto con todo lo demás. [PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]
 - Usted puede ver, corregir o eliminar la información de su hijo, o retirar su consentimiento, en cualquier momento y sin costo. Consulte nuestra [página de Derechos de los padres](https://adaptivelearn.radlor.com/legal/parent-rights).
-- Si usted retira su consentimiento, dejamos de recopilar, eliminamos lo que tenemos sobre su hijo y cerramos el perfil. Su suscripción se cancela y le reembolsamos la parte no utilizada — nunca se le cobra por ejercer un derecho de privacidad. Si hay más de un niño registrado en la cuenta, retirar el consentimiento cierra toda la cuenta; para quitar a un solo niño sin cerrar la cuenta, use en su lugar la función *Quitar a este niño*.
+- Si usted retira su consentimiento para un hijo, dejamos de recopilar, eliminamos lo que tenemos sobre ese hijo y cerramos su perfil. Esto se aplica solo a ese hijo: su cuenta sigue abierta y los demás hijos que tenga en ella no se ven afectados. Nunca se le cobra por ejercer un derecho de privacidad. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing consent also cancels or reduces a subscription, and any refund. Nothing does this today (billing is off). The earlier text promised cancellation and a pro-rata refund; decide before billing goes live.]
 
 Nuestra [Política de privacidad](https://adaptivelearn.radlor.com/legal/privacy) describe todo esto en detalle y forma parte de estos Términos.
 
@@ -49,7 +49,7 @@ Nuestra [Política de privacidad](https://adaptivelearn.radlor.com/legal/privacy
 
 - Los planes, precios y periodos de facturación se muestran al pagar, antes de que usted pague.
 - **Las suscripciones se renuevan automáticamente** hasta que usted cancele. El importe y la fecha de la renovación se le informan antes de suscribirse y se repiten en el correo de confirmación que le enviamos.
-- **Puede cancelar en cualquier momento**, en línea, en el mismo número de pasos que le llevó suscribirse. La cancelación detiene todos los cobros futuros; su acceso continúa hasta el final del periodo que ya pagó.
+- **Puede cancelar en cualquier momento**, en línea, en el mismo número de pasos que le llevó suscribirse: en la aplicación, en **Cuenta → Plan y facturación**. La cancelación detiene todos los cobros futuros; su acceso continúa hasta el final del periodo que ya pagó, y le enviamos por correo electrónico una confirmación con esa fecha.
 - Los reembolsos, los cambios de precio, los pagos fallidos y el procedimiento completo de cancelación se establecen en nuestra [Política de reembolsos y cancelaciones](https://adaptivelearn.radlor.com/legal/refunds), que forma parte de estos Términos.
 - Usted es responsable de los impuestos que correspondan.
 

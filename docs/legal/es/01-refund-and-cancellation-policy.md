@@ -44,7 +44,7 @@ Después de que se suscriba, le enviaremos un acuse de recibo que establece las 
 
 Puede cancelar su suscripción en cualquier momento, y la cancelación está diseñada para requerir el mismo número de pasos que la suscripción.
 
-**En línea, en la aplicación:** [PLACEHOLDER — there is no in-app cancellation today. A cancel path must exist before this policy is published: several state statutes require cancelling online to be as easy as subscribing, and a policy that names a path a parent cannot find is worse than one that does not offer it. Fill this in with the real path once it is built.]
+**En línea, en la aplicación:** inicie sesión, abra **Cuenta → Plan y facturación → Ver planes**, elija **Cancel subscription** (cancelar la suscripción) en *Your subscription* (su suscripción) y después **Yes, cancel my subscription** (sí, cancelar mi suscripción). La pantalla muestra entonces la fecha en que termina su plan, y le enviamos por correo electrónico una confirmación con esa fecha.
 
 **Por correo electrónico:** escriba a support@radlor.com. Tramitaremos la cancelación en un plazo de 2 días hábiles desde su recepción y se lo confirmaremos por correo electrónico.
 
@@ -56,7 +56,8 @@ Para cancelar no necesita llamarnos, chatear con un agente ni explicar por qué 
 
 - Su suscripción sigue activa hasta el final del periodo de facturación que ya pagó.
 - No se le volverá a cobrar.
-- Cuando termina el periodo, su cuenta se cierra.
+- Cancelar no genera por sí solo un reembolso; los reembolsos se tratan en la sección 5.
+- Cuando termina el periodo, su suscripción termina. Su cuenta y los perfiles de sus hijos siguen abiertos, salvo que usted cierre su cuenta.
 - Los datos de aprendizaje de su hijo se tratan como se describe en la sección 8.
 
 ## 5. Reembolsos

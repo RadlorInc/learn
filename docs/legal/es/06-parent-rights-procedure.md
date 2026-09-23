@@ -22,7 +22,7 @@ Puede pedirnos una copia de todo lo que hemos recopilado de su hijo. Se la envia
 
 ### 2. Corregirlo
 
-**Escríbanos a support@radlor.com y lo corregiremos.** La aplicación todavía no le permite editar usted mismo el nombre o el grado de un niño. [PLACEHOLDER — replace this with the in-app path once an edit function exists.]
+**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → **Corregir los datos de *nombre***. Ahí puede cambiar el nombre o el apodo de su hijo, su avatar y su franja de grados (grados 3 a 5 o grados 6 a 8). Solo el adulto que agregó al niño puede hacer este cambio. **O escríbanos** a support@radlor.com y lo corregiremos por usted.
 
 ### 3. Eliminarlo
 
@@ -30,15 +30,17 @@ Puede pedirnos que eliminemos la información de su hijo. La eliminaremos de nue
 
 ### 4. Retirar su permiso
 
-Puede retirar el permiso que nos dio. Si lo hace, dejamos de recopilar cualquier otro dato de su hijo, eliminamos lo que tenemos y se cierra el perfil de su hijo.
+Puede retirar el permiso que nos dio para un hijo. Si lo hace, dejamos de recopilar cualquier otro dato de ese hijo, eliminamos todo lo que tenemos sobre él — incluido su propio inicio de sesión — y se cierra su perfil. Esto no se puede deshacer.
 
-**Su suscripción se cancela y le reembolsamos la parte no utilizada.** Nunca se le cobra por ejercer un derecho de privacidad.
+**Retirar el permiso se aplica solo a ese hijo.** Su cuenta sigue abierta y los demás hijos que tenga en ella no se ven afectados. Guardamos un registro de que el permiso se dio y después se retiró, y de cuándo, sin los datos del niño.
 
-**Si tiene más de un hijo en la cuenta, retirar el permiso cierra toda la cuenta**, incluidos los perfiles de sus otros hijos. Si solo quiere quitar a un hijo, use en su lugar *Quitar a este niño* — eso elimina solo la información de ese hijo y deja el resto de la cuenta en funcionamiento.
+Puede retirar el permiso desde el enlace del segundo correo electrónico que le enviamos después de que dé su permiso. También puede eliminar usted mismo el perfil de un hijo en cualquier momento (la tarjeta de su hijo → **Inicio de sesión y datos** → *Eliminar el perfil de nombre*), lo que tiene el mismo efecto; o cerrar toda su cuenta (**Cuenta → Cerrar su cuenta**), lo que elimina a todos los hijos que haya en ella.
+
+Nunca se le cobra por ejercer un derecho de privacidad. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing permission for a child also cancels or reduces a subscription, and whether any part is refunded. Nothing does this today: billing is off and no subscription can be bought (`BILLING_LIVE = false`). An earlier version of this page promised cancellation and a pro-rata refund; decide and build it before billing goes live, then write it here.]
 
 ### Cómo hacer una solicitud
 
-**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → *Descargar una copia* o *Eliminar este perfil*. Para eliminarlo todo: **Cuenta → Cerrar su cuenta**, que le pide escribir su dirección de correo electrónico para confirmar y requiere haber iniciado sesión recientemente.
+**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → *Descargar una copia* o *Eliminar el perfil de nombre*. Para eliminarlo todo: **Cuenta → Cerrar su cuenta**, que le pide escribir su dirección de correo electrónico para confirmar y requiere haber iniciado sesión recientemente.
 **Por correo electrónico:** support@radlor.com, desde la dirección de correo electrónico de la cuenta
 **Por correo postal:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
