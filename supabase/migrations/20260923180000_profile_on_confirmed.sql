@@ -18,14 +18,22 @@
 -- `on conflict (id) do nothing` makes it idempotent across the INSERT and UPDATE firings and any
 -- re-confirmation.
 --
--- ⚠️ SECURITY POSTURE UNCHANGED. This is `pg_get_functiondef` of the live function with ONLY the
--- guard added: it stays `security definer set search_path to 'public'`. No owner, definer or
--- search_path change. The only behaviour change is WHEN a profile is created.
+-- ⚠️ SECURITY POSTURE UNCHANGED. Rebased on production's CURRENT body, which is the baseline
+-- statement (`supabase/schema/baseline_schema.sql`, `handle_new_user`) — measured 2026-09-23 (deploy
+-- loop D4, `d4-5` part A: production's `pg_get_functiondef` md5 `34812ad…` is that statement with
+-- different line breaks; nothing in the loop since, D4–D6, redefines it). The ONLY lines changed:
+--   + `IF NEW.email_confirmed_at IS NOT NULL THEN` / `END IF;` around the insert
+--   ~ `VALUES (…)` loses its `;` and gains `ON CONFLICT (id) DO NOTHING;`
+--   ~ the trigger: `after insert` → `after insert or update of email_confirmed_at`
+-- It stays `security definer set search_path to 'public'`, same owner. The explicit revoke below
+-- restates the posture already set by 20260615142049 (no API role may call it) — a no-op today.
 --
--- ⚠️ NOT APPLIED TO PROD BY THIS COMMIT. Prod DDL — and a trigger on auth.users especially — is the
--- founder's to run by hand (see handoff). It is safe to apply before or after the client ships:
--- the client already tolerates a missing profile (getMyRole returns null → role picker), so there
--- is no expand/contract ordering constraint here.
+-- First written 2026-09-08 as `20260908120000`, never applied, held in `supabase/held/` until
+-- 2026-09-23; re-versioned here because a file older than production's newest ledger row is refused
+-- by `db push`. Applied by `migrate-prod` behind the `production-db` approval, together with the
+-- prune (`20260923180100`) — they are one design: an account is real once it is confirmed, and the
+-- unconfirmed are removed. Order-safe with the client in either direction: the client already
+-- tolerates a missing profile (getMyRole returns null → role picker).
 
 create or replace function public.handle_new_user()
  returns trigger language plpgsql security definer set search_path to 'public'
@@ -39,6 +47,8 @@ BEGIN
   RETURN NEW;
 END;
 $function$;
+
+revoke all on function public.handle_new_user() from public, anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
