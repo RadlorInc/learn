@@ -67,7 +67,10 @@ async function asCaller<T>(auth: string | null, f: (tx: Transaction) => Promise<
 }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
-const ident = (s: string) => { if (!/^[a-z_]+$/.test(s)) throw new Error(`stand-in: bad identifier ${s}`); return s }
+// A Postgres identifier: a letter or underscore, then letters, DIGITS or underscores. The first version left
+// digits out, so `consent_b3_due` (20260923200000) fell through to "not implemented" and the route's
+// best-effort drain swallowed it — red on main only after #189 and #192 met (Deploy #428).
+const ident = (s: string) => { if (!/^[a-z_][a-z0-9_]*$/.test(s)) throw new Error(`stand-in: bad identifier ${s}`); return s }
 
 async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
   const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
@@ -90,7 +93,7 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
   }
 
   try {
-    const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/([a-z_]+)$/)
+    const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/([a-z_][a-z0-9_]*)$/)
     if (rpc && init.method === 'POST') {
       const fn = ident(rpc[1]), args = Object.entries(body ?? {})
       const [{ retset }] = (await db.query<{ retset: boolean }>(`select proretset retset from pg_proc where proname = $1 and pronamespace = 'public'::regnamespace`, [fn])).rows
@@ -101,7 +104,7 @@ async function fakeFetch(input: RequestInfo | URL, init: RequestInit = {}): Prom
         return json((await tx.query<{ r: unknown }>(`select ${call} as r`, vals)).rows[0].r)
       })
     }
-    const table = url.pathname.match(/^\/rest\/v1\/([a-z_]+)$/)
+    const table = url.pathname.match(/^\/rest\/v1\/([a-z_][a-z0-9_]*)$/)
     if (table && (init.method ?? 'GET') === 'GET') {
       const t = ident(table[1]), where: string[] = [], vals: unknown[] = []
       let order = '', limit = ''
