@@ -32,7 +32,10 @@ create schema if not exists cron;
 do $$ begin
   if not exists (select 1 from pg_roles where rolname='anon') then create role anon; end if;
   if not exists (select 1 from pg_roles where rolname='authenticated') then create role authenticated; end if;
-  if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role; end if;
+  -- ⚠️ BYPASSRLS, AS IN PRODUCTION — measured 2026-09-23 (pg_roles: service_role rolbypassrls = t,
+  -- anon/authenticated = f). Without it, anything a test runs AS the server's role is filtered by
+  -- policies the real server never meets, and a query that returns nothing reads as a refusal.
+  if not exists (select 1 from pg_roles where rolname='service_role') then create role service_role bypassrls; end if;
   if not exists (select 1 from pg_roles where rolname='supabase_auth_admin') then create role supabase_auth_admin; end if;
 end $$;
 -- The columns this app actually reads off auth.users. It is a managed table; we do not own its shape.
@@ -120,9 +123,12 @@ export async function grantedConsent(db: PGlite, parentId: string): Promise<stri
   const { rows } = await db.query<{ id: string }>(`
     insert into public.parental_consents
       (parent_id, method, state, notice_version, privacy_version, terms_version,
-       email_address, confirmed_at)
+       email_address, confirmed_at, token_hash, expires_at,
+       request_email_provider_id, request_email_sent_at,
+       second_email_provider_id, second_notice_scheduled_for)
     values ('${parentId}', 'email_plus', 'granted', 'notice-v1', 'privacy-v1', 'terms-v1',
-            'fixture@x.test', now())
+            'fixture@x.test', now(), md5(random()::text), now() + interval '7 days',
+            're_fixture_b1', now(), 're_fixture_b3', now() + interval '1 day')
     returning id`)
   return rows[0].id
 }

@@ -30,7 +30,10 @@ create table if not exists public.parental_consents (
 
   method                    text not null check (method in ('payment_card', 'email_plus')),
   state                     text not null default 'pending'
-                              check (state in ('pending', 'granted', 'withdrawn', 'expired')),
+                              -- `declined` added in Phase 2: a parent who clicks "No — cancel this request" did
+                              -- not withdraw (they never granted) and did not expire (they answered). Recording
+                              -- either would put a false statement into the one table that exists to be evidence.
+                              check (state in ('pending', 'granted', 'declined', 'withdrawn', 'expired')),
 
   -- ⚠️ THE VERSIONS THE PARENT ACTUALLY SAW, COPIED IN — never a pointer to "current". A parent who
   -- consented in March agreed to March's notice, and the only way to say so in a year is to have
@@ -42,7 +45,19 @@ create table if not exists public.parental_consents (
 
   requested_at              timestamptz not null default now(),
   confirmed_at              timestamptz,
-  second_notice_sent_at     timestamptz,
+  -- ⚠️ SCHEDULED, NOT SENT. B3 is handed to Resend at the moment of grant with `scheduled_at` set a
+  -- day ahead, so what we can truthfully record then is WHEN it is due, plus Resend's id for it. A
+  -- column called `…_sent_at` holding a future time would be a lie in the evidence table. The
+  -- delivery itself is in Resend's log under `second_email_provider_id`.
+  second_notice_scheduled_for timestamptz,
+  declined_at               timestamptz,
+  -- A pending email_plus request is only good for this long; see `consent_expire_stale`.
+  expires_at                timestamptz,
+  -- sha256 of the one-time token in the emailed links. The token itself is never stored.
+  token_hash                text unique,
+  -- Which language the parent was shown the notice and emails in. Part of "the version they saw":
+  -- the Spanish text is a different text, and it is an unreviewed machine translation.
+  lang                      text not null default 'en' check (lang in ('en', 'es')),
   withdrawn_at              timestamptz,
 
   -- The email-plus round trip. The address it went to, and evidence of BOTH sends — the second
@@ -62,6 +77,20 @@ create table if not exists public.parental_consents (
     check (state <> 'granted'   or confirmed_at is not null),
   constraint parental_consents_withdrawn_has_time
     check (state <> 'withdrawn' or withdrawn_at is not null),
+  constraint parental_consents_declined_has_time
+    check (state <> 'declined'  or declined_at is not null),
+  -- ⚠️ THE SECOND EMAIL IS A PRECONDITION OF GRANTING, NOT A FOLLOW-UP. Without B3 this is not
+  -- email-plus and the consent does not stand, so a row cannot EVER have been confirmed unless B3
+  -- was scheduled and Resend gave us its id. The grant path schedules first and grants second; this
+  -- constraint is what stops a future path from doing it the other way round.
+  constraint parental_consents_email_plus_second_notice
+    check (method <> 'email_plus' or confirmed_at is null
+           or (second_email_provider_id is not null and second_notice_scheduled_for is not null)),
+  -- …and nobody can confirm a link that was never sent to them.
+  constraint parental_consents_email_plus_request_sent
+    check (method <> 'email_plus' or confirmed_at is null or request_email_provider_id is not null),
+  constraint parental_consents_email_plus_token
+    check (method <> 'email_plus' or (token_hash is not null and expires_at is not null)),
   -- email_plus cannot be evidenced without the address it was sent to.
   constraint parental_consents_email_plus_has_address
     check (method <> 'email_plus' or email_address is not null)
@@ -191,7 +220,11 @@ begin
        or not exists (select 1 from public.parental_consents c
                        where c.id = new.consent_id
                          and c.state = 'granted'
-                         and c.parent_id = new.created_by) then
+                         and c.parent_id = new.created_by
+                         -- Phase 2: a consent covers ONE child. Without this, one granted row
+                         -- could create any number of children; the bind trigger only ever
+                         -- recorded the first.
+                         and c.learner_id is null) then
       raise exception 'no granted parental consent for this child — refusing to create them'
         using errcode = 'P0C01',
               hint = 'Create a parental_consents row, move it to granted, and pass its id as '
@@ -281,15 +314,22 @@ end $$;
 -- ── 5. Who may see a consent record ────────────────────────────────────────────────────────────
 alter table public.parental_consents enable row level security;
 
--- A parent reads and writes only their own consents. There is deliberately no DELETE policy: a
--- withdrawn consent is evidence and is kept, which is what `state = 'withdrawn'` is for.
+-- ⚠️⚠️ READ-ONLY TO THE PARENT. THE FIRST DRAFT OF THIS FILE LET A PARENT WRITE THEIR OWN ROW, AND
+-- THAT WAS A SELF-GRANT. It had `insert` and `update` policies scoped to `parent_id = auth.uid()`,
+-- which reads as "only your own row" — and the gate above DECIDES on `state`, a column in that row.
+-- So `update parental_consents set state = 'granted', confirmed_at = now()` from the browser would
+-- have satisfied the gate without an email ever being sent, and verifiable consent would have
+-- verified nothing. CLAUDE.md: a column a client can write must never be read as an authorisation
+-- decision. Found while building Phase 2, before this file was ever applied anywhere.
+-- Every write now goes through the service-role functions in 20260923130000, which a browser
+-- cannot reach. There is deliberately no DELETE policy either: a withdrawn consent is evidence.
 create policy "parental_consents: own rows" on public.parental_consents
   for select using (parent_id = auth.uid());
-create policy "parental_consents: own insert" on public.parental_consents
-  for insert with check (parent_id = auth.uid());
-create policy "parental_consents: own update" on public.parental_consents
-  for update using (parent_id = auth.uid()) with check (parent_id = auth.uid());
 
-revoke all on public.parental_consents from public, anon;
-grant select, insert, update on public.parental_consents to authenticated;
+revoke all on public.parental_consents from public, anon, authenticated;
+grant select on public.parental_consents to authenticated;
 grant all on public.parental_consents to service_role;
+
+-- One consent, one child — as a structure, so no future code path can reuse one.
+create unique index if not exists learners_consent_id_unique
+  on public.learners (consent_id) where consent_id is not null;

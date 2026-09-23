@@ -30,15 +30,16 @@ async function asOwner(sql: string): Promise<{ rows?: Record<string, unknown>[];
   catch (e) { const x = e as { message: string; code?: string }; return { err: x.message, code: x.code } }
 }
 
-const newConsent = (state: string, extra = '') => `
+/** A consent row in a given state, carrying everything the real flow would have written by then. */
+const newConsent = (state: 'pending' | 'granted') => `
   insert into public.parental_consents
-    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address
-     ${state === 'granted' || state === 'withdrawn' ? ', confirmed_at' : ''}
-     ${state === 'withdrawn' ? ', withdrawn_at' : ''} ${extra ? ', ' + extra.split('=')[0] : ''})
+    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
+     token_hash, expires_at, request_email_provider_id, request_email_sent_at
+     ${state === 'granted' ? ', confirmed_at, second_email_provider_id, second_notice_scheduled_for' : ''})
   values
-    ('${PARENT}', 'email_plus', '${state}', '${V.notice}', '${V.privacy}', '${V.terms}', 'p@x.test'
-     ${state === 'granted' || state === 'withdrawn' ? ', now()' : ''}
-     ${state === 'withdrawn' ? ', now()' : ''} ${extra ? ', ' + extra.split('=')[1] : ''})
+    ('${PARENT}', 'email_plus', '${state}', '${V.notice}', '${V.privacy}', '${V.terms}', 'p@x.test',
+     md5(random()::text), now() + interval '7 days', 're_b1', now()
+     ${state === 'granted' ? ", now(), 're_b3', now() + interval '1 day'" : ''})
   returning id`
 
 beforeAll(async () => {
