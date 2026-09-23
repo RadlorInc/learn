@@ -961,7 +961,7 @@ export function AddLearnerModal({ onClose, onAdded, consentId }: { onClose: () =
           */}
         <div style={{ color:P.ink3, margin:'14px 0 0' }}>
           <p style={{ fontSize:11.5, lineHeight:1.45, margin:0 }}>
-            {t('What we collect about your child: the first name or nickname you choose, their avatar and grade, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.')}
+            {t('What we collect about your child: the first name or nickname you choose, their avatar, the lessons you choose and a grade band worked out from them, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.')}
           </p>
           <p style={{ fontSize:11.5, lineHeight:1.45, margin:'6px 0 0' }}>
             <Link href="/legal/privacy" style={{ color:P.accent, fontWeight:700 }}>{t('Read the Privacy Policy')}</Link>

@@ -19,7 +19,7 @@
 ## In short
 
 - A parent or guardian holds the account. A child uses a profile inside it.
-- We collect a small amount of information about each child: a first name or nickname, a grade level, and their work in the app.
+- We collect a small amount of information about each child: a first name or nickname, the lessons you choose and a grade band worked out from them, and their work in the app.
 - We use it to teach the child and to show the parent progress. Nothing else.
 - **We never sell it, never share it for advertising, and never let anyone track a child across other websites or apps.**
 - A parent can see everything we hold, delete it, or withdraw permission, at any time, for free.
@@ -50,7 +50,7 @@ The service is directed to children, so the Children's Online Privacy Protection
 | What | Why | Required? |
 |---|---|---|
 | First name or a nickname you choose | So the app can address your child, and so you can tell profiles apart | Required — a nickname is fine |
-| Grade level | To give work at the right level | Required |
+| The lessons you choose, and a grade band worked out from them — grades 3–5 or 6–8, stored as the age range 9–11 or 12–14. Not the child's exact grade or age | To give work at the right level | Required |
 | The child's work: answers, scores, progress, and the topics you have chosen for them | This is the service. It is how the app decides what to teach next and how it shows you progress | Required |
 | Technical information from the device — a sign-in token kept on the device; a per-tab marker of which child's profile is in use; an internal identifier for the child, which appears on every progress and event record; a random identifier per event, used to avoid duplicates; the device's IP address and browser type, and an approximate location — city, region and country — derived from the IP address by our hosting and database providers, who record it for every request; and, if the app crashes, the page being viewed and the browser type. We set no cookies | To keep the app working, keep the account secure, and keep your child signed in | Required for the app to function |
 | A small number of product events, such as a lesson session starting | To see which parts of the app are used, so we can improve them. Stored on our own systems, tied to your child's internal identifier rather than their name, **deleted automatically after 90 days**, never shared, never used for advertising | Required |
