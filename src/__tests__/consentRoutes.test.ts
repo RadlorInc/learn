@@ -59,6 +59,10 @@ describe('grant', () => {
     expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant'])
 
     const b3 = sent[0]
+    // ⚠️ Asserted, not dereferenced. The first draft read `b3.at!.getTime()`, so with B3 sent at once it
+    // went red on a TypeError — and `npm run break` refused to certify that (exit 4: red for the wrong
+    // reason). A check that only catches a defect by crashing on it says nothing about what it found.
+    expect(b3.at, 'B3 was sent immediately — it must be SCHEDULED, a day after the grant').toBeInstanceOf(Date)
     const delay = b3.at!.getTime() - t0
     expect(delay, 'B3 must be due a day after the grant — its first word is "Yesterday"').toBeGreaterThanOrEqual(24 * 3600_000 - 5_000)
     expect(delay).toBeLessThan(24 * 3600_000 + 60_000)
