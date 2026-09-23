@@ -54,6 +54,7 @@ import { childReminders, classReminders, hardestQuestion, byPriority, type Remin
 import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
 import { LangContext, loadLang, saveLang, makeT, useT, type Lang } from '@/features/dashboard/i18n'
+import { AddChildFlow } from '@/features/consent/AddChildFlow'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -695,11 +696,15 @@ function Dashboard() {
       )}
 
       {/* Add learner modal */}
+      {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
       {showAddModal && (
-        <AddLearnerModal
-          onClose={() => setShowAddModal(false)}
-          onAdded={async () => { setShowAddModal(false); await loadAll() }}
-        />
+        <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={consentId => (
+          <AddLearnerModal
+            consentId={consentId}
+            onClose={() => setShowAddModal(false)}
+            onAdded={async () => { setShowAddModal(false); await loadAll() }}
+          />
+        )} />
       )}
     </div>
     </LangContext.Provider>
@@ -843,7 +848,7 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
   )
 }
 
-export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+export function AddLearnerModal({ onClose, onAdded, consentId }: { onClose: () => void; onAdded: () => void; consentId?: string }) {
   const t = useT()
   const [name,        setName]        = useState('')
   const [avatarIndex, setAvatarIndex] = useState(0)
@@ -862,7 +867,7 @@ export function AddLearnerModal({ onClose, onAdded }: { onClose: () => void; onA
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) })
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, consentId)
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     /**
      * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not

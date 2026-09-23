@@ -87,6 +87,8 @@ describe('the consent record cannot be written from a browser', () => {
       expect(r.err ?? 'ALLOWED', `${role} could call consent_grant`).toMatch(/permission denied for function consent_grant/)
     }
     expect((await grant(hash)).rows![0].s, 'positive twin: the server can').toBe('granted')
+    // …and a repeat click is told so, rather than looking like a fresh grant or a failure.
+    expect((await grant(hash)).rows![0].s).toBe('already_granted')
   })
 })
 

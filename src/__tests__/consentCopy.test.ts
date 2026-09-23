@@ -1,0 +1,144 @@
+/**
+ * THE CONSENT SCREENS AND EMAILS SAY EXACTLY WHAT THE DOCUMENTS SAY — NO MORE, NO LESS.
+ *
+ * ⚠️ THE EXPECTATION IS READ FROM `docs/legal/`, NOT FROM THE COPY UNDER TEST. Two independent
+ * artefacts, compared in BOTH directions:
+ *   · every sentence, heading, table cell, list item and button in the document is on the screen —
+ *     a dropped line is a notice that no longer says everything the policy says;
+ *   · every string on the screen is in the document — a reworded one is two statements about the
+ *     same thing, which is the failure this whole exercise exists to prevent.
+ * Markdown emphasis and link syntax are stripped on both sides before comparing; the words are not.
+ *
+ * ⚠️ AND THE NOTICE'S TEXT IS PINNED TO ITS VERSION. Every consent row stores `NOTICE_VERSION` as
+ * "what the parent was shown". If the notice changes and the version does not, every later consent
+ * records a lie about what was on screen. The hashes below are written out by hand, one per version:
+ * changing a word means adding a version here, not editing v1's hash.
+ */
+import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { createHash } from 'node:crypto'
+import { NOTICE, B1, B2, B3, WITHDRAW, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
+
+const ROOT = resolve(__dirname, '../..')
+const doc = (f: string) => readFileSync(resolve(ROOT, 'docs/legal', f), 'utf8')
+
+/** Same normalisation both sides: drop emphasis, links → their text, collapse whitespace. */
+const norm = (s: string) => s
+  .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+  .replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '')
+  .replace(/\s+/g, ' ').trim()
+
+/** Split a stretch of markdown into the units a reader sees: lines, list items, table cells. */
+function units(md: string, skip: (line: string) => boolean): string[] {
+  const out: string[] = []
+  for (const raw of md.split('\n')) {
+    let line = raw.trim().replace(/^>\s?/, '').trim()
+    if (!line || skip(line) || /^\|?\s*-{3,}/.test(line) || line === '---') continue
+    if (line.startsWith('|')) { out.push(...line.split('|').map(c => c.trim()).filter(Boolean)); continue }
+    // doc 03's B1 button row and "Buttons:" lines: `**[ A ]**    **[ B ]**` and `\`A\` · \`B\``
+    const bracketed = [...line.matchAll(/\[ ([^\]]+) \]/g)].map(m => m[1])
+    if (bracketed.length) { out.push(...bracketed); continue }
+    const ticked = [...line.matchAll(/`([^`]+)`/g)].map(m => m[1])
+    if (ticked.length && /^(\*\*|- \*\*)/.test(line)) { out.push(...ticked); continue }
+    line = line.replace(/^#{1,6}\s+/, '').replace(/^- /, '')
+    out.push(line)
+  }
+  return out.map(norm).filter(Boolean)
+}
+
+const between = (s: string, from: string, to: string) => {
+  const a = s.indexOf(from), b = s.indexOf(to, a + from.length)
+  if (a < 0 || b < 0) throw new Error(`section markers not found: "${from}" … "${to}" — the document moved; fix the markers, do not weaken the check`)
+  return s.slice(a + from.length, b)
+}
+
+const en = (xs: (L | string)[]) => xs.map(x => norm(typeof x === 'string' ? x : x.en))
+
+// ── document 02 ──
+const D02 = doc('02-coppa-direct-notice-to-parents.md')
+const noticeDoc = units(
+  between(D02, '## Screen / email title', '### Notes for the attorney'),
+  l => l === '## Body' || l === '## Buttons on the screen version',
+)
+const noticeCopy = en([
+  NOTICE.title, NOTICE.intro, NOTICE.collectHeading, ...NOTICE.columns, ...NOTICE.rows.flat(),
+  NOTICE.doNotAsk, NOTICE.useHeading, NOTICE.use, NOTICE.thirdParty, NOTICE.weDoNot, ...NOTICE.weDoNotList,
+  NOTICE.permissionHeading, NOTICE.permission, ...NOTICE.permissionList,
+  NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList, NOTICE.rightsHow,
+  NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect,
+  NOTICE.detailsHeading, NOTICE.details, NOTICE.contactHeading, ...NOTICE.contact,
+  NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
+])
+
+// ── document 03, Path B and the withdrawal screen ──
+const D03 = doc('03-consent-and-checkout-screen-copy.md')
+const bDoc = units(
+  between(D03, '### B1. Consent request email — sent when the parent asks to start', '### Notes for the attorney'),
+  l => /^#{2,3} /.test(l) || l === '**Body:**' || l.startsWith('**Timing:**'),
+)
+const bCopy = en([
+  B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.grant, B1.decline, B1.ignore, B1.details, B1.address,
+  B2.heading, ...B2.body,
+  B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
+  WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
+])
+
+describe('the consent copy is the documents, verbatim', () => {
+  it('reads the documents at all — positive control', () => {
+    expect(noticeDoc.length, 'document 02 yielded almost nothing — the parser is blind, not the copy clean').toBeGreaterThan(40)
+    expect(bDoc.length, 'document 03 yielded almost nothing').toBeGreaterThan(25)
+    expect(noticeDoc).toContain('How we protect it')
+    expect(bDoc).toContain('Thank you — permission recorded')
+  })
+
+  it.each([['document 02 (the notice)', noticeDoc, noticeCopy], ['document 03 (B1–B3, withdrawal)', bDoc, bCopy]])(
+    '%s — nothing in the document is missing from the screen', (_n, docUnits, copyUnits) => {
+      const missing = docUnits.filter(u => !copyUnits.includes(u))
+      expect(missing, 'these lines are in the document and not on the screen or in the email').toEqual([])
+    })
+
+  it.each([['document 02 (the notice)', noticeDoc, noticeCopy], ['document 03 (B1–B3, withdrawal)', bDoc, bCopy]])(
+    '%s — nothing on the screen is absent from the document', (_n, docUnits, copyUnits) => {
+      const invented = copyUnits.filter(u => !docUnits.includes(u))
+      expect(invented, 'these strings are not in the document — reworded, or invented').toEqual([])
+    })
+
+  it('the notice text is the text its version says it is', () => {
+    const PINNED: Record<string, string> = {
+      // v1 as approved 2026-09-23. A new version is a new line, never an edit to this one.
+      'notice-v1': '7e15d9f398ee',
+    }
+    const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
+    expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()
+    expect(h, `the notice text changed but NOTICE_VERSION is still ${NOTICE_VERSION} — every consent ` +
+      'from here on would record the wrong text as "what the parent was shown". Bump the version.').toBe(PINNED[NOTICE_VERSION])
+  })
+})
+
+describe('Spanish — present everywhere, and never claimed to be reviewed', () => {
+  const all: L[] = [
+    NOTICE.title, NOTICE.intro, NOTICE.collectHeading, ...NOTICE.columns, ...NOTICE.rows.flat(), NOTICE.doNotAsk,
+    NOTICE.useHeading, NOTICE.use, NOTICE.thirdParty, NOTICE.weDoNot, ...NOTICE.weDoNotList, NOTICE.permissionHeading,
+    NOTICE.permission, ...NOTICE.permissionList, NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList,
+    NOTICE.rightsHow, NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect, NOTICE.detailsHeading,
+    NOTICE.details, NOTICE.contactHeading, NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
+    B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.grant, B1.decline, B1.ignore, B1.details,
+    B2.heading, ...B2.body, B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime,
+    WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep, ...Object.values(PROPOSED),
+  ]
+  it('every string has a Spanish version that is not just the English', () => {
+    expect(all.length).toBeGreaterThan(80)
+    const bad = all.filter(x => !x.es?.trim() || x.es === x.en).map(x => x.en)
+    expect(bad).toEqual([])
+  })
+  it('the placeholders a screen fills in survive translation', () => {
+    for (const x of all) for (const p of x.en.match(/%[A-Z]+%|\{\w+\}/g) ?? [])
+      expect(x.es, `"${x.en.slice(0, 40)}…" lost ${p} in Spanish`).toContain(p)
+  })
+  it('the source says, in words, that the Spanish is unreviewed', () => {
+    const src = readFileSync(resolve(ROOT, 'src/features/consent/copy.ts'), 'utf8')
+    expect(src).toMatch(/NOT reviewed by a Spanish speaker/)
+    expect(src).toMatch(/HAS NOT\s+\*?\s*BEEN REVIEWED BY ANYONE WHO SPEAKS SPANISH/)
+  })
+})

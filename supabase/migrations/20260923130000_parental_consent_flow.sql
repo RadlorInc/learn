@@ -117,14 +117,14 @@ $$;
 
 -- ── 3. What a token currently points at — read-only, so a GET can show the right screen ─────────
 create or replace function public.consent_lookup(p_token_hash text)
-returns table (consent_id uuid, state text, lang text, expired boolean,
+returns table (consent_id uuid, state text, lang text, expired boolean, email text,
                learner_id uuid, second_email_provider_id text, second_notice_scheduled_for timestamptz)
 language sql
 stable
 security definer
 set search_path = public, pg_temp
 as $$
-  select c.id, c.state, c.lang, (c.state = 'pending' and c.expires_at <= now()),
+  select c.id, c.state, c.lang, (c.state = 'pending' and c.expires_at <= now()), c.email_address,
          c.learner_id, c.second_email_provider_id, c.second_notice_scheduled_for
     from public.parental_consents c
    where c.token_hash = p_token_hash;
@@ -152,6 +152,11 @@ declare
 begin
   select * into r from public.parental_consents where token_hash = p_token_hash for update;
   if not found then return 'unknown'; end if;
+  -- ⚠️ DISTINCT FROM 'granted'. A second click on a link that already worked must not read as a fresh
+  -- grant, and it must not read as a failure either: the route cancels the B3 it scheduled whenever
+  -- the answer is not a fresh grant, and B3 is scheduled with an idempotency key — so the "new" B3 of
+  -- a repeat click IS the original one, and cancelling it would strip the consent of its second email.
+  if r.state = 'granted' then return 'already_granted'; end if;
   if r.state <> 'pending' then return r.state; end if;
   if r.expires_at <= now() then
     update public.parental_consents set state = 'expired' where id = r.id;

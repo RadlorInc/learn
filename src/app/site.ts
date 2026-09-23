@@ -63,4 +63,5 @@ export const PUBLIC_ROUTES = ['/', '/help', '/legal/privacy', '/legal/terms'] as
 export const PRIVATE_ROUTES = [
   '/api/', '/parent', '/admin', '/play', '/shop', '/menu', '/game', '/story',
   '/auth', '/practice', '/lesson', '/modules',
+  '/consent',   // token-bearing pages reached from a consent email; also noindex in their layout
 ] as const
