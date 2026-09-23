@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   let emailed = false
   if (!already && adult.email) {
     try {
-      await sendEmail(adult.email, renderCancelled(row.current_period_end), `billing-cancel-${sub.id}`)
+      await sendEmail('transactional', adult.email, renderCancelled(row.current_period_end), `billing-cancel-${sub.id}`)
       emailed = true
     } catch (e) {
       await log(`confirmation email failed for ${sub.id}: ${e instanceof Error ? e.message : String(e)}`)
