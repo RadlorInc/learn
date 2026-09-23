@@ -30,8 +30,9 @@ export interface LegalPage {
   published: boolean
   /** Who signed off, when. `null` = no attorney has. Recorded by a human, never inferred. */
   signoff: { by: string; date: string } | null
-  /** The Spanish version, and whether a Spanish reader has reviewed it. `null` = none exists. */
-  spanish: { source: string; reviewedBy: string | null } | null
+  /** The Spanish version under `docs/legal/`. `null` = none exists. Whether a Spanish reader has reviewed
+   *  it is NOT recorded here: it is the draft's own `REVIEWED-BY:` line (see `spanishReviewer`). */
+  spanish: { source: string } | null
   /** A page that promises something the product must do first. */
   needs?: 'deletion' | 'billing'
 }
@@ -39,20 +40,20 @@ export interface LegalPage {
 export const LEGAL_PAGES: LegalPage[] = [
   { slug: 'privacy', title: 'Privacy Policy', source: '11-privacy-policy.md',
     after: '> One dependency survives', until: '### Where this policy must appear',
-    published: false, signoff: null, spanish: null },
+    published: false, signoff: null, spanish: { source: 'es/11-privacy-policy.md' } },
   { slug: 'terms', title: 'Terms of Service', source: '12-terms-of-service.md',
-    until: '### Notes for the attorney', published: false, signoff: null, spanish: null },
+    until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/12-terms-of-service.md' } },
   { slug: 'refunds', title: 'Refund and Cancellation Policy', source: '01-refund-and-cancellation-policy.md',
-    until: '### Notes for the attorney', published: false, signoff: null, spanish: null, needs: 'billing' },
+    until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/01-refund-and-cancellation-policy.md' }, needs: 'billing' },
   { slug: 'parent-rights', title: 'Your rights as a parent', source: '06-parent-rights-procedure.md',
     after: '# Part A — Public page', until: '# Part B — Internal procedure',
-    published: false, signoff: null, spanish: null, needs: 'deletion' },
+    published: false, signoff: null, spanish: { source: 'es/06-parent-rights-procedure.md' }, needs: 'deletion' },
   { slug: 'subprocessors', title: 'Service Providers and Subprocessors', source: '07-subprocessors.md',
-    until: '## Two questions still open', published: false, signoff: null, spanish: null },
+    until: '## Two questions still open', published: false, signoff: null, spanish: { source: 'es/07-subprocessors.md' } },
   { slug: 'cookies', title: 'Cookie and Tracking Notice', source: '08-cookie-and-tracking-notice.md',
-    until: '### Notes for the attorney', published: false, signoff: null, spanish: null },
+    until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/08-cookie-and-tracking-notice.md' } },
   { slug: 'retention', title: 'Data Retention and Deletion Policy', source: '04-data-retention-policy.md',
-    until: '## 7. The purge cliff', published: false, signoff: null, spanish: null },
+    until: '## 7. The purge cliff', published: false, signoff: null, spanish: { source: 'es/04-data-retention-policy.md' } },
 ]
 
 export const pageBySlug = (slug: string) => LEGAL_PAGES.find(p => p.slug === slug)
@@ -84,6 +85,23 @@ export function assertRenderable(page: LegalPage, body: string): void {
   if (n) throw new Error(`/legal/${page.slug} refused: its text still carries ${n} placeholder(s) from docs/legal/${page.source}. A placeholder is a decision nobody has made; it is never shown to a reader.`)
 }
 
+/**
+ * ⚠️ WHO REVIEWED A SPANISH TEXT — READ FROM THE TEXT ITSELF, never from a flag elsewhere. The drafts in
+ * `docs/legal/es/` are machine-prepared; one counts as reviewed only when its header (above the first
+ * `---`) carries `REVIEWED-BY: <a name>, <YYYY-MM-DD>`, written there by the person who read it. An empty
+ * line, a name without a date, or a line in the body is not a review. `null` = not reviewed.
+ */
+export function spanishReviewer(es: string): { by: string; date: string } | null {
+  const lines = es.split('\n')
+  const end = lines.findIndex(l => l.trim() === '---')
+  if (end < 0) return null
+  for (const l of lines.slice(0, end)) {
+    const m = /^REVIEWED-BY:\s*(.*\p{L}.*?),\s*(\d{4}-\d{2}-\d{2})\s*$/u.exec(l)
+    if (m) return { by: m[1].trim(), date: m[2] }
+  }
+  return null
+}
+
 // ─────────────────────────────── the switch ───────────────────────────────
 /**
  * ⚠️ TWO FACTS THE PRODUCT MUST MAKE TRUE BEFORE A PAGE MAY PROMISE THEM. Each is a literal a human
@@ -111,7 +129,7 @@ export function publishRefusals(page: LegalPage, md: string, es: string | null, 
   if (/STATUS:\s*DRAFT/.test(header)) why.push(`draft: docs/legal/${page.source} still opens "STATUS: DRAFT"`)
   if (!page.signoff) why.push('sign-off: no attorney sign-off is recorded in registry.ts')
   if (!page.spanish || es === null) why.push('spanish: there is no Spanish version')
-  else if (!page.spanish.reviewedBy) why.push(`spanish: ${page.spanish.source} has not been reviewed by a Spanish reader`)
+  else if (!spanishReviewer(es)) why.push(`spanish: docs/legal/${page.spanish.source} has not been reviewed by a Spanish reader — its REVIEWED-BY: line must name the reviewer and the date (Name, YYYY-MM-DD)`)
   if (page.needs === 'deletion' && !facts.deletion) why.push('deletion: withdrawing consent does not yet delete the child\'s data (WITHDRAWAL_DELETES)')
   if (page.needs === 'billing' && !facts.billing) why.push('billing: billing is not live, so no refund can be given (BILLING_LIVE)')
   return why
