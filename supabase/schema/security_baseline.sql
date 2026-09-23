@@ -75,6 +75,11 @@
 --                                                  the adult who gave it (parent_id = auth.uid()). NO DELETE
 --                                                  policy and none intended: a withdrawn consent is evidence
 --                                                  and is kept as state='withdrawn'. anon has no grant.
+--   consent_b3_cancellations   rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-23, 20260923200000): every
+--                                                  privilege revoked from public/anon/authenticated; service_role
+--                                                  (the server) reads/updates it via consent_b3_due / consent_b3_record (INVOKER).
+--                                                  Rows are written ONLY by the DEFINER trigger consent_queue_b3_cancel.
+--                                                  No FK to parental_consents, on purpose: it outlives an account close.
 --   email_suppressions         rls=t  policies=0   2026-09-23 (20260923190000): INTENTIONAL deny-all, the
 --                                                  error_events precedent. CAN-SPAM suppression list (address,
 --                                                  opaque unsubscribe token, suppressed_at). Every privilege

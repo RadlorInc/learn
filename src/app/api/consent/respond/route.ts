@@ -3,7 +3,7 @@ import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { secondNoticeDelayMs } from '@/features/consent/config'
 import { renderB3 } from '@/features/consent/email'
-import { ConfigMissing, requireConfig, cancelEmail, hashToken, learnerName, looksLikeToken, rpc, sendEmail } from '@/features/consent/server'
+import { ConfigMissing, requireConfig, cancelEmail, drainB3Cancellations, hashToken, learnerName, looksLikeToken, rpc, sendEmail } from '@/features/consent/server'
 
 interface Found {
   consent_id: string; state: string; lang: 'en' | 'es'; expired: boolean; email: string
@@ -45,8 +45,11 @@ export async function POST(req: Request) {
       case 'withdraw': {
         const s = await rpc<string>('consent_withdraw', { p_token_hash: hash })
         // B3 still waiting to go out would tell a parent who has just withdrawn "Yesterday you gave
-        // permission". Cancelling is best-effort: the withdrawal has already committed either way.
-        if (s === 'withdrawn' && row.second_email_provider_id && row.second_notice_scheduled_for
+        // permission". The withdrawal queued it (20260923200000); the drain cancels and records it.
+        // Best-effort: the withdrawal has already committed either way. Before that migration there
+        // is no queue (null), so the id read above is cancelled directly, as it always was.
+        if (s === 'withdrawn' && await drainB3Cancellations().catch(() => 0) === null
+            && row.second_email_provider_id && row.second_notice_scheduled_for
             && new Date(row.second_notice_scheduled_for) > new Date()) {
           await cancelEmail(row.second_email_provider_id)
         }
