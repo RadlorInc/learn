@@ -40,3 +40,13 @@ describe('withdrawal scope — the public documents match the product', () => {
     expect(pub(slug)).not.toMatch(/subscription is cancelled and we refund/i)
   })
 })
+
+describe('doc 06 procedure — no step that the build made unnecessary', () => {
+  it('the Delete row no longer tells staff to delete crash records by hand (they cascade since 20260923140000)', async () => {
+    const { readFileSync } = await import('node:fs')
+    const row = readFileSync('docs/legal/06-parent-rights-procedure.md', 'utf8').split('\n').find(l => l.startsWith('| **Delete** |'))
+    expect(row, 'doc 06 lost its Delete row — this check sees nothing').toBeDefined()
+    expect(row).not.toMatch(/deleted by hand/)
+    expect(row).toMatch(/delete_child_data/)
+  })
+})
