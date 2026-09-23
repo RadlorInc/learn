@@ -54,7 +54,7 @@ check. Do not start the next PR until the proof passes.
 |---|---|---|---|
 | C1 | [#190](https://github.com/RadlorInc/learn/pull/190) | **R13** — Spanish drafts of the 7 public pages, which **cannot render until `REVIEWED-BY:` names a person and date** *(on #187, #186, #188, #191, #195, #194)* | Nothing renders; every page stays dark. |
 | C2 | [#199](https://github.com/RadlorInc/learn/pull/199) | **R11** — `PLACEHOLDERS.md`, all 66 remaining placeholders, guarded; 5 resolved; doc 08 storage rows *(on #190, #192)* | Approve §6 first. |
-| C3 | this records PR | **R12** attorney packet, **R15** READINESS checklist, this file, LOOP-STATE "Round 1" *(on #187)* | — |
+| C3 | [#200](https://github.com/RadlorInc/learn/pull/200) | **R12** attorney packet, **R15** READINESS checklist, this file, LOOP-STATE "Round 1" *(on #187)* | — |
 
 ---
 
