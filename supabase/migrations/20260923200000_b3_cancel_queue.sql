@@ -1,3 +1,8 @@
+-- ⚠️ APPLY NOTE (added 2026-09-24, comment only — no statement below changed). This file first reached
+-- `main` in #192 (5ab91bd), whose Deploy run went red on an unrelated test, so `migrate-prod` was skipped
+-- and nothing was applied. `migrate-prod` runs only when a push's own range touches supabase/migrations/,
+-- so the fix PR carries this comment on purpose: its merge is the push that offers this migration to
+-- production, behind the `production-db` approval, after a fresh backup.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════
 -- B3 IS CANCELLED ON EVERY PATH WHERE A CONSENT STOPS BEING GRANTED — BY A QUEUE THE DATABASE FILLS.
 --
