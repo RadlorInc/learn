@@ -76,7 +76,7 @@ from public.learners l join auth.users u on u.id = l.created_by where u.email = 
 | 3.2 | **Teachers at signup.** The box says "I'm a parent or legal guardian", which a teacher cannot tick honestly. Built: *"Signing up as a teacher, not a parent?" → Continue as a teacher* enables the buttons without the tick. A teacher's account still cannot add a child without the full consent, and the roster stays paused. | Keep it. |
 | 3.3 | **Mark a notice version as needing re-consent** (the switch): a one-row SQL update, which should go through a reviewed migration. None is marked today. | Mark a version only when what we collect changes; ask the attestation wording question (attorney A8c) first. |
 | 3.4 | **Proposal, not built: the signup confirmation email as the consent email.** | Don't. Google parents get no confirmation email, so there would be two flows, and the auth templates are not versioned (ATTORNEY-PACKET A10). |
-| 3.5 | The new screens' **unapproved wording** that is not in any document (PROPOSED block, listed in the PR). | Approve or reword. |
+| 3.5 | The one new string that is in no document (the PROPOSED block): the result screen after withdrawing every child, *"We have stopped collecting information about every child on your account and deleted what we held about them. Your account stays open."* | Approve or reword. |
 | 3.6 | Spanish: the consent flow now has more machine-translated strings, all still unreviewed (Round-1 decision 3.2 still open). | Unchanged. English until reviewed. |
 
 ## 4. The attorney
