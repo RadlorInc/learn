@@ -97,7 +97,9 @@ function Dashboard() {
   const [loadError,    setLoadError]    = useState(false)
   const [parentName,   setParentName]   = useState('')
   const [uid,          setUid]          = useState<string | null>(null)
-  const [showAddModal, setShowAddModal] = useState(false)
+  // ?add=1 opens the add-a-child flow — where B2 ("permission recorded") sends the parent, so the consent they just
+  // gave is used straight away instead of waiting behind a second press of "Add a child".
+  const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
   const [acceptingId,  setAcceptingId]  = useState<string | null>(null)
   const [inviteMsg,    setInviteMsg]    = useState<string | null>(null)

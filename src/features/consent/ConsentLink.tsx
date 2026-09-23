@@ -87,7 +87,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
       <div data-consent="granted">
         <h1 style={S.h1}>{t(B2.heading)}</h1>
         {B2.body.map((x, i) => <p key={i} style={S.p}><Md s={t(x)} /></p>)}
-        <a href="/parent" style={{ ...S.primary, display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 20 }}>{makeT(lang)('Add a child')}</a>
+        <a href="/parent?add=1" style={{ ...S.primary, display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 20 }}>{makeT(lang)('Add a child')}</a>
       </div>
     )
   }
