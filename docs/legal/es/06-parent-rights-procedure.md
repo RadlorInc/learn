@@ -30,11 +30,13 @@ Puede pedirnos que eliminemos la información de su hijo. La eliminaremos de nue
 
 ### 4. Retirar su permiso
 
-Puede retirar el permiso que nos dio para un hijo. Si lo hace, dejamos de recopilar cualquier otro dato de ese hijo, eliminamos todo lo que tenemos sobre él — incluido su propio inicio de sesión — y se cierra su perfil. Esto no se puede deshacer.
+Usted nos da su permiso una sola vez, para su cuenta, y cubre a todos los niños que añada a ella. Puede retirarlo para un niño o para todos los niños de la cuenta. En ambos casos dejamos de recopilar cualquier otro dato, eliminamos todo lo que tenemos sobre cada niño afectado — incluido su propio inicio de sesión — y se cierra su perfil. Esto no se puede deshacer.
 
-**Retirar el permiso se aplica solo a ese hijo.** Su cuenta sigue abierta y los demás hijos que tenga en ella no se ven afectados. Guardamos un registro de que el permiso se dio y después se retiró, y de cuándo, sin los datos del niño.
+**Para un niño:** elimine el perfil de ese niño (la tarjeta de su hijo → **Inicio de sesión y datos** → *Eliminar el perfil de nombre*). Esto se aplica solo a ese niño: su cuenta, su permiso y los demás niños que tenga en ella no se ven afectados. (Si dio su permiso antes del 24 de septiembre de 2026 para un solo niño, el enlace del segundo correo de ese permiso hace lo mismo para ese niño).
 
-Puede retirar el permiso desde el enlace del segundo correo electrónico que le enviamos después de que dé su permiso. También puede eliminar usted mismo el perfil de un hijo en cualquier momento (la tarjeta de su hijo → **Inicio de sesión y datos** → *Eliminar el perfil de nombre*), lo que tiene el mismo efecto; o cerrar toda su cuenta (**Cuenta → Cerrar su cuenta**), lo que elimina a todos los hijos que haya en ella.
+**Para todos los niños de la cuenta:** use **Cuenta → Retirar el permiso para todos mis hijos**, o el enlace del segundo correo que le enviamos después de que dé su permiso. Se eliminan todos los niños de la cuenta. **Su cuenta sigue abierta**, sin niños; si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.
+
+Guardamos un registro de que el permiso se dio y después se retiró, y de cuándo, sin los datos de los niños. Para eliminarlo todo, incluida la propia cuenta, use **Cuenta → Cerrar su cuenta**.
 
 Nunca se le cobra por ejercer un derecho de privacidad. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing permission for a child also cancels or reduces a subscription, and whether any part is refunded. Nothing does this today: billing is off and no subscription can be bought (`BILLING_LIVE = false`). An earlier version of this page promised cancellation and a pro-rata refund; decide and build it before billing goes live, then write it here.]
 
