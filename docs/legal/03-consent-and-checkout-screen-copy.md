@@ -124,7 +124,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 > Before we collect anything from your child, US law requires your permission. Here is exactly what we would collect:
 >
 > - your child's first name or nickname
-> - their grade level
+> - the lessons you choose for them, and a grade band (grades 3–5 or 6–8) worked out from those lessons
 > - the avatar you pick and the username your child signs in with
 > - their answers to maths questions, their scores, their points and progress, and anything they save in a game
 > - any feedback they send us about a lesson
@@ -160,7 +160,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > Hi,
 >
-> Yesterday you gave permission for your child to use Milo, and for us to collect their first name, grade level, and maths progress.
+> Yesterday you gave permission for your child to use Milo, and for us to collect their first name, grade band, and maths progress.
 >
 > **If that was you, you don't need to do anything.**
 >
