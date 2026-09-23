@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, grantedConsent } from './_schema'
+import { loadSchema, grantedConsent, FIXTURE_NOTICE } from './_schema'
 
 const OWNER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const VIEWER = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
@@ -27,8 +27,8 @@ beforeAll(async () => {
     insert into public.profiles (id, role) values ('${OWNER}', 'parent'), ('${VIEWER}', 'parent'), ('${STRANGER}', 'parent')
       on conflict (id) do update set role = excluded.role;`)
   const consent = await grantedConsent(db, OWNER)
-  kid = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id)
-    values ('Ana', 0, '9-11', '${OWNER}', '${consent}') returning id`)).rows[0].id
+  kid = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+    values ('Ana', 0, '9-11', '${OWNER}', '${consent}', '${FIXTURE_NOTICE}') returning id`)).rows[0].id
   await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${kid}', '${OWNER}', 'owner') on conflict do nothing;
     insert into public.learner_access (learner_id, parent_id, access_role) values ('${kid}', '${VIEWER}', 'viewer');
     insert into public.error_events (source, message, learner_id) values ('client', 'boom', '${kid}');`)
@@ -62,8 +62,8 @@ describe('correct the avatar, and nothing without live consent (R5)', () => {
     // A second child whose consent is then taken out of `granted` (withdrawal normally deletes the child; this is
     // the state in between, and the state a future bug could leave behind).
     const c2 = await grantedConsent(db, OWNER)
-    const kid2 = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id)
-      values ('Cy', 0, '9-11', '${OWNER}', '${c2}') returning id`)).rows[0].id
+    const kid2 = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+      values ('Cy', 0, '9-11', '${OWNER}', '${c2}', '${FIXTURE_NOTICE}') returning id`)).rows[0].id
     await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${kid2}', '${OWNER}', 'owner') on conflict do nothing`)
     // Positive twin first: while consent is granted the owner CAN edit this child.
     expect((await as(OWNER, `update public.learners set display_name = 'Cyd' where id = '${kid2}' returning display_name`)).rows).toEqual([{ display_name: 'Cyd' }])

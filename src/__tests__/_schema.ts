@@ -146,3 +146,34 @@ export async function grantedConsent(db: PGlite, parentId: string, scope: 'accou
     returning id`)
   return rows[0].id
 }
+
+/** The consent-once migration: a child created before it is the "legacy" shape (one per-child consent each). */
+export const CONSENT_ONCE = '20260924100000_consent_once.sql'
+
+/** The second half of `loadSchema({ before: file })`: applies `file` and every migration after it, in order. */
+export async function applyFrom(db: PGlite, file: string): Promise<void> {
+  for (const f of readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql') && f >= file).sort())
+    await applyFile(db, f)
+}
+
+/**
+ * A child made THE PRE-CONSENT-ONCE WAY — its own granted per-child consent, then the child under it — for a
+ * schema loaded `before: CONSENT_ONCE`. Applying the migration afterwards (`applyFrom`) is the only faithful
+ * route to a legacy child: after it, no child can be created under a per-child consent at all, and building one
+ * by switching the gate off would test a world production never had. `b3` is the consent's scheduled B3 id.
+ */
+export async function legacyChild(db: PGlite, parentId: string, name = 'Legacy', b3 = `re_legacy_b3_${Math.random().toString(36).slice(2)}`):
+  Promise<{ id: string; consent: string; token: string }> {
+  const { rows: [c] } = await db.query<{ id: string; token_hash: string }>(`
+    insert into public.parental_consents
+      (parent_id, method, state, notice_version, privacy_version, terms_version,
+       email_address, confirmed_at, token_hash, expires_at,
+       request_email_provider_id, request_email_sent_at, second_email_provider_id, second_notice_scheduled_for)
+    values ('${parentId}', 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1',
+            'fixture@x.test', now(), md5(random()::text), now() + interval '7 days',
+            're_fixture_b1', now(), '${b3}', now() + interval '1 day')
+    returning id, token_hash`)
+  const { rows: [l] } = await db.query<{ id: string }>(`insert into public.learners
+    (display_name, avatar_index, age_group, created_by, consent_id) values ('${name}', 0, '6-8', '${parentId}', '${c.id}') returning id`)
+  return { id: l.id, consent: c.id, token: c.token_hash }
+}
