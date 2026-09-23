@@ -13,6 +13,7 @@
  * leave behind on a good day.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NOTICE_VERSION } from '@/features/consent/copy'
 
 const log: string[] = []
 let lookup: Record<string, unknown> | null
@@ -169,7 +170,7 @@ describe('request', () => {
     expect(log).toEqual([])
   })
   it('sends B1 to the ACCOUNT\'s address with both links, then records that it went', async () => {
-    const r = await req({ noticeVersion: 'notice-v4', lang: 'en' })
+    const r = await req({ noticeVersion: NOTICE_VERSION, lang: 'en' })
     expect(r.status).toBe(200)
     expect(log).toEqual(['rpc:consent_request', 'send:Please confi', 'rpc:consent_record_request_sent'])
     expect(sent[0].to).toBe('p@x.test')
@@ -181,7 +182,7 @@ describe('request', () => {
   // refuses anything but 'account'; a route still sending the seven old parameters names a function that no longer
   // exists (PGRST202 in production). Red until src/app/api/consent/request/route.ts sends them.
   it('asks for ACCOUNT consent, with the time the parent ticked (or null)', async () => {
-    const r = await req({ noticeVersion: 'notice-v4', lang: 'en' })
+    const r = await req({ noticeVersion: NOTICE_VERSION, lang: 'en' })
     expect(r.status).toBe(200)
     const { rpc } = await import('@/features/consent/server')
     const args = (rpc as unknown as { mock: { calls: [string, Record<string, unknown>][] } }).mock.calls.findLast(c => c[0] === 'consent_request')![1]
