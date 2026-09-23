@@ -68,7 +68,22 @@ Questions: support@radlor.com
 - One click, no sign-in, no questions, no "tell us why" before it takes effect.
 - Effective immediately in practice.
 - The suppression list is permanent — re-adding an address requires the person to opt in again themselves.
-- **Resend delivers every email**, configured as the SMTP relay behind the authentication service's mailer, so the suppression list belongs there. [PLACEHOLDER — no suppression list or unsubscribe mechanism exists yet, because only authentication emails are sent today and those are transactional. It must be built before the first commercial email, not after.] Before any send to more than one person, confirm the list is applied by looking for a known unsubscribed address in the prepared send and seeing it absent.
+- **Resend delivers every email**: the authentication emails through the authentication service's SMTP relay (a provider setting, not in the code), and the app's own emails through Resend's API from one function, `sendEmail` in `src/features/consent/server.ts`. Every send through that function must declare whether it is transactional or commercial. A commercial send is checked against the suppression list (`email_suppressions`, readable and writable only by the server) and is not sent to an address on it; if the list cannot be read, nothing is sent. Otherwise it carries the §4 footer with a one-click unsubscribe link and the `List-Unsubscribe` / `List-Unsubscribe-Post: List-Unsubscribe=One-Click` headers (RFC 8058). The link carries a random token, never the address. Pressing the single button on the page it opens — or a mail client's own one-click unsubscribe — puts the address on the list permanently, with no sign-in and no questions; opening the link alone does nothing, because mail scanners open every link. Transactional emails never read the list. There is no preferences page, so the footer omits §4's "Manage your email preferences" line. **No commercial email is sent today** (see §8). Before any send to more than one person, confirm the list is applied by looking for a known unsubscribed address in the prepared send and seeing it absent.
+
+## 8. Every email the product sends today
+
+Measured from the repository on 2026-09-23. The Supabase Auth templates and the mailer's settings live in the provider's dashboard, not in the repository, so the first three rows are what the code triggers, not a reading of the template text.
+
+| Email | Sent by | Triggered by | Kind |
+|---|---|---|---|
+| Sign-up confirmation | Supabase Auth | an adult signing up with email and password | transactional |
+| Password reset | Supabase Auth | "Forgot password" on the sign-in page | transactional |
+| Invitation (set your password) | Supabase Auth | no code in the app sends one — only the Supabase dashboard can; the app handles its link | transactional |
+| B1 — the consent request | `sendEmail` (Resend API) | a parent adding a child | transactional |
+| B3 — the second consent notice, a day later | `sendEmail` (Resend API, scheduled) | a parent granting consent | transactional |
+| Payment receipts | Stripe, if receipts are turned on in Stripe's dashboard | a payment | transactional — whether Stripe sends them is a provider setting that cannot be read from the repository |
+
+Not email: the dashboard's "reminders" are shown inside the app only, and every "Contact support" link opens the reader's own mail program. Children's sign-in accounts use addresses that cannot receive mail, and are created already confirmed, so nothing is sent to them. **No commercial email exists.** The suppression list in §7 guards the first one.
 
 ---
 

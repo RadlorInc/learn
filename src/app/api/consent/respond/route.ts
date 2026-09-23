@@ -70,7 +70,7 @@ export async function POST(req: Request) {
          */
         const when = new Date(Date.now() + secondNoticeDelayMs())
         const withdraw = `${SITE_URL}/consent/withdraw#t=${t}`
-        const b3 = await sendEmail(row.email, renderB3(lang, withdraw), `consent-${row.consent_id}-b3`, when)
+        const b3 = await sendEmail('transactional', row.email, renderB3(lang, withdraw), `consent-${row.consent_id}-b3`, when)
         const s = await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: b3, p_second_scheduled_for: when.toISOString() })
         // Lost a race to expiry or a decline: the email we just scheduled must never arrive. A repeat
         // click is 'already_granted', and because B3 carries an idempotency key its id IS the real

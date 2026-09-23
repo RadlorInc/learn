@@ -16,6 +16,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/data/supabase/client'
 import { LADDER, MAX_SEATS, totalCents, type Cadence } from '@/core/billing'
+import { SubscriptionCard } from '@/features/billing/SubscriptionCard'
 
 /* The adult surface's palette, from globals.css — same tokens the other parent screens use.
    These pages previously mixed ad-hoc greys (#888 / #6b7280 / #1a1a1a / #f7f8fa) with the brand
@@ -86,6 +87,8 @@ function PlanInner() {
               copy here is a product decision, not a tidy-up. */}
           One subscription covers up to {MAX_SEATS} children.
         </p>
+
+        <SubscriptionCard />
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
           {(['monthly', 'annual'] as Cadence[]).map(c => (
