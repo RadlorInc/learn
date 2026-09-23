@@ -169,3 +169,45 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
     expect(src).toMatch(/HAS NOT\s+\*?\s*BEEN REVIEWED BY ANYONE WHO SPEAKS SPANISH/)
   })
 })
+
+/**
+ * ⚠️ AND WHAT IS ACTUALLY SENT OR PAINTED — not only copy.ts. The checks above compare the copy file to
+ * the documents; a sentence added in the email RENDERER or the screen component would never pass
+ * through copy.ts and would reach a parent unchecked. So the rendered text of B1, B3 and the withdrawal
+ * screen is split into lines, and every line must be a document unit (or one of the renderer's own
+ * link lines, named here).
+ */
+describe('the rendered emails and screen say nothing the documents do not', () => {
+  const docLines = new Set([...bDoc, norm(B1.address)])
+  const extra = (lines: string[]) => lines.map(l => norm(l.replace(/^- /, '').replace(/ \(https?:[^)]+\)/g, '')))
+    .filter(l => l && !docLines.has(l))
+
+  it('B1 and B3, both parts', async () => {
+    const { renderB1, renderB3 } = await import('@/features/consent/email')
+    const b1 = renderB1('en', 'https://x.test/g', 'https://x.test/d'), b3 = renderB3('en', 'https://x.test/w')
+    const htmlLines = (h: string) => h.split(/<\/(?:p|li)>/).map(s => s.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"))
+    // The renderer's own lines: the two buttons in the text part carry their URL.
+    const own = (l: string) => /^(I give permission|No — cancel this request): https:/.test(l)
+    for (const [name, m] of [['B1', b1], ['B3', b3]] as const) {
+      expect(extra(m.text.split('\n').filter(l => !own(l))), `${name} text part`).toEqual([])
+      expect(extra(htmlLines(m.html).filter(l => !/^(I give permission|No — cancel this request)+$/.test(l.trim()) && !own(l))), `${name} html part`).toEqual([])
+      expect(m.text.length, `control: ${name} rendered`).toBeGreaterThan(200)
+    }
+  })
+
+  it('the withdrawal screen', async () => {
+    window.location.hash = '#t=' + 'a'.repeat(43)
+    const { vi } = await import('vitest')
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ status: 'granted', lang: 'en', name: 'Maya' }), { status: 200 })))
+    const React = await import('react')
+    const { createRoot } = await import('react-dom/client')
+    const { ConsentLink } = await import('@/features/consent/ConsentLink')
+    const host = document.createElement('div'); document.body.appendChild(host)
+    await React.act(async () => { createRoot(host).render(React.createElement(ConsentLink, { mode: 'withdraw' })) })
+    await React.act(async () => { await new Promise(r => setTimeout(r, 20)) })
+    vi.unstubAllGlobals()
+    const lines = [...host.querySelectorAll('h1, p, button')].map(e => (e.textContent ?? '').replace('Maya', '<name>'))
+    expect(lines.length, 'control: the withdrawal screen rendered').toBeGreaterThan(3)
+    expect(extra(lines)).toEqual([])
+  })
+})

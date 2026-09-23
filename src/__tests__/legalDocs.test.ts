@@ -279,3 +279,15 @@ describe('a draft legal document never reaches published content', () => {
       .toEqual([])
   })
 })
+
+describe('a published page never carries a placeholder', () => {
+  it('every page whose switch is on has a public text with no placeholder and nothing refusing it', async () => {
+    const { publishRefusals } = await import('@/app/legal/registry')
+    for (const p of LEGAL_PAGES.filter(p => p.published)) {
+      const md = read(`docs/legal/${p.source}`)
+      const n = pub(p.slug).split(REG_MARKER).length - 1
+      expect(n, `/legal/${p.slug} is published and its document still carries ${n} placeholder(s)`).toBe(0)
+      expect(publishRefusals(p, md, p.spanish ? read(`docs/legal/${p.spanish.source}`) : null), `/legal/${p.slug} is published and refused`).toEqual([])
+    }
+  })
+})
