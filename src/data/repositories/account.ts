@@ -10,7 +10,7 @@
  * ⚠️ ONE TRANSACTION, SO THERE IS NO PARTIAL STATE TO REPORT. Either every table is emptied or the
  * account is untouched. `error` here always means "nothing was deleted".
  */
-import { db } from '@/data/repositories/_shared'
+import { db, cancelQueuedSecondNotices } from '@/data/repositories/_shared'
 
 export type DeleteOutcome =
   | { ok: true; deleted: Record<string, number> }
@@ -32,7 +32,10 @@ export type DeleteOutcome =
 
 export async function deleteMyAccount(confirmEmail: string): Promise<DeleteOutcome> {
   const { data, error } = await db().rpc('delete_my_account', { p_confirm_email: confirmEmail })
-  if (!error) return { ok: true, deleted: (data ?? {}) as Record<string, number> }
+  if (!error) {
+    await cancelQueuedSecondNotices()   // the consent rows are gone; their B3 ids are in the queue
+    return { ok: true, deleted: (data ?? {}) as Record<string, number> }
+  }
 
   // The function raises these three by name; anything else is genuinely unexpected and is reported
   // as such rather than being mapped onto a friendly message that hides it.

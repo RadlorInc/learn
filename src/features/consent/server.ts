@@ -109,12 +109,44 @@ export async function sendEmail(to: string, m: Rendered, idempotencyKey: string,
   return body.id
 }
 
-/** Best-effort: used only where a scheduled B3 must not arrive (a grant that lost a race, a withdrawal). */
-export async function cancelEmail(id: string): Promise<boolean> {
+/**
+ * Cancel one scheduled message and say what happened, as the string the queue records:
+ * 'cancelled' · 'refused: …' (Resend said no — already cancelled, already sent, unknown id; retrying
+ * cannot change that) · 'error: …' (Resend unreachable, rate-limited or 5xx; worth retrying).
+ * Never throws: a cancel is always best-effort next to the thing that asked for it.
+ */
+export async function cancelOutcome(id: string): Promise<string> {
   try {
     const r = await fetch(`${RESEND()}/emails/${encodeURIComponent(id)}/cancel`, {
       method: 'POST', headers: { Authorization: `Bearer ${env('RESEND_API_KEY')}` }, cache: 'no-store',
     })
-    return r.ok
-  } catch { return false }
+    if (r.ok) return 'cancelled'
+    const b = await r.json().catch(() => null)
+    const why = `${r.status} ${b?.message ?? b?.name ?? ''}`.trim()
+    return r.status >= 500 || r.status === 429 ? `error: ${why}` : `refused: ${why}`
+  } catch (e) { return `error: ${e instanceof Error ? e.message : String(e)}` }
+}
+
+/** Best-effort: a grant that lost a race (its B3 was never recorded anywhere, so it is not queued). */
+export const cancelEmail = async (id: string): Promise<boolean> => (await cancelOutcome(id)) === 'cancelled'
+
+/**
+ * Cancel every B3 the database has queued and record each outcome (20260923180000). The queue is
+ * filled by a trigger in the same transaction that ends a consent — withdrawal, deleting the child,
+ * closing the account — so the id cannot be lost to the cascade that deletes the consent row.
+ * Idempotent: a settled row is never picked again, and a second cancel of the same message is
+ * recorded as 'refused', not thrown.
+ * Returns how many it tried, or null when the queue does not exist yet (client deployed before the
+ * migration) — the caller decides whether it has a fallback.
+ */
+export async function drainB3Cancellations(): Promise<number | null> {
+  let due: { provider_id: string }[]
+  try { due = await rpc<{ provider_id: string }[]>('consent_b3_due', {}) } catch (e) {
+    if ((e as RpcError)?.code === 'PGRST202') return null
+    throw e
+  }
+  for (const { provider_id } of due) {
+    await rpc('consent_b3_record', { p_provider_id: provider_id, p_result: await cancelOutcome(provider_id) })
+  }
+  return due.length
 }

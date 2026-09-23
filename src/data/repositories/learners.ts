@@ -2,7 +2,7 @@
 
 /** Learner CRUD + access-role management. */
 import { toast } from '@/shared/ui/Toast'
-import { db } from '@/data/repositories/_shared'
+import { db, cancelQueuedSecondNotices } from '@/data/repositories/_shared'
 import type { Learner } from '@/data/supabase/types'
 import type { AgeGroup } from '@/core/chapters'
 
@@ -190,7 +190,7 @@ export async function deleteLearnerPermanently(
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = db()
   const { error } = await supabase.rpc('delete_learner', { p_learner_id: learnerId })
-  if (!error) return { ok: true }
+  if (!error) { await cancelQueuedSecondNotices(); return { ok: true } }
   if (error.code === 'PGRST202') return { ok: false, error: LEGACY_DELETE }
   return { ok: false, error: /not_owner/.test(error.message) ? 'Only the owner can delete a learner' : error.message }
 }
