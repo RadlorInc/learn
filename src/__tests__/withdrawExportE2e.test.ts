@@ -198,6 +198,9 @@ beforeAll(async () => {
   for (const [k, v] of Object.entries({ NEXT_PUBLIC_SUPABASE_URL: SUPA, NEXT_PUBLIC_SUPABASE_ANON_KEY: ANON,
     SUPABASE_SERVICE_ROLE_KEY: SERVICE, RESEND_API_KEY: 're_for_tests', RESEND_API_URL: RESEND })) vi.stubEnv(k, v)
   vi.stubGlobal('fetch', fakeFetch)
+  // CI runs Node 20, which has no global WebSocket, and supabase-js refuses to construct without one. Realtime is
+  // never opened on this path; this only lets the app's own client be built.
+  if (typeof globalThis.WebSocket === 'undefined') vi.stubGlobal('WebSocket', class {})
   // A parent's request calls auth.uid() as `authenticated` in an INVOKER function (get_parent_dashboard), which
   // needs USAGE on schema auth. Supabase grants it; the fixture's prelude does not. That the live dashboard
   // loads at all is the evidence production has it.
