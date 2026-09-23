@@ -45,7 +45,7 @@ Every account is a test account, so keep the gap short: have the backup running 
 | 2.5 | **Add a child** → name, modules → the **unticked** box *"I'm this child's parent or legal guardian. The permission I gave on {date} applies to this child too."* | **Add** stays disabled until you tick. No email is sent. |
 | 2.6 | Add a **second** child the same way. | Created with a tick only. |
 | 2.7 | Delete one child (card → Login & data → *Delete name's profile*). | The other child stays; the dashboard still allows adding. |
-| 2.8 | **Account → Withdraw permission for all my children** → confirm. | *"We have stopped collecting information about every child on your account…"*. The dashboard shows no children; **Add a child** asks for permission again (the notice, then a new B1). In Resend, that consent's B3 shows **Canceled**. |
+| 2.8 | **Account → Withdraw permission for all my children** → confirm. | *"We have stopped collecting information about every child on your account…"*. The dashboard shows no children and **no email arrives by itself**. **Add a child** asks for permission again (the notice, then a new B1 only when you press continue). In Resend, that consent's B3 shows **Canceled**. |
 | 2.9 | Google sign-up: repeat 2.1–2.4 with **Continue with Google** (after ticking). | The same single B1 (Google proves the address; it is not the consent). |
 
 Then read-only:
@@ -89,4 +89,7 @@ Send the updated [`ATTORNEY-PACKET.md`](ATTORNEY-PACKET.md):
 
 ## 5. Blocked / not done
 
-- __BLOCKED__
+Nothing is blocked. What is **not** covered, so you know what your in-app checks (§2) are the first to see:
+- **Signed-in screens were not driven in a signed-in browser.** I don't type passwords into sign-in fields. The dashboard card, waiting state, add-a-child tick and Account withdrawal were proven in jsdom tests and screenshotted from the preview route (`/ui-preview?p=co-*`, fake data). The same flows ran end to end over HTTP against a local Supabase stack. The signup page and the B3-link withdrawal page were seen in a real browser.
+- **The re-ask screen and "Read the notice you agreed to" show the current notice's text**, not the older version a parent agreed to: the app only holds the current text. The version and date are stated, and the consent record keeps the version.
+- **No Stripe, no production, no real email**: Resend was a local stand-in that records calls.
