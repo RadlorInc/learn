@@ -266,3 +266,12 @@ Risks: irreversible (backup restore only); a real parent who has not confirmed f
 | 3 | waiting | D3: Backup by hand + before-counts SQL (given after 2′) |
 
 ⛔ **HARD RULE, added to `CLAUDE.md` (top) the same day, after the accidental `db push`:** never run `supabase link` or any `supabase db` / `supabase migration` command against a remote from a local checkout; production's schema and ledger change only through GitHub workflows behind `production-db`; generated text only through quoted heredocs. **Measured 2026-09-23:** no checkout under `/Users/mrk` is linked (`find … -path '*/supabase/.temp/project-ref'` → none; control — a planted one is found), and no Supabase CLI login exists (`~/.supabase/access-token` absent, `SUPABASE_ACCESS_TOKEN` unset, no Keychain entry; control — a planted Keychain entry is found). The local CLI currently cannot reach production at all.
+
+## D3 (2026-09-23)
+
+| item | state | proof |
+|---|---|---|
+| 2′ d4-4 re-run | **done** (Rafi) | `ledger_rows=99`, **62 same / 8 different / 0 / 0** — the same 8 as before; `delete_my_account` md5 unchanged (`86a805…`); prune "would delete" still 1. The repair replayed nothing. |
+| Backup by hand | **done** | Backup run **#41** (`35869937550`, manual, success): artifact `milo-db-backup-35869937550`, **88,652 bytes**, expires 2026-10-23 (measured via the API). ✅ Also: **#40, the SCHEDULED nightly at 07:51 UTC today, succeeded unattended** — the first one; the drafts' "still to watch" is now met. |
+| Before counts | **⛔ Rafi** | run `docs/legal/sql/d3-before-counts.sql` and keep the result. It counts: children; exempt (column absent before D4); `error_events` all / child-tagged / **orphaned**; `auth.users`; `profiles`; and every table with a `learner_id` column, taken from the catalog. Tested on a seeded local copy before and after the four migrations: after, every count is equal except `error_events` (drops by exactly the orphan count), exempt = children, the table list gains `parental_consents`, and on production the ledger will read 103 (99 + 4 recorded by `db push`). |
+| then | ⛔ Rafi | re-run the failed `migrate-prod` job on Deploy **#413** → approve `production-db`. I then read its log (must apply exactly the 4) and give the D4 proof SQL. |
