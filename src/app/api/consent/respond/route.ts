@@ -8,6 +8,8 @@ import { ConfigMissing, requireConfig, cancelEmail, drainB3Cancellations, hashTo
 interface Found {
   consent_id: string; state: string; lang: 'en' | 'es'; expired: boolean; email: string
   learner_id: string | null; second_email_provider_id: string | null; second_notice_scheduled_for: string | null
+  /** consent-once: 'account' covers every child of the parent; 'child' is a pre-2026-09-24 per-child consent. */
+  scope?: 'account' | 'child'
 }
 
 /**
@@ -36,7 +38,8 @@ export async function POST(req: Request) {
         const status = row.expired ? 'expired' : row.state
         // The withdrawal screen names the per-child control ("Delete <name>'s profile"), so it needs the name.
         const name = row.learner_id ? await learnerName(row.learner_id) : null
-        return NextResponse.json({ status, lang, name })
+        // The withdrawal screen says "all your children" for an account consent, "your child" for a per-child one.
+        return NextResponse.json({ status, lang, name, scope: row.scope ?? 'child' })
       }
 
       case 'decline':
@@ -72,7 +75,8 @@ export async function POST(req: Request) {
         const withdraw = `${SITE_URL}/consent/withdraw#t=${t}`
         const b3 = await sendEmail('transactional', row.email, renderB3(lang, withdraw), `consent-${row.consent_id}-b3`, when)
         const s = await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: b3, p_second_scheduled_for: when.toISOString() })
-        // Lost a race to expiry or a decline: the email we just scheduled must never arrive. A repeat
+        // Lost a race to expiry or a decline — or 'already_consented' (consent-once: the account already holds a
+        // current consent, so this request was closed): the email we just scheduled must never arrive. A repeat
         // click is 'already_granted', and because B3 carries an idempotency key its id IS the real
         // B3 — so that one is left alone.
         if (s !== 'granted' && s !== 'already_granted') await cancelEmail(b3)

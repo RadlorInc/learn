@@ -5,7 +5,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, grantedConsent } from './_schema'
+import { loadSchema, grantedConsent, FIXTURE_NOTICE } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const CHILD = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
@@ -16,8 +16,8 @@ beforeAll(async () => {
   ({ db } = await loadSchema())
   const users = [PARENT, CHILD, STRANGER].map((id, i) => `('${id}', 'u${i}@x.test', now())`).join(',')
   await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ${users}`)
-  L = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id)
-    values ('Kid', 0, '9-11', '${PARENT}', '${await grantedConsent(db, PARENT)}') returning id`)).rows[0].id
+  L = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+    values ('Kid', 0, '9-11', '${PARENT}', '${await grantedConsent(db, PARENT)}', '${FIXTURE_NOTICE}') returning id`)).rows[0].id
   await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${L}', '${CHILD}', 'self')`)
 }, 120_000)
 

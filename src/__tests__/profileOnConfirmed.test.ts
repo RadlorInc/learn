@@ -16,7 +16,7 @@
  * name — so a rename or a move of either file fails loudly here instead of testing nothing.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
-import { loadSchema, applyFile, grantedConsent } from './_schema'
+import { loadSchema, applyFile, legacyChild } from './_schema'
 import type { PGlite } from '@electric-sql/pglite'
 
 let db: PGlite
@@ -65,9 +65,9 @@ describe('profile creation is gated on email confirmation', () => {
       ('${parent}',    'old-unconfirmed-parent@example.com', now(), now() - interval '4 days')`)
     // The parent is created confirmed so a profile and a (consented) child can exist — the only way
     // either can — then its confirmation is cleared: the "cannot happen" row the child guard is for.
-    const consent = await grantedConsent(db, parent)
-    await db.exec(`insert into public.learners (display_name, age_group, created_by, consent_id)
-                   values ('Kid', '6-8', '${parent}', '${consent}')`)
+    // This world stops before consent-once (20260924100000), so the child is made that era's way: its own
+    // per-child consent. `legacyChild` is the fixture for exactly that shape.
+    await legacyChild(db, parent, 'Kid')
     await db.exec(`update auth.users set email_confirmed_at = null where id = '${parent}'`)
 
     // As the job runs it: one call over the whole table. A throw here (e.g. learners.created_by's

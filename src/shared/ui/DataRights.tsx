@@ -45,6 +45,9 @@ export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras)
     about: `Everything Milo has stored about ${name}.`,
     note: 'This is a copy. It does not delete anything — use "Delete profile" for that.',
     learner: b.learner,
+    // Consent-once: the parent's attestation for THIS child, named on its own so it cannot be missed inside
+    // the learner row. Who confirmed they are the child's parent or guardian, when, against which notice, how.
+    parentalAttestation: attestation(b.learner),
     stats: b.stats,
     chapterProgress: b.progress,
     sessions: b.sessions,
@@ -70,6 +73,12 @@ export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras)
       notes:    extra?.notes ?? [],
     },
   }
+}
+
+const ATTESTATION = ['attested_by', 'attested_at', 'attested_notice_version', 'attestation_method'] as const
+function attestation(learner: unknown): Record<(typeof ATTESTATION)[number], unknown> {
+  const l = (learner ?? {}) as Record<string, unknown>
+  return Object.fromEntries(ATTESTATION.map(k => [k, l[k] ?? null])) as Record<(typeof ATTESTATION)[number], unknown>
 }
 
 /** A filename a parent can find again in their Downloads folder. */

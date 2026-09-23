@@ -28,14 +28,14 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v4'
+export const NOTICE_VERSION = 'notice-v5'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
   title: { en: 'Before your child starts: what we collect, and your choice',
            es: 'Antes de que su hijo empiece: qué recopilamos y su decisión' },
-  intro: { en: "You are setting up a profile for your child. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their child's age. Here it is, in plain language.",
-           es: 'Está creando un perfil para su hijo. La ley de los Estados Unidos — la Ley de Protección de la Privacidad Infantil en Línea, que protege a los menores de 13 años — nos exige decirle exactamente qué recopilamos y obtener su permiso primero. Pedimos el mismo permiso a todos los padres, sea cual sea la edad de su hijo. Aquí lo tiene, en lenguaje sencillo.' },
+  intro: { en: "You are creating a Milo account for your children. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their children's ages. You give it once, for this account, and it covers every child you add to it. Here it is, in plain language.",
+           es: 'Está creando una cuenta de Milo para sus hijos. La ley de los Estados Unidos — la Ley de Protección de la Privacidad Infantil en Línea, que protege a los menores de 13 años — nos exige decirle exactamente qué recopilamos y obtener su permiso primero. Pedimos el mismo permiso a todos los padres, sea cual sea la edad de sus hijos. Lo da una sola vez, para esta cuenta, y cubre a todos los niños que añada a ella. Aquí lo tiene, en lenguaje sencillo.' },
   collectHeading: { en: 'What we collect from your child', es: 'Qué recopilamos de su hijo' },
   columns: [
     { en: 'What', es: 'Qué' },
@@ -89,19 +89,19 @@ export const NOTICE = {
                 es: 'Antes de recopilar cualquiera de estos datos, necesitamos su consentimiento verificable.' },
   /** Document 02 follows this with a drafters' placeholder for the card path, which is not built. A placeholder
    *  is a note to the drafters and is never rendered — so there is nothing here for it. */
-  permissionHow: { en: 'We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. You can withdraw your consent from either email.',
-                   es: 'Enviamos una solicitud de consentimiento a su dirección de correo electrónico, usted la confirma y, un día después, enviamos un segundo correo de confirmación a la misma dirección. Puede retirar su consentimiento desde cualquiera de los dos correos.' },
+  permissionHow: { en: "We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. This one permission covers every child you add to this account, now or later: each time you add a child, you confirm in the app that you are that child's parent or legal guardian, and we record when you did. You can withdraw your permission from the second email or in the app, at any time.",
+                   es: 'Enviamos una solicitud de consentimiento a su dirección de correo electrónico, usted la confirma y, un día después, enviamos un segundo correo de confirmación a la misma dirección. Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante: cada vez que añada un niño, usted confirma en la aplicación que es su padre, madre o tutor legal, y registramos cuándo lo hizo. Puede retirar su permiso desde el segundo correo o en la aplicación, en cualquier momento.' },
   rightsHeading: { en: 'Your rights as a parent', es: 'Sus derechos como padre o madre' },
   rightsIntro: { en: 'At any time, you can:', es: 'En cualquier momento, usted puede:' },
   rightsList: [
     { en: '**See** everything we hold about your child;', es: '**Ver** todo lo que tenemos sobre su hijo;' },
     { en: "**Delete** your child's information;", es: '**Eliminar** la información de su hijo;' },
     // The document's line ends in a drafters' placeholder (deletion is to be restored once built) — not rendered.
-    { en: "**Withdraw your consent** — we stop any further collection and delete your child's information. Your account stays open.",
-      es: '**Retirar su consentimiento** — dejamos de recopilar y eliminamos la información de su hijo. Su cuenta sigue abierta.' },
+    { en: "**Withdraw your consent** — for one child, or for every child on the account. We stop any further collection and delete the information of each child it covers. Your account stays open.",
+      es: '**Retirar su consentimiento** — para un niño o para todos los niños de la cuenta. Dejamos de recopilar y eliminamos la información de cada niño afectado. Su cuenta sigue abierta.' },
   ] as L[],
-  rightsHow: { en: "To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.",
-               es: 'Para hacer cualquiera de estas cosas, abra su panel de padres, elija la tarjeta de su hijo y luego **Inicio de sesión y datos** — desde ahí puede descargar una copia de todo lo que tenemos y eliminar el perfil — o use **Cuenta → Cerrar su cuenta** para eliminarlo todo a la vez. También puede simplemente escribir a support@radlor.com. Verificaremos que la solicitud proviene de usted antes de actuar, y completaremos la solicitud en un plazo de 10 días.' },
+  rightsHow: { en: "To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — use **Account → Withdraw permission for all my children** to delete every child's information and keep the account, or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.",
+               es: 'Para hacer cualquiera de estas cosas, abra su panel de padres, elija la tarjeta de su hijo y luego **Inicio de sesión y datos** — desde ahí puede descargar una copia de todo lo que tenemos y eliminar el perfil — use **Cuenta → Retirar el permiso para todos mis hijos** para eliminar la información de todos los niños y conservar la cuenta, o use **Cuenta → Cerrar su cuenta** para eliminarlo todo a la vez. También puede simplemente escribir a support@radlor.com. Verificaremos que la solicitud proviene de usted antes de actuar, y completaremos la solicitud en un plazo de 10 días.' },
   keepHeading: { en: 'How long we keep it', es: 'Cuánto tiempo la conservamos' },
   keep: { en: "We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at https://adaptivelearn.radlor.com/legal/retention.",
           es: 'Conservamos la información de su hijo solo mientras la necesitamos para prestar el servicio y después la eliminamos. El calendario completo está en nuestra Política de conservación de datos en https://adaptivelearn.radlor.com/legal/retention (en inglés).' },
@@ -120,10 +120,10 @@ export const NOTICE = {
 
 // ─────────────────────── Document 03 · B1 — the consent request email ───────────────────────
 export const B1 = {
-  subject: { en: 'Please confirm: permission for your child to use Milo', es: 'Confirme, por favor: permiso para que su hijo use Milo' },
+  subject: { en: 'Please confirm: permission for your children to use Milo', es: 'Confirme, por favor: permiso para que sus hijos usen Milo' },
   hi: { en: 'Hi,', es: 'Hola:' },
-  someone: { en: 'Someone — we believe you — asked to set up a Milo account for your child.', es: 'Alguien — creemos que usted — pidió crear una cuenta de Milo para su hijo.' },
-  before: { en: 'Before we collect anything from your child, US law requires your permission. Here is exactly what we would collect:', es: 'Antes de recopilar cualquier dato de su hijo, la ley de los EE. UU. exige su permiso. Esto es exactamente lo que recopilaríamos:' },
+  someone: { en: 'Someone — we believe you — created a Milo account and asked to add children to it.', es: 'Alguien — creemos que usted — creó una cuenta de Milo y pidió añadir niños a ella.' },
+  before: { en: 'Before we collect anything from any child on this account, US law requires your permission. Here is exactly what we would collect about each child you add:', es: 'Antes de recopilar cualquier dato de cualquier niño de esta cuenta, la ley de los EE. UU. exige su permiso. Esto es exactamente lo que recopilaríamos sobre cada niño que añada:' },
   list: [
     { en: "your child's first name or nickname", es: 'el nombre de pila o el apodo de su hijo' },
     { en: 'the lessons you choose for them, and a grade band (grades 3–5 or 6–8) worked out from those lessons', es: 'las lecciones que usted elija para su hijo y una franja de grados (grados 3 a 5 o 6 a 8) deducida de esas lecciones' },
@@ -135,6 +135,7 @@ export const B1 = {
   ] as L[],
   doNot: { en: "We do not ask your child for a last name, email, phone number, address, photo, voice recording, or location. We do not sell your child's information, and we do not use it for advertising.",
            es: 'No le pedimos a su hijo apellido, correo electrónico, número de teléfono, dirección, foto, grabación de voz ni ubicación. No vendemos la información de su hijo ni la usamos para publicidad.' },
+  covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
   grant:   { en: 'I give permission', es: 'Doy mi permiso' },
   decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
   ignore: { en: 'If you did nothing, you can ignore this email and nothing will happen.', es: 'Si usted no hizo nada, puede ignorar este correo y no pasará nada.' },
@@ -146,23 +147,23 @@ export const B1 = {
 export const B2 = {
   heading: { en: 'Thank you — permission recorded', es: 'Gracias — permiso registrado' },
   body: [
-    { en: 'We have recorded your permission and your child can start now.', es: 'Hemos registrado su permiso y su hijo ya puede empezar.' },
-    { en: "We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about your child.",
-      es: 'Dentro de un rato le enviaremos un correo más para confirmar que realmente fue usted. Si no lo fue, ese correo le permitirá cancelar de inmediato y eliminaremos todo lo que tenemos sobre su hijo.' },
+    { en: 'We have recorded your permission. You can add your children now.', es: 'Hemos registrado su permiso. Ya puede añadir a sus hijos.' },
+    { en: "We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about any child on the account.",
+      es: 'Dentro de un rato le enviaremos un correo más para confirmar que realmente fue usted. Si no lo fue, ese correo le permitirá cancelar de inmediato y eliminaremos todo lo que tenemos sobre cualquier niño de la cuenta.' },
   ] as L[],
 }
 
 // ─────────────────────── Document 03 · B3 — the second email, a day later ───────────────────────
 export const B3 = {
-  subject: { en: "Confirming the permission you gave for your child's account", es: 'Confirmación del permiso que dio para la cuenta de su hijo' },
+  subject: { en: 'Confirming the permission you gave for your children', es: 'Confirmación del permiso que dio para sus hijos' },
   hi: { en: 'Hi,', es: 'Hola:' },
   /** ⚠️ "Yesterday" is only true if B3 goes out a day later. `config.ts` refuses, in production, a
    *  delay that would make it false — the wording and the timer are bound, not merely adjacent. */
-  yesterday: { en: 'Yesterday you gave permission for your child to use Milo, and for us to collect their first name, grade band, and maths progress.',
-               es: 'Ayer usted dio permiso para que su hijo use Milo y para que recopilemos su nombre de pila, su franja de grados y su progreso en matemáticas.' },
+  yesterday: { en: "Yesterday you gave permission for your children to use Milo, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.",
+               es: 'Ayer usted dio permiso para que sus hijos usen Milo y para que recopilemos el nombre de pila, la franja de grados y el progreso en matemáticas de cada niño. Cubre a todos los niños que añada a esta cuenta.' },
   ifYou: { en: "**If that was you, you don't need to do anything.**", es: '**Si fue usted, no tiene que hacer nada.**' },
-  ifNot: { en: "**If it wasn't you, [click here](%WITHDRAW%) to withdraw permission.** We will immediately stop collecting and delete everything we hold about the child. Your account stays open.",
-           es: '**Si no fue usted, [haga clic aquí](%WITHDRAW%) para retirar el permiso.** Dejaremos de recopilar de inmediato y eliminaremos todo lo que tenemos sobre el niño. Su cuenta sigue abierta.' },
+  ifNot: { en: "**If it wasn't you, [click here](%WITHDRAW%) to withdraw permission.** We will immediately stop collecting and delete everything we hold about every child on the account. Your account stays open.",
+           es: '**Si no fue usted, [haga clic aquí](%WITHDRAW%) para retirar el permiso.** Dejaremos de recopilar de inmediato y eliminaremos todo lo que tenemos sobre todos los niños de la cuenta. Su cuenta sigue abierta.' },
   anyTime: { en: 'You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.',
              es: 'También puede retirar el permiso en cualquier momento en el futuro: https://adaptivelearn.radlor.com/legal/parent-rights (en inglés).' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
@@ -181,6 +182,37 @@ export const WITHDRAW = {
   ] as L[],
   confirm: { en: "Withdraw permission and delete my child's data", es: 'Retirar el permiso y eliminar los datos de mi hijo' },
   keep:    { en: 'Keep my settings', es: 'Mantener mi configuración' },
+}
+
+
+// ─────────────────────── Consent-once (2026-09-24): document 03, the new screens ───────────────────────
+export const WITHDRAW_ALL = {
+  heading: { en: "Withdraw permission for all your children", es: 'Retirar el permiso para todos sus hijos' },
+  body0: { en: "If you withdraw permission, we will stop collecting information from every child on your account, delete everything we hold about each of them — including their own sign-ins — and close their profiles. This cannot be undone.", es: 'Si retira el permiso, dejaremos de recopilar información de todos los niños de su cuenta, eliminaremos todo lo que tenemos sobre cada uno de ellos — incluidos sus propios inicios de sesión — y cerraremos sus perfiles. Esto no se puede deshacer.' },
+  body1: { en: "**Your account stays open.** If you add a child again later, we will ask for your permission again first.", es: '**Su cuenta sigue abierta.** Si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.' },
+  confirm: { en: "Withdraw permission and delete my children's data", es: 'Retirar el permiso y eliminar los datos de mis hijos' },
+}
+export const SIGNUP = {
+  heading: { en: "Before you create an account: what we collect about your children", es: 'Antes de crear una cuenta: qué recopilamos sobre sus hijos' },
+  summary: { en: "For each child you add, Milo stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.", es: 'Por cada niño que añada, Milo guarda su nombre de pila o apodo, el avatar que usted elija, las lecciones que elija y una franja de grados, sus respuestas y su progreso, e información técnica básica del dispositivo. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, un domicilio, una fotografía ni una grabación de voz, y nunca vendemos su información ni la usamos para publicidad.' },
+  readFull: { en: "Read the full notice", es: 'Leer el aviso completo' },
+  tick: { en: "I'm a parent or legal guardian, I've read what we collect, and I agree.", es: 'Soy el padre, la madre o el tutor legal, he leído qué recopilan y estoy de acuerdo.' },
+  next: { en: "After you sign up, we will email you once to ask for your permission. You can add your children as soon as you have given it.", es: 'Después de registrarse, le enviaremos un único correo para pedirle su permiso. Podrá añadir a sus hijos en cuanto lo haya dado.' },
+  teacher: { en: "Signing up as a teacher, not a parent?", es: '¿Se registra como docente y no como padre o madre?' },
+  teacherButton: { en: "Continue as a teacher", es: 'Continuar como docente' },
+}
+export const WAITING = {
+  heading: { en: "Waiting for your permission", es: 'Esperando su permiso' },
+  body: { en: "We have emailed {email}. Open that email and choose \"I give permission\" — then you can add your children. The link works for {days} days.", es: 'Le hemos enviado un correo a {email}. Ábralo y elija "Doy mi permiso" — después podrá añadir a sus hijos. El enlace funciona durante {days} días.' },
+  resend: { en: "Send the email again", es: 'Enviar el correo de nuevo' },
+}
+export const ATTEST = {
+  tick: { en: "I'm this child's parent or legal guardian. The permission I gave on {date} applies to this child too.", es: 'Soy el padre, la madre o el tutor legal de este niño. El permiso que di el {date} también se aplica a este niño.' },
+  link: { en: "Read the notice you agreed to", es: 'Leer el aviso que aceptó' },
+}
+export const REASK = {
+  heading: { en: "We've changed what we collect", es: 'Hemos cambiado lo que recopilamos' },
+  body: { en: "Please read the updated notice and give your permission again before your children continue.", es: 'Lea el aviso actualizado y vuelva a dar su permiso antes de que sus hijos continúen.' },
 }
 
 /**
@@ -203,6 +235,7 @@ export const PROPOSED = {
   declinedBody: { en: 'Nothing about your child has been collected.', es: 'No se ha recopilado nada sobre su hijo.' },
   withdrawnHeading: { en: 'Permission withdrawn', es: 'Permiso retirado' },
   withdrawnBody: { en: 'We have stopped collecting information about your child and deleted what we held about them. Your account stays open.', es: 'Hemos dejado de recopilar información sobre su hijo y hemos eliminado lo que teníamos sobre él. Su cuenta sigue abierta.' },
+  withdrawnAllBody: { en: 'We have stopped collecting information about every child on your account and deleted what we held about them. Your account stays open.', es: 'Hemos dejado de recopilar información sobre todos los niños de su cuenta y hemos eliminado lo que teníamos sobre ellos. Su cuenta sigue abierta.' },
   expiredHeading: { en: 'This link has expired', es: 'Este enlace ha caducado' },
   expiredBody: { en: 'Ask again from your parent dashboard.', es: 'Vuelva a solicitarlo desde su panel de padres.' },
   usedHeading: { en: 'This link has already been used', es: 'Este enlace ya se ha usado' },

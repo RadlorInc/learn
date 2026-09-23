@@ -65,7 +65,7 @@ We ask a child for no more information than is reasonably necessary to take part
 |---|---|
 | Name and email address | To create the account, to contact you about it, and to verify your identity when you make a request about your child's data |
 | Subscription and billing details | To take payment and manage the subscription. **Payments are processed by our payment provider. We never receive or store your full card number or security code** — we receive a payment reference, your email address, the plan you chose and the number of seats. [PLACEHOLDER — confirm the exact fields returned once billing is switched on.] |
-| Your record of consent — the method, the date, your email address, and the version of each document you were shown | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is deleted with everything else |
+| Your record of consent — the method, the date, your email address, and the version of each document you were shown — and, for each child you add, when you confirmed that you are that child's parent or legal guardian and which version of the notice that confirmation referred to | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is deleted with everything else |
 | Messages you send us | To answer you |
 
 ## 5. Your rights as a parent
@@ -75,7 +75,7 @@ At any time, you can:
 1. **See** everything we hold about your child;
 2. **Correct** it;
 3. **Delete** it;
-4. **Withdraw** your consent — we then stop collecting, delete what we hold, and close the profile.
+4. **Withdraw** your consent — for one child or for every child on the account; we then stop collecting, delete what we hold about each child it covers, and close their profiles. Your account stays open.
 
 Using any of these is free. We will confirm that the request comes from you before we act on it — usually by sending a link to the email address on the account — and we will not demand a government ID or any sensitive document for a routine request.
 

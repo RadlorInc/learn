@@ -13,6 +13,7 @@
  * leave behind on a good day.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NOTICE_VERSION } from '@/features/consent/copy'
 
 const log: string[] = []
 let lookup: Record<string, unknown> | null
@@ -85,6 +86,14 @@ describe('grant', () => {
   it('a grant that loses a race to expiry cancels the B3 it scheduled', async () => {
     grantAnswer = 'expired'
     expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('expired')
+    expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant', 'cancel:re_1'])
+  })
+
+  it('consent-once: a parent who already holds a current account consent is told so, and the B3 just scheduled is cancelled', async () => {
+    // consent_grant answers 'already_consented' (and closes this request) — nothing was granted, so a B3 saying
+    // "Yesterday you gave permission" must not go out for it.
+    grantAnswer = 'already_consented'
+    expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('already_consented')
     expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant', 'cancel:re_1'])
   })
 
@@ -161,13 +170,26 @@ describe('request', () => {
     expect(log).toEqual([])
   })
   it('sends B1 to the ACCOUNT\'s address with both links, then records that it went', async () => {
-    const r = await req({ noticeVersion: 'notice-v4', lang: 'en' })
+    const r = await req({ noticeVersion: NOTICE_VERSION, lang: 'en' })
     expect(r.status).toBe(200)
     expect(log).toEqual(['rpc:consent_request', 'send:Please confi', 'rpc:consent_record_request_sent'])
     expect(sent[0].to).toBe('p@x.test')
     expect(sent[0].at, 'B1 goes now, not later').toBeUndefined()
     expect(sent[0].html).toMatch(/\/consent\/respond#t=[A-Za-z0-9_-]{43}"/)
     expect(sent[0].html).toMatch(/\/consent\/respond#t=[A-Za-z0-9_-]{43}&amp;choice=decline"/)
+  })
+  // ⚠️ CONSENT-ONCE: needs the request route change. consent_request (20260924100000) takes p_scope and p_ack_at and
+  // refuses anything but 'account'; a route still sending the seven old parameters names a function that no longer
+  // exists (PGRST202 in production). Red until src/app/api/consent/request/route.ts sends them.
+  it('asks for ACCOUNT consent, with the time the parent ticked (or null)', async () => {
+    const r = await req({ noticeVersion: NOTICE_VERSION, lang: 'en' })
+    expect(r.status).toBe(200)
+    const { rpc } = await import('@/features/consent/server')
+    const args = (rpc as unknown as { mock: { calls: [string, Record<string, unknown>][] } }).mock.calls.findLast(c => c[0] === 'consent_request')![1]
+    expect(args.p_scope).toBe('account')
+    // Named, because PostgREST resolves a function by its parameter NAMES; null is allowed (the database stamps now()).
+    expect(args, 'p_ack_at not sent').toHaveProperty('p_ack_at')
+    if (args.p_ack_at !== null) expect(Number.isNaN(Date.parse(String(args.p_ack_at))), `p_ack_at is not a time: ${String(args.p_ack_at)}`).toBe(false)
   })
 })
 

@@ -22,9 +22,11 @@ export async function getCurrentUser(): Promise<User | null> {
   return user
 }
 
-/** Email + password sign-up. Sends a confirmation email that returns to `emailRedirectTo`. */
-export function signUpWithEmail(email: string, password: string, emailRedirectTo: string) {
-  return createClient().auth.signUp({ email, password, options: { emailRedirectTo } })
+/** Email + password sign-up. Sends a confirmation email that returns to `emailRedirectTo`.
+ *  `data` goes into the account's user_metadata — the signup consent tick rides there (consent-once C2),
+ *  so it survives the confirmation link being opened on another device. */
+export function signUpWithEmail(email: string, password: string, emailRedirectTo: string, data?: Record<string, unknown>) {
+  return createClient().auth.signUp({ email, password, options: { emailRedirectTo, ...(data ? { data } : {}) } })
 }
 
 /**

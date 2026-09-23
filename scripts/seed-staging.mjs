@@ -90,12 +90,21 @@ async function account(email, name, role) {
   return id
 }
 
-/** A GRANTED email-plus consent, as if both emails had gone out. Provider ids are visibly fake. */
+/**
+ * Consent-once (20260924100000): the parent's ONE granted ACCOUNT consent, as if both emails had gone out —
+ * reused if the parent already has one, so a re-run adds nothing. Provider ids are visibly fake. The notice
+ * version must be one `consent_notice_versions` knows (the gate refuses an unknown one as not current), and
+ * every child attests to that same version.
+ */
+const SEED_NOTICE = 'notice-v5'
 async function grantedConsent(parentId, email) {
+  const [have] = must('parental_consents lookup')(await db.from('parental_consents').select('id')
+    .eq('parent_id', parentId).eq('scope', 'account').eq('state', 'granted').eq('notice_version', SEED_NOTICE))
+  if (have) return have.id
   const now = new Date()
   const row = must('parental_consents')(await db.from('parental_consents').insert({
-    parent_id: parentId, method: 'email_plus', state: 'granted',
-    notice_version: 'seed', privacy_version: 'seed', terms_version: 'seed', lang: 'en',
+    parent_id: parentId, method: 'email_plus', state: 'granted', scope: 'account', parent_ack_at: now.toISOString(),
+    notice_version: SEED_NOTICE, privacy_version: 'seed', terms_version: 'seed', lang: 'en',
     email_address: email,
     token_hash: createHash('sha256').update(randomBytes(32)).digest('hex'),
     expires_at: new Date(now.getTime() + 7 * 864e5).toISOString(),
@@ -107,14 +116,15 @@ async function grantedConsent(parentId, email) {
   return row.id
 }
 
-/** A child, created under their own fresh consent — the only way the database allows. */
+/** A child, created under the parent's account consent with the parent's attestation — the only way the database allows. */
 async function child(parentId, parentEmail, name, ageGroup, extra = {}) {
   const existing = must('learners lookup')(await db.from('learners').select('id')
     .eq('created_by', parentId).eq('display_name', name))
   if (existing.length) return existing[0].id
   const consentId = await grantedConsent(parentId, parentEmail)
   const row = must(`learner ${name}`)(await db.from('learners').insert({
-    display_name: name, avatar_index: 0, age_group: ageGroup, created_by: parentId, consent_id: consentId, ...extra,
+    display_name: name, avatar_index: 0, age_group: ageGroup, created_by: parentId, consent_id: consentId,
+    attested_notice_version: SEED_NOTICE, ...extra,
   }).select('id').single())
   return row.id
 }
@@ -148,5 +158,5 @@ const s2 = await child(t1, T1, 'Fakestudent Echo', '9-11', { grade_id: klass.id 
 await progress(s1, [['g4m1-t1', true, 1]])
 await progress(s2, [['g4m1-t1', false, 0]])
 
-console.log(`✓ seeded ${ref}: 2 parents, 1 teacher (class "Fake Class 4B"), 5 children, each under its own granted consent.`)
+console.log(`✓ seeded ${ref}: 2 parents, 1 teacher (class "Fake Class 4B"), 5 children, under one granted account consent per adult.`)
 console.log(`  sign in at /auth with ${P1}, ${P2} or ${T1} and the SEED_PASSWORD you set.`)

@@ -20,7 +20,7 @@ const pub = (slug: string) => readPublic(pageBySlug(slug)!)
 describe('withdrawal scope — the public documents match the product', () => {
   it('reads the public parts at all (control)', () => {
     expect(pub('parent-rights')).toContain('Withdraw your permission')
-    expect(pub('terms')).toContain('If you withdraw consent')
+    expect(pub('terms')).toContain('You can withdraw consent for one child or for every child on the account')
   })
 
   it('the product itself says: this child only, the account stays open', () => {
@@ -48,5 +48,19 @@ describe('doc 06 procedure — no step that the build made unnecessary', () => {
     expect(row, 'doc 06 lost its Delete row — this check sees nothing').toBeDefined()
     expect(row).not.toMatch(/deleted by hand/)
     expect(row).toMatch(/delete_child_data/)
+  })
+})
+
+describe('consent-once — withdrawal for EVERY child is described exactly as built (consent_withdraw_account)', () => {
+  it.each(['parent-rights', 'terms'])('/legal/%s says: every child deleted, the account stays open, a new child needs consent again', slug => {
+    const text = pub(slug)
+    expect(text).toMatch(/every child on the account/)
+    expect(text).toMatch(/account stays open/i)
+    expect(text).toMatch(/(ask for your permission again|needs your consent again)/)
+  })
+  it('/legal/parent-rights names both in-app controls', () => {
+    const text = pub('parent-rights')
+    expect(text).toContain('Withdraw permission for all my children')
+    expect(text).toContain("Delete name's profile")
   })
 })

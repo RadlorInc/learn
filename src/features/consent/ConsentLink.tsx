@@ -16,15 +16,16 @@ import { useEffect, useState } from 'react'
 import { B1, B2, WITHDRAW, PROPOSED, type Lang, type L } from './copy'
 import { makeT } from '@/features/dashboard/i18n'
 import { Md } from './Md'
+import { WithdrawAll } from './WithdrawAll'
 
-type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'declined' | 'withdrawn' | 'expired' | 'unknown' | 'kept' | 'error'
+type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'already_consented' | 'declined' | 'withdrawn' | 'expired' | 'unknown' | 'kept' | 'error'
 
 function fragment(): { t: string; choice: string } {
   const h = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.hash.slice(1))
   return { t: h.get('t') ?? '', choice: h.get('choice') ?? '' }
 }
 
-async function call(t: string, action: string): Promise<{ status: Status; lang?: Lang; name?: string | null }> {
+async function call(t: string, action: string): Promise<{ status: Status; lang?: Lang; name?: string | null; scope?: 'account' | 'child' }> {
   const r = await fetch('/api/consent/respond', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t, action }),
   }).catch(() => null)
@@ -38,12 +39,14 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
   const [busy, setBusy] = useState(false)
   const [choice, setChoice] = useState('')
   const [name, setName] = useState<string | null>(null)
+  // consent-once: an ACCOUNT consent's B3 link withdraws for every child, so it gets document 03's "all" screen.
+  const [scope, setScope] = useState<'account' | 'child'>('child')
   const t = (x: L) => x[lang]
 
   useEffect(() => {
     const f = fragment()
     setChoice(f.choice)
-    void call(f.t, 'lookup').then(r => { if (r.lang) setLang(r.lang); setName(r.name ?? null); setStatus(r.status) })
+    void call(f.t, 'lookup').then(r => { if (r.lang) setLang(r.lang); setName(r.name ?? null); if (r.scope === 'account') setScope('account'); setStatus(r.status) })
   }, [])
 
   async function act(action: 'grant' | 'decline' | 'withdraw') {
@@ -68,6 +71,8 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
         </div>
       </div>
     )
+  } else if (mode === 'withdraw' && status === 'granted' && scope === 'account') {
+    content = <WithdrawAll lang={lang} busy={busy} onConfirm={() => act('withdraw')} onKeep={() => setStatus('kept')} />
   } else if (mode === 'withdraw' && status === 'granted') {
     content = (
       <div data-consent="withdraw">
@@ -82,7 +87,9 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
         </div>
       </div>
     )
-  } else if (status === 'granted' || status === 'already_granted') {
+  } else if (status === 'granted' || status === 'already_granted' || status === 'already_consented') {
+    // already_consented: the account already held a current consent, so this request was closed and its B3
+    // cancelled — the permission the parent is looking for IS recorded, which is what B2 says.
     content = (
       <div data-consent="granted">
         <h1 style={S.h1}>{t(B2.heading)}</h1>
@@ -92,7 +99,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
     )
   }
   else if (status === 'declined') content = <div data-consent="declined">{say(PROPOSED.declinedHeading, PROPOSED.declinedBody)}</div>
-  else if (status === 'withdrawn') content = <div data-consent="withdrawn">{say(PROPOSED.withdrawnHeading, PROPOSED.withdrawnBody)}</div>
+  else if (status === 'withdrawn') content = <div data-consent="withdrawn">{say(PROPOSED.withdrawnHeading, scope === 'account' ? PROPOSED.withdrawnAllBody : PROPOSED.withdrawnBody)}</div>
   else if (status === 'expired') content = <div data-consent="expired">{say(PROPOSED.expiredHeading, PROPOSED.expiredBody)}</div>
   else if (status === 'kept') content = <div data-consent="kept"><p style={S.p}>{t(PROPOSED.keptBody)}</p></div>
   else if (status === 'unknown') content = <div data-consent="unknown">{say(PROPOSED.invalidHeading)}</div>

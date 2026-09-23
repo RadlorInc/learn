@@ -47,7 +47,8 @@ declare
   -- passing one from outside — which is exactly how `rls-tests` reported success for weeks
   -- while executing nothing at all. The count is the evidence.
   v_asserts  int := 0;
-  v_consent  uuid;                        -- a granted parental consent, one per child (see below)
+  v_consent  uuid;                        -- the attacker's granted ACCOUNT consent (see below)
+  v_owner_consent uuid;                   -- the owner's granted ACCOUNT consent: covers all three of their children
 begin
   -- ── Setup (as the migration role; RLS bypassed here) ──────────────────────
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
@@ -64,19 +65,22 @@ begin
   -- THE SCHEMA ALLOWS ONE (20260923120000: `trg_enforce_learner_consent` refuses a learner without
   -- one, P0C01). The cheap repair — disabling the trigger for this suite — would run every assertion
   -- below against a schema production does not have. Same fixture as `_schema.ts: grantedConsent`.
-  -- A consent covers ONE child, so each learner gets its own.
+  -- CONSENT-ONCE (20260924100000): one ACCOUNT consent per parent covers every child they add, and each
+  -- child carries the parent's attestation (`attested_notice_version` = the consent's notice_version; the
+  -- trigger stamps who/when/how).
   insert into public.parental_consents
     (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
      confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
-     second_email_provider_id, second_notice_scheduled_for)
+     second_email_provider_id, second_notice_scheduled_for, scope)
   values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
-          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
-  returning id into v_consent;
+          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3_' || md5(random()::text),
+          now() + interval '1 day', 'account')
+  returning id into v_owner_consent;
 
   -- Owner creates a learner. The grant_owner_access trigger gives the owner a
   -- learner_access row; init_learner_stats seeds learner_stats.
-  insert into public.learners (id, display_name, created_by, consent_id)
-    values (v_learner, 'RLS Test Kid', v_owner, v_consent);
+  insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
+    values (v_learner, 'RLS Test Kid', v_owner, v_owner_consent, 'notice-v3');
 
   insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
                                stars_earned, xp_earned, coins_earned, client_id)
@@ -87,12 +91,13 @@ begin
   insert into public.parental_consents
     (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
      confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
-     second_email_provider_id, second_notice_scheduled_for)
+     second_email_provider_id, second_notice_scheduled_for, scope)
   values (v_attacker, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
-          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
+          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3_' || md5(random()::text),
+          now() + interval '1 day', 'account')
   returning id into v_consent;
-  insert into public.learners (id, display_name, created_by, consent_id)
-    values (v_alearner, 'Attacker Kid', v_attacker, v_consent);
+  insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
+    values (v_alearner, 'Attacker Kid', v_attacker, v_consent, 'notice-v3');
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
@@ -124,24 +129,10 @@ begin
     raise exception 'RLS FAIL B0: chapters has no free/paid split (free=%, paid=%)', v_free, v_paid;
   end if;
 
-  insert into public.parental_consents
-    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
-     confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
-     second_email_provider_id, second_notice_scheduled_for)
-  values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
-          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
-  returning id into v_consent;
-  insert into public.learners (id, display_name, created_by, consent_id)
-    values (v_learner2, 'RLS Test Kid 2', v_owner, v_consent);
-  insert into public.parental_consents
-    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
-     confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
-     second_email_provider_id, second_notice_scheduled_for)
-  values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
-          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
-  returning id into v_consent;
-  insert into public.learners (id, display_name, created_by, consent_id)
-    values (v_learner3, 'RLS Test Kid 3', v_owner, v_consent);
+  insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
+    values (v_learner2, 'RLS Test Kid 2', v_owner, v_owner_consent, 'notice-v3');
+  insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
+    values (v_learner3, 'RLS Test Kid 3', v_owner, v_owner_consent, 'notice-v3');
 
   insert into public.subscriptions (id, account_id, status, seats_paid,
                                     current_period_start, current_period_end)
@@ -786,6 +777,54 @@ begin
     v_asserts := v_asserts + 1;
     if v_cnt <> 2 then raise exception 'RLS FAIL M7b: service_role call left % seats, expected 2', v_cnt; end if;
   end;
+
+  -- ── CONSENT-ONCE (20260924100000): withdrawing a whole account, and nobody else's ─────────────
+  -- Last, because C3 deletes the attacker's child that the assertions above use.
+  select count(*) into v_cnt from public.learners where created_by = v_owner;
+  v_asserts := v_asserts + 1;
+  if v_cnt < 3 then raise exception 'RLS FAIL C0: fixture — the owner has % children, expected at least 3', v_cnt; end if;
+
+  -- C1: anon cannot reach withdraw_my_consent.
+  set local role anon;
+  begin
+    perform public.withdraw_my_consent();
+    reset role;
+    raise exception 'RLS FAIL C1: anon called withdraw_my_consent';
+  exception when insufficient_privilege then
+    reset role;
+    v_asserts := v_asserts + 1;
+  end;
+
+  -- C2: a signed-in adult cannot call the internal step with somebody else's id.
+  set local role authenticated;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+  begin
+    perform public.consent_withdraw_account(v_owner);
+    reset role;
+    raise exception 'RLS FAIL C2: authenticated called consent_withdraw_account for another parent';
+  exception when insufficient_privilege then
+    reset role;
+    v_asserts := v_asserts + 1;
+  end;
+
+  -- C3: the attacker's own withdrawal acts on the attacker only. Positive twin first: it works (their child
+  -- is gone); then the owner's three children and granted consent are exactly as they were.
+  set local role authenticated;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+  perform public.withdraw_my_consent();
+  reset role;
+  select count(*) into v_cnt from public.learners where id = v_alearner;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 0 then raise exception 'RLS FAIL C3: withdraw_my_consent did not delete the caller''s own child'; end if;
+  select count(*) into v_cnt from public.learners where created_by = v_owner;
+  v_asserts := v_asserts + 1;
+  if v_cnt < 3 then raise exception 'RLS FAIL C3b: another parent''s withdrawal deleted the owner''s children (% left)', v_cnt; end if;
+  v_asserts := v_asserts + 1;
+  if not exists (select 1 from public.parental_consents where id = v_owner_consent and state = 'granted') then
+    raise exception 'RLS FAIL C3c: another parent''s withdrawal ended the owner''s consent';
+  end if;
 
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
   raise notice 'RLS REGRESSION SUITE: ALL ASSERTIONS PASSED';

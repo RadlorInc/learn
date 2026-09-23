@@ -68,7 +68,7 @@ No le pedimos a un niño más información de la razonablemente necesaria para p
 |---|---|
 | Nombre y dirección de correo electrónico | Para crear la cuenta, para comunicarnos con usted sobre ella y para verificar su identidad cuando haga una solicitud sobre los datos de su hijo |
 | Datos de la suscripción y de facturación | Para cobrar y administrar la suscripción. **Los pagos los procesa nuestro proveedor de pagos. Nunca recibimos ni guardamos el número completo de su tarjeta ni su código de seguridad** — recibimos una referencia del pago, su dirección de correo electrónico, el plan que eligió y el número de plazas. [PLACEHOLDER — confirm the exact fields returned once billing is switched on.] |
-| Su registro de consentimiento — el método, la fecha, su dirección de correo electrónico y la versión de cada documento que se le mostró | Porque la ley nos exige poder demostrar que se dio el consentimiento, y demostrar exactamente qué se aceptó. Si usted cierra su cuenta, este registro se elimina junto con todo lo demás |
+| Su registro de consentimiento — el método, la fecha, su dirección de correo electrónico y la versión de cada documento que se le mostró — y, por cada niño que añada, cuándo confirmó que es su padre, madre o tutor legal y a qué versión del aviso se refería esa confirmación | Porque la ley nos exige poder demostrar que se dio el consentimiento, y demostrar exactamente qué se aceptó. Si usted cierra su cuenta, este registro se elimina junto con todo lo demás |
 | Los mensajes que nos envía | Para responderle |
 
 ## 5. Sus derechos como padre o madre
@@ -78,7 +78,7 @@ En cualquier momento, usted puede:
 1. **Ver** todo lo que tenemos sobre su hijo;
 2. **Corregirlo**;
 3. **Eliminarlo**;
-4. **Retirar** su consentimiento — entonces dejamos de recopilar, eliminamos lo que tenemos y cerramos el perfil.
+4. **Retirar** su consentimiento — para un niño o para todos los niños de la cuenta; entonces dejamos de recopilar, eliminamos lo que tenemos sobre cada niño afectado y cerramos sus perfiles. Su cuenta sigue abierta.
 
 Ejercer cualquiera de estos derechos es gratuito. Confirmaremos que la solicitud proviene de usted antes de actuar — normalmente enviando un enlace a la dirección de correo electrónico de la cuenta — y no le exigiremos una identificación oficial ni ningún documento sensible para una solicitud habitual.
 

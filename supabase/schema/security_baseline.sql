@@ -85,6 +85,11 @@
 --                                                  opaque unsubscribe token, suppressed_at). Every privilege
 --                                                  revoked from public/anon/authenticated; service_role holds
 --                                                  SELECT/INSERT/UPDATE explicitly. NOT YET APPLIED TO PRODUCTION.
+--   consent_notice_versions    rls=t  policies=1   2026-09-24 (20260924100000, consent-once): SELECT for
+--                                                  authenticated (using true — notice versions are not personal
+--                                                  data). All privileges revoked from public/anon/authenticated,
+--                                                  then SELECT granted to authenticated and service_role only; no
+--                                                  write policy for any client. NOT YET APPLIED TO PRODUCTION.
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
 --                                                  only) for the learner's creator or a learner_access row. Reasons
 --                                                  are a fixed list (check constraint), no free text. No update/delete.

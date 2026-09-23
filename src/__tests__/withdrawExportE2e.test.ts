@@ -31,7 +31,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { PGlite, Transaction } from '@electric-sql/pglite'
-import { loadSchema, foreignKeys, grantedConsent } from './_schema'
+import { loadSchema, foreignKeys, grantedConsent, FIXTURE_NOTICE } from './_schema'
 
 const SUPA = 'http://supabase.test', RESEND = 'http://resend.test'
 const SERVICE = 'service-key-for-tests', ANON = 'anon-key-for-tests'
@@ -193,6 +193,7 @@ async function rowsAbout(f: Family) {
 }
 
 let A: Family, B: Family
+let siblingA = ''   // a second child under family A's ACCOUNT consent (consent-once): the B3 link must take it too
 let b3Stored = '', token = ''
 const kidTokenFromB3 = (html: string) => html.match(/\/consent\/withdraw#t=([A-Za-z0-9_-]{43})/)?.[1] ?? ''
 
@@ -224,19 +225,28 @@ beforeAll(async () => {
   expect((await r2.json()).status).toBe('granted')
   token = kidTokenFromB3(String(resendCalls[1].body?.html))
   expect(token, 'B3 carries no withdrawal link').toHaveLength(43)
-  const [consentA] = await q<{ id: string; b3: string }>(`select id, second_email_provider_id b3 from public.parental_consents where parent_id = '${PARENT_A}'`)
+  // ⚠️ CONSENT-ONCE: this needs the request route change (p_scope: 'account', p_ack_at). Until the route sends the
+  // new parameters, consent_request resolves to no function and `r1` above is a 502 — this file is red for that
+  // reason alone. The route is not this test's to change.
+  const [consentA] = await q<{ id: string; b3: string; notice: string; scope: string }>(`select id, second_email_provider_id b3,
+    notice_version notice, scope from public.parental_consents where parent_id = '${PARENT_A}'`)
+  expect(consentA.scope, 'the route asked for something other than ACCOUNT consent').toBe('account')
+  expect(consentA.notice).toBe(NOTICE_VERSION)
   b3Stored = consentA.b3
   expect(b3Stored, 'the grant did not store the B3 Resend returned').toBe('re_2')
 
-  // The child, created as the parent under that consent (the gate refuses anything else).
-  const kidA = await asCaller(`Bearer ${jwtFor(PARENT_A)}`, async tx => (await tx.query<{ id: string }>(`insert into public.learners
-    (display_name, avatar_index, age_group, created_by, consent_id) values ('Ana ${MARK_A}', 0, '6-8', '${PARENT_A}', '${consentA.id}') returning id`)).rows[0].id)
+  // The children, created as the parent under that consent with the parent's attestation (the gate refuses anything else).
+  const addA = (name: string) => asCaller(`Bearer ${jwtFor(PARENT_A)}`, async tx => (await tx.query<{ id: string }>(`insert into public.learners
+    (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+    values ('${name}', 0, '6-8', '${PARENT_A}', '${consentA.id}', '${NOTICE_VERSION}') returning id`)).rows[0].id)
+  const kidA = await addA(`Ana ${MARK_A}`)
+  siblingA = await addA(`Abe ${MARK_A}`)
   A = await seedRows({ parent: PARENT_A, kid: kidA, login: KIDLOGIN_A, consent: consentA.id }, MARK_A)
 
   // ── Family B: the control. Another parent, their own child, a row everywhere. ──
   const consentB = await grantedConsent(db, PARENT_B)
-  const [{ id: kidB }] = await q<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id)
-    values ('Bo ${MARK_B}', 0, '6-8', '${PARENT_B}', '${consentB}') returning id`)
+  const [{ id: kidB }] = await q<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+    values ('Bo ${MARK_B}', 0, '6-8', '${PARENT_B}', '${consentB}', '${FIXTURE_NOTICE}') returning id`)
   await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${kidB}', '${PARENT_B}', 'owner') on conflict do nothing`)
   B = await seedRows({ parent: PARENT_B, kid: kidB, login: KIDLOGIN_B, consent: consentB }, MARK_B)
 }, 120_000)
@@ -356,6 +366,11 @@ describe('withdrawal from the B3 link — the real route, the real functions', (
   it('deletes every row about the child in every child table', async () => {
     const after = await rowsAbout(A)
     expect(Object.entries(after).filter(([, n]) => n > 0).map(([t, n]) => `${t}: ${n}`), 'still holds the child').toEqual([])
+  })
+
+  it('deletes every other child the account consent covered — consent-once: the B3 link withdraws the ACCOUNT', async () => {
+    expect(siblingA, 'control: the sibling was never created').not.toBe('')
+    expect(await q(`select 1 from public.learners where id = '${siblingA}' or created_by = '${PARENT_A}'`)).toEqual([])
   })
 
   it('deletes the child\'s own login', async () => {

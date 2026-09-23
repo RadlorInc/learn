@@ -23,12 +23,12 @@ export function renderB1(lang: Lang, grantUrl: string, declineUrl: string): Rend
   const html = wrap([
     p(t(B1.hi)), p(t(B1.someone)), p(t(B1.before)),
     `<ul style="margin:0 0 14px;padding-left:22px">${B1.list.map(x => `<li>${toHtml(t(x))}</li>`).join('')}</ul>`,
-    p(t(B1.doNot)),
+    p(t(B1.doNot)), p(t(B1.covers)),
     `<p style="margin:18px 0 8px">${button(t(B1.grant), grantUrl, true)}${button(t(B1.decline), declineUrl, false)}</p>`,
     p(t(B1.ignore)), small(t(B1.details)), small(B1.address),
   ].join(''))
   const text = [
-    t(B1.hi), t(B1.someone), t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot),
+    t(B1.hi), t(B1.someone), t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot), t(B1.covers),
     `${t(B1.grant)}: ${grantUrl}\n${t(B1.decline)}: ${declineUrl}`,
     t(B1.ignore), toText(t(B1.details)), B1.address,
   ].map(s => toText(s)).join('\n\n')
