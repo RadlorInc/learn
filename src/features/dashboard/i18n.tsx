@@ -332,8 +332,8 @@ export const ES: Record<string, string> = {
    * this translation has the same status as the English: draft, pending review. Flagged in the
    * session report rather than left to be discovered.
    */
-  'What we collect about your child: the first name or nickname you choose, their avatar and grade, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.':
-    'Lo que recopilamos sobre su hijo: el nombre o apodo que usted elija, su avatar y su grado, y su trabajo en la aplicación: respuestas, puntuaciones y progreso. Lo usamos para enseñar a su hijo y para mostrarle a usted cómo va. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, una dirección postal ni una fotografía.',
+  'What we collect about your child: the first name or nickname you choose, their avatar, the lessons you choose and a grade band worked out from them, and their work in the app — answers, scores and progress. We use it to teach your child and to show you how they are doing. We never ask a child for an email address, phone number, home address or photograph.':
+    'Lo que recopilamos sobre su hijo: el nombre o apodo que usted elija, su avatar, las lecciones que usted elija y una franja de grados deducida de ellas, y su trabajo en la aplicación: respuestas, puntuaciones y progreso. Lo usamos para enseñar a su hijo y para mostrarle a usted cómo va. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, una dirección postal ni una fotografía.',
   'Read the Privacy Policy': 'Lea la Política de privacidad (en inglés)',
   'By adding a child you confirm you are their parent or legal guardian, or have that person’s permission.':
     'Al agregar un niño, usted confirma que es su padre, madre o tutor legal, o que cuenta con el permiso de esa persona.',

@@ -64,3 +64,14 @@ describe('the notice names what a new child row stores', () => {
     expect(B3.yesterday.en).not.toMatch(/grade level/i)
   })
 })
+
+describe('the add-a-child sheet\'s own "what we collect" line', () => {
+  it('says a grade band, not "grade" (it sits on the same screen that stores the band)', async () => {
+    const { readFileSync } = await import('node:fs')
+    const src = readFileSync('src/app/parent/page.tsx', 'utf8')
+    const line = src.match(/t\('What we collect about your child:([^']*)'\)/)
+    expect(line, 'the sheet no longer carries its "what we collect" line — this check sees nothing').not.toBeNull()
+    expect(line![1]).toContain('the lessons you choose and a grade band worked out from them')
+    expect(line![1]).not.toMatch(/avatar and grade\b/)
+  })
+})
