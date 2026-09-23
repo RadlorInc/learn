@@ -16,6 +16,8 @@ All personal information we hold about children, and the parent account informat
 
 Today that means **26 children's records and 20 adult accounts**. At least **18 of those children are under 13** — eight in the 3–5 band, four in 6–8, six in 9–11 — and some share of the five in the 12–14 band will be twelve. COPPA therefore covers most of the children on the service, not a minority of them.
 
+> **Changed, 23 September 2026 (measured on production).** All of those child records were team and intern test profiles, and they were **cleared**: immediately afterwards the service held **0 children** and **17 adult accounts**. Every child created since exists only through the consent flow — the database refuses to store a child without a granted consent record.
+
 ## 2. Designated responsibility
 
 Rakif is responsible for this program: the annual risk assessment, the vendor review, incident response, and making sure the controls below are real rather than described.
@@ -56,11 +58,15 @@ Two things follow. First, staging is still required — "their own profile" and 
 
 **And it opens a cleaner option than grandfathering.** The consent gate was built with an exemption for the existing 26 so they would not freeze. If none of them is real, the exemption is unnecessary — the test data can be cleared and the gate applied with **zero exemptions**, so that every child in the system from that moment on has a consent record behind them. An exemption that exists for nobody is still a route around the gate; removing it entirely is stronger than documenting it. [PLACEHOLDER — decide before the migration is applied: clear the test data and drop the exemption, or keep it. If it is kept, record why, and record the date it will be removed.]
 
+> **Done, 23 September 2026 (measured on production).** The test children were cleared and the exemption removed. The consent gate is live on every table that holds a field about a child (14 tables), there is **no exemption** — the column that marked it no longer exists — and a child's record **cannot be stored without a consent record at all** (a database constraint, not only a check). A test parent then added a child end to end: the notice, the email, the permission, and the child created.
+
 **Testers and interns.** Anyone reviewing or testing the product — including unpaid interns on academic placements — works against test accounts and seeded data only, never against real children's records. This is a condition of their access and it belongs in their placement agreement. Before a testing session begins, confirm that the environment the tester is pointed at contains no real child data. [PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]
 
 ## 4a. Who may create a child profile — an unresolved question
 
 The consent gate assumes a parent. The product also lets a **teacher** add students to a class roster, and those students arrive with no consent record, so every roster add will be refused the moment the gate is applied.
+
+> **Live since 23 September 2026.** The gate is applied, and the class roster now says plainly that **adding students is paused** rather than failing on each name (confirmed present in the live app). School consent remains open.
 
 The consent flow cannot honestly serve teachers either: its button says "I'm the parent or legal guardian", and a teacher is neither. School consent under COPPA is a separate mechanism with its own conditions, and it is not built. [PLACEHOLDER — attorney: can a school consent on a parent's behalf here, and under what conditions? Until that is answered, the teacher path and the consent gate cannot both be live.]
 
