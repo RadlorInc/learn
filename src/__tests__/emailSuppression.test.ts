@@ -13,10 +13,10 @@
  * imported from the code under test, which would only prove the code equals itself.
  */
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema } from './_schema'
+import { applyFile, loadSchema } from './_schema'
 
 let db: PGlite
 const resend: { to: string[]; subject: string; html: string; text: string; headers?: Record<string, string>; scheduled_at?: string }[] = []
@@ -59,8 +59,25 @@ async function postgrest(url: URL, init: RequestInit): Promise<Response> {
   } finally { await db.exec('reset role') }
 }
 
+/**
+ * ⚠️ SUPABASE GRANTS EVERY NEW public TABLE TO anon AND authenticated BY DEFAULT PRIVILEGE; plain
+ * Postgres does not. Built naively, pglite is a world where the migration's `revoke` has nothing to
+ * remove — a planted break deleting it stayed green (break-check exit 1, measured 2026-09-23). So the
+ * schema is loaded up to this migration, the platform's default is installed, and then this migration
+ * and everything after it run into it, as they do on the real platform.
+ */
+const MIGRATION = '20260923190000_email_suppressions.sql'
+async function loadAsSupabase(): Promise<PGlite> {
+  const { db } = await loadSchema({ before: MIGRATION })
+  await db.exec('alter default privileges in schema public grant all on tables to anon, authenticated, service_role')
+  for (const f of readdirSync(resolve(__dirname, '../../supabase/migrations')).filter(f => f.endsWith('.sql') && f >= MIGRATION).sort()) {
+    await applyFile(db, f)
+  }
+  return db
+}
+
 beforeAll(async () => {
-  ;({ db } = await loadSchema())
+  db = await loadAsSupabase()
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'http://supabase.test'
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role'
   process.env.RESEND_API_KEY = 'test-resend'
