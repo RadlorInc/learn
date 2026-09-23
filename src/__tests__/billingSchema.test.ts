@@ -108,6 +108,16 @@ describe('a redefinition never drops a guard an earlier one added', () => {
     expect(Object.keys(defs).length, 'no function definitions parsed — the regex has rotted').toBeGreaterThan(10)
 
     const conditions = (b: string) => new Set([...b.matchAll(/raise\s+exception\s+'([^']*)'/gi)].map(m => m[1]))
+    /**
+     * ⚠️ A GUARD MAY ONLY BE RETIRED BY NAME, WITH THE MIGRATION AND THE REASON — never by loosening this
+     * check. Each entry must match a guard that really is lost (a stale entry fails below), and its
+     * reason must be structural: the thing the guard refused can no longer be expressed at all.
+     */
+    const RETIRED: { fn: string; raises: string; by: string; why: string }[] = [
+      { fn: 'enforce_learner_consent', raises: 'consent_exempt_at may not be set on a new child — it marks the children that ',
+        by: '20260923170000_consent_zero_exemptions.sql',
+        why: 'the consent_exempt_at column is dropped by that migration, so no insert can set it' },
+    ]
     const lost: string[] = []
     for (const [fn, ds] of Object.entries(defs)) {
       if (ds.length < 2) continue
@@ -115,10 +125,15 @@ describe('a redefinition never drops a guard an earlier one added', () => {
       const earlier = new Set<string>()
       for (const d of ds.slice(0, -1)) for (const c of conditions(d.body)) earlier.add(c)
       for (const c of earlier) {
-        if (!newest.body.includes(c)) lost.push(`${fn} (newest: ${newest.file}) no longer raises "${c}"`)
+        if (newest.body.includes(c)) continue
+        const r = RETIRED.find(x => x.fn === fn && x.raises === c && x.by === newest.file)
+        if (r) { r.why = ''; continue }            // consumed: this retirement is real
+        lost.push(`${fn} (newest: ${newest.file}) no longer raises "${c}"`)
       }
     }
     expect(lost, `a redefinition dropped a guard an earlier migration added:\n  ${lost.join('\n  ')}`).toEqual([])
+    const stale = RETIRED.filter(r => r.why !== '').map(r => `${r.fn}: "${r.raises}" (${r.by})`)
+    expect(stale, `RETIRED lists a guard that is not actually lost — remove the entry:\n  ${stale.join('\n  ')}`).toEqual([])
   })
 })
 
