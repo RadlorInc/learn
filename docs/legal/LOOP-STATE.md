@@ -52,8 +52,8 @@ Started 2026-09-23. Rafi approves every step that touches production. Rules: no 
 | D3 before-migration checks | not started | — |
 | D4 apply the four migrations | **done 2026-09-23** — see "D4 COMPLETE" below (was blocked on the ledger; resolved by PR #183 + the one-shot repair) | |
 | D5 real deletion on real rows | **done 2026-09-23** — see "D5 PASSED" below | |
-| D6 clear test children, remove exemption | **PR #184 open; ⛔ Rafi** — see "D6" below | |
-| D7 record it | not started | — |
+| D6 clear test children, remove exemption | **done 2026-09-23** — see "D6 — applied" below | |
+| D7 record it | **done 2026-09-23** — see "D7" below; reaches `main` with PR #182 | |
 
 ## D0 — findings (read-only, 2026-09-23)
 
@@ -340,4 +340,38 @@ So a parent who deletes a child or closes the account within a day of granting g
 | migrate-prod | done | Deploy **#414** (`a6b08182`), job `107258894814`: `✓ production ref confirmed`, `Applying migration 20260923170000_consent_zero_exemptions.sql` — **the only one** — `Finished supabase db push.` |
 | D6 proof SQL | **done — every row PASS** (Rafi, production) | ledger **104** / D6 recorded · **0 children** · exemption column + view gone · `consent_id` NOT NULL · gate on **14** tables · `consent_ok()` true/false/true/true · `enforce_learner_consent()` true/false/true/true · **no row tagged to a child** in any `learner_id` table · `error_events` **0 orphaned / 5 untagged** (D4 left 6 = 1 child-tagged + 5 untagged → D6 removed exactly the one) · **0 granted-and-unused consents** · rafi3's consent **withdrawn / unlinked / B3 id kept** · **0 child logins** · cron active · `delete_my_account` + `handle_new_user` unchanged. INFO: accounts **17 / 17** (D3: 20 / 20) — consistent with 3 child logins removed (rafi7's in D5, 2 in D6), but the number of child logins before D5 was never measured, so the 3 is an inference; **0 remaining is the measurement**. |
 | (the query) | — | `docs/legal/sql/d6-proof.sql`: ledger **104** + D6 recorded; **0 children**; exemption column and view gone; `consent_id` NOT NULL; `consent_ok()` reads `parental_consents`, has no `exempt`, still DEFINER with `search_path` pinned; `enforce_learner_consent()` still refuses, no `consent_exempt_at`, DEFINER + pinned; gate still on **14** tables; **0 rows tagged to a child** in every `learner_id` table; `error_events` 0 orphaned (untagged stay); rafi3's consent **withdrawn / unlinked / B3 id kept**; 0 granted-and-unused consents (INFO, not FAIL: one you grant after D6 looks the same); **0 child logins** (`@learner.adaptivelearn.invalid`); cron active; `delete_my_account` / `handle_new_user` unchanged. **Rehearsed** in production's order (pre-gate child + login + crash rows, consented child carrying rafi3's real B3 id, then D6): all PASS except the two local-only rows (ledger count, `handle_new_user` hash). **Planted defects**, each on its own statement: exemption column back → FAIL; a child login left → FAIL; a granted unused consent → INFO. (A first attempt planted all three in one transaction; the consent state machine refused "withdrawn → granted" and rolled all three back — itself evidence a withdrawn consent cannot be revived — so that run proved nothing and was redone.) |
-| in-app checks | **partly done — ⛔ one run recommended** | Rafi (clarified): "Add a child" showed the consent notice; he ticked *I am the parent or legal guardian* and pressed **Not now** → nothing created. ✅ **the consent flow still starts after D6**; ✅ declining creates nothing. ⚪ **Not exercised in the app after D6:** (a) a write the gate REFUSES — covered at database level instead (D6 proof: `consent_id` NOT NULL + gate on 14 tables; tests: a consent-less child refused even with the trigger disabled, 23502; D4 saw the app meet the gate once, via a stale bundle); (b) **a child CREATED through consent after D6** — the one thing D6 could have broken for a real parent, since it made `consent_id` required. Recommended: one full run on a test account (Add a child → Continue → email → I give permission → child appears); cancel its B3 in Resend afterwards. |
+| in-app checks | **done** — and, after that, Rafi ran a full creation after D6: Add a child → notice → email → I give permission → **child created** (his report, 2026-09-23). ✅ **D6 COMPLETE.** Earlier: | Rafi (clarified): "Add a child" showed the consent notice; he ticked *I am the parent or legal guardian* and pressed **Not now** → nothing created. ✅ **the consent flow still starts after D6**; ✅ declining creates nothing. ⚪ **Not exercised in the app after D6:** (a) a write the gate REFUSES — covered at database level instead (D6 proof: `consent_id` NOT NULL + gate on 14 tables; tests: a consent-less child refused even with the trigger disabled, 23502; D4 saw the app meet the gate once, via a stale bundle); (b) **a child CREATED through consent after D6** — the one thing D6 could have broken for a real parent, since it made `consent_id` required. Recommended: one full run on a test account (Add a child → Continue → email → I give permission → child appears); cancel its B3 in Resend afterwards. |
+
+## D7 — recorded (2026-09-23)
+
+- `READINESS.md`: flows table rewritten with the measured state (consent notice + email-plus **live**; deletion of one child **live and proven on real rows**; withdrawal and export **deployed, not yet exercised on production**; roster **paused**; the gate live with **zero exemptions**). Pages unchanged: all dark, 73 placeholders.
+- Documents 04, 05, 06, 16: dated notes added under the passages the loop made untrue — each states only what was measured and where: the orphan defect **fixed** (cascade read from the catalog; 3 orphans deleted; 0 after D6), deletion **proven on real rows** (D5, with its limit: that child had no crash records), the gate **live with zero exemptions** (D4/D6 proofs), the retroactive-consent question **moot** (children cleared), Resend **in use** (B1 received; B3 ids stored). The founder's text is kept; no placeholder was touched (count **73**). ⚠️ One placeholder is now answerable but left, as instructed: doc 05's "decide before the migration is applied: clear the test data and drop the exemption, or keep it" — D6 decided it.
+- Legal/consent guards after the edits: 16 files / 141 tests pass.
+
+# FINAL REPORT — deploy loop D0–D7 (2026-09-23)
+
+| step | result | proof |
+|---|---|---|
+| D0 preflight | ✅ done (was BLOCKED on three points; founder decided each) | `migrate-prod` skipped on every main deploy (measured); `WITHDRAWAL_DELETES` a repo literal; every live screen links a dark page |
+| D1 branch + fixes | ✅ | merge of `main` (no conflicts); `deploy.yml` (staging-first suspended while no staging); consent copy tells the truth (`notice-v3`); roster paused; CI Node 20 green; 73 placeholders |
+| D2 app deployed | ✅ | PR #181 → `fe721153`; legal pages dark as predicted; new strings in the live bundle with controls; Rafi's signed-in checks |
+| D3 before | ✅ | Backup #41 (88,652 B); before-counts on production |
+| D4 four migrations | ✅ (after a ledger repair) | ledger 95 → repair (PR #183 + one-shot workflow, rehearsed) → exactly the four applied (#413); proof all PASS; in-app A + B (first real consent email) |
+| D5 real deletion | ✅ | rafi7: every row + login gone, control untouched (Rafi); limit recorded |
+| D6 zero exemptions | ✅ | PR #184; backup #42 (pre-D6 by 23 s); only `20260923170000` applied (#414); proof all PASS; flow starts, "Not now" creates nothing, full creation after D6 works |
+| D7 record | ✅ | this section; PR #182 |
+
+**Found that the brief did not expect:**
+1. `migrate-prod` had **never run** — its only dependency was always skipped. Production migrations had no path.
+2. **Production's migration ledger had drifted**: 3 hand-applied rows not in the repo, 6 repo migrations never recorded (two never applied at all), and **a hand-applied migration that deleted a ledger row**. `db push` would have refused; replaying would have regressed `delete_my_account`.
+3. The first ledger query **ran against a different Supabase project** — every query since prints the database it ran on.
+4. **An accidental `supabase db push`** from an unquoted heredoc; harmless only because the checkout was unlinked → a hard rule in `CLAUDE.md`, and no checkout or CLI login on this machine can reach production (measured).
+5. The consent gate **refused the RLS suite's own fixtures** — fixed by giving them real consents, not by loosening the gate.
+6. The consent copy promised **account closure** on withdrawal; the product deletes one child — copy fixed; doc 06 still says otherwise (attorney).
+7. **Teacher rosters** are refused by the gate — now a visible pause.
+8. **A scheduled B3 survives** a dashboard delete or account closure (only the email link cancels it) — follow-up.
+9. The nightly backup's **first unattended success** (#40), meeting the drafts' "still to watch".
+10. The backup before D6 was pre-D6 **by 23 seconds** — approve only after the backup finishes.
+11. Two repo guards met cases they were not written for; both refined **without loosening** (named retirements; migration-created columns), each break-tested.
+
+**Open, recorded for later PRs:** service-worker takeover (returning parents got a stale bundle); "Grade level" vs the stored band (doc 02 + a new notice version); B3 cancellation on delete/close; delete `ledger-repair.yml` + `scripts/ledger-repair.sh`; staging database before the first real family; the held profile-on-confirm + prune pair (with doc 04's retention row); every legal page still dark (73 placeholders, attorney, Spanish).

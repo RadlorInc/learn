@@ -1,6 +1,6 @@
 # Legal readiness — what stands between each document and "live"
 
-As measured 2026-09-23 on branch `legal-drafts-and-guard` (not pushed, nothing applied to production).
+Pages: as measured 2026-09-23. Flows: **updated 2026-09-23 after the deploy loop (D1–D6)** — see `LOOP-STATE.md` for each proof.
 **Prefer re-measuring to trusting this table:** `npx vitest run src/__tests__/legalSwitch.test.ts` prints
 every page's refusals, and `legalSurface.test.ts` holds the links. A row here is true on the day it was
 written and on no other day.
@@ -40,15 +40,17 @@ opening "Known defect — deletion is …". **The attorney signs off the boundar
 
 | Flow | Built | Where | Content ready | Blocking on | Live? |
 |---|---|---|---|---|---|
-| Direct notice (02) | ✅ | Add a child → notice | ✅ copy = doc 02 (`notice-v2`), drift-checked both ways | **Spanish reviewer** — machine-translated, unreviewed · **attorney** — the notice links three dark pages; sign-off | ❌ not deployed |
-| Email-plus consent (B1 → grant → B2 → B3) | ✅ | `/api/consent/request`, `/consent/respond` | ✅ doc 03, rendered text checked | **Rafi** — `RESEND_API_KEY` (none exists; no real email has ever been sent); the deploy runbook (LOOP-STATE) · **attorney** — doc 03 Path B, "confirm with the attorney before building" | ❌ not deployed, migrations not applied |
-| Withdrawal | ✅ deletes the child (item 6) | B3 → `/consent/withdraw` | ⚠️ two lines still untrue | **attorney** — B3 "…and close the account" and the screen's "closes the whole account, including your other children's profiles": build account closure (it deletes the consent evidence) or change the words · **Rafi** — apply `20260923140000` | ❌ |
-| Deletion — one child | ✅ same set as withdrawal | Login & data → Delete *name*'s profile | ✅ | **Rafi** — apply `20260923140000` (until then the old path runs, and crash records survive the child) | ⚠️ old path live |
-| Deletion — everything | ✅ (existing) | Account → Close your account | ✅ | — | ✅ live today |
-| Parent data export | ✅ nine doc-06 tables | Login & data → Download a copy | ✅ | **Rafi** — apply `20260923150000` (until then the file says crash records and the access list are missing) | ⚠️ partial live |
-| Profile correction (name, grade) | ✅ new (item 7) | Login & data → Correct *name*'s details | ⚠️ the grade is stored only as a band — "grade level" in doc 02 overstates what is kept | **drafter/attorney** — word it as a band, or store the grade | ❌ not deployed |
-| Teacher / school consent | ❌ | Classes → Add students | — | **attorney** — the school-consent route. ⚠️ Once the consent migration is applied, every roster add is refused | ❌ |
+| Direct notice (02) | ✅ | Add a child → notice | ✅ copy = doc 02 (`notice-v3` since D1: withdrawal deletes that child, the account stays open), drift-checked both ways | **Spanish reviewer** — machine-translated, unreviewed · **attorney** — the notice links three dark pages; sign-off | ✅ **live 23 Sep** — shown on production in D4 and D6 (test accounts only; no real family until the pages publish) |
+| Email-plus consent (B1 → grant → B2 → B3) | ✅ | `/api/consent/request`, `/consent/respond` | ✅ doc 03, rendered text checked | **attorney** — doc 03 Path B · ⚠️ **follow-up:** a scheduled B3 is cancelled ONLY by the email-link withdrawal — deleting the child in the dashboard or closing the account leaves it to arrive (LOOP-STATE, D6 pre-approval) | ✅ **live 23 Sep** — first B1 arrived from `noreply@radlor.com`; end-to-end creations in D4 and after D6; B3 scheduled with Resend, id stored |
+| Withdrawal | ✅ deletes the child (item 6) | B3 → `/consent/withdraw` | ✅ copy now says what it does (D1) · ⚠️ doc 06 still says withdrawal closes the whole account | **attorney** — doc 06: close the account, or the child only | ✅ deployed · ⚪ **not yet exercised on production** (no withdraw link has been pressed there) |
+| Deletion — one child | ✅ same set as withdrawal | Login & data → Delete *name*'s profile | ✅ | — | ✅ **live, proven on real rows** (D5: every row of the child and its login gone, a sibling untouched; the crash-record cascade proven by the catalog and D6, not by that deletion) |
+| Deletion — everything | ✅ (existing) | Account → Close your account | ✅ | ⚠️ deletes the consent records (the evidence) and does not cancel a scheduled B3 | ✅ live |
+| Parent data export | ✅ nine doc-06 tables | Login & data → Download a copy | ✅ | — | ✅ deployed, `export_child_records` applied (D4) · ⚪ not yet exercised on production |
+| Profile correction (name, grade) | ✅ (item 7) | Login & data → Correct *name*'s details | ⚠️ the grade is stored only as a band — "grade level" in doc 02 overstates what is kept (follow-up 2) | **drafter/attorney** — word it as a band, or store the grade | ✅ deployed with D2 · ⚪ not exercised on production |
+| Teacher / school consent | ❌ | Classes → Add students | — | **attorney** — the school-consent route | ⏸ **paused** — the roster says "Adding students is paused" (live since D4) |
 | In-app cancellation | ❌ | — | — | **billing (not this loop)** | ❌ |
+
+**The consent gate itself (not a row above):** ✅ **live on production since 23 September 2026 with zero exemptions** — on all 14 tables that hold a field about a child, and `learners.consent_id` NOT NULL, so no child can be stored without a consent record (D4 and D6 proofs, every check PASS).
 
 ## Open items that are not a row above
 
