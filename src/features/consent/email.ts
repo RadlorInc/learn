@@ -11,9 +11,12 @@ const wrap = (inner: string) =>
   `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#2b2118;max-width:560px">${inner}</div>`
 const p = (s: string) => `<p style="margin:0 0 14px">${toHtml(s)}</p>`
 const small = (s: string) => `<p style="margin:22px 0 0;font-size:13px;color:#7a6a58">${toHtml(s)}</p>`
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+/** Both halves escaped: the decline link carries `&choice=`, and an unescaped attribute is also how a
+ *  label with a quote in it would break the button — caught by consentRoutes.test.ts, not by a reader. */
 const button = (label: string, href: string, primary: boolean) =>
-  `<a href="${href}" style="display:inline-block;margin:0 10px 10px 0;padding:12px 20px;border-radius:999px;` +
-  `font-weight:700;text-decoration:none;${primary ? 'background:#E0591F;color:#fff' : 'border:2px solid #E0591F;color:#E0591F'}">${label}</a>`
+  `<a href="${esc(href)}" style="display:inline-block;margin:0 10px 10px 0;padding:12px 20px;border-radius:999px;` +
+  `font-weight:700;text-decoration:none;${primary ? 'background:#E0591F;color:#fff' : 'border:2px solid #E0591F;color:#E0591F'}">${esc(label)}</a>`
 
 export function renderB1(lang: Lang, grantUrl: string, declineUrl: string): Rendered {
   const t = (x: L) => x[lang]

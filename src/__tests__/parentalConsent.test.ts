@@ -215,7 +215,7 @@ describe('the consent gate', () => {
      * change to it. Adding a table here is meant to take a second edit and a moment's thought about
      * whether it really holds no field about a child.
      */
-    const EXEMPT = ['learner_access', 'learner_invites', 'subscription_seats']
+    const EXEMPT = ['learner_access', 'learner_invites', 'parental_consents', 'subscription_seats']
     const ungated = rows.filter(r => !r.gated).map(r => r.tbl)
     expect(ungated.sort(), 'a table holds a child\'s data and is not gated — either attach the ' +
       'trigger or add it to the exemption list with a reason').toEqual([...EXEMPT].sort())

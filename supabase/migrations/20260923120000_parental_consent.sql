@@ -285,11 +285,15 @@ create trigger trg_consent_bind_learner
  *                       in the same statement that creates the child, so gating it would order-trap.
  *   · learner_invites — an invitation addressed to an adult.
  *   · subscription_seats — how many seats an adult has paid for.
+ *   · parental_consents — the consent record itself. It carries `learner_id` (which child a consent
+ *                       covers), so the catalog loop gated it too — found on the real stack in Phase 2,
+ *                       when 15 tables came back gated instead of 14. A record gated on its own state
+ *                       refuses writes about itself the moment it is withdrawn, which is circular.
  */
 do $$
 declare
   t record;
-  exempt text[] := array['learner_access', 'learner_invites', 'subscription_seats'];
+  exempt text[] := array['learner_access', 'learner_invites', 'subscription_seats', 'parental_consents'];
 begin
   for t in
     select c.relname

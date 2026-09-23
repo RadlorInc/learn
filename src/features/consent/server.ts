@@ -75,13 +75,16 @@ export async function userFromBearer(req: Request): Promise<string | null> {
 }
 
 // ── Resend ──
+/** Resend's API unless overridden. The override exists for ONE reason: the local end-to-end run points
+ *  it at a stand-in that records messages instead of delivering them. Unset in every real environment. */
+const RESEND = () => process.env.RESEND_API_URL || 'https://api.resend.com'
 /**
  * Send (or schedule) one message. The idempotency key makes a retried request — a double click, a
  * network retry — return the SAME message rather than a second one, which is also what lets a repeat
  * grant click be told apart from a fresh one without cancelling the real B3.
  */
 export async function sendEmail(to: string, m: Rendered, idempotencyKey: string, scheduledAt?: Date): Promise<string> {
-  const r = await fetch('https://api.resend.com/emails', {
+  const r = await fetch(`${RESEND()}/emails`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${env('RESEND_API_KEY')}`, 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
     body: JSON.stringify({
@@ -98,7 +101,7 @@ export async function sendEmail(to: string, m: Rendered, idempotencyKey: string,
 /** Best-effort: used only where a scheduled B3 must not arrive (a grant that lost a race, a withdrawal). */
 export async function cancelEmail(id: string): Promise<boolean> {
   try {
-    const r = await fetch(`https://api.resend.com/emails/${encodeURIComponent(id)}/cancel`, {
+    const r = await fetch(`${RESEND()}/emails/${encodeURIComponent(id)}/cancel`, {
       method: 'POST', headers: { Authorization: `Bearer ${env('RESEND_API_KEY')}` }, cache: 'no-store',
     })
     return r.ok

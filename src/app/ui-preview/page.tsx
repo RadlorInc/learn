@@ -24,6 +24,7 @@ import { localDay } from '@/features/lessons/progressReport'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
+import { AddChildFlow } from '@/features/consent/AddChildFlow'
 import { useState } from 'react'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { ParentPinGate } from '@/shared/ui/ParentPinGate'
@@ -65,6 +66,9 @@ function Surfaces() {
       {p === 'role'  && <div data-t="role" style={{ width: '100%' }}><RolePicker name="Sarah" onPick={() => {}} /></div>}
       {p === 'empty' && <div data-t="empty" className="adult-shell"><EmptyDashboard onAdd={() => {}} /></div>}
       {p === 'sheet' && <div data-t="sheet"><AddLearnerModal onClose={() => {}} onAdded={() => {}} /></div>}
+      {/* The consent flow as "+ Add a child" opens it — NOT fake data: it reads and writes the signed-in
+          parent's real consents, so it can be driven end to end without the dashboard's PIN screen. */}
+      {p === 'consent' && <ConsentPreview />}
       {p === 'childlogin' && <div className="adult-shell" style={{ width: '100%' }}><ChildLoginsList title="Child logins" blurb="Set a username and password for each child." learners={[{ id: 'a', name: 'Aarav' }, { id: 'b', name: 'Maya' }, { id: 'c', name: 'Zoya' }]} logins={{ b: 'maya.k' }} onLogins={() => {}} /></div>}
       {(p === 'pin' || p === 'pinset') && <div style={{ width: '100%' }}><ParentPinGate preview={p === 'pin' ? 'enter' : 'create'}>dashboard</ParentPinGate></div>}
       {p === 'mhex' && <div style={{ width: '100%' }}><ModuleHome learnerId={null} grade={5} exercises={{ count: 1, onOpen: () => {} }} /></div>}
@@ -155,4 +159,11 @@ function DashPreview({ p }: { p: string }) {
       <TourRunner tour={tour} onEnd={() => setTour(null)} />
     </div>
   )
+}
+
+function ConsentPreview() {
+  const lang = useLang()
+  return <div data-t="consent"><AddChildFlow lang={lang} onClose={() => {}} renderAdd={id => (
+    <div data-consent-id={id ?? 'none'}><AddLearnerModal consentId={id} onClose={() => {}} onAdded={() => { document.body.dataset.added = 'yes' }} /></div>
+  )} /></div>
 }
