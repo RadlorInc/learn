@@ -17,7 +17,7 @@ You can ask us for a copy of everything we have collected from your child. We wi
 
 ### 2. Correct it
 
-**Email us at support@radlor.com and we will correct it.** The app does not yet let you edit a child's name or grade yourself. [PLACEHOLDER — replace this with the in-app path once an edit function exists.]
+**In the app:** parent dashboard → your child's card → **Login & data** → **Correct *name*'s details**. There you can change your child's name or nickname, their avatar, and their grade band (grades 3–5 or grades 6–8). Only the adult who added the child can make this change. **Or email us** at support@radlor.com and we will correct it for you.
 
 ### 3. Delete it
 
