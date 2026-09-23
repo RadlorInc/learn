@@ -48,6 +48,8 @@ create table if not exists public.consent_b3_cancellations (
 alter table public.consent_b3_cancellations enable row level security;
 revoke all on public.consent_b3_cancellations from public, anon, authenticated;
 grant select, update on public.consent_b3_cancellations to service_role;
+-- (On Supabase, default privileges also give service_role INSERT/DELETE on every new table; the server
+-- uses only the two functions below. Measured on a local stack: anon/authenticated have nothing.)
 
 create or replace function public.consent_queue_b3_cancel()
 returns trigger

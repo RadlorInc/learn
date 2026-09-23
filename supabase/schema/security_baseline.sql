@@ -77,7 +77,7 @@
 --                                                  and is kept as state='withdrawn'. anon has no grant.
 --   consent_b3_cancellations   rls=t  policies=0   ⚠️ ZERO POLICIES IS DELIBERATE (2026-09-23, 20260923180000): every
 --                                                  privilege revoked from public/anon/authenticated; service_role
---                                                  SELECT/UPDATE only (via consent_b3_due / consent_b3_record, INVOKER).
+--                                                  (the server) reads/updates it via consent_b3_due / consent_b3_record (INVOKER).
 --                                                  Rows are written ONLY by the DEFINER trigger consent_queue_b3_cancel.
 --                                                  No FK to parental_consents, on purpose: it outlives an account close.
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
