@@ -9,16 +9,29 @@
  * Real Postgres (pglite), baseline + every migration in order — the same fixture the schema tests
  * build (`_schema.ts`), so the trigger under test is the migrated one, not a retype. The three
  * cases below are watched: with the OLD trigger, case ① (unconfirmed → no profile) is red.
+ *
+ * ⚠️ BOTH MIGRATIONS ARE HELD (`supabase/held/`, 2026-09-23): production has run neither, and still
+ * creates the profile at signup. They are applied here EXPLICITLY on top of the migrations, so this
+ * file tests the held design — not production — and is ready for the PR that applies them.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
-import { loadSchema } from './_schema'
+import { loadSchema, applyFile } from './_schema'
 import type { PGlite } from '@electric-sql/pglite'
 
 let db: PGlite
 const count = async (sql: string) =>
   Number((await db.query<{ n: bigint }>(`select count(*)::int as n from ${sql}`)).rows[0].n)
 
-beforeAll(async () => { ({ db } = await loadSchema()) })
+beforeAll(async () => {
+  ({ db } = await loadSchema())
+  // Positive control: without the held files the migrated schema is production's — a profile at signup.
+  await db.exec(`insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000000c1', 'control@example.com')`)
+  if (Number((await db.query<{ n: number }>(`select count(*)::int as n from public.profiles where id = '00000000-0000-4000-8000-0000000000c1'`)).rows[0].n) !== 1) {
+    throw new Error('control: the migrations alone no longer create a profile at signup — is a held file back in supabase/migrations?')
+  }
+  await applyFile(db, '20260908120000_profile_on_confirmed.sql', 'supabase/held')
+  await applyFile(db, '20260908120100_prune_unconfirmed_users.sql', 'supabase/held')
+})
 
 describe('profile creation is gated on email confirmation', () => {
   it('① email/password signup (unconfirmed) creates NO profile', async () => {

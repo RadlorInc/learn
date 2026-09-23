@@ -61,8 +61,8 @@ const substitute = (sql: string) =>
     .replace(/\bcitext\b/gi, 'text')
 
 export interface Loaded { db: PGlite; files: number }
-export const applyFile = (db: PGlite, file: string) =>
-  db.exec(substitute(readFileSync(resolve(ROOT, 'supabase/migrations', file), 'utf8')))
+export const applyFile = (db: PGlite, file: string, dir = 'supabase/migrations') =>
+  db.exec(substitute(readFileSync(resolve(ROOT, dir, file), 'utf8')))
 
 /** Applies baseline + every migration. Throws on the first failure — a partly-built schema is not
  *  a schema, and swallowing an error here would make every assertion downstream vacuous. */
