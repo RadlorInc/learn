@@ -20,7 +20,7 @@
 
 ## Body
 
-You are setting up a profile for your child. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their child's age. Here it is, in plain language.
+You are creating a Milo account for your children. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their children's ages. You give it once, for this account, and it covers every child you add to it. Here it is, in plain language.
 
 ### What we collect from your child
 
@@ -54,7 +54,7 @@ We use this information only to run Milo for your child: to teach, to track prog
 
 Before we collect any of the above, we need your verifiable consent.
 
-We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. You can withdraw your consent from either email.
+We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. This one permission covers every child you add to this account, now or later: each time you add a child, you confirm in the app that you are that child's parent or legal guardian, and we record when you did. You can withdraw your permission from the second email or in the app, at any time.
 
 [PLACEHOLDER — a second method, verification through the payment card at checkout, is specified in document 03 and is not built. Add it here only when it exists; describing a choice a parent cannot make is worse than offering one method plainly.]
 
@@ -64,9 +64,9 @@ At any time, you can:
 
 - **See** everything we hold about your child;
 - **Delete** your child's information;
-- **Withdraw your consent** — we stop any further collection and delete your child's information. Your account stays open.
+- **Withdraw your consent** — for one child, or for every child on the account. We stop any further collection and delete the information of each child it covers. Your account stays open.
 
-To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.
+To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — use **Account → Withdraw permission for all my children** to delete every child's information and keep the account, or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.
 
 ### How long we keep it
 

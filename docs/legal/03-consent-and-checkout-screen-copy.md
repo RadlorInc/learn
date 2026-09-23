@@ -113,15 +113,15 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B1. Consent request email — sent when the parent asks to start
 
-**Subject:** `Please confirm: permission for your child to use Milo`
+**Subject:** `Please confirm: permission for your children to use Milo`
 
 **Body:**
 
 > Hi,
 >
-> Someone — we believe you — asked to set up a Milo account for your child.
+> Someone — we believe you — created a Milo account and asked to add children to it.
 >
-> Before we collect anything from your child, US law requires your permission. Here is exactly what we would collect:
+> Before we collect anything from any child on this account, US law requires your permission. Here is exactly what we would collect about each child you add:
 >
 > - your child's first name or nickname
 > - the lessons you choose for them, and a grade band (grades 3–5 or 6–8) worked out from those lessons
@@ -132,6 +132,8 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 > - basic technical information from the device, to keep the app working and secure
 >
 > We do not ask your child for a last name, email, phone number, address, photo, voice recording, or location. We do not sell your child's information, and we do not use it for advertising.
+>
+> This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.
 >
 > **[ I give permission ]**    **[ No — cancel this request ]**
 >
@@ -146,25 +148,25 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 **Body:**
 
-> We have recorded your permission and your child can start now.
+> We have recorded your permission. You can add your children now.
 >
-> We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about your child.
+> We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about any child on the account.
 
 ### B3. Second confirmation email — sent after a delay
 
 **Timing:** [PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]
 
-**Subject:** `Confirming the permission you gave for your child's account`
+**Subject:** `Confirming the permission you gave for your children`
 
 **Body:**
 
 > Hi,
 >
-> Yesterday you gave permission for your child to use Milo, and for us to collect their first name, grade band, and maths progress.
+> Yesterday you gave permission for your children to use Milo, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.
 >
 > **If that was you, you don't need to do anything.**
 >
-> **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting and delete everything we hold about the child. Your account stays open.
+> **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting and delete everything we hold about every child on the account. Your account stays open.
 >
 > You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.
 >
@@ -172,7 +174,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ---
 
-## Withdrawal-of-consent screen (both paths)
+## Withdrawal-of-consent screen — one child (a permission given before 24 September 2026 for a single child)
 
 **Heading:** `Withdraw permission`
 
@@ -185,6 +187,64 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 > **This applies only to this child.** Your account stays open, and any other children on it are not affected.
 
 **Buttons:** `Withdraw permission and delete my child's data` · `Keep my settings`
+
+---
+
+## Withdrawal screen — every child on the account (the second email's link, and Account settings)
+
+**Heading:** `Withdraw permission for all your children`
+
+**Body:**
+
+> If you withdraw permission, we will stop collecting information from every child on your account, delete everything we hold about each of them — including their own sign-ins — and close their profiles. This cannot be undone.
+>
+> **Your account stays open.** If you add a child again later, we will ask for your permission again first.
+
+**Buttons:** `Withdraw permission and delete my children's data` · `Keep my settings`
+
+---
+
+## Signup page — shown before the signup buttons, which stay disabled until the box is ticked
+
+**Heading:** `Before you create an account: what we collect about your children`
+
+> For each child you add, Milo stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.
+
+**Link:** `Read the full notice` (opens the full notice, document 02)
+
+**Checkbox (unticked):** `I'm a parent or legal guardian, I've read what we collect, and I agree.`
+
+> After you sign up, we will email you once to ask for your permission. You can add your children as soon as you have given it.
+
+> Signing up as a teacher, not a parent?
+
+**Button:** `Continue as a teacher` (enables the signup buttons without the parent's tick; a teacher's account cannot add a child until it has given the permission above)
+
+---
+
+## Waiting for permission — the parent dashboard, until "I give permission" is clicked
+
+**Heading:** `Waiting for your permission`
+
+> We have emailed {email}. Open that email and choose "I give permission" — then you can add your children. The link works for {days} days.
+
+**Button:** `Send the email again`
+
+---
+
+## Adding a child — the parental attestation (replaces the notice and the email for each later child)
+
+**Checkbox (unticked):** `I'm this child's parent or legal guardian. The permission I gave on {date} applies to this child too.`
+
+**Link:** `Read the notice you agreed to`
+
+---
+
+## Asking again after a material change to the notice
+
+**Heading:** `We've changed what we collect`
+
+> Please read the updated notice and give your permission again before your children continue.
 
 ---
 

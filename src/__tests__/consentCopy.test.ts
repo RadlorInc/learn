@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createHash } from 'node:crypto'
-import { NOTICE, B1, B2, B3, WITHDRAW, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
+import { NOTICE, B1, B2, B3, WITHDRAW, WITHDRAW_ALL, SIGNUP, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
 
 const ROOT = resolve(__dirname, '../..')
 const doc = (f: string) => readFileSync(resolve(ROOT, 'docs/legal', f), 'utf8')
@@ -80,10 +80,12 @@ const bDoc = units(
   l => /^#{2,3} /.test(l) || l === '**Body:**' || l.startsWith('**Timing:**'),
 )
 const bCopy = en([
-  B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.grant, B1.decline, B1.ignore, B1.details, B1.address,
+  B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.covers, B1.grant, B1.decline, B1.ignore, B1.details, B1.address,
   B2.heading, ...B2.body,
   B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
   WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
+  // consent-once (2026-09-24): the new screens, each held to document 03 both ways
+  ...Object.values(WITHDRAW_ALL), ...Object.values(SIGNUP), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
 ])
 
 /**
@@ -140,6 +142,9 @@ describe('the consent copy is the documents, verbatim', () => {
       // v4, 2026-09-23 (Round 1, R2): "Grade level" was not what is stored — the lessons chosen and a grade
       // band worked out from them, kept as the age range 9–11 / 12–14. No exact grade or age is stored.
       'notice-v4': '7ee78cacb4dc',
+      // v5, 2026-09-24 (consent-once): one permission for the account covers every child; each child is attested in the app;
+      // withdrawal for one child or every child; Account → Withdraw permission for all my children.
+      'notice-v5': '6f9af556a754',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()
@@ -155,9 +160,10 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
     NOTICE.permission, NOTICE.permissionHow, NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList,
     NOTICE.rightsHow, NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect, NOTICE.detailsHeading,
     NOTICE.details, NOTICE.contactHeading, NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
-    B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.grant, B1.decline, B1.ignore, B1.details,
+    B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.covers, B1.grant, B1.decline, B1.ignore, B1.details,
     B2.heading, ...B2.body, B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime,
     WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep, ...Object.values(PROPOSED),
+    ...Object.values(WITHDRAW_ALL), ...Object.values(SIGNUP), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
   ]
   it('every string has a Spanish version that is not just the English', () => {
     expect(all.length).toBeGreaterThan(80)
