@@ -47,6 +47,7 @@ declare
   -- passing one from outside — which is exactly how `rls-tests` reported success for weeks
   -- while executing nothing at all. The count is the evidence.
   v_asserts  int := 0;
+  v_consent  uuid;                        -- a granted parental consent, one per child (see below)
 begin
   -- ── Setup (as the migration role; RLS bypassed here) ──────────────────────
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
@@ -58,10 +59,23 @@ begin
     (v_owner,    'owner.rlstest@milo.invalid',    now()),
     (v_attacker, 'attacker.rlstest@milo.invalid', now());
 
+  -- ⚠️ EVERY CHILD HERE IS CREATED WITH A GRANTED PARENTAL CONSENT, BECAUSE THAT IS THE ONLY WAY
+  -- THE SCHEMA ALLOWS ONE (20260923120000: `trg_enforce_learner_consent` refuses a learner without
+  -- one, P0C01). The cheap repair — disabling the trigger for this suite — would run every assertion
+  -- below against a schema production does not have. Same fixture as `_schema.ts: grantedConsent`.
+  -- A consent covers ONE child, so each learner gets its own.
+  insert into public.parental_consents
+    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
+     confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
+     second_email_provider_id, second_notice_scheduled_for)
+  values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
+          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
+  returning id into v_consent;
+
   -- Owner creates a learner. The grant_owner_access trigger gives the owner a
   -- learner_access row; init_learner_stats seeds learner_stats.
-  insert into public.learners (id, display_name, created_by)
-    values (v_learner, 'RLS Test Kid', v_owner);
+  insert into public.learners (id, display_name, created_by, consent_id)
+    values (v_learner, 'RLS Test Kid', v_owner, v_consent);
 
   insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
                                stars_earned, xp_earned, coins_earned, client_id)
@@ -69,8 +83,15 @@ begin
 
   -- Attacker owns their OWN learner and has a legit pending invite to their own email for it —
   -- the raw material for the V12 repoint exploit (rewrite this invite to point at the victim).
-  insert into public.learners (id, display_name, created_by)
-    values (v_alearner, 'Attacker Kid', v_attacker);
+  insert into public.parental_consents
+    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
+     confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
+     second_email_provider_id, second_notice_scheduled_for)
+  values (v_attacker, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
+          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
+  returning id into v_consent;
+  insert into public.learners (id, display_name, created_by, consent_id)
+    values (v_alearner, 'Attacker Kid', v_attacker, v_consent);
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
@@ -102,9 +123,24 @@ begin
     raise exception 'RLS FAIL B0: chapters has no free/paid split (free=%, paid=%)', v_free, v_paid;
   end if;
 
-  insert into public.learners (id, display_name, created_by) values
-    (v_learner2, 'RLS Test Kid 2', v_owner),
-    (v_learner3, 'RLS Test Kid 3', v_owner);
+  insert into public.parental_consents
+    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
+     confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
+     second_email_provider_id, second_notice_scheduled_for)
+  values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
+          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
+  returning id into v_consent;
+  insert into public.learners (id, display_name, created_by, consent_id)
+    values (v_learner2, 'RLS Test Kid 2', v_owner, v_consent);
+  insert into public.parental_consents
+    (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
+     confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
+     second_email_provider_id, second_notice_scheduled_for)
+  values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
+          now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3', now() + interval '1 day')
+  returning id into v_consent;
+  insert into public.learners (id, display_name, created_by, consent_id)
+    values (v_learner3, 'RLS Test Kid 3', v_owner, v_consent);
 
   insert into public.subscriptions (id, account_id, status, seats_paid,
                                     current_period_start, current_period_end)
