@@ -64,7 +64,7 @@
 ## 06-parent-rights-procedure.md  (3 total)
 
 - [ ] date
-- [ ] replace this with the in-app path once an edit function exists.
+- [x] replace this with the in-app path once an edit function exists. *(Done in Round 1, R5: Login & data → Correct *name*'s details.)*
 - [ ] method
 
 ## 07-subprocessors.md  (6 total)
@@ -91,7 +91,7 @@
 - [ ] ...
 - [ ] date
 - [ ] confirm the exact fields returned once billing is switched on.
-- [ ] remove this paragraph once an edit function exists.
+- [x] remove this paragraph once an edit function exists. *(Done in Round 1, R5.)*
 - [ ] period, to be set by the attorney once consent records exist
 - [ ] the providers' retention periods must be established and stated here before publication
 - [ ] this paragraph must be checked against the Information Security Program immediately before publication, and any control that is not implemented on that day must be removed from it.

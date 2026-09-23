@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from 'vitest'
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, replace() {} }), usePathname: () => '/parent', useSearchParams: () => new URLSearchParams() }))
 
-async function mount(owner: boolean, onCorrect: (n: string, g: number | null) => Promise<'ok' | 'error'>) {
+async function mount(owner: boolean, onCorrect: (n: string, band: string | null, avatar: number) => Promise<'ok' | 'error'>) {
   const React = await import('react')
   const { act } = React
   const { createRoot } = await import('react-dom/client')
@@ -14,7 +14,7 @@ async function mount(owner: boolean, onCorrect: (n: string, g: number | null) =>
   const host = document.createElement('div'); document.body.appendChild(host)
   const root = createRoot(host)
   await act(async () => { root.render(React.createElement(ChildPage, {
-    id: 'k', name: 'Ana', avatar: '/a.png', tab: 'login', crumb: { href: '/parent', label: 'Home' }, owner,
+    id: 'k', name: 'Ana', avatar: '/a.png', avatarIndex: 0, tab: 'login', crumb: { href: '/parent', label: 'Home' }, owner,
     lessonIds: null, due: {}, isDone: () => false, login: undefined, wallet: undefined,
     onLaunch() {}, onSaveLessons: async () => 'ok' as never, onSaveGame: async () => {}, onLogin() {}, onCorrect, dataRights: null,
   })) })
@@ -22,7 +22,7 @@ async function mount(owner: boolean, onCorrect: (n: string, g: number | null) =>
 }
 
 describe('correct a child\'s details', () => {
-  it('the owner sees the card, and Save sends the new name and grade', async () => {
+  it('the owner sees the card, and Save sends the new name, grade band and avatar', async () => {
     const onCorrect = vi.fn(async () => 'ok' as const)
     const { host, act } = await mount(true, onCorrect)
     const card = host.querySelector('[data-tour="correct-card"]')
@@ -33,9 +33,14 @@ describe('correct a child\'s details', () => {
       Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(el, v)
       el.dispatchEvent(new Event(el instanceof HTMLInputElement ? 'input' : 'change', { bubbles: true }))
     }
-    await act(async () => { set(input, 'Bea'); set(select, '7') })
-    await act(async () => { card!.querySelector('button')!.click() })
-    expect(onCorrect).toHaveBeenCalledWith('Bea', 7)
+    // The grade is offered as the two bands the database stores — never grades 3–8 (a change within a band
+    // would store nothing and still say "Saved.").
+    expect([...select.options].map(o => o.value)).toEqual(['', '9-11', '12-14'])
+    const avatars = [...card!.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')]
+    expect(avatars.length, 'the avatar picker did not render').toBe(4)
+    await act(async () => { set(input, 'Bea'); set(select, '12-14'); avatars[2].click() })
+    await act(async () => { [...card!.querySelectorAll('button')].find(b => b.textContent === 'Save')!.click() })
+    expect(onCorrect).toHaveBeenCalledWith('Bea', '12-14', 2)
     expect(card!.textContent).toContain('Saved.')
   })
   it('an adult who only views the child does not get the card', async () => {

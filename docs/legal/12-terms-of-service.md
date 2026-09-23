@@ -44,7 +44,7 @@ Because the Service is used by children, additional rules apply:
 - Before we collect anything about your child, we give you a **direct notice** telling you exactly what we collect, and we obtain your **verifiable consent**.
 - **We keep a record of that consent** — the date, how it was given, your email address, and the version of each document you were shown. We keep it so that we can show, later, exactly what you agreed to. If you close your account, that record is deleted along with everything else. [PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]
 - You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://adaptivelearn.radlor.com/legal/parent-rights).
-- If you withdraw consent, we stop collecting, delete what we hold about your child, and close the profile. Your subscription is cancelled and we refund the unused part of it — you are never charged for exercising a privacy right. If more than one child is set up on the account, withdrawing consent closes the whole account; to remove a single child without ending the account, use the *Remove this child* function instead.
+- If you withdraw consent for a child, we stop collecting, delete what we hold about that child, and close their profile. This applies only to that child: your account stays open and any other children on it are not affected. You are never charged for exercising a privacy right. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing consent also cancels or reduces a subscription, and any refund. Nothing does this today (billing is off). The earlier text promised cancellation and a pro-rata refund; decide before billing goes live.]
 
 Our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) describes all of this in full and forms part of these Terms.
 
@@ -52,7 +52,7 @@ Our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) describes a
 
 - Plans, prices and billing periods are shown at checkout before you pay.
 - **Subscriptions renew automatically** until you cancel. The renewal amount and date are disclosed to you before you subscribe and repeated in the confirmation email we send you.
-- **You can cancel at any time**, online, in the same number of steps it took to subscribe. Cancelling stops all future charges; your access continues until the end of the period you have paid for.
+- **You can cancel at any time**, online, in the same number of steps it took to subscribe: in the app, under **Account → Plan & billing**. Cancelling stops all future charges; your access continues until the end of the period you have paid for, and we email you a confirmation with that date.
 - Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds), which forms part of these Terms.
 - You are responsible for any applicable taxes.
 

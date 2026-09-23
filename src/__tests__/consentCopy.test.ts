@@ -137,6 +137,9 @@ describe('the consent copy is the documents, verbatim', () => {
       'notice-v2': '366370ec6729',
       // v3, 2026-09-23 (deploy loop D1): withdrawing deletes that child's information and the account stays open.
       'notice-v3': '9631b50821a5',
+      // v4, 2026-09-23 (Round 1, R2): "Grade level" was not what is stored — the lessons chosen and a grade
+      // band worked out from them, kept as the age range 9–11 / 12–14. No exact grade or age is stored.
+      'notice-v4': '7ee78cacb4dc',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()

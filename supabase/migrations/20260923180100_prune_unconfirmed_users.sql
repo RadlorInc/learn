@@ -4,8 +4,17 @@
 --
 -- A never-confirmed user cannot sign in (Confirm email is ON) and so cannot own a learner; the
 -- `and not exists` guard is belt-and-suspenders so one unexpected row can never make the nightly job
--- throw and go silently un-run. Deleting the auth.users row cascades to `profiles`
--- (profiles.id -> auth.users on delete cascade); nothing else references an unconfirmed user.
+-- throw and go silently un-run. ⚠️ It is not decorative: `learners.created_by → profiles` is
+-- ON DELETE RESTRICT, so without it one such row would abort the WHOLE delete, every night.
+--
+-- WHAT A DELETE CASCADES INTO (read off pg_constraint on baseline + every migration, 2026-09-23):
+-- `auth.users` ← profiles, auth_events, grades, parent_pins, subscriptions, teacher_plans,
+-- admin_users, parental_consents (CASCADE), billing_events.account_id (SET NULL); `profiles` ←
+-- learner_access, learner_invites (CASCADE), learners (RESTRICT — the guard). An unconfirmed user
+-- can create none of those except its signup `auth_events` and — under the pre-20260923180000
+-- trigger — a `profiles` row: signing in, consent (`consent_request` requires
+-- `email_confirmed_at is not null`), invites, checkout and PINs all need a session. Children's own
+-- logins are created CONFIRMED (`/api/child-login`, `email_confirm: true`), so they are never pruned.
 --
 -- 3 days, not hours: a real signup confirms within minutes, but people do check email the next day,
 -- and nuking an in-flight confirmation is worse than letting junk live one more night.
@@ -15,7 +24,10 @@
 -- (public/anon/authenticated); only pg_cron (postgres) calls it, so it is not reachable through
 -- PostgREST. Do not grant it back.
 --
--- ⚠️ NOT APPLIED TO PROD BY THIS COMMIT — founder applies prod DDL by hand (see handoff).
+-- First written 2026-09-08 as `20260908120100`, never applied, held in `supabase/held/` until
+-- 2026-09-23; re-versioned after `20260923180000`, body unchanged. Applied by `migrate-prod` behind
+-- the `production-db` approval. ⚠️ IRREVERSIBLE: the one-time sweep below deletes accounts at apply;
+-- take the backup by hand first. Retention row: docs/legal/04-data-retention-policy.md §2.
 
 create extension if not exists pg_cron;
 

@@ -1,4 +1,4 @@
-const VERSION      = 'v229'
+const VERSION      = 'v230'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -127,34 +127,30 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // App pages — stale while revalidate
-  // Serve from cache IMMEDIATELY, update in background
+  /**
+   * App pages and their RSC payloads (`/parent?_rsc=…`) — NETWORK FIRST, cache only when offline.
+   *
+   * ⚠️ THIS WAS STALE-WHILE-REVALIDATE UNTIL 2026-09-23, AND THAT IS HOW A DEPLOY FAILED TO REACH
+   * RETURNING PARENTS. The cached HTML came back instantly and named yesterday's content-hashed
+   * `/_next/static/` chunks, which are cache-first for ever — so the whole old bundle ran (the old
+   * add-child sheet, which the new consent gate then refused). skipWaiting/claim do not help: the
+   * worker was new, the page it served was not. Gated by `src/__tests__/swTakeover.test.ts`.
+   */
   event.respondWith(
     caches.open(SHELL_CACHE).then(async cache => {
-      const cached = await cache.match(request)
-
-      // Always try to update cache in background.
-      // Never cache redirected/non-ok responses — a redirected response cannot
-      // be replayed to a navigation (causes ERR_FAILED).
-      const networkPromise = fetch(request)
-        .then(r => { if (r.ok && !r.redirected) cache.put(request, r.clone()); return r })
-        .catch(() => null)
-
-      // Cached and safe to replay? Return immediately (stale while revalidate)
-      if (cached && !cached.redirected) {
-        networkPromise.catch(() => {})
-        return cached
+      try {
+        const r = await fetch(request)
+        // A redirected response cannot be replayed to a navigation (ERR_FAILED) — never cache one.
+        if (r.ok && !r.redirected) cache.put(request, r.clone())
+        return r
+      } catch {
+        const cached = await cache.match(request)
+        if (cached && !cached.redirected) return cached
+        if (request.mode === 'navigate') {
+          return caches.match('/offline.html').then(r => r || new Response('Offline', { status: 503 }))
+        }
+        return new Response('Offline', { status: 503 })
       }
-
-      // Not cached — wait for network
-      const response = await networkPromise
-      if (response) return response
-
-      // Offline fallback
-      if (request.mode === 'navigate') {
-        return caches.match('/offline.html').then(r => r || new Response('Offline', { status: 503 }))
-      }
-      return new Response('Offline', { status: 503 })
     })
   )
 })

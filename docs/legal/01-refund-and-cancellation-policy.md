@@ -45,7 +45,7 @@ We will send you an acknowledgement after you subscribe that sets out the terms 
 
 You can cancel your subscription at any time, and cancelling is designed to take the same number of steps as subscribing.
 
-**Online, in the app:** [PLACEHOLDER — there is no in-app cancellation today. A cancel path must exist before this policy is published: several state statutes require cancelling online to be as easy as subscribing, and a policy that names a path a parent cannot find is worse than one that does not offer it. Fill this in with the real path once it is built.]
+**Online, in the app:** sign in, open **Account → Plan & billing → See plans**, choose **Cancel subscription** under *Your subscription*, then **Yes, cancel my subscription**. The screen then shows the date your plan ends, and we email you a confirmation with that date.
 
 **By email:** Write to support@radlor.com. We will action the cancellation within 2 business days of receipt and confirm by email.
 
@@ -57,7 +57,8 @@ You do not need to call us, chat with an agent, or explain why you are cancellin
 
 - Your subscription remains active until the end of the billing period you have already paid for.
 - You will not be charged again.
-- After the period ends, your account is closed.
+- Cancelling does not by itself issue a refund; refunds are covered in Section 5.
+- After the period ends, your subscription ends. Your account and your child's profiles stay open unless you close your account.
 - Your child's learning data is handled as described in Section 8.
 
 ## 5. Refunds
@@ -102,5 +103,5 @@ We do not currently offer a telephone contact.
 2. **Federal negative option rule.** The FTC's amended Negative Option Rule ("click to cancel") was vacated by the Eighth Circuit in 2025. Please confirm the current federal position at the time of review, since the FTC has continued to pursue negative-option cases under Section 5 and ROSCA regardless.
 3. **ROSCA.** Please confirm the checkout flow satisfies the Restore Online Shoppers' Confidence Act — clear and conspicuous disclosure before obtaining billing information, express informed consent, and a simple cancellation mechanism.
 4. **Refund stance.** A 14-day satisfaction window has been adopted. Please confirm it against state-specific refund rights.
-5. **No in-app cancellation exists today.** Section 4 is deliberately left open rather than filled with a path that does not exist. Please tell us how much of a problem that is if the policy had to be published before the path is built — our assumption is that it must be built first.
+5. **In-app cancellation now exists** (Section 4): two taps from the plan page, no reason asked, cancelling at the end of the paid period, with an on-screen end date and a confirmation email. Please confirm that satisfies the online-cancellation and acknowledgement requirements, and what the confirmation email must contain.
 5. **Children and purchases.** Confirm whether any additional protections are needed given that the end users are children and the account holders are parents.

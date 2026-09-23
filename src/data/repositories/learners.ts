@@ -2,7 +2,7 @@
 
 /** Learner CRUD + access-role management. */
 import { toast } from '@/shared/ui/Toast'
-import { db } from '@/data/repositories/_shared'
+import { db, cancelQueuedSecondNotices } from '@/data/repositories/_shared'
 import type { Learner } from '@/data/supabase/types'
 import type { AgeGroup } from '@/core/chapters'
 
@@ -133,12 +133,13 @@ export async function setLearnerAssignments(learnerId: string, lessonIds: string
 }
 
 /**
- * The parent's right to CORRECT (docs/legal/02, 06): the child's name or nickname, and their grade.
- * ⚠️ The grade is stored only as a band (`age_group`, via `bandOf`), so moving a child between two grades
- * in the same band changes nothing in the database. Owner only, by the existing "learners: update" policy;
+ * The parent's right to CORRECT (docs/legal/06, 11): the child's name or nickname, avatar, and grade band.
+ * ⚠️ The grade is stored only as a band (`age_group`: '9-11' = grades 3–5, '12-14' = grades 6–8), so the card
+ * offers the two bands, not grades. Owner only, by the existing "learners: update" policy, and only while the
+ * child's consent is granted (trg_enforce_learner_consent refuses the UPDATE otherwise);
  * RLS refuses by returning no rows, which is reported as an error rather than a silent success.
  */
-export async function correctLearner(learnerId: string, fields: { display_name?: string; age_group?: string }): Promise<'ok' | 'error'> {
+export async function correctLearner(learnerId: string, fields: { display_name?: string; age_group?: string; avatar_index?: number }): Promise<'ok' | 'error'> {
   const { data, error } = await db().from('learners').update(fields as never).eq('id', learnerId).select('id')
   if (error) { console.error('[correctLearner]', error.code, error.message); return 'error' }
   return data && data.length > 0 ? 'ok' : 'error'
@@ -190,7 +191,7 @@ export async function deleteLearnerPermanently(
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = db()
   const { error } = await supabase.rpc('delete_learner', { p_learner_id: learnerId })
-  if (!error) return { ok: true }
+  if (!error) { await cancelQueuedSecondNotices(); return { ok: true } }
   if (error.code === 'PGRST202') return { ok: false, error: LEGACY_DELETE }
   return { ok: false, error: /not_owner/.test(error.message) ? 'Only the owner can delete a learner' : error.message }
 }

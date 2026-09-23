@@ -12,6 +12,11 @@ import { LessonsTab, type SaveResult } from './LessonsTab'
 import { dbtn, dghost, dcard } from './Helpers'
 import { useT } from './i18n'
 
+/** The four avatars a parent picks from (add-a-child and the correction card) — pictures we provide, never a photo. */
+export const AVATAR_SRCS = ['/assets/objects/fox.png', '/assets/objects/bunny.png', '/assets/objects/bear.png', '/assets/objects/cat.png']
+/** What the database stores for a grade: a band, written as the age range (docs/legal/02, notice-v4). */
+export type Band = '9-11' | '12-14'
+
 export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['login', 'Login & data']] as const
 export type ChildTab = typeof CHILD_TABS[number][0]
 
@@ -24,14 +29,14 @@ export function Tabs({ base, tabs, on }: { base: string; tabs: readonly (readonl
   )
 }
 
-export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due, isDone, login, wallet, onLaunch, onSaveLessons, onSaveGame, onLogin, onCorrect, dataRights }: {
-  id: string; name: string; avatar: string; tab: ChildTab; crumb: { href: string; label: string }; owner: boolean
+export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, lessonIds, due, isDone, login, wallet, onLaunch, onSaveLessons, onSaveGame, onLogin, onCorrect, dataRights }: {
+  id: string; name: string; avatar: string; avatarIndex: number; tab: ChildTab; crumb: { href: string; label: string }; owner: boolean
   lessonIds: string[] | null; due: Record<string, string>; isDone: (lessonId: string) => boolean
   login: string | null | undefined; wallet: Wallet | 'unavailable' | null | undefined
   onLaunch: () => void; onSaveLessons: (ids: string[] | null, due: Record<string, string>) => Promise<SaveResult>
   onSaveGame: (enabled: boolean, minutes: number) => Promise<void>; onLogin: () => void
-  /** The parent's right to correct: a new name, and/or a grade (null = leave it). */
-  onCorrect: (name: string, grade: number | null) => Promise<'ok' | 'error'>
+  /** The parent's right to correct: the name, the avatar, and/or the grade band (null = leave it). */
+  onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | 'error'>
   /** Download + delete, rendered by the page (it owns the delete flow and the export bundle). */
   dataRights: ReactNode
 }) {
@@ -70,7 +75,7 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Let a partner or grandparent see {name}’s progress with their own sign-in.', { name })}</p>
           <Link href="/parent/invites" style={dghost}>{t('Invite someone')}</Link>
         </section>
-        {owner && <section style={dcard} data-tour="correct-card"><CorrectCard key={name} name={name} onCorrect={onCorrect} /></section>}
+        {owner && <section style={dcard} data-tour="correct-card"><CorrectCard key={`${name}-${avatarIndex}`} name={name} avatarIndex={avatarIndex} onCorrect={onCorrect} /></section>}
         <section style={dcard} data-tour="data-card">{dataRights}</section>
       </div>
     )}
@@ -79,11 +84,14 @@ export function ChildPage({ id, name, avatar, tab, crumb, owner, lessonIds, due,
 
 const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' }
 
-/** Correct a child's name or grade — the parent right the documents promise and the app did not have. */
-function CorrectCard({ name, onCorrect }: { name: string; onCorrect: (name: string, grade: number | null) => Promise<'ok' | 'error'> }) {
+/** Correct a child's name, avatar or grade band — the parent right the documents promise (docs/legal/06, 11).
+ *  ⚠️ The grade is offered as the two bands the database stores, not as grades 3–8: a "Grade 4 → 5" choice
+ *  would change nothing stored and still say "Saved." */
+function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarIndex: number; onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | 'error'> }) {
   const t = useT()
   const [value, setValue] = useState(name)
-  const [grade, setGrade] = useState('')
+  const [avatar, setAvatar] = useState(avatarIndex)
+  const [band, setBand] = useState<'' | Band>('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
   const field: CSSProperties = { minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 15, width: '100%', boxSizing: 'border-box' }
@@ -91,7 +99,7 @@ function CorrectCard({ name, onCorrect }: { name: string; onCorrect: (name: stri
     const trimmed = value.trim()
     if (!trimmed) return
     setBusy(true)
-    const r = await onCorrect(trimmed, grade ? Number(grade) : null)
+    const r = await onCorrect(trimmed, band || null, avatar)
     setBusy(false)
     setMsg(r === 'ok' ? t('Saved.') : t('Could not save. Check your connection and try again.'))
   }
@@ -99,10 +107,21 @@ function CorrectCard({ name, onCorrect }: { name: string; onCorrect: (name: stri
     <h2 style={h2}>{t('Correct {name}’s details', { name })}</h2>
     <label style={{ display: 'block', margin: '10px 0', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Name or nickname')}
       <input value={value} maxLength={30} onChange={e => setValue(e.target.value)} style={{ ...field, marginTop: 4 }} /></label>
-    <label style={{ display: 'block', margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Grade')}
-      <select value={grade} onChange={e => setGrade(e.target.value)} style={{ ...field, marginTop: 4 }}>
-        <option value="">{t('Keep the grade as it is')}</option>
-        {[3, 4, 5, 6, 7, 8].map(g => <option key={g} value={g}>{t('Grade {n}', { n: g })}</option>)}
+    <fieldset style={{ border: 0, margin: '0 0 10px', padding: 0 }}>
+      <legend style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', padding: 0 }}>{t('Avatar')}</legend>
+      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        {AVATAR_SRCS.map((src, i) => (
+          <button key={src} type="button" onClick={() => setAvatar(i)} aria-pressed={avatar === i} aria-label={t('Avatar {n}', { n: i + 1 })}
+            style={{ width: 48, height: 48, padding: 0, borderRadius: 12, cursor: 'pointer', background: 'var(--milo-orange-soft)', border: avatar === i ? '3px solid var(--milo-orange)' : '1.5px solid var(--card-border)' }}>
+            <img src={src} alt="" width={40} height={40} style={{ objectFit: 'contain' }} />
+          </button>))}
+      </div>
+    </fieldset>
+    <label style={{ display: 'block', margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Grade band')}
+      <select value={band} onChange={e => setBand(e.target.value as '' | Band)} style={{ ...field, marginTop: 4 }}>
+        <option value="">{t('Keep it as it is')}</option>
+        <option value="9-11">{t('Grades 3–5')}</option>
+        <option value="12-14">{t('Grades 6–8')}</option>
       </select></label>
     <button type="button" disabled={busy || !value.trim()} onClick={save} style={dbtn}>{t('Save')}</button>
     {msg && <p role="status" style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-soft)', fontWeight: 700 }}>{msg}</p>}

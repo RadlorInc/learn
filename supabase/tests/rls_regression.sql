@@ -53,8 +53,8 @@ begin
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
 
   -- email_confirmed_at set: both are CONFIRMED accounts, so handle_new_user() creates their
-  -- profiles either way (production creates a profile at signup; the HELD supabase/held/20260908120000
-  -- would defer it to confirmation — this fixture is valid under both). Without it the
+  -- profiles either way (before 20260923180000 a profile is created at signup; from it, only on
+  -- confirmation — this fixture is valid under both). Without it the
   -- learners insert below fails learners_created_by_fkey — there is no owner profile to point at.
   insert into auth.users (id, email, email_confirmed_at) values
     (v_owner,    'owner.rlstest@milo.invalid',    now()),
@@ -326,6 +326,25 @@ begin
   end;
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL B7: authenticated user wrote to billing_events'; end if;
+
+  -- E1: the CAN-SPAM suppression list (email_suppressions) is unreadable — it holds addresses and the
+  -- tokens that unsubscribe them. RLS on, ZERO policies, every client privilege revoked.
+  v_blocked := false;
+  begin
+    perform * from public.email_suppressions limit 1;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL E1: authenticated user can read email_suppressions'; end if;
+
+  -- E2: nor writable — a client that could clear suppressed_at could re-subscribe someone who left.
+  v_blocked := false;
+  begin
+    update public.email_suppressions set suppressed_at = null;
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL E2: authenticated user can write email_suppressions'; end if;
 
   -- B8: a stranger cannot read another account's seats (who is in them is family information).
   select count(*) into v_cnt from public.subscription_seats where subscription_id = v_subid;

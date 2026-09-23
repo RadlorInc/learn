@@ -10,7 +10,8 @@ in the main checkout. It failed only because that checkout happened to be linked
   (`127.0.0.1`). Not to read, not to "just check", not with `--dry-run`.
 - **Production's schema and migration ledger change ONLY through GitHub workflows behind the `production-db`
   environment** (required reviewer, admin bypass off): `deploy.yml`'s `migrate-prod`, or a reviewed one-off
-  workflow such as `ledger-repair.yml`. Production is READ only through SQL the founder runs in the Supabase
+  workflow (the one-shot `ledger-repair.yml` of 2026-09-23 was one; it ran once and was deleted in Round 1, R10 —
+  evidence in `docs/legal/LOOP-STATE.md`). Production is READ only through SQL the founder runs in the Supabase
   SQL editor.
 - The local CLI is for throwaway local stacks only (`supabase start` / `db start` in a scratch directory,
   torn down afterwards). Rehearse a production operation there, against a production-SHAPED copy.
