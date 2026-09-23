@@ -72,7 +72,8 @@ select * from (
   union all select 6, 'accounts: auth.users / profiles', (select count(*) from auth.users) || ' / ' || (select count(*) from public.profiles), '20 / 20',
          case when (select count(*) from auth.users) = 20 and (select count(*) from public.profiles) = 20 then 'PASS' else 'FAIL' end
   union all
-  select 7, 'rows in ' || coalesce(c.t, b.t), coalesce(c.n::text, 'MISSING'), coalesce(b.n::text, 'new table'),
+  select 7, 'rows in ' || coalesce(c.t, b.t), coalesce(c.n::text, 'MISSING'),
+         coalesce(case when b.t = 'error_events' then (b.n - 3) || ' (' || b.n || ' − 3 orphans)' else b.n::text end, 'new table'),
          case when b.t is null and c.t = 'parental_consents' and c.n = 0 then 'PASS'
               when c.t is null then 'FAIL'
               when c.t = 'error_events' then case when c.n = b.n - 3 then 'PASS' else 'FAIL' end
