@@ -28,14 +28,14 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v1'
+export const NOTICE_VERSION = 'notice-v2'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
   title: { en: 'Before your child starts: what we collect, and your choice',
            es: 'Antes de que su hijo empiece: qué recopilamos y su decisión' },
-  intro: { en: "You are setting up an account for a child under 13. United States law (the Children's Online Privacy Protection Act) requires us to tell you exactly what we collect from your child and to get your permission first. Here it is, in plain language.",
-           es: 'Está creando una cuenta para un niño menor de 13 años. La ley de los Estados Unidos (la Ley de Protección de la Privacidad Infantil en Línea) nos exige decirle exactamente qué recopilamos de su hijo y obtener su permiso primero. Aquí lo tiene, en lenguaje sencillo.' },
+  intro: { en: "You are setting up a profile for your child. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their child's age. Here it is, in plain language.",
+           es: 'Está creando un perfil para su hijo. La ley de los Estados Unidos — la Ley de Protección de la Privacidad Infantil en Línea, que protege a los menores de 13 años — nos exige decirle exactamente qué recopilamos y obtener su permiso primero. Pedimos el mismo permiso a todos los padres, sea cual sea la edad de su hijo. Aquí lo tiene, en lenguaje sencillo.' },
   collectHeading: { en: 'What we collect from your child', es: 'Qué recopilamos de su hijo' },
   columns: [
     { en: 'What', es: 'Qué' },
@@ -52,9 +52,15 @@ export const NOTICE = {
     [{ en: 'Grade level', es: 'Nivel de grado' },
      { en: 'To give your child work at the right level', es: 'Para darle a su hijo trabajo del nivel adecuado' },
      { en: 'Required', es: 'Obligatorio' }],
-    [{ en: 'Answers to maths questions, scores, and progress', es: 'Respuestas a preguntas de matemáticas, puntuaciones y progreso' },
+    [{ en: 'The username your child signs in with', es: 'El nombre de usuario con el que su hijo inicia sesión' },
+     { en: 'So your child can sign in without needing an email address of their own', es: 'Para que su hijo pueda iniciar sesión sin necesitar una dirección de correo electrónico propia' },
+     { en: 'Required', es: 'Obligatorio' }],
+    [{ en: 'Answers to maths questions, scores, points, progress, and anything saved in a game', es: 'Respuestas a preguntas de matemáticas, puntuaciones, puntos, progreso y todo lo que se guarde en un juego' },
      { en: 'This is the product: it is how the app decides what to teach next and how it shows you progress', es: 'Esto es el producto: así decide la aplicación qué enseñar a continuación y cómo le muestra a usted el progreso' },
      { en: 'Required', es: 'Obligatorio' }],
+    [{ en: 'Any feedback your child sends us about a lesson', es: 'Cualquier comentario que su hijo nos envíe sobre una lección' },
+     { en: 'So we can fix what is not working', es: 'Para poder arreglar lo que no funciona' },
+     { en: 'Only if they send it', es: 'Solo si lo envía' }],
     [{ en: "Basic technical information from the device — a sign-in token kept on the device; a per-tab marker of which child's profile is in use; an internal identifier for the child, which appears on every progress and event record; a random identifier per event, used to avoid duplicates; the device's IP address and browser type, and an approximate location — city, region and country — derived from the IP address by our hosting and database providers, who record it for every request; and, if the app crashes, the page being viewed and the browser type. We set no cookies",
        es: 'Información técnica básica del dispositivo — un token de inicio de sesión guardado en el dispositivo; una marca por pestaña que indica qué perfil de niño está en uso; un identificador interno del niño, que aparece en cada registro de progreso y de eventos; un identificador aleatorio por evento, usado para evitar duplicados; la dirección IP y el tipo de navegador del dispositivo, y una ubicación aproximada — ciudad, región y país — derivada de la dirección IP por nuestros proveedores de alojamiento y de base de datos, que la registran en cada solicitud; y, si la aplicación falla, la página que se estaba viendo y el tipo de navegador. No usamos cookies' },
      { en: 'To keep the app working, keep the account secure, and keep your child signed in', es: 'Para que la aplicación funcione, mantener la cuenta segura y mantener a su hijo con la sesión iniciada' },
@@ -79,21 +85,20 @@ export const NOTICE = {
     { en: 'ask your child to give us more information than they need to take part.', es: 'le pedimos a su hijo más información de la que necesita para participar.' },
   ] as L[],
   permissionHeading: { en: 'Your permission', es: 'Su permiso' },
-  permission: { en: 'Before we collect any of the above, we need your verifiable consent. You will be asked to give it in one of two ways, depending on how you sign up:',
-                es: 'Antes de recopilar cualquiera de estos datos, necesitamos su consentimiento verificable. Se le pedirá que lo dé de una de dos maneras, según cómo se registre:' },
-  permissionList: [
-    { en: '**If you are subscribing to a paid plan:** we verify you through the payment card you use at checkout. Your card issuer will notify you of the transaction, which confirms an adult account holder approved it.',
-      es: '**Si se suscribe a un plan de pago:** lo verificamos mediante la tarjeta de pago que use al pagar. El emisor de su tarjeta le notificará la transacción, lo que confirma que la aprobó un titular de cuenta adulto.' },
-    { en: '**If you are starting without a payment method:** we send a consent request to your email address, you confirm it, and then we send a second confirmation email a little later to the same address. You can withdraw your consent from either email.',
-      es: '**Si empieza sin un método de pago:** enviamos una solicitud de consentimiento a su dirección de correo electrónico, usted la confirma y, un poco más tarde, enviamos un segundo correo de confirmación a la misma dirección. Puede retirar su consentimiento desde cualquiera de los dos correos.' },
-  ] as L[],
+  permission: { en: 'Before we collect any of the above, we need your verifiable consent.',
+                es: 'Antes de recopilar cualquiera de estos datos, necesitamos su consentimiento verificable.' },
+  /** Document 02 follows this with a drafters' placeholder for the card path, which is not built. A placeholder
+   *  is a note to the drafters and is never rendered — so there is nothing here for it. */
+  permissionHow: { en: 'We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. You can withdraw your consent from either email.',
+                   es: 'Enviamos una solicitud de consentimiento a su dirección de correo electrónico, usted la confirma y, un día después, enviamos un segundo correo de confirmación a la misma dirección. Puede retirar su consentimiento desde cualquiera de los dos correos.' },
   rightsHeading: { en: 'Your rights as a parent', es: 'Sus derechos como padre o madre' },
   rightsIntro: { en: 'At any time, you can:', es: 'En cualquier momento, usted puede:' },
   rightsList: [
     { en: '**See** everything we hold about your child;', es: '**Ver** todo lo que tenemos sobre su hijo;' },
     { en: "**Delete** your child's information;", es: '**Eliminar** la información de su hijo;' },
-    { en: '**Withdraw your consent** and stop any further collection — if you do, we will delete what we hold and your child will no longer be able to use the app;',
-      es: '**Retirar su consentimiento** y detener cualquier recopilación posterior — si lo hace, eliminaremos lo que tenemos y su hijo ya no podrá usar la aplicación;' },
+    // The document's line ends in a drafters' placeholder (deletion is to be restored once built) — not rendered.
+    { en: '**Withdraw your consent** and stop any further collection — if you do, your child will no longer be able to use the app.',
+      es: '**Retirar su consentimiento** y detener cualquier recopilación posterior — si lo hace, su hijo ya no podrá usar la aplicación.' },
   ] as L[],
   rightsHow: { en: "To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.",
                es: 'Para hacer cualquiera de estas cosas, abra su panel de padres, elija la tarjeta de su hijo y luego **Inicio de sesión y datos** — desde ahí puede descargar una copia de todo lo que tenemos y eliminar el perfil — o use **Cuenta → Cerrar su cuenta** para eliminarlo todo a la vez. También puede simplemente escribir a support@radlor.com. Verificaremos que la solicitud proviene de usted antes de actuar, y completaremos la solicitud en un plazo de 10 días.' },
@@ -117,12 +122,15 @@ export const NOTICE = {
 export const B1 = {
   subject: { en: 'Please confirm: permission for your child to use Milo', es: 'Confirme, por favor: permiso para que su hijo use Milo' },
   hi: { en: 'Hi,', es: 'Hola:' },
-  someone: { en: 'Someone — we believe you — asked to set up a Milo account for a child under 13.', es: 'Alguien — creemos que usted — pidió crear una cuenta de Milo para un niño menor de 13 años.' },
+  someone: { en: 'Someone — we believe you — asked to set up a Milo account for your child.', es: 'Alguien — creemos que usted — pidió crear una cuenta de Milo para su hijo.' },
   before: { en: 'Before we collect anything from your child, US law requires your permission. Here is exactly what we would collect:', es: 'Antes de recopilar cualquier dato de su hijo, la ley de los EE. UU. exige su permiso. Esto es exactamente lo que recopilaríamos:' },
   list: [
     { en: "your child's first name or nickname", es: 'el nombre de pila o el apodo de su hijo' },
     { en: 'their grade level', es: 'su nivel de grado' },
-    { en: 'their answers to maths questions, their scores, and their progress', es: 'sus respuestas a preguntas de matemáticas, sus puntuaciones y su progreso' },
+    { en: 'the avatar you pick and the username your child signs in with', es: 'el avatar que usted elija y el nombre de usuario con el que su hijo inicia sesión' },
+    { en: 'their answers to maths questions, their scores, their points and progress, and anything they save in a game', es: 'sus respuestas a preguntas de matemáticas, sus puntuaciones, sus puntos y progreso, y todo lo que guarde en un juego' },
+    { en: 'any feedback they send us about a lesson', es: 'cualquier comentario que nos envíe sobre una lección' },
+    { en: 'a small number of product events, such as a lesson starting', es: 'un pequeño número de eventos del producto, como el inicio de una lección' },
     { en: 'basic technical information from the device, to keep the app working and secure', es: 'información técnica básica del dispositivo, para que la aplicación funcione y sea segura' },
   ] as L[],
   doNot: { en: "We do not ask your child for a last name, email, phone number, address, photo, voice recording, or location. We do not sell your child's information, and we do not use it for advertising.",
@@ -166,10 +174,10 @@ export const WITHDRAW = {
   body: [
     { en: 'If you withdraw permission, we will stop collecting information from your child, delete what we already hold about them, and close their profile. This cannot be undone.',
       es: 'Si retira el permiso, dejaremos de recopilar información de su hijo, eliminaremos lo que ya tenemos sobre él y cerraremos su perfil. Esto no se puede deshacer.' },
-    { en: '**Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within 10 business days.',
-      es: '**Su suscripción se cancelará y le reembolsaremos la parte no utilizada.** Nunca se le cobra por ejercer un derecho de privacidad. El reembolso llega a su método de pago original en un plazo de 10 días hábiles.' },
-    { en: '**If you have more than one child on this account, withdrawing permission closes the whole account, including your other children\'s profiles.** If you only want to remove one child, use *Remove this child* instead.',
-      es: '**Si tiene más de un hijo en esta cuenta, retirar el permiso cierra toda la cuenta, incluidos los perfiles de sus otros hijos.** Si solo quiere quitar a un hijo, use *Quitar a este niño* en su lugar.' },
+    // The document's refund paragraph is WITHHELD: its own ⛔ table says it "must not be said" until
+    // billing is live. `consentCopy.test.ts` names it in WITHHELD, so it cannot silently return or vanish.
+    { en: '**If you have more than one child on this account, withdrawing permission closes the whole account, including your other children\'s profiles.** If you only want to remove one child, use *Delete {name}\'s profile* instead.',
+      es: '**Si tiene más de un hijo en esta cuenta, retirar el permiso cierra toda la cuenta, incluidos los perfiles de sus otros hijos.** Si solo quiere quitar a un hijo, use *Eliminar el perfil de {name}* en su lugar.' },
   ] as L[],
   confirm: { en: "Withdraw permission and delete my child's data", es: 'Retirar el permiso y eliminar los datos de mi hijo' },
   keep:    { en: 'Keep my settings', es: 'Mantener mi configuración' },

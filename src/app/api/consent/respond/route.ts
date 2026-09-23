@@ -3,7 +3,7 @@ import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { secondNoticeDelayMs } from '@/features/consent/config'
 import { renderB3 } from '@/features/consent/email'
-import { ConfigMissing, requireConfig, cancelEmail, hashToken, looksLikeToken, rpc, sendEmail } from '@/features/consent/server'
+import { ConfigMissing, requireConfig, cancelEmail, hashToken, learnerName, looksLikeToken, rpc, sendEmail } from '@/features/consent/server'
 
 interface Found {
   consent_id: string; state: string; lang: 'en' | 'es'; expired: boolean; email: string
@@ -32,8 +32,12 @@ export async function POST(req: Request) {
     const ok = (status: string) => NextResponse.json({ status, lang })
 
     switch (action) {
-      case 'lookup':
-        return ok(row.expired ? 'expired' : row.state)
+      case 'lookup': {
+        const status = row.expired ? 'expired' : row.state
+        // The withdrawal screen names the per-child control ("Delete <name>'s profile"), so it needs the name.
+        const name = row.learner_id ? await learnerName(row.learner_id) : null
+        return NextResponse.json({ status, lang, name })
+      }
 
       case 'decline':
         return ok(await rpc<string>('consent_decline', { p_token_hash: hash }))

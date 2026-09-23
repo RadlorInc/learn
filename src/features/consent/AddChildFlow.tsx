@@ -130,7 +130,7 @@ function Notice({ lang, busy, onContinue, onClose }: { lang: Lang; busy: boolean
 
       <h4 style={S.h4}>{t(N.permissionHeading)}</h4>
       <p style={S.p}><Md s={t(N.permission)} /></p>
-      <ul style={S.ul}>{N.permissionList.map((x, i) => <li key={i}><Md s={t(x)} /></li>)}</ul>
+      <p style={S.p}><Md s={t(N.permissionHow)} /></p>
 
       <h4 style={S.h4}>{t(N.rightsHeading)}</h4>
       <p style={S.p}><Md s={t(N.rightsIntro)} /></p>

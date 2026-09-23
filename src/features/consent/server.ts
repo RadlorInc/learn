@@ -63,6 +63,16 @@ export async function rpc<T>(fn: string, args: Record<string, unknown>): Promise
   return body as T
 }
 
+/** A child's display name, read as the service role (the link's reader is not signed in). */
+export async function learnerName(id: string): Promise<string | null> {
+  const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
+  const r = await fetch(`${url}/rest/v1/learners?id=eq.${encodeURIComponent(id)}&select=display_name`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: 'no-store',
+  })
+  const rows = await r.json().catch(() => null)
+  return r.ok && typeof rows?.[0]?.display_name === 'string' ? rows[0].display_name : null
+}
+
 /** The signed-in adult behind a bearer token, verified by the auth server — never a claim we decode. */
 export async function userFromBearer(req: Request): Promise<string | null> {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')

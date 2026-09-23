@@ -24,7 +24,7 @@ function fragment(): { t: string; choice: string } {
   return { t: h.get('t') ?? '', choice: h.get('choice') ?? '' }
 }
 
-async function call(t: string, action: string): Promise<{ status: Status; lang?: Lang }> {
+async function call(t: string, action: string): Promise<{ status: Status; lang?: Lang; name?: string | null }> {
   const r = await fetch('/api/consent/respond', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t, action }),
   }).catch(() => null)
@@ -37,12 +37,13 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
   const [lang, setLang] = useState<Lang>('en')
   const [busy, setBusy] = useState(false)
   const [choice, setChoice] = useState('')
+  const [name, setName] = useState<string | null>(null)
   const t = (x: L) => x[lang]
 
   useEffect(() => {
     const f = fragment()
     setChoice(f.choice)
-    void call(f.t, 'lookup').then(r => { if (r.lang) setLang(r.lang); setStatus(r.status) })
+    void call(f.t, 'lookup').then(r => { if (r.lang) setLang(r.lang); setName(r.name ?? null); setStatus(r.status) })
   }, [])
 
   async function act(action: 'grant' | 'decline' | 'withdraw') {
@@ -71,7 +72,10 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
     content = (
       <div data-consent="withdraw">
         <h1 style={S.h1}>{t(WITHDRAW.heading)}</h1>
-        {WITHDRAW.body.map((x, i) => <p key={i} style={S.p}><Md s={t(x)} /></p>)}
+        {/* The last paragraph points at the per-child control by the child's name; with no child
+            profile yet there is nothing to delete one of, so it is not shown rather than guessed. */}
+        {WITHDRAW.body.filter(x => !x.en.includes('{name}') || name)
+          .map((x, i) => <p key={i} style={S.p}><Md s={t(x).replace('{name}', name ?? '')} /></p>)}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
           <button type="button" disabled={busy} onClick={() => act('withdraw')} style={S.danger}>{t(WITHDRAW.confirm)}</button>
           <button type="button" disabled={busy} onClick={() => setStatus('kept')} style={S.ghost}>{t(WITHDRAW.keep)}</button>

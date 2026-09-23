@@ -25,6 +25,7 @@ const doc = (f: string) => readFileSync(resolve(ROOT, 'docs/legal', f), 'utf8')
 
 /** Same normalisation both sides: drop emphasis, links → their text, collapse whitespace. */
 const norm = (s: string) => s
+  .replace(/\{name\}/g, '<name>')   // the screen fills the child's name where the document writes <name>
   .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
   .replace(/\*\*/g, '').replace(/\*/g, '').replace(/`/g, '')
   .replace(/\s+/g, ' ').trim()
@@ -33,7 +34,8 @@ const norm = (s: string) => s
 function units(md: string, skip: (line: string) => boolean): string[] {
   const out: string[] = []
   for (const raw of md.split('\n')) {
-    let line = raw.trim().replace(/^>\s?/, '').trim()
+    // A [PLACEHOLDER — …] is a note to the drafters, never words for a parent: it is not on the screen.
+    let line = raw.replace(/\[PLACEHOLDER[^\]]*\]/g, '').trim().replace(/^>\s?/, '').trim()
     if (!line || skip(line) || /^\|?\s*-{3,}/.test(line) || line === '---') continue
     if (line.startsWith('|')) { out.push(...line.split('|').map(c => c.trim()).filter(Boolean)); continue }
     // doc 03's B1 button row and "Buttons:" lines: `**[ A ]**    **[ B ]**` and `\`A\` · \`B\``
@@ -64,7 +66,7 @@ const noticeDoc = units(
 const noticeCopy = en([
   NOTICE.title, NOTICE.intro, NOTICE.collectHeading, ...NOTICE.columns, ...NOTICE.rows.flat(),
   NOTICE.doNotAsk, NOTICE.useHeading, NOTICE.use, NOTICE.thirdParty, NOTICE.weDoNot, ...NOTICE.weDoNotList,
-  NOTICE.permissionHeading, NOTICE.permission, ...NOTICE.permissionList,
+  NOTICE.permissionHeading, NOTICE.permission, NOTICE.permissionHow,
   NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList, NOTICE.rightsHow,
   NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect,
   NOTICE.detailsHeading, NOTICE.details, NOTICE.contactHeading, ...NOTICE.contact,
@@ -84,7 +86,30 @@ const bCopy = en([
   WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
 ])
 
+/**
+ * ⚠️ DOCUMENT LINES DELIBERATELY NOT ON THE SCREEN — each one because the document itself says so.
+ * Doc 03's ⛔ table lists statements that are ahead of the product, with a fix per row; where the fix is
+ * "must not be said" until something exists, the line is withheld here by its exact text. The test
+ * proves each is still in the document (a stale entry fails) and is NOT on the screen.
+ */
+const WITHHELD: Record<string, string> = {
+  [norm('**Your subscription will be cancelled and we will refund the unused part of it.** You are never charged for exercising a privacy right. The refund reaches your original payment method within 10 business days.')]:
+    'doc 03 ⛔: "Withdrawal refunds the unused subscription — True once billing is live; until then it must not be said"',
+}
+
 describe('the consent copy is the documents, verbatim', () => {
+  it('every withheld line is still in the document, and not on the screen', () => {
+    for (const w of Object.keys(WITHHELD)) {
+      expect(bDoc, `WITHHELD names a line document 03 no longer has — delete the entry`).toContain(w)
+      expect(bCopy, `a withheld line is on the screen: ${WITHHELD[w]}`).not.toContain(w)
+    }
+  })
+
+  it('never renders a placeholder, and knows it would', () => {
+    expect([...noticeCopy, ...bCopy].filter(u => u.includes('PLACEHOLDER'))).toEqual([])
+    expect(D02, 'control: document 02 carries placeholders the parser must drop').toMatch(/\[PLACEHOLDER/)
+  })
+
   it('reads the documents at all — positive control', () => {
     expect(noticeDoc.length, 'document 02 yielded almost nothing — the parser is blind, not the copy clean').toBeGreaterThan(40)
     expect(bDoc.length, 'document 03 yielded almost nothing').toBeGreaterThan(25)
@@ -94,7 +119,7 @@ describe('the consent copy is the documents, verbatim', () => {
 
   it.each([['document 02 (the notice)', noticeDoc, noticeCopy], ['document 03 (B1–B3, withdrawal)', bDoc, bCopy]])(
     '%s — nothing in the document is missing from the screen', (_n, docUnits, copyUnits) => {
-      const missing = docUnits.filter(u => !copyUnits.includes(u))
+      const missing = docUnits.filter(u => !copyUnits.includes(u) && !(u in WITHHELD))
       expect(missing, 'these lines are in the document and not on the screen or in the email').toEqual([])
     })
 
@@ -108,6 +133,8 @@ describe('the consent copy is the documents, verbatim', () => {
     const PINNED: Record<string, string> = {
       // v1 as approved 2026-09-23. A new version is a new line, never an edit to this one.
       'notice-v1': '7e15d9f398ee',
+      // v2, 2026-09-23: the v4 export — "your child" not "under 13", username/points/game/feedback rows, one consent path.
+      'notice-v2': '366370ec6729',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()
@@ -120,7 +147,7 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
   const all: L[] = [
     NOTICE.title, NOTICE.intro, NOTICE.collectHeading, ...NOTICE.columns, ...NOTICE.rows.flat(), NOTICE.doNotAsk,
     NOTICE.useHeading, NOTICE.use, NOTICE.thirdParty, NOTICE.weDoNot, ...NOTICE.weDoNotList, NOTICE.permissionHeading,
-    NOTICE.permission, ...NOTICE.permissionList, NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList,
+    NOTICE.permission, NOTICE.permissionHow, NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList,
     NOTICE.rightsHow, NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect, NOTICE.detailsHeading,
     NOTICE.details, NOTICE.contactHeading, NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
     B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.grant, B1.decline, B1.ignore, B1.details,
