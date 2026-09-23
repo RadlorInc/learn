@@ -1,5 +1,7 @@
 # Placeholder Fill-In Worksheet
 
+> **Superseded 24 September 2026 by [`PLACEHOLDERS.md`](PLACEHOLDERS.md)**, which is re-measured against the documents on every test run (`placeholderAudit.test.ts`). This worksheet is kept as the drafting record; its ticks are not maintained. Prefer the table.
+
 > What is still open, per document, as of 23 September 2026. **74 left, from 280.**
 
 **Filled so far:** Milo · Radlor Inc. · 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · no telephone · legal pages under https://adaptivelearn.radlor.com/legal/… · Resend (SMTP behind the auth mailer) · consent by email-plus · monthly + annual, auto-renew, no free trial · no model training on children's work · withdrawal closes the account with a pro-rata refund · 14-day refund window, paid back in 10 business days · renewal reminder and price-change notice 30 days · failed payment 7 days then pause · parent requests answered in 10 days with an appeal · four children per subscription · 13–17 treated as under-13 · owner Rakif · request log and annual review in Radlor Ops · **Terms control on conflict** · **no contractors**.
