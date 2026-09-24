@@ -343,10 +343,12 @@ const ROUTES = process.env.ROUTES ? JSON.parse(process.env.ROUTES) : [
   },
   {
   "url": "/ui-preview?p=lessons",
+  // #212 dropped the Change button: the choices show directly. Ticking one is what brings up Save / Cancel now.
   "steps": [
   {
-  "click": "button:has-text('Change')",
-  "label": "change open"
+  "click": "main input[type=checkbox]",
+  "label": "tick a module (Save / Cancel appear)",
+  "wait": 400
   }
   ]
   },
@@ -417,6 +419,14 @@ function inspect([T, B, L, R]) {
       if (h.closest('details[open]') && !h.closest('details[open]').contains(e)) continue // an open ⋯ menu floats over the page on purpose
       if (h.closest('nextjs-portal')) continue // the dev server's own badge — not in the shipped app
       if (fixedish(h) && scrollsOnDown(e)) continue // a pinned Save bar over a list that still scrolls clear of it
+      // …or over the PAGE, when the page can scroll far enough to lift this control above the bar. ⚠️ Not merely "the
+      // page scrolls": a control at the very end of the page that can never leave the bar's shadow must still count.
+      if (fixedish(h) && !fixedish(e)) {
+        // The PINNED box itself (h may be a button inside it, which ends above the screen's edge by the bar's padding).
+        let pin = h; for (let n = h; n && n !== document.body; n = n.parentElement) { const p = getComputedStyle(n).position; if (p === 'fixed' || p === 'sticky') { pin = n; break } }
+        const bar = pin.getBoundingClientRect(), room = document.documentElement.scrollHeight - (scrollY + H)
+        if (bar.bottom >= H - 2 && room >= r.bottom - bar.top) continue   // a bar pinned to the bottom, and room to scroll past it
+      }
       out.push(['covered', `${sel(e)} is under ${sel(h)}`])
     }
   }
@@ -454,6 +464,9 @@ for (const [name, w, h, insets, mobile] of PROFILES) {
           if (st.fill) await loc.fill(st.fill); else await loc.click({ timeout: 5000 }).catch(e => results.push({ route: R.url + ' ▸ ' + st.label, profile: name, rule: 'click-failed', msg: e.message.split('\n')[0] }))
           if (st.press) await page.keyboard.press(st.press)
           await page.waitForTimeout(st.wait ?? 700)
+          // Back to the top before judging, as the header promises: a tap that scrolled the page (Playwright scrolls a
+          // control into view) otherwise reports ordinary content scrolled under a pinned bar as "covered".
+          await page.evaluate(() => window.scrollTo(0, 0)); await page.waitForTimeout(150)
           await check(' ▸ ' + st.label + (st.times ? ' #' + (k + 1) : ''))
         }
       }
