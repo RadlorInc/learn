@@ -145,7 +145,7 @@ No system is perfectly secure. If a breach affects your child's information, we 
 
 ## 11. Where information is held
 
-We store information in the United States. Our database is hosted in the US East region, and the application runs in the United States. [PLACEHOLDER — confirm the hosting region from the provider's dashboard before publication.] The service is intended for use in the United States only.
+We store information in the United States. Our database is hosted in the US East region, and the application runs in the United States, in Washington, D.C. (region iad1, confirmed from the hosting provider's dashboard on 24 September 2026). The service is intended for use in the United States only.
 
 ## 12. Children aged 13 to 17
 

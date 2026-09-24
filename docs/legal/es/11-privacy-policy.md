@@ -148,7 +148,7 @@ Ningún sistema es perfectamente seguro. Si una filtración afecta a la informac
 
 ## 11. Dónde se guarda la información
 
-Guardamos la información en los Estados Unidos. Nuestra base de datos está alojada en la región Este de EE. UU., y la aplicación funciona en los Estados Unidos. [PLACEHOLDER — confirm the hosting region from the provider's dashboard before publication.] El servicio está pensado para usarse solo en los Estados Unidos.
+Guardamos la información en los Estados Unidos. Nuestra base de datos está alojada en la región Este de EE. UU., y la aplicación funciona en los Estados Unidos, en Washington D. C. (región iad1, confirmado en el panel del proveedor de alojamiento el 24 de septiembre de 2026). El servicio está pensado para usarse solo en los Estados Unidos.
 
 ## 12. Niños de 13 a 17 años
 

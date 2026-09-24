@@ -88,7 +88,7 @@ We may suspend or close an account that breaches this section. Where it is reaso
 Parts of the Service use artificial intelligence to adapt what a child sees and to generate or select content. You should understand:
 
 - AI systems are probabilistic. They can produce content that is **wrong, incomplete, or unsuitable**, even when everything is working as designed.
-- We check content before it reaches a child [PLACEHOLDER — describe the actual review process. Do not claim a level of human review that is not performed.], but we cannot guarantee that every item is correct or appropriate.
+- We check content before it reaches a child: lessons and practice questions are written before release, not generated while your child uses the Service; every answer is checked by an independent automated solver and by automated tests; and not every lesson has yet been read by a person. We cannot guarantee that every item is correct or appropriate.
 - The Service gives no professional advice of any kind.
 - If you see something wrong, please tell us at support@radlor.com — this genuinely helps.
 
@@ -128,7 +128,9 @@ You agree to indemnify us against claims, losses and reasonable legal costs aris
 
 If you believe material on the Service infringes your copyright, contact our designated agent:
 
-[PLACEHOLDER — designated agent name, address, email, and phone. To rely on the DMCA safe harbour the agent must also be registered with the US Copyright Office. Confirm with the attorney whether registration is needed given that the Service hosts little or no user-posted material.]
+**Copyright Agent, Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · phone [PLACEHOLDER — phone number]
+
+[PLACEHOLDER — ATTORNEY: to rely on the DMCA safe harbour the agent must also be registered with the US Copyright Office. Confirm whether registration is needed given that the Service hosts little or no user-posted material.]
 
 ## 15. Disputes and governing law
 

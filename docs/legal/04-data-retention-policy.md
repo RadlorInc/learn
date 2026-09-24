@@ -4,7 +4,7 @@
 > Internal policy. The amended COPPA Rule requires a written retention policy for children's personal information, and requires the retention practice to be published in the online privacy notice.
 > **Every period below is marked as either enforced by a job that has been watched working, or not enforced.** A period written here that no job enforces would be a published claim that is false, which is worse than having no policy.
 
-**Owner:** Rakif [PLACEHOLDER — full name, for the record]
+**Owner:** Rakif Bobre
 **Adopted:** [PLACEHOLDER — date]
 **Review cycle:** annually, and on any material change to the product, the vendor set, or the data collected.
 **Facts in this document were measured on 22 September 2026.**
@@ -33,7 +33,7 @@ We keep children's personal information only for as long as it is reasonably nec
 | Provider request logs — IP address, browser, IP-derived city/region/country, account id | Our database provider's own platform logs | **Unknown.** The project is 20 days old and nothing has aged out, so "kept indefinitely" cannot yet be distinguished from "kept at least 20 days" | **Outside our jobs entirely** |
 | Hosting request and console logs | Hosting provider | [PLACEHOLDER — the provider's retention for this plan could not be read from the API; confirm from the dashboard or the provider's documentation] | Provider-managed |
 | Backups | Encrypted build artifact, 30-day expiry by design | 30 days | **Working — restore proven 23 Sep 2026.** See Section 6 |
-| Support correspondence with parents | Email | [PLACEHOLDER — number] months | Not automated |
+| Support correspondence with parents | Email | 12 months | Not automated |
 
 **Consent records — `parental_consents`, built 23 September 2026.** Holds the adult, the child, the method, the timestamps, the version of each document shown, and the state. It is linked to the adult account and **cascades on account deletion**, so closing an account erases the only evidence that consent was ever given or withdrawn.
 
@@ -75,7 +75,7 @@ Two things sit outside our deletion jobs, and both must be described honestly to
 
 Earlier notes predicted that 520 rows, about 31% of the event history, would be destroyed on 27 September 2026. **That was wrong.** Measured: the table holds 233 rows, the oldest dates from 23 July, the first row ages out on 21 October, and the largest single night ahead removes one row. There is no cliff.
 
-But the same measurement raised something else. The roughly 1,677 rows recorded on 5 September are gone, and the nightly jobs account for only three of them. About 1,440 rows of children's behavioural history left the database by a route that could not be reconstructed — most likely a deliberate deletion around 17 September, though there is no audit trail to prove it. **There is no record of who deleted what, or when.** [PLACEHOLDER — Radlor should establish what happened and decide whether an audit trail on deletions is warranted. An operator who cannot say what happened to children's data is in a weak position if ever asked.]
+But the same measurement raised something else. The roughly 1,677 rows recorded on 5 September are gone, and the nightly jobs account for only three of them. About 1,440 rows of children's behavioural history left the database by a route that could not be reconstructed — most likely a deliberate deletion around 17 September, though there is no audit trail to prove it. **There is no record of who deleted what, or when.** **What happened, as stated by Radlor (24 September 2026):** Radlor deleted these rows deliberately on or about 17 September 2026 while clearing test accounts' old chapter and XP history; every account then was a team test account. **Audit trail on deletions:** not built. Decided on 24 September 2026 to add one before the first real family; tracked in `READINESS.md`.
 
 No aggregate or rollup table exists, so nothing preserves the numbers once a purge runs.
 

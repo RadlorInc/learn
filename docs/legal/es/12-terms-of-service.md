@@ -85,7 +85,7 @@ Podemos suspender o cerrar una cuenta que incumpla esta sección. Cuando sea raz
 Algunas partes del Servicio usan inteligencia artificial para adaptar lo que ve un niño y para generar o seleccionar contenido. Usted debe entender que:
 
 - Los sistemas de IA son probabilísticos. Pueden producir contenido **incorrecto, incompleto o inadecuado**, incluso cuando todo funciona según lo previsto.
-- Revisamos el contenido antes de que llegue a un niño [PLACEHOLDER — describe the actual review process. Do not claim a level of human review that is not performed.], pero no podemos garantizar que cada elemento sea correcto o adecuado.
+- Revisamos el contenido antes de que llegue a un niño: las lecciones y las preguntas de práctica se escriben antes de publicarse, no se generan mientras su hijo usa el Servicio; cada respuesta la comprueban un resolutor automático independiente y pruebas automáticas; y todavía no todas las lecciones han sido leídas por una persona. No podemos garantizar que cada elemento sea correcto o adecuado.
 - El Servicio no da asesoramiento profesional de ningún tipo.
 - Si ve algo incorrecto, díganoslo en support@radlor.com — de verdad nos ayuda.
 
@@ -125,7 +125,9 @@ Usted se compromete a indemnizarnos frente a reclamaciones, pérdidas y costos l
 
 Si usted cree que algún material del Servicio infringe sus derechos de autor, comuníquese con nuestro agente designado:
 
-[PLACEHOLDER — designated agent name, address, email, and phone. To rely on the DMCA safe harbour the agent must also be registered with the US Copyright Office. Confirm with the attorney whether registration is needed given that the Service hosts little or no user-posted material.]
+**Agente de derechos de autor, Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · teléfono [PLACEHOLDER — phone number]
+
+[PLACEHOLDER — ATTORNEY: to rely on the DMCA safe harbour the agent must also be registered with the US Copyright Office. Confirm whether registration is needed given that the Service hosts little or no user-posted material.]
 
 ## 15. Controversias y ley aplicable
 
