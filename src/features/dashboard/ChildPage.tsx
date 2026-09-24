@@ -64,7 +64,7 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
           <h2 style={h2}>{t('{name}’s login', { name })}</h2>
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>
             {login ? <>{t('Username')} <b style={{ color: 'var(--ink)' }}>{login}</b>. {t('{name} signs in with it on any device and goes straight to their lessons.', { name })}</>
-              : login === undefined ? t('{name} has no login yet. With one, they can sign in on any device and go straight to their lessons.', { name })
+              : login === undefined ? t('There is no user account for {name} yet. With a user account, they can sign in on any device and go straight to their lessons.', { name })
               : t('Set a username and password so they can sign in on any device.')}
           </p>
           {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? t('Set up login') : t('Change login or password')}</button>
