@@ -123,7 +123,8 @@ export const B1 = {
   subject: { en: 'Please confirm: permission for your children to use Radlic', es: 'Confirme, por favor: permiso para que sus hijos usen Radlic' },
   /** "{name}" is the parent's first name (typed at signup, or from Google); with none, the line is "Hi,". */
   hi: { en: 'Hi {name},', es: 'Hola, {name}:' },
-  before: { en: 'Thanks for signing up to Radlic. Before your children can use it, US law asks for your permission. For each child you add, we store:', es: 'Gracias por registrarse en Radlic. Antes de que sus hijos puedan usarla, la ley de los EE. UU. exige su permiso. Por cada niño que añada, guardamos:' },
+  thanks: { en: 'Thanks for signing up to Radlic.', es: 'Gracias por registrarse en Radlic.' },
+  before: { en: 'Before your children can use it, US law requires your permission. For each child you add, we store:', es: 'Antes de que sus hijos puedan usarla, la ley de los EE. UU. exige su permiso. Por cada niño que añada, guardamos:' },
   list: [
     { en: 'their first name or nickname, the avatar you pick and their username', es: 'su nombre de pila o apodo, el avatar que usted elija y su nombre de usuario' },
     { en: 'the lessons you choose, and a grade band (grades 3–5 or 6–8) worked out from them', es: 'las lecciones que usted elija y una franja de grados (grados 3 a 5 o 6 a 8) deducida de ellas' },

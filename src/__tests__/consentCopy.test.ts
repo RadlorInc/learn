@@ -80,7 +80,7 @@ const bDoc = units(
   l => /^#{2,3} /.test(l) || l === '**Body:**' || l.startsWith('**Timing:**'),
 )
 const bCopy = en([
-  B1.subject, B1.hi, B1.before, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.address, B1.covers, B1.tick, B1.decline,
+  B1.subject, B1.hi, B1.thanks, B1.before, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.address, B1.covers, B1.tick, B1.decline,
   B2.heading, ...B2.body,
   B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
   WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
@@ -163,7 +163,7 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
     NOTICE.permission, NOTICE.permissionHow, NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList,
     NOTICE.rightsHow, NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect, NOTICE.detailsHeading,
     NOTICE.details, NOTICE.contactHeading, NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
-    B1.subject, B1.hi, B1.before, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.covers, B1.tick, B1.decline,
+    B1.subject, B1.hi, B1.thanks, B1.before, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.covers, B1.tick, B1.decline,
     B2.heading, ...B2.body, B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime,
     WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep, ...Object.values(PROPOSED),
     ...Object.values(WITHDRAW_ALL), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),

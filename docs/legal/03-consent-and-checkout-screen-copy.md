@@ -119,7 +119,9 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > Hi {name},
 >
-> Thanks for signing up to Radlic. Before your children can use it, US law asks for your permission. For each child you add, we store:
+> Thanks for signing up to Radlic.
+>
+> Before your children can use it, US law requires your permission. For each child you add, we store:
 >
 > - their first name or nickname, the avatar you pick and their username
 > - the lessons you choose, and a grade band (grades 3–5 or 6–8) worked out from them

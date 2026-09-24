@@ -26,14 +26,14 @@ export function renderB1(lang: Lang, agreeUrl: string, firstName: string | null)
   const t = (x: L) => x[lang]
   const hi = firstName ? t(B1.hi).replace('{name}', firstName) : t(B1.hi).replace(/,? \{name\}/, '')
   const html = wrap([
-    p(hi), p(t(B1.before)),
+    p(hi), p(t(B1.thanks)), p(t(B1.before)),
     `<ul style="margin:0 0 14px;padding-left:22px">${B1.list.map(x => `<li>${toHtml(t(x))}</li>`).join('')}</ul>`,
     p(t(B1.doNot)), p(t(B1.details)),
     `<p style="margin:4px 0 18px">${checkbox(t(B1.tick), agreeUrl)}</p>`,
     p(t(B1.ignore)), small(B1.address),
   ].join(''))
   const text = [
-    hi, t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot), toText(t(B1.details)),
+    hi, t(B1.thanks), t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot), toText(t(B1.details)),
     `☐ ${t(B1.tick)}: ${agreeUrl}`,
     t(B1.ignore), B1.address,
   ].map(s => toText(s)).join('\n\n')
