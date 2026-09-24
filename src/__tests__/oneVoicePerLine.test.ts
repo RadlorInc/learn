@@ -118,6 +118,11 @@ describe('one line, one voice', () => {
     await tick(300)                                          // the band manifest lands LAST
     expect(home.fallback, 'control: the band voice has no clip for this line').toHaveBeenCalledTimes(1)
     expect([lesson.onStart.mock.calls.length, lesson.fallback.mock.calls.length]).toEqual([1, 0])
+    // ⚠️ The damage is to the NEXT lesson line, spoken after the slow manifest landed: a shared key set now holds the
+    // band voice's keys, so the lesson's clip looks missing and the line goes to browser speech.
+    const next = run(speakLine as never)
+    await tick(20)
+    expect([next.onStart.mock.calls.length, next.fallback.mock.calls.length], 'a later lesson line fell back to browser speech').toEqual([1, 0])
     expect(String((play.mock.contexts.at(-1) as HTMLAudioElement).src)).toContain(`/audio/${LESSON}/${clipKey(LINE)}.mp3`)
   })
 })
