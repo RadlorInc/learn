@@ -57,6 +57,8 @@ export interface Report {
   stuck: { lessonId: string; problems: number; firstTryPct: number }[]
   mastered: number
   done: number
+  /** Topics practised and not done yet (done = mastered, or 12 answers): real work in progress, told calmly. */
+  practising: number
 }
 
 export const STUCK_MIN = 6
@@ -85,5 +87,6 @@ export function buildReport(points: readonly PointRow[], progress: readonly Prog
     stuck,
     mastered: mastered.size,
     done: progress.filter(r => r.done).length,
+    practising: progress.filter(r => !r.done).length,
   }
 }

@@ -15,7 +15,7 @@ import { createElement } from 'react'
 import { MODULES } from '@/features/lessons/modules'
 import { Pic } from '@/features/lessons/Pictures'
 import { LADDERS } from '@/features/lessons/ladders'
-import { rng, step, startLevel, draw, beginRun, advance, reviewTopic, nextModuleTopic, FRESH, MAX_PROBLEMS, type Level, type Standing } from '@/features/lessons/adaptive'
+import { rng, step, startLevel, draw, beginRun, advance, reviewTopic, nextModuleTopic, FRESH, CHECKPOINT, DONE_AFTER, runDone, toSaved, fromSaved, type Level, type Standing } from '@/features/lessons/adaptive'
 import { isCorrect, showAnswer, type Answer, type Problem } from '@/features/lessons/script'
 
 // Every built module, written out (not read from MODULES): a module that silently loses its ladders must fail here.
@@ -90,22 +90,45 @@ describe('the adaptive rules', () => {
   const ladders: Record<string, Level[]> = { here: toy('here'), back: toy('back') }
   const of = (id: string) => ladders[id]
 
-  it('a run moves up, is mastered at the top, and stops', () => {
+  it('a run moves up, is mastered at the top, and pauses for the child there', () => {
     let run = beginRun('here', ladders.here, at(0), rng(3), null)
     expect(run.current.problem.text).toMatch(/^here L0/)
     const outcomes = ['first', 'first', 'first', 'first'] as const
-    const texts: string[] = []
-    let done = false
-    for (const o of outcomes) { const m = advance(run, 'here', of, o, rng(texts.length)); run = m.run; done = m.done; texts.push(run.current.problem.text) }
+    const texts: string[] = [], pauses: unknown[] = []
+    for (const o of outcomes) { const m = advance(run, 'here', of, o, rng(texts.length)); run = m.run; pauses.push(m.pause); texts.push(run.current.problem.text) }
     // one first-try right keeps L0, the second moves to L1, two more at the top is mastery
     expect(texts.slice(0, 3).map(t => t.slice(0, 7))).toEqual(['here L0', 'here L1', 'here L1'])
-    expect(done).toBe(true)
+    expect(pauses).toEqual([null, null, null, 'mastered'])
     expect(run.standing).toEqual({ level: 1, streak: 0, mastered: true })
+    expect(runDone(run)).toBe(true)
+    // Keep going after mastery: a next problem is always there, from the top of the ladder.
+    expect(run.current.problem.text).toMatch(/^here L1/)
   })
-  it('a run ends after MAX_PROBLEMS even without mastery', () => {
-    let run = beginRun('here', ladders.here, at(0), rng(3), null), done = false, n = 0
-    while (!done) { const m = advance(run, 'here', of, 'second', rng(n)); run = m.run; done = m.done; n++ }
-    expect(n).toBe(MAX_PROBLEMS)
+  it('practice never ends by itself: a checkpoint after every 5 answers, done after 12 without mastery', () => {
+    // Written out, not derived from the constants: the founder's numbers are the spec (2026-09-24).
+    expect([CHECKPOINT, DONE_AFTER]).toEqual([5, 12])
+    let run = beginRun('here', ladders.here, at(0), rng(3), null)
+    const at_: number[] = [], done: boolean[] = []
+    for (let n = 1; n <= 23; n++) {
+      const m = advance(run, 'here', of, 'second', rng(n)); run = m.run
+      if (m.pause) at_.push(n)
+      done.push(runDone(run))
+      expect(run.current.problem.text).toMatch(/^here/)
+    }
+    expect(at_).toEqual([5, 10, 15, 20])
+    expect(done.indexOf(true) + 1).toBe(12)
+  })
+  it('a saved run resumes exactly: same problem on screen, same count, nothing it has asked comes back', () => {
+    const repeaty: Level[] = [{ style: 'x', make: r => { const n = Math.floor(r() * 30); return { text: `q${n}`, picture: { kind: 'eq', text: '' }, answer: n, steps: ['a', String(n)] } } }]
+    const lad = (id: string) => (id === 'here' ? repeaty : undefined)
+    let run = beginRun('here', repeaty, at(0), rng(3), null)
+    for (let n = 0; n < 7; n++) run = advance(run, 'here', lad, 'second', rng(n)).run
+    const saved = JSON.parse(JSON.stringify(toSaved(run)))          // through storage, as the device and the column do
+    const back = fromSaved(saved, run.standing, null)
+    expect(back).toEqual(run)
+    const next = advance(back, 'here', lad, 'second', rng(99)).run
+    expect(run.recent).not.toContain(next.current.problem.text)
+    expect(next.asked).toBe(8)
   })
   it('the review problem comes third, from the earlier topic, and moves only that topic', () => {
     let run = beginRun('here', ladders.here, at(0), rng(3), { id: 'back', standing: at(1) })

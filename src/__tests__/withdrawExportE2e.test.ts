@@ -161,7 +161,8 @@ async function seedRows(f: Omit<Family, 'sessions' | 'plans'>, mark: string): Pr
     insert into public.learner_state (learner_id, owned_items) values ('${k}', array['${mark}']) on conflict do nothing;
     insert into public.learner_progress (learner_id, chapter) values ('${k}', '${chapter}');
     insert into public.sessions (learner_id, chapter, client_id, completed_at) values ('${k}', '${chapter}', '${mark}', now());
-    insert into public.lesson_progress (learner_id, lesson_id, done) values ('${k}', 'g3m1-t1', true);
+    insert into public.lesson_progress (learner_id, lesson_id, done, run) values ('${k}', 'g3m1-t1', true,
+      '{"asked": 7, "recent": ["RUN-${mark}"], "current": {"from": "g3m1-t1", "problem": {"text": "RUN-${mark}"}}, "review": null}');
     insert into public.point_events (learner_id, reason, points, lesson_id) values ('${k}', 'problem', 5, 'g3m1-t1');
     insert into public.learner_events (learner_id, event, props) values ('${k}', 'session_start', '{"m":"${mark}"}');
     insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${k}', '${mark}', '2', array['picture']);
@@ -339,6 +340,11 @@ describe('"Download a copy" — the real export, as the owning parent', () => {
     expect(await read(A.kid)).toHaveLength(1)
     expect(await read(B.kid)).toEqual([])
     expect(await q(`select 1 from public.learner_events where learner_id = '${B.kid}'`), 'control: B has the row').toHaveLength(1)
+  })
+
+  it('carries where the child is in practice (lesson_progress.run, short sessions) — the saved run, as it is', () => {
+    const rows = file.lessonProgress as { lesson_id: string; run?: { asked: number; recent: string[] } }[]
+    expect(rows.find(r => r.lesson_id === 'g3m1-t1')?.run).toMatchObject({ asked: 7, recent: [`RUN-${MARK_A}`] })
   })
 
   it('holds nothing of the other family — and the same search finds this family\'s marker', () => {

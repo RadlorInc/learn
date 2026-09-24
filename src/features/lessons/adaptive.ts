@@ -8,8 +8,10 @@
  *   - right on the first try, twice in a row → one level up;
  *   - right after a miss → stay;
  *   - worked steps shown (two misses) → one level down;
- *   - right on the first try twice in a row at the TOP level → mastered, practice ends;
- *   - or practice ends after MAX_PROBLEMS whatever happened.
+ *   - right on the first try twice in a row at the TOP level → mastered.
+ * Practice has no end count (founder, 2026-09-24): after every CHECKPOINT answers — and the moment a topic is mastered —
+ * the child chooses Keep going or Take a break, and the run is saved so the next visit continues from exactly there.
+ * The topic counts as done once mastered, or after DONE_AFTER answers across all its sessions.
  * Lesson practice, module practice and the review problem all move the same per-topic Standing with `step`.
  */
 import type { Problem } from './script'
@@ -56,7 +58,12 @@ export const FRESH: Standing = { level: 0, streak: 0, mastered: false }
 /** How a problem went: right on the first try, right after a miss, or the worked steps were shown. */
 export type Outcome = 'first' | 'second' | 'worked'
 
-export const MAX_PROBLEMS = 12
+/** A checkpoint after every CHECKPOINT answers: Keep going (CHECKPOINT more) or Take a break. */
+export const CHECKPOINT = 5
+/** A topic is done once mastered, or once this many problems have been answered across all its sessions. */
+export const DONE_AFTER = 12
+/** How many question texts a run remembers so it does not ask them again — across sessions, since it is saved. */
+export const SEEN = 40
 
 export function step(s: Standing, levels: number, o: Outcome): Standing {
   const top = levels - 1
@@ -85,8 +92,9 @@ export const freshSeed = () => Math.floor(Math.random() * 2 ** 31)
 // ── One practice run ────────────────────────────────────────────────────────────────────────────────────────
 /**
  * A topic's practice run. `current` is the problem on screen and the topic it came from: usually this topic, but once
- * per run (the REVIEW_AT-th problem) it may be an earlier topic the child finished and has not mastered — that is how a
- * weak topic comes back. A review problem moves ITS topic's standing, never this one's.
+ * per round of CHECKPOINT (the REVIEW_AT-th problem) it may be an earlier topic the child finished and has not
+ * mastered — that is how a weak topic comes back. A review problem moves ITS topic's standing, never this one's.
+ * `asked` counts every answer on this topic's practice, across sessions; `recent` the last SEEN question texts.
  */
 export interface Run {
   standing: Standing
@@ -95,6 +103,19 @@ export interface Run {
   current: { problem: Problem; from: string }
   review: { id: string; standing: Standing } | null
 }
+/** What is saved between sessions: the run without the standings, which are stored per topic on their own. */
+export interface SavedRun { asked: number; recent: string[]; current: { problem: Problem; from: string }; review: string | null }
+export const toSaved = (run: Run): SavedRun => ({ asked: run.asked, recent: run.recent, current: run.current, review: run.review?.id ?? null })
+/** A saved run, with the standings as they are now (a review topic may have moved since). */
+export const fromSaved = (saved: SavedRun, standing: Standing, reviewStanding: Standing | null): Run => ({
+  standing,   // streak kept: a resume continues exactly where the child stopped
+  asked: saved.asked, recent: saved.recent, current: saved.current,
+  review: saved.review ? { id: saved.review, standing: reviewStanding ?? FRESH } : null,
+})
+/** Done: mastered, or DONE_AFTER problems answered — however many sessions that took. */
+export const runDone = (run: Run): boolean => run.standing.mastered || run.asked >= DONE_AFTER
+/** Why practice stops for a choice after an answer: the topic was just mastered, or a round of CHECKPOINT ended. */
+export type Pause = 'mastered' | 'checkpoint' | null
 export const REVIEW_AT = 2
 
 export type LadderOf = (lessonId: string) => readonly Level[] | undefined
@@ -105,22 +126,22 @@ export function beginRun(id: string, ladder: readonly Level[], standing: Standin
 }
 
 /**
- * After a problem: move the right standing, then the next problem — or `done` (mastered, or MAX_PROBLEMS asked).
- * `saved` lists every standing that changed, for the caller to store.
+ * After a problem: move the right standing, then draw the next problem — practice never ends by itself. `pause` says
+ * whether to stop for the child's choice first. `saved` lists every standing that changed, for the caller to store.
  */
-export function advance(run: Run, id: string, ladderOf: LadderOf, o: Outcome, r: Rng): { run: Run; done: boolean; saved: [string, Standing][] } {
+export function advance(run: Run, id: string, ladderOf: LadderOf, o: Outcome, r: Rng): { run: Run; pause: Pause; saved: [string, Standing][] } {
   const ladder = ladderOf(id)!
   let { standing, review } = run
   const saved: [string, Standing][] = []
   if (run.current.from === id) { standing = step(standing, ladder.length, o); saved.push([id, standing]) }
   else if (review) { review = { ...review, standing: step(review.standing, ladderOf(review.id)!.length, o) }; saved.push([review.id, review.standing]) }
   const asked = run.asked + 1
-  if (standing.mastered || asked >= MAX_PROBLEMS) return { run: { ...run, standing, review, asked }, done: true, saved }
-  const reviewLadder = review && asked === REVIEW_AT ? ladderOf(review.id) : undefined
+  const pause: Pause = standing.mastered && !run.standing.mastered ? 'mastered' : asked % CHECKPOINT === 0 ? 'checkpoint' : null
+  const reviewLadder = review && !review.standing.mastered && asked % CHECKPOINT === REVIEW_AT ? ladderOf(review.id) : undefined
   const current = reviewLadder && review
     ? { problem: draw(reviewLadder, review.standing.level, r, run.recent), from: review.id }
     : { problem: draw(ladder, standing.level, r, run.recent), from: id }
-  return { run: { standing, review, asked, recent: [...run.recent, current.problem.text].slice(-6), current }, done: false, saved }
+  return { run: { standing, review, asked, recent: [...run.recent, current.problem.text].slice(-SEEN), current }, pause, saved }
 }
 
 /** The earlier topic to bring back: finished, laddered, not mastered — the lowest standing first, then the earliest. */

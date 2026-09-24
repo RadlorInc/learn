@@ -89,7 +89,9 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
   }
   const answering = feedback !== 'right' && feedback !== 'worked'
 
-  return page(`${exercise ? 'Question' : 'Practice'} ${i + 1} of ${total}`, `Problem ${i + 1} of ${total}`, <>
+  // A count of a total reads as a score to a child (founder, 2026-09-24): only a class exercise, a teacher's fixed list, shows "of".
+  const of = exercise ? ` of ${total}` : ''
+  return page(`${exercise ? 'Question' : 'Practice'} ${i + 1}${of}`, `Problem ${i + 1}${of}`, <>
     <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
     <div style={stage}>
       <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />

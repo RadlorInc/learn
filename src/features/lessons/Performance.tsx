@@ -57,6 +57,7 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
             {[
               { num: r.mastered, label: t('Topics mastered') },
               { num: r.done, label: t('Lessons finished') },
+              { num: r.practising, label: t('Topics in progress') },
               { num: r.problemsThisWeek, label: t('Problems this week') },
               { num: r.firstTryPct === null ? '—' : `${r.firstTryPct}%`, label: t('Right on the first try · last {n} days', { n: DAYS }) },
             ].map(s => (
