@@ -16,12 +16,14 @@ import {
   START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
-import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, type Run } from './adaptive'
+import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, FRESH, type Run, type Pause } from './adaptive'
 import { ladderOf, ladderAnswers } from './ladders'
 import { findLesson } from './modules'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
+import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { lessonDone } from '@/infra/storage/lessonProgress'
-import { syncLesson } from '@/infra/storage/lessonSync'
+import { syncLesson, syncRun } from '@/infra/storage/lessonSync'
+import { C } from './sessionCopy'
 import { Pic, tapCue, pill, INK } from './Pictures'
 import { Ink, wrap } from './Diagrams'
 import { Chalkboard } from './Chalkboard'
@@ -49,6 +51,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]
   /** True once every topic of this lesson's module (that the child has) is finished — the badge is shown then, and only then. */
   moduleDone?: () => boolean
+  /** The topic is done: mastered, or DONE_AFTER problems answered (a laddered topic); the 5 problems (one without). */
   onFinish: () => void; onExit: () => void
 }) {
   const [s, setS] = useState<FlowState>(START)
@@ -70,6 +73,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const ladder = ladderOf(lesson.id)
   const [run, setRun] = useState<Run | null>(null)
   const r = useRef(rng(freshSeed())).current
+  // Short sessions (founder, 2026-09-24): a choice after every 5 answers and at mastery; the run is saved after every
+  // answer, so Take a break — or closing the app — continues from exactly there. A saved run greets the child with a
+  // choice to go straight back to practice (never an automatic skip of the lesson).
+  const [welcome, setWelcome] = useState(() => !!ladder && !!loadRun(learnerId, lesson.id))
+  const [pause, setPause] = useState<Pause>(null)
+  const [session, setSession] = useState({ answered: 0, points: 0, mastered: false })
+  const keep = (next: Run) => { setRun(next); saveRun(learnerId, lesson.id, toSaved(next)); syncRun(learnerId, lesson.id) }
   const firstTry = useRef(false)              // Screen 8 solved with no miss: adaptive practice starts one level up
 
   // The beat clock. A teaching screen with `beats` reveals itself line by line — her words on the right, what she
@@ -87,14 +97,15 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false) }
     setS(n)
     if (spoken) say(spoken)
-    if (n.mode === 'finish' && s.mode !== 'finish') onFinish()
+    // A laddered topic is done by its run (see nextProblem); its 'finish' screen is only the break.
+    if (n.mode === 'finish' && s.mode !== 'finish' && !ladder) onFinish()
   }
   const screenSay = SAY.screen
   // Screen 1 has no beats, so the beat clock never speaks it — and since the audio button went (2026-09-20) nothing
   // else did either, so the lesson opened in silence. Say it on arrival: the first mount, ← Back to it, and "Watch the
   // lesson again". ⚠️ A browser only allows sound after a tap, so this is heard when the child came from the topic
   // list (their tap) and not on a lesson opened cold from a link — where Screen 1's own button is the first tap.
-  const line1 = s.mode === 'lesson' && s.screen === 0 ? screenSay(lesson.screens[0]) : ''
+  const line1 = s.mode === 'lesson' && s.screen === 0 && !welcome ? screenSay(lesson.screens[0]) : ''
   useEffect(() => { if (line1) speak(line1) }, [line1, replay])
 
   const autoNext = useLatestRef(() => {
@@ -122,12 +133,20 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // gets the green check at the top and moves on — no badge or sticker screen per topic; the badge waits for the module.
   const startPractice = () => {
     if (ladder) {
+      const saved = loadRun(learnerId, lesson.id)
+      if (saved) {
+        // Back where the child stopped: the same problem, the same count, the standings as they are now.
+        setRun(fromSaved(saved, loadStanding(learnerId, lesson.id) ?? FRESH, saved.review ? loadStanding(learnerId, saved.review) : null))
+        return go({ ...toPractice(s), practice: saved.asked })
+      }
       const standing = startLevel(loadStanding(learnerId, lesson.id), firstTry.current, ladder.length)
       const review = reviewTopic(earlier, id => lessonDone(learnerId, id), id => loadStanding(learnerId, id), ladderOf)
-      setRun(beginRun(lesson.id, ladder, standing, r, review))
+      keep(beginRun(lesson.id, ladder, standing, r, review))
     }
     go(toPractice(s))
   }
+  // Take a break: the celebration, if anything was answered this time; straight back to the topics if not.
+  const takeBreak = () => { stopSpeech(); setPause(null); if (session.answered === 0) onExit(); else go({ ...s, mode: 'finish', misses: 0, feedback: null }) }
   const won = s.mode === 'won'
   useEffect(() => {
     if (!won) return
@@ -154,6 +173,17 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
   const box = problem && <AnswerInput answer={solutionOf(problem)} value={value} onChange={setValue} signed={needsSign(all)} mixed={needsWhole(all)} />
 
+  if (welcome) {
+    return (
+      <Frame crumb={C.welcomeTitle} at={7} total={9} title={C.welcomeTitle}
+        picture={<div style={{ ...stage, alignItems: 'center' }}><span style={{ fontSize: 96 }} aria-hidden>⭐</span></div>}
+        words={<p style={bubble}>{C.spotSaved}</p>}
+        back={<button type="button" style={hintBtn} onClick={() => setWelcome(false)}>{C.watchFirst}</button>}
+        action={<button type="button" style={primary} onClick={() => { setWelcome(false); startPractice() }}>{C.keepPractising}</button>}
+        exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }} />
+    )
+  }
+
   // A lesson's 5 practice problems: the practice screen (problem left, scratch pad right), shared with mixed practice.
   // Hint shows the big idea without counting as a miss; a miss shows it too; a second miss shows the worked steps.
   if (s.mode === 'practice' && problem) {
@@ -170,13 +200,25 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       const o = outcomeOf(s), outcome = asked && o === 'first' ? 'second' : o
       const moved = advance(run, lesson.id, ladderOf, outcome, r)
       for (const [id, st] of moved.saved) { saveStanding(learnerId, id, st); syncLesson(learnerId, id, outcome) }
-      setRun(moved.run)
-      go(moved.done ? { ...s, mode: 'finish', misses: 0, feedback: null } : { ...s, practice: s.practice + 1, misses: 0, feedback: null })
+      keep(moved.run)
+      // The points this answer earns, by docs/new-flow/points.md, for the break screen. The database decides the real
+      // ones. ponytail: the +15/+10 bonuses are counted only when the topic was not done before, so a re-mastery is
+      // never over-counted; a first mastery after "done by 12 answers" is under-counted by 15.
+      const was = lessonDone(learnerId, lesson.id)
+      const before = (id: string) => (id === lesson.id ? run.standing : run.review?.standing ?? FRESH)
+      const gained = (outcome === 'first' ? 2 : 1) + moved.saved.filter(([id, st]) => st.level > before(id).level).length * 3
+        + (!was && runDone(moved.run) ? 10 : 0) + (!was && moved.pause === 'mastered' ? 15 : 0)
+      if (runDone(moved.run) && !was) onFinish()
+      setSession(x => ({ answered: x.answered + 1, points: x.points + gained, mastered: x.mastered || moved.pause === 'mastered' }))
+      setPause(moved.pause)
+      go({ ...s, practice: s.practice + 1, misses: 0, feedback: null })
     }
     const of = ladder ? '' : ' of 5'
     return (
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
-        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback}>
+        exitLabel={ladder ? C.takeBreak : undefined}
+        onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback}>
+        {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
           <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
@@ -318,16 +360,23 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     action = <button type="button" style={primary} onClick={startPractice}>Next</button>
   } else {
     crumb = 'Done!'; at = 8
-    const allDone = moduleDone?.() ?? false
+    // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
+    const allDone = (!ladder || lessonDone(learnerId, lesson.id)) && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
     picture = <div style={stage}>
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
       <p style={idea}>{lesson.bigIdea}</p>
     </div>
-    words = <p style={bubble}>{run
-      ? run.standing.mastered ? 'You really know this one now. Nice work!' : `You worked through ${run.asked} practice problems. Nice work sticking with it!`
-      : 'You worked through all 5 practice problems. Nice work sticking with it!'}</p>
-    action = <button type="button" style={primary} onClick={onExit}>Back to topics</button>
+    if (run) {
+      // The break (founder, 2026-09-24): a celebration, never a verdict — no count of a total, no "unfinished".
+      crumb = C.takeBreak
+      title = session.mastered ? C.breakMastered : C.breakTitle(session.answered)
+      words = <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <p style={bubble}>{C.spotSaved}</p>
+        {session.points > 0 && <p style={{ ...right, alignSelf: 'flex-start' }}>{C.points(session.points)}</p>}
+      </div>
+    } else words = <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>
+    action = <button type="button" style={primary} onClick={onExit}>{C.backToTopics}</button>
   }
 
   return (
@@ -413,3 +462,20 @@ function Written({ children, after = 0 }: { children: ReactNode; after?: number 
 
 const said: CSSProperties = { margin: 0, fontSize: 'clamp(19px, 2.4vw, 24px)', lineHeight: 1.35, color: INK, fontWeight: 600, transition: 'opacity .4s ease' }
 const askBtn: CSSProperties = { ...primary, flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '12px 22px', maxWidth: 440 }
+
+/** The choice after every 5 answers and at mastery. Two positive buttons; the problem behind it is already the next one. */
+function Checkpoint({ text, onKeep, onBreak }: { text: string; onKeep: () => void; onBreak: () => void }) {
+  return (
+    <div role="dialog" aria-modal="true" aria-label={text} style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center',
+      justifyContent: 'center', padding: 16, background: '#1f1a1466' }}>
+      <div style={{ background: '#fffaf0', border: `4px solid ${INK}`, borderRadius: 24, boxShadow: `6px 6px 0 ${INK}`, padding: '24px 22px',
+        maxWidth: 440, width: '100%', display: 'flex', flexDirection: 'column', gap: 18, textAlign: 'center' }}>
+        <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: INK }}>{text}</p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <button type="button" style={hintBtn} onClick={onBreak}>{C.takeBreak}</button>
+          <button type="button" style={primary} onClick={onKeep} autoFocus>{C.keepGoing}</button>
+        </div>
+      </div>
+    </div>
+  )
+}

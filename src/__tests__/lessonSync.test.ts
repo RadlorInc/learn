@@ -8,19 +8,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const rpc = vi.fn()
 let rows: unknown = []
+// A database without `lesson_progress.run` (migration 20260925100000 not applied) refuses a select naming it, 42703.
+const db = vi.hoisted(() => ({ noRunColumn: false, selects: [] as string[] }))
 vi.mock('@/data/repositories/_shared', async (orig) => {
   const actual = await orig<typeof import('@/data/repositories/_shared')>()
-  return { ...actual, db: () => ({ rpc, from: () => ({ select: () => ({ eq: async () => (rows === null ? { error: { code: 'x' } } : { data: rows }) }) }) }) }
+  return { ...actual, db: () => ({ rpc, from: () => ({ select: (cols: string) => ({ eq: async () => {
+    db.selects.push(cols)
+    if (db.noRunColumn && /\brun\b/.test(cols)) return { error: { code: '42703', message: 'column lesson_progress.run does not exist' } }
+    return rows === null ? { error: { code: 'x' } } : { data: rows }
+  } }) }) }) }
 })
 
-const { syncLesson, flushLessonSync, pullLessonProgress } = await import('@/infra/storage/lessonSync')
+const { syncLesson, syncRun, flushLessonSync, pullLessonProgress, pendingLessonUploads } = await import('@/infra/storage/lessonSync')
+const { loadRun, saveRun } = await import('@/infra/storage/lessonRun')
 const { lessonDone, markLessonDone } = await import('@/infra/storage/lessonProgress')
 const { loadStanding, saveStanding } = await import('@/infra/storage/lessonStanding')
 
 const PGRST202 = { code: 'PGRST202', message: 'Could not find the function public.record_lesson_progress in the schema cache' }
 const calls = () => rpc.mock.calls.map(c => c[1] as Record<string, unknown>)
 
-beforeEach(() => { rpc.mockReset(); localStorage.clear(); rows = [] })
+beforeEach(() => { rpc.mockReset(); localStorage.clear(); rows = []; db.noRunColumn = false; db.selects.length = 0 })
 
 describe('uploads', () => {
   it('keep waiting while the database lacks the function, then go up with the device\'s state and the SAME event id', async () => {
@@ -75,5 +82,58 @@ describe('pulling the account onto a device', () => {
     rows = null
     expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(false)
     expect(loadStanding('L', 'g3m2-t1')).toEqual({ level: 2, streak: 0, mastered: false })
+  })
+})
+
+describe('where the child is in practice (short sessions)', () => {
+  const RUN = { asked: 5, recent: ['q5'], current: { from: 'g3m2-t1', problem: { text: 'q5', answer: 5, picture: { kind: 'eq', text: '' } } }, review: null }
+
+  it('goes up as the device holds it — and a database without the function never holds progress behind it', async () => {
+    rpc.mockImplementation(async (fn: string) => ({ error: fn === 'save_practice_run' ? PGRST202 : null }))
+    saveRun('L', 'g3m2-t1', RUN as never)
+    syncRun('L', 'g3m2-t1')
+    saveStanding('L', 'g3m2-t1', { level: 1, streak: 0, mastered: false })
+    syncLesson('L', 'g3m2-t1', 'first')
+    await flushLessonSync()
+    expect(rpc.mock.calls.map(c => c[0])).toEqual(['save_practice_run', 'record_lesson_progress'])
+    expect(calls()[0]).toEqual({ p_learner: 'L', p_lesson: 'g3m2-t1', p_run: RUN })
+    expect(pendingLessonUploads()).toBe(0)
+    expect(loadRun('L', 'g3m2-t1')).toEqual(RUN)   // the device keeps its copy
+  })
+
+  it('queues one upload per topic, however many answers are given before it is sent', async () => {
+    rpc.mockResolvedValue({ error: { code: '08006', message: 'offline' } })
+    saveRun('L', 'g3m2-t1', RUN as never)
+    syncRun('L', 'g3m2-t1'); syncRun('L', 'g3m2-t1'); syncRun('L', 'g3m2-t2')
+    await flushLessonSync()
+    expect(pendingLessonUploads()).toBe(2)
+  })
+
+  it('a signed-out visitor keeps no run at all', () => {
+    saveRun(null, 'g3m2-t1', RUN as never)
+    expect(loadRun(null, 'g3m2-t1')).toBeNull()
+    expect(localStorage.length).toBe(0)
+  })
+
+  it('pulls the account\'s run onto this device; an older database without the column still pulls the rest', async () => {
+    rpc.mockResolvedValue({ error: null })
+    rows = [{ lesson_id: 'g3m2-t1', done: false, level: 2, streak: 1, mastered: false, run: RUN }]
+    expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(true)
+    expect(loadRun('L', 'g3m2-t1')).toEqual(RUN)
+    expect(db.selects.at(-1)).toMatch(/\brun\b/)
+
+    localStorage.clear(); db.selects.length = 0; db.noRunColumn = true
+    rows = [{ lesson_id: 'g3m2-t1', done: false, level: 2, streak: 1, mastered: false }]
+    expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(true)
+    expect(loadStanding('L', 'g3m2-t1')).toEqual({ level: 2, streak: 1, mastered: false })
+    expect(db.selects).toHaveLength(2)                       // asked with run, refused, asked again without
+    expect(db.selects[1]).not.toMatch(/\brun\b/)
+  })
+
+  it('a malformed run from the account is never used', async () => {
+    rpc.mockResolvedValue({ error: null })
+    rows = [{ lesson_id: 'g3m2-t1', done: false, level: 0, streak: 0, mastered: false, run: { asked: 'x' } }]
+    await pullLessonProgress('L', ['g3m2-t1'])
+    expect(loadRun('L', 'g3m2-t1')).toBeNull()
   })
 })

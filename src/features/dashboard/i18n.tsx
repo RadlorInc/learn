@@ -395,6 +395,7 @@ export const ES: Record<string, string> = {
   'No students here yet.': 'Todavía no hay estudiantes aquí.',
   'Could not load {name}’s results. Refresh to try again.': 'No se pudieron cargar los resultados de {name}. Actualice la página para intentarlo de nuevo.',
   'Topics mastered': 'Temas dominados',
+  'Topics in progress': 'Temas en curso',
   'Lessons finished': 'Lecciones terminadas',
   'Problems this week': 'Problemas esta semana',
   'Right on the first try · last {n} days': 'Bien al primer intento · últimos {n} días',

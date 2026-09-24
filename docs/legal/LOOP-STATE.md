@@ -585,3 +585,87 @@ Proofs: Node 20 — `tsc` 0, vitest 125 files / 3,722 passed (11 skipped as befo
 Planted breaks, each exit 0 on its own assertion: placeholder in a published page (three tests + the build); beta
 letting a placeholder through; beta banner removed; `WITHDRAWAL_DELETES` false; the plan card shown in beta; inline
 code shown raw; sign-off never required.
+
+## Short sessions (started 24 September 2026) — 5-question checkpoints, resume, and a soft prerequisite nudge
+
+Branch `short-sessions`, worktree `/Users/mrk/milo_react/w-ss`, off `main` = `46d297e2`. Rules: no production, no
+merges (founder decides after the launch weekend), PRs only; anything for the founder → `SHORT-SESSIONS-ROUND2.md`.
+
+| step | status | proof |
+|---|---|---|
+| S0 measure (read-only) | done | findings below, every one read from code on `46d297e2` (file:line) |
+| S1 interview | done | four rounds, 24 Sep 2026 — decisions below |
+| S2 Part A (PR 1) | not started | — |
+| S3 Part B (PR 2) | not started | — |
+| S4 legal check | not started | — |
+| S5 verification | not started | — |
+
+### S0 — findings (read from the code, 24 Sep 2026; nothing run against production)
+
+**Vocabulary.** There are no visible "chapters". Every legacy chapter is hidden (`LEGACY_CHAPTERS_HIDDEN`). A child
+sees **grade → module → topic** (a *topic* = one `Lesson`: 9 teaching screens, then adaptive practice). Below,
+"chapter" in the brief is read as **topic**. Module practice is a separate, second practice screen.
+
+1. **Question count and what ends practice.** Topic practice: `MAX_PROBLEMS = 12` (`adaptive.ts:59`), not 10. It ends
+   when the topic is **mastered** (two first-try right answers in a row at the top ladder level) **or** 12 problems are
+   asked (`advance`, `adaptive.ts:118`). The screen shows "Problem N" with no "of" (`LessonPlayer.tsx:180`). Module
+   practice: fixed `MODULE_PROBLEMS = 10` and it **does** show "Problem N of 10" (`ModulePractice.tsx:97`). Class
+   exercises: a fixed list of 1–50, not adaptive, "Question N of M".
+2. **Adaptive state.** Per topic, `Standing = { level, streak, mastered }` (`adaptive.ts:53`) — saved after **every
+   answer** to the device (`lessonStanding.ts`, kv key `milo-newflow-standing-<child>-<topic>`) and queued to
+   `lesson_progress` (level, streak, mastered, done). The **run** — problems asked so far, the last 6 question texts
+   (`recent`, the only no-repeat memory), the problem on screen, which earlier topic was picked for review — lives in
+   React memory only (`Run`, `adaptive.ts:92`). Closing the app loses the run; the level survives. `startLevel` resets
+   the streak to 0 on every start (`adaptive.ts:71`).
+   ⚠️ **And more is lost than the brief assumes:** a topic is only marked done at the end of practice
+   (`lesson/page.tsx:47`, `onFinish`). A child who leaves mid-practice finds the topic not done, and reopening it starts
+   at **teaching Screen 1** (`START`), not in practice.
+3. **Complete / mastered.** Topic *done* = practice reached its end (mastered or 12 asked). Topic *mastered* = the ladder
+   rule above. Module "done" = every topic done. Child home: "N of M topics done" (`ModuleHome.tsx:110`), the topic map
+   "N of M done" + green ticks (`LessonList.tsx:59`), button "Start / Keep / Learn again". Parent dashboard:
+   "Topics mastered", topics done, problems this week, first-try %, and "finding X hard" (≥6 problems, not mastered,
+   first-try <50%) (`progressReport.ts`), plus "{done} of {total} done" for assigned topics (`Performance.tsx:118`).
+4. **Prerequisites.** **None exist as data.** `docs/skill-graph.md` and the skill graph were deleted (2026-09-13/20).
+   The only structure is **order**: topics in teaching order inside a module, modules in order inside a grade
+   (`modules.ts`). No topic → topic or module → module dependency is written anywhere.
+5. **Assigned.** `learners.lesson_ids text[]` (NULL = every topic, no choice made; a list = the child sees **only**
+   those topics) and `learners.lesson_due jsonb` (a date per assigned topic). A teacher's class writes the same
+   `lesson_ids` onto each student (`20260918100000`). ⚠️ So when a list is set, a prerequisite outside it is not even
+   visible to the child. Class exercises are separate (`classes.exercises`).
+6. **Offline queue.** `lessonSync.ts`: every answer appends `{learnerId, lessonId, outcome, event}` to kv
+   `milo-lesson-sync-queue` (max 2,000), flushed in order, stopping at the first `retry`. The standing sent is re-read
+   from the device at send time. Pulled back into the device on the child's home (`pullLessonProgress`).
+7. **Consent / export / delete** for a new field: `lesson_progress` is already gated (catalog-loop trigger,
+   `20260923120000` §4), exported with `select('*')` (`exportData.ts:87`), and cascades from `learners` on delete and
+   withdrawal (`20260923140000`). **A new column on `lesson_progress` inherits all three; a new table needs its own
+   trigger** (the loop ran once, at migration time).
+8. **Legal, first read.** Doc 02 line 33 and doc 11 line 56 already name "answers … scores, points, progress". Doc 08
+   line 20 names the device store's "what they last played, work waiting to sync". A resume position is plausibly
+   covered; S4 settles it.
+9. **Spanish.** The child screens (lessons, practice, modules home) have **no translation mechanism**: Spanish covers
+   the adult dashboard and `/auth` only.
+10. **Words.** Lesson *content* legitimately says "wrong" (Screen 7 crosses out the wrong move; "spot the mistake"
+    ladder levels). A forbidden-words test has to cover UI strings, not the maths content.
+
+### S1 — the founder's decisions (24 Sep 2026, question tool)
+
+1. **Where:** the checkpoint is in a **topic's practice** (the questions after the 9 screens), at every 5th answer.
+   Not in module practice or class exercises; module practice loses its "of 10" instead.
+2. **No end count:** the child practises as long as they like; a checkpoint every 5. `MAX_PROBLEMS` goes.
+3. **Mastery** (any time): celebrate "You've got this topic! ⭐" with the same two choices; going on keeps giving
+   top-level questions and points. The topic is done + mastered at that moment.
+4. **Progress = ladder position** (mastered = full). "Done" (tick, +10 points, parent counts) = mastered **or** 12
+   answers in total across sessions. 50% = at or past the middle of the ladder.
+5. **Wording** (EN): popup "5 questions done! ⭐ Nice work." [Keep going] [Take a break]; break "Great work, 5
+   questions done! ⭐ Your spot is saved." + points earned [Back to topics]. **No points bonus.**
+6. **Coming back:** a card, never an automatic skip — "Welcome back! ⭐ Your spot is saved." [Keep practising]
+   [Watch the lesson first]; after the lesson, practice resumes from the saved state.
+7. **Storage:** a new column on `lesson_progress` (gate, export, delete inherited) + a device copy through the offline
+   queue.
+8. **Prerequisite = the previous topic in the same module.** The first topic of a module gets no card.
+9. **Nudge:** a filled bar (no number), the brief's wording. **Assigned** = the child has a topic list and this topic is
+   in it → no card; and no card when the previous topic is not in the child's list (they cannot see it).
+10. **Parent line:** yes — "<name> started “X” before getting far with “Y”." only after "Go anyway"; via
+    `learner_events` (already gated, exported, deleted).
+11. **Spanish:** new child strings in one module with an unreviewed ES draft each; the screens stay English until the
+    child screens get a language system. The forbidden-words test runs over both.

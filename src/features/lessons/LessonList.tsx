@@ -10,6 +10,8 @@ import Link from 'next/link'
 import { useSyncExternalStore, type CSSProperties } from 'react'
 import type { Module } from './modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
+import { loadRun } from '@/infra/storage/lessonRun'
+import { C } from './sessionCopy'
 import { Thing, INK, TEAL, GOOD, pill, PAGE_BG, shell, topBar } from './Pictures'
 import type { Lesson, Obj } from './script'
 
@@ -100,6 +102,9 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                       {isDone && <span aria-hidden style={{ ...badge, top: -size / 2 - 6, left: size / 2 - 22, width: 32, height: 32, fontSize: 18, background: GOOD, color: '#fff', pointerEvents: 'none' }}>✓</span>}
                       <Link href={`/lesson?id=${l.id}`} tabIndex={-1} aria-hidden style={{ position: 'absolute', textDecoration: 'none', color: INK, ...label, ...dim }}>
                         <b style={{ display: 'inline-block', fontFamily: 'var(--font-display)', fontSize: isNext ? 19 : 16, lineHeight: 1.2, background: '#fff', border: `3px solid ${INK}`, borderRadius: 14, padding: '6px 10px', boxShadow: `3px 3px 0 ${INK}` }}>{l.title}</b>
+                        {/* A topic the child took a break from: an invitation, never "not completed" (founder, 2026-09-24). */}
+                        {!isDone && loadRun(learnerId, l.id) && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 6,
+                          background: '#fff', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>⭐ {C.started}</span>}
                         {/* Never "late" to a child: the date is information, not a mark against them. */}
                         {!isDone && due?.[l.id] && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 6,
                           background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>Due {showDay(due[l.id])}</span>}

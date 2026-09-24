@@ -10,12 +10,14 @@
 import { kv } from '@/infra/storage/kv'
 import { lessonDone, markLessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
-import { FRESH, type Outcome } from '@/features/lessons/adaptive'
-import { recordLessonProgress, recordModulePractice, getLessonRows } from '@/data/repositories/points'
+import { loadRun, saveRun } from '@/infra/storage/lessonRun'
+import { FRESH, type Outcome, type SavedRun } from '@/features/lessons/adaptive'
+import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows } from '@/data/repositories/points'
 
 type Item = { id: string; learnerId: string } & (
   | { lessonId: string; outcome?: Outcome; event?: string }
-  | { moduleId: string; event: string })
+  | { moduleId: string; event: string }
+  | { runOf: string })
 
 const QUEUE = 'milo-lesson-sync-queue'
 // ponytail: oldest dropped past this — a device offline for weeks loses the points of its oldest answers, not its progress
@@ -39,6 +41,14 @@ export function syncModulePractice(learnerId: string | null, moduleId: string): 
   void flushLessonSync()
 }
 
+/** Where the child is in a topic's practice changed. One upload per topic is enough: it sends the device's run as it is then. */
+export function syncRun(learnerId: string | null, lessonId: string): void {
+  if (!learnerId) return
+  const q = read()
+  if (!q.some(x => 'runOf' in x && x.learnerId === learnerId && x.runOf === lessonId)) write([...q, { id: uuid(), learnerId, runOf: lessonId }])
+  void flushLessonSync()
+}
+
 /** How many uploads are waiting. The offline banner's number — it used to count `sessions`. */
 export const pendingLessonUploads = (): number => read().length
 
@@ -58,7 +68,9 @@ async function send(): Promise<void> {
     // Seen twice = the queue could not be written (storage full): stop rather than send it forever.
     if (!item || sent.has(item.id)) return
     sent.add(item.id)
-    const r = 'moduleId' in item
+    const r = 'runOf' in item
+      ? await recordPracticeRun(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
+      : 'moduleId' in item
       ? await recordModulePractice(item.learnerId, item.moduleId, item.event)
       : await recordLessonProgress(item.learnerId, item.lessonId,
           { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH) },
@@ -79,16 +91,21 @@ export async function pullLessonProgress(learnerId: string, lessonIds: readonly 
   const rows = await getLessonRows(learnerId)
   if (!rows) return false
   const server = new Map(rows.map(r => [r.lesson_id, r]))
-  const pending = new Set(read().flatMap(x => (x.learnerId === learnerId && 'lessonId' in x ? [x.lessonId] : [])))
-  const upload: string[] = []
+  const pending = new Set(read().flatMap(x => (x.learnerId === learnerId && 'lessonId' in x ? [x.lessonId] : x.learnerId === learnerId && 'runOf' in x ? [x.runOf] : [])))
+  const upload: string[] = [], runs: string[] = []
   for (const id of lessonIds) {
     if (pending.has(id)) continue
-    const row = server.get(id), localDone = lessonDone(learnerId, id), local = loadStanding(learnerId, id)
-    if (!row) { if (localDone || local) upload.push(id); continue }
+    const row = server.get(id), localDone = lessonDone(learnerId, id), local = loadStanding(learnerId, id), localRun = loadRun(learnerId, id)
+    if (!row) { if (localDone || local) upload.push(id); if (localRun) runs.push(id); continue }
     if (localDone && !row.done) upload.push(id)
     if (row.done) markLessonDone(learnerId, id)
     saveStanding(learnerId, id, { level: row.level, streak: row.streak, mastered: row.mastered })
+    // Where the child is in practice: the account's copy wins, as the standing does; one only this device has goes up.
+    // (Stored as it came: `loadRun` checks the shape of every run it reads, from whichever side it came.)
+    if (row.run) saveRun(learnerId, id, row.run as SavedRun)
+    else if (localRun && row.run === null) runs.push(id)
   }
-  if (upload.length) { write([...read(), ...upload.map(lessonId => ({ id: uuid(), learnerId, lessonId }))]); await flushLessonSync() }
+  const items = [...upload.map(lessonId => ({ id: uuid(), learnerId, lessonId })), ...runs.map(runOf => ({ id: uuid(), learnerId, runOf }))]
+  if (items.length) { write([...read(), ...items]); await flushLessonSync() }
   return true
 }
