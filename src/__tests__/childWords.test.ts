@@ -25,6 +25,7 @@ const PERCENT = /\d\s*%|%\s*$|\$\{[^}]*\}\s*%/
 
 const CHILD_SCREENS = [
   'src/features/lessons/LessonPlayer.tsx', 'src/features/lessons/ModulePractice.tsx', 'src/features/lessons/LessonList.tsx',
+  'src/features/lessons/AnswerFeedback.tsx',
   'src/features/lessons/ModuleHome.tsx', 'src/features/lessons/PracticeLayout.tsx', 'src/features/lessons/Frame.tsx',
   'src/features/lessons/Feedback.tsx', 'src/features/lessons/AnswerInput.tsx',
   'src/app/modules/page.tsx', 'src/app/lesson/page.tsx', 'src/app/play/page.tsx',
@@ -32,7 +33,7 @@ const CHILD_SCREENS = [
 
 /** Every line a copy object can produce: strings as they are, functions called with sample arguments. */
 function lines(copy: Record<string, unknown>): string[] {
-  return Object.values(copy).flatMap(v => (typeof v === 'string' ? [v] : typeof v === 'function' ? [1, 5, 12].map(n => String((v as (...a: unknown[]) => unknown)(n, 'Fractions'))) : []))
+  return Object.values(copy).flatMap(v => (typeof v === 'string' ? [v] : Array.isArray(v) ? v.map(String) : typeof v === 'function' ? [1, 5, 12].map(n => String((v as (...a: unknown[]) => unknown)(n, 'Fractions'))) : []))
 }
 
 /** Style code, not words: a `style={…}` attribute, a `<style>` element, or the value of a CSS property in an object

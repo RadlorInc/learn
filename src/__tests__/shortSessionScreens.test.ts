@@ -107,16 +107,18 @@ describe('short practice sessions', () => {
     expect(onExit).toHaveBeenCalledTimes(1)
   })
 
-  it('a right answer says "Right!" and the next problem comes by itself — no Next problem tap (founder, 2026-09-24)', async () => {
+  it('a right answer cheers and the next problem comes by itself — no Next problem tap (founder, 2026-09-24)', async () => {
     await click('Keep practicing')
     const run = loadRun(L, lesson.id)!
     await type(String(solutionOf(run.current.problem)))
-    expect(text()).toContain('Right!')
+    // A ✓ and a short cheer, which changes from problem to problem (Review 1, founder 2026-09-24).
+    const cheer = () => host.querySelector('[role="status"]')?.textContent ?? ''
+    expect(cheer()).toMatch(/^✓(Right!|Nice!|You got it!|Great thinking!)$/)
     expect(text()).not.toContain('The answer is')
     expect(loadRun(L, lesson.id)!.asked).toBe(3)                    // still on it, "Right!" showing
     await act(async () => { await new Promise(r => setTimeout(r, 1600)) })
     expect(loadRun(L, lesson.id)!.asked).toBe(4)                    // moved on without a tap
-    expect(text()).not.toContain('Right!')
+    expect(cheer()).toBe('')
   })
 
   it('Take a break from the checkpoint', async () => {

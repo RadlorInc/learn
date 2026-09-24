@@ -20,8 +20,9 @@ import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { syncLesson, syncModulePractice } from '@/infra/storage/lessonSync'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { Pic, tapCue, pill } from './Pictures'
-import { stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
+import { stage, bubble, primary, hint, idea, cue } from './Frame'
 import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
+import { Cheer, TryAgain } from './AnswerFeedback'
 import { mixedPractice, type Module } from './modules'
 
 type Feedback = null | 'idea' | 'worked' | 'right'
@@ -117,8 +118,8 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
       </form>
     )}
 
-    {(feedback === 'idea' || (asked && answering)) && <p style={idea}>{lesson.bigIdea}</p>}
-    {feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right!</p>}
+    {feedback === 'idea' ? <TryAgain>{lesson.bigIdea}</TryAgain> : asked && answering && <p style={idea}>{lesson.bigIdea}</p>}
+    {feedback === 'right' && <Cheer k={i} />}
     {feedback === 'worked' && <>
       <div style={hint}>
         <b>Here&apos;s how this one works:</b>
