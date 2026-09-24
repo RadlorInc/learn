@@ -128,22 +128,22 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > We never sell your child's information or use it for advertising.
 >
-> **[ Review and confirm ]**
+> **[ I agree ]** (a link drawn as an empty checkbox; it opens the page below)
 >
 > Didn't sign up? Ignore this email and nothing will happen.
 >
 > Full details: [Privacy Policy](https://radlic.com/legal/privacy)
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
-### B1b. The page the button opens — the parent ticks the box and confirms
+### B1b. The page "I agree" opens — ticking the box there gives the permission
 
 **Heading:** `Please confirm: permission for your children to use Radlic`
 
 > This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.
 
-**Checkbox (unticked):** `I'm the parent or legal guardian, and I give permission.`
+**Checkbox (unticked):** `I agree` (ticking it records the permission; there is no separate button)
 
-**Buttons:** `Confirm` (disabled until the box is ticked) · `No — cancel this request`
+**Button:** `No — cancel this request`
 
 ### B2. Confirmation screen after the parent clicks
 

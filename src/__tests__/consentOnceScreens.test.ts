@@ -334,25 +334,22 @@ describe('withdraw permission for all my children', () => {
 })
 
 // ─────────────── B1's page: the box IS the grant (founder, 2026-09-25) ───────────────
-describe('the page B1 opens: Confirm waits for the box, and nothing is granted on arrival', () => {
-  it('unticked → Confirm disabled and a press sends nothing; ticked → exactly one grant; cancel stays available', async () => {
+describe('the page B1 opens: ticking "I agree" IS the grant, and nothing is granted on arrival', () => {
+  it('arrival sends only the lookup; there is no Confirm button; one tick → exactly one grant → B2', async () => {
     fetchAnswer = (_u, b) => b.action === 'lookup' ? { status: 'pending', lang: 'en', scope: 'account' } : { status: 'granted', lang: 'en' }
     window.location.hash = `#t=${'A'.repeat(43)}`
     const { ConsentLink } = await import('@/features/consent/ConsentLink')
     const m = await mount(createElement(ConsentLink, { mode: 'respond' }))
+    const grants = () => fetchLog.filter(f => (f.body as { action?: string })?.action === 'grant')
     const box = m.host.querySelector('[data-consent="respond"] input[type="checkbox"]') as HTMLInputElement
     expect(box, 'the page has no box').toBeTruthy()
     expect(box.checked, 'the box must start UNTICKED').toBe(false)
-    expect(box.closest('label')?.textContent?.trim()).toBe("I'm the parent or legal guardian, and I give permission.")
-    const confirm = button(m.host, /^Confirm$/) as HTMLButtonElement
-    expect(confirm.disabled, 'Confirm works without the tick').toBe(true)
-    await click(confirm)
-    expect(fetchLog.filter(f => (f.body as { action?: string })?.action === 'grant'), 'granted without the tick').toEqual([])
+    expect(box.closest('label')?.textContent?.trim()).toBe('I agree')
+    expect(grants(), 'granted on arrival — a mail scanner would agree for every parent').toEqual([])
+    expect(button(m.host, /^(Confirm|I give permission|Review and confirm)$/), 'a separate button is back').toBeUndefined()
     expect((button(m.host, /^No — cancel this request$/) as HTMLButtonElement).disabled).toBe(false)
     await click(box)
-    expect(confirm.disabled).toBe(false)
-    await click(confirm)
-    expect(fetchLog.filter(f => (f.body as { action?: string })?.action === 'grant')).toHaveLength(1)
+    expect(grants()).toHaveLength(1)
     expect(m.host.textContent).toContain('Thank you — permission recorded')
     await m.done()
   })
