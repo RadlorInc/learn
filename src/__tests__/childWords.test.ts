@@ -18,7 +18,8 @@ import { resolve } from 'node:path'
 import ts from 'typescript'
 import { SESSION_COPY } from '@/features/lessons/sessionCopy'
 
-const EN = /\b(fail(ed|s|ure)?|wrong|locked?|incomplete|not completed?|quit|leave|leaving)\b/i
+// ⚠️ `lock(ed|s)?`, not `locked?`: the second means "locke" + optional "d" and never matched "lock" (found by a planted break).
+const EN = /\b(fail(ed|s|ure)?|wrong|lock(ed|s)?|incomplete|not completed?|quit|leave|leaving)\b/i
 const ES = /\b(fall(aste|ado|ó|o)|incorrect[oa]|equivocad[oa]|bloquead[oa]|incomplet[oa]|no completad[oa]|salir|abandonar|dejar)\b/i
 const PERCENT = /\d\s*%|%\s*$|\$\{[^}]*\}\s*%/
 
@@ -83,7 +84,7 @@ describe('child-facing words', () => {
     // A sentence kept as an object's value is read; a CSS value is not.
     expect(sentences('src/app/play/page.tsx')).toContain("The game couldn't start. Try again.")
     expect(sentences('src/features/lessons/Frame.tsx').some(t => t.includes('* 100)}%'))).toBe(false)
-    for (const w of ['You failed', 'That is wrong', 'Locked', 'Incomplete', 'Not completed', 'Quit', 'Leave now', '23%', '7 %'])
+    for (const w of ['You failed', 'That is wrong', 'Locked', 'Skip the lock', 'Incomplete', 'Not completed', 'Quit', 'Leave now', '23%', '7 %'])
       expect(EN.test(w) || PERCENT.test(w), w).toBe(true)
     for (const w of ['Fallaste', 'Incorrecto', 'Bloqueado', 'Incompleto', 'No completado', 'Salir', 'Abandonar'])
       expect(ES.test(w), w).toBe(true)
