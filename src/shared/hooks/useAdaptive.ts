@@ -81,7 +81,7 @@ const ON_FIRE = [
   'Wow, you\'re on a roll! 🔥',
   'Three in a row! Amazing! ⭐',
   'You\'re unstoppable! 🚀',
-  'Milo is so proud of you! 🦊',
+  'Be proud of yourself! 🌟',
 ]
 
 function pick<T>(arr: T[]): T {

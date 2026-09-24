@@ -31,7 +31,7 @@ const P = {
 export const metadata: Metadata = {
   title: 'Help',
   description:
-    'Answers to the questions parents ask about AdaptiveLearn: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.',
+    'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.',
   alternates: { canonical: '/help' },
 }
 
@@ -57,7 +57,7 @@ function plainText(node: React.ReactNode): string {
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'The app looks wrong, or older than it should',
-    a: <>Fully close the app and open it again — not just a refresh. Milo keeps a copy on the device
+    a: <>Fully close the app and open it again — not just a refresh. Radlic keeps a copy on the device
        so it works offline, and occasionally that copy is a version behind. Reopening replaces it.</>,
   },
   {
@@ -73,7 +73,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
        we will check whether it was sent.</>,
   },
   {
-    q: 'How does Milo decide what to teach?',
+    q: 'How does Radlic decide what to teach?',
     a: <>You choose. On your dashboard you pick what your child sees: whole modules or single topics,
        from any grade from 3 to 8, or simply every topic. Each lesson explains one idea step by step,
        then practice adjusts to your child: two right in a row brings a different, harder kind of
@@ -137,7 +137,7 @@ export default function HelpPage() {
       padding: '28px 20px 60px',
     }}>
       <div className="adult-doc">
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← AdaptiveLearn</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← Radlic</Link>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: P.ink, margin: '14px 0 20px' }}>
           Help
         </h1>

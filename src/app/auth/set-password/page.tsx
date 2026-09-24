@@ -15,12 +15,12 @@
  */
 
 import { Suspense, useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { getCurrentSession, verifyEmailToken, setPassword } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
+import { APP_NAME } from '@/app/site'
 import { makeT, useSavedLang } from '@/features/dashboard/i18n'
 
 const MIN = 6
@@ -56,19 +56,10 @@ function Frame({ subtitle, children }: { subtitle: string; children: React.React
       fontFamily: 'var(--font-body)',
     }}>
       <div style={{ textAlign: 'center' }}>
-        <Image
-          src="/assets/characters/milo-happy.png"
-          alt="Milo"
-          width={78}
-          height={78}
-          priority
-          style={{ objectFit: 'contain', marginBottom: 6 }}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-        />
         <h1 style={{
           fontSize: 28, fontWeight: 800, color: C.accent, margin: 0,
           fontFamily: 'var(--font-display)',
-        }}>AdaptiveLearn</h1>
+        }}>{APP_NAME}</h1>
         <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
           {subtitle}
         </p>

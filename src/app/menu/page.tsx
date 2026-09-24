@@ -226,8 +226,8 @@ export default function MainMenu() {
     <div style={{
       minHeight: '100dvh', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
-      background: '#FCEAB6', fontSize: 48,
-    }}>🦊</div>
+      background: '#FCEAB6',
+    }} aria-busy="true" />
   )
 
   // Every card below (plan, resume, story, check door, picker) opens a legacy chapter, so while they
@@ -299,13 +299,13 @@ export default function MainMenu() {
                 <div style={{ fontSize: 12, fontWeight: 700, color: '#1e9e5f', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Your plan · step {planNext.step} of {planNext.total}</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Next: {CHAPTER_NAMES[planNext.ch]}</div>
                 {/* ⚠️ EVERY PLAN IS A GRADE-START PLAN NOW — the check that produced a diagnosed
-                    one was deleted 2026-09-20 — so this may not claim a gap. "Milo picked this to
+                    one was deleted 2026-09-20 — so this may not claim a gap. "We picked this to
                     close the gap" would be a straight falsehood. Same rule as the report's
                     never-say-"on track". */}
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>
                   {chapterDone(learnerId, planNext.ch)
                     ? "You've played this one — a quick second go, then something new."
-                    : 'Starting from the beginning — Milo adjusts as they play.'}
+                    : 'Starting from the beginning — it adjusts as they play.'}
                 </div>
               </div>
               <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: '#2BB673', border: '3px solid #1e9e5f', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Continue ▶</span>
@@ -334,11 +334,10 @@ export default function MainMenu() {
             border: '3px solid var(--milo-orange)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', rowGap: 10 }}>
-              <div style={{ fontSize: 36 }}>🦊</div>
               <div style={{ flex: 1, minWidth: 150 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--milo-orange)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Story Mode</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Go on an adventure with Milo!</div>
-                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>Milo&apos;s Picnic Party — count, knock, share &amp; more</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Go on an adventure!</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>The Picnic Party — count, knock, share &amp; more</div>
               </div>
               <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--milo-orange)', border: '3px solid var(--milo-orange-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Play ▶</span>
             </div>

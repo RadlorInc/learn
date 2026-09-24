@@ -212,7 +212,7 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
   if (paused) return (
     <div data-roster="paused" style={{ marginTop: 14, fontSize: 14, color: P.ink, background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 10, padding: '12px 14px', lineHeight: 1.5 }}>
       <p style={{ margin: 0, fontWeight: 800 }}>Adding students is paused for now.</p>
-      <p style={{ margin: '6px 0 0' }}>We are still setting up how a school gives permission for a child to use Milo. Until that is ready, new students cannot be added to a class. Students already in your class are not affected.</p>
+      <p style={{ margin: '6px 0 0' }}>We are still setting up how a school gives permission for a child to use Radlic. Until that is ready, new students cannot be added to a class. Students already in your class are not affected.</p>
       <button onClick={onDone} style={{ ...ghost, marginTop: 10 }}>Close</button>
     </div>
   )

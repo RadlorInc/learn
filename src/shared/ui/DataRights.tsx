@@ -42,7 +42,7 @@ export interface ExportBundle {
 export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras) {
   return {
     exportedAt: new Date().toISOString(),
-    about: `Everything Milo has stored about ${name}.`,
+    about: `Everything Radlic has stored about ${name}.`,
     note: 'This is a copy. It does not delete anything — use "Delete profile" for that.',
     learner: b.learner,
     // Consent-once: the parent's attestation for THIS child, named on its own so it cannot be missed inside
@@ -128,7 +128,7 @@ export function DataRights({ name, learnerId, bundle, children }: {
         {t('{name}’s data', { name })}
       </h3>
       <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        {t('You can take a copy of everything Milo has stored, or delete it for good. Deleting cannot be undone.')}
+        {t('You can take a copy of everything Radlic has stored, or delete it for good. Deleting cannot be undone.')}
       </p>
       <button onClick={download} disabled={busy} style={btn}>
         {busy ? `… ${t('Gathering')}` : done ? `✓ ${t('Downloaded')}` : `⬇ ${t('Download a copy')}`}

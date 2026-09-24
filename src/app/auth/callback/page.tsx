@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getCurrentSession, onAuthStateChange } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
@@ -65,14 +64,6 @@ export default function AuthCallbackPage() {
       background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
       gap: 16,
     }}>
-      <Image
-        src="/assets/characters/milo-happy.png"
-        alt="Milo"
-        width={80}
-        height={80}
-        priority
-        style={{ objectFit: 'contain', animation: 'bounce 1s ease-in-out infinite' }}
-      />
       <p style={{ fontSize: 16, fontWeight: 600, color: '#888' }}>{t('Signing you in…')}</p>
       <style>{`@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }`}</style>
     </div>

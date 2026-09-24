@@ -67,7 +67,7 @@ const nextConfig: NextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
           // V3: deny every powerful feature. The camera grant existed only for the AR hand-tracking
           // games under /play/* — those are deleted and nothing calls getUserMedia now, so the app
-          // was advertising a capability it cannot use. (Milo's voice is speechSynthesis, which is
+          // was advertising a capability it cannot use. (the app's voice is speechSynthesis, which is
           // output-only and needs no Permissions-Policy grant.)
           // ⚠️ `camera=(self)` is granted for ONE feature: the 9–11 Factor Lab, which is answered by
           // holding fingers up to a webcam (story/FactorLab.tsx). Hand landmarks are computed

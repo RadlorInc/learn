@@ -11,7 +11,7 @@ import { kv } from '@/infra/storage/kv'
  *
  * ⚠️⚠️ IT IS IN THE ROOT LAYOUT, SO WITHOUT THE EXEMPTION BELOW IT REPLACED **EVERY PAGE IN THE
  * APP** WITH A FOX EMOJI IN THE SERVER-RENDERED HTML — measured on production, `/help` shipped
- * exactly 13 visible characters ("Milo — Help 🦊") and so did both legal pages. Three faults from
+ * exactly 13 visible characters ("<old name> — Help") and so did both legal pages. Three faults from
  * one early return, none of which fail anywhere a type-check or a gate can see:
  *   1. `/legal/[slug]`'s own comment states a policy page "must render … **with JS blocked**". It
  *      did not. A COPPA privacy policy that needs JavaScript to be read is a compliance artifact
@@ -64,9 +64,7 @@ export default function StorageGate({ children }: { children: React.ReactNode })
   // client-side nav INTO the app instant) — only the splash is skipped.
   if (!ready && needsStorage(pathname)) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6', fontSize: 48 }}>
-        🦊
-      </div>
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6' }} aria-busy="true" />
     )
   }
   return <>{children}</>

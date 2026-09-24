@@ -28,19 +28,19 @@ export function DashNav({ items, reminders, onBell, onSignOut }: {
   </>
   return <>
     <nav className="home-nav" aria-label={t('Dashboard')}>
-      <span className="home-logo">🦊 AdaptiveLearn</span>
+      <span className="home-logo">Radlic</span>
       {links(false)}
     </nav>
     <header className="dash-top">
       <button type="button" aria-label={t('Open menu')} aria-haspopup="dialog" data-tour="menu" onClick={() => drawer.current?.showModal()}><Burger /></button>
-      <span className="dash-top-logo">🦊 AdaptiveLearn</span>
+      <span className="dash-top-logo">Radlic</span>
       <button type="button" aria-label={t('Reminders, {n} waiting', { n: reminders })} data-tour="bell" onClick={onBell}>
         <Bell />{reminders > 0 && <span className="dash-count">{reminders}</span>}
       </button>
     </header>
     <dialog ref={drawer} className="dash-drawer" aria-label={t('Menu')} onClick={e => { if (e.target === e.currentTarget) close() }}>
       <nav className="dash-drawer-panel" aria-label={t('Dashboard')}>
-        <span className="home-logo">🦊 AdaptiveLearn
+        <span className="home-logo">Radlic
           <button type="button" aria-label={t('Close menu')} onClick={close} className="dash-x">×</button></span>
         {links(true)}
       </nav>

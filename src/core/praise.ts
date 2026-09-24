@@ -1,5 +1,5 @@
 /**
- * What Milo says when a child gets one right, and which bands hear it.
+ * What the app says when a child gets one right, and which bands hear it.
  *
  * ⚠️ THIS REVERSES A RECORDED CALL, DELIBERATELY. The rule used to be *no spoken praise on a
  * correct answer — the tick is enough*, on the reasoning that children do not need praising every

@@ -1,6 +1,6 @@
 'use client'
 /**
- * miloPointer — a tiny singleton that tracks the on-screen element Milo's voice
+ * miloPointer — a tiny singleton that tracks the on-screen element the voice
  * is currently talking about, so a bouncing-hand pointer can point at it.
  *
  * Decoupled from the speaker so there's no import cycle. Pair it with speech:

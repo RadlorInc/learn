@@ -33,10 +33,10 @@ export const SUPPORT_EMAIL = 'support@radlor.com'
  * ⚠️ THIS IS THE WHOLE POINT AND IT IS EASY TO BREAK BY RETYPING A URL. radlor.com's own JSON-LD
  * declares the Organization at `https://radlor.com/#organization`; this app REFERENCES that same id
  * rather than declaring a second Organization of its own. Two declarations would be two entities
- * with the same name, which is exactly the problem the AdaptiveLearn/Milo rename existed to fix —
+ * with the same name, which is exactly the problem the product's first rename (2026-08) existed to fix —
  * one product, one company, one node, described from two sites.
  *
- * ⚠️ "AdaptiveLearn" is a GENERIC phrase in a crowded category (measured 2026-08-19: the search
+ * ⚠️ "AdaptiveLearn", the product's name until 2026-09-24, was a GENERIC phrase in a crowded category (measured 2026-08-19: the search
  * returns "adaptive learning" the concept, plus AdaptedMind / bettermarks / DreamBox / Prodigy).
  * "Radlor" is distinctive and effectively unclaimed. So the distinctive token has to do the entity
  * work: the app names Radlor as its publisher in schema AND links to it visibly in the footer.
@@ -45,7 +45,7 @@ export const SUPPORT_EMAIL = 'support@radlor.com'
 export const COMPANY = 'Radlor'
 export const COMPANY_URL = 'https://radlor.com'
 export const COMPANY_ID = `${COMPANY_URL}/#organization`
-export const APP_NAME = 'AdaptiveLearn'
+export const APP_NAME = 'Radlic'
 /** The app's own entity id. radlor.com's `/adaptivelearn` page references this exact string. */
 export const APP_ID = 'https://adaptivelearn.radlor.com/#app'
 

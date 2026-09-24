@@ -31,7 +31,7 @@ export class MiloErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
-    console.error('[Milo Error]', error, errorInfo)
+    console.error('[Radlic Error]', error, errorInfo)
     // ⚠️ ONE report path, shared with `app/error.tsx` and `app/global-error.tsx` — see
     // `infra/reportCrash.ts`. It keeps the local breadcrumb (what travels to support in the
     // parent's diagnostic block) AND posts to the monitoring sink, and it can never throw.
@@ -50,7 +50,6 @@ export class MiloErrorBoundary extends React.Component<
           background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
           padding: 24, gap: 20, textAlign: 'center',
         }}>
-          <div style={{ fontSize: 72 }}>🦊</div>
           <h1 style={{
             fontSize: 24, fontWeight: 800,
             color: '#F26B2C', margin: 0,
@@ -61,7 +60,7 @@ export class MiloErrorBoundary extends React.Component<
             fontSize: 16, color: '#888',
             maxWidth: 320, margin: 0, lineHeight: 1.5,
           }}>
-            Milo bumped into a problem. Don&apos;t worry — your progress is saved!
+            Something went wrong. Don&apos;t worry — your progress is saved!
           </p>
           <button
             onClick={() => {

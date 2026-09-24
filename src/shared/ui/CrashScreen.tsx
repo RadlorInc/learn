@@ -45,7 +45,6 @@ export function CrashScreen({
 }) {
   return (
     <div style={style}>
-      <div style={{ fontSize: 72, lineHeight: 1 }} aria-hidden>🦊</div>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#F26B2C', margin: 0 }}>{title}</h1>
       <p style={{ fontSize: 16, color: '#7a6a55', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>{body}</p>
 

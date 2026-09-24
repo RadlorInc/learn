@@ -16,7 +16,7 @@ export interface ActivePlan {
   startedAt: string
   /**
    * ⚠️ WHERE THE PLAN CAME FROM, AND IT IS NOT BOOKKEEPING — IT DECIDES WHAT WE MAY SAY ABOUT IT.
-   * The plan card's own words are "Milo picked this to close the gap", which is true of a diagnosed
+   * The plan card's own words are "<name> picked this to close the gap", which is true of a diagnosed
    * plan and FALSE of a grade-start one: nobody looked, so there is no gap to have closed. Same
    * family as the diagnostic's never-say-"on-track" rule — the claim has to match the evidence, and
    * without this field the UI cannot tell the two apart. Absent = 'diagnostic' (every plan written
@@ -160,7 +160,7 @@ export function reconcilePlan(
      * This function REBUILDS the plan field by field, so anything not named here is dropped — and
      * `source` absent reads as 'diagnostic', which is correct for every plan written before
      * 2026-08-24 and a lie about a skipper's. The menu runs this on every load with a learner
-     * bootstrap, so a skipped child's card would revert to "Milo picked this to close the gap"
+     * bootstrap, so a skipped child's card would revert to "<name> picked this to close the gap"
      * within one visit: the app claiming a diagnosis nobody made, which is the exact defect
      * `source` was added to prevent.
      *

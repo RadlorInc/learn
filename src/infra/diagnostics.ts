@@ -2,14 +2,14 @@
 /**
  * diagnostics — the device-side snapshot a parent sends with a support request.
  *
- * THE PROBLEM THIS SOLVES. Milo is local-first: progress lives in IndexedDB on the child's
+ * THE PROBLEM THIS SOLVES. The app is local-first: progress lives in IndexedDB on the child's
  * device and syncs up through a queue. So the failures parents actually report are, more often
  * than not, entirely invisible from the server:
  *
  *   "her stars vanished"      → the offline queue is full and never flushed
  *   "it won't load"           → a stale service-worker shell after a deploy
  *   "nothing saves"           → IndexedDB blocked/hung, running on the localStorage fallback
- *   "Milo doesn't talk"       → speech never unlocked on that browser
+ *   "the voice doesn't talk" → speech never unlocked on that browser
  *
  * None of those produce a Supabase row or a Vercel log line. Historically the only way this
  * repo ever diagnosed one (the Safari `upgrade-insecure-requests` boot failure) was by
@@ -99,7 +99,7 @@ export async function collectDiagnostics(learnerIdOverride?: string): Promise<Di
 /** Render the snapshot as the plain-text block that goes in the support email. */
 export function formatDiagnostics(d: Diagnostics): string {
   const lines = [
-    `--- Milo diagnostics (please keep this in your email) ---`,
+    `--- Radlic diagnostics (please keep this in your email) ---`,
     `time      ${d.at}`,
     `app       ${d.swVersion}${d.swControlling ? '' : ' (no service worker)'}`,
     `account   ${d.accountEmail}  ${d.accountId}`,
@@ -133,5 +133,5 @@ export function supportMailto(block: string, note: string): string {
     '',
     block,
   ].join('\n')
-  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Milo — problem report')}&body=${encodeURIComponent(body)}`
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Radlic — problem report')}&body=${encodeURIComponent(body)}`
 }

@@ -55,6 +55,6 @@ export function lockCopy(chapterId: string): LockCopy {
     emoji: meta?.emoji ?? '🔒',
     title: meta?.name ?? 'This chapter',
     // The catalog's own one-liner. Written once, for the picker, and true here for the same reason.
-    what: meta?.hint ?? 'There is more for Milo to show you in here.',
+    what: meta?.hint ?? 'There is more to learn in here.',
   }
 }

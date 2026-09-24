@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Fredoka, Nunito, IBM_Plex_Sans, IBM_Plex_Mono, Gaegu } from 'next/font/google'
 import { MiloErrorBoundary } from '@/shared/ui/ErrorBoundary'
 import StorageGate from '@/shared/ui/StorageGate'
-import { SITE_URL } from './site'
+import { APP_NAME, SITE_URL } from './site'
 
 import { OfflineBanner } from '@/infra/useOfflineSync'
 import AuthEventLogger from '@/infra/AuthEventLogger'
@@ -70,28 +70,28 @@ export const viewport: Viewport = {
  * The `template` gives every page a suffix without each page repeating it; `/help` and
  * `/legal/[slug]` already export their own titles and now inherit the brand for free.
  *
- * ⚠️ MILO IS THE CHARACTER. ADAPTIVELEARN IS THE PRODUCT. Only naming positions — the title,
- * the manifest, the wordmark, the legal definitions — carry the product name. Everywhere the pony
- * is doing something (speaking, asking, tripping over an error) he stays Milo, and that is
- * deliberate: it is the Duo/Duolingo split, not an inconsistency. Do not "fix" it either way.
+ * ⚠️ THE PRODUCT IS RADLIC (renamed 2026-09-24 from AdaptiveLearn, which was renamed from Milo) AND THERE IS NO
+ * MASCOT. Every naming position — the title, the manifest, the wordmark, the legal definitions — reads `APP_NAME`;
+ * nothing speaks or apologises as a character. `renameGate.test.ts` fails if either name, or the fox as a brand,
+ * comes back.
  *
- * ⚠️ THE DESCRIPTION SAYS WHAT THE PRODUCT DOES, NOT WHAT IT IS CALLED. "Milo's interactive
+ * ⚠️ THE DESCRIPTION SAYS WHAT THE PRODUCT DOES, NOT WHAT IT IS CALLED. "<Name>'s interactive
  * learning adventure for kids" contains no word a parent would type. This one names the job
  * (lessons that adapt) and the grades, because the description is the only sentence most people read.
  */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "AdaptiveLearn — math lessons that adapt to your child, grades 3 to 8",
-    template: '%s · AdaptiveLearn',
+    default: `${APP_NAME} — math lessons that adapt to your child, grades 3 to 8`,
+    template: `%s · ${APP_NAME}`,
   },
   description:
     'Math for grades 3 to 8: each lesson explains one idea step by step, then practice adapts to what your child gets right and wrong. You choose the lessons. No timer, no red crosses.',
-  applicationName: 'AdaptiveLearn',
+  applicationName: APP_NAME,
   openGraph: {
     type: 'website',
-    siteName: 'AdaptiveLearn',
-    title: "AdaptiveLearn — math lessons that adapt to your child, grades 3 to 8",
+    siteName: APP_NAME,
+    title: `${APP_NAME} — math lessons that adapt to your child, grades 3 to 8`,
     description:
       'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
     url: '/',
@@ -100,7 +100,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: "AdaptiveLearn — math lessons that adapt to your child, grades 3 to 8",
+    title: `${APP_NAME} — math lessons that adapt to your child, grades 3 to 8`,
     description:
       'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
   },
@@ -112,13 +112,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'AdaptiveLearn',
+    title: APP_NAME,
   },
   other: {
     'mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'AdaptiveLearn',
+    'apple-mobile-web-app-title': APP_NAME,
     'msapplication-TileColor': '#F26B2C',
     'msapplication-tap-highlight': 'no',
   },

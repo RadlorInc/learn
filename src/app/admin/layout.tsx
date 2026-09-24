@@ -57,7 +57,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       )}
       <header style={{ background: '#fff', borderBottom: '1px solid #e3e8ef', padding: '12px 24px', display: 'flex', gap: 18, alignItems: 'center' }}>
-        <strong style={{ fontSize: 14 }}>Milo · usage</strong>
+        <strong style={{ fontSize: 14 }}>Radlic · usage</strong>
         <nav style={{ display: 'flex', gap: 14 }}>
           {TABS.map(t => (
             <Link key={t.href} href={t.href} style={{

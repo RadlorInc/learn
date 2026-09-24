@@ -1,6 +1,6 @@
 'use client'
 /**
- * Which voice Milo speaks in — a per-DEVICE setting, not per-learner.
+ * Which voice the lessons speak in — a per-DEVICE setting, not per-learner.
  *
  * Device-scoped on purpose: it's an output preference like volume, and a family
  * sharing a tablet wants one answer, not one per child. `'device'` means fall back

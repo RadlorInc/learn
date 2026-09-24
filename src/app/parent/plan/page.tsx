@@ -75,7 +75,7 @@ function PlanInner() {
     <main style={{ minHeight: '100dvh', background: P.page, fontFamily: 'var(--font-body)' }}>
       <div className="adult-doc">
         <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: P.ink2, textDecoration: 'none' }}>← Back</Link>
-        <h1 style={{ fontSize: 26, margin: '12px 0 6px', color: P.ink, fontFamily: 'var(--font-display)', fontWeight: 900 }}>Milo for your family</h1>
+        <h1 style={{ fontSize: 26, margin: '12px 0 6px', color: P.ink, fontFamily: 'var(--font-display)', fontWeight: 900 }}>Radlic for your family</h1>
         <p style={{ fontSize: 14, lineHeight: 1.55, color: P.ink2, margin: '0 0 20px' }}>
           {/* ⚠️ THIS PARAGRAPH ONCE SOLD A FEATURE THAT NO LONGER EXISTS. It read "The check that
               finds your child's starting point is always free, and so is the first chapter of

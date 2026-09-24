@@ -11,7 +11,7 @@ export const alt = `${APP_NAME} by ${COMPANY} — adaptive math for grades 3 to 
  * a square is letterboxed or cropped to a strip, and this is a product parents forward to each
  * other by link. The card now says the name, the promise and the grades at the size the slot is.
  *
- * ⚠️ It names Radlor, deliberately: "AdaptiveLearn" is a generic phrase in a crowded category, so
+ * ⚠️ It names Radlor, deliberately: a product name alone is easily lost in a crowded category, so
  * the card that travels furthest is the one place it can least afford to be unattributed.
  */
 export default function OpengraphImage() {

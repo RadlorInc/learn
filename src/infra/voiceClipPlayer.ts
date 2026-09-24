@@ -3,7 +3,7 @@
  * Play a PRE-RENDERED clip for a spoken line, falling back to browser speech when we
  * don't hold one.
  *
- * Why clips at all: Chrome ships no usable local voice on many machines, so Milo was
+ * Why clips at all: Chrome ships no usable local voice on many machines, so the app was
  * simply silent there — and the teen walkthroughs are where the actual teaching lives.
  *
  * The whole layer is fallback-first: any miss (no clip, no manifest, decode error,
@@ -64,7 +64,7 @@ let _el: HTMLAudioElement | null = null
 // How fast a clip plays back. A RECORDED clip ignores the `rate` passed to speak()
 // — that only ever reached the browser-TTS fallback — so without this the "speech
 // speed" control is a dead button for every learner who has clips, which is the
-// whole 12–18 band. `preservesPitch` keeps Milo sounding like Milo when slowed.
+// whole 12–18 band. `preservesPitch` keeps the voice sounding like itself when slowed.
 let _rate = 1
 export function setClipRate(r: number): void {
   _rate = r

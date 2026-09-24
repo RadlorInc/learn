@@ -397,7 +397,7 @@ function Dashboard() {
   }
 
   if (loading) return (
-    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6', fontSize:48 }}>🦊</div>
+    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6' }} aria-busy="true" />
   )
 
   // One-time gate: a fresh account (role still null) picks Teacher or Parent before seeing the dashboard.
@@ -405,7 +405,6 @@ function Dashboard() {
 
   if (loadError) return (
     <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, background:'#FCEAB6', padding:24, textAlign:'center' }}>
-      <div style={{ fontSize:56 }}>🦊</div>
       <p style={{ fontSize:18, fontWeight:700, color:'#3D2516', margin:0 }}>{t('Hmm, we couldn’t load your dashboard.')}</p>
       <p style={{ fontSize:14, color:'#7a6a55', margin:0 }}>{t('Check your connection and try again.')}</p>
       <button onClick={() => loadAll()} style={{ padding:'14px 28px', background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>{t('Try again')}</button>
@@ -756,8 +755,7 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
         padding:'44px 24px', margin:'8px auto 0', maxWidth:520,
         textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14,
       }}>
-        <div style={{ fontSize:60 }}>🦊</div>
-        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>{t('Welcome to AdaptiveLearn!')}</h2>
+        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>{t('Welcome to Radlic!')}</h2>
         <p style={{ fontSize:15, color:P.ink2, margin:0, maxWidth:340, lineHeight:1.5 }}>
           {t('Add your first learner and we’ll find where to start.')}
         </p>
@@ -801,10 +799,9 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
 
   return (
     <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'32px 20px', background:P.page, fontFamily:'var(--font-body)' }}>
-      <div style={{ fontSize:52 }}>🦊</div>
       <div style={{ textAlign:'center' }}>
         <h1 style={{ fontSize:28, fontWeight:900, color:P.ink, margin:'0 0 6px', fontFamily:'var(--font-display)' }}>Welcome{name && name !== 'there' ? `, ${name}` : ''}!</h1>
-        <p style={{ fontSize:15, color:P.ink2, margin:0 }}>How will you be using AdaptiveLearn?</p>
+        <p style={{ fontSize:15, color:P.ink2, margin:0 }}>How will you be using Radlic?</p>
       </div>
 
       {/* `.role-cards` stacks under 720px and sits the two side by side above it. */}

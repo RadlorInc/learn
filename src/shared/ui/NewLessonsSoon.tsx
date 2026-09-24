@@ -10,7 +10,6 @@ export function NewLessonsSoon({ back = '/parent', label = 'Back' }: { back?: st
       minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', gap: 14, padding: 24, textAlign: 'center', background: '#FCEAB6',
     }}>
-      <div style={{ fontSize: 56 }} aria-hidden>🦊</div>
       <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: 0 }}>
         New lessons are on the way
       </h1>
