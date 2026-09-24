@@ -105,7 +105,7 @@ const SURFACES: Record<string, { paint: () => Promise<string>; control: string }
   },
   'consent-email': {
     paint: async () => (await import('@/features/consent/email')).renderB1('en', `${ORIGIN}/consent/respond#t=x`, 'Maya').html,
-    control: 'Thanks for signing up to Radlic',
+    control: 'Thanks for signing up with Radlic',
   },
   'withdraw-email': {
     paint: async () => (await import('@/features/consent/email')).renderB3('en', `${ORIGIN}/consent/withdraw#t=x`).html,

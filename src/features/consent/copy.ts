@@ -123,8 +123,10 @@ export const B1 = {
   subject: { en: 'Please confirm: permission for your children to use Radlic', es: 'Confirme, por favor: permiso para que sus hijos usen Radlic' },
   /** "{name}" is the parent's first name (typed at signup, or from Google); with none, the line is "Hi,". */
   hi: { en: 'Hi {name},', es: 'Hola, {name}:' },
-  thanks: { en: 'Thanks for signing up to Radlic.', es: 'Gracias por registrarse en Radlic.' },
-  before: { en: 'Before your children can use it, US law requires your permission. For each child you add, we store:', es: 'Antes de que sus hijos puedan usarla, la ley de los EE. UU. exige su permiso. Por cada niño que añada, guardamos:' },
+  thanks: { en: 'Thanks for signing up with Radlic.', es: 'Gracias por registrarse en Radlic.' },
+  before: { en: 'Before your children can use it, US law requires your permission.', es: 'Antes de que sus hijos puedan usarla, la ley de los EE. UU. exige su permiso.' },
+  /** Sits directly on top of `list`, with no gap. */
+  store: { en: 'For each child you add, we store:', es: 'Por cada niño que añada, guardamos:' },
   list: [
     { en: 'their first name or nickname, the avatar you pick and their username', es: 'su nombre de pila o apodo, el avatar que usted elija y su nombre de usuario' },
     { en: 'the lessons you choose, and a grade band (grades 3–5 or 6–8) worked out from them', es: 'las lecciones que usted elija y una franja de grados (grados 3 a 5 o 6 a 8) deducida de ellas' },
@@ -137,7 +139,7 @@ export const B1 = {
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
   // ── the tick is the email's checkbox-link AND the page's box (/consent/respond); ticking the page's box IS the grant ──
   covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
-  tick: { en: "I've read and agreed to the Privacy Policy", es: 'He leído y acepto la Política de privacidad' },
+  tick: { en: "I've read and agree to the Privacy Policy", es: 'He leído y acepto la Política de privacidad' },
   decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
 }
 

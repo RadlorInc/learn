@@ -345,7 +345,7 @@ describe('the page B1 opens: ticking the box IS the grant, and nothing is grante
     const box = m.host.querySelector('[data-consent="respond"] input[type="checkbox"]') as HTMLInputElement
     expect(box, 'the page has no box').toBeTruthy()
     expect(box.checked, 'the box must start UNTICKED').toBe(false)
-    expect(box.closest('label')?.textContent?.trim()).toBe("I've read and agreed to the Privacy Policy")
+    expect(box.closest('label')?.textContent?.trim()).toBe("I've read and agree to the Privacy Policy")
     const policy = m.host.querySelector('[data-consent="respond"] a[href="https://radlic.com/legal/privacy"]')
     expect(policy?.textContent, 'the Privacy Policy link is not on the page').toBe('Privacy Policy')
     expect(policy!.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING, 'the Privacy Policy line must come ABOVE the box').toBeTruthy()
