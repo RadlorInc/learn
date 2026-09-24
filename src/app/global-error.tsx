@@ -28,9 +28,9 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body style={{ margin: 0 }}>
-        <title>Milo — something went wrong</title>
+        <title>Radlic — something went wrong</title>
         <CrashScreen
-          title="Oops! Milo needs a moment"
+          title="Oops! Something needs a moment"
           body="Something went wrong while starting up. Nothing is lost — your stars and progress are saved."
           primary={{ label: 'Try again', onClick: retry }}
           secondary={{ label: 'Go back home', href: '/menu' }}

@@ -130,9 +130,9 @@ describe('POST /api/billing/cancel', () => {
     const [mail, ...extra] = emails()
     expect(extra).toEqual([])
     expect(mail.to).toEqual(['a@example.com'])
-    expect(mail.subject).toBe('Your Milo subscription is cancelled')
+    expect(mail.subject).toBe('Your Radlic subscription is cancelled')
     expect(mail.text).toContain('Your plan ends on February 1, 2026. You will not be charged again.')
-    expect(mail.text).toContain('This is a service message about your Milo account.\n\nRadlor Inc.\n254 Chapman Rd, Ste 208 #28608, Newark, DE 19702\nQuestions: support@radlor.com')
+    expect(mail.text).toContain('This is a service message about your Radlic account.\n\nRadlor Inc.\n254 Chapman Rd, Ste 208 #28608, Newark, DE 19702\nQuestions: support@radlor.com')
     expect(mail.html).toContain('February 1, 2026')
   })
 

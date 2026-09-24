@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * useMiloSpeaker — Milo's speech engine
+ * useMiloSpeaker — the app's speech engine
  *
  * Root cause of silence bug:
  * Chrome's speechSynthesis gets stuck when:
@@ -43,10 +43,10 @@ let _activeLineCancel: (() => void) | null = null
 
 /**
  * ⚠️ A LINE IS "IN FLIGHT" FROM THE MOMENT IT IS DISPATCHED, NOT FROM THE MOMENT IT IS HEARD —
- * and that gap is where Milo's voice was being cut off.
+ * and that gap is where the voice was being cut off.
  *
  * `_speaking` only turns true at the clip's (or utterance's) `onStart`, which is one async clip
- * lookup plus Chrome's mandatory 100ms cancel gap after the call. Anything that asked "is Milo
+ * lookup plus Chrome's mandatory 100ms cancel gap after the call. Anything that asked "is the voice
  * talking?" inside that window got FALSE about a line that was already on its way — so it started
  * its own line, and `_doSpeak` cancelled the one still loading. The first half simply vanished, on
  * exactly the machines that HAVE clips.
@@ -72,7 +72,7 @@ let _queue: Array<{ text: string; rate: number; pitch: number }> = []
 /**
  * ⚠️ AND IT IS BOUNDED, because a queue is a way of running LATE. A round is at most three lines
  * deep (the chapter's verdict, the shell's praise, the next question) and a child who answers
- * faster than Milo talks would otherwise build a backlog and hear commentary on the question
+ * faster than the voice talks would otherwise build a backlog and hear commentary on the question
  * before last. Past this depth the OLDEST waiting line is dropped: the newest is the one that
  * still describes what is on screen.
  */
@@ -147,7 +147,7 @@ function _pickVoice(): SpeechSynthesisVoice | null {
   // sound, sometimes no error), whereas a local voice always produces audio. Reason for "US": the
   // product is American English, so we must NOT fall onto the British/Australian/Irish system voices
   // (Daniel/Karen/Moira) that ship alongside the US ones — they were in this list before and gave
-  // Milo a non-US accent. Ordered warmest/most kid-appropriate first (Samantha & the enhanced US
+  // the voice a non-US accent. Ordered warmest/most kid-appropriate first (Samantha & the enhanced US
   // female voices read best for young children); male US voices and the Windows voices follow.
   const LOCAL_PREFER = [
     'Samantha', 'Ava', 'Allison', 'Susan', 'Nicky',   // macOS/iOS US female (warm)
@@ -236,7 +236,7 @@ function _doSpeakBrowser(text: string, rate: number, pitch: number) {
 /**
  * ⚠️⚠️ THIS IS AN INSTRUMENT FOR A FAULT WE HAVE NOT MEASURED YET, AND IT FIXES NOTHING.
  *
- * "Milo's voice does not speak" has been reported twice now (the nest chapter, then Shape House on
+ * "the voice does not speak" has been reported twice now (the nest chapter, then Shape House on
  * 2026-08-30, where a tester lost the voice around the hull round). Both times the only thing anyone
  * could check afterwards was whether `speak()` was CALLED — and it was, every time. That is not the
  * question. The question is whether the utterance ever PRODUCED AUDIO, and the two differ under a
@@ -253,7 +253,7 @@ function _doSpeakBrowser(text: string, rate: number, pitch: number) {
  * quiet, then read `__miloSpeech()` in the console.
  *
  * Deliberately always on (not dev-gated): the fault appears on the tester's real device, on
- * production, and a dev-only diagnostic could not see it there. It holds Milo's own lines — no
+ * production, and a dev-only diagnostic could not see it there. It holds the app's own lines — no
  * child's data — capped at the last 60.
  */
 export type SpeechNote = { text: string; at: number; started?: number; ended?: number; error?: string }
@@ -324,14 +324,14 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
       return
     }
     if (e.error !== 'canceled' && e.error !== 'interrupted') {
-      console.warn('[Milo] Speech error:', e.error)
+      console.warn('[Radlic] Speech error:', e.error)
     }
   }
 
   try {
     window.speechSynthesis.speak(u)
   } catch (err) {
-    console.warn('[Milo] speak() threw:', err)
+    console.warn('[Radlic] speak() threw:', err)
     _setSpeaking(false)
     _lineDone()
   }
@@ -345,8 +345,8 @@ export function speak(text: string, rate = 0.88, pitch = 1.05) {
 }
 
 /**
- * Speak a line AND point Milo's hand at the element it's about. The pointer shows
- * while the line plays and hides when Milo stops. Pass null to just speak.
+ * Speak a line AND point the hand at the element it's about. The pointer shows
+ * while the line plays and hides when the voice stops. Pass null to just speak.
  */
 export function speakAt(text: string, target: HTMLElement | null, rate = 0.88, pitch = 1.05) {
   _doSpeak(text, rate, pitch)
@@ -354,7 +354,7 @@ export function speakAt(text: string, target: HTMLElement | null, rate = 0.88, p
 }
 
 /**
- * Speak `text` only once Milo has finished what he is saying — the queueing counterpart of
+ * Speak `text` only once the voice has finished what it is saying — the queueing counterpart of
  * `speak()`, which supersedes. Use it wherever one NARRATION follows another (a verdict, then the
  * next question); use `speak()` where the newest line is genuinely the only one worth hearing (a
  * child tapping numbers).
@@ -378,7 +378,7 @@ export function speakAfterCurrent(text: string, rate = 0.88, pitch = 1.05) {
 }
 
 /**
- * Run `cb` when Milo has stopped talking — or after `ceilingMs`, whichever comes FIRST.
+ * Run `cb` when the voice has stopped talking — or after `ceilingMs`, whichever comes FIRST.
  *
  * This is how a beat holds itself open for the voice instead of advancing on a fixed timer that
  * cuts the tail off a long line. The ceiling is not optional: both Chrome and Safari start an
@@ -400,7 +400,7 @@ export function afterSpeech(cb: () => void, ceilingMs = 12000): () => void {
  * Narrate a walkthrough line by line, self-paced.
  *
  * Each line reveals its visual (`onStep`), speaks, and holds for AT LEAST `minMs(line)` and until
- * Milo has actually stopped — so a silent device still plays the lesson at a watchable speed, and a
+ * the voice has actually stopped — so a silent device still plays the lesson at a watchable speed, and a
  * real voice is never chopped off by the next line arriving.
  *
  * ⚠️ THIS IS NOT `speakSteps`, AND THE DIFFERENCE IS DELIBERATE. `speakSteps` reveals each visual
@@ -432,7 +432,7 @@ export function speakPaced(
     if (timer) { clearTimeout(timer); timer = null }
     if (unwait) { unwait(); unwait = null }
   }
-  // The minimum dwell and Milo's own line run TOGETHER, and the step ends at the later of the two.
+  // The minimum dwell and the voice's own line run TOGETHER, and the step ends at the later of the two.
   const hold = (ms: number, then: () => void) => {
     timer = setTimeout(() => {
       timer = null
@@ -750,7 +750,7 @@ export function speakWithHighlight(
 
   // Re-arm after each boundary: if the next one doesn't arrive in time (Chrome
   // stalls, especially on long passages), fall through to the timed sweep so the
-  // highlight never freezes while Milo keeps talking.
+  // highlight never freezes while the voice keeps talking.
   const armWatch = (ms: number) => {
     if (watch) clearTimeout(watch)
     watch = setTimeout(() => { if (!done && mode !== 'timed') startTimed(lastIdx + 1, false) }, ms)

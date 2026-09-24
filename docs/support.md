@@ -122,7 +122,7 @@ The "Need help?" panel makes the parent send two things: what happened in their 
 **diagnostic block** collected from their device:
 
 ```
---- Milo diagnostics (please keep this in your email) ---
+--- Radlic diagnostics (please keep this in your email) ---
 time      2026-07-27T14:38:24.470Z
 app       v65
 account   a.parent@example.com  8f3c…
@@ -137,7 +137,7 @@ recent errors:
 ---
 ```
 
-**Why this exists:** Milo is local-first. Progress lives on the child's device and syncs
+**Why this exists:** the app is local-first. Progress lives on the child's device and syncs
 afterwards. So most real failures leave *no trace on the server* — there is nothing in Supabase or
 Vercel to look at. This block is often the only evidence that exists.
 

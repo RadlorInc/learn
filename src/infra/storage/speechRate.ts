@@ -1,6 +1,6 @@
 'use client'
 /**
- * How fast Milo talks — a per-DEVICE setting, like volume (mirrors voicePref.ts).
+ * How fast the voice talks — a per-DEVICE setting, like volume (mirrors voicePref.ts).
  *
  * Device-scoped on purpose: a kid who needs it slower needs it slower in EVERY
  * chapter, and re-picking it per unit is exactly the friction that made a tester

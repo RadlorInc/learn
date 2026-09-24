@@ -15,7 +15,7 @@ import { resolve } from 'node:path'
  * "the parent sees chunk B", and that is the intent, independent of how the worker is written.
  */
 
-const ORIGIN = 'https://adaptivelearn.radlor.com'
+const ORIGIN = 'https://radlic.com'
 const SRC = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8')
 const VERSION = SRC.match(/const VERSION\s*=\s*'([^']+)'/)![1]
 

@@ -28,7 +28,7 @@ export default function SegmentError({
 
   return (
     <CrashScreen
-      title="Oops! Milo tripped over something"
+      title="Oops! Something went wrong"
       /** True, and the reason it is worth saying: the app is local-first, so a crash mid-chapter
        *  does not cost the child their stars. */
       body="Nothing is lost — your stars and progress are saved. Let's try that again."

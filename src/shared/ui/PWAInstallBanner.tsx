@@ -8,9 +8,9 @@
  * - Safari on iOS: shows manual instructions (iOS doesn't support the API)
  * - Already installed or dismissed: hidden forever (localStorage)
  *
- * WHY THIS MATTERS FOR MILO:
+ * WHY THIS MATTERS HERE:
  * Once installed as a PWA, Chrome grants autoplay permanently —
- * no more "tap to hear Milo" workarounds needed at all.
+ * no more "tap to hear the lesson" workarounds needed at all.
  */
 
 import { useEffect, useState } from 'react'
@@ -97,22 +97,19 @@ export default function PWAInstallBanner() {
       >×</button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-        {/* Milo icon */}
-        <div style={{
-          width: 52, height: 52, borderRadius: 14,
-          background: '#FCEAB6',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 30, flexShrink: 0,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        }}>🦊</div>
+        {/* The app icon — what they will see on their home screen. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icons/icon-96.png" alt="" width={52} height={52} style={{
+          borderRadius: 14, flexShrink: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        }} />
 
         <div>
           <div style={{ fontWeight: 800, fontSize: 17, marginBottom: 2 }}>
-            Add Milo to Home Screen!
+            Add Radlic to Home Screen!
           </div>
           <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.4 }}>
             {platform === 'ios'
-              ? 'Play offline & hear Milo\'s voice without tapping first'
+              ? 'Play offline & hear the lessons without tapping first'
               : 'Install for the best experience — works offline too!'}
           </div>
         </div>

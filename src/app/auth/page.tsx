@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
 import { getMyRole, homeForRole, enterAsChild } from '@/data/repositories'
@@ -12,6 +11,7 @@ import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
 import { SignupConsent } from '@/features/consent/SignupConsent'
 import { saveAck, loadAck } from '@/features/consent/consentState'
+import { APP_NAME } from '@/app/site'
 import { NOTICE_VERSION } from '@/features/consent/copy'
 
 type Mode = 'login' | 'signup'
@@ -240,22 +240,13 @@ export default function AuthPage() {
                   background: lang === l ? 'var(--milo-orange-soft)' : C.card, color: C.ink, fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>{label}</button>
             ))}
           </div>
-          {/* Logo */}
+          {/* The wordmark — plain text until there is a logo (the mascot image went with the Radlic rename). */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <Image
-              src="/assets/characters/milo-happy.png"
-              alt="Milo"
-              width={78}
-              height={78}
-              priority
-              style={{ objectFit: 'contain', marginBottom: 6 }}
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
             <h1 style={{
               fontSize: 28, fontWeight: 800,
               color: C.accent, margin: 0,
               fontFamily: 'var(--font-display)',
-            }}>AdaptiveLearn</h1>
+            }}>{APP_NAME}</h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
               {t('Adaptive math for grades 3 to 8')}
             </p>

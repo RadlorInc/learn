@@ -14,7 +14,7 @@ REVIEWED-BY:
 
 ## 1. Qué abarca esta política
 
-Esta política explica cómo se facturan las suscripciones a Milo, cómo se renuevan, cómo puede cancelarlas y cuándo puede obtener un reembolso. Forma parte de nuestros Términos del servicio. Si hay un conflicto entre esta política y los Términos del servicio, **prevalecen los Términos del servicio.**
+Esta política explica cómo se facturan las suscripciones a Radlic, cómo se renuevan, cómo puede cancelarlas y cuándo puede obtener un reembolso. Forma parte de nuestros Términos del servicio. Si hay un conflicto entre esta política y los Términos del servicio, **prevalecen los Términos del servicio.**
 
 ## 2. Nuestros planes
 

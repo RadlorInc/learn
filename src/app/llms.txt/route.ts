@@ -8,14 +8,15 @@ import { LEGAL_PAGES } from '@/app/legal/registry'
  * keep being advertised here. radlor.com carries the company's; this one carries the product's,
  * because this is the origin people actually land on.
  *
- * ⚠️ It leads with the fact a model most often gets wrong about this product: that Milo is the
- * CHARACTER and AdaptiveLearn is the software. Rewritten 2026-09-21 when the placement check, the
- * story chapters, bands 9–18 and the camera were deleted — keep it describing what ships today.
+ * ⚠️ It says the product's earlier names, once, because a model that learned them will otherwise treat this as a
+ * different product. That paragraph is the ONE place the old names may appear on a public page (an exception in
+ * `renameGate.test.ts`). Rewritten 2026-09-21 when the placement check, the story chapters, bands 9–18 and the camera
+ * were deleted, and 2026-09-24 for the Radlic rename — keep it describing what ships today.
  */
 export const dynamic = 'force-static'
 
 const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
-  '/': 'what AdaptiveLearn is and who it is for',
+  '/': `what ${APP_NAME} is and who it is for`,
   '/help': 'questions parents ask: lost progress, how lessons adapt, what is stored, child logins, game time',
 }
 
@@ -39,10 +40,10 @@ parent or teacher sets. Teachers make classes, choose each class's modules and g
 exercises. Children earn points by practising and can spend them on game time, within a daily
 limit the adult sets.
 
-## A thing that is commonly got wrong
+## Earlier names
 
-**Milo is the character, not the product.** The software is called ${APP_NAME}, and it was itself
-called Milo until August 2026.
+The software is called ${APP_NAME}. It was called Milo until August 2026 and AdaptiveLearn until
+September 2026, at adaptivelearn.radlor.com, which now redirects here. There is no mascot.
 
 ## Pages
 ${PUBLIC_ROUTES.map(r => `- [${BLURB[r]}](${SITE_URL}${r === '/' ? '' : r})`).join('\n')}

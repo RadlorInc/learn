@@ -1,8 +1,8 @@
 'use client'
 /**
- * MiloPointer — a bouncing 👆 that points at whatever Milo is talking about.
+ * MiloPointer — a bouncing 👆 that points at whatever the voice is talking about.
  *
- * Rendered once in the game wrapper. It shows only while Milo is speaking AND a
+ * Rendered once in the game wrapper. It shows only while the voice is speaking AND a
  * target element is set (via pointAt / speakAt), follows the target every frame
  * (so it tracks growing towers, scrolling, etc.), and hides itself otherwise.
  */

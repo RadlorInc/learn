@@ -142,7 +142,7 @@ export const ES: Record<string, string> = {
   'Open': 'Abrir',
   'One thing to try this week': 'Algo para probar esta semana',
   'Shown on your first visit each week. Turn it off in Account → Reminders.': 'Aparece en su primera visita de cada semana. Puede desactivarlo en Cuenta → Recordatorios.',
-  'Welcome to AdaptiveLearn!': '¡Bienvenido a AdaptiveLearn!',
+  'Welcome to Radlic!': '¡Bienvenido a Radlic!',
   'Add your first learner and we’ll find where to start.': 'Agregue a su primer estudiante y encontraremos por dónde empezar.',
   '+ Add your first learner': '+ Agregar a su primer estudiante',
   'Takes about 2 minutes': 'Toma unos 2 minutos',
@@ -431,7 +431,7 @@ export const ES: Record<string, string> = {
 
   // ── A child's data (shared/ui/DataRights.tsx) ──
   '{name}’s data': 'Datos de {name}',
-  'You can take a copy of everything Milo has stored, or delete it for good. Deleting cannot be undone.': 'Puede descargar una copia de todo lo que Milo ha guardado, o eliminarlo para siempre. Eliminar no se puede deshacer.',
+  'You can take a copy of everything Radlic has stored, or delete it for good. Deleting cannot be undone.': 'Puede descargar una copia de todo lo que Radlic ha guardado, o eliminarlo para siempre. Eliminar no se puede deshacer.',
   'Gathering': 'Reuniendo',
   'Downloaded': 'Descargado',
   'Download a copy': 'Descargar una copia',

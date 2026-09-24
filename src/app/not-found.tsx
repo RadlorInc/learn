@@ -7,7 +7,7 @@
  * ⚠️ THIS IS THE *STABLE* PATH ON PURPOSE. This Next version also has `global-not-found.js`, which
  * is experimental, needs `experimental.globalNotFound` in the config, and exists for apps that
  * **cannot** compose a 404 from a root layout (multiple root layouts, or a top-level dynamic
- * segment). Milo has one root layout and no top-level dynamic segment, so the stable
+ * segment). The app has one root layout and no top-level dynamic segment, so the stable
  * layout + `not-found.tsx` path covers it — verified by actually requesting an unmatched URL rather
  * than by trusting the doc.
  *
@@ -27,7 +27,7 @@ export default function NotFound() {
     }}>
       <div style={{ fontSize: 72, lineHeight: 1 }} aria-hidden>🗺️</div>
       <h1 style={{ fontSize: 24, fontWeight: 800, color: '#F26B2C', margin: 0 }}>
-        Milo can&apos;t find that page
+        We can&apos;t find that page
       </h1>
       <p style={{ fontSize: 16, color: '#7a6a55', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>
         It might have moved, or the link might be old. Nothing is lost — let&apos;s get you back.

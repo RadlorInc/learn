@@ -1,5 +1,5 @@
 /* =================================================================
-   MILO DESIGN SYSTEM — globals.css for Next.js
+   RADLIC DESIGN SYSTEM — globals.css for Next.js
    Direct port of:
      colors_and_type.css  (tokens + base type)
      components.css       (milo-btn, milo-card, milo-bubble etc.)
@@ -786,7 +786,7 @@ p, .p {
 .shake      { animation: shake      400ms var(--ease-smooth) both; }
 .bounce-in  { animation: bounce-in  350ms var(--ease-bounce)  both; }
 .slide-up   { animation: slide-up   260ms var(--ease-smooth)  both; }
-/* ── Voice pointer (bouncing hand that points at what Milo is saying) ───────── */
+/* ── Voice pointer (bouncing hand that points at what the voice is saying) ───────── */
 @keyframes milo-point-bob {
   0%, 100% { transform: translateX(-50%) translateY(0); }
   50%      { transform: translateX(-50%) translateY(-9px); }

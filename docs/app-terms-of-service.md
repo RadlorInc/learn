@@ -1,4 +1,4 @@
-# Terms of Service — Milo by Radlor
+# Terms of Service — Radlic by Radlor
 
 **Last updated: 6 September 2026**
 
@@ -8,7 +8,7 @@
 
 These Terms of Service ("Terms") are an agreement between you and **Radlor Inc.**,
 a Delaware corporation ("Radlor", "we", "us", "our"), covering your use of the
-Milo learning application at adaptivelearn.radlor.com and any related apps or
+Radlic learning application at radlic.com and any related apps or
 features (the "Service").
 
 By creating an account or using the Service, you agree to these Terms and to our
@@ -95,7 +95,7 @@ applies, are legal determinations. They have not been made.]**
 
 ## 4. What the Service is — and what it is not
 
-Milo is an adaptive learning application. It presents mathematics lessons for
+Radlic is an adaptive learning application. It presents mathematics lessons for
 grades 3 to 8, asks practice questions, adjusts the kind and difficulty of the
 questions from the answers, and brings back topics a learner found hard.
 
@@ -227,7 +227,7 @@ least as easy as signing up. Confirm the checkout flow meets them.]**
 ## 9. Content and ownership
 
 The Service, including its software, question banks, lesson content, artwork,
-audio and the Milo and Radlor names and logos, belongs to Radlor or its
+audio and the Radlic and Radlor names and logos, belongs to Radlor or its
 licensors. You get a personal, non-transferable, revocable licence to use it for
 your family's own non-commercial learning. Nothing more is granted.
 

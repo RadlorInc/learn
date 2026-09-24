@@ -52,7 +52,7 @@ vi.mock('@/data/supabase/client', () => {
   }
 })
 
-const ORIGIN = 'https://adaptivelearn.radlor.com'
+const ORIGIN = 'https://radlic.com'
 const MANIFEST = readFileSync(resolve(__dirname, '../../docs/legal/SURFACE.md'), 'utf8')
 
 /** The rows of the table under `## <heading>`, as objects keyed by the header cells. */
@@ -94,7 +94,7 @@ const h = async (mod: Promise<Record<string, unknown>>, name = 'default', props:
 const SURFACES: Record<string, { paint: () => Promise<string>; control: string }> = {
   home: { paint: async () => paint(await h(import('@/app/page'))), control: 'Math lessons that adapt' },
   signup: { paint: async () => paint(await h(import('@/app/auth/page'))), control: 'Quiet insight' },
-  checkout: { paint: async () => paint(await h(import('@/app/parent/plan/page'))), control: 'Milo for your family' },
+  checkout: { paint: async () => paint(await h(import('@/app/parent/plan/page'))), control: 'Radlic for your family' },
   'add-child': {
     paint: async () => paint(await h(import('@/app/parent/page'), 'AddLearnerModal', { onClose() {}, onAdded() {} })),
     control: 'Child',

@@ -1,17 +1,17 @@
-# Milo
+# Radlic
 
-An adaptive maths app for children aged 3–18. **70 chapters across six age bands**, each one a thing
-you *do* rather than a quiz: you count a parade home, fill a coin tray, peg out a building plot, load
-a cart from a chart. The product rule is *maths without fear* — no timers, no red crosses, no visible
-score, and difficulty that moves invisibly.
+Adaptive maths for grades 3 to 8, made by Radlor Inc. A lesson explains one idea step by step, the
+way a teacher would at a board; then practice adapts — two right in a row bring a harder *kind* of
+question, a miss brings worked steps. The product rule is *maths without fear*: no timers, no red
+crosses, no visible level. A parent or teacher chooses what each child sees.
 
-**Live:** https://milo-story-mode.vercel.app
+**Live:** https://radlic.com (until the domain switch, https://adaptivelearn.radlor.com — it becomes a
+permanent redirect; see [docs/RENAME-MANUAL.md](docs/RENAME-MANUAL.md)).
 
-| band | look | how you answer |
-|---|---|---|
-| 3–5, 6–8 | painted story worlds | tap the world itself |
-| 9–11 | neon "field lab" instruments | build the answer — **or hold it up to a webcam** |
-| 12–14, 15–16, 17–18 | field-lab games on one shared engine | work the instrument |
+The product was called **Milo** until August 2026 and **AdaptiveLearn** until September 2026. Code
+identifiers kept the old name (`useMiloSpeaker`, `--milo-orange`, `milo_active_learner` …) on purpose:
+they are what stored data and running devices depend on. Anything a person sees says Radlic, and
+`src/__tests__/renameGate.test.ts` fails if that stops being true.
 
 ## Running it
 
@@ -25,25 +25,22 @@ Supabase backs sign-in and progress sync; without `NEXT_PUBLIC_SUPABASE_URL` and
 
 | | |
 |---|---|
-| `npm test` | vitest — the invariant gates (1,039 tests) |
+| `npm test` | vitest — the invariant gates |
 | `npm run build` | production build |
 | `npm run lint` | eslint |
 | `npm run test:e2e` | playwright |
 
 ## Reading the code
 
-Next.js 16 · React 19 · TypeScript · Supabase. ~76k lines under `src/`, 18 routes.
+Next.js 16 · React 19 · TypeScript · Supabase.
 
-- `src/features/chapters/story/` — the 3–11 story chapters, plus the pure modules (`cents.ts`,
-  `plotMaths.ts`, `cargo.ts` …) that hold every rule a gate can check.
-- `src/features/chapters/teen/games/` — the 12–18 band and the ported 9–11 chapters, each a data
-  file over the shared `parts/GameShell.tsx`.
-- `src/core/` — the adaptive engine (invisible tiers, re-teach after 3 wrong, mastery early-exit),
-  the skill graph and the diagnostic.
-- `src/infra/ar/` — webcam hand-tracking: the readings a 9–11 chapter can answer with.
-
-**The maths and the words live in the pure modules; the layout lives in the shell.** That split is
-why one engine runs ~40 chapters, and it is the first thing to understand before changing any of them.
+- `src/features/lessons/` — the lessons (content as data in `content/g<grade>m<module>.ts`), the lesson
+  player and adaptive practice.
+- `src/features/consent/`, `src/app/consent/` — verifiable parental consent (email plus); read
+  [docs/legal/](docs/legal/README.md) first.
+- `src/features/dashboard/`, `src/app/parent/` — the parent and teacher dashboard.
+- `src/features/chapters/` — the older story chapters, **hidden** (`LEGACY_CHAPTERS_HIDDEN`) and built
+  around the retired Milo character; see the manual before unhiding anything.
 
 ## Before you change a lesson
 

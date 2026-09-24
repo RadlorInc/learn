@@ -39,7 +39,7 @@ export function useOfflineSync() {
     setSyncing(true)
     try {
       const flushed = await flushQueue()
-      if (flushed > 0) console.log(`[Milo] Synced ${flushed} queued updates`)
+      if (flushed > 0) console.log(`[Radlic] Synced ${flushed} queued updates`)
     } finally {
       syncingRef.current = false
       setSyncing(false)

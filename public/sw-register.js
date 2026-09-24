@@ -42,7 +42,7 @@
         if (sessionStorage.getItem(FLAG)) return;
         sessionStorage.setItem(FLAG, '1');
       } catch (e) { return; } // no sessionStorage → skip the reload rather than risk a loop
-      console.warn('[Milo SW] Stale service worker was controlling this page — cleared it, reloading once.');
+      console.warn('[Radlic SW] Stale service worker was controlling this page — cleared it, reloading once.');
       location.reload();
     });
   }
@@ -51,7 +51,7 @@
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/sw.js')
         .then(function (reg) {
-          console.log('[Milo SW] Registered:', reg.scope);
+          console.log('[Radlic SW] Registered:', reg.scope);
 
           // After page loads, tell SW to cache all loaded JS chunks
           // This ensures offline works after one online session
@@ -65,11 +65,11 @@
             var urls = scripts.concat(links);
             if (urls.length > 0 && reg.active) {
               reg.active.postMessage({ type: 'CACHE_URLS', urls: urls });
-              console.log('[Milo SW] Requested caching of', urls.length, 'chunks');
+              console.log('[Radlic SW] Requested caching of', urls.length, 'chunks');
             }
           }, 2000);
         })
-        .catch(function (err) { console.warn('[Milo SW] Failed:', err); });
+        .catch(function (err) { console.warn('[Radlic SW] Failed:', err); });
     });
   }
 })();

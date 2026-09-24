@@ -28,7 +28,7 @@ export default function Page() {
         <h1>This link did not work</h1>
         <p>It may have been copied incompletely. Write to support@radlor.com and we will take your address off our list.</p>
       </> : <>
-        <h1>Unsubscribe from Milo updates</h1>
+        <h1>Unsubscribe from Radlic updates</h1>
         <p>Press the button and we will stop sending this address updates and offers. You will still get essential messages about your account.</p>
         <button type="button" onClick={go} disabled={state === 'busy'}
           style={{ font: 'inherit', padding: '12px 20px', borderRadius: 8, border: 0, background: '#1f2937', color: '#fff', cursor: 'pointer' }}>

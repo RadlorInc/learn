@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef } from 'react'
-import Image from 'next/image'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
 
 /**
@@ -40,7 +39,7 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
   return (
     // ⚠️ `flex-start` + `margin: auto`, not `align-items: center`. Centring CLIPS an overflowing
     // card at the top with no way to scroll back to it — measured at 640×320, the short-landscape
-    // phone this band is played on, where the old card lost its top 189px including Milo.
+    // phone this band is played on, where the old card lost its top 189px.
     <div style={{
       position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(61,37,22,0.7)',
       display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
@@ -51,9 +50,6 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
         padding: 'min(32px, 5vh) 28px 28px', maxWidth: 360, width: '100%', textAlign: 'center',
         margin: 'auto', boxShadow: '0 8px 0 var(--outline)',
       }}>
-        <Image src="/assets/characters/milo-happy.png" alt="Milo" width={110} height={110}
-          style={{ objectFit: 'contain', marginBottom: 4, height: 'min(110px, 22vh)', width: 'auto' }}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--t-h1)', color: 'var(--ink)', margin: '0 0 4px' }}>
           🎉 All done!
         </h2>

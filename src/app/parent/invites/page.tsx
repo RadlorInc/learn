@@ -88,7 +88,7 @@ export default function InvitesPage() {
   }
 
   if (loading) return (
-    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: P.page, fontSize: 36 }}>🦊</div>
+    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: P.page, fontSize: 36 }} aria-busy="true" />
   )
 
   const selectedLearner = learners.find(l => l.id === selectedId)

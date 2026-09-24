@@ -10,7 +10,7 @@
 > One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
 
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** Milo
+**Product:** Radlic
 **Effective date:** [PLACEHOLDER — date]
 **Last updated:** [PLACEHOLDER — date]
 
@@ -34,7 +34,7 @@ Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
 
-We are the operator of Milo, and the only one. No other company operates any part of the service in a way that collects information through it.
+We are the operator of Radlic, and the only one. No other company operates any part of the service in a way that collects information through it.
 
 ## 2. Who this policy is for
 
@@ -83,7 +83,7 @@ Using any of these is free. We will confirm that the request comes from you befo
 
 **How long we take:** 10 days.
 
-Full details, including what happens to a subscription if you withdraw consent, are on our Parent Rights page at https://adaptivelearn.radlor.com/legal/parent-rights.
+Full details, including what happens to a subscription if you withdraw consent, are on our Parent Rights page at https://radlic.com/legal/parent-rights.
 
 ## 6. How we use information
 
@@ -109,7 +109,7 @@ We use what we collect only to:
 
 We do not sell information and we do not disclose a child's information to anyone for their own purposes.
 
-We do use service providers who process information on our instructions and for no purpose of their own — hosting, database, email delivery, and payment processing. The current list, and exactly what each one receives, is published at https://adaptivelearn.radlor.com/legal/subprocessors.
+We do use service providers who process information on our instructions and for no purpose of their own — hosting, database, email delivery, and payment processing. The current list, and exactly what each one receives, is published at https://radlic.com/legal/subprocessors.
 
 We may also disclose information where we are legally required to — for example, in response to a valid legal process — or to protect the safety of a person. If we are ever required to do so in relation to a child, we will tell the parent unless the law forbids it.
 
@@ -117,7 +117,7 @@ If the company is ever sold or merged, information may transfer as part of that 
 
 ## 8. Cookies and similar storage
 
-We use only what the app needs to work: to keep you signed in, to remember settings, and to keep the service secure. We do not use advertising cookies and we do not allow cross-site tracking. The detailed list is in our Cookie and Tracking Notice at https://adaptivelearn.radlor.com/legal/cookies.
+We use only what the app needs to work: to keep you signed in, to remember settings, and to keep the service secure. We do not use advertising cookies and we do not allow cross-site tracking. The detailed list is in our Cookie and Tracking Notice at https://radlic.com/legal/cookies.
 
 ## 9. How long we keep information
 
@@ -133,13 +133,13 @@ We keep a child's information only as long as we need it to provide the service,
 | Our providers' request logs, which include IP address and browser type | [PLACEHOLDER — the providers' retention periods must be established and stated here before publication] |
 | Backups | Designed to expire after 30 days |
 
-If you ask us to delete your child's information, we delete it from our live systems straight away; copies in backups disappear when those backups expire, and we never restore a deleted child's record from a backup. Our full retention schedule is at https://adaptivelearn.radlor.com/legal/retention.
+If you ask us to delete your child's information, we delete it from our live systems straight away; copies in backups disappear when those backups expire, and we never restore a deleted child's record from a backup. Our full retention schedule is at https://radlic.com/legal/retention.
 
 ## 10. How we protect information
 
 We maintain a written security programme covering children's information, reviewed at least annually.
 
-In practice: every connection to Milo is encrypted; the database enforces rules so that one family's records cannot be read by another; the keys that would allow broad access are never sent to your browser; and our internal tools are kept in a separate system that holds no children's data. [PLACEHOLDER — this paragraph must be checked against the Information Security Program immediately before publication, and any control that is not implemented on that day must be removed from it.]
+In practice: every connection to Radlic is encrypted; the database enforces rules so that one family's records cannot be read by another; the keys that would allow broad access are never sent to your browser; and our internal tools are kept in a separate system that holds no children's data. [PLACEHOLDER — this paragraph must be checked against the Information Security Program immediately before publication, and any control that is not implemented on that day must be removed from it.]
 
 No system is perfectly secure. If a breach affects your child's information, we will tell you as required by law, and we will tell you plainly what happened.
 

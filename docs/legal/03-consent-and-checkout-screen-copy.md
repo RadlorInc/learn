@@ -70,11 +70,11 @@ Parent creates account
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
 > - You can cancel any time at **Account → Plan & billing** or by emailing support@radlor.com. Cancelling stops all future charges.
-> - Full terms: [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds)
+> - Full terms: [Refund and Cancellation Policy](https://radlic.com/legal/refunds)
 
 **Checkbox — unticked by default, and the button must stay disabled until it is ticked:**
 
-> ☐ I am the parent or legal guardian of the child I am setting up. I have read the [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) and [Terms of Service](https://adaptivelearn.radlor.com/legal/terms), I give permission for the information described to be collected from my child, and I agree to the automatic renewal terms shown above.
+> ☐ I am the parent or legal guardian of the child I am setting up. I have read the [Privacy Policy](https://radlic.com/legal/privacy) and [Terms of Service](https://radlic.com/legal/terms), I give permission for the information described to be collected from my child, and I agree to the automatic renewal terms shown above.
 
 **Button:** `Subscribe — [PLACEHOLDER — amount] today`
 
@@ -86,7 +86,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### A3. Acknowledgement email — sent immediately
 
-**Subject:** `Your Milo subscription — confirmation and how to cancel`
+**Subject:** `Your Radlic subscription — confirmation and how to cancel`
 
 **Body:**
 
@@ -101,7 +101,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **How to cancel:** sign in and go to **Account → Plan & billing → See plans → Cancel subscription**, or reply to this email. Cancelling stops all future charges. Your access continues until the end of the period you have paid for.
 >
-> **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: https://adaptivelearn.radlor.com/legal/parent-rights. You can see everything we hold, delete it, or withdraw permission at any time.
+> **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: https://radlic.com/legal/parent-rights. You can see everything we hold, delete it, or withdraw permission at any time.
 >
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
@@ -113,13 +113,13 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B1. Consent request email — sent when the parent asks to start
 
-**Subject:** `Please confirm: permission for your children to use Milo`
+**Subject:** `Please confirm: permission for your children to use Radlic`
 
 **Body:**
 
 > Hi,
 >
-> Someone — we believe you — created a Milo account and asked to add children to it.
+> Someone — we believe you — created a Radlic account and asked to add children to it.
 >
 > Before we collect anything from any child on this account, US law requires your permission. Here is exactly what we would collect about each child you add:
 >
@@ -139,7 +139,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > If you did nothing, you can ignore this email and nothing will happen.
 >
-> Full details: [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy)
+> Full details: [Privacy Policy](https://radlic.com/legal/privacy)
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 ### B2. Confirmation screen after the parent clicks
@@ -162,13 +162,13 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > Hi,
 >
-> Yesterday you gave permission for your children to use Milo, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.
+> Yesterday you gave permission for your children to use Radlic, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.
 >
 > **If that was you, you don't need to do anything.**
 >
 > **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting and delete everything we hold about every child on the account. Your account stays open.
 >
-> You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.
+> You can withdraw permission at any time in future, too: https://radlic.com/legal/parent-rights.
 >
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
@@ -208,7 +208,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 **Heading:** `Before you create an account: what we collect about your children`
 
-> For each child you add, Milo stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.
+> For each child you add, Radlic stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.
 
 **Link:** `Read the full notice` (opens the full notice, document 02)
 

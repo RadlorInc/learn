@@ -1,5 +1,6 @@
 # Session Handoff — Milo Story Mode
 
+> 🏷️ **2026-09-24: the product is renamed RADLIC and moves to radlic.com; the Milo mascot is removed.** Built on branch `rename-radlic` (see `docs/legal/LOOP-STATE.md` → Rename, and `docs/RENAME-MANUAL.md` for every founder step, in order). Entries below this line are history and keep the names of their day.
 > 🆕 **THE NEW TEACHING FLOW COVERS GRADES 3–8 (2026-09-14) — READ [docs/new-flow/README.md](docs/new-flow/README.md) AND [docs/new-flow/AUTHORING.md](docs/new-flow/AUTHORING.md) BEFORE ANY LESSON WORK.**
 > All **36 modules / 282 topics** (counted 2026-09-16, Grade 3 Module 1's 8 included) are written as data in `src/features/lessons/content/g<grade>m<module>.ts` (topic split:
 > [docs/new-flow/curriculum.md](docs/new-flow/curriculum.md)); Grade 3 · Module 1 stays in `grade3Module1.ts`. Every legacy

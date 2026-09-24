@@ -42,7 +42,7 @@ async function paint(): Promise<string> {
 }
 
 const PAUSED = 'Adding students is paused for now.'
-const WHY = 'We are still setting up how a school gives permission for a child to use Milo. Until that is ready, new students cannot be added to a class. Students already in your class are not affected.'
+const WHY = 'We are still setting up how a school gives permission for a child to use Radlic. Until that is ready, new students cannot be added to a class. Students already in your class are not affected.'
 const FORM = 'One student per line'   // text only the roster's collection form renders
 
 describe('the roster, once the consent gate is live', () => {

@@ -22,7 +22,7 @@ const calls = async () => (await j(`${RESEND}/__calls`)).body
 
 async function parent(label) {
   const email = `${label}-${Date.now()}@example.test`, password = randomBytes(18).toString('base64url')
-  const ack = { noticeVersion: 'notice-v5', at: new Date(Date.now() - 60_000).toISOString() }
+  const ack = { noticeVersion: 'notice-v6', at: new Date(Date.now() - 60_000).toISOString() }
   const u = await j(`${API}/auth/v1/admin/users`, { method: 'POST', headers: svcH,
     body: JSON.stringify({ email, password, email_confirm: true, user_metadata: { consent_ack: ack } }) })
   const id = u.body.id
@@ -33,7 +33,7 @@ async function parent(label) {
 async function consentFlow(p) {
   const before = (await calls()).length
   const r = await j(`${APP}/api/consent/request`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${p.token}` },
-    body: JSON.stringify({ noticeVersion: 'notice-v5', lang: 'en', ackAt: p.ack.at }) })
+    body: JSON.stringify({ noticeVersion: 'notice-v6', lang: 'en', ackAt: p.ack.at }) })
   ok(r.status === 200 && r.body?.ok, `request → B1 sent (${r.status})`)
   const b1 = (await calls()).slice(before).find(c => c.path === '/emails')
   ok(/permission for your children/.test(b1?.body?.subject ?? ''), `B1 subject: "${b1?.body?.subject}"`)
@@ -44,7 +44,7 @@ async function consentFlow(p) {
   const b3 = (await calls()).slice(before).filter(c => c.path === '/emails')[1]
   ok(!!b3?.body?.scheduled_at && /permission you gave for your children/.test(b3.body.subject), `B3 scheduled for ${b3?.body?.scheduled_at}`)
   const [c] = (await j(`${API}/rest/v1/parental_consents?parent_id=eq.${p.id}&state=eq.granted&select=id,scope,notice_version,parent_ack_at,second_email_provider_id`, { headers: userH(p.token) })).body
-  ok(c?.scope === 'account' && c.notice_version === 'notice-v5', `account consent granted (scope ${c?.scope}, ${c?.notice_version})`)
+  ok(c?.scope === 'account' && c.notice_version === 'notice-v6', `account consent granted (scope ${c?.scope}, ${c?.notice_version})`)
   ok(c?.parent_ack_at === new Date(p.ack.at).toISOString().replace('Z', '+00:00') || !!c?.parent_ack_at, `the signup tick is recorded (parent_ack_at ${c?.parent_ack_at})`)
   return { consent: c, token: tok }
 }

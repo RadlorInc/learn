@@ -65,7 +65,7 @@ describe('every screen that collects a child\'s details or takes money links to 
      * Anchor on copy only the real screen produces.
      */
     expect(html, 'the checkout screen did not render — this gate is blind, not clean')
-      .toContain('Milo for your family')
+      .toContain('Radlic for your family')
 
     expect(hrefs(html), 'the checkout screen has lost its Privacy Policy link. A parent is being ' +
       'asked for money on this screen; the policy covering what is collected about their child ' +

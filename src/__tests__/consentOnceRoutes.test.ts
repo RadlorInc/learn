@@ -53,22 +53,22 @@ beforeEach(() => {
 describe('request: an ACCOUNT consent, stamped with the tick', () => {
   it('sends p_scope = account and the tick time it was given', async () => {
     const at = new Date(Date.now() - 3600_000).toISOString()
-    const r = await request({ noticeVersion: 'notice-v5', lang: 'en', ackAt: at })
+    const r = await request({ noticeVersion: 'notice-v6', lang: 'en', ackAt: at })
     expect(r.status).toBe(200)
-    expect(calls.consent_request).toMatchObject({ p_scope: 'account', p_ack_at: at, p_notice_version: 'notice-v5' })
+    expect(calls.consent_request).toMatchObject({ p_scope: 'account', p_ack_at: at, p_notice_version: 'notice-v6' })
     expect(log).toEqual(['rpc:consent_request', 'send:Please confi', 'rpc:consent_record_request_sent'])
   })
   it('an implausible tick time is dropped (the database records now): future, too old, not a time', async () => {
     for (const ackAt of [new Date(Date.now() + 3600_000).toISOString(), new Date(Date.now() - 31 * 86_400_000).toISOString(), 'yesterday', 12345]) {
-      await request({ noticeVersion: 'notice-v5', lang: 'en', ackAt })
+      await request({ noticeVersion: 'notice-v6', lang: 'en', ackAt })
       expect(calls.consent_request?.p_ack_at, `kept ${String(ackAt)}`).toBeNull()
     }
-    await request({ noticeVersion: 'notice-v5', lang: 'en' })
+    await request({ noticeVersion: 'notice-v6', lang: 'en' })
     expect(calls.consent_request.p_ack_at).toBeNull()
   })
   it('a database without consent-once (PGRST202) → 503 not_ready, and no email', async () => {
     requestErr = { status: 404, code: 'PGRST202' }
-    const r = await request({ noticeVersion: 'notice-v5', lang: 'en' })
+    const r = await request({ noticeVersion: 'notice-v6', lang: 'en' })
     expect(r.status).toBe(503)
     expect(await r.json()).toEqual({ error: 'not_ready' })
     expect(log).toEqual(['rpc:consent_request'])
@@ -103,8 +103,8 @@ describe('respond', () => {
 describe('the export names the child\'s attestation', () => {
   it('who, when, which notice, how — from the learner row', async () => {
     const { buildExport } = await import('@/shared/ui/DataRights')
-    const learner = { id: 'k', attested_by: 'p1', attested_at: '2026-09-24T10:00:00Z', attested_notice_version: 'notice-v5', attestation_method: 'checkbox' }
+    const learner = { id: 'k', attested_by: 'p1', attested_at: '2026-09-24T10:00:00Z', attested_notice_version: 'notice-v6', attestation_method: 'checkbox' }
     const out = buildExport('Bea', { learner, stats: {}, progress: [], sessions: [] }) as Record<string, unknown>
-    expect(out.parentalAttestation).toEqual({ attested_by: 'p1', attested_at: '2026-09-24T10:00:00Z', attested_notice_version: 'notice-v5', attestation_method: 'checkbox' })
+    expect(out.parentalAttestation).toEqual({ attested_by: 'p1', attested_at: '2026-09-24T10:00:00Z', attested_notice_version: 'notice-v6', attestation_method: 'checkbox' })
   })
 })

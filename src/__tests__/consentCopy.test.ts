@@ -145,6 +145,9 @@ describe('the consent copy is the documents, verbatim', () => {
       // v5, 2026-09-24 (consent-once): one permission for the account covers every child; each child is attested in the app;
       // withdrawal for one child or every child; Account → Withdraw permission for all my children.
       'notice-v5': '6f9af556a754',
+      // v6, 2026-09-24 (the Radlic rename): the product's name and web address (Milo → Radlic, adaptivelearn.radlor.com
+      // → radlic.com), and "Withdraw permission for all YOUR children" (was "my"), matching the button and doc 03.
+      'notice-v6': 'b24962a84278',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()

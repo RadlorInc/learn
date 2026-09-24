@@ -3,7 +3,7 @@
  *
  * ⚠️ IT WAS A REDIRECT WITH A FOX ON IT. Measured on production, the whole document was 66 visible
  * characters: a splash, a session check, and a `router.replace`. So there was no page anywhere on
- * the internet that said what Milo is — every link shared, every crawler, every parent who typed
+ * the internet that said what the product is — every link shared, every crawler, every parent who typed
  * the name got one emoji. `robots.txt` and `sitemap.xml` now exist and point here, which is
  * plumbing without a building until this page has words in it.
  *
@@ -15,7 +15,7 @@
  * fox would be back in the HTML and none of this would be visible.
  *
  * ⚠️ THE COPY IS ASSEMBLED FROM WORDS THAT WERE ALREADY WRITTEN, not invented here — the promise is
- * `/help`'s own "How does Milo decide what to teach?" answer, the game-time and offline lines are
+ * `/help`'s own "How does Radlic decide what to teach?" answer, the game-time and offline lines are
  * that page's answers in shorter form, and "no timer, no red cross" is the standing anti-fear rule.
  * Rewritten 2026-09-21: it still sold the placement check, story chapters, ages 3–18 and the camera,
  * all deleted. Change the words freely; keep them TRUE, because this is the one page that makes
@@ -24,7 +24,6 @@
 import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, SUPPORT_EMAIL, SITE_URL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import Image from 'next/image'
 import ResumeSignedIn from './ResumeSignedIn'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 
@@ -94,10 +93,8 @@ export default function RootPage() {
 
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 30 }}>
-          <Image src="/assets/characters/milo-happy.png" alt="" width={44} height={44} priority
-            style={{ objectFit: 'contain' }} />
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: '#F26B2C' }}>
-            AdaptiveLearn
+            {APP_NAME}
           </span>
           <Link href="/auth" style={{
             marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: '#7a6a55', textDecoration: 'none',
