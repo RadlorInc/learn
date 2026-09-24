@@ -1,5 +1,6 @@
 /**
- * A teaching screen moves on by itself once her last line is done (founder, 2026-09-19), Screen 7 runs on into
+ * A teaching screen moves on by itself once her last line is done (founder, 2026-09-19) — Screen 1 too, since
+ * 2026-09-24 (it used to wait for the child to tap its question) — Screen 7 runs on into
  * "Your turn" (2026-09-20), and ← Back stops it pulling a child forward. Rendered with the real LessonPlayer and
  * driven like a child; the speaker is stubbed so a test decides when her voice finishes — the case that matters is
  * that the screen waits for the VOICE, not for a clock.
@@ -8,10 +9,10 @@ import { it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createElement, act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 
-const { steps, said } = vi.hoisted(() => ({ steps: [] as { onDone?: () => void }[], said: [] as string[] }))
+const { steps, said } = vi.hoisted(() => ({ steps: [] as { lines: string[]; onDone?: () => void }[], said: [] as string[] }))
 vi.mock('@/infra/useMiloSpeaker', () => ({
   speak: (t: string) => { said.push(t) }, stopSpeech: () => {},
-  speakSteps: (_: string[], opts: { onDone?: () => void }) => { steps.push(opts); return () => {} },
+  speakSteps: (lines: string[], opts: { onDone?: () => void }) => { steps.push({ ...opts, lines }); return () => {} },
 }))
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/infra/storage/lessonSync', () => ({ syncLesson: () => {}, syncModulePractice: () => {} }))
@@ -45,11 +46,14 @@ const wait = async (ms: number) => {
 /** She finishes the line she is on. */
 const voiceDone = () => act(async () => { steps.at(-1)!.onDone!() })
 
-it('Screen 1 waits for the child; then each screen waits for her VOICE, not a clock, and moves on a moment later', async () => {
+it('each screen, Screen 1 included, waits for her VOICE, not a clock, and moves on a moment later', async () => {
   await wait(60_000)
-  expect(screen()).toBe(1)                       // the question on Screen 1 is the child's to tap
-  await tap(/Let's see/)
-  expect(screen()).toBe(2)
+  expect(screen()).toBe(1)                       // still saying Screen 1: it stays
+  await voiceDone()
+  await wait(1200)
+  expect(screen()).toBe(1)
+  await wait(500)
+  expect(screen()).toBe(2)                       // Screen 1 moves on by itself (founder, 2026-09-24)
   await wait(60_000)
   expect(screen()).toBe(2)                       // still talking: however long she takes, the screen stays
   await voiceDone()
@@ -88,9 +92,12 @@ it('the screen shows how far through it she is', async () => {
 })
 
 it('Screen 1 is spoken on arrival — it has no beats, so nothing else says it', async () => {
-  expect(said).toEqual([SAY.screen(lesson.screens[0])])
+  expect(steps.map(x => x.lines)).toEqual([[SAY.screen(lesson.screens[0])]])
+  expect(said).toEqual([])
   await tap(/Let's see/)
   await tap(/Back/)
   expect(screen()).toBe(1)
-  expect(said.at(-1)).toBe(SAY.screen(lesson.screens[0]))   // and again when the child comes back to it
+  expect(steps.at(-1)!.lines).toEqual([SAY.screen(lesson.screens[0])])   // and again when the child comes back to it
+  await voiceDone(); await wait(60_000)
+  expect(screen()).toBe(1)                       // …where ← Back means it is not pulled forward
 })

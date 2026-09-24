@@ -95,8 +95,12 @@ describe('short practice sessions', () => {
     expect(loadRun(L, lesson.id)!.asked).toBe(12)
 
     await click('Take a break')                                      // the top bar's, mid-round
-    expect(text()).toContain('Great work, 9 questions done! ⭐')
-    expect(text()).toContain('Your spot is saved.')
+    // Practice is complete, so this is Screen 9 (founder, 2026-09-24): Screen 8's sentence and the math-word sticker —
+    // not the break screen, which is for a topic still in progress (next test).
+    expect(text()).toContain('Screen 9 of 9')
+    expect(text()).toContain('You got it')
+    expect(host.querySelector('[data-sticker]')?.textContent).toBe(`⭐ ${lesson.won.sticker}`)
+    expect(text()).not.toContain('Your spot is saved.')
     expect(text()).toContain('+19 points')                           // 9 answers × 1, + 10 for the topic becoming done
     expect(text()).not.toMatch(/\b\d+ of \d+\b|%/)
     await click('Back to topics')
@@ -109,6 +113,7 @@ describe('short practice sessions', () => {
     expect(dialog()).toContain('5 questions done! ⭐ Nice work.')
     await click('Take a break')
     expect(text()).toContain('Great work, 2 questions done! ⭐')
+    expect(text()).not.toContain('Screen 9 of 9')                   // not done yet: the break, not Screen 9
     expect(loadRun(L, lesson.id)!.asked).toBe(5)
   })
 

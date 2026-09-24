@@ -29,7 +29,12 @@ export function ScratchPad({ clearKey }: { clearKey: string | number }) {
     }
     fit()
     const ro = new ResizeObserver(fit); ro.observe(c)
-    return () => ro.disconnect()
+    // ⚠️ iPad + Apple Pencil: a pen (or a long touch) on the page starts a text SELECTION and its callout, which takes
+    // the stroke away — the pad "got selected" and nothing drew (founder, 2026-09-24). touch-action does not stop that;
+    // cancelling the touch does. Native and non-passive, because React's touch handlers are passive and cannot cancel.
+    const stop = (e: Event) => e.preventDefault()
+    for (const t of ['touchstart', 'touchmove', 'selectstart', 'contextmenu']) c.addEventListener(t, stop, { passive: false })
+    return () => { ro.disconnect(); for (const t of ['touchstart', 'touchmove', 'selectstart', 'contextmenu']) c.removeEventListener(t, stop) }
   }, [])
 
   const at = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -48,7 +53,7 @@ export function ScratchPad({ clearKey }: { clearKey: string | number }) {
 
   const toolBtn = (on: boolean): CSSProperties => ({ ...pill, background: on ? TEAL : '#fff', color: on ? '#fff' : INK })
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } as CSSProperties}>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" style={toolBtn(tool === 'pencil')} aria-pressed={tool === 'pencil'} onClick={() => setTool('pencil')}>Pencil</button>
         <button type="button" style={toolBtn(tool === 'eraser')} aria-pressed={tool === 'eraser'} onClick={() => setTool('eraser')}>Eraser</button>

@@ -13,7 +13,7 @@ import { setSceneVoice, prefetchClips, setClipRate } from '@/infra/voiceClipPlay
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
-  START, next, back, check, hintsFor, wonFor, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
+  START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
 import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, FRESH, type Run, type Pause } from './adaptive'
@@ -39,9 +39,10 @@ import { Feedback } from './Feedback'
  * 2026-09-20: 3 s then 2.3 s both felt long — and the screen now carries a bar that says where it is, so the wait
  * does not have to be long enough to be understood on its own. */
 const HOLD_MS = 1500
-/** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.45 s: the
- * old ~0.8 s stop sounded generated, and none at all (2026-09-19) ran the sentences together. */
-const GAP_MS = 300
+/** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.65 s.
+ * History: ~0.8 s sounded generated, none at all (2026-09-19) ran the sentences together, ~0.45 s (300) was still
+ * too quick for the founder (2026-09-24: "add a small pause between the sentences"). */
+const GAP_MS = 500
 /** Her clips play a little slower than rendered, pitch kept (founder, 2026-09-20: "Stevie khud tez bolti hai"). */
 const LESSON_RATE = 0.9
 
@@ -91,6 +92,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const [session, setSession] = useState({ answered: 0, points: 0, mastered: false })
   const keep = (next: Run) => { setRun(next); saveRun(learnerId, lesson.id, toSaved(next)); syncRun(learnerId, lesson.id) }
   const firstTry = useRef(false)              // Screen 8 solved with no miss: adaptive practice starts one level up
+  const doneHere = useRef(false)              // the topic became done in this session (mastered, or its 12th answer)
+  const wonAt = useRef<ReturnType<typeof wonFor> | null>(null)   // how Screen 8 ended — Screen 9 says it after practice
 
   // The beat clock. A teaching screen with `beats` reveals itself line by line — her words on the right, what she
   // puts on the board on the left — so BOTH columns read `shown`, and it has to live above the early returns below.
@@ -98,8 +101,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const [shown, setShown] = useState(1)
   // Founder, 2026-09-19: a teaching screen moves on by itself once her last line is done, HOLD_MS later so the board
   // can finish and the child can take it in. ← Back pauses it — a child who went back to look again is not pulled
-  // forward — and Next turns it back on. From Screen 2 on: Screen 1 waits for the child to tap its question, and
-  // Screen 7 runs on into "Your turn" (founder, 2026-09-20).
+  // forward — and Next turns it back on. Screen 1 too, once its line is said (founder, 2026-09-24; it used to wait for
+  // the child to tap its question), and Screen 7 runs on into "Your turn" (founder, 2026-09-20).
   const [autoOn, setAutoOn] = useState(true)
 
   const say = (text: string, on = audio) => { if (on && text) speak(text) }
@@ -116,13 +119,20 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // lesson again". ⚠️ A browser only allows sound after a tap, so this is heard when the child came from the topic
   // list (their tap) and not on a lesson opened cold from a link — where Screen 1's own button is the first tap.
   const line1 = s.mode === 'lesson' && s.screen === 0 && !welcome && !nudging ? screenSay(lesson.screens[0]) : ''
-  useEffect(() => { if (line1) speak(line1) }, [line1, replay])
-
   const autoNext = useLatestRef(() => {
-    if (!autoOn || s.mode !== 'lesson' || s.screen < 1) return
+    if (!autoOn || s.mode !== 'lesson') return
     const n = next(s)
     go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
   })
+  useEffect(() => {
+    if (!line1) return
+    // speakSteps, not speak: it says when the line is over — and, when the browser blocks sound (a cold link), its
+    // own timer stands in, so the screen still moves on.
+    let hold: ReturnType<typeof setTimeout> | undefined
+    const stop = speakSteps([line1], { onDone: () => { hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
+    return () => { stop(); clearTimeout(hold) }
+  }, [line1, replay, autoNext])
+
   useEffect(() => {
     if (!beats) return
     setShown(1)
@@ -139,8 +149,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     return () => ids.forEach(clearTimeout)
   }, [beats, audio, replay, autoNext])
 
-  // Screen 8 solved (or the twin's worked steps seen): straight on to practice. Founder's call, 2026-09-19: a right answer
-  // gets the green check at the top and moves on — no badge or sticker screen per topic; the badge waits for the module.
+  // Screen 8 solved (or the twin's worked steps seen): straight on to practice with the green check. Screen 9 (its sentence
+  // and the math-word sticker) comes AFTER practice (founder, 2026-09-24).
   const startPractice = () => {
     if (ladder) {
       const saved = loadRun(learnerId, lesson.id)
@@ -160,6 +170,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const won = s.mode === 'won'
   useEffect(() => {
     if (!won) return
+    wonAt.current = wonFor(lesson, s)
     // A child who did not solve the twin gets no check: nothing to celebrate, so no pause either.
     const id = setTimeout(startPractice, wonFor(lesson, s).helped ? 0 : 1500)
     return () => clearTimeout(id)
@@ -237,7 +248,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       const before = (id: string) => (id === lesson.id ? run.standing : run.review?.standing ?? FRESH)
       const gained = (outcome === 'first' ? 2 : 1) + moved.saved.filter(([id, st]) => st.level > before(id).level).length * 3
         + (!was && runDone(moved.run) ? 10 : 0) + (!was && moved.pause === 'mastered' ? 15 : 0)
-      if (runDone(moved.run) && !was) onFinish()
+      if (runDone(moved.run) && !was) { onFinish(); doneHere.current = true }
       setSession(x => ({ answered: x.answered + 1, points: x.points + gained, mastered: x.mastered || moved.pause === 'mastered' }))
       setPause(moved.pause)
       go({ ...s, practice: s.practice + 1, misses: 0, feedback: null })
@@ -390,13 +401,20 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   } else {
     crumb = 'Done!'; at = 8
     // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
-    const allDone = (!ladder || lessonDone(learnerId, lesson.id)) && (moduleDone?.() ?? false)
+    const topicDone = !ladder || doneHere.current || lessonDone(learnerId, lesson.id)
+    const allDone = topicDone && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
+    // Screen 9, once practice is complete: Screen 8's sentence and the math word (README: the math word appears ONLY
+    // here). A child who needed the worked steps on the twin never hears "You got it" — the big idea instead.
+    const w = topicDone ? wonAt.current ?? { title: 'You got it', ...lesson.won, helped: false } : null
     picture = <div style={stage}>
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
-      <p style={idea}>{lesson.bigIdea}</p>
+      {w
+        ? <p data-sticker style={{ ...idea, alignSelf: 'center', boxShadow: `4px 4px 0 ${INK}`, transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' }}>⭐ {w.sticker}</p>
+        : <p style={idea}>{lesson.bigIdea}</p>}
     </div>
-    if (run) {
+    if (w) { crumb = 'Screen 9 of 9'; if (!allDone) title = w.helped ? KEEP_GOING.title : w.title }
+    if (run && !w) {
       // The break (founder, 2026-09-24): a celebration, never a verdict — no count of a total, no "unfinished".
       crumb = C.takeBreak
       title = session.mastered ? C.breakMastered : C.breakTitle(session.answered)
@@ -404,7 +422,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         <p style={bubble}>{C.spotSaved}</p>
         {session.points > 0 && <p style={{ ...right, alignSelf: 'flex-start' }}>{C.points(session.points)}</p>}
       </div>
-    } else words = <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>
+    } else words = <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {w && <p style={bubble}>{w.helped ? lesson.bigIdea : w.text}</p>}
+      {run
+        ? session.points > 0 && <p style={{ ...right, alignSelf: 'flex-start' }}>{C.points(session.points)}</p>
+        : <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>}
+    </div>
     action = <button type="button" style={primary} onClick={onExit}>{C.backToTopics}</button>
   }
 
