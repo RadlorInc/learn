@@ -218,17 +218,22 @@ test('Part B — no card at halfway or past it, and none for an assigned topic',
 })
 
 test('the parent sees real progress, calmly — and the going-ahead line, read from progress alone', async ({ browser }) => {
-  // TOPIC was started (the tests above); PREV is at level 1 of 5 — under halfway. No event exists for the line to use.
+  // /ui-preview's demo child has a chosen list: g5m1-t1, g5m1-t2, g5m1-t3, g4m2-t1. On it, g5m1-t2 is started while
+  // g5m1-t1 is at level 1 of 5 — under halfway → a line. Off it, g5m1-t12/-t11 (started, under halfway) → NO line: a
+  // previous topic outside the list is not on the child's map. No event exists for either.
   server.events.length = 0
   server.progress.set(PREV, { lesson_id: PREV, done: false, level: 1, streak: 0, mastered: false })
+  server.progress.set('g5m1-t1', { lesson_id: 'g5m1-t1', done: false, level: 1, streak: 0, mastered: false })
+  server.progress.set('g5m1-t2', { lesson_id: 'g5m1-t2', done: false, level: 0, streak: 0, mastered: false })
   server.progress.set('g5m1-t13', { lesson_id: 'g5m1-t13', done: false, level: 1, streak: 0, mastered: false })
   const ctx = await device(browser)
   const page = await ctx.newPage()
   await page.goto('/ui-preview?p=child&tab=progress')
   await expect(page.getByText('Topics in progress')).toBeVisible()
-  // g5m1-t11 and g5m1-t13 started and not done → 2 in progress; g5m1-t12 is done (12 answers).
-  await expect(page.getByText('Topics in progress').locator('xpath=..')).toContainText('2')
-  await expect(page.getByText(`Aarav started “${NEXT_TITLE}” before getting far with “${PREV_TITLE}”.`)).toBeVisible()
+  // g5m1-t1, -t2, -t11, -t13 started and not done → 4 in progress; g5m1-t12 is done (12 answers).
+  await expect(page.getByText('Topics in progress').locator('xpath=..')).toContainText('4')
+  await expect(page.getByText('Aarav started “Multiply and divide by 10, 100, 1,000” before getting far with “Relate place value neighbors”.')).toBeVisible()
+  await expect(page.getByText(`Aarav started “${NEXT_TITLE}”`)).toHaveCount(0)
   await page.screenshot({ path: `${SHOTS}/06-parent-progress.png`, fullPage: true })
   await ctx.close()
 })
