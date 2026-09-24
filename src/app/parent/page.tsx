@@ -764,20 +764,6 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
         <button onClick={onAdd} style={{ marginTop:4, background:P.accent, color:'#fff', border:'none', borderRadius:50, padding:'16px 34px', minHeight:44, fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(242,107,44,0.28)' }}>
           {t('+ Add your first learner')}
         </button>
-        {/* ⚠️ BOTH OF THESE ARE TRUE AS OF 2026-08-25 AND ONLY BECAUSE OF THAT DATE. The check
-            became OPTIONAL then (a one-tap "Skip for now" issues a grade-start plan), so
-            "no diagnostic tests required" is a fact about the product, not reassuring copy —
-            and the ~2 minutes is the ADD-LEARNER form, never the check itself, which the intro
-            copy correctly calls "about ten minutes". If the check is ever re-forced, the first
-            of these two chips becomes a lie and has to come out with it. */}
-        <div style={{ display:'flex', flexWrap:'wrap', gap:8, justifyContent:'center', marginTop:2 }}>
-          {[t('Takes about 2 minutes'), t('No diagnostic tests required')].map(chip => (
-            <span key={chip} style={{ background:P.page, border:`1.5px solid ${P.edge}`, borderRadius:999, padding:'7px 13px', fontSize:12, fontWeight:700, color:P.ink2 }}>{chip}</span>
-          ))}
-        </div>
-        <p style={{ fontSize:12.5, color:P.ink3, margin:'6px 0 0', lineHeight:1.5 }}>
-          {t('…or wait for someone to share access with you.')}
-        </p>
       </div>
   )
 }
