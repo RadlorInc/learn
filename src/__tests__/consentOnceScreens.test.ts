@@ -24,10 +24,12 @@ const google = vi.hoisted(() => vi.fn(async () => ({ error: null })))
 const created = vi.hoisted(() => vi.fn(async () => ({ id: 'kid-1', age_group: '9-11' })))
 
 // ONE router object: the account page's effect depends on `router`, and a new object per render re-runs it for ever.
-const router = vi.hoisted(() => ({ replace: () => {}, push: () => {}, refresh: () => {} }))
+// `push` moves the (fake) URL, so the dashboard re-renders on the page the route names — the route is what is asserted.
+const nav = vi.hoisted(() => ({ qs: '', pushed: [] as string[] }))
+const router = vi.hoisted(() => ({ replace: () => {}, push: (u: string) => { nav.pushed.push(u); nav.qs = u.split('?')[1] ?? '' }, refresh: () => {} }))
 vi.mock('next/navigation', () => ({
   useRouter: () => router,
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => new URLSearchParams(nav.qs),
   usePathname: () => '/',
 }))
 vi.mock('@/data/auth', async orig => ({
@@ -76,6 +78,7 @@ let fetchAnswer: (url: string, body: Record<string, unknown>) => unknown = () =>
 beforeEach(() => {
   log.length = 0; fetchLog.length = 0
   st.consents = []; st.current = true; st.withdrawErr = null
+  nav.qs = ''; nav.pushed.length = 0
   signUp.mockClear(); google.mockClear(); created.mockClear()
   localStorage.clear()
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: { body?: string }) => {
@@ -276,27 +279,59 @@ describe('the dashboard sends B1 by itself when the signup tick is for the curre
 
 // ─────────────────────────────── C4 — withdraw all ───────────────────────────────
 describe('withdraw permission for all my children', () => {
-  it('Account settings: confirm → withdraw_my_consent → the cancel route, in that order', async () => {
-    const { default: AccountPage } = await import('@/app/parent/account/page')
-    const m = await mount(createElement(AccountPage))
-    await click(button(m.host, /^Withdraw permission for all your children$/))
+  // Prod check 2.8 (2026-09-24): it lived at the top of /parent/account, and a parent who withdrew went on, still on
+  // that page, to close the whole account. It is now its own card in the dashboard's Account view.
+  async function accountView() {
+    nav.qs = 'view=account'
+    const { default: Dashboard } = await import('@/app/parent/page')
+    const m = await mount(createElement(Dashboard))
+    return { ...m, card: () => m.host.querySelector('[data-tour="withdraw-all-card"]') as HTMLElement | null }
+  }
+
+  it('the Account view has its own card, beside "Close your account" and not part of it', async () => {
+    const m = await accountView()
+    expect(m.host.querySelector('[data-tour="close-card"]'), 'control: the Account view rendered').toBeTruthy()
+    expect(m.card(), 'no withdraw-all card in the Account view').toBeTruthy()
+    expect(m.card()!.querySelector('h2')?.textContent).toBe('Withdraw permission for all your children')
+    expect(m.card()!.textContent).toContain('Your account stays open.')
+    expect(m.card()!.textContent).not.toContain('Close your account')
+    await m.done()
+  })
+
+  it('confirm → withdraw_my_consent → the cancel route, then back to /parent with the result as the banner', async () => {
+    const m = await accountView()
+    await click(button(m.card()!, /^Withdraw permission for all your children$/))
     expect(m.host.textContent).toContain('Your account stays open.')
     expect(log.filter(l => /withdraw|cancel/.test(l)), 'withdrew before the confirm').toEqual([])
     await click(button(m.host, /^Withdraw permission and delete my children's data$/))
     expect(log.filter(l => /withdraw_my_consent|cancel-second-notice/.test(l)))
       .toEqual(['rpc:withdraw_my_consent', 'fetch:/api/consent/cancel-second-notice'])
-    expect(m.host.textContent).toContain('We have stopped collecting information about every child on your account')
+    expect(nav.pushed).toEqual(['/parent'])
+    expect(m.card(), 'still on the Account view after withdrawing').toBeNull()
+    expect(m.host.textContent).toContain('We have stopped collecting information about every child on your account and deleted what we held about them. Your account stays open.')
+    // …and ABOVE the notice that now follows it: the full notice is long, and a banner under it is not seen.
+    const text = m.host.textContent ?? ''
+    expect(text.indexOf('Before your child starts: what we collect'), 'control: the notice is on the dashboard').toBeGreaterThan(-1)
+    expect(text.indexOf('We have stopped collecting'), 'the result banner is below the notice').toBeLessThan(text.indexOf('Before your child starts: what we collect'))
     await m.done()
   })
 
-  it('a failed withdrawal says so and cancels nothing', async () => {
+  it('a failed withdrawal says so, cancels nothing and goes nowhere', async () => {
     st.withdrawErr = { code: '42501', message: 'boom' }
-    const { default: AccountPage } = await import('@/app/parent/account/page')
-    const m = await mount(createElement(AccountPage))
-    await click(button(m.host, /^Withdraw permission for all your children$/))
+    const m = await accountView()
+    await click(button(m.card()!, /^Withdraw permission for all your children$/))
     await click(button(m.host, /^Withdraw permission and delete my children's data$/))
     expect(log).not.toContain('fetch:/api/consent/cancel-second-notice')
-    expect(m.host.textContent).toContain('Something went wrong. Please try again.')
+    expect(nav.pushed).toEqual([])
+    expect(m.card()!.textContent).toContain('Something went wrong. Please try again.')
+    await m.done()
+  })
+
+  it('/parent/account is only for closing: no withdraw-all on it', async () => {
+    const { default: AccountPage } = await import('@/app/parent/account/page')
+    const m = await mount(createElement(AccountPage))
+    expect(m.host.querySelector('h1')?.textContent, 'control: the close page rendered').toBe('Close your account')
+    expect(m.host.textContent).not.toMatch(/withdraw/i)
     await m.done()
   })
 

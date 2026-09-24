@@ -58,7 +58,8 @@ import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
 import { AccountConsentCard } from '@/features/consent/AccountConsent'
 import { currentAck, longDate, type Ack } from '@/features/consent/consentState'
 import { Notice } from '@/features/consent/Notice'
-import { ATTEST } from '@/features/consent/copy'
+import { ATTEST, PROPOSED } from '@/features/consent/copy'
+import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 
@@ -424,15 +425,17 @@ function Dashboard() {
   const h1 = { margin: 0, fontSize: 28, fontWeight: 900, color: P.ink, fontFamily: 'var(--font-display)' } as const
 
   const notices = <>
-    {/* Consent-once (C2): a PARENT with no granted account consent sees the notice, or "waiting", here.
-        Never blocking — the dashboard stays usable; only adding a child waits for the consent. */}
-    {role === 'parent' && ack !== undefined && <AccountConsentCard lang={lang} ack={ack} />}
+    {/* The result of what the adult just did comes FIRST — after withdrawing for every child the full notice follows, and
+        a banner under it is a banner nobody sees (2026-09-24). */}
     {actionMsg && (
       <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, fontWeight:600, color:'#166534', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         ✅ {actionMsg}
         <button onClick={() => setActionMsg(null)} aria-label={t('Dismiss')} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:P.ink3, minWidth:44, minHeight:44 }}>×</button>
       </div>
     )}
+    {/* Consent-once (C2): a PARENT with no granted account consent sees the notice, or "waiting", here.
+        Never blocking — the dashboard stays usable; only adding a child waits for the consent. */}
+    {role === 'parent' && ack !== undefined && <AccountConsentCard lang={lang} ack={ack} />}
     {invites.length > 0 && (
       <div style={{ marginBottom:20 }}>
         {inviteMsg && <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:12, fontSize:14, fontWeight:600, color:'#166534' }}>✅ {inviteMsg}</div>}
@@ -561,6 +564,10 @@ function Dashboard() {
           ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
           : <section style={dcard} data-tour="plan-card"><h2 style={h2}>{t('Plan & billing')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Your plan and what it costs.')}</p><Link href="/parent/plan" style={dghost}>{t('See plans')}</Link></section>}
         {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
+        {/* Withdraw permission for every child, and KEEP the account — its own card, never on the close page (prod check 2.8).
+            On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}
+        {!tea && <WithdrawAllCard lang={lang} style={dcard}
+          onDone={() => { setActionMsg(PROPOSED.withdrawnAllBody[lang]); router.push('/parent'); void loadAll(true) }} />}
         {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
             /parent. The page itself carries the real guards. */}

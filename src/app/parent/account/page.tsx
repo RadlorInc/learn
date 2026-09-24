@@ -19,6 +19,9 @@
  *      than a password prompt (half these accounts have no password) or an emailed code (no
  *      verified sender).
  *
+ * ⚠️ ONLY CLOSING LIVES HERE. "Withdraw permission for all your children" is its own card in the dashboard's
+ * Account view (/parent?view=account): on this page a parent who withdrew went on to close the account by mistake.
+ *
  * ⚠️ THE EXPORT IS OFFERED FIRST AND IT IS PER CHILD, because that is where the data is. A parent
  * who deletes without taking a copy has lost it — there is no soft delete and no grace window, by
  * design — so the download sits above the confirm rather than beside it.
@@ -26,10 +29,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getMyLearners, getLearnerStats, getLearnerProgress, getRecentSessions, deleteMyAccount, withdrawAllConsent, signOut } from '@/data/repositories'
-import { useSavedLang } from '@/features/dashboard/i18n'
-import { WithdrawAll } from '@/features/consent/WithdrawAll'
-import { WITHDRAW_ALL, PROPOSED } from '@/features/consent/copy'
+import { getMyLearners, getLearnerStats, getLearnerProgress, getRecentSessions, deleteMyAccount, signOut } from '@/data/repositories'
 import { getCurrentSession } from '@/data/auth'
 import { DataRights } from '@/shared/ui/DataRights'
 import { SURVIVORS, HELD_ELSEWHERE } from '@/core/accountDeletion'
@@ -58,18 +58,6 @@ export default function AccountPage() {
   const [stale, setStale] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<Record<string, number> | null>(null)
-  // Consent-once, C4(b): withdraw permission for every child, and keep the account.
-  const lang = useSavedLang()
-  const [withdraw, setWithdraw] = useState<'idle' | 'confirm' | 'busy' | 'done' | 'error'>('idle')
-
-  async function withdrawAll() {
-    setWithdraw('busy')
-    const r = await withdrawAllConsent()
-    if (!r.ok) { setWithdraw('error'); return }
-    setOwned([])          // every child this account created is gone
-    setWithdraw('done')
-  }
-
   useEffect(() => {
     (async () => {
       const session = await getCurrentSession()
@@ -129,20 +117,6 @@ export default function AccountPage() {
         {' · '}
         <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
       </p>
-
-      {/* ⚠️ A SEPARATE RIGHT FROM CLOSING: every child's data goes, the account stays (document 02 §rights,
-          document 03 "Withdraw permission for all your children"). */}
-      <section data-t="withdraw-all" style={{ margin: '18px 0 8px', padding: '16px 18px', borderRadius: 16, border: '2px solid rgba(61,37,22,.12)', background: 'rgba(255,255,255,.6)' }}>
-        {withdraw === 'confirm' || withdraw === 'busy'
-          ? <WithdrawAll lang={lang} busy={withdraw === 'busy'} onConfirm={withdrawAll} onKeep={() => setWithdraw('idle')} />
-          : withdraw === 'done'
-            ? <p role="status" style={{ ...p, margin: 0, fontWeight: 700 }}>{PROPOSED.withdrawnAllBody[lang]}</p>
-            : <>
-                <h2 style={{ ...h2, margin: '0 0 10px' }}>{WITHDRAW_ALL.heading[lang]}</h2>
-                {withdraw === 'error' && <p role="alert" style={{ ...p, color: '#DC2626', fontWeight: 700 }}>{PROPOSED.error[lang]}</p>}
-                <button type="button" onClick={() => setWithdraw('confirm')} style={btn}>{WITHDRAW_ALL.heading[lang]}</button>
-              </>}
-      </section>
 
       <p style={{ ...p, marginTop: 14 }}>
         Deleting your account removes it and <strong>every child profile you created</strong>, with all of

@@ -45,7 +45,7 @@ Every account is a test account, so keep the gap short: have the backup running 
 | 2.5 | **Add a child** → name, modules → the **unticked** box *"I'm this child's parent or legal guardian. The permission I gave on {date} applies to this child too."* | **Add** stays disabled until you tick. No email is sent. |
 | 2.6 | Add a **second** child the same way. | Created with a tick only. |
 | 2.7 | Delete one child (card → Login & data → *Delete name's profile*). | The other child stays; the dashboard still allows adding. |
-| 2.8 | **Account → Withdraw permission for all my children** → confirm. | *"We have stopped collecting information about every child on your account…"*. The dashboard shows no children and **no email arrives by itself**. **Add a child** asks for permission again (the notice, then a new B1 only when you press continue). In Resend, that consent's B3 shows **Canceled**. |
+| 2.8 | **Account** (the dashboard's Account view) → the **Withdraw permission for all your children** card, beside *Close your account* → confirm. | You land back on the **dashboard** with *"We have stopped collecting information about every child on your account…"* as a banner — never on the Close-your-account page, which no longer offers withdrawal (fixed 2026-09-24 after this check: a parent who withdrew there went on to close the account by mistake). The dashboard shows no children and **no email arrives by itself**. **Add a child** asks for permission again (the notice, then a new B1 only when you press continue). In Resend, that consent's B3 shows **Canceled**. |
 | 2.9 | Google sign-up: repeat 2.1–2.4 with **Continue with Google** (after ticking). | The same single B1 (Google proves the address; it is not the consent). |
 
 Then read-only:
