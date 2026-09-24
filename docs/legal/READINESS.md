@@ -83,6 +83,9 @@ every box marked 👪 is ticked.** Boxes marked 💳 must be ticked **before any
 ### Spanish reviewer (ROUND-2 §3, the review job)
 - [ ] 👪 About 10,500 words of legal pages (`docs/legal/es/`) + 104 consent strings. Sign with `REVIEWED-BY: <Full Name>, <YYYY-MM-DD>`.
 
+### To build (launch blockers found after Round 1)
+- [ ] 👪 **B3 cancel: retry refused rows in the daily cron + make a refused cancel visible (error log + SQL check).** Found 24 Sep: sending-only Resend key caused silent 401s.
+
 ### Publish
 - [ ] 👪 **Publish the legal pages.** For each page in `src/app/legal/registry.ts`: 0 placeholders in its public part, the `STATUS: DRAFT` line removed, attorney sign-off recorded, and Spanish signed. Then set `published: true` in a reviewed PR. The switch refuses anything short of that. Flip `BILLING_LIVE` only when billing is live (💳).
 
