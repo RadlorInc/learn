@@ -6,7 +6,7 @@
  * Look: the founder's SampleUI template. Its red wrong-answer banners, locks, emoji and scores are deliberately NOT
  * carried over (a wrong answer is never marked wrong; difficulty and scores stay invisible).
  */
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import Link from 'next/link'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { setSceneVoice, prefetchClips, setClipRate } from '@/infra/voiceClipPlayer'
@@ -51,8 +51,12 @@ const LESSON_RATE = 0.9
  * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
  * (see ./adaptive) asks generated problems that follow the child, and may bring back one earlier topic that is not mastered.
  */
-export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit, nudge = null, onPractise }: {
+export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit, nudge = null, onPractise, practiceFirst = false, onModuleComplete }: {
   lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]
+  /** "Practice again" from the module summary: straight into practice — no teaching screens, no welcome card. */
+  practiceFirst?: boolean
+  /** The module's last topic just finished: its end screen leads to the module summary instead of the topic map. */
+  onModuleComplete?: () => void
   /** The soft prerequisite card (./nudge), decided by the page; shown before anything else, once. */
   nudge?: Nudge | null
   /** "Practice <previous topic> first". */
@@ -84,7 +88,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // Short sessions (founder, 2026-09-24): a choice after every 5 answers and at mastery; the run is saved after every
   // answer, so Take a break — or closing the app — continues from exactly there. A saved run greets the child with a
   // choice to go straight back to practice (never an automatic skip of the lesson).
-  const [welcome, setWelcome] = useState(() => !!ladder && !!loadRun(learnerId, lesson.id))
+  const [welcome, setWelcome] = useState(() => !practiceFirst && !!ladder && !!loadRun(learnerId, lesson.id))
   // Held in state from the first render: marking it shown makes the page's next answer "no card", and a re-render must
   // not snatch the card away while the child is reading it.
   const [nudging, setNudging] = useState(nudge)
@@ -167,6 +171,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     }
     go(toPractice(s))
   }
+  // Practice again: before the first paint, so no teaching screen flashes (and none of her lines starts).
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  useLayoutEffect(() => { if (practiceFirst) startPractice() }, [])
   // Take a break: the celebration, if anything was answered this time; straight back to the topics if not.
   const takeBreak = () => { stopSpeech(); setPause(null); if (session.answered === 0) onExit(); else go({ ...s, mode: 'finish', misses: 0, feedback: null }) }
   const won = s.mode === 'won'
@@ -444,7 +451,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         ? session.points > 0 && <p style={{ ...right, alignSelf: 'flex-start' }}>{C.points(session.points)}</p>
         : <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>}
     </div>
-    action = <button type="button" style={primary} onClick={onExit}>{C.backToTopics}</button>
+    action = allDone && onModuleComplete
+      ? <button type="button" style={primary} onClick={() => { stopSpeech(); onModuleComplete() }}>{C.seeSummary}</button>
+      : <button type="button" style={primary} onClick={onExit}>{C.backToTopics}</button>
   }
 
   return (

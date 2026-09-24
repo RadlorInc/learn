@@ -70,7 +70,10 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
         <div style={topBar}>
           {back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link> : <span />}
           <span style={{ fontSize: 'clamp(15px, 3.6vw, 18px)', textAlign: 'center' }}>Grade {module.grade} · Module {module.n}</span>
-          <span style={{ background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>{done.length} of {n} done</span>
+          {/* Every topic done: the chip becomes the way back to the module summary (Review 1 Q3). */}
+          {done.length === n
+            ? <Link href={`/lesson?module=${module.id}&summary=1`} style={{ ...pill, background: '#ffd166', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{C.seeSummary}</Link>
+            : <span style={{ background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>{done.length} of {n} done</span>}
         </div>
         <div style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
           <h1 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 4.5vw, 36px)', color: INK, lineHeight: 1.1 }}>{module.title}</h1>
