@@ -16,6 +16,13 @@ export const SITE_URL =
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
     : 'https://radlic.com')
 
+/**
+ * The app's own origin (app.radlic.com) — radlic.com keeps the landing, /help and /legal. Unset = the same as
+ * `SITE_URL`, and then there is no split at all (`hostSplit.ts`). Set `NEXT_PUBLIC_APP_URL` only after
+ * docs/APP-SUBDOMAIN.md steps 1–4.
+ */
+export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? SITE_URL
+
 /** The product's domain until 2026-09-24. It keeps working, as a permanent redirect to `SITE_URL`. */
 export const OLD_HOST = 'adaptivelearn.radlor.com'
 

@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
-import { oldDomainRedirects } from './src/app/site'
+import { APP_URL, SITE_URL, oldDomainRedirects } from './src/app/site'
+import { appRoutes, hostSplitRedirects } from './src/app/hostSplit'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -56,8 +57,9 @@ const nextConfig: NextConfig = {
   },
 
   // The old domain (adaptivelearn.radlor.com) → radlic.com, once SITE_URL has moved. See `oldDomainRedirects`.
+  // radlic.com ↔ app.radlic.com, once APP_URL is set. See `hostSplit.ts`.
   async redirects() {
-    return oldDomainRedirects()
+    return [...oldDomainRedirects(), ...hostSplitRedirects(appRoutes(), SITE_URL, APP_URL)]
   },
   async headers() {
     return [
