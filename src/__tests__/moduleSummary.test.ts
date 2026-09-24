@@ -120,7 +120,11 @@ describe('getting there', () => {
     saveRun(L, lesson.id, { asked: 11, recent: [problem.text], current: { problem, from: lesson.id }, review: null })
     const onModuleComplete = vi.fn(), onExit = vi.fn()
     await mount(createElement(LessonPlayer, { lesson, learnerId: L, onFinish: () => markLessonDone(L, lesson.id), onExit, moduleDone: () => true, onModuleComplete }))
-    const click = async (label: string) => { const b = [...host.querySelectorAll('button')].filter(x => x.textContent?.trim() === label).at(-1)!; await act(async () => { b.click() }) }
+    const click = async (label: string) => {
+      const bs = [...host.querySelectorAll('button')]
+      expect(bs.map(x => x.textContent?.trim())).toContain(label)
+      await act(async () => { bs.filter(x => x.textContent?.trim() === label).at(-1)!.click() })
+    }
     await click('Keep practicing')
     await act(async () => { const i = host.querySelector('form input') as HTMLInputElement
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(i, String(solutionOf(loadRun(L, lesson.id)!.current.problem)))
