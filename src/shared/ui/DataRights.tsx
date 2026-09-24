@@ -81,9 +81,10 @@ function attestation(learner: unknown): Record<(typeof ATTESTATION)[number], unk
   return Object.fromEntries(ATTESTATION.map(k => [k, l[k] ?? null])) as Record<(typeof ATTESTATION)[number], unknown>
 }
 
-/** A filename a parent can find again in their Downloads folder. */
+/** A filename a parent can find again in their Downloads folder. `radlic-` since the 2026-09-24 rename (was `milo-`);
+ *  nothing reads the name back, so a file downloaded before the rename still works wherever it is used. */
 export const exportFilename = (name: string, at: Date) =>
-  `milo-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'learner'}-${at.toISOString().slice(0, 10)}.json`
+  `radlic-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'learner'}-${at.toISOString().slice(0, 10)}.json`
 
 /**
  * ⚠️ IT WRAPS THE EXISTING DELETE CONTROL RATHER THAN ADDING A SECOND ONE. The dashboard already

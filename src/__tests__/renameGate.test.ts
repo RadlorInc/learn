@@ -107,6 +107,11 @@ describe('the Radlic rename — nothing visible still says Milo, AdaptiveLearn, 
     expect(EXCEPTIONS.filter((_, i) => !result.used.has(i)).map(e => `${e.file}: ${e.line}`)).toEqual([])
   })
 
+  it('N6: the one identifier a person sees — the export download — is named for the product', async () => {
+    const { exportFilename } = await import('@/shared/ui/DataRights')
+    expect(exportFilename('Ava Rose', new Date('2026-09-24T12:00:00Z'))).toBe('radlic-ava-rose-2026-09-24.json')
+  })
+
   it('the hidden legacy chapters are built around the Milo character — they may not be unhidden until that is decided', () => {
     // RENAME-MANUAL.md §F: delete them, or rewrite them without the mascot. Until then the flag is the gate.
     const character = execFileSync('git', ['grep', '-c', '-w', 'Milo', '--', 'src/features/chapters'], { encoding: 'utf8' })
