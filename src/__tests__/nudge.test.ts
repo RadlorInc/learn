@@ -59,6 +59,10 @@ describe('the rule', () => {
     expect(at(half - 1)?.prev.id).toBe(first.id)
     expect(at(half)).toBeNull()
     expect(nudgeFor(second, mod, ctx({ standingOf: () => ({ level: 0, streak: 0, mastered: true }) }))).toBeNull()
+    // Exactly halfway is "past halfway" enough: a 4-level ladder at level 2 is 0.5 → no card; level 1 (0.25) → card.
+    const four = (level: number) => nudgeFor(second, mod, ctx({ levelsOf: () => 4, standingOf: () => ({ level, streak: 0, mastered: false }) }))
+    expect(four(2)).toBeNull()
+    expect(four(1)).toEqual({ prev: first, progress: 0.25 })
   })
 
   it('never on a module\'s first topic, mid-session, twice in a day, or when the topics were chosen for the child', () => {
