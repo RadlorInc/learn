@@ -149,6 +149,7 @@ describe('Q2 in module practice (a class exercise, so the problems are fixed)', 
     const mod = MODULES.find(m => m.lessons.includes(lesson))!
     await mount(createElement(ModulePractice, { module: mod, onExit: () => {}, exercise: { title: 'Set A', items: problems.map(problem => ({ problem, lesson })) } }))
     await type(wrongFor(solutionOf(problems[0])))
+    expect(status().map(x => x.textContent).join('|')).toContain('Try again!')
     expect(status()[0].textContent).toContain('↻')
     expect(status()[0].textContent).toContain('Try again!')
     expect(status()[0].style.background).toBe(YELLOW)
