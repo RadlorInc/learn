@@ -18,6 +18,7 @@
  * scripted tap found nothing to tap). Written 2026-09-21; watched red on /help's back link at a 59px status bar and on
  * the /admin/login reload loop before any fix.
  *
+ * OFFLINE=1 also checks each screen with the connection cut, so the offline bar is judged like anything else.
  * ⚠️ It checks the INITIAL scroll position for in-flow content (content that scrolls under the bar later is normal)
  * and every scroll position for fixed/sticky content. It does not judge beauty — only overlap, overflow and clipping.
  */
@@ -456,6 +457,14 @@ for (const [name, w, h, insets, mobile] of PROFILES) {
       await page.goto(BASE + R.url, { waitUntil: 'networkidle', timeout: 45000 })
       await page.waitForTimeout(+(process.env.SETTLE ?? 800))
       await check('')
+      // OFFLINE=1: the same screen once the connection drops — the offline bar appears and must cover nothing.
+      if (process.env.OFFLINE) {
+        await ctx.setOffline(true); await page.waitForTimeout(600)
+        const bar = await page.locator('[data-offline-bar]').count()
+        if (!bar) results.push({ route: R.url + ' (offline)', profile: name, rule: 'step-missing', msg: 'no offline bar appeared' })
+        await check(' (offline)')
+        await ctx.setOffline(false); await page.waitForTimeout(300)
+      }
       for (const st of R.steps) {
         for (let k = 0; k < (st.times ?? 1); k++) {
           if (st.reload) { await page.goto(BASE + R.url, { waitUntil: 'networkidle' }); await page.waitForTimeout(600) }
