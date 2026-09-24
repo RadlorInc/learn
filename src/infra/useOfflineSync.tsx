@@ -128,13 +128,24 @@ export function OfflineBanner(): React.ReactElement | null {
     }
   }, [doFlush, updateCount])
 
-  // Don't render until we know the real online status
-  if (isOnline === null) return null
-  // Online with nothing pending — hide
-  if (isOnline && pendingCount === 0 && !syncing) return null
+  // While it shows, the bar publishes its height as `--offline-bar`, and the page keeps that much clear at the bottom
+  // (globals.css: body's padding and the dashboard sidebar's height). It used to sit ON the page — on an iPad Pro it
+  // covered the sidebar's "Sign out" (found by the responsive sweep, 2026-09-24).
+  const shown = isOnline !== null && !(isOnline && pendingCount === 0 && !syncing)
+  const bar = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = bar.current, root = document.documentElement
+    if (!shown || !el) return
+    const ro = new ResizeObserver(() => root.style.setProperty('--offline-bar', `${el.offsetHeight}px`))
+    ro.observe(el)
+    return () => { ro.disconnect(); root.style.removeProperty('--offline-bar') }
+  }, [shown])
+
+  // Don't render until we know the real online status; online with nothing pending — hide.
+  if (!shown) return null
 
   return (
-    <div style={{
+    <div ref={bar} data-offline-bar style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
       padding: '12px 20px calc(12px + env(safe-area-inset-bottom))',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
