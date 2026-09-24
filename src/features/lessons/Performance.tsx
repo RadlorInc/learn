@@ -8,8 +8,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { findLesson } from './modules'
-import { buildReport, assignmentStatus, localDay, showDay, STUCK_MIN, type Report } from './progressReport'
-import { getLessonRows, getRecentPoints, type LessonRow } from '@/data/repositories/points'
+import { buildReport, assignmentStatus, localDay, showDay, masteredByModule, STUCK_MIN, type Report } from './progressReport'
+import { getLessonRows, getRecentPoints, getMasteredDates, type LessonRow } from '@/data/repositories/points'
 import { startedAhead } from './nudge'
 import { ladderOf } from './ladders'
 import { MODULES } from './modules'
@@ -24,15 +24,17 @@ const DAYS = 30
 export function Performance({ learners, lessonsHref }: { learners: PerformanceLearner[]; lessonsHref?: string }) {
   const t = useT(), lang = useLang(), loc = lang === 'es' ? 'es-US' : 'en-US'
   const [who, setWho] = useState(learners[0]?.id ?? '')
-  const [report, setReport] = useState<{ id: string; r: Report | null; rows: LessonRow[] } | null>(null)
+  const [report, setReport] = useState<{ id: string; r: Report | null; rows: LessonRow[]; dates: Record<string, string> } | null>(null)
+  // Review 1 Q4: the "Topics mastered" tile opens the list of them, by module, with the day each was mastered.
+  const [listOpen, setListOpen] = useState(false)
   const child = learners.find(l => l.id === who) ?? learners[0]
 
   const childId = child?.id
   useEffect(() => {
     if (!childId) return
     let live = true
-    Promise.all([getRecentPoints(childId, DAYS), getLessonRows(childId)]).then(([points, rows]) => {
-      if (live) setReport({ id: childId, r: points && rows ? buildReport(points, rows, new Date()) : null, rows: rows ?? [] })
+    Promise.all([getRecentPoints(childId, DAYS), getLessonRows(childId), getMasteredDates(childId)]).then(([points, rows, dates]) => {
+      if (live) setReport({ id: childId, r: points && rows ? buildReport(points, rows, new Date()) : null, rows: rows ?? [], dates: dates ?? {} })
     })
     return () => { live = false }
   }, [childId])
@@ -44,6 +46,7 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
   const assigned = child.lessonIds ?? []
   const late = assigned.filter(id => assignmentStatus(lessonDone(child.id, id), child.due[id], today) === 'late')
   const most = r ? Math.max(1, ...r.week.map(d => d.problems)) : 1
+  const mastered = r && report ? masteredByModule(report.rows, report.dates, MODULES) : { groups: [], other: 0 }
 
   return (
     <>
@@ -64,13 +67,39 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
               { num: r.practising, label: t('Topics in progress') },
               { num: r.problemsThisWeek, label: t('Problems this week') },
               { num: r.firstTryPct === null ? '—' : `${r.firstTryPct}%`, label: t('Right on the first try · last {n} days', { n: DAYS }) },
-            ].map(s => (
-              <div key={s.label} style={card}>
+            ].map((s, i) => {
+              const inner = <>
                 <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--ink)' }}>{s.num}</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-muted)', fontWeight: 600 }}>{s.label}</div>
+              </>
+              // The first tile, Topics mastered, opens its list once there is something in it.
+              return i === 0 && r.mastered > 0
+                ? <button key={s.label} type="button" aria-expanded={listOpen} aria-controls="mastered-list" onClick={() => setListOpen(o => !o)}
+                    style={{ ...card, textAlign: 'left', cursor: 'pointer', font: 'inherit' }}>
+                    {inner}
+                    <div style={{ marginTop: 6, fontSize: 13, fontWeight: 800, color: 'var(--ink)' }}>{listOpen ? `▴ ${t('Hide the list')}` : `▾ ${t('Show the list')}`}</div>
+                  </button>
+                : <div key={s.label} style={card}>{inner}</div>
+            })}
+          </div>
+
+          {listOpen && r.mastered > 0 && <section id="mastered-list" style={{ ...panel, marginTop: 14 }} aria-label={t('Mastered topics')}>
+            <h2 style={h2}>{t('Mastered topics')}</h2>
+            {mastered.groups.map(g => (
+              <div key={g.moduleId} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--ink-muted)' }}>{t('Grade {g}', { g: g.grade })} · {g.title}</h3>
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {g.topics.map(x => (
+                    <li key={x.id} style={{ display: 'flex', flexDirection: 'column', fontSize: 14, color: 'var(--ink)' }}>
+                      <span style={{ fontWeight: 700 }}>⭐ {x.title}</span>
+                      <span style={{ color: 'var(--ink-soft)', fontSize: 13, paddingLeft: 22 }}>{x.day ? t('Mastered {day}', { day: showDay(x.day, lang) }) : t('Mastered, date not recorded')}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
-          </div>
+            {mastered.other > 0 && <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-soft)' }}>{t(mastered.other === 1 ? '1 more from the older story chapters.' : '{n} more from the older story chapters.', { n: mastered.other })}</p>}
+          </section>}
 
           <div className="home-two" style={{ marginTop: 14 }}>
             <section style={panel} aria-label={t('This week')}>

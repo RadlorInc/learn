@@ -90,3 +90,24 @@ export function buildReport(points: readonly PointRow[], progress: readonly Prog
     practising: progress.filter(r => !r.done).length,
   }
 }
+
+/**
+ * The mastered topics for a parent (Review 1 Q4): grouped by module in teaching order, each with the day it was first
+ * mastered — the `mastered` row of point_events (one per topic, a unique index) — or null when no such row survives
+ * (the points ledger was emptied on 2026-09-17, so an older mastery has no date: say so, never guess one).
+ * `other` counts mastered ids that are not a topic of any module (a legacy chapter), so the list never silently
+ * disagrees with the tile's count.
+ */
+export interface MasteredGroup { moduleId: string; grade: number; n: number; title: string; topics: { id: string; title: string; day: Day | null }[] }
+export function masteredByModule(
+  progress: readonly ProgressRow[], dates: Readonly<Record<string, string>>,
+  modules: readonly { id: string; grade: number; n: number; title: string; lessons: readonly { id: string; title: string }[] }[],
+): { groups: MasteredGroup[]; other: number } {
+  const mastered = new Set(progress.filter(r => r.mastered).map(r => r.lesson_id))
+  const groups = modules
+    .map(m => ({ moduleId: m.id, grade: m.grade, n: m.n, title: m.title,
+      topics: m.lessons.filter(l => mastered.has(l.id)).map(l => ({ id: l.id, title: l.title, day: dates[l.id] ? localDay(new Date(dates[l.id])) : null })) }))
+    .filter(g => g.topics.length > 0)
+  const known = new Set(groups.flatMap(g => g.topics.map(t => t.id)))
+  return { groups, other: [...mastered].filter(id => !known.has(id)).length }
+}
