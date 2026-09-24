@@ -121,7 +121,7 @@ describe('signup: both buttons wait for the tick', () => {
 
   it('disabled until ticked, enabled after — and the tick is kept with its notice version and time', async () => {
     const s = await signup()
-    expect(s.host.textContent, 'the signup notice is not on the screen').toContain('Before you create an account: what we collect about your children')
+    expect(s.host.textContent, 'the signup notice is not on the screen').toContain('Before you create an account: What we collect about your child/children')
     expect(s.box().checked, 'the box must start UNTICKED').toBe(false)
     expect(s.email().disabled, '"Create account" works without the tick').toBe(true)
     expect(s.google().disabled, '"Continue with Google" works without the tick').toBe(true)

@@ -206,11 +206,11 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ## Signup page — shown before the signup buttons, which stay disabled until the box is ticked
 
-**Heading:** `Before you create an account: what we collect about your children`
+**Heading:** `Before you create an account: What we collect about your child/children`
 
-> For each child you add, Radlic stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.
+> For each child you add, Radlic stores their first name or nickname, the avatar you pick, the lessons you choose and a grade level, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising. We do not sell or use parent information for marketing or advertising either.
 
-**Link:** `Read the full notice` (opens the full notice, document 02)
+**Link:** `Read our Privacy Policy` (opens https://radlic.com/legal/privacy in a new tab; the full notice, document 02, is shown with the consent request)
 
 **Checkbox (unticked):** `I'm a parent or legal guardian, I've read what we collect, and I agree.`
 

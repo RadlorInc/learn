@@ -64,6 +64,10 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 - **Draft:** doc 02 as renamed.
 - **Decide:** is a change of product name and domain, with nothing else changed, a "material change" that requires fresh consent from parents who agreed to the old notice? If yes, one setting makes every earlier consent non-current and each parent is asked again the next time they add a child. Also: trademark clearance for "Radlic" (education software / online classes) has not been done.
 
+### A12. The signup summary says "grade level"; the notice says "grade band" *(new, 25 September 2026; doc 03 signup page, doc 02)*
+- **Today:** at the founder's request, the short summary above the signup buttons says the app stores "a grade level". What is stored is a **band** worked out from the lessons chosen (grades 3–5 or 6–8, saved as the age range 9–11 or 12–14), and the full notice (doc 02) and both consent emails say "grade band". The same summary now also says "We do not sell or use parent information for marketing or advertising either", which is true today (no marketing email is sent), and its link now opens the Privacy Policy, not the full notice.
+- **Decide:** is the summary's "grade level" acceptable next to a notice that says "grade band"? The mismatch goes away when the app starts storing the child's grade (branch `learner-grade`, notice-v7). And is the parent-marketing sentence a commitment we can keep, given that the email code already supports commercial sends with an unsubscribe link?
+
 ---
 
 ## B. Parent rights — needed before the Parent Rights page publishes *(06 notes 1–5)*
