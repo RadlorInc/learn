@@ -8,7 +8,7 @@
  * grant it for every parent before they read the email, and email-plus would verify nothing. So the
  * page looks the token up (read-only) and shows the choice; the POST is the parent's own click.
  *
- *   respond  — heading: B1's subject; B1's "I agree" box (unticked) — ticking it IS the grant, there is no
+ *   respond  — heading: B1's subject; the Privacy Policy line, then B1's tick box (unticked) — ticking it IS the grant, there is no
  *              separate button; after granting: B2, verbatim
  *   withdraw — the withdrawal screen from document 03, verbatim
  * Every other message on this page is from `PROPOSED` in copy.ts and awaits the founder's approval.
@@ -64,7 +64,8 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
       <div data-consent="respond">
         <h1 style={S.h1}>{t(B1.subject)}</h1>
         <p style={S.p}>{t(B1.covers)}</p>
-        <label style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 18, color: 'var(--ink)', fontWeight: 800, cursor: busy ? 'wait' : 'pointer', padding: '14px 16px', margin: '8px 0 16px', border: '2px solid var(--milo-orange)', borderRadius: 14, minHeight: 48, boxSizing: 'border-box' }}>
+        <p style={S.p}><Md s={t(B1.details)} /></p>
+        <label style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 16, lineHeight: 1.4, color: 'var(--ink)', fontWeight: 800, cursor: busy ? 'wait' : 'pointer', padding: '14px 16px', margin: '8px 0 16px', border: '2px solid var(--milo-orange)', borderRadius: 14, minHeight: 48, boxSizing: 'border-box' }}>
           <input type="checkbox" checked={busy} disabled={busy} onChange={e => { if (e.target.checked) void act('grant') }}
             style={{ width: 26, height: 26, flex: '0 0 auto', margin: 0, accentColor: '#F26B2C' }} />
           <span>{t(B1.tick)}</span>

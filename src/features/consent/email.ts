@@ -20,7 +20,7 @@ const checkbox = (label: string, href: string) =>
   `border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;color:#2B1D14">` +
   `<span style="display:inline-block;width:20px;height:20px;border:2px solid #E0591F;border-radius:4px;background:#fff"></span>${esc(label)}</a>`
 
-/** B1. "☐ I agree" opens the page whose box IS the grant. Clicking in the email cannot grant by itself: mail
+/** B1. The "☐ I've read and agreed…" link opens the page whose box IS the grant. Clicking in the email cannot grant by itself: mail
  *  scanners open every link, so a link that granted would agree for every parent before anyone read it. */
 export function renderB1(lang: Lang, agreeUrl: string, firstName: string | null): Rendered {
   const t = (x: L) => x[lang]
@@ -28,14 +28,14 @@ export function renderB1(lang: Lang, agreeUrl: string, firstName: string | null)
   const html = wrap([
     p(hi), p(t(B1.before)),
     `<ul style="margin:0 0 14px;padding-left:22px">${B1.list.map(x => `<li>${toHtml(t(x))}</li>`).join('')}</ul>`,
-    p(t(B1.doNot)),
-    `<p style="margin:18px 0 8px">${checkbox(t(B1.tick), agreeUrl)}</p>`,
-    p(t(B1.ignore)), small(t(B1.details)), small(B1.address),
+    p(t(B1.doNot)), p(t(B1.details)),
+    `<p style="margin:4px 0 18px">${checkbox(t(B1.tick), agreeUrl)}</p>`,
+    p(t(B1.ignore)), small(B1.address),
   ].join(''))
   const text = [
-    hi, t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot),
+    hi, t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot), toText(t(B1.details)),
     `☐ ${t(B1.tick)}: ${agreeUrl}`,
-    t(B1.ignore), toText(t(B1.details)), B1.address,
+    t(B1.ignore), B1.address,
   ].map(s => toText(s)).join('\n\n')
   return { subject: t(B1.subject), html, text }
 }

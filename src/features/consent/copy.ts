@@ -132,11 +132,11 @@ export const B1 = {
   ] as L[],
   doNot: { en: "We never sell your child's information or use it for advertising.", es: 'Nunca vendemos la información de su hijo ni la usamos para publicidad.' },
   ignore: { en: "Didn't sign up? Ignore this email and nothing will happen.", es: '¿No se registró? Ignore este correo y no pasará nada.' },
-  details: { en: 'Full details: [Privacy Policy](https://radlic.com/legal/privacy)', es: 'Todos los detalles: [Política de privacidad](https://radlic.com/legal/privacy) (en inglés)' },
+  details: { en: "Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)", es: 'Aquí está nuestra Política de privacidad detallada: [Política de privacidad](https://radlic.com/legal/privacy) (en inglés)' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
-  // ── "I agree" is the email's checkbox-link AND the page's box (/consent/respond); ticking the page's box IS the grant ──
+  // ── the tick is the email's checkbox-link AND the page's box (/consent/respond); ticking the page's box IS the grant ──
   covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
-  tick: { en: 'I agree', es: 'Acepto' },
+  tick: { en: "I've read and agreed to the Privacy Policy", es: 'He leído y acepto la Política de privacidad' },
   decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
 }
 

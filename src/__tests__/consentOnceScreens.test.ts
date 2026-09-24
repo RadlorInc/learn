@@ -334,7 +334,7 @@ describe('withdraw permission for all my children', () => {
 })
 
 // ─────────────── B1's page: the box IS the grant (founder, 2026-09-25) ───────────────
-describe('the page B1 opens: ticking "I agree" IS the grant, and nothing is granted on arrival', () => {
+describe('the page B1 opens: ticking the box IS the grant, and nothing is granted on arrival', () => {
   it('arrival sends only the lookup; there is no Confirm button; one tick → exactly one grant → B2', async () => {
     fetchAnswer = (_u, b) => b.action === 'lookup' ? { status: 'pending', lang: 'en', scope: 'account' } : { status: 'granted', lang: 'en' }
     window.location.hash = `#t=${'A'.repeat(43)}`
@@ -345,7 +345,10 @@ describe('the page B1 opens: ticking "I agree" IS the grant, and nothing is gran
     const box = m.host.querySelector('[data-consent="respond"] input[type="checkbox"]') as HTMLInputElement
     expect(box, 'the page has no box').toBeTruthy()
     expect(box.checked, 'the box must start UNTICKED').toBe(false)
-    expect(box.closest('label')?.textContent?.trim()).toBe('I agree')
+    expect(box.closest('label')?.textContent?.trim()).toBe("I've read and agreed to the Privacy Policy")
+    const policy = m.host.querySelector('[data-consent="respond"] a[href="https://radlic.com/legal/privacy"]')
+    expect(policy?.textContent, 'the Privacy Policy link is not on the page').toBe('Privacy Policy')
+    expect(policy!.compareDocumentPosition(box) & Node.DOCUMENT_POSITION_FOLLOWING, 'the Privacy Policy line must come ABOVE the box').toBeTruthy()
     expect(button(m.host, /^(Confirm|I give permission|Review and confirm)$/), 'a separate button is back').toBeUndefined()
     expect((button(m.host, /^No — cancel this request$/) as HTMLButtonElement).disabled).toBe(false)
     await click(box)

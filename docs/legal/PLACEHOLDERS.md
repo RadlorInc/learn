@@ -112,7 +112,7 @@ Published on the founder's decisions, without an attorney; every attorney row de
 | 16 | 03-consent-and-checkout-screen-copy.md | 99 | `[PLACEHOLDER — every month / every 12 months]` | rafi | Rafi | Cadence in the receipt. |
 | 17 | 03-consent-and-checkout-screen-copy.md | 99 | `[PLACEHOLDER — date]` | rafi | Rafi | Renewal date — a per-purchase field of an unbuilt receipt email (not a publication date). |
 | 18 | 03-consent-and-checkout-screen-copy.md | 100 | `[PLACEHOLDER — amount]` | rafi | Rafi | Renewal amount in the receipt. |
-| 19 | 03-consent-and-checkout-screen-copy.md | 160 | `[PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]` | attorney | Attorney | B3 delay. Build: 24 h, refused outside 24–48 h in production (`config.ts`). Attorney confirms. |
+| 19 | 03-consent-and-checkout-screen-copy.md | 163 | `[PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]` | attorney | Attorney | B3 delay. Build: 24 h, refused outside 24–48 h in production (`config.ts`). Attorney confirms. |
 | 28 | 05-information-security-program.md | 8 | `[PLACEHOLDER — date]` | date | Rafi | Adoption date. |
 | 29 | 05-information-security-program.md | 35 | `[PLACEHOLDER — obtain written confirmation from the provider and keep it as evidence]` | provider | Supabase | Written confirmation of encryption at rest. |
 | 30 | 05-information-security-program.md | 63 | `[PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]` | rafi | Rafi | Name the staging/test environment once created (R14 prepared it; ROUND-2 §4). |
