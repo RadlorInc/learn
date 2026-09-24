@@ -15,6 +15,7 @@ import { useT } from '@/features/dashboard/i18n'
 const SAYS: Record<ChildLoginError, string> = {
   bad_username:    'Use 3–20 letters or numbers (a dot or _ is fine), starting with a letter or number.',
   weak_password:   'Make the password at least {n} characters.',
+  password_rejected: 'This password is too easy to guess. Choose a different one: longer, and not a common one like 123456.',
   username_taken:  'That username is already taken. Try adding a number.',
   not_owner:       'Only the adult who added this learner can set their login.',
   not_configured:  'Child logins are not switched on yet on this server.',

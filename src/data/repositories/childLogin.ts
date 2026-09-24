@@ -7,7 +7,7 @@ import { setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { mustChangePassword } from '@/data/auth'
 
 export type ChildLoginError =
-  | 'bad_username' | 'weak_password' | 'username_taken' | 'not_owner' | 'not_configured' | 'rate_limited' | 'unauthenticated' | 'failed'
+  | 'bad_username' | 'weak_password' | 'password_rejected' | 'username_taken' | 'not_owner' | 'not_configured' | 'rate_limited' | 'unauthenticated' | 'failed'
 
 async function call(method: 'GET' | 'POST' | 'DELETE', body?: unknown): Promise<{ ok: true; [k: string]: unknown } | { ok: false; error: ChildLoginError }> {
   const { data: { session } } = await db().auth.getSession()
@@ -20,7 +20,7 @@ async function call(method: 'GET' | 'POST' | 'DELETE', body?: unknown): Promise<
     // ⚠️ fetch does not throw on 4xx/5xx — read the body's `ok`, never assume it.
     const j = (await r.json().catch(() => null)) as { ok?: boolean; error?: string } | null
     if (r.ok && j?.ok) return j as { ok: true }
-    const known: ChildLoginError[] = ['bad_username', 'weak_password', 'username_taken', 'not_owner', 'not_configured', 'rate_limited', 'unauthenticated']
+    const known: ChildLoginError[] = ['bad_username', 'weak_password', 'password_rejected', 'username_taken', 'not_owner', 'not_configured', 'rate_limited', 'unauthenticated']
     return { ok: false, error: known.includes(j?.error as ChildLoginError) ? j!.error as ChildLoginError : 'failed' }
   } catch { return { ok: false, error: 'failed' } }
 }

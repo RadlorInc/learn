@@ -32,7 +32,6 @@ type Line = { text: string; started: boolean; done: boolean; cut: boolean }
 const LOG: Line[] = []
 
 vi.mock('@/infra/voiceClipPlayer', () => ({
-  setClipOnly: () => {},
   setClipRate: () => {},
   unlockVoiceClips: () => {},
   stopClip: () => {},

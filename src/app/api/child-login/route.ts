@@ -120,6 +120,18 @@ export async function POST(req: Request) {
   const rows = await selfRows(b.e, [learner.id])
   if (rows === null) return json({ ok: false, error: 'lookup_failed' }, 502)
   const taken = async (r: Response) => r.status === 422 && /exist|registered/i.test(await r.clone().text())
+  // ⚠️ A PASSWORD SUPABASE REFUSES IS THE ADULT'S TO FIX, NOT A SERVER FAULT. With leaked-password protection on, Supabase
+  // answers 422 `error_code: weak_password` (reasons: length / characters / pwned) for "123456" and its like. That used
+  // to fall through to `create_failed` 502, which the sheet reads as "Check your connection" (production, 2026-09-24).
+  const refused = async (r: Response) => {
+    const j = (await r.clone().json().catch(() => null)) as { error_code?: string; weak_password?: { reasons?: unknown } } | null
+    return j?.error_code === 'weak_password' || !!j?.weak_password
+  }
+  // Anything else Supabase refuses is logged with its status and code — never the password — so the next 502 has a cause.
+  const logged = async (what: string, r: Response) => {
+    const j = (await r.clone().json().catch(() => null)) as { error_code?: string; code?: string | number } | null
+    console.error(`[child-login] ${what}`, r.status, j?.error_code ?? j?.code ?? '')
+  }
 
   // Already has a login: change its username and/or password in place.
   if (rows.length) {
@@ -127,7 +139,8 @@ export async function POST(req: Request) {
       method: 'PUT', body: JSON.stringify({ email: childEmail(username), password, email_confirm: true, user_metadata: { must_change_password: mustChange } }),
     })
     if (await taken(r)) return json({ ok: false, error: 'username_taken' }, 409)
-    if (!r.ok) return json({ ok: false, error: 'update_failed' }, 502)
+    if (await refused(r)) return json({ ok: false, error: 'password_rejected' }, 422)
+    if (!r.ok) { await logged('update failed', r); return json({ ok: false, error: 'update_failed' }, 502) }
     return json({ ok: true, username })
   }
 
@@ -136,6 +149,8 @@ export async function POST(req: Request) {
     method: 'POST', body: JSON.stringify({ email: childEmail(username), password, email_confirm: true, user_metadata: { full_name: learner.display_name, must_change_password: mustChange } }),
   })
   if (await taken(c)) return json({ ok: false, error: 'username_taken' }, 409)
+  if (await refused(c)) return json({ ok: false, error: 'password_rejected' }, 422)
+  if (!c.ok) await logged('create failed', c)
   const created = c.ok ? ((await c.json()) as { id?: string }) : null
   if (!created?.id) return json({ ok: false, error: 'create_failed' }, 502)
 

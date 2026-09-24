@@ -152,6 +152,31 @@ describe('/api/child-login', () => {
     expect(adminCalls()).toEqual([])
   })
 
+  // Production, 2026-09-24: "123456" with leaked-password protection on came back as 502 → "Check your connection".
+  // Supabase's refusal, as @supabase/auth-js parses it: 422, error_code weak_password, weak_password.reasons.
+  const weak = () => res(422, { code: 422, error_code: 'weak_password', msg: 'Password is known to be weak and easy to guess, please choose a different one.', weak_password: { reasons: ['pwned'] } })
+  it('a password Supabase refuses is a 422 password_rejected — on a new login and on a changed one — not a 502', async () => {
+    script = [signedIn, owns, noLogin, ['POST /auth/v1/admin/users', weak]]
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '123456' }))
+    expect([r.status, await r.json()]).toEqual([422, { ok: false, error: 'password_rejected' }])
+    expect(adminCalls().map(c => `${c.method} ${c.path}`), 'nothing may be linked for an account that was never made').toEqual(['POST /auth/v1/admin/users'])
+
+    calls = []
+    script = [signedIn, owns, hasLogin, [`PUT /auth/v1/admin/users/${CHILD}`, weak]]
+    const u = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '123456' }))
+    expect([u.status, await u.json()]).toEqual([422, { ok: false, error: 'password_rejected' }])
+  })
+
+  it('control: any OTHER refusal is still a 502, and is logged with its status and code but never the password', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    script = [signedIn, owns, noLogin, ['POST /auth/v1/admin/users', () => res(500, { code: 500, error_code: 'unexpected_failure' })]]
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }))
+    expect([r.status, await r.json()]).toEqual([502, { ok: false, error: 'create_failed' }])
+    expect(err.mock.calls).toEqual([['[child-login] create failed', 500, 'unexpected_failure']])
+    expect(JSON.stringify(err.mock.calls)).not.toContain('secret1')
+    err.mockRestore()
+  })
+
   it('lists usernames for the caller\'s own learners, and removes a login by deleting the child\'s account', async () => {
     script = [signedIn, owns, hasLogin,
       [`GET /auth/v1/admin/users/${CHILD}`, () => res(200, { email: 'aarav7@learner.adaptivelearn.invalid' })],
