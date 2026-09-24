@@ -32,7 +32,8 @@ import { Chalkboard } from './Chalkboard'
 import { beatMs } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
-import { PracticeLayout, hintBtn, RIGHT_MS, SetDots, Cheer, TryAgain } from './PracticeLayout'
+import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
+import { SetDots, Cheer, TryAgain } from './AnswerFeedback'
 import { Feedback } from './Feedback'
 
 /** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder,
