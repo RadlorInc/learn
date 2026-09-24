@@ -8,8 +8,11 @@
 > One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
 
 **Company:** Radlor Inc., a Delaware corporation
+
 **Product:** Radlic
+
 **Effective date:** 25 September 2026
+
 **Last updated:** 25 September 2026
 
 ---

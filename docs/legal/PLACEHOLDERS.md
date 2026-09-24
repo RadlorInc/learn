@@ -118,5 +118,5 @@ Published on the founder's decisions, without an attorney; every attorney row de
 | 30 | 05-information-security-program.md | 63 | `[PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]` | rafi | Rafi | Name the staging/test environment once created (R14 prepared it; ROUND-2 §4). |
 | 31 | 05-information-security-program.md | 71 | `[PLACEHOLDER — attorney: can a school consent on a parent's behalf here, and under what conditions? Until that is answered, the teacher path and the consent gate cannot both be live.]` | attorney | Attorney | School consent (packet A3). |
 | 45 | 09-email-compliance.md | 20 | `[PLACEHOLDER — confirm with the attorney whether this applies to our sends, given the recipient relationship.]` | attorney | Attorney | Whether the "advertisement" label applies (packet E7). |
-| 62 | 12-terms-of-service.md | 114 | `[PLACEHOLDER — a floor amount]` | attorney | Attorney | Liability floor (packet D2). |
-| 67 | 12-terms-of-service.md | 126 | `[PLACEHOLDER — phone number]` | rafi | Rafi | The DMCA agent's phone number (the agent itself was filled on 24 Sep 2026: Radlor Inc.). |
+| 62 | 12-terms-of-service.md | 117 | `[PLACEHOLDER — a floor amount]` | attorney | Attorney | Liability floor (packet D2). |
+| 67 | 12-terms-of-service.md | 129 | `[PLACEHOLDER — phone number]` | rafi | Rafi | The DMCA agent's phone number (the agent itself was filled on 24 Sep 2026: Radlor Inc.). |

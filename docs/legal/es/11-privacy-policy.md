@@ -13,8 +13,11 @@ REVIEWED-BY:
 ---
 
 **Empresa:** Radlor Inc., una sociedad anónima (corporation) de Delaware
+
 **Producto:** Radlic
+
 **Fecha de entrada en vigor:** 25 de septiembre de 2026
+
 **Última actualización:** 25 de septiembre de 2026
 
 ---

@@ -541,3 +541,47 @@ CONSENT-ONCE-ROUND2, `docs/legal/sql/`, doc 14 (dated findings), the handoff arc
 order; (2) machines POST to the old domain (Stripe webhook, one-click unsubscribe, cron) — so `/api/*` is not
 redirected; (3) radlic.com is a parked domain today, found when the first test build leaked two GETs to it (see
 RENAME-MANUAL §F.5); (4) the README was stale (it still described 70 chapters, six age bands and webcam answers).
+
+## Beta launch (24 September 2026) — the legal pages a private beta needs, published on the founder's decisions
+
+Goal (founder): a private-beta soft launch on Friday 25 September 2026 (US time) with families the founder knows —
+real US children — with the Privacy Policy and Terms public and accurate first. No attorney yet: the founder decided
+each open point for the beta; each is in `ATTORNEY-PACKET.md` → *Decided by the founder for the beta*. Branch
+`beta-launch`, one PR. The founder's steps up to Friday: **`docs/LAUNCH-CHECKLIST.md`**.
+
+**Which pages (measured, not assumed).** Live screens and emails link to Privacy, Terms, Parent rights, Retention and
+Subprocessors; the Privacy Policy itself links Cookies, so Cookies must be public too. Refunds is linked only from the
+(now hidden) plans page and the cancellation email, and billing is off.
+
+| page | state | why |
+|---|---|---|
+| Privacy, Parent rights, Subprocessors, Cookies, Retention | **published**, English only, beta banner | 0 placeholders; guard passes |
+| Terms | **dark** | two founder decisions open: §11 liability floor (#62), §14 phone or plain contact (#67) — **go/no-go G1** |
+| Refunds | dark | billing is off (`BILLING_LIVE = false`) |
+
+**Placeholders 53 → 24** (29 resolved; `PLACEHOLDERS.md` → *Resolved for the private beta*). Dates: 25 September 2026.
+Provider values read by the founder from the dashboards (hosting logs 1 hour on Hobby, database logs 7 days on Pro, no
+Stripe key in production, GitHub = github.com). The two storage rows seen in a live child session.
+
+**The guard.** A `beta` record in `registry.ts` stands in for the attorney's sign-off and the Spanish review, and lifts
+nothing else: a placeholder anywhere in the file, a DRAFT status, deletion and billing still refuse, and the page throws
+at build. Proven: a placeholder planted in the **published** Privacy Policy turns `legalDocs`, `legalSwitch` and
+`placeholderAudit` red (break-check exit 0 each) **and fails `next build`** with "/legal/privacy is switched on but must
+not be published: placeholders: … still carries 1".
+
+**The beta is free.** Terms §5 says so; subscription, refund and "amount paid" text removed from Terms and Privacy; the
+parent's plan card, its Help step and the checkout on `/parent/plan` are hidden while `BILLING_LIVE` is false (the
+checkout component still ships and is still held to its legal links).
+
+**Found by publishing (and fixed):** the legal renderer showed raw markdown to parents — nested emphasis as bare
+asterisks ("**Or email us"), inline code as backticks (cookie and table names). Inline code now renders as code, inside
+bold too; two nested-emphasis lines were reformatted; a test fails on any bare `*` or backtick in a published page.
+
+**Decided, not built:** invite-only — **no** (signup stays open). Errors — **nothing to build**: crashes already reach
+`error_events` (when the service-role key is set — inferred, see the checklist) and Vercel's logs; the founder reads a
+read-only SQL query (checklist §4).
+
+Proofs: Node 20 — `tsc` 0, vitest 125 files / 3,722 passed (11 skipped as before), `next build` OK, `npm audit` 0.
+Planted breaks, each exit 0 on its own assertion: placeholder in a published page (three tests + the build); beta
+letting a placeholder through; beta banner removed; `WITHDRAWAL_DELETES` false; the plan card shown in beta; inline
+code shown raw; sign-off never required.
