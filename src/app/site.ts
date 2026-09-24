@@ -80,7 +80,13 @@ export const APP_ID = 'https://radlic.com/#app'
  * ⚠️ This is NOT the access control — RLS is. It stops a bot spending crawl budget on an app shell
  * and stops those URLs appearing in results; it protects nothing on its own.
  */
-export const PUBLIC_ROUTES = ['/', '/help'] as const
+export const PUBLIC_ROUTES = ['/help'] as const
+// ⚠️ '/' LEFT THIS LIST 2026-09-25: the home page is `LANDING_URL` on radlor.com, and radlic.com/ only sends a visitor
+// there (signed out) or home (signed in) — a sitemap must not list a page whose canonical is another site.
+
+/** The Radlic home page — on radlor.com, not this origin (founder's decision, 2026-09-25). radlic.com/ sends a
+ *  signed-out visitor here: `ResumeSignedIn.tsx`. */
+export const LANDING_URL = 'https://radlor.com/radlic'
 // ⚠️ The legal pages join these only once PUBLISHED (`PUBLISHED_LEGAL_ROUTES` in app/legal/registry.ts):
 // a dark page is noindex and must not be advertised by the sitemap or llms.txt.
 

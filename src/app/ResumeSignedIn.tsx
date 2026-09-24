@@ -2,28 +2,35 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentSession } from '@/data/auth'
+import { LANDING_URL } from './site'
 
 /**
- * The only client-side thing `/` does: if a parent is already signed in, send them to their
- * dashboard instead of making them read the pitch again.
+ * The only thing `/` does: send a signed-in user home, and a signed-out visitor to the landing page on radlor.com
+ * (founder's decision, 2026-09-25). Rendered by `/` ONLY — no other route may send anyone away
+ * (`landingRedirect.test.ts` holds that).
  *
- * ⚠️ IT RENDERS NOTHING, AND THAT IS THE POINT. This used to be the whole page — a splash plus a
- * `router.replace` — which meant the marketing content could not exist, because the redirect owned
- * the render. Isolated here, the page is static HTML that a crawler and a link preview can read,
- * and the redirect is a side effect on top of it.
- *
- * The session lives in localStorage under Supabase's own `milo-auth` key, so the server cannot know
- * about it and a signed-in parent sees this page for one beat before moving. That flash is
- * unavoidable without a cookie-based session, and it is a better one than the fox: it is the real
- * page, and if the redirect ever fails they can still use it.
+ * ⚠️ IN THE BROWSER, NOT A 308, AND THAT IS FORCED: the session is in localStorage under Supabase's `milo-auth` key,
+ * so the server cannot tell the two visitors apart, and a server redirect would send signed-in parents away too.
+ * ⚠️ ONLY A DEFINITE "NO SESSION" LEAVES. If the check throws (offline, storage blocked) the visitor stays on the
+ * fallback page, which links to both — a signed-in child offline must not be bounced to a marketing page.
  */
+/** Opened from the home screen (the manifest's start_url is `/`, display `fullscreen`), not in a browser tab. */
+const installed = () =>
+  ['fullscreen', 'standalone', 'minimal-ui'].some(m => window.matchMedia?.(`(display-mode: ${m})`).matches) ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true
+
 export default function ResumeSignedIn() {
   const router = useRouter()
   useEffect(() => {
     let cancelled = false
     getCurrentSession()
-      .then(session => { if (session && !cancelled) router.replace('/parent') })
-      .catch(() => { /* signed out, or offline — the page below is the right thing to show */ })
+      .then(session => {
+        if (cancelled) return
+        if (session) router.replace('/parent')
+        else if (installed()) router.replace('/auth')   // the home-screen app starts here: never out to a web page
+        else window.location.replace(LANDING_URL)
+      })
+      .catch(() => { /* could not tell — stay on the fallback page */ })
     return () => { cancelled = true }
   }, [router])
   return null
