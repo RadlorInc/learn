@@ -1,4 +1,4 @@
-const VERSION      = 'v231'
+const VERSION      = 'v232'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -80,12 +80,12 @@ self.addEventListener('fetch', event => {
       caches.open(SHELL_CACHE).then(async cache => {
         const cached = await cache.match(request)
         // Update cache in background
-        fetch(request).then(r => { if (r.ok) cache.put(request, r.clone()) }).catch(() => {})
+        fetch(request).then(r => store(cache, request, r)).catch(() => {})
         if (cached) return cached
         // Not cached yet — try network
         try {
           const r = await fetch(request)
-          if (r.ok) cache.put(request, r.clone())
+          store(cache, request, r)
           return r
         } catch {
           // Return empty RSC response so page renders from client state
@@ -140,8 +140,8 @@ self.addEventListener('fetch', event => {
     caches.open(SHELL_CACHE).then(async cache => {
       try {
         const r = await fetch(request)
-        // A redirected response cannot be replayed to a navigation (ERR_FAILED) — never cache one.
-        if (r.ok && !r.redirected) cache.put(request, r.clone())
+        // A redirected response cannot be replayed to a navigation (ERR_FAILED) — never cache one (store() refuses it).
+        store(cache, request, r)
         return r
       } catch {
         const cached = await cache.match(request)
@@ -157,11 +157,27 @@ self.addEventListener('fetch', event => {
 
 /** Network first, falling back to the cached copy — for a small file whose CONTENT changes
  *  and whose staleness is silent (see the /audio/ branch). */
+/**
+ * Keep a response only if it is the WHOLE thing, and never let a refusal escape.
+ *
+ * ⚠️ A media element asks for byte RANGES and gets 206 Partial Content, which `r.ok` calls success and `Cache.put`
+ * refuses — "Failed to execute 'put' on 'Cache': Partial response (status code 206) is unsupported", an unhandled
+ * rejection on every clip (production console, 2026-09-24). A range request's answer is never the whole file, so it is
+ * never kept; the whole file is kept when it is fetched whole (prefetchClips). A redirected response cannot be replayed
+ * to a navigation (ERR_FAILED), so it is not kept either. Any other put failure (quota) is swallowed: the page already
+ * has its response, and a cache miss next time is the right cost.
+ */
+function store(cache, request, r) {
+  if (r.status !== 200 || r.redirected) return
+  if (request.headers && typeof request.headers.get === 'function' && request.headers.get('range')) return
+  cache.put(request, r.clone()).catch(() => {})
+}
+
 async function networkFirst(request, cacheName) {
   const cache = await caches.open(cacheName)
   try {
     const r = await fetch(request)
-    if (r.ok) cache.put(request, r.clone())
+    store(cache, request, r)
     return r
   } catch {
     return (await cache.match(request)) || new Response('', { status: 503 })
@@ -174,7 +190,7 @@ async function cacheFirst(request, cacheName) {
   if (cached) return cached
   try {
     const r = await fetch(request)
-    if (r.ok) cache.put(request, r.clone())
+    store(cache, request, r)
     return r
   } catch {
     return new Response('', { status: 503 })

@@ -86,7 +86,6 @@ describe('static asset caching', () => {
     // every clip it has dropped — silent, and it cost the 17–18 band its whole voice in Chrome
     // while 12–14 and 15–16 played from the same stale copy. See next.config's note.
     ['/audio/IvUJKFyjVb5hItY9dJAT/manifest.json', 'public, max-age=0, must-revalidate'],
-    ['/audio/IvUJKFyjVb5hItY9dJAT/frag/fragments.json', 'public, max-age=0, must-revalidate'],
   ])('%s resolves to what production served', async (path, expected) => {
     expect(await cacheControlFor(path)).toBe(expected)
   })

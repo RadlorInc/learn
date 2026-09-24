@@ -150,10 +150,15 @@ const loginError = (e: string) =>
 async function addOne(row: RosterRow, cls: ClassRow): Promise<Made> {
   const learner = await createLearner(row.name, Math.floor(Math.random() * 4), bandOf(cls.grade), { classId: cls.id, lessonIds: cls.lesson_ids })
   if (!learner) return { ...row, error: 'could not add the student' }
-  const password = tempPassword()
+  let password = tempPassword()
   let r = await setChildLogin(learner.id, row.username, password, true)
   if (!r.ok && r.error === 'rate_limited') {                  // a very big list: the route allows 60 a minute
     await new Promise(res => setTimeout(res, 61_000))
+    r = await setChildLogin(learner.id, row.username, password, true)
+  }
+  // A generated "otter482" can be in a leaked-password list, and Supabase refuses those. Draw another, twice at most.
+  for (let i = 0; i < 2 && !r.ok && r.error === 'password_rejected'; i++) {
+    password = tempPassword()
     r = await setChildLogin(learner.id, row.username, password, true)
   }
   if (!r.ok) {
