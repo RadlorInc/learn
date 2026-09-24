@@ -5,15 +5,21 @@
  *   coral bar (where you are) · "Problem 1 of 8" + Exit practice · left: the problem (children) · right: a scratch pad.
  * Also used by a lesson's Screen 8 ("Now you try"). `pad={false}` drops the pad (the finish screen).
  */
-import type { CSSProperties, ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { pill, INK, PAGE_BG, shell, topBar, LESSON_KEYFRAMES } from './Pictures'
 import { LANDSCAPE } from './Frame'
 import { ScratchPad } from './ScratchPad'
+import { VerticalNumberLine, verticalLineFor } from './VerticalNumberLine'
+import { C } from './sessionCopy'
 
-export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit practice', pad, padKey, feedback, children }: {
+export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit practice', pad, padKey, feedback, topic, children }: {
   corner: string; crumb: string; feedback?: ReactNode; title: string; onExit: () => void; exitLabel?: string
   pad: boolean; padKey: string | number; children: ReactNode
+  /** The topic the problem on screen comes from: on the signed-number topics it offers the vertical number line. */
+  topic?: string
 }) {
+  const [lineOpen, setLineOpen] = useState(false)
+  const line = pad && verticalLineFor(topic)
   return (
     <div className="pr-page" style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 26px', display: 'flex', justifyContent: 'center' }}>
       <style>{LESSON_KEYFRAMES + LAYOUT}</style>
@@ -30,7 +36,14 @@ export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit
           </div>
           <div className={pad ? 'pr-row' : 'pr-row pr-solo'}>
             <div className="pr-left">{children}</div>
-            {pad && <div className="pr-pad"><ScratchPad clearKey={padKey} /></div>}
+            {pad && <div className="pr-pad">
+              {line && <button type="button" aria-expanded={lineOpen} aria-controls="pr-vline" onClick={() => setLineOpen(o => !o)}
+                style={{ ...pill, alignSelf: 'flex-start', marginBottom: 10, background: lineOpen ? '#ffd166' : '#fff' }}>↕ {lineOpen ? C.hideLine : C.showLine}</button>}
+              <div style={{ flex: 1, display: 'flex', gap: 10, minHeight: 0 }}>
+                {line && lineOpen && <div id="pr-vline" style={{ flexShrink: 0, width: 96 }}><VerticalNumberLine clearKey={padKey} /></div>}
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}><ScratchPad clearKey={padKey} /></div>
+              </div>
+            </div>}
           </div>
         </main>
       </div>

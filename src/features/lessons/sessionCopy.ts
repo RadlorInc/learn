@@ -27,6 +27,9 @@ export const SESSION_COPY = {
     sizeXl: 'Extra large',
     breakTitle: (n: number) => (n === 1 ? 'Great work, 1 question done! ⭐' : `Great work, ${n} questions done! ⭐`),
     breakMastered: "Great work! ⭐ You've got this topic.",
+    // Review 1 Q7: the vertical number line.
+    numberLine: 'Number line', showLine: 'Number line', hideLine: 'Hide number line', clearMarks: 'Clear marks',
+    mark: (n: string) => `Mark ${n}`, unmark: (n: string) => `Take the mark off ${n}`,
     spotSaved: 'Your spot is saved.',
     points: (n: number) => (n === 1 ? '+1 point' : `+${n} points`),
     backToTopics: 'Back to topics',
@@ -68,6 +71,8 @@ export const SESSION_COPY = {
     sizeXl: 'Muy grande',
     breakTitle: (n: number) => (n === 1 ? '¡Muy bien, 1 pregunta hecha! ⭐' : `¡Muy bien, ${n} preguntas hechas! ⭐`),
     breakMastered: '¡Muy bien! ⭐ Ya dominas este tema.',
+    numberLine: 'Recta numérica', showLine: 'Recta numérica', hideLine: 'Ocultar la recta numérica', clearMarks: 'Borrar las marcas',
+    mark: (n: string) => `Marcar ${n}`, unmark: (n: string) => `Quitar la marca de ${n}`,
     spotSaved: 'Guardamos tu lugar.',
     points: (n: number) => (n === 1 ? '+1 punto' : `+${n} puntos`),
     backToTopics: 'Volver a los temas',

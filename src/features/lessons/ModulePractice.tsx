@@ -63,7 +63,7 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
 
   const done = i >= total
   const page = (crumb: string, title: string, left: React.ReactNode, pad: boolean) => (
-    <PracticeLayout corner={exercise?.title ?? `Module ${module.n}`} crumb={crumb} title={title} onExit={onExit} pad={pad} padKey={i}>{left}</PracticeLayout>
+    <PracticeLayout corner={exercise?.title ?? `Module ${module.n}`} crumb={crumb} title={title} onExit={onExit} pad={pad} padKey={i} topic={items[i]?.lesson.id}>{left}</PracticeLayout>
   )
 
   if (done) {
