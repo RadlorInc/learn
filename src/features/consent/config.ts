@@ -40,5 +40,5 @@ export const PENDING_TTL_DAYS = 7
 
 /** From address: radlor.com is the domain with Resend's DKIM record (`resend._domainkey`); the app's
  *  own subdomain has none, so it cannot be the sender. Replies go to a person. */
-export const EMAIL_FROM = 'Milo <noreply@radlor.com>'
+export const EMAIL_FROM = 'Radlic <noreply@radlor.com>'
 export const EMAIL_REPLY_TO = 'support@radlor.com'

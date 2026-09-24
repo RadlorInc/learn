@@ -31,7 +31,7 @@ We do not send marketing email to children. We do not collect a child's email ad
 ## 4. Standard footer — commercial email
 
 ```
-You are receiving this because you have a Milo account.
+You are receiving this because you have a Radlic account.
 
 Unsubscribe from updates like this: [one-click unsubscribe link]
 Manage your email preferences: [preferences link]
@@ -46,7 +46,7 @@ subscription, such as receipts and renewal reminders.
 ## 5. Standard footer — transactional email
 
 ```
-This is a service message about your Milo account.
+This is a service message about your Radlic account.
 
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702

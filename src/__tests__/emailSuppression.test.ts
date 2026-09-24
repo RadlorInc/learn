@@ -164,7 +164,7 @@ describe('the commercial footer and headers (docs/legal/09 §2, §4; RFC 8058)',
     const m = resend[0], token = (await tokenOf('p@x.test'))!
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/)
     for (const body of [m.text, m.html]) {
-      expect(body).toContain('You are receiving this because you have a Milo account.')
+      expect(body).toContain('You are receiving this because you have a Radlic account.')
       expect(body).toContain('Unsubscribe from updates like this')
       expect(body).toContain('Radlor Inc.')
       expect(body).toContain(address)

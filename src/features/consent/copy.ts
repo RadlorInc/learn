@@ -120,9 +120,9 @@ export const NOTICE = {
 
 // ─────────────────────── Document 03 · B1 — the consent request email ───────────────────────
 export const B1 = {
-  subject: { en: 'Please confirm: permission for your children to use Milo', es: 'Confirme, por favor: permiso para que sus hijos usen Milo' },
+  subject: { en: 'Please confirm: permission for your children to use Radlic', es: 'Confirme, por favor: permiso para que sus hijos usen Radlic' },
   hi: { en: 'Hi,', es: 'Hola:' },
-  someone: { en: 'Someone — we believe you — created a Milo account and asked to add children to it.', es: 'Alguien — creemos que usted — creó una cuenta de Milo y pidió añadir niños a ella.' },
+  someone: { en: 'Someone — we believe you — created a Radlic account and asked to add children to it.', es: 'Alguien — creemos que usted — creó una cuenta de Radlic y pidió añadir niños a ella.' },
   before: { en: 'Before we collect anything from any child on this account, US law requires your permission. Here is exactly what we would collect about each child you add:', es: 'Antes de recopilar cualquier dato de cualquier niño de esta cuenta, la ley de los EE. UU. exige su permiso. Esto es exactamente lo que recopilaríamos sobre cada niño que añada:' },
   list: [
     { en: "your child's first name or nickname", es: 'el nombre de pila o el apodo de su hijo' },
@@ -139,7 +139,7 @@ export const B1 = {
   grant:   { en: 'I give permission', es: 'Doy mi permiso' },
   decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
   ignore: { en: 'If you did nothing, you can ignore this email and nothing will happen.', es: 'Si usted no hizo nada, puede ignorar este correo y no pasará nada.' },
-  details: { en: 'Full details: [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy)', es: 'Todos los detalles: [Política de privacidad](https://adaptivelearn.radlor.com/legal/privacy) (en inglés)' },
+  details: { en: 'Full details: [Privacy Policy](https://radlic.com/legal/privacy)', es: 'Todos los detalles: [Política de privacidad](https://radlic.com/legal/privacy) (en inglés)' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
 }
 
@@ -159,13 +159,13 @@ export const B3 = {
   hi: { en: 'Hi,', es: 'Hola:' },
   /** ⚠️ "Yesterday" is only true if B3 goes out a day later. `config.ts` refuses, in production, a
    *  delay that would make it false — the wording and the timer are bound, not merely adjacent. */
-  yesterday: { en: "Yesterday you gave permission for your children to use Milo, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.",
-               es: 'Ayer usted dio permiso para que sus hijos usen Milo y para que recopilemos el nombre de pila, la franja de grados y el progreso en matemáticas de cada niño. Cubre a todos los niños que añada a esta cuenta.' },
+  yesterday: { en: "Yesterday you gave permission for your children to use Radlic, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.",
+               es: 'Ayer usted dio permiso para que sus hijos usen Radlic y para que recopilemos el nombre de pila, la franja de grados y el progreso en matemáticas de cada niño. Cubre a todos los niños que añada a esta cuenta.' },
   ifYou: { en: "**If that was you, you don't need to do anything.**", es: '**Si fue usted, no tiene que hacer nada.**' },
   ifNot: { en: "**If it wasn't you, [click here](%WITHDRAW%) to withdraw permission.** We will immediately stop collecting and delete everything we hold about every child on the account. Your account stays open.",
            es: '**Si no fue usted, [haga clic aquí](%WITHDRAW%) para retirar el permiso.** Dejaremos de recopilar de inmediato y eliminaremos todo lo que tenemos sobre todos los niños de la cuenta. Su cuenta sigue abierta.' },
-  anyTime: { en: 'You can withdraw permission at any time in future, too: https://adaptivelearn.radlor.com/legal/parent-rights.',
-             es: 'También puede retirar el permiso en cualquier momento en el futuro: https://adaptivelearn.radlor.com/legal/parent-rights (en inglés).' },
+  anyTime: { en: 'You can withdraw permission at any time in future, too: https://radlic.com/legal/parent-rights.',
+             es: 'También puede retirar el permiso en cualquier momento en el futuro: https://radlic.com/legal/parent-rights (en inglés).' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
 }
 
@@ -194,7 +194,7 @@ export const WITHDRAW_ALL = {
 }
 export const SIGNUP = {
   heading: { en: "Before you create an account: what we collect about your children", es: 'Antes de crear una cuenta: qué recopilamos sobre sus hijos' },
-  summary: { en: "For each child you add, Milo stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.", es: 'Por cada niño que añada, Milo guarda su nombre de pila o apodo, el avatar que usted elija, las lecciones que elija y una franja de grados, sus respuestas y su progreso, e información técnica básica del dispositivo. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, un domicilio, una fotografía ni una grabación de voz, y nunca vendemos su información ni la usamos para publicidad.' },
+  summary: { en: "For each child you add, Radlic stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.", es: 'Por cada niño que añada, Radlic guarda su nombre de pila o apodo, el avatar que usted elija, las lecciones que elija y una franja de grados, sus respuestas y su progreso, e información técnica básica del dispositivo. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, un domicilio, una fotografía ni una grabación de voz, y nunca vendemos su información ni la usamos para publicidad.' },
   readFull: { en: "Read the full notice", es: 'Leer el aviso completo' },
   tick: { en: "I'm a parent or legal guardian, I've read what we collect, and I agree.", es: 'Soy el padre, la madre o el tutor legal, he leído qué recopilan y estoy de acuerdo.' },
   next: { en: "After you sign up, we will email you once to ask for your permission. You can add your children as soon as you have given it.", es: 'Después de registrarse, le enviaremos un único correo para pedirle su permiso. Podrá añadir a sus hijos en cuanto lo haya dado.' },
