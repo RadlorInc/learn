@@ -121,3 +121,29 @@ describe('the migration refuses to land wrong — and takes everything with it',
     expect(await hasColumn(fresh)).toBe(true)
   }, 120_000)
 })
+
+describe('the founder\'s before/proof SQL, rehearsed on the production-shaped schema', () => {
+  // supabase_migrations is the CLI's ledger; the fixture has none, so it is created here the way the CLI records a file.
+  const ledger = `create schema if not exists supabase_migrations;
+    create table if not exists supabase_migrations.schema_migrations (version text primary key);`
+  const run = async (d: PGlite, f: string) =>
+    (await d.query<{ check: string; result: string }>(readFileSync(resolve(__dirname, '../../docs/legal/sql', f), 'utf8'))).rows
+  const fails = (rows: { check: string; result: string }[]) => rows.filter(r => !r.check.startsWith('INFO') && r.result !== 'PASS').map(r => r.check)
+  const info = (rows: { check: string; result: string }[], k: string) => rows.find(r => r.check.startsWith(`INFO ${k}`))!.result
+
+  it('before: all PASS on the pre-migration schema; proof: all PASS after it, and the counts move as stated', async () => {
+    const { db: d } = await loadSchema({ before: '20260925100000_practice_run.sql' })
+    await d.exec(ledger)
+    const before = await run(d, 'ss-before.sql')
+    expect(fails(before)).toEqual([])
+    // Control: the proof, run BEFORE the apply, does not pass — it errors on the missing column — so it can tell the
+    // two states apart.
+    expect(await run(d, 'ss-proof.sql').then(r => fails(r).length, () => 'error')).not.toBe(0)
+    await d.exec(readFileSync(resolve(__dirname, '../../supabase/migrations/20260925100000_practice_run.sql'), 'utf8'))
+    await d.exec(`insert into supabase_migrations.schema_migrations values ('20260925100000')`)
+    const after = await run(d, 'ss-proof.sql')
+    expect(fails(after)).toEqual([])
+    expect(info(after, 'lesson_progress rows')).toBe(info(before, 'lesson_progress rows'))
+    expect(Number(info(after, 'SECURITY DEFINER'))).toBe(Number(info(before, 'SECURITY DEFINER')) + 1)
+  }, 120_000)
+})
