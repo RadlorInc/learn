@@ -497,6 +497,15 @@ in the repo. Put new instances of the class here, in their general form.
 
 # Project Context
 
+## The product is Radlic (since 2026-09-24)
+**Radlic**, at **https://radlic.com**, made by **Radlor Inc.** (support@radlor.com, noreply@radlor.com). It was
+called Milo, then AdaptiveLearn at adaptivelearn.radlor.com, which becomes a 308 to radlic.com at the domain switch.
+**There is no mascot**: no named character, no "Milo says…", no fox as a brand — a child's own avatar (fox, rabbit,
+bear, cat) is data, not the mascot. Say "Radlic" in anything a person reads; keep the old name in identifiers
+(`useMiloSpeaker`, `--milo-orange`, `milo_active_learner`, the repo, the Vercel/Supabase project names) because
+stored data and running devices depend on them. `src/__tests__/renameGate.test.ts` fails on a visible old name, the
+old domain or the mascot. Everything that needs the founder is in `docs/RENAME-MANUAL.md`.
+
 ## Session Continuity
 At the start of every session, read @handoff.md to load the current state, recent decisions, and what was in progress. Treat it as the source of truth for where work left off, then continue from there.
 

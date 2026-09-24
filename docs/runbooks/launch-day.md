@@ -171,7 +171,7 @@ gh run watch "$run" --exit-status
 gh run view "$run" --json headSha,conclusion   # confirm headSha is the sha you pushed
 
 # 5. confirm production actually serves it — by service worker version
-curl -s -H 'Cache-Control: no-cache' https://adaptivelearn.radlor.com/sw.js | head -1
+curl -s -H 'Cache-Control: no-cache' https://radlic.com/sw.js | head -1
 git ls-remote origin refs/heads/main refs/heads/release   # must be equal
 ```
 

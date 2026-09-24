@@ -51,6 +51,10 @@ const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] =
     why: 'the redirect code' },
   { file: 'docs/legal/ATTORNEY-PACKET.md', line: /^\*\*Product renamed to Radlic and moved to radlic\.com on \[date\]|^- \*\*Today \(once the rename ships\):\*\* the notice a parent agrees to changed only in the product's name/, kinds: ['name', 'domain'],
     why: 'the rename itself, told to the attorney (brief N4)' },
+  { file: 'README.md', line: /^The product was called \*\*Milo\*\* until August 2026 and \*\*AdaptiveLearn\*\* until September 2026|^\*\*Live:\*\* https:\/\/radlic\.com \(until the domain switch, https:\/\/adaptivelearn\.radlor\.com|^around the retired Milo character/, kinds: ['name', 'domain'],
+    why: 'the earlier names, the switch, and the hidden chapters — history a reader of the repo needs' },
+  { file: 'CLAUDE.md', line: /^called Milo, then AdaptiveLearn at adaptivelearn\.radlor\.com, which becomes a 308 to radlic\.com|^\*\*There is no mascot\*\*: no named character, no "Milo says…"/, kinds: ['name', 'domain'],
+    why: 'the rename, told to future sessions' },
   { file: 'CLAUDE.md', line: /^\| ⚠️⚠️ \*\*a gate grepping `menu\/page\.tsx` for `'Milo picked this to close the gap'`/, kinds: ['name'],
     why: 'a historical record in the defect table (rule 3: records of what was stay)' },
 ]

@@ -1,6 +1,6 @@
 # DevOps / production operations
 
-How Milo is deployed, scaled, and kept up — and the one-time manual setup that lives in
+How Radlic is deployed, scaled, and kept up — and the one-time manual setup that lives in
 dashboards (Supabase / Vercel / GitHub), which code can't do for you.
 
 ## Architecture
@@ -486,7 +486,7 @@ is the fix; deletion is tidying.**
 Every merge produced **three** deployments: the PR-branch preview, a `main` preview, and the
 `release` production build — each carrying the full audio. Nothing reads the `main` one
 (`adaptivelearn-git-main-….vercel.app` is an auto-assigned branch alias; production is
-`adaptivelearn.radlor.com` off `release`).
+`radlic.com` off `release` — `adaptivelearn.radlor.com` until the domain switch, then a 308 to it; docs/RENAME-MANUAL.md).
 
 ```json
 { "git": { "deploymentEnabled": { "main": false } } }

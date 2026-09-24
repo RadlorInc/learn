@@ -1,4 +1,4 @@
-# Architecture — Milo Story Mode
+# Architecture — Radlic (repo: milo-story-mode)
 
 _Clean-architecture layering introduced 2026-07-03. Behavior-preserving refactor; `tsc` + `npm test` (15/15) + `next build` all green._
 
