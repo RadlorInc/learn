@@ -112,6 +112,12 @@ export const fromSaved = (saved: SavedRun, standing: Standing, reviewStanding: S
   asked: saved.asked, recent: saved.recent, current: saved.current,
   review: saved.review ? { id: saved.review, standing: reviewStanding ?? FRESH } : null,
 })
+/**
+ * How far a child is with a topic, 0–1: the ladder position, mastered = 1, never started = 0 (founder, 2026-09-24).
+ * On a 4-level ladder: level 0 → 0, 1 → ¼, 2 → ½, 3 → ¾, mastered → 1. Shown to a child only as a bar, never a number.
+ */
+export const progressOf = (s: Standing | null, levels: number): number =>
+  !s ? 0 : s.mastered ? 1 : Math.min(s.level, levels - 1) / levels
 /** Done: mastered, or DONE_AFTER problems answered — however many sessions that took. */
 export const runDone = (run: Run): boolean => run.standing.mastered || run.asked >= DONE_AFTER
 /** Why practice stops for a choice after an answer: the topic was just mastered, or a round of CHECKPOINT ended. */

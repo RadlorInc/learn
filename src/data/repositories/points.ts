@@ -105,3 +105,23 @@ export async function setGameSettings(learnerId: string, enabled: boolean, minut
     return !error && (data as { ok: boolean }).ok
   } catch { return false }
 }
+
+/**
+ * "Went ahead anyway" on the prerequisite nudge (features/lessons/nudge.ts), newest first, one per topic: the parent's
+ * calm line. From `learner_events`, which the owning adult may read (policy learner_events_select). null = could not read.
+ */
+export async function getRecentNudges(learnerId: string, days: number): Promise<{ lesson: string; prereq: string; at: string }[] | null> {
+  try {
+    const since = new Date(Date.now() - days * 86_400_000).toISOString()
+    const { data, error } = await db().from('learner_events').select('props, created_at')
+      .eq('learner_id', learnerId).eq('event', 'nudge_went_anyway').gte('created_at', since).order('created_at', { ascending: false }).limit(50)
+    if (error) return null
+    const seen = new Set<string>(), out: { lesson: string; prereq: string; at: string }[] = []
+    for (const r of data as { props: { lesson?: unknown; prereq?: unknown }; created_at: string }[]) {
+      const { lesson, prereq } = r.props ?? {}
+      if (typeof lesson !== 'string' || typeof prereq !== 'string' || seen.has(lesson)) continue
+      seen.add(lesson); out.push({ lesson, prereq, at: r.created_at })
+    }
+    return out
+  } catch { return null }
+}

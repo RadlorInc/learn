@@ -1,5 +1,5 @@
 /**
- * Every child-facing line of short practice sessions (checkpoint, break, welcome back), in one
+ * Every child-facing line of short practice sessions (checkpoint, break, welcome back, the prerequisite nudge), in one
  * place so `childWords.test.ts` can hold all of them to the words a child must never see.
  *
  * Wording approved by the founder, 2026-09-24. ⚠️ SPANISH IS AN UNREVIEWED DRAFT: the child screens have no language
@@ -20,6 +20,10 @@ export const SESSION_COPY = {
     keepPractising: 'Keep practising',
     watchFirst: 'Watch the lesson first',
     started: 'Keep practising',
+    nudge: (prev: string, next: string) => `You're on your way with ${prev}! ⭐ Getting a bit further there (past halfway) will make ${next} easier.`,
+    practiseFirst: (prev: string) => `Practise ${prev} first`,
+    goAnyway: (next: string) => `Go to ${next} anyway`,
+    progressLabel: (prev: string) => `How far you are with ${prev}`,
   },
   // REVIEWED-BY: (unreviewed draft)
   es: {
@@ -36,6 +40,10 @@ export const SESSION_COPY = {
     keepPractising: 'Seguir practicando',
     watchFirst: 'Ver la lección primero',
     started: 'Seguir practicando',
+    nudge: (prev: string, next: string) => `¡Vas muy bien con ${prev}! ⭐ Avanzar un poco más ahí (más de la mitad) hará más fácil ${next}.`,
+    practiseFirst: (prev: string) => `Practicar ${prev} primero`,
+    goAnyway: (next: string) => `Ir a ${next} de todos modos`,
+    progressLabel: (prev: string) => `Cuánto llevas en ${prev}`,
   },
 } as const
 
