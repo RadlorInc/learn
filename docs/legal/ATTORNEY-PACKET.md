@@ -145,7 +145,7 @@ Measured facts entered at the same time (not decisions): provider log windows (h
 days on Pro, from the dashboards), GitHub backup location and 30-day expiry, no Stripe key in production, the two
 browser-storage rows seen in a live child session.
 
-**Doc 08, added after publication (founder-approved 24 Sep 2026, #219):** a functional local-storage row `al-text-size` (the text size chosen on the device; nothing kept for Normal) and one sentence in the signed-out paragraph; "Effective" kept at 25 Sep 2026, a "Last updated" line added. Please confirm a new functional row needs no fresh notice.
+**Doc 08, added after publication (founder-approved 24 Sep 2026, #219):** a functional local-storage row `al-text-size` (the text size chosen on the device; nothing kept for Normal) and one sentence in the signed-out paragraph; "Effective" kept at 25 Sep 2026; a "Last updated" line carries the day #219 merges. Please confirm a new functional row needs no fresh notice.
 
 ## What we are not asking you
 Prices, dates, regions, the DMCA agent's identity, provider log-retention periods and the reviewer's name are the founder's or providers' to supply. They are tracked in `PLACEHOLDERS.md`.
