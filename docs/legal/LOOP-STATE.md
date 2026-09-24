@@ -731,14 +731,15 @@ terminology, unit tests, formula sheets) are later loops.
 |---|---|---|---|
 | Q0 measure (read-only) | done | — | findings below, read from code on `cf020313` |
 | Q0 interview | done | — | two rounds, 24 Sep 2026 — decisions below |
-| Q1 session tracker | not started | | |
-| Q2 gentle feedback | not started | | |
-| Q3 module summary + Practice again | not started | | |
-| Q4 parent: mastered list | not started | | |
-| Q5 font size | not started | | |
-| Q6 drawing: colours + arrow | not started | | |
-| Q7 vertical number line | not started | | |
-| Q8 home motion | not started | | |
+| Q1 session tracker | done | [#213](https://github.com/RadlorInc/learn/pull/213) (with Q2) | `practiceFeedback.test.ts`; breaks B1–B3 red; e2e desktop + 375 px reduced motion, served-tree break red; CI green |
+| Q2 gentle feedback | done | [#213](https://github.com/RadlorInc/learn/pull/213) | breaks B4–B9 red (B4/B7 first came back exit 3/4 — my break and my test, both fixed); `childWords` now reads arrays |
+| Q3 module summary + Practice again | done | [#214](https://github.com/RadlorInc/learn/pull/214) | `moduleSummary.test.ts`; C1–C8 red (C5 first exit 4, fixed); e2e: last topic → summary, Practice again at 375 px; 2 served-tree breaks red; CI green |
+| Q4 parent: mastered list | done | [#215](https://github.com/RadlorInc/learn/pull/215) | `masteredList.test.ts`; D1–D6 red; e2e on `/ui-preview`, keyboard, desktop + 375 px, served-tree break red; CI green |
+| Q5 font size | done | [#219](https://github.com/RadlorInc/learn/pull/219) | `textSize.test.ts` + `doc08SignedOut`; E1–E9 red; e2e 375 px × 3 sizes over 7 screens + keyboard; **the first width check was blind (clipping) — found by a screenshot, rebuilt, watched red**; sweep: 0 new findings vs `main`; doc 08 row to approve |
+| Q6 drawing: colours + arrow | done | [#216](https://github.com/RadlorInc/learn/pull/216) | `scratchPadTools.test.ts` (recording canvas); F1, F3–F8 red; **F2 passed on the broken state — correctly: the arrow is straight by two mechanisms; both broken → red**; e2e real mouse + canvas pixels; CI green |
+| Q7 vertical number line | done | [#217](https://github.com/RadlorInc/learn/pull/217) | `verticalNumberLine.test.ts`; G1–G7 red; e2e g7m2 desktop + 375 px, keyboard; served-tree break red; CI green (a font-loader build error on one run was transient: re-run passed) |
+| Q8 home motion | done | [#218](https://github.com/RadlorInc/learn/pull/218) | e2e only (CSS behaviour); 3 served-tree breaks red — **the first "slow" check passed a 3 s loop (two samples can share a phase); now measures speed**; CI green |
+| merge check | done | — | all seven trial-merged onto `main` in order, no conflict; full suite on the result **138 files, 3,793 passed, 11 skipped** (tsc clean) |
 
 ### Q0 — findings (code on `cf020313`; nothing run against production)
 
@@ -789,3 +790,18 @@ terminology, unit tests, formula sheets) are later loops.
    "Let's keep practicing:" (done, not mastered) · a Practice again button per topic.
 7. **Vertical number line:** all 8 topics of g7m2, −10 to 10, beside the scratch pad.
 8. **Home motion:** the three background circles drift slowly (CSS only), off under reduced motion, home screen only.
+
+### What was unexpected (24 Sep 2026)
+
+- **Three of my own checks were blind until a break or a screenshot said so:** the Q5 width check (the lesson shell
+  clips its overflow, so "no sideways scroll" passed with "Aa" invisible), the Q8 "slow" check (two samples far apart
+  passed a 3 s loop), and two test helpers that failed with a TypeError instead of an assertion (B7, C5). Each was
+  rebuilt and watched red on the defect it is for.
+- **CSS `zoom` multiplies `vw` too:** the topic map's `42vw` labels outgrew the map at 130 %. Fixed by sizing from the
+  map's measured width. Anything else sized in `vw` needs the same look before a bigger zoom is offered.
+- **Already existed, in part:** the easier follow-up question (after the second miss), the "Module complete!" line with
+  a badge, a count-only "Topics mastered" tile, a checkpoint every 5. **Did not exist:** Undo on the pad (the brief
+  assumed it), any number-line tool, any text size.
+- The seven PRs first conflicted in three places (`sessionCopy.ts`, `childWords.test.ts`, `PracticeLayout.tsx`). They
+  were fixed at the source, not left for a merge: Q1's components moved to `AnswerFeedback.tsx`, and each item's lines
+  sit at their own anchor.
