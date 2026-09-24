@@ -72,7 +72,7 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
         </section>
         <section style={dcard} data-tour="share-card">
           <h2 style={h2}>{t('Share with another adult')}</h2>
-          <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Let a partner or grandparent see {name}’s progress with their own sign-in.', { name })}</p>
+          <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Share {name}’s progress with family or a school teacher.', { name })}</p>
           <Link href="/parent/invites" style={dghost}>{t('Invite someone')}</Link>
         </section>
         {owner && <section style={dcard} data-tour="correct-card"><CorrectCard key={`${name}-${avatarIndex}`} name={name} avatarIndex={avatarIndex} onCorrect={onCorrect} /></section>}

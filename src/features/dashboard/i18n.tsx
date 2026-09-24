@@ -185,7 +185,7 @@ export const ES: Record<string, string> = {
   'Change login or password': 'Cambiar usuario o contraseña',
   'Only the adult who added {name} can change it.': 'Solo el adulto que agregó a {name} puede cambiarlo.',
   'Share with another adult': 'Compartir con otro adulto',
-  'Let a partner or grandparent see {name}’s progress with their own sign-in.': 'Permita que su pareja o un abuelo vea el progreso de {name} con su propio inicio de sesión.',
+  'Share {name}’s progress with family or a school teacher.': 'Comparta el progreso de {name} con su familia o con un maestro de la escuela.',
   'Invite someone': 'Invitar a alguien',
   'Game time': 'Tiempo de juego',
   'Loading…': 'Cargando…',
