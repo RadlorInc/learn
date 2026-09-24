@@ -110,6 +110,12 @@ export const ES: Record<string, string> = {
   'Delete {name}’s profile': 'Eliminar el perfil de {name}',
   'Remove myself from {name}’s profile': 'Salir del perfil de {name}',
   'Language': 'Idioma',
+  // Review 1 Q5 (unreviewed draft)
+  'Text size': 'Tamaño del texto',
+  'Makes the words and buttons bigger, on every screen of this device, the lessons too. Saved on this device.': 'Agranda las palabras y los botones en todas las pantallas de este dispositivo, también en las lecciones. Se guarda en este dispositivo.',
+  'Normal|size': 'Normal',
+  'Large|size': 'Grande',
+  'Extra large|size': 'Muy grande',
   'The language of this dashboard. Lessons stay in English. Saved on this device.': 'El idioma de este panel. Las lecciones siguen en inglés. Se guarda en este dispositivo.',
   'Choose what we point out. You can also snooze or hide one reminder with ⋯. Saved on this device.': 'Elija qué le señalamos. También puede posponer u ocultar un recordatorio con ⋯. Se guarda en este dispositivo.',
   'Setup steps': 'Pasos de configuración',

@@ -18,6 +18,11 @@
 .mb-word-write { display: inline-block; animation: mb-write 280ms steps(var(--n, 4)) both; }
 @media (prefers-reduced-motion: reduce) { .mb-word-write { animation: none; } }
 
+/* Text size on this device (Review 1 Q5): the whole page, words and buttons together. */
+html[data-text="large"] { zoom: 1.15; }
+html[data-text="xl"] { zoom: 1.3; }
+.ts-summary::-webkit-details-marker { display: none; }
+
 /* ── Reset ──────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 

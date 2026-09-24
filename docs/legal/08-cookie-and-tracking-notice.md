@@ -24,13 +24,14 @@
 | `exercise-done:<child id>:<exercise id>` | Local storage | That a child has finished a class exercise, so it shows as done on this device *(read from the code)* | Until you clear it | Functional |
 | `exercise-results-pending` | Local storage | A child's class-exercise answers that could not be sent yet (for example, offline), kept until they are sent *(read from the code)* | Until they are sent | Strictly necessary |
 | `milo_active_plan_<child id>` | Local storage | An older per-child learning-plan record, still written by some screens *(read from the code)* | Until you clear it | Functional |
+| `al-text-size` | Local storage | The text size chosen on this device (Large or Extra large; nothing is kept for Normal) *(read from the code, 24 Sep 2026)* | Until you clear it | Functional |
 | `milo-pwa-dismissed` | Local storage | That you dismissed the "install the app" banner *(read from the code)* | Until you clear it | Functional |
 | `milo-auth` | Local storage | Keeps you signed in | Until sign-out or expiry | Strictly necessary |
 | `milo_active_learner` | Session storage | Which child's profile this browser tab is using | Until the tab closes | Strictly necessary |
 
 > The last two rows were also seen in a live signed-in child session on 24 September 2026.
 
-**If you are not signed in, nothing that names or identifies your child is stored, and nothing is sent to us — but the device does keep a note of the practice.** As measured on 24 September 2026, after a full lesson and practice session signed out, the on-device database held two entries for the topic practised: `milo-newflow-standing-device-<topic>` (how far along that topic's practice the device got: a level number, a count of right answers in a row, and whether it was mastered) and, once the topic was finished, `milo-newflow-done-device-<topic>`; local storage held `milo-kv-migrated`. None of these carries a name, an email address or an account, and they stay on the device until you clear it.
+**If you are not signed in, nothing that names or identifies your child is stored, and nothing is sent to us — but the device does keep a note of the practice.** As measured on 24 September 2026, after a full lesson and practice session signed out, the on-device database held two entries for the topic practised: `milo-newflow-standing-device-<topic>` (how far along that topic's practice the device got: a level number, a count of right answers in a row, and whether it was mastered) and, once the topic was finished, `milo-newflow-done-device-<topic>`; local storage held `milo-kv-migrated`, and holds `al-text-size` only if a bigger text size was chosen on this device. None of these carries a name, an email address or an account, and they stay on the device until you clear it.
 
 ## What we do not do
 

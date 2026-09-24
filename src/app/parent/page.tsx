@@ -54,6 +54,7 @@ import { childReminders, classReminders, hardestQuestion, byPriority, type Remin
 import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
 import { LangContext, loadLang, saveLang, makeT, useT, useLang, type Lang } from '@/features/dashboard/i18n'
+import { TextSizeCard } from '@/features/dashboard/TextSizeCard'
 import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
 import { AccountConsentCard } from '@/features/consent/AccountConsent'
 import { currentAck, longDate, type Ack } from '@/features/consent/consentState'
@@ -547,6 +548,8 @@ function Dashboard() {
             ))}
           </div>
         </section>}
+        {/* Review 1 Q5: the whole screen bigger on this device, for the parent and the child alike. */}
+        <TextSizeCard style={dcard} />
         <section style={dcard} data-tour="reminders-card">
           <h2 style={h2}>{t('Reminders')}</h2>
           <p style={{ margin:'4px 0 6px', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Choose what we point out. You can also snooze or hide one reminder with ⋯. Saved on this device.')}</p>

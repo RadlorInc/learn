@@ -16,7 +16,8 @@ export const INK = '#2a1c14', SOFT = '#6d4c3d', ACCENT = '#ff6b4a', TEAL = '#0f8
 export const PAGE_BG = 'radial-gradient(circle at 12% 20%, #ffe08a 0 90px, transparent 91px), radial-gradient(circle at 88% 10%, #ffb3a3 0 70px, transparent 71px), radial-gradient(circle at 80% 85%, #9cf0d8 0 110px, transparent 111px), #f3c98b'
 export const shell: CSSProperties = { width: '100%', background: '#fff6e8', borderRadius: 28, border: `6px solid ${INK}`, boxShadow: `10px 10px 0 ${INK}`,
   overflow: 'hidden', display: 'flex', flexDirection: 'column', color: INK }
-export const topBar: CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#ff8a65', color: INK, fontWeight: 800 }
+// Wraps on a narrow screen or a bigger text size (Review 1 Q5), so a control at the right end is never cut off.
+export const topBar: CSSProperties = { display: 'flex', flexWrap: 'wrap', rowGap: 8, justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#ff8a65', color: INK, fontWeight: 800 }
 
 /** One object's size. The player sets `--lp-u` from the viewport so the picture grows on a tablet; 20px is the phone size. */
 const u = (k: number) => `calc(var(--lp-u, 20px) * ${k})`

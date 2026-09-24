@@ -20,6 +20,11 @@ export const SESSION_COPY = {
     mastered: "You've got this topic! ⭐",
     keepGoing: 'Keep going',
     takeBreak: 'Take a break',
+    // Review 1 Q5: the text-size control on the child's home.
+    textSize: 'Text size',
+    sizeNormal: 'Normal',
+    sizeLarge: 'Large',
+    sizeXl: 'Extra large',
     breakTitle: (n: number) => (n === 1 ? 'Great work, 1 question done! ⭐' : `Great work, ${n} questions done! ⭐`),
     breakMastered: "Great work! ⭐ You've got this topic.",
     spotSaved: 'Your spot is saved.',
@@ -53,6 +58,11 @@ export const SESSION_COPY = {
     mastered: '¡Ya dominas este tema! ⭐',
     keepGoing: 'Seguir',
     takeBreak: 'Tomar un descanso',
+    // Review 1 Q5.
+    textSize: 'Tamaño del texto',
+    sizeNormal: 'Normal',
+    sizeLarge: 'Grande',
+    sizeXl: 'Muy grande',
     breakTitle: (n: number) => (n === 1 ? '¡Muy bien, 1 pregunta hecha! ⭐' : `¡Muy bien, ${n} preguntas hechas! ⭐`),
     breakMastered: '¡Muy bien! ⭐ Ya dominas este tema.',
     spotSaved: 'Guardamos tu lugar.',
