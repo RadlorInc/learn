@@ -148,7 +148,7 @@ function GameTimeCard({ name, wallet, canEdit, onSave }: {
             <div><div style={{ fontSize: 26, fontWeight: 900, color: P.ink }}>{wallet.minutes_used_today} / {wallet.minutes_per_day}</div><div style={{ fontSize: 12, color: P.ink3, fontWeight: 600 }}>{t('minutes played today')}</div></div>
           </div>
           <p style={{ margin: '0 0 12px', fontSize: 14, color: P.ink2, lineHeight: 1.45 }}>
-            {t('{name} earns points by practising and spends {n} points for each minute of game.', { name, n: wallet.points_per_minute })}
+            {t('{name} earns points by practicing and spends {n} points for each minute of game.', { name, n: wallet.points_per_minute })}
           </p>
           {canEdit ? (
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

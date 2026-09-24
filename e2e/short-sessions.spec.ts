@@ -117,7 +117,7 @@ const deviceRun = (page: Page) => page.evaluate(({ kid, topic }) => new Promise<
   r.onsuccess = () => { const g = r.result.transaction('kv').objectStore('kv').get(`milo-newflow-run-${kid}-${topic}`); g.onsuccess = () => res(g.result ? JSON.parse(g.result) : null) }
 }), { kid: KID, topic: TOPIC })
 
-test('Part A — 5 → checkpoint, Keep going → 10 → checkpoint, Take a break → celebrate; home says Keep practising', async ({ browser }) => {
+test('Part A — 5 → checkpoint, Keep going → 10 → checkpoint, Take a break → celebrate; home says Keep practicing', async ({ browser }) => {
   const ctx = await device(browser, { kv: { [`milo-newflow-standing-${KID}-${PREV}`]: standing(4) } })
   const page = await ctx.newPage()
   await page.goto(`/lesson?id=${TOPIC}`)
@@ -145,9 +145,9 @@ test('Part A — 5 → checkpoint, Keep going → 10 → checkpoint, Take a brea
   await expect.poll(() => server.runs.filter(r => r.lesson === TOPIC).at(-1)?.run.asked).toBe(10)   // and on the account
 
   await page.getByRole('button', { name: 'Back to topics' }).click()
-  await expect(page.getByText('⭐ Keep practising')).toBeVisible()
-  await page.getByText('⭐ Keep practising').scrollIntoViewIfNeeded()   // the map scrolls sideways: show the topic itself
-  await expect(page.getByText('⭐ Keep practising')).toBeInViewport()
+  await expect(page.getByText('⭐ Keep practicing')).toBeVisible()
+  await page.getByText('⭐ Keep practicing').scrollIntoViewIfNeeded()   // the map scrolls sideways: show the topic itself
+  await expect(page.getByText('⭐ Keep practicing')).toBeInViewport()
   await page.screenshot({ path: `${SHOTS}/03-home-after-break.png` })
   await ctx.close()
 })
@@ -164,7 +164,7 @@ test('Part A — reopen: Welcome back, the same problem, nothing asked again; cl
   await page.goto(`/lesson?id=${TOPIC}`)
   await expect(page.getByRole('heading', { name: 'Welcome back! ⭐' })).toBeVisible()
   await page.screenshot({ path: `${SHOTS}/04-welcome-back.png` })
-  await page.getByRole('button', { name: 'Keep practising' }).click()
+  await page.getByRole('button', { name: 'Keep practicing' }).click()
   await expect(page.getByText(onAccount.current.problem.text, { exact: false }).first()).toBeVisible()   // exactly where they stopped
   expect(askedBefore.has(onAccount.current.problem.text)).toBe(false)                                     // …and not a repeat
 
@@ -178,7 +178,7 @@ test('Part A — reopen: Welcome back, the same problem, nothing asked again; cl
 
   page = await ctx.newPage()
   await page.goto(`/lesson?id=${TOPIC}`)
-  await page.getByRole('button', { name: 'Keep practising' }).click()
+  await page.getByRole('button', { name: 'Keep practicing' }).click()
   await expect(page.getByText(onScreen.current.problem.text, { exact: false }).first()).toBeVisible()
   await answerNotRight(page); await answerNotRight(page)
   await expect(page.getByRole('dialog')).toHaveCount(0)                                                   // 13, 14

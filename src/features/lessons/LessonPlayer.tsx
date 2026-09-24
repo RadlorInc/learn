@@ -53,7 +53,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]
   /** The soft prerequisite card (./nudge), decided by the page; shown before anything else, once. */
   nudge?: Nudge | null
-  /** "Practise <previous topic> first". */
+  /** "Practice <previous topic> first". */
   onPractise?: (lessonId: string) => void
   /** True once every topic of this lesson's module (that the child has) is finished — the badge is shown then, and only then. */
   moduleDone?: () => boolean

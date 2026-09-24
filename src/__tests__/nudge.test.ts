@@ -115,9 +115,9 @@ describe('the /lesson page', () => {
     expect(text()).toContain('Screen 1 of 9')
   })
 
-  it('"Practise first" opens the previous topic', async () => {
+  it('"Practice first" opens the previous topic', async () => {
     await open()
-    await act(async () => { button(`Practise ${first.title} first`)!.click() })
+    await act(async () => { button(`Practice ${first.title} first`)!.click() })
     expect(nav.pushed).toEqual([`/lesson?id=${first.id}`])
   })
 

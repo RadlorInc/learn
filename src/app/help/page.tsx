@@ -94,7 +94,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'What is game time?',
-    a: <>Your child earns points by practising and can spend them on minutes of a building game. It starts
+    a: <>Your child earns points by practicing and can spend them on minutes of a building game. It starts
        on, at up to 20 minutes a day. You can turn it off or change the daily limit on the Game time tab
        on their page.</>,
   },

@@ -1,7 +1,7 @@
 /**
  * The soft prerequisite nudge (founder, 2026-09-24): a nudge, never a lock. Opening a topic whose previous topic in
  * the same module is below PREREQ_THRESHOLD of the way (the ladder position, `progressOf`) shows a friendly card —
- * "Practise <prev> first" or "Go to <next> anyway", both fine — before the topic starts.
+ * "Practice <prev> first" or "Go to <next> anyway", both fine — before the topic starts.
  *
  * Never shown: on a module's first topic; for an ASSIGNED topic — one with a due date (the adult already decided);
  * when the previous topic is not on the child's chosen list (it is not on their map); when the child already started

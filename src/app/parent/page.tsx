@@ -552,7 +552,7 @@ function Dashboard() {
           <p style={{ margin:'4px 0 6px', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Choose what we point out. You can also snooze or hide one reminder with ⋯. Saved on this device.')}</p>
           {([['setup', t('Setup steps'), t('Things not set up yet: logins, game time, modules, exercises.')],
              ['help', t('Where help is needed'), tea ? 'A question most of a class got wrong.' : t('A topic a child keeps missing.')],
-             ['nudge', t('Gentle nudges'), tea ? 'An exercise not everyone has taken.' : t('A child who hasn’t practised for a while, or a due date that passed.')],
+             ['nudge', t('Gentle nudges'), tea ? 'An exercise not everyone has taken.' : t('A child who hasn’t practiced for a while, or a due date that passed.')],
              ...(tea ? [] : [['good', t('Celebrations'), t('When a child masters a topic.')], ['recap', t('Weekly recap'), t('A short summary on your first visit each week.')]]),
           ] as [Kind | 'good' | 'recap', string, string][]).map(([k, title, d]) => {
             const on = !prefs?.off.includes(k)

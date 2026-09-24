@@ -75,14 +75,14 @@ export function childReminders(c: ChildFacts, today: Day, now: Date, titleOf: (l
     const days = Math.floor((now.getTime() - new Date(since).getTime()) / DAY)
     if (days >= QUIET_DAYS) {
       out.push({ ...base, id: `quiet:${c.id}`, kind: 'nudge',
-        title: c.lastProblemAt ? t('{name} hasn’t practised for {days} days', { name, days }) : t('{name} hasn’t started practising yet', { name }),
+        title: c.lastProblemAt ? t('{name} hasn’t practiced for {days} days', { name, days }) : t('{name} hasn’t started practicing yet', { name }),
         detail: t('A few minutes a day works better than a long session once a week.'),
         action: t('Start a lesson with {name}', { name }), to: `start:${c.id}` })
     }
   }
   if (c.owner && c.gameEnabled === false) {
     out.push({ ...base, id: `game:${c.id}`, kind: 'setup', title: t('Game time is off for {name}', { name }),
-      detail: t('Children earn minutes of the game by practising. You choose the daily limit.'),
+      detail: t('Children earn minutes of the game by practicing. You choose the daily limit.'),
       action: t('Game time settings'), to: `?child=${c.id}&tab=game` })
   }
   return out

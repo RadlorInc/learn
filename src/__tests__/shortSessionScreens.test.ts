@@ -1,6 +1,6 @@
 /**
  * SHORT PRACTICE SESSIONS, THE SCREEN (founder, 2026-09-24) — the real LessonPlayer on a real topic, rendered and
- * clicked: a saved run greets the child with a choice; Keep practising puts back the SAME problem; a checkpoint after
+ * clicked: a saved run greets the child with a choice; Keep practicing puts back the SAME problem; a checkpoint after
  * the 5th and the 10th answer; Keep going; Take a break celebrates with the points; the topic becomes done at 12.
  * ⚠️ Every expected line is written out here, never imported from sessionCopy.ts (a check that imports the value it
  * asserts passes because the code equals itself). Only the network and the voice are replaced.
@@ -77,7 +77,7 @@ describe('short practice sessions', () => {
     expect(text()).toContain('Welcome back! ⭐')
     expect(text()).toContain('Your spot is saved.')
     const saved = loadRun(L, lesson.id)!.current.problem.text
-    await click('Keep practising')
+    await click('Keep practicing')
     expect(text()).toContain(saved)                                  // exactly where the child stopped
 
     await answerNotRight()                                           // 4
@@ -104,7 +104,7 @@ describe('short practice sessions', () => {
   })
 
   it('Take a break from the checkpoint', async () => {
-    await click('Keep practising')
+    await click('Keep practicing')
     await answerNotRight(); await answerNotRight()
     expect(dialog()).toContain('5 questions done! ⭐ Nice work.')
     await click('Take a break')

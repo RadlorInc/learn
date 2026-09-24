@@ -37,7 +37,7 @@ answer is never marked with a red cross.
 A parent chooses what each child sees (whole modules or single topics, from any grade), can set
 due dates, and sees what the child finds hard. Children sign in with a username and password their
 parent or teacher sets. Teachers make classes, choose each class's modules and give class
-exercises. Children earn points by practising and can spend them on game time, within a daily
+exercises. Children earn points by practicing and can spend them on game time, within a daily
 limit the adult sets.
 
 ## Earlier names
