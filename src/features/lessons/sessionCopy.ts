@@ -7,6 +7,14 @@
  */
 export const SESSION_COPY = {
   en: {
+    // Review 1 Q3: the module summary (founder, 2026-09-24 — "warm + specific").
+    seeSummary: 'See what you learned ⭐',
+    moduleComplete: 'Module complete! ⭐',
+    topicsDone: (n: number) => (n === 1 ? '1 topic done' : `${n} topics done`),
+    gotGoodAt: 'You got really good at:',
+    keepPractisingList: "Let's keep practicing:",
+    practiceAgain: 'Practice again',
+    backToModules: 'Back to modules',
     checkpoint: (n: number) => `${n} questions done! ⭐ Nice work.`,
     mastered: "You've got this topic! ⭐",
     keepGoing: 'Keep going',
@@ -27,6 +35,14 @@ export const SESSION_COPY = {
   },
   // REVIEWED-BY: (unreviewed draft)
   es: {
+    // Review 1 Q3.
+    seeSummary: 'Mira lo que aprendiste ⭐',
+    moduleComplete: '¡Módulo completo! ⭐',
+    topicsDone: (n: number) => (n === 1 ? '1 tema hecho' : `${n} temas hechos`),
+    gotGoodAt: 'Aprendiste muy bien:',
+    keepPractisingList: 'Sigamos practicando:',
+    practiceAgain: 'Practicar otra vez',
+    backToModules: 'Volver a los módulos',
     checkpoint: (n: number) => `¡${n} preguntas hechas! ⭐ Buen trabajo.`,
     mastered: '¡Ya dominas este tema! ⭐',
     keepGoing: 'Seguir',
