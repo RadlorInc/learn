@@ -88,11 +88,11 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
             {mastered.groups.map(g => (
               <div key={g.moduleId} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--ink-muted)' }}>{t('Grade {g}', { g: g.grade })} · {g.title}</h3>
-                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {g.topics.map(x => (
-                    <li key={x.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', fontSize: 14, color: 'var(--ink)' }}>
+                    <li key={x.id} style={{ display: 'flex', flexDirection: 'column', fontSize: 14, color: 'var(--ink)' }}>
                       <span style={{ fontWeight: 700 }}>⭐ {x.title}</span>
-                      <span style={{ color: 'var(--ink-soft)' }}>{x.day ? t('Mastered {day}', { day: showDay(x.day, lang) }) : t('Mastered, date not recorded')}</span>
+                      <span style={{ color: 'var(--ink-soft)', fontSize: 13, paddingLeft: 22 }}>{x.day ? t('Mastered {day}', { day: showDay(x.day, lang) }) : t('Mastered, date not recorded')}</span>
                     </li>
                   ))}
                 </ul>
