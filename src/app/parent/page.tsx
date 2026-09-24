@@ -59,6 +59,7 @@ import { AccountConsentCard } from '@/features/consent/AccountConsent'
 import { currentAck, longDate, type Ack } from '@/features/consent/consentState'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
+import { BILLING_LIVE } from '@/app/legal/registry'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -561,7 +562,8 @@ function Dashboard() {
         </section>
         {tea
           ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
-          : <section style={dcard} data-tour="plan-card"><h2 style={h2}>{t('Plan & billing')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Your plan and what it costs.')}</p><Link href="/parent/plan" style={dghost}>{t('See plans')}</Link></section>}
+          // The private beta is free (founder, 2026-09-24): no plans, no prices, no link to the (dark) refund policy until billing is live.
+          : BILLING_LIVE && <section style={dcard} data-tour="plan-card"><h2 style={h2}>{t('Plan & billing')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Your plan and what it costs.')}</p><Link href="/parent/plan" style={dghost}>{t('See plans')}</Link></section>}
         {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
         {/* Withdraw permission for every child, and KEEP the account — its own card, never on the close page (prod check 2.8).
             On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}

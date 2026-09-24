@@ -1,18 +1,17 @@
 # Privacy Policy
 
-> **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY BEFORE PUBLICATION.**
-> This document must not render as a live page while any `[PLACEHOLDER — ...]` remains unresolved.
+> **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 >
 > **This draft assumes Path A**: the product collects a limited amount of information about each child, discloses it honestly, and obtains verifiable parental consent. Every statement below is written to be true of the product as described on 22 September 2026 — a child's first name or nickname, grade level, and learning progress. **Before publication, each factual statement must be checked against the running application.** Where the application does something this policy does not describe, the policy is wrong, not the application.
 
-> **Written for the paid product.** Payment is expected within days of the soft launch (Rafi, 22 Sep 2026), so this document assumes paid subscriptions throughout and does not carry a free-tier variant.
+> **Beta (decided 24 September 2026): the Service is free during the beta and billing is switched off.** The paid-plan text was taken out; it comes back, with the Refund and Cancellation Policy, before billing goes live.
 >
 > One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
 
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Radlic
-**Effective date:** [PLACEHOLDER — date]
-**Last updated:** [PLACEHOLDER — date]
+**Effective date:** 25 September 2026
+**Last updated:** 25 September 2026
 
 ---
 
@@ -64,7 +63,7 @@ We ask a child for no more information than is reasonably necessary to take part
 | What | Why |
 |---|---|
 | Name and email address | To create the account, to contact you about it, and to verify your identity when you make a request about your child's data |
-| Subscription and billing details | To take payment and manage the subscription. **Payments are processed by our payment provider. We never receive or store your full card number or security code** — we receive a payment reference, your email address, the plan you chose and the number of seats. [PLACEHOLDER — confirm the exact fields returned once billing is switched on.] |
+| Subscription and billing details | None during the beta: the Service is free, billing is switched off, and we collect no payment details. |
 | Your record of consent — the method, the date, your email address, and the version of each document you were shown — and, for each child you add, when you confirmed that you are that child's parent or legal guardian and which version of the notice that confirmation referred to | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is deleted with everything else |
 | Messages you send us | To answer you |
 
@@ -83,7 +82,7 @@ Using any of these is free. We will confirm that the request comes from you befo
 
 **How long we take:** 10 days.
 
-Full details, including what happens to a subscription if you withdraw consent, are on our Parent Rights page at https://radlic.com/legal/parent-rights.
+Full details are on our Parent Rights page at https://radlic.com/legal/parent-rights.
 
 ## 6. How we use information
 
@@ -91,7 +90,6 @@ We use what we collect only to:
 
 - run the service for your child — teach, adapt, track progress;
 - show you your child's progress;
-- take payment and manage your subscription;
 - keep the service secure, detect abuse, and fix faults;
 - contact you about your account;
 - meet our legal obligations.
@@ -109,7 +107,7 @@ We use what we collect only to:
 
 We do not sell information and we do not disclose a child's information to anyone for their own purposes.
 
-We do use service providers who process information on our instructions and for no purpose of their own — hosting, database, email delivery, and payment processing. The current list, and exactly what each one receives, is published at https://radlic.com/legal/subprocessors.
+We do use service providers who process information on our instructions and for no purpose of their own — hosting, database and email delivery. The current list, and exactly what each one receives, is published at https://radlic.com/legal/subprocessors.
 
 We may also disclose information where we are legally required to — for example, in response to a valid legal process — or to protect the safety of a person. If we are ever required to do so in relation to a child, we will tell the parent unless the law forbids it.
 
@@ -129,8 +127,8 @@ We keep a child's information only as long as we need it to provide the service,
 | Product events | 90 days, then deleted automatically every night |
 | Crash records | 90 days, then deleted automatically |
 | Parent account | Until you close it |
-| Consent records | [PLACEHOLDER — period, to be set by the attorney once consent records exist] |
-| Our providers' request logs, which include IP address and browser type | [PLACEHOLDER — the providers' retention periods must be established and stated here before publication] |
+| Consent records | Until you close your account. If you withdraw consent, the record is kept, marked as withdrawn, so we can show when and how it ended |
+| Our providers' request logs, which include IP address and browser type | Available to us for up to 7 days (database provider) and 1 hour (hosting provider) on our current plans, from their dashboards on 24 September 2026 |
 | Backups | Designed to expire after 30 days |
 
 If you ask us to delete your child's information, we delete it from our live systems straight away; copies in backups disappear when those backups expire, and we never restore a deleted child's record from a backup. Our full retention schedule is at https://radlic.com/legal/retention.
@@ -139,7 +137,7 @@ If you ask us to delete your child's information, we delete it from our live sys
 
 We maintain a written security programme covering children's information, reviewed at least annually.
 
-In practice: every connection to Radlic is encrypted; the database enforces rules so that one family's records cannot be read by another; the keys that would allow broad access are never sent to your browser; and our internal tools are kept in a separate system that holds no children's data. [PLACEHOLDER — this paragraph must be checked against the Information Security Program immediately before publication, and any control that is not implemented on that day must be removed from it.]
+In practice: every connection to Radlic is encrypted; the database enforces rules so that one family's records cannot be read by another; the keys that would allow broad access are never sent to your browser; and our internal records are kept in a separate system that holds no children's data; the admin view inside the product shows only totals, never an individual child.
 
 No system is perfectly secure. If a breach affects your child's information, we will tell you as required by law, and we will tell you plainly what happened.
 

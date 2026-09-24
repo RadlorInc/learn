@@ -35,25 +35,36 @@ export interface LegalPage {
   spanish: { source: string } | null
   /** A page that promises something the product must do first. */
   needs?: 'deletion' | 'billing'
+  /**
+   * ⚠️ THE PRIVATE BETA (2026-09-24). Published on the FOUNDER's decisions, before any attorney has reviewed it — each
+   * decision is recorded in ATTORNEY-PACKET.md ("decided by founder for beta on <date>, attorney to review").
+   * It stands in for `signoff`, and for the Spanish review (a beta page is shown in English only; its Spanish draft
+   * stays unpublished). It lifts NOTHING else: a placeholder anywhere in the file, a DRAFT status, deletion or billing
+   * still refuse. The page says it is the beta version, with this effective date, in a banner (`[slug]/page.tsx`).
+   */
+  beta?: { decidedBy: string; decided: string; effective: string }
 }
+
+const BETA = { decidedBy: 'Rafi (founder)', decided: '2026-09-24', effective: '25 September 2026' }
 
 export const LEGAL_PAGES: LegalPage[] = [
   { slug: 'privacy', title: 'Privacy Policy', source: '11-privacy-policy.md',
     after: '> One dependency survives', until: '### Where this policy must appear',
-    published: false, signoff: null, spanish: { source: 'es/11-privacy-policy.md' } },
+    published: true, signoff: null, beta: BETA, spanish: { source: 'es/11-privacy-policy.md' } },
+  // ⚠️ DARK UNTIL TWO FOUNDER DECISIONS: the liability floor (§11) and §14's phone / contact. Everything else is decided.
   { slug: 'terms', title: 'Terms of Service', source: '12-terms-of-service.md',
-    until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/12-terms-of-service.md' } },
+    until: '### Notes for the attorney', published: false, signoff: null, beta: BETA, spanish: { source: 'es/12-terms-of-service.md' } },
   { slug: 'refunds', title: 'Refund and Cancellation Policy', source: '01-refund-and-cancellation-policy.md',
     until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/01-refund-and-cancellation-policy.md' }, needs: 'billing' },
   { slug: 'parent-rights', title: 'Your rights as a parent', source: '06-parent-rights-procedure.md',
     after: '# Part A — Public page', until: '# Part B — Internal procedure',
-    published: false, signoff: null, spanish: { source: 'es/06-parent-rights-procedure.md' }, needs: 'deletion' },
+    published: true, signoff: null, beta: BETA, spanish: { source: 'es/06-parent-rights-procedure.md' }, needs: 'deletion' },
   { slug: 'subprocessors', title: 'Service Providers and Subprocessors', source: '07-subprocessors.md',
-    until: '## Two questions still open', published: false, signoff: null, spanish: { source: 'es/07-subprocessors.md' } },
+    until: '## Two questions still open', published: true, signoff: null, beta: BETA, spanish: { source: 'es/07-subprocessors.md' } },
   { slug: 'cookies', title: 'Cookie and Tracking Notice', source: '08-cookie-and-tracking-notice.md',
-    until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/08-cookie-and-tracking-notice.md' } },
+    until: '### Notes for the attorney', published: true, signoff: null, beta: BETA, spanish: { source: 'es/08-cookie-and-tracking-notice.md' } },
   { slug: 'retention', title: 'Data Retention and Deletion Policy', source: '04-data-retention-policy.md',
-    until: '## 7. The purge cliff', published: false, signoff: null, spanish: { source: 'es/04-data-retention-policy.md' } },
+    until: '## 7. The purge cliff', published: true, signoff: null, beta: BETA, spanish: { source: 'es/04-data-retention-policy.md' } },
 ]
 
 export const pageBySlug = (slug: string) => LEGAL_PAGES.find(p => p.slug === slug)
@@ -112,7 +123,9 @@ export function spanishReviewer(es: string): { by: string; date: string } | null
  *     with the proof `consentDeletion.test.ts` provides (item 6), which asserts it back.
  */
 export const BILLING_LIVE = false
-export const WITHDRAWAL_DELETES = false
+// ⚠️ TRUE since the private-beta PR (2026-09-24): withdrawing deletes, proven by `consentDeletion.test.ts` (which asserts
+// this flag back) and on production (deploy loop D5, 2026-09-23). If that test ever stops proving it, this goes false.
+export const WITHDRAWAL_DELETES = true
 
 /**
  * Every reason this page must not be published, in words a person can act on. Empty = the switch
@@ -127,8 +140,10 @@ export function publishRefusals(page: LegalPage, md: string, es: string | null, 
   if (holes) why.push(`placeholders: docs/legal/${page.source} still carries ${holes}`)
   const header = md.split('\n').slice(0, md.split('\n').findIndex(l => l.trim() === '---') + 1 || 12).join('\n')
   if (/STATUS:\s*DRAFT/.test(header)) why.push(`draft: docs/legal/${page.source} still opens "STATUS: DRAFT"`)
-  if (!page.signoff) why.push('sign-off: no attorney sign-off is recorded in registry.ts')
-  if (!page.spanish || es === null) why.push('spanish: there is no Spanish version')
+  if (!page.signoff && !page.beta) why.push('sign-off: no attorney sign-off is recorded in registry.ts')
+  // A beta page is shown in English only, so its Spanish draft may stay unreviewed (and unpublished) — see `beta`.
+  if (page.beta) { /* no Spanish refusal */ }
+  else if (!page.spanish || es === null) why.push('spanish: there is no Spanish version')
   else if (!spanishReviewer(es)) why.push(`spanish: docs/legal/${page.spanish.source} has not been reviewed by a Spanish reader — its REVIEWED-BY: line must name the reviewer and the date (Name, YYYY-MM-DD)`)
   if (page.needs === 'deletion' && !facts.deletion) why.push('deletion: withdrawing consent does not yet delete the child\'s data (WITHDRAWAL_DELETES)')
   if (page.needs === 'billing' && !facts.billing) why.push('billing: billing is not live, so no refund can be given (BILLING_LIVE)')

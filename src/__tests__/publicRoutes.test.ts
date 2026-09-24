@@ -36,7 +36,9 @@ describe('public routes render without the storage splash', () => {
 
   it('every crawlable route is in the sitemap, and every private one is disallowed', () => {
     const urls = sitemap().map(e => e.url)
-    expect(urls).toEqual(PUBLIC_ROUTES.map(p => `${SITE_URL}${p}`))
+    // The private beta (2026-09-24) published five legal pages; they are crawlable. Written out, not read from the registry.
+    const BETA_LEGAL = ['/legal/privacy', '/legal/parent-rights', '/legal/subprocessors', '/legal/cookies', '/legal/retention']
+    expect(urls).toEqual([...PUBLIC_ROUTES, ...BETA_LEGAL].map(p => `${SITE_URL}${p}`))
 
     const { rules, sitemap: ref } = robots()
     expect(ref).toBe(`${SITE_URL}/sitemap.xml`)

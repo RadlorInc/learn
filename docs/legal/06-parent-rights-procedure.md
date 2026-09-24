@@ -1,13 +1,13 @@
 # Parent Rights: Public Page and Internal Procedure
 
-> **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY BEFORE PUBLICATION.**
+> **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > Part A is a public page. Part B is the internal procedure that makes Part A true. Do not publish Part A until Part B can actually be carried out — a published right that nobody can service is a worse position than no page at all.
 
 ---
 
 # Part A — Public page: "Your rights as a parent"
 
-**Effective:** [PLACEHOLDER — date]
+**Effective:** 25 September 2026
 
 If your child uses Radlic, you are in control of their information. You have four rights, and you can use any of them at any time, for free.
 
@@ -17,7 +17,7 @@ You can ask us for a copy of everything we have collected from your child. We wi
 
 ### 2. Correct it
 
-**In the app:** parent dashboard → your child's card → **Login & data** → **Correct *name*'s details**. There you can change your child's name or nickname, their avatar, and their grade band (grades 3–5 or grades 6–8). Only the adult who added the child can make this change. **Or email us** at support@radlor.com and we will correct it for you.
+**In the app:** parent dashboard → your child's card → **Login & data** → **Correct name's details**. There you can change your child's name or nickname, their avatar, and their grade band (grades 3–5 or grades 6–8). Only the adult who added the child can make this change. **Or email us** at support@radlor.com and we will correct it for you.
 
 ### 3. Delete it
 
@@ -33,7 +33,7 @@ You give us permission once, for your account, and it covers every child you add
 
 We keep a record that permission was given and then withdrawn, and when, without the children's details. To delete everything, including the account itself, use **Account → Close your account**.
 
-You are never charged for exercising a privacy right. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing permission for a child also cancels or reduces a subscription, and whether any part is refunded. Nothing does this today: billing is off and no subscription can be bought (`BILLING_LIVE = false`). An earlier version of this page promised cancellation and a pro-rata refund; decide and build it before billing goes live, then write it here.]
+You are never charged for exercising a privacy right.
 
 ### How to make a request
 

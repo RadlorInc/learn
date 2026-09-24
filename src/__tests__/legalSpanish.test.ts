@@ -16,7 +16,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { LEGAL_PAGES, publicBody, publishRefusals, MARKER, type LegalPage } from '@/app/legal/registry'
+import { LEGAL_PAGES, publicBody, publishRefusals, spanishReviewer, MARKER, type LegalPage } from '@/app/legal/registry'
 
 const DIR = resolve(__dirname, '../../docs/legal')
 const read = (f: string) => readFileSync(resolve(DIR, f), 'utf8')
@@ -59,8 +59,28 @@ describe('every legal page has a Spanish draft, wired in and marked unreviewed',
   it.each(Object.entries(SPANISH))('%s: the Spanish keeps every placeholder of the English public text', (slug, file) => {
     const page = LEGAL_PAGES.find(p => p.slug === slug)!
     const en = holes(publicBody(page, read(page.source)))
-    expect(en, `positive control: the English public text of ${slug} was expected to carry placeholders`).toBeGreaterThan(0)
+    // (Positive control moved below: since the beta, five English pages carry none — and then neither may the Spanish.)
     expect(holes(read(file)), `${file} dropped or added a placeholder`).toBe(en)
+  })
+
+  it('positive control: the count is live — some page still carries placeholders in both languages', () => {
+    const counts = Object.entries(SPANISH).map(([slug, file]) => [holes(publicBody(LEGAL_PAGES.find(p => p.slug === slug)!, read(LEGAL_PAGES.find(p => p.slug === slug)!.source))), holes(read(file))])
+    expect(counts.some(([en, es]) => en > 0 && es > 0), 'every page reads zero in both languages — the count may be blind').toBe(true)
+  })
+})
+
+describe('a beta page is shown in English only: its unreviewed Spanish neither blocks it nor reaches the page', () => {
+  it.each(LEGAL_PAGES.filter(p => p.beta && p.published).map(p => [p.slug, p] as const))('%s', async (slug, p) => {
+    const es = read(p.spanish!.source)
+    expect(spanishReviewer(es), `control: ${p.spanish!.source} is still unreviewed`).toBeNull()
+    expect(publishRefusals(p, read(p.source), es).filter(w => w.startsWith('spanish:'))).toEqual([])
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: View } = await import('@/app/legal/[slug]/page')
+    const html = renderToStaticMarkup(await View({ params: Promise.resolve({ slug }) }))
+    // The Spanish draft's text below its header (the English boundaries are English sentences, so they do not apply).
+    const spanishLine = es.slice(es.indexOf('\n---\n') + 5).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim()).sort((a, b) => b.length - a.length)[0]
+    expect(spanishLine.length).toBeGreaterThan(80)
+    expect(html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' '), `/legal/${slug} shows its unreviewed Spanish`).not.toContain(spanishLine.replace(/\s+/g, ' ').slice(0, 60))
   })
 })
 
@@ -92,7 +112,7 @@ describe('an unreviewed Spanish text is refused; a named, dated review lets it t
     expect(spanishOnly(planted)).toEqual([expect.stringMatching(/^spanish: /)])
   })
 
-  it.each(LEGAL_PAGES.map(p => [p.slug, p] as const))('%s: its real draft is refused for Spanish today, and only a filled line lifts that', (_s, p) => {
+  it.each(LEGAL_PAGES.filter(p => !p.beta).map(p => [p.slug, p] as const))('%s: its real draft is refused for Spanish today, and only a filled line lifts that', (_s, p) => {
     const es = read(p.spanish!.source)
     expect(publishRefusals(p, read(p.source), es).filter(w => w.startsWith('spanish:'))).toHaveLength(1)
     const signed = publishRefusals(p, read(p.source), sign(es, 'REVIEWED-BY: Ana Ruiz, 2026-09-24'))

@@ -90,6 +90,15 @@ describe('crash records whose child is gone — three before the migration, none
   }, 120_000)
 })
 
+describe('the parent-rights page may promise deletion because this file proves it', () => {
+  // registry.ts: WITHDRAWAL_DELETES is set true on THIS proof (private beta, 2026-09-24). The rows below are what make
+  // it true; if they stop, turn the flag off and /legal/parent-rights refuses to publish.
+  it('WITHDRAWAL_DELETES is true', async () => {
+    const { WITHDRAWAL_DELETES } = await import('@/app/legal/registry')
+    expect(WITHDRAWAL_DELETES).toBe(true)
+  })
+})
+
 describe('deleting a child deletes every row document 06 lists', () => {
   let legacyA: { id: string; consent: string; token: string }, legacyB: { id: string; consent: string; token: string }
   beforeAll(async () => {

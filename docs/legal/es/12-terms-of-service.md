@@ -39,19 +39,15 @@ Radlic es una herramienta de aprendizaje adaptativo. Presenta lecciones, pregunt
 Como el Servicio lo usan niños, se aplican normas adicionales:
 
 - Antes de recopilar cualquier dato sobre sus hijos, le damos un **aviso directo** que le dice exactamente qué recopilamos, y obtenemos su **consentimiento verificable**. Lo da una sola vez, para su cuenta, y cubre a todos los niños que añada a ella. Cada vez que añade un niño, usted confirma que es su padre, madre o tutor legal, y registramos cuándo lo hizo.
-- **Guardamos un registro de ese consentimiento** — la fecha, cómo se dio, su dirección de correo electrónico y la versión de cada documento que se le mostró. Lo guardamos para poder demostrar, más adelante, exactamente qué aceptó usted. Si usted cierra su cuenta, ese registro se elimina junto con todo lo demás. [PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]
+- **Guardamos un registro de ese consentimiento** — la fecha, cómo se dio, su dirección de correo electrónico y la versión de cada documento que se le mostró. Lo guardamos para poder demostrar, más adelante, exactamente qué aceptó usted. Si usted cierra su cuenta, ese registro se elimina junto con todo lo demás.
 - Usted puede ver, corregir o eliminar la información de su hijo, o retirar su consentimiento, en cualquier momento y sin costo. Consulte nuestra [página de Derechos de los padres](https://radlic.com/legal/parent-rights).
-- Puede retirar su consentimiento para un niño o para todos los niños de la cuenta. Para un niño, dejamos de recopilar, eliminamos lo que tenemos sobre ese niño y cerramos su perfil; esto se aplica solo a ese niño, y la cuenta y los demás niños no se ven afectados. Para todos, hacemos lo mismo con cada uno; su cuenta sigue abierta, y añadir un niño más adelante requiere de nuevo su consentimiento. Nunca se le cobra por ejercer un derecho de privacidad. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing consent also cancels or reduces a subscription, and any refund. Nothing does this today (billing is off). The earlier text promised cancellation and a pro-rata refund; decide before billing goes live.]
+- Puede retirar su consentimiento para un niño o para todos los niños de la cuenta. Para un niño, dejamos de recopilar, eliminamos lo que tenemos sobre ese niño y cerramos su perfil; esto se aplica solo a ese niño, y la cuenta y los demás niños no se ven afectados. Para todos, hacemos lo mismo con cada uno; su cuenta sigue abierta, y añadir un niño más adelante requiere de nuevo su consentimiento. Nunca se le cobra por ejercer un derecho de privacidad.
 
 Nuestra [Política de privacidad](https://radlic.com/legal/privacy) describe todo esto en detalle y forma parte de estos Términos.
 
-## 5. Suscripciones, renovación y cancelación
+## 5. La beta es gratuita
 
-- Los planes, precios y periodos de facturación se muestran al pagar, antes de que usted pague.
-- **Las suscripciones se renuevan automáticamente** hasta que usted cancele. El importe y la fecha de la renovación se le informan antes de suscribirse y se repiten en el correo de confirmación que le enviamos.
-- **Puede cancelar en cualquier momento**, en línea, en el mismo número de pasos que le llevó suscribirse: en la aplicación, en **Cuenta → Plan y facturación**. La cancelación detiene todos los cobros futuros; su acceso continúa hasta el final del periodo que ya pagó, y le enviamos por correo electrónico una confirmación con esa fecha.
-- Los reembolsos, los cambios de precio, los pagos fallidos y el procedimiento completo de cancelación se establecen en nuestra [Política de reembolsos y cancelaciones](https://radlic.com/legal/refunds), que forma parte de estos Términos.
-- Usted es responsable de los impuestos que correspondan.
+Durante la beta el Servicio es gratuito y no se cobra nada. Antes de que empiece cualquier plan de pago, le enviaremos un correo electrónico y le pediremos que acepte unos Términos actualizados.
 
 ## 6. Uso aceptable
 
@@ -60,7 +56,7 @@ Usted se compromete a no hacer lo siguiente, ni permitir que otra persona lo hag
 - usar el Servicio para cualquier fin ilícito;
 - copiar, extraer de forma automatizada (scraping), revender, sublicenciar o redistribuir el contenido o las preguntas;
 - aplicar ingeniería inversa, descompilar o intentar extraer los modelos, algoritmos o código fuente;
-- compartir las credenciales de su cuenta, o usar el Servicio en nombre de cualquier persona ajena a su propio hogar; una suscripción cubre hasta cuatro niños;
+- compartir las credenciales de su cuenta, o usar el Servicio en nombre de cualquier persona ajena a su propio hogar;
 - subir cualquier cosa ilícita, dañina o que infrinja derechos;
 - interferir con el Servicio o con su seguridad, sobrecargarlos o sondearlos;
 - usar medios automatizados para acceder al Servicio, salvo en la medida en que lo permitamos expresamente;
@@ -70,9 +66,9 @@ Podemos suspender o cerrar una cuenta que incumpla esta sección. Cuando sea raz
 
 ## 7. Contenido y propiedad intelectual
 
-**Lo nuestro.** El Servicio, y todo lo que contiene — lecciones, preguntas, diagramas, audio, software, modelos y diseño — nos pertenece a nosotros o a nuestros licenciantes. Le otorgamos una licencia limitada, personal, no exclusiva e intransferible para usarlo con fines educativos no comerciales de su propio hogar mientras su suscripción esté activa.
+**Lo nuestro.** El Servicio, y todo lo que contiene — lecciones, preguntas, diagramas, audio, software, modelos y diseño — nos pertenece a nosotros o a nuestros licenciantes. Le otorgamos una licencia limitada, personal, no exclusiva e intransferible para usarlo con fines educativos no comerciales de su propio hogar mientras tenga una cuenta.
 
-> [PLACEHOLDER — ATTORNEY: the previous draft said this material "is protected by copyright and other laws". Most of the lesson content is AI-generated. In the United States, material produced by a machine without sufficient human authorship is not protected by copyright, and a bare claim of copyright over it may be both unenforceable and inaccurate. Please advise on the right formulation — we expect protection to rest on the selection, arrangement and editing that humans contributed, on these Terms as a contract, and on the acceptable-use restrictions, rather than on a blanket copyright assertion.]
+No reclamamos derechos de autor sobre ninguna parte del Servicio más allá de lo que nos concede la ley; su uso se rige por esta licencia y por estos Términos.
 
 **Lo suyo.** Todo lo que su hijo envíe — respuestas, trabajo y cualquier otra cosa que usted o su hijo introduzcan en el Servicio — sigue siendo suyo ("Contenido del usuario"). Usted nos otorga la licencia que necesitamos para **operar el Servicio para usted**: guardarlo, mostrárselo de nuevo a usted y a su hijo, y tratarlo para que el Servicio pueda adaptarse e informar del progreso. Esa licencia termina cuando el contenido se elimina.
 
@@ -91,15 +87,15 @@ Algunas partes del Servicio usan inteligencia artificial para adaptar lo que ve 
 
 ## 9. Disponibilidad y cambios
 
-Procuramos mantener el Servicio en funcionamiento, pero no prometemos que funcione sin interrupciones ni errores. Podemos cambiar, añadir o quitar funciones. Si hacemos un cambio que reduzca de forma importante aquello por lo que usted pagó, se lo diremos y [PLACEHOLDER — state the remedy: a pro-rata refund, or the right to cancel].
+Procuramos mantener el Servicio en funcionamiento, pero no prometemos que funcione sin interrupciones ni errores. Podemos cambiar, añadir o quitar funciones. Si hacemos un cambio que usted no quiere, puede dejar de usar el Servicio y cerrar su cuenta en cualquier momento.
 
 Podemos realizar tareas de mantenimiento, y podemos suspender el Servicio cuando sea necesario por motivos de seguridad.
 
 ## 10. Terminación de este acuerdo
 
-**Usted** puede cancelar su suscripción o cerrar su cuenta en cualquier momento.
+**Usted** puede cerrar su cuenta en cualquier momento.
 
-**Nosotros** podemos suspender o cerrar su cuenta si usted incumple de forma importante estos Términos, si la ley nos obliga a hacerlo o si dejamos de ofrecer el Servicio. Salvo cuando un incumplimiento lo haga inapropiado, le daremos un aviso razonable y, si cerramos su cuenta por un motivo que no sea un incumplimiento, le reembolsaremos la parte no utilizada de lo que haya pagado.
+**Nosotros** podemos suspender o cerrar su cuenta si usted incumple de forma importante estos Términos, si la ley nos obliga a hacerlo o si dejamos de ofrecer el Servicio. Salvo cuando un incumplimiento lo haga inapropiado, le daremos un aviso razonable.
 
 Cuando se cierra una cuenta, la información de su hijo se trata como se describe en la Política de privacidad y en la Política de conservación de datos. Las secciones 7, 11, 12, 13 y 15 siguen vigentes.
 
@@ -127,22 +123,18 @@ Si usted cree que algún material del Servicio infringe sus derechos de autor, c
 
 **Agente de derechos de autor, Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · teléfono [PLACEHOLDER — phone number]
 
-[PLACEHOLDER — ATTORNEY: to rely on the DMCA safe harbour the agent must also be registered with the US Copyright Office. Confirm whether registration is needed given that the Service hosts little or no user-posted material.]
-
 ## 15. Controversias y ley aplicable
 
 Estos Términos se rigen por las leyes del Estado de Delaware, sin tener en cuenta sus normas sobre conflicto de leyes. Nada de lo aquí dispuesto le priva de la protección de cualquier ley imperativa de protección al consumidor del estado donde usted vive.
 
-Antes de iniciar un procedimiento formal, ambos acordamos intentar resolver la controversia comunicándonos primero entre nosotros — escriba a support@radlor.com y le responderemos en un plazo de [PLACEHOLDER — number] días.
-
-[PLACEHOLDER — ARBITRATION AND CLASS ACTION WAIVER. This is a deliberate business decision, not a blank to be filled casually. If Radlor wants binding arbitration and a class-action waiver, the attorney must draft it, including the opt-out right and the notice formatting several courts require. If Radlor does not want it, the clause below applies instead and this note is deleted.]
+Antes de iniciar un procedimiento formal, ambos acordamos intentar resolver la controversia comunicándonos primero entre nosotros — escriba a support@radlor.com y le responderemos en un plazo de 30 días.
 
 Si una controversia no se resuelve de manera informal, se someterá exclusivamente a los tribunales estatales o federales ubicados en Delaware, y cada uno de nosotros acepta esa jurisdicción.
 
 ## 16. Disposiciones generales
 
-- **Acuerdo completo.** Estos Términos, junto con la Política de privacidad y la Política de reembolsos y cancelaciones, constituyen el acuerdo completo entre nosotros sobre el Servicio.
-- **Cambios.** Podemos actualizar estos Términos. Publicaremos la versión actualizada con una nueva fecha y, en caso de cambios importantes, le enviaremos un correo electrónico al menos [PLACEHOLDER — number] días antes de que entren en vigor. Si no está de acuerdo, puede cancelar. Los cambios nunca se aplican de forma retroactiva a un periodo que usted ya haya pagado, y los cambios que afecten a la información de los niños siguen la norma adicional de la Política de privacidad.
+- **Acuerdo completo.** Estos Términos, junto con la Política de privacidad, constituyen el acuerdo completo entre nosotros sobre el Servicio.
+- **Cambios.** Podemos actualizar estos Términos. Publicaremos la versión actualizada con una nueva fecha y, en caso de cambios importantes, le enviaremos un correo electrónico al menos 14 días antes de que entren en vigor. Si no está de acuerdo, puede cerrar su cuenta. Los cambios que afecten a la información de los niños siguen la norma adicional de la Política de privacidad.
 - **Divisibilidad.** Si una disposición no se puede hacer cumplir, el resto sigue vigente.
 - **Sin renuncia.** No hacer valer un derecho en una ocasión no supone renunciar a él.
 - **Cesión.** Usted no puede transferir su cuenta. Nosotros podemos ceder estos Términos en relación con una fusión o una venta, con sujeción a la Política de privacidad.

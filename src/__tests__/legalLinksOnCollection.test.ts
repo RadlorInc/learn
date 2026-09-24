@@ -55,8 +55,10 @@ const hrefs = (html: string) => [...html.matchAll(/href="([^"]+)"/g)].map(m => m
 describe('every screen that collects a child\'s details or takes money links to the Privacy Policy', () => {
   it('the checkout screen renders a Privacy Policy link beside the Terms', async () => {
     const React = await import('react')
-    const { default: PlanPage } = await import('@/app/parent/plan/page')
-    const html = await paint(React.createElement(PlanPage))
+    // The CHECKOUT screen itself — while the beta is free the page shows a notice instead, but the checkout still ships
+    // and must still carry its links the day billing is switched on.
+    const { PlanCheckout } = await import('@/app/parent/plan/page')
+    const html = await paint(React.createElement(PlanCheckout))
 
     /**
      * ⚠️ POSITIVE CONTROL FIRST, AND IT IS LOAD-BEARING HERE. `RoleGate` renders `null` until its

@@ -1,3 +1,4 @@
+import { BILLING_LIVE } from '@/app/legal/registry'
 import type { Tour } from './Helpers'
 import { makeT, type Lang } from './i18n'
 
@@ -78,6 +79,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
           { url: `/parent?child=${c}&tab=login`, target: 'data-card', title: t('Their data'), text: t('Download a copy of everything stored about them, or delete their profile for good.') }] } },
       ] },
     ] : []),
-    { h: t('Your account'), items: [reminders, plan, close] },
+    // No plan step while the beta is free: the card it points at is not shown (founder, 2026-09-24).
+    { h: t('Your account'), items: BILLING_LIVE ? [reminders, plan, close] : [reminders, close] },
   ]
 }
