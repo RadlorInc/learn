@@ -158,14 +158,13 @@ describe('signup: both buttons wait for the tick', () => {
     await s.done()
   })
 
-  it('"Continue as a teacher" enables both buttons without the tick, and records nothing', async () => {
+  it('the box reads only "I\'ve read what we collect, and I agree." — no teacher escape, no "after you sign up" line (founder, 2026-09-25)', async () => {
     const s = await signup()
-    await click(button(s.host, /^Continue as a teacher$/))
-    expect(s.email().disabled).toBe(false)
-    expect(s.google().disabled).toBe(false)
-    expect(localStorage.getItem('consent-signup-ack')).toBeNull()
-    await click(s.google())
-    expect(google).toHaveBeenCalledTimes(1)
+    const box = s.host.querySelector('[data-consent="signup"] label')
+    expect(box?.textContent?.trim()).toBe("I've read what we collect, and I agree.")
+    expect(s.host.textContent).not.toContain('Continue as a teacher')
+    expect(s.host.textContent).not.toContain('Signing up as a teacher')
+    expect(s.host.textContent).not.toContain('After you sign up, we will email you once')
     await s.done()
   })
 

@@ -77,17 +77,15 @@ export default function AuthPage() {
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
-  // Consent-once (C2): signup waits for the parent's tick on the notice — or for "Continue as a teacher".
+  // Consent-once (C2): signup waits for the tick on the notice (parents and teachers alike).
   const [ticked,   setTicked]   = useState(false)
-  const [teacher,  setTeacher]  = useState(false)
-  const blocked = mode === 'signup' && !ticked && !teacher
+  const blocked = mode === 'signup' && !ticked
 
   function tick(on: boolean) {
     setTicked(on)
     // Kept on the device with the version and the moment it was ticked; unticking takes it back.
     saveAck(on ? { noticeVersion: NOTICE_VERSION, at: new Date().toISOString() } : null)
   }
-  function asTeacher() { setTeacher(true); tick(false) }   // a teacher agrees to nothing here, so nothing is kept
 
   function reset() { setError(null); setSuccess(null) }
 
@@ -384,7 +382,7 @@ export default function AuthPage() {
               </div>
             )}
 
-            {mode === 'signup' && <SignupConsent lang={lang} ticked={ticked} onTick={tick} teacher={teacher} onTeacher={asTeacher} />}
+            {mode === 'signup' && <SignupConsent lang={lang} ticked={ticked} onTick={tick} />}
 
             {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
                 adult commits rather than after. This is the consent record — without it we cannot show

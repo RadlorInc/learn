@@ -138,7 +138,7 @@ export const ES: Record<string, string> = {
   'Show me how to…': 'Muéstreme cómo…',
   'Take the 1-minute tour again': 'Ver otra vez el recorrido de 1 minuto',
   'Questions and answers': 'Preguntas y respuestas',
-  'Tap a child to see their progress, choose their lessons, or set game time.': 'Toque a un niño para ver su progreso, elegir sus lecciones o fijar su tiempo de juego.',
+  'Let’s add your learners…': 'Vamos a añadir a sus estudiantes…',
   '+ Add a child': '+ Agregar un niño',
   'Terms of Service': 'Términos del servicio',
   'Privacy Policy': 'Política de privacidad',

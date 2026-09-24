@@ -212,13 +212,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 **Link:** `Read our Privacy Policy` (opens https://radlic.com/legal/privacy in a new tab; the full notice, document 02, is shown with the consent request)
 
-**Checkbox (unticked):** `I'm a parent or legal guardian, I've read what we collect, and I agree.`
-
-> After you sign up, we will email you once to ask for your permission. You can add your children as soon as you have given it.
-
-> Signing up as a teacher, not a parent?
-
-**Button:** `Continue as a teacher` (enables the signup buttons without the parent's tick; a teacher's account cannot add a child until it has given the permission above)
+**Checkbox (unticked):** `I've read what we collect, and I agree.` (every signup — parent or teacher — ticks it; the parent-or-guardian confirmation is made later, when each child is added)
 
 ---
 

@@ -636,7 +636,7 @@ function Dashboard() {
     page = <>
       <div style={{ marginBottom:18 }}>
         <h1 style={h1}>{greeting}, {parentName}</h1>
-        <p style={{ margin:'4px 0 0', color:P.ink2 }}>{t('Tap a child to see their progress, choose their lessons, or set game time.')}</p>
+        <p style={{ margin:'4px 0 0', color:P.ink2 }}>{t('Let’s add your learners…')}</p>
       </div>
       {notices}
       {learners.length === 0 ? <EmptyDashboard onAdd={() => setShowAddModal(true)} /> : (

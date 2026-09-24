@@ -181,7 +181,7 @@ function ConsentOncePreview({ p }: { p: string }) {
   const sp = useSearchParams()
   const [ticked, setTicked] = useState(sp.get('ticked') === '1')
   const card = (c: React.ReactNode) => <section data-t={p} className="adult-shell" style={{ background: 'var(--paper-soft)', border: '2px solid var(--card-border)', borderRadius: 20, padding: '22px 20px', maxWidth: 560, width: '100%', boxSizing: 'border-box' }}>{c}</section>
-  if (p === 'co-signup') return card(<SignupConsent lang={lang} ticked={ticked} onTick={setTicked} teacher={false} onTeacher={() => {}} />)
+  if (p === 'co-signup') return card(<SignupConsent lang={lang} ticked={ticked} onTick={setTicked} />)
   if (p === 'co-notice') return card(<ConsentPanel lang={lang} view={{ k: 'notice' }} onAsk={() => {}} onClose={() => {}} />)
   if (p === 'co-waiting') return card(<ConsentPanel lang={lang} view={{ k: 'waiting', email: 'parent@example.com', days: 7 }} onAsk={() => {}} onClose={() => {}} />)
   if (p === 'co-reask') return card(<ConsentPanel lang={lang} view={{ k: 'reask' }} onAsk={() => {}} onClose={() => {}} />)
