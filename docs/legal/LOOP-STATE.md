@@ -707,3 +707,16 @@ not on their map. Seen in the parent screenshot; now excluded (as the card alrea
 committed screenshots from a run with **1 failure**. The `grep` succeeded, so the `&&` did too, which is CLAUDE.md's
 *never chain a test run to a commit*. It was caught before the push (local only), undone with `reset --soft`, the cause
 was found (the new list filter correctly hid the old line), and the commit was redone after a read 6/6 run.
+
+### Live finding → "assigned" means a due date (24 Sep 2026)
+
+After #210 went live, the founder reported: a child in g3m1 took a break on "Rows of chairs" (t2) and opened "Turn the
+tray" (t3) with no card. **Cause, not a bug against the spec:** the child's parent had ticked all 8 g3m1 topics in the
+Lessons tab (no due dates), and the S1 rule counted any listed topic as assigned. t2 was at level 0 (well under 0.5),
+there is only one entry path (`/lesson?id=`), and no day mark exists when no card was ever shown. **Founder's decision:
+a topic is assigned only when it has a due date.** Built on branch `nudge-due-date` (Draft PR); the test
+reproduces the live path and went red on the rule production runs. Teachers have no due dates today (a class writes
+only `lesson_ids`), so for now only a parent's due date suppresses the card.
+⚠️ The investigation read production with three SELECTs through the Supabase MCP tool, which the founder had allowed
+("read-only") for that request. **The founder has since forbidden it outright** (CLAUDE.md, top): production is read
+only through SQL he runs. The same questions are now `docs/legal/sql/nudge-why-no-card.sql`.

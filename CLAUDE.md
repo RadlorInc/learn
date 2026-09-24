@@ -1,5 +1,13 @@
 @AGENTS.md
 
+# ⛔ NEVER QUERY PRODUCTION DIRECTLY — NOT EVEN A READ-ONLY SELECT.
+
+No Supabase MCP `execute_sql`, no `psql`, no CLI, no script against the production database, for any reason. Production
+is read ONLY through SQL that Rafi runs himself in the Supabase SQL editor: **write the query for him instead** — put it
+in `docs/legal/sql/<topic>.sql`, say what each column answers and what result would mean what, and wait for his output.
+Founder's rule, 2026-09-24, after an investigation ran three read-only SELECTs on production through the MCP tool. A
+read is still access to children's data, and "read-only" is a claim about the statement, not about who holds the key.
+
 # ⛔ OPEN EVERY PR AS A DRAFT. RAFI MARKS IT READY ONLY WHEN HE MEANS TO MERGE.
 
 `gh pr create --draft`, always — including a follow-up, a stacked PR and a one-line fix. Never mark a PR Ready for

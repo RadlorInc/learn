@@ -59,10 +59,10 @@ async function fake(ctx: BrowserContext) {
 }
 
 /** A signed-in child on a fresh device; `kv` seeds the device store (moved into IndexedDB on first load). */
-async function device(browser: import('@playwright/test').Browser, o: { kv?: Record<string, unknown>; lessonIds?: string[] | null } = {}) {
+async function device(browser: import('@playwright/test').Browser, o: { kv?: Record<string, unknown>; lessonIds?: string[] | null; due?: Record<string, string> | null } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 820 } })
   await fake(ctx)
-  await ctx.addInitScript(({ kid, lessonIds }) => {
+  await ctx.addInitScript(({ kid, lessonIds, due }) => {
     const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
     const exp = Math.floor(Date.now() / 1000) + 3600, sub = '00000000-0000-4000-8000-000000000001'
     const jwt = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub, role: 'authenticated', exp, aud: 'authenticated' })}.e2e`
@@ -70,8 +70,8 @@ async function device(browser: import('@playwright/test').Browser, o: { kv?: Rec
       localStorage.setItem('milo-auth', JSON.stringify({ access_token: jwt, refresh_token: 'r', token_type: 'bearer', expires_in: 3600, expires_at: exp,
         user: { id: sub, aud: 'authenticated', role: 'authenticated', email: 'e2e@x.invalid', app_metadata: {}, user_metadata: {}, created_at: new Date(0).toISOString() } }))
     }
-    sessionStorage.setItem('milo_active_learner', JSON.stringify({ id: kid, display_name: 'Ava', name: 'Ava', age_group: '9-11', lesson_ids: lessonIds }))
-  }, { kid: KID, lessonIds: o.lessonIds ?? null })
+    sessionStorage.setItem('milo_active_learner', JSON.stringify({ id: kid, display_name: 'Ava', name: 'Ava', age_group: '9-11', lesson_ids: lessonIds, lesson_due: due }))
+  }, { kid: KID, lessonIds: o.lessonIds ?? null, due: o.due ?? null })
   // The device store is IndexedDB (`milo` / `kv`); lesson keys are not among the localStorage keys it migrates, so it is
   // seeded directly, from a same-origin page, before the app first loads.
   if (o.kv && Object.keys(o.kv).length) {
@@ -206,8 +206,8 @@ test('Part B — under halfway: the card, a bar and no number; "anyway" in one t
   await ctx.close()
 })
 
-test('Part B — no card at halfway or past it, and none for an assigned topic', async ({ browser }) => {
-  for (const o of [{ kv: { [`milo-newflow-standing-${KID}-${PREV}`]: standing(3) } }, { lessonIds: [PREV, TOPIC] }]) {
+test('Part B — no card at halfway or past it, and none for an assigned (due-dated) topic', async ({ browser }) => {
+  for (const o of [{ kv: { [`milo-newflow-standing-${KID}-${PREV}`]: standing(3) } }, { lessonIds: [PREV, TOPIC], due: { [TOPIC]: '2026-10-01' } }]) {
     const ctx = await device(browser, o)
     const page = await ctx.newPage()
     await page.goto(`/lesson?id=${TOPIC}`)
@@ -256,5 +256,13 @@ test('signed out: the device keeps exactly what the published doc 08 says', asyn
   expect(named.filter(n => n.includes('<topic>')).filter(n => !idb.some(k => matches(k) && new RegExp(n.replace('<topic>', '')).test(k))), 'on the page but not kept').toEqual([])
   expect(ss).toBe(0)
   expect(await ctx.cookies()).toEqual([])
+  await ctx.close()
+})
+
+test('Part B — a chosen list with no due dates is not an assignment: the card shows', async ({ browser }) => {
+  const ctx = await device(browser, { lessonIds: [PREV, TOPIC], kv: { [`milo-newflow-standing-${KID}-${PREV}`]: standing(0) } })
+  const page = await ctx.newPage()
+  await page.goto(`/lesson?id=${TOPIC}`)
+  await expect(page.getByText(`You're on your way with ${PREV_TITLE}!`, { exact: false })).toBeVisible()
   await ctx.close()
 })

@@ -14,7 +14,7 @@ HTMLCanvasElement.prototype.getContext = (() => noop) as never
 globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {} } as never
 
 const nav = vi.hoisted(() => ({ qs: '', pushed: [] as string[] }))
-const who = vi.hoisted(() => ({ learner: null as null | { id: string; lesson_ids: string[] | null } }))
+const who = vi.hoisted(() => ({ learner: null as null | { id: string; lesson_ids: string[] | null; lesson_due?: Record<string, string> | null } }))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: (u: string) => nav.pushed.push(u), replace: () => {} }),
   useSearchParams: () => new URLSearchParams(nav.qs), usePathname: () => '/lesson',
@@ -39,7 +39,7 @@ const mod = findModule('g3m2')!
 const [first, second] = mod.lessons
 const levels = ladderOf(first.id)!.length
 const ctx = (o: Partial<Parameters<typeof nudgeFor>[2]> = {}) => ({
-  lessonIds: null, standingOf: () => null, levelsOf: (id: string) => ladderOf(id)?.length, started: false, shownToday: false, ...o,
+  lessonIds: null, due: null, standingOf: () => null, levelsOf: (id: string) => ladderOf(id)?.length, started: false, shownToday: false, ...o,
 })
 
 describe('the rule', () => {
@@ -67,7 +67,12 @@ describe('the rule', () => {
     expect(nudgeFor(first, mod, ctx())).toBeNull()
     expect(nudgeFor(second, mod, ctx({ started: true }))).toBeNull()
     expect(nudgeFor(second, mod, ctx({ shownToday: true }))).toBeNull()
-    expect(nudgeFor(second, mod, ctx({ lessonIds: [first.id, second.id] }))).toBeNull()   // assigned: they decided
+    // A chosen list is NOT an assignment (founder, 2026-09-24): the card still shows…
+    expect(nudgeFor(second, mod, ctx({ lessonIds: [first.id, second.id] }))).not.toBeNull()
+    // …only a due date on this topic makes it assigned.
+    expect(nudgeFor(second, mod, ctx({ lessonIds: [first.id, second.id], due: { [second.id]: '2026-10-01' } }))).toBeNull()
+    expect(nudgeFor(second, mod, ctx({ due: { [second.id]: '2026-10-01' } }))).toBeNull()
+    expect(nudgeFor(second, mod, ctx({ due: { [first.id]: '2026-10-01' } }))).not.toBeNull()          // a due date elsewhere changes nothing
     expect(nudgeFor(second, mod, ctx({ lessonIds: ['g3m3-t1'] }))).toBeNull()            // previous topic not on the child's map
     expect(nudgeFor(second, mod, ctx({ lessonIds: [] }))).not.toBeNull()                  // an empty list is "no choice made"
   })
@@ -116,13 +121,33 @@ describe('the /lesson page', () => {
     expect(nav.pushed).toEqual([`/lesson?id=${first.id}`])
   })
 
+  it('THE LIVE PATH (radlic.com, 24 Sep): a whole-module list with no due dates still shows the card; a due date on the topic does not', async () => {
+    // Grade 3 · Module 1, written out: all 8 topics chosen in the Lessons tab, no due dates; "Rows of chairs" (t2) at
+    // level 0 after 5 questions; the child opens "Turn the tray" (t3).
+    const g3m1 = ['g3m1-t1', 'g3m1-t2', 'g3m1-t3', 'g3m1-t4', 'g3m1-t5', 'g3m1-t6', 'g3m1-t7', 'g3m1-t8']
+    expect(findModule('g3m1')!.lessons.map(l => l.id)).toEqual(g3m1)                // control: this is the whole module
+    const CARD = "You're on your way with Rows of chairs! ⭐ Getting a bit further there (past halfway) will make Turn the tray easier."
+    nav.qs = 'id=g3m1-t3'
+    who.learner = { id: 'kid-1', lesson_ids: g3m1, lesson_due: null }
+    saveStanding('kid-1', 'g3m1-t2', { level: 0, streak: 0, mastered: false })
+    await open()
+    expect(text()).toContain(CARD)
+
+    localStorage.clear()
+    who.learner = { id: 'kid-1', lesson_ids: g3m1, lesson_due: { 'g3m1-t3': '2026-10-01' } }
+    saveStanding('kid-1', 'g3m1-t2', { level: 0, streak: 0, mastered: false })
+    await open()
+    expect(text()).toContain('Screen 1 of 9')                                       // control: the lesson itself rendered
+    expect(text()).not.toContain('on your way with')
+  })
+
   it('no card at halfway, for an assigned topic, or when the child already started this topic', async () => {
     saveStanding('kid-1', first.id, { level: Math.ceil(levels / 2), streak: 0, mastered: false })
     await open()
     expect(text()).toContain('Screen 1 of 9')                 // control: the page rendered the lesson
     expect(text()).not.toContain('on your way with')
 
-    localStorage.clear(); who.learner = { id: 'kid-1', lesson_ids: [first.id, second.id] }
+    localStorage.clear(); who.learner = { id: 'kid-1', lesson_ids: [first.id, second.id], lesson_due: { [second.id]: '2026-10-01' } }
     await open()
     expect(text()).not.toContain('on your way with')
 
