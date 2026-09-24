@@ -268,7 +268,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     return (
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
         exitLabel={ladder ? C.takeBreak : undefined}
-        onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback}>
+        onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
@@ -320,7 +320,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     }
     return (
       <PracticeLayout corner={lesson.title} crumb="Screen 8 of 9" title="Now you try" exitLabel="Exit lesson"
-        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'} feedback={feedback}>
+        onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'} feedback={feedback} topic={lesson.id}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: INK }}>{lesson.turn.prompt}</p>
         <div style={stage}>
