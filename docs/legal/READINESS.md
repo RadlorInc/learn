@@ -84,6 +84,7 @@ every box marked 👪 is ticked.** Boxes marked 💳 must be ticked **before any
 - [ ] 👪 About 10,500 words of legal pages (`docs/legal/es/`) + 104 consent strings. Sign with `REVIEWED-BY: <Full Name>, <YYYY-MM-DD>`.
 
 ### To build (launch blockers found after Round 1)
+- [ ] 👪 **Deletion audit trail** — a record of who deleted which child's data, and when. Decided 24 Sep 2026 after ~1,440 event rows were deleted on or about 17 Sep with no record (04 §7).
 - [ ] 👪 **B3 cancel: retry refused rows in the daily cron + make a refused cancel visible (error log + SQL check).** Found 24 Sep: sending-only Resend key caused silent 401s.
 
 ### Publish

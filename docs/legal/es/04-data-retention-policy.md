@@ -34,7 +34,7 @@ Conservamos la información personal de los niños solo durante el tiempo razona
 | Registros de solicitudes del proveedor — dirección IP, navegador, ciudad/región/país derivados de la IP, identificador de cuenta | Los registros de plataforma propios de nuestro proveedor de base de datos | **Desconocido.** El proyecto tiene 20 días y todavía no ha caducado nada, así que "se conserva indefinidamente" aún no puede distinguirse de "se conserva al menos 20 días" | **Totalmente fuera de nuestros procesos** |
 | Registros de solicitudes y de consola del alojamiento | Proveedor de alojamiento | [PLACEHOLDER — the provider's retention for this plan could not be read from the API; confirm from the dashboard or the provider's documentation] | Gestionado por el proveedor |
 | Copias de seguridad | Artefacto de compilación cifrado, con caducidad de 30 días por diseño | 30 días | **Funciona — restauración comprobada el 23 de septiembre de 2026.** Consulte la sección 6 |
-| Correspondencia de soporte con los padres | Correo electrónico | [PLACEHOLDER — number] meses | No automatizado |
+| Correspondencia de soporte con los padres | Correo electrónico | 12 meses | No automatizado |
 
 **Registros de consentimiento — `parental_consents`, creado el 23 de septiembre de 2026.** Contiene el adulto, el niño, el método, las marcas de tiempo, la versión de cada documento mostrado y el estado. Está vinculado a la cuenta del adulto y **se elimina en cascada al eliminar la cuenta**, de modo que cerrar una cuenta borra la única prueba de que alguna vez se dio o se retiró el consentimiento.
 

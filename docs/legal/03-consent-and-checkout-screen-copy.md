@@ -66,7 +66,7 @@ Parent creates account
 **Auto-renewal disclosure block — must appear on the same screen, above the pay button, in the same size and colour as the surrounding text, not behind a link or a tooltip:**
 
 > **Your subscription renews automatically.**
-> - Plan: [PLACEHOLDER — plan name]
+> - Plan: Radlic Family
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
 > - You can cancel any time at **Account → Plan & billing** or by emailing support@radlor.com. Cancelling stops all future charges.
@@ -94,7 +94,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > Your subscription is active. Here are the details, for your records.
 >
-> **Plan:** [PLACEHOLDER — plan name]
+> **Plan:** Radlic Family
 > **Charged today:** [PLACEHOLDER — amount]
 > **Renews:** automatically, [PLACEHOLDER — every month / every 12 months], on [PLACEHOLDER — date]
 > **Renewal amount:** [PLACEHOLDER — amount]

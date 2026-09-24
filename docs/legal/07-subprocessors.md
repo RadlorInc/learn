@@ -4,7 +4,7 @@
 > This list is published alongside the Privacy Policy and must match it exactly. It is also the working document for the vendor review in the Information Security Program.
 
 **Last reviewed:** 22 September 2026, from the code, the database and a driven session on production — not from memory.
-**Reviewed by:** Rakif [PLACEHOLDER — full name, for the record]
+**Reviewed by:** Rakif Bobre
 
 ---
 
@@ -18,9 +18,9 @@ A **service provider** processes data on our instructions and for no purpose of 
 |---|---|---|---|---|---|
 | **Supabase** | The entire backend — database, authentication, file storage. The browser talks to it directly. | **Yes.** This is the only service that holds a child's information. | First name, avatar number, age band, grade, chosen lessons; lesson progress, points, game-time settings; "didn't get it" taps; product events; crash records; the child's sign-in credentials | us-east-1 (read from the provider's API) | Service provider — integral to delivering the service |
 | **Supabase platform logs** (same vendor, separate matter) | The provider's own request logging, outside our database schema | **Yes, incidentally.** Every request a child's device makes | IP address, user agent, and an approximate location derived from IP — city, region and country — on every request sampled, plus the signed-in account id on most | Same | Service provider. **Outside our own retention jobs — see the Retention Policy** |
-| **Vercel** | Hosting and content delivery | **Yes, incidentally.** Request logs, and crash lines written to the console | IP address, request path, user agent; a crash line can carry a child's internal id and the page being viewed | Functions run in iad1 [PLACEHOLDER — confirm from the Vercel dashboard rather than from repository prose] | Service provider — integral |
+| **Vercel** | Hosting and content delivery | **Yes, incidentally.** Request logs, and crash lines written to the console | IP address, request path, user agent; a crash line can carry a child's internal id and the page being viewed | Functions run in iad1, Washington, D.C., USA (confirmed from the Vercel dashboard, 24 September 2026) | Service provider — integral |
 | **Stripe** | Subscription checkout and billing | **No.** | The parent's account id, the parent's email, the price and the number of seats. Nothing about a child. | [PLACEHOLDER — confirm region] | Service provider, parent data only |
-| **Resend** | Delivers every email the service sends. It is configured as the SMTP relay behind the authentication service's mailer, so although the application contains no email code of its own, **every message a parent receives is delivered by Resend** | **No**, unless a progress email is ever built that names a child — none exists | The parent's email address and the content of the message | [PLACEHOLDER — confirm region] | Service provider |
+| **Resend** | Delivers every email the service sends. It is configured as the SMTP relay behind the authentication service's mailer, so although the application contains no email code of its own, **every message a parent receives is delivered by Resend** | **No**, unless a progress email is ever built that names a child — none exists | The parent's email address and the content of the message | United States: North Virginia, us-east-1 (confirmed from the Resend dashboard, 24 September 2026) | Service provider |
 | **Google Sign-In** | Optional sign-in for adults | **No.** Adults only, by top-level redirect; we send nothing | — | — | Not a recipient of our data |
 | **GitHub Actions** | Encrypted database backups, stored as a 30-day build artifact | **Would** — a backup contains everything | The whole database, encrypted | [PLACEHOLDER — confirm] | Service provider. Backups working again from 23 September 2026; a full restore was proven that day. See the Security Program. |
 | **Google Fonts** | Nothing at runtime | **No.** Fonts are downloaded at build time and served from our own domain. Verified: 212 font files emitted, zero references to Google's font host in the built stylesheet | — | — | Not a runtime recipient |
@@ -33,7 +33,7 @@ No analytics provider. No error or crash monitoring provider. No advertising or 
 
 ## Two questions still open before this list can be relied on
 
-1. **`MONITORING_INGEST_URL` — settled, 23 September 2026. It is not set.** The production environment holds five variables and this is not among them, so although the application would forward crash records if it were configured, nothing is being forwarded. **No crash data leaves our infrastructure for a third party.** Re-check whenever environment variables change, since setting this one silently adds a recipient of children's identifiers. [PLACEHOLDER — confirm the same is true of the preview and development environments before anyone tests against real data there.]
+1. **`MONITORING_INGEST_URL` — settled, 23 September 2026. It is not set.** The production environment holds five variables and this is not among them, so although the application would forward crash records if it were configured, nothing is being forwarded. **No crash data leaves our infrastructure for a third party.** Re-check whenever environment variables change, since setting this one silently adds a recipient of children's identifiers. Confirmed on 24 September 2026 from the Vercel dashboard: it is not set in the Preview or Development environments either.
 2. **Written terms with Supabase and Vercel** confirming they act on our instructions only. Both are plainly service providers by function; the attorney should confirm the paperwork matches.
 
 ## Vendors that must never receive children's data

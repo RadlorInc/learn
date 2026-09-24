@@ -4,7 +4,7 @@
 > **Internal document.** The amended COPPA Rule requires a written children's-information security program with safeguards appropriate to the sensitivity of the information and to the operator's size, plus an annual evaluation.
 > **Every control below is marked implemented, not implemented, or unverified, as measured on 22–23 September 2026.** A security program that describes a control we do not have is a false statement, and a false security claim is an FTC Act problem in its own right. Nothing here is aspirational.
 
-**Program owner:** Rakif [PLACEHOLDER — full name, for the record] — a single named person, as the Rule expects.
+**Program owner:** Rakif Bobre — a single named person, as the Rule expects.
 **Adopted:** [PLACEHOLDER — date]
 **Review:** at least annually, and after any material change to the product, the vendor set, or any security incident.
 
@@ -100,7 +100,7 @@ The Rule requires this program to be evaluated at least annually. The evaluation
 
 | Date | What was reviewed | What was found | What changed | By |
 |---|---|---|---|---|
-| 22 Sep 2026 | First full control audit — vendors, storage, database, controls, access | Backups broken 13 nights; no consent record exists; `.env.local` points at production; secret scanning off; leaked-password protection off; crash rows survive a child's deletion | 23 Sep: backups fixed and a full restore proven against production counts. Monitoring address confirmed unset. Retroactive-consent problem dissolved (all accounts are test). [PLACEHOLDER — record the remaining fixes as they land] | Rakif |
+| 22 Sep 2026 | First full control audit — vendors, storage, database, controls, access | Backups broken 13 nights; no consent record exists; `.env.local` points at production; secret scanning off; leaked-password protection off; crash rows survive a child's deletion | 23 Sep: backups fixed and a full restore proven against production counts. Monitoring address confirmed unset. Retroactive-consent problem dissolved (all accounts are test). Remaining fixes are tracked, with their proof, in `docs/legal/READINESS.md`; this table records each annual evaluation. | Rakif |
 
 ---
 
