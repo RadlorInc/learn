@@ -9,7 +9,10 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { findLesson } from './modules'
 import { buildReport, assignmentStatus, localDay, showDay, STUCK_MIN, type Report } from './progressReport'
-import { getLessonRows, getRecentPoints, getRecentNudges } from '@/data/repositories/points'
+import { getLessonRows, getRecentPoints } from '@/data/repositories/points'
+import { startedAhead } from './nudge'
+import { ladderOf } from './ladders'
+import { MODULES } from './modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { useT, useLang } from '@/features/dashboard/i18n'
 
@@ -21,15 +24,16 @@ const DAYS = 30
 export function Performance({ learners, lessonsHref }: { learners: PerformanceLearner[]; lessonsHref?: string }) {
   const t = useT(), lang = useLang(), loc = lang === 'es' ? 'es-US' : 'en-US'
   const [who, setWho] = useState(learners[0]?.id ?? '')
-  const [report, setReport] = useState<{ id: string; r: Report | null; nudges: { lesson: string; prereq: string }[] } | null>(null)
+  const [report, setReport] = useState<{ id: string; r: Report | null; ahead: ReturnType<typeof startedAhead> } | null>(null)
   const child = learners.find(l => l.id === who) ?? learners[0]
 
   const childId = child?.id
   useEffect(() => {
     if (!childId) return
     let live = true
-    Promise.all([getRecentPoints(childId, DAYS), getLessonRows(childId), getRecentNudges(childId, DAYS)]).then(([points, rows, nudges]) => {
-      if (live) setReport({ id: childId, r: points && rows ? buildReport(points, rows, new Date()) : null, nudges: (nudges ?? []).slice(0, 3) })
+    Promise.all([getRecentPoints(childId, DAYS), getLessonRows(childId)]).then(([points, rows]) => {
+      if (live) setReport({ id: childId, r: points && rows ? buildReport(points, rows, new Date()) : null,
+        ahead: rows ? startedAhead(rows, MODULES, id => ladderOf(id)?.length).slice(0, 3) : [] })
     })
     return () => { live = false }
   }, [childId])
@@ -108,12 +112,12 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
             </section>
           </div>
 
-          {/* The prerequisite nudge, told calmly: the child chose to go ahead, which is allowed (founder, 2026-09-24). */}
-          {(report?.nudges.length ?? 0) > 0 && <section style={{ ...panel, marginTop: 14 }} aria-label={t('Worth knowing')}>
+          {/* Going ahead is allowed; told calmly, from progress alone (founder, 2026-09-24, option (a)). */}
+          {(report?.ahead.length ?? 0) > 0 && <section style={{ ...panel, marginTop: 14 }} aria-label={t('Worth knowing')}>
             <h2 style={h2}>{t('Worth knowing')}</h2>
-            {report!.nudges.map(n => (
-              <p key={n.lesson} style={{ margin: 0, fontSize: 14, color: 'var(--ink)' }}>
-                {t('{name} started “{next}” before getting far with “{prev}”.', { name: child.name, next: findLesson(n.lesson)?.lesson.title ?? n.lesson, prev: findLesson(n.prereq)?.lesson.title ?? n.prereq })}
+            {report!.ahead.map(a => (
+              <p key={a.lesson.id} style={{ margin: 0, fontSize: 14, color: 'var(--ink)' }}>
+                {t('{name} started “{next}” before getting far with “{prev}”.', { name: child.name, next: a.lesson.title, prev: a.prev.title })}
               </p>
             ))}
           </section>}

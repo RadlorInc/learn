@@ -15,13 +15,11 @@ globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {
 
 const nav = vi.hoisted(() => ({ qs: '', pushed: [] as string[] }))
 const who = vi.hoisted(() => ({ learner: null as null | { id: string; lesson_ids: string[] | null } }))
-const tracked = vi.hoisted(() => [] as [string, Record<string, unknown>][])
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: (u: string) => nav.pushed.push(u), replace: () => {} }),
   useSearchParams: () => new URLSearchParams(nav.qs), usePathname: () => '/lesson',
 }))
 vi.mock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => who.learner }))
-vi.mock('@/infra/analytics', () => ({ track: (e: string, p: Record<string, unknown>) => tracked.push([e, p]) }))
 vi.mock('@/infra/useMiloSpeaker', () => ({ speak: () => {}, speakSteps: () => () => {}, stopSpeech: () => {} }))
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/data/repositories/points', () => ({
@@ -95,7 +93,7 @@ describe('the /lesson page', () => {
   const CARD = `You're on your way with ${first.title}! ⭐ Getting a bit further there (past halfway) will make ${second.title} easier.`
 
   beforeEach(() => {
-    localStorage.clear(); nav.pushed.length = 0; tracked.length = 0
+    localStorage.clear(); nav.pushed.length = 0
     nav.qs = `id=${second.id}`; who.learner = { id: 'kid-1', lesson_ids: null }
   })
 
@@ -107,7 +105,6 @@ describe('the /lesson page', () => {
     expect(text()).not.toMatch(/\d\s*%/)
     await act(async () => { button(`Go to ${second.title} anyway`)!.click() })
     expect(text()).toContain('Screen 1 of 9')
-    expect(tracked).toEqual([['nudge_went_anyway', { lesson: second.id, prereq: first.id }]])
     await open()
     expect(text()).not.toContain(CARD)
     expect(text()).toContain('Screen 1 of 9')

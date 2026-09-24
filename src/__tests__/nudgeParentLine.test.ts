@@ -1,6 +1,7 @@
 /**
- * The parent's calm line about the prerequisite nudge (founder, 2026-09-24): "<name> started “<next>” before getting
- * far with “<prev>”." — only after the child chose "Go anyway", one per topic, newest first. Written out, not imported.
+ * The parent's calm line about going ahead (founder, 2026-09-24, option (a)): "<name> started “<next>” before getting
+ * far with “<prev>”." — derived from PROGRESS ALONE (lesson_progress), which the notice already covers. No event is
+ * read or written for it. Expected lines are written out here, not imported.
  */
 import { describe, it, expect, vi } from 'vitest'
 import { createElement, act } from 'react'
@@ -8,50 +9,45 @@ import { createRoot } from 'react-dom/client'
 
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
-const rows = vi.hoisted(() => ({ events: [] as unknown[] }))
+const data = vi.hoisted(() => ({ rows: [] as { lesson_id: string; done: boolean; level: number; streak: number; mastered: boolean }[], tables: [] as string[] }))
 vi.mock('@/data/repositories/_shared', async orig => {
   const actual = await orig<typeof import('@/data/repositories/_shared')>()
-  // select → eq(learner) → eq(event) → gte → order → limit, as getRecentNudges calls it
-  const q = { select: () => q, eq: () => q, gte: () => q, order: () => q, limit: async () => ({ data: rows.events }) }
-  return { ...actual, db: () => ({ from: () => q }) }
+  const q = (t: string) => { data.tables.push(t); const x = { select: () => x, eq: () => x, gte: () => x, order: async () => ({ data: [] }), then: (r: (v: unknown) => void) => r({ data: t === 'lesson_progress' ? data.rows : [] }) }; return x }
+  return { ...actual, db: () => ({ from: q, rpc: async () => ({ data: null }) }) }
 })
 
-const { getRecentNudges } = await import('@/data/repositories/points')
+const { startedAhead } = await import('@/features/lessons/nudge')
 const { findModule } = await import('@/features/lessons/modules')
-const [first, second, third] = findModule('g3m2')!.lessons
+const { Performance } = await import('@/features/lessons/Performance')
+const m = findModule('g3m2')!
+const [first, second, third] = m.lessons
+const row = (id: string, level: number, mastered = false) => ({ lesson_id: id, done: mastered, level, streak: 0, mastered })
 
-describe('the parent line', () => {
-  it('one per topic, newest first; a malformed event is skipped', async () => {
-    rows.events = [
-      { props: { lesson: second.id, prereq: first.id }, created_at: '2026-09-26T10:00:00Z' },
-      { props: { lesson: second.id, prereq: first.id }, created_at: '2026-09-25T10:00:00Z' },
-      { props: { lesson: 7 }, created_at: '2026-09-25T09:00:00Z' },
-      { props: { lesson: third.id, prereq: second.id }, created_at: '2026-09-24T10:00:00Z' },
-    ]
-    expect(await getRecentNudges('kid', 30)).toEqual([
-      { lesson: second.id, prereq: first.id, at: '2026-09-26T10:00:00Z' },
-      { lesson: third.id, prereq: second.id, at: '2026-09-24T10:00:00Z' },
-    ])
+describe('the parent line, from progress', () => {
+  it('a started topic whose previous topic is under halfway — and only that (a 4-level ladder: ¼ per level)', () => {
+    const four = () => 4
+    const ids = (r: ReturnType<typeof startedAhead>) => r.map(x => [x.lesson.id, x.prev.id])
+    expect(ids(startedAhead([row(second.id, 0)], [m], four))).toEqual([[second.id, first.id]])                        // previous never started
+    expect(ids(startedAhead([row(first.id, 1), row(second.id, 0)], [m], four))).toEqual([[second.id, first.id]])      // ¼
+    expect(startedAhead([row(first.id, 2), row(second.id, 0)], [m], four)).toEqual([])                               // exactly halfway
+    expect(startedAhead([row(first.id, 0, true), row(second.id, 0)], [m], four)).toEqual([])                         // previous mastered
+    expect(startedAhead([row(first.id, 0)], [m], four)).toEqual([])                                                  // nothing started ahead
+    expect(ids(startedAhead([row(first.id, 3), row(second.id, 0), row(third.id, 0)], [m], four))).toEqual([[third.id, second.id]])
   })
 
-  it('shows on the Progress tab in calm words, and not at all when there is nothing to say', async () => {
-    vi.doMock('@/data/repositories/points', async orig => ({
-      ...(await orig<Record<string, unknown>>()),
-      getRecentPoints: async () => [], getLessonRows: async () => [],
-      getRecentNudges: async () => rows.events.length ? [{ lesson: second.id, prereq: first.id, at: 'x' }] : [],
-    }))
-    const { Performance } = await import('@/features/lessons/Performance')
+  it('shows on the Progress tab in calm words; nothing when there is nothing to say; no event table is read', async () => {
     const render = async () => {
       const host = document.createElement('div'); document.body.append(host)
       await act(async () => { createRoot(host).render(createElement(Performance, { learners: [{ id: 'kid', name: 'Ava', lessonIds: null, due: {} }] })) })
       await act(async () => { await new Promise(r => setTimeout(r, 0)) })
       return host.textContent ?? ''
     }
-    const line = `Ava started “${second.title}” before getting far with “${first.title}”.`
+    data.rows = [row(second.id, 1)]
     const shown = await render()
-    expect(shown).toContain('Topics mastered')                    // control: the tab rendered its report
-    expect(shown).toContain(line)
-    rows.events = []
+    expect(shown).toContain('Topics mastered')                        // control: the report rendered
+    expect(shown).toContain(`Ava started “${second.title}” before getting far with “${first.title}”.`)
+    expect(data.tables).not.toContain('learner_events')
+    data.rows = [row(first.id, 0, true), row(second.id, 1)]
     const quiet = await render()
     expect(quiet).toContain('Topics mastered')
     expect(quiet).not.toContain('Worth knowing')

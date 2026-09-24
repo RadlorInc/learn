@@ -11,6 +11,7 @@
  * Screenshots → docs/legal/screenshots/short-sessions/.
  */
 import { test, expect, type BrowserContext, type Page, type Route } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 
 const FAKE = 'https://e2e-fake.supabase.co'
 const KID = 'e2e-kid'
@@ -198,8 +199,7 @@ test('Part B — under halfway: the card, a bar and no number; "anyway" in one t
   await page.screenshot({ path: `${SHOTS}/05-nudge.png` })
   await page.getByRole('button', { name: `Go to ${NEXT_TITLE} anyway` }).click()
   await expect(page.getByText('Screen 1 of 9')).toBeVisible()
-  await expect.poll(() => server.events.filter(e => e.event === 'nudge_went_anyway').length).toBe(1)
-  expect(server.events.find(e => e.event === 'nudge_went_anyway')!.props).toEqual({ lesson: TOPIC, prereq: PREV })
+  expect(server.events, 'option (a): no event is written for the nudge').toEqual([])
   await page.reload()
   await expect(page.getByText('Screen 1 of 9')).toBeVisible()
   await expect(page.getByText("You're on your way with")).toHaveCount(0)
@@ -217,16 +217,39 @@ test('Part B — no card at halfway or past it, and none for an assigned topic',
   }
 })
 
-test('the parent sees real progress, calmly — and the nudge line', async ({ browser }) => {
-  server.progress.set(PREV, { lesson_id: PREV, done: true, level: 4, streak: 0, mastered: true })
+test('the parent sees real progress, calmly — and the going-ahead line, read from progress alone', async ({ browser }) => {
+  // TOPIC was started (the tests above); PREV is at level 1 of 5 — under halfway. No event exists for the line to use.
+  server.events.length = 0
+  server.progress.set(PREV, { lesson_id: PREV, done: false, level: 1, streak: 0, mastered: false })
   server.progress.set('g5m1-t13', { lesson_id: 'g5m1-t13', done: false, level: 1, streak: 0, mastered: false })
   const ctx = await device(browser)
   const page = await ctx.newPage()
   await page.goto('/ui-preview?p=child&tab=progress')
   await expect(page.getByText('Topics in progress')).toBeVisible()
-  // g5m1-t13 started and not done → 1 in progress; the other two are done (mastered, and 12 answers).
-  await expect(page.getByText('Topics in progress').locator('xpath=..')).toContainText('1')
+  // g5m1-t11 and g5m1-t13 started and not done → 2 in progress; g5m1-t12 is done (12 answers).
+  await expect(page.getByText('Topics in progress').locator('xpath=..')).toContainText('2')
   await expect(page.getByText(`Aarav started “${NEXT_TITLE}” before getting far with “${PREV_TITLE}”.`)).toBeVisible()
   await page.screenshot({ path: `${SHOTS}/06-parent-progress.png`, fullPage: true })
+  await ctx.close()
+})
+
+test('signed out: the device keeps exactly what the published doc 08 says', async ({ browser }) => {
+  const doc = readFileSync('docs/legal/08-cookie-and-tracking-notice.md', 'utf8').split('\n').find(l => l.startsWith('**If you are not signed in'))!
+  const named = [...doc.matchAll(/`([^`]+)`/g)].map(m => m[1])
+  const matches = (k: string) => named.some(n => new RegExp(`^${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace('<topic>', '[a-z0-9-]+')}$`).test(k))
+  const ctx = await browser.newContext()
+  await fake(ctx)
+  const page = await ctx.newPage()
+  await page.goto(`/lesson?id=${TOPIC}`)
+  await toPractice(page)
+  for (let n = 1; n <= 12; n++) { await answerNotRight(page); const d = page.getByRole('dialog'); if (await d.isVisible().catch(() => false)) await d.getByRole('button', { name: 'Keep going' }).click() }
+  const idb = await page.evaluate(() => new Promise<string[]>(res => { const r = indexedDB.open('milo', 1); r.onsuccess = () => { const g = r.result.transaction('kv').objectStore('kv').getAllKeys(); g.onsuccess = () => res(g.result.map(String)) } }))
+  const ls = await page.evaluate(() => Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!))
+  const ss = await page.evaluate(() => sessionStorage.length)
+  expect(idb.length, 'control: the device store holds something to compare').toBeGreaterThan(0)
+  expect([...idb, ...ls].filter(k => !matches(k)), 'kept on the device but not on the published page').toEqual([])
+  expect(named.filter(n => n.includes('<topic>')).filter(n => !idb.some(k => matches(k) && new RegExp(n.replace('<topic>', '')).test(k))), 'on the page but not kept').toEqual([])
+  expect(ss).toBe(0)
+  expect(await ctx.cookies()).toEqual([])
   await ctx.close()
 })

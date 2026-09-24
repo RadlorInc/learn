@@ -25,7 +25,6 @@ import { lessonDone } from '@/infra/storage/lessonProgress'
 import { syncLesson, syncRun } from '@/infra/storage/lessonSync'
 import { C } from './sessionCopy'
 import type { Nudge } from './nudge'
-import { track } from '@/infra/analytics'
 import { markNudgeShown } from '@/infra/storage/nudgeSeen'
 import { Pic, tapCue, pill, INK } from './Pictures'
 import { Ink, wrap } from './Diagrams'
@@ -186,7 +185,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   if (nudging) {
     // A nudge, never a lock: both buttons are fine, "anyway" goes straight in with nothing else asked.
-    const anyway = () => { track('nudge_went_anyway', { lesson: lesson.id, prereq: nudging.prev.id }); setNudging(null) }
+    const anyway = () => setNudging(null)
     return (
       <Frame crumb={lesson.title} at={0} total={9} title={lesson.title}
         picture={<div style={{ ...stage, justifyContent: 'center', gap: 12 }}>

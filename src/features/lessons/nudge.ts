@@ -34,3 +34,19 @@ export function nudgeFor(lesson: Lesson, module: Module, ctx: {
   const progress = progressOf(ctx.standingOf(prev.id), levels)
   return progress < PREREQ_THRESHOLD ? { prev, progress } : null
 }
+
+/**
+ * The parent's line (founder, 2026-09-24, option (a)): read from progress alone, never from an event. A topic the child
+ * has started (it has a progress row) while the topic before it in the module is still under PREREQ_THRESHOLD —
+ * "<name> started “X” before getting far with “Y”." True whether the child saw the card or the topic was assigned: it
+ * describes progress, which the notice already covers ("how it shows you progress").
+ */
+export function startedAhead(rows: readonly (Standing & { lesson_id: string })[], modules: readonly Module[],
+  levelsOf: (id: string) => number | undefined): { lesson: Lesson; prev: Lesson }[] {
+  const byId = new Map(rows.map(r => [r.lesson_id, r]))
+  return modules.flatMap(m => m.lessons.flatMap((lesson, i) => {
+    const prev = m.lessons[i - 1], levels = prev && levelsOf(prev.id)
+    if (!prev || !levels || !byId.has(lesson.id)) return []
+    return progressOf(byId.get(prev.id) ?? null, levels) < PREREQ_THRESHOLD ? [{ lesson, prev }] : []
+  }))
+}

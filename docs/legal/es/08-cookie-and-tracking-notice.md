@@ -23,7 +23,7 @@ REVIEWED-BY:
 |---|---|---|---|---|
 | — | Cookies | **No usamos ninguna.** | — | — |
 | `milo-kv-migrated` | Almacenamiento local | Recuerda que sus datos guardados ya se trasladaron al formato de almacenamiento más reciente | Hasta que usted lo borre | Estrictamente necesario |
-| Base de datos `milo`, almacén `kv` | Base de datos en el dispositivo | El perfil de su hijo, lo último que usó, el trabajo pendiente de sincronizar si usted se queda sin conexión, las preferencias de voz y de velocidad, y el idioma elegido | Hasta que usted lo borre | Funcional |
+| Base de datos `milo`, almacén `kv` | Base de datos en el dispositivo | El perfil de su hijo, lo último que usó y dónde va en la práctica de cada tema, el trabajo pendiente de sincronizar si usted se queda sin conexión, el día en que se mostró por última vez la sugerencia de "practicar primero el tema anterior", las preferencias de voz y de velocidad, y el idioma elegido | Hasta que usted lo borre | Funcional |
 | `milo-shell`, `milo-static`, `milo-assets` | Almacenamiento en caché | La propia aplicación, sus imágenes y su audio, para que las lecciones funcionen sin conexión y usen menos datos. Unos 7 MB después de una lección, y aumenta con el audio de cada lección | Hasta que la aplicación se actualice a una versión nueva | Estrictamente necesario |
 | `al-lang` | Almacenamiento local | El idioma que eligió para el panel de padres y las pantallas de consentimiento (inglés o español) *(leído del código, 24 sep 2026)* | Hasta que lo borre | Funcional |
 | `al-dash-prefs:<id de la cuenta>` | Almacenamiento local | Sus preferencias del panel: recordatorios pospuestos u ocultos, tipos de recordatorio desactivados, su última visita y qué recorridos guiados ya vio. Nada sobre un niño *(leído del código)* | Hasta que lo borre | Funcional |
@@ -36,7 +36,7 @@ REVIEWED-BY:
 
 > Las dos últimas filas también se observaron en una sesión real de un niño con la sesión iniciada, el 24 de septiembre de 2026.
 
-**Si no ha iniciado sesión, no se guarda nada sobre su hijo.** Verificado: después de una lección completa y una sesión de práctica sin iniciar sesión, el almacén del dispositivo estaba vacío.
+**Si no ha iniciado sesión, no se guarda nada que nombre o identifique a su hijo y no se nos envía nada, pero el dispositivo sí guarda una nota de la práctica.** Según lo medido el 24 de septiembre de 2026, después de una lección completa y una sesión de práctica sin iniciar sesión, la base de datos del dispositivo tenía dos entradas para el tema practicado: `milo-newflow-standing-device-<tema>` (hasta dónde llegó el dispositivo en la práctica de ese tema: un número de nivel, cuántas respuestas seguidas fueron correctas y si lo dominó) y, una vez terminado el tema, `milo-newflow-done-device-<tema>`; el almacenamiento local tenía `milo-kv-migrated`. Ninguna contiene un nombre, un correo electrónico ni una cuenta, y permanecen en el dispositivo hasta que usted las borre.
 
 ## Lo que no hacemos
 
