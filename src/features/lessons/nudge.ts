@@ -42,11 +42,13 @@ export function nudgeFor(lesson: Lesson, module: Module, ctx: {
  * describes progress, which the notice already covers ("how it shows you progress").
  */
 export function startedAhead(rows: readonly (Standing & { lesson_id: string })[], modules: readonly Module[],
-  levelsOf: (id: string) => number | undefined): { lesson: Lesson; prev: Lesson }[] {
+  levelsOf: (id: string) => number | undefined, lessonIds?: readonly string[] | null): { lesson: Lesson; prev: Lesson }[] {
   const byId = new Map(rows.map(r => [r.lesson_id, r]))
+  // As with the card: a previous topic outside the child's chosen list is not on their map, so it is never named.
+  const onMap = (id: string) => !lessonIds?.length || lessonIds.includes(id)
   return modules.flatMap(m => m.lessons.flatMap((lesson, i) => {
     const prev = m.lessons[i - 1], levels = prev && levelsOf(prev.id)
-    if (!prev || !levels || !byId.has(lesson.id)) return []
+    if (!prev || !levels || !byId.has(lesson.id) || !onMap(prev.id)) return []
     return progressOf(byId.get(prev.id) ?? null, levels) < PREREQ_THRESHOLD ? [{ lesson, prev }] : []
   }))
 }
