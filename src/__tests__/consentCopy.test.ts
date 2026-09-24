@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createHash } from 'node:crypto'
-import { NOTICE, B1, B2, B3, WITHDRAW, WITHDRAW_ALL, SIGNUP, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
+import { NOTICE, B1, B2, B3, WITHDRAW, WITHDRAW_ALL, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
 
 const ROOT = resolve(__dirname, '../..')
 const doc = (f: string) => readFileSync(resolve(ROOT, 'docs/legal', f), 'utf8')
@@ -85,7 +85,7 @@ const bCopy = en([
   B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
   WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
   // consent-once (2026-09-24): the new screens, each held to document 03 both ways
-  ...Object.values(WITHDRAW_ALL), ...Object.values(SIGNUP), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
+  ...Object.values(WITHDRAW_ALL), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
 ])
 
 /**
@@ -166,7 +166,7 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
     B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.covers, B1.grant, B1.decline, B1.ignore, B1.details,
     B2.heading, ...B2.body, B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime,
     WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep, ...Object.values(PROPOSED),
-    ...Object.values(WITHDRAW_ALL), ...Object.values(SIGNUP), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
+    ...Object.values(WITHDRAW_ALL), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
   ]
   it('every string has a Spanish version that is not just the English', () => {
     expect(all.length).toBeGreaterThan(80)

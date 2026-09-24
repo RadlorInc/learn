@@ -192,11 +192,6 @@ export const WITHDRAW_ALL = {
   body1: { en: "**Your account stays open.** If you add a child again later, we will ask for your permission again first.", es: '**Su cuenta sigue abierta.** Si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.' },
   confirm: { en: "Withdraw permission and delete my children's data", es: 'Retirar el permiso y eliminar los datos de mis hijos' },
 }
-export const SIGNUP = {
-  heading: { en: "Before you create an account: What we collect about your child/children", es: 'Antes de crear una cuenta: Qué recopilamos sobre su hijo/sus hijos' },
-  summary: { en: "For each child you add, Radlic stores their first name or nickname, the avatar you pick, the lessons you choose and a grade level, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising. We do not sell or use parent information for marketing or advertising either.", es: 'Por cada niño que añada, Radlic guarda su nombre de pila o apodo, el avatar que usted elija, las lecciones que elija y un nivel de grado, sus respuestas y su progreso, e información técnica básica del dispositivo. Nunca le pedimos a un niño una dirección de correo electrónico, un número de teléfono, un domicilio, una fotografía ni una grabación de voz, y nunca vendemos su información ni la usamos para publicidad. Tampoco vendemos ni usamos la información de los padres para marketing o publicidad.' },
-  readFull: { en: "Read our Privacy Policy", es: 'Leer nuestra Política de privacidad (en inglés)' },
-}
 export const WAITING = {
   heading: { en: "Waiting for your permission", es: 'Esperando su permiso' },
   body: { en: "We have emailed {email}. Open that email and choose \"I give permission\" — then you can add your children. The link works for {days} days.", es: 'Le hemos enviado un correo a {email}. Ábralo y elija "Doy mi permiso" — después podrá añadir a sus hijos. El enlace funciona durante {days} días.' },

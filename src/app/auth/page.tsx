@@ -9,7 +9,6 @@ import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
-import { SignupConsent } from '@/features/consent/SignupConsent'
 import { APP_NAME } from '@/app/site'
 
 type Mode = 'login' | 'signup'
@@ -365,8 +364,6 @@ export default function AuthPage() {
                 />
               </div>
             )}
-
-            {mode === 'signup' && <SignupConsent lang={lang} />}
 
             {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
                 adult commits rather than after. This is the consent record — without it we cannot show

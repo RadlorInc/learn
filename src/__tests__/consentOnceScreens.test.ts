@@ -109,7 +109,7 @@ const type = async (el: Element | null, value: string) => {
 const button = (host: HTMLElement, text: RegExp) => [...host.querySelectorAll('button')].find(b => text.test(b.textContent ?? ''))
 
 // ─────────────────────────────── C2 — signup ───────────────────────────────
-describe('signup: no tick box (founder, 2026-09-25) — consent is the email the dashboard starts', () => {
+describe('signup: no consent block (founder, 2026-09-25) — consent is the email the dashboard starts', () => {
   async function signup() {
     const { default: AuthPage } = await import('@/app/auth/page')
     const m = await mount(createElement(AuthPage))
@@ -119,10 +119,13 @@ describe('signup: no tick box (founder, 2026-09-25) — consent is the email the
     return { ...m, email, google }
   }
 
-  it('the summary is on screen, there is no checkbox, and both buttons work straight away', async () => {
+  it('no consent block at all (founder, 2026-09-25): no summary, no checkbox — and both buttons work straight away', async () => {
     const s = await signup()
-    const box = s.host.querySelector('[data-consent="signup"]')
-    expect(box?.textContent, 'the signup notice is not on the screen').toContain('Before you create an account: What we collect about your child/children')
+    expect(s.host.querySelector('#auth-confirm'), 'control: this is the signup form').toBeTruthy()
+    expect(s.host.textContent, 'control: Terms + Privacy are still linked above the button').toMatch(/By continuing you agree to our Terms and Privacy Policy/)
+    expect(s.host.querySelector('[data-consent="signup"]')).toBeNull()
+    expect(s.host.textContent).not.toContain('What we collect')
+    expect(s.host.textContent).not.toContain('Read the full notice')
     expect(s.host.querySelectorAll('input[type="checkbox"]')).toHaveLength(0)
     expect(s.host.textContent).not.toContain("I've read what we collect")
     expect(s.host.textContent).not.toContain('Continue as a teacher')
