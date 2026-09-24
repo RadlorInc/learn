@@ -96,7 +96,9 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
                 any material change to it.
               </p>
             )}
-            <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516' }}>
+            {/* break-word, not `anywhere`: a long URL wraps instead of widening the page at 320 px, while a table keeps
+                its natural column widths and scrolls in its own box. */}
+            <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516', overflowWrap: 'break-word' }}>
               {renderDoc(body)}
             </div>
           </>
