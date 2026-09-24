@@ -396,6 +396,8 @@ export const ES: Record<string, string> = {
   'Could not load {name}’s results. Refresh to try again.': 'No se pudieron cargar los resultados de {name}. Actualice la página para intentarlo de nuevo.',
   'Topics mastered': 'Temas dominados',
   'Topics in progress': 'Temas en curso',
+  'Worth knowing': 'Para tener en cuenta',
+  '{name} started “{next}” before getting far with “{prev}”.': '{name} empezó “{next}” antes de avanzar mucho en “{prev}”.',
   'Lessons finished': 'Lecciones terminadas',
   'Problems this week': 'Problemas esta semana',
   'Right on the first try · last {n} days': 'Bien al primer intento · últimos {n} días',

@@ -38,6 +38,10 @@
 # ⚠️ VITEST ONLY, DELIBERATELY. Milo has two runners and this covers one: the verdict reader knows
 # vitest's JSON report and has been driven against real breaks of every kind it claims to classify.
 # A playwright path would be a second reader nobody has watched fail, which is the thing this file
+# ⚠️⚠️ AND FOR AN e2e TARGET IT CANNOT SEE THE BREAK AT ALL (found 2026-09-24): the break is applied in a TEMPORARY
+# WORKTREE, while the dev server the spec drives serves YOUR tree — so the spec runs against unbroken code and passes
+# ("5 passed" on a planted CHECKPOINT = 6). Plant an e2e break in the SERVED tree instead: copy the file, `trap` the copy
+# back on EXIT INT TERM, no git operations (e2e/short-sessions.spec.ts was proven that way).
 # exists to prevent. For an `e2e/*.spec.ts` target it still PARKS AND RESTORES YOUR WORK — the half
 # that has actually cost us anything — runs the spec, and tells you the verdict was not attempted.
 #

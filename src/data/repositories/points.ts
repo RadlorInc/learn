@@ -105,3 +105,4 @@ export async function setGameSettings(learnerId: string, enabled: boolean, minut
     return !error && (data as { ok: boolean }).ok
   } catch { return false }
 }
+

@@ -1,5 +1,12 @@
 @AGENTS.md
 
+# ⛔ OPEN EVERY PR AS A DRAFT. RAFI MARKS IT READY ONLY WHEN HE MEANS TO MERGE.
+
+`gh pr create --draft`, always — including a follow-up, a stacked PR and a one-line fix. Never mark a PR Ready for
+review yourself, and never undo a Draft someone else set. Founder's rule, 2026-09-24, after #209 (titled "do not merge
+before the launch weekend") was merged the same hour it was opened and went to production: a title is not a lock, and
+a Ready PR reads as "ready to merge" to anyone looking at the list.
+
 # ⛔ HARD RULE — NEVER POINT THE SUPABASE CLI AT A REMOTE DATABASE FROM A LOCAL CHECKOUT
 
 Founder's rule, 2026-09-23, after an agent's unquoted shell heredoc executed `supabase db push` by accident

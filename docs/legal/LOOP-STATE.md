@@ -595,10 +595,10 @@ merges (founder decides after the launch weekend), PRs only; anything for the fo
 |---|---|---|
 | S0 measure (read-only) | done | findings below, every one read from code on `46d297e2` (file:line) |
 | S1 interview | done | four rounds, 24 Sep 2026 — decisions below |
-| S2 Part A (PR 1) | not started | — |
-| S3 Part B (PR 2) | not started | — |
-| S4 legal check | not started | — |
-| S5 verification | not started | — |
+| S2 Part A (PR 1) | done — **merged by the founder's account 11:44 UTC, before the launch weekend** (see below) | [#209](https://github.com/RadlorInc/learn/pull/209): CI green; 20 planted breaks, each red on its own assertion; 3 decorative checks found and fixed |
+| S3 Part B (PR 2) | done, open | [#210](https://github.com/RadlorInc/learn/pull/210): CI green (verify + rls-tests); 12 planted breaks red; carries #209's two follow-ups |
+| S4 legal check | done — **decision needed** | saved run covered by docs 02/11 (no bump); doc 08 line 20 wording proposed; the parent line is a new use of an event → options a/b/c (`SHORT-SESSIONS-ROUND2.md` §4) |
+| S5 verification | done | CI (Node 20) green on both; full suite 130 files / 3,754; legal/consent/Spanish/RLS suites in it; e2e on a fake backend 5/5 twice, 3 served-tree breaks red; screenshots 01–06 |
 
 ### S0 — findings (read from the code, 24 Sep 2026; nothing run against production)
 
@@ -669,3 +669,41 @@ sees **grade → module → topic** (a *topic* = one `Lesson`: 9 teaching screen
     `learner_events` (already gated, exported, deleted).
 11. **Spanish:** new child strings in one module with an unreviewed ES draft each; the screens stay English until the
     child screens get a language system. The forbidden-words test runs over both.
+
+### S2–S5 — results (24 Sep 2026)
+
+- **#209 was merged at 11:44 UTC by `Rafiquekuwari`**, against its own title. The agent merged nothing. `promote` ran, so
+  `release` = `3bdf7f80` and production's client has Part A; `migrate-prod` waits for approval. The client's tolerance of
+  the unapplied migration was then **measured**, not assumed: Supabase's PostgREST image, run locally, answers `42703`/400
+  for the unknown column and `PGRST202`/404 for the missing function, which are the codes the client handles; the same select
+  without the column gives 200. Options for the founder: `SHORT-SESSIONS-ROUND2.md` §0.
+- **Checks that were decorative until a planted break said so:** the pull's run validation (inert; `loadRun` already
+  validates — deleted); a closing-assertion test reported as the wrong kind of red (rewritten as a value); the proof's
+  row count on an empty fixture (seeded); exact halfway never reached on an odd ladder (pinned); **the forbidden-words
+  regex never matched "lock"** (`locked?` = "locke" + optional "d"); **the e2e "passed" on a planted break because
+  `break-check.sh` breaks a temporary worktree while the dev server serves the real one** (re-planted in the served tree:
+  red). Each is now red on its defect.
+- **Found by driving it:** the welcome card said "Welcome back! ⭐" twice (fixed, in #210); `toBeVisible` passes for an
+  element scrolled off the topic map (the spec now asserts in-viewport); "+10 points" looked faint in a screenshot. It was
+  the pop-in frame: the spec now asserts full opacity, and that passes.
+- **Neighbouring defect, written down:** doc 08 line 33 ("signed out … the on-device store was empty") is false as measured
+  today (`milo-newflow-standing-device-*`), and it predates this loop (ROUND2 §5).
+
+### Change of plan — Part B before the launch (24 Sep 2026, founder)
+
+Decisions: keep #209 (live); parent line = option (a), from progress; #210 is updated in place and stays a **Draft**.
+
+| step | status | proof |
+|---|---|---|
+| Rebase #210 onto `main` (#209 merged) | done | clean; the two #209 follow-ups (`lock` regex, welcome crumb) were already in #210 and survive it |
+| Parent line from progress, no events | done | `startedAhead()`; `getRecentNudges` and the nudge's `track` call deleted; e2e asserts **no event** is written; 5 planted breaks red (threshold, never-started, never shown, list ignored ×2) |
+| Doc 08 lines 20 + 33 true (published) | done | signed-out store **measured** (Playwright, fake backend): exactly `milo-newflow-standing-device-<topic>`, `milo-newflow-done-device-<topic>`, `milo-kv-migrated`; nothing in session storage, no cookies, no calls. Gated by `doc08SignedOut.test.ts` (3 breaks red) + the e2e re-measure (a served-tree break red). Rendered page checked: codes shown as code, no raw backticks |
+| CLAUDE.md Draft rule | done | top of CLAUDE.md |
+| Migration for #210 | **none** | `git diff origin/main -- supabase/` empty |
+
+**Found on the way:** with option (a) the line could name a previous topic outside the child's chosen list, which is
+not on their map. Seen in the parent screenshot; now excluded (as the card already was), tested and broken.
+⚠️ **And one of mine, recorded because the rule exists for exactly this:** a `playwright test … | grep && git commit`
+committed screenshots from a run with **1 failure**. The `grep` succeeded, so the `&&` did too, which is CLAUDE.md's
+*never chain a test run to a commit*. It was caught before the push (local only), undone with `reset --soft`, the cause
+was found (the new list filter correctly hid the old line), and the commit was redone after a read 6/6 run.

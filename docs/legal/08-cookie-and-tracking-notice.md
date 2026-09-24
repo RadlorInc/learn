@@ -17,7 +17,7 @@
 |---|---|---|---|---|
 | — | Cookies | **We set none.** | — | — |
 | `milo-kv-migrated` | Local storage | Remembers that your saved data has already been moved to the newer storage format | Until you clear it | Strictly necessary |
-| `milo` database, `kv` store | On-device database | Your child's profile, what they last played, work waiting to sync if you go offline, voice and speed preferences, and the chosen language | Until you clear it | Functional |
+| `milo` database, `kv` store | On-device database | Your child's profile, what they last played and where they are in each topic's practice, work waiting to sync if you go offline, the day a "practise the topic before first" suggestion was last shown, voice and speed preferences, and the chosen language | Until you clear it | Functional |
 | `milo-shell`, `milo-static`, `milo-assets` | Cache storage | The app itself, its images and its audio, so lessons work offline and use less data. About 7 MB after one lesson, growing with each lesson's audio | Until the app updates to a new version | Strictly necessary |
 | `al-lang` | Local storage | The language you chose for the parent dashboard and the consent screens (English or Spanish) *(read from the code, 24 Sep 2026)* | Until you clear it | Functional |
 | `al-dash-prefs:<account id>` | Local storage | Your dashboard choices: reminders snoozed or hidden, kinds of reminder switched off, when you last visited, which guided tours you have seen. Nothing about a child *(read from the code)* | Until you clear it | Functional |
@@ -30,7 +30,7 @@
 
 > The last two rows were also seen in a live signed-in child session on 24 September 2026.
 
-**If you are not signed in, nothing is stored about your child at all.** Verified: after a full lesson and practice session signed out, the on-device store was empty.
+**If you are not signed in, nothing that names or identifies your child is stored, and nothing is sent to us — but the device does keep a note of the practice.** As measured on 24 September 2026, after a full lesson and practice session signed out, the on-device database held two entries for the topic practised: `milo-newflow-standing-device-<topic>` (how far along that topic's practice the device got: a level number, a count of right answers in a row, and whether it was mastered) and, once the topic was finished, `milo-newflow-done-device-<topic>`; local storage held `milo-kv-migrated`. None of these carries a name, an email address or an account, and they stay on the device until you clear it.
 
 ## What we do not do
 

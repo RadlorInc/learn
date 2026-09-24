@@ -8,6 +8,11 @@ import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { LessonList } from '@/features/lessons/LessonList'
 import { markLessonDone, lessonDone } from '@/infra/storage/lessonProgress'
 import { syncLesson } from '@/infra/storage/lessonSync'
+import { loadStanding } from '@/infra/storage/lessonStanding'
+import { loadRun } from '@/infra/storage/lessonRun'
+import { nudgeShownToday } from '@/infra/storage/nudgeSeen'
+import { nudgeFor } from '@/features/lessons/nudge'
+import { ladderOf } from '@/features/lessons/ladders'
 
 const noSubscribe = () => () => {}
 
@@ -46,6 +51,12 @@ function Lesson() {
         .every(l => l.id === lesson.id || lessonDone(learnerId, l.id))}
       onFinish={() => { markLessonDone(learnerId, lesson.id); syncLesson(learnerId, lesson.id) }}
       onExit={() => router.push(`/lesson?module=${module.id}`)}
+      // Signed-in children only: the nudge reads the child's own standing on the previous topic.
+      nudge={learnerId ? nudgeFor(lesson, module, {
+        lessonIds: learner?.lesson_ids, standingOf: x => loadStanding(learnerId, x), levelsOf: x => ladderOf(x)?.length,
+        started: !!loadRun(learnerId, lesson.id), shownToday: nudgeShownToday(learnerId, lesson.id),
+      }) : null}
+      onPractise={prev => router.push(`/lesson?id=${prev}`)}
     />
   )
 }

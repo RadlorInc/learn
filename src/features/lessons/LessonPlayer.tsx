@@ -24,6 +24,8 @@ import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { syncLesson, syncRun } from '@/infra/storage/lessonSync'
 import { C } from './sessionCopy'
+import type { Nudge } from './nudge'
+import { markNudgeShown } from '@/infra/storage/nudgeSeen'
 import { Pic, tapCue, pill, INK } from './Pictures'
 import { Ink, wrap } from './Diagrams'
 import { Chalkboard } from './Chalkboard'
@@ -47,8 +49,12 @@ const LESSON_RATE = 0.9
  * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
  * (see ./adaptive) asks generated problems that follow the child, and may bring back one earlier topic that is not mastered.
  */
-export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit }: {
+export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit, nudge = null, onPractise }: {
   lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]
+  /** The soft prerequisite card (./nudge), decided by the page; shown before anything else, once. */
+  nudge?: Nudge | null
+  /** "Practise <previous topic> first". */
+  onPractise?: (lessonId: string) => void
   /** True once every topic of this lesson's module (that the child has) is finished — the badge is shown then, and only then. */
   moduleDone?: () => boolean
   /** The topic is done: mastered, or DONE_AFTER problems answered (a laddered topic); the 5 problems (one without). */
@@ -77,6 +83,10 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // answer, so Take a break — or closing the app — continues from exactly there. A saved run greets the child with a
   // choice to go straight back to practice (never an automatic skip of the lesson).
   const [welcome, setWelcome] = useState(() => !!ladder && !!loadRun(learnerId, lesson.id))
+  // Held in state from the first render: marking it shown makes the page's next answer "no card", and a re-render must
+  // not snatch the card away while the child is reading it.
+  const [nudging, setNudging] = useState(nudge)
+  useEffect(() => { if (nudging && learnerId) markNudgeShown(learnerId, lesson.id) }, [nudging, learnerId, lesson.id])
   const [pause, setPause] = useState<Pause>(null)
   const [session, setSession] = useState({ answered: 0, points: 0, mastered: false })
   const keep = (next: Run) => { setRun(next); saveRun(learnerId, lesson.id, toSaved(next)); syncRun(learnerId, lesson.id) }
@@ -105,7 +115,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // else did either, so the lesson opened in silence. Say it on arrival: the first mount, ← Back to it, and "Watch the
   // lesson again". ⚠️ A browser only allows sound after a tap, so this is heard when the child came from the topic
   // list (their tap) and not on a lesson opened cold from a link — where Screen 1's own button is the first tap.
-  const line1 = s.mode === 'lesson' && s.screen === 0 && !welcome ? screenSay(lesson.screens[0]) : ''
+  const line1 = s.mode === 'lesson' && s.screen === 0 && !welcome && !nudging ? screenSay(lesson.screens[0]) : ''
   useEffect(() => { if (line1) speak(line1) }, [line1, replay])
 
   const autoNext = useLatestRef(() => {
@@ -173,9 +183,28 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
   const box = problem && <AnswerInput answer={solutionOf(problem)} value={value} onChange={setValue} signed={needsSign(all)} mixed={needsWhole(all)} />
 
+  if (nudging) {
+    // A nudge, never a lock: both buttons are fine, "anyway" goes straight in with nothing else asked.
+    const anyway = () => setNudging(null)
+    return (
+      <Frame crumb={lesson.title} at={0} total={9} title={lesson.title}
+        picture={<div style={{ ...stage, justifyContent: 'center', gap: 12 }}>
+          <b style={{ fontSize: 20, color: INK }}>{nudging.prev.title}</b>
+          <div role="img" aria-label={C.progressLabel(nudging.prev.title)}
+            style={{ height: 26, borderRadius: 999, border: `3px solid ${INK}`, background: '#fff', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.round(nudging.progress * 100)}%`, minWidth: 18, background: '#ffd166' }} />
+          </div>
+        </div>}
+        words={<p style={bubble}>{C.nudge(nudging.prev.title, lesson.title)}</p>}
+        back={<button type="button" style={hintBtn} onClick={() => onPractise?.(nudging.prev.id)}>{C.practiseFirst(nudging.prev.title)}</button>}
+        action={<button type="button" style={primary} onClick={anyway}>{C.goAnyway(lesson.title)}</button>}
+        exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }} />
+    )
+  }
+
   if (welcome) {
     return (
-      <Frame crumb={C.welcomeTitle} at={7} total={9} title={C.welcomeTitle}
+      <Frame crumb={lesson.title} at={7} total={9} title={C.welcomeTitle}
         picture={<div style={{ ...stage, alignItems: 'center' }}><span style={{ fontSize: 96 }} aria-hidden>⭐</span></div>}
         words={<p style={bubble}>{C.spotSaved}</p>}
         back={<button type="button" style={hintBtn} onClick={() => setWelcome(false)}>{C.watchFirst}</button>}
