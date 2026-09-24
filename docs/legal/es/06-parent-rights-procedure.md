@@ -22,7 +22,7 @@ Puede pedirnos una copia de todo lo que hemos recopilado de su hijo. Se la envia
 
 ### 2. Corregirlo
 
-**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → **Corregir los datos de nombre**. Ahí puede cambiar el nombre o el apodo de su hijo, su avatar y su franja de grados (grados 3 a 5 o grados 6 a 8). Solo el adulto que agregó al niño puede hacer este cambio. **O escríbanos** a support@radlor.com y lo corregiremos por usted.
+**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → **Actualizar los datos de nombre**. Ahí puede cambiar el nombre o el apodo de su hijo, su avatar y su franja de grados (grados 3 a 5 o grados 6 a 8). Solo el adulto que agregó al niño puede hacer este cambio. **O escríbanos** a support@radlor.com y lo corregiremos por usted.
 
 ### 3. Eliminarlo
 
