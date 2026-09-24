@@ -355,8 +355,8 @@ function Dashboard() {
   const autoPick: 'celebrate' | 'recap' | 'first' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
     : mastered.length && !prefs.off.includes('good') ? 'celebrate'
     : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap'
-    : !prefs.seen.includes('first') ? 'first' : null
-  const auto = !autoDone && home ? autoPick : null
+    : !prefs.seen.includes('first') && (tea || learners.length > 0) ? 'first' : null
+  const auto = !autoDone && home && !showAddModal ? autoPick : null
   const shownPopup = auto === 'celebrate' || auto === 'recap' ? auto : null
   function closePopup() {
     setAutoDone(true)
@@ -381,6 +381,13 @@ function Dashboard() {
       { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
       { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
       { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }
+    // The first time a parent opens the add-a-child window with no child yet. Runs inside the window, after consent.
+    if (id === 'add-child') return { title: t('Add your first child'), steps: [
+      { target: 'add-avatar', title: t('Pick a picture'), text: t('Choose a picture for your child.') },
+      { target: 'add-name', title: t('Their name'), text: t('A first name or nickname is plenty.') },
+      { target: 'add-modules', title: t('Choose their lessons'), text: t('Pick a grade, then tick the modules they can see. You can change this later in their Lessons tab.') },
+      { target: 'add-attest', title: t('Confirm this child'), text: t('Tick to confirm you are their parent or guardian.') },
+      { target: 'add-submit', title: t('Add them'), text: t('Tap here when you’re done.') }] }
     if (id === 'inside-class') return { title: 'Inside a class', steps: [
       { target: 'tab-students', title: 'Students', text: 'Add students, and give a new password to anyone who can’t sign in.' },
       { target: 'tab-lessons', title: 'Lessons', text: 'Choose the class’s modules. New students get them too.' },
@@ -728,11 +735,15 @@ function Dashboard() {
       {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
       {showAddModal && (
         <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
-          <AddLearnerModal
-            attest={attest}
-            onClose={() => setShowAddModal(false)}
-            onAdded={async () => { setShowAddModal(false); await loadAll() }}
-          />
+          <>
+            <AddLearnerModal
+              attest={attest}
+              onClose={() => setShowAddModal(false)}
+              onAdded={async () => { setShowAddModal(false); await loadAll() }}
+            />
+            <TourRunner tour={!tea && learners.length === 0 && prefs && !prefs.seen.includes('add-child') ? tourFor('add-child') : null}
+              onEnd={() => setPrefs(p => ({ ...p, seen: [...new Set([...p.seen, 'add-child'])] }))} />
+          </>
         )} />
       )}
     </div>
@@ -929,7 +940,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
       <div className="sheet-card" style={{ background:P.card, padding:'28px 24px 40px', overflowY:'auto', WebkitOverflowScrolling:'touch', boxSizing:'border-box' }} onClick={e => e.stopPropagation()}>
         <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 4px', color:P.ink, fontFamily:'var(--font-display)' }}>{t('Add a learner')}</h3>
         <p style={{ fontSize:13, color:P.ink2, margin:'0 0 18px', lineHeight:1.45 }}>{t('Quiet, private progress tracking for home or class.')}</p>
-        <div style={{ display:'flex', gap:12, marginBottom:20, justifyContent:'center' }}>
+        <div data-tour="add-avatar" style={{ display:'flex', gap:12, marginBottom:20, justifyContent:'center' }}>
           {AVATARS.map((emoji, i) => (
             <button key={i} onClick={() => setAvatarIndex(i)} aria-pressed={avatarIndex===i} aria-label={t('Avatar {n}', { n: i + 1 })} style={{ position:'relative', width:64, height:64, fontSize:32, borderRadius:16, cursor:'pointer', background:avatarIndex===i?'var(--milo-orange-soft)':P.page, border:avatarIndex===i?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
               {emoji}
@@ -939,13 +950,17 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
             </button>
           ))}
         </div>
+        <div data-tour="add-name">
         <label htmlFor="learner-name" style={{ display:'block', fontSize:13, fontWeight:700, color:P.ink2, margin:'0 0 6px' }}>{t('Child’s name')}</label>
         <input id="learner-name" type="text" placeholder={t('First name is plenty')} value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
+        </div>
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
+        <div data-tour="add-modules">
         <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{t('Which modules can they see?')}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
+        </div>
         </div>
 
         {/**
@@ -986,7 +1001,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
         {/* Consent-once: the parental attestation, one per child, UNTICKED. The account consent is the
             verifiable consent; this is the parent saying THIS child is theirs to consent for. */}
         {attest && (
-          <div data-consent="attest" style={{ margin:'14px 0 0', padding:'12px 14px', border:`1.5px solid ${P.edge}`, borderRadius:14, background:P.page }}>
+          <div data-consent="attest" data-tour="add-attest" style={{ margin:'14px 0 0', padding:'12px 14px', border:`1.5px solid ${P.edge}`, borderRadius:14, background:P.page }}>
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', fontSize:14, lineHeight:1.45, color:P.ink, fontWeight:600, cursor:'pointer' }}>
               <input type="checkbox" checked={attested} onChange={e => setAttested(e.target.checked)} style={{ width:22, height:22, flex:'0 0 auto', marginTop:1, accentColor:'#F26B2C' }} />
               <span>{ATTEST.tick[lang].replace('{date}', longDate(attest.confirmedAt, lang))}</span>
@@ -996,7 +1011,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
             {showNotice && <div style={{ marginTop:8 }}><Notice lang={lang} /></div>}
           </div>
         )}
-        <button onClick={handleAdd} disabled={loading || !attest || !attested} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading||!attest||!attested?P.edge:P.accent, color:loading||!attest||!attested?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':!attest||!attested?'not-allowed':'pointer', boxShadow:loading||!attest||!attested?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
+        <button data-tour="add-submit" onClick={handleAdd} disabled={loading || !attest || !attested} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading||!attest||!attested?P.edge:P.accent, color:loading||!attest||!attested?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':!attest||!attested?'not-allowed':'pointer', boxShadow:loading||!attest||!attested?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
           {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>
       </div>
