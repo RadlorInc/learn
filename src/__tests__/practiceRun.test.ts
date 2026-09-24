@@ -134,8 +134,15 @@ describe('the founder\'s before/proof SQL, rehearsed on the production-shaped sc
   it('before: all PASS on the pre-migration schema; proof: all PASS after it, and the counts move as stated', async () => {
     const { db: d } = await loadSchema({ before: '20260925100000_practice_run.sql' })
     await d.exec(ledger)
+    // A child with progress, so the row count the proof compares is not the 0 every empty table shares.
+    await d.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${PARENT}', 'p@x.test', now())`)
+    const c = await grantedConsent(d, PARENT)
+    await d.exec(`insert into public.learners (id, display_name, created_by, age_group, consent_id, attested_notice_version)
+                    values ('${KID}', 'Kid', '${PARENT}', '3-5', '${c}', '${FIXTURE_NOTICE}');
+                  insert into public.lesson_progress (learner_id, lesson_id, level) values ('${KID}', 'g3m2-t1', 2), ('${KID}', 'g3m2-t2', 1);`)
     const before = await run(d, 'ss-before.sql')
     expect(fails(before)).toEqual([])
+    expect(info(before, 'lesson_progress rows')).toBe('2')
     // Control: the proof, run BEFORE the apply, does not pass — it errors on the missing column — so it can tell the
     // two states apart.
     expect(await run(d, 'ss-proof.sql').then(r => fails(r).length, () => 'error')).not.toBe(0)
