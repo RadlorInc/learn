@@ -720,3 +720,72 @@ only `lesson_ids`), so for now only a parent's due date suppresses the card.
 ⚠️ The investigation read production with three SELECTs through the Supabase MCP tool, which the founder had allowed
 ("read-only") for that request. **The founder has since forbidden it outright** (CLAUDE.md, top): production is read
 only through SQL he runs. The same questions are now `docs/legal/sql/nudge-why-no-card.sql`.
+
+## Review 1 quick wins (started 24 September 2026) — the small, code-mostly items from "Adaptive Learn review 1"
+
+Worktree `/Users/mrk/milo_react/w-rv1`, off `main` = `cf020313` (after #212). Rules: no production, no merges, every
+PR a Draft; the founder's steps go to `REVIEW1-ROUND2.md`. Content-heavy review items (real-world intros, topic images,
+terminology, unit tests, formula sheets) are later loops.
+
+| item | status | PR | proof |
+|---|---|---|---|
+| Q0 measure (read-only) | done | — | findings below, read from code on `cf020313` |
+| Q0 interview | done | — | two rounds, 24 Sep 2026 — decisions below |
+| Q1 session tracker | not started | | |
+| Q2 gentle feedback | not started | | |
+| Q3 module summary + Practice again | not started | | |
+| Q4 parent: mastered list | not started | | |
+| Q5 font size | not started | | |
+| Q6 drawing: colours + arrow | not started | | |
+| Q7 vertical number line | not started | | |
+| Q8 home motion | not started | | |
+
+### Q0 — findings (code on `cf020313`; nothing run against production)
+
+1. **Session tracker (Q1).** The 5-answer checkpoint exists (`CHECKPOINT = 5`, `adaptive.ts:62`; popup in
+   `LessonPlayer.tsx:272`). The screen shows only "Problem N" (per session, no "of"). **No dots.** Module practice is a
+   fixed 10 with no checkpoint and shows "Problem N" too; class exercises "Question N of M".
+2. **Answer feedback (Q2).** Right: pale green box `#b7f0c6` + a green ✓ disc + "Right!" (voice says "Right!"), next
+   problem by itself after `RIGHT_MS` = 1.4 s. **First miss:** the input clears and the topic's big idea appears in a
+   yellow `#ffd166` box — **no icon and no words telling the child to try again** (the voice reads the big idea).
+   **Second miss:** "Here's how this one works:" + numbered worked steps in `#fff1c9`, a "Watch the lesson again" link,
+   then "Next problem". No red anywhere; **no sound effects exist** (voice only). Same in `ModulePractice.tsx`.
+3. **Follow-up question after a wrong answer (the review's ask) — ALREADY EXISTS, with one nuance.** After the worked
+   steps the outcome is `worked` → the standing drops one level (`step`, `adaptive.ts:71`) → the next problem is an
+   **easier KIND** from the ladder. Once per 5 a weak earlier topic comes back (`REVIEW_AT`). The nuance: after ONE miss
+   the child retries the SAME problem with the big idea shown; the easier follow-up comes only after the second miss.
+4. **Scratch pad (Q6).** `ScratchPad.tsx` (71 lines): Pencil (ink `#2a1c14`, 4 px), Eraser, Clear pad, grid paper.
+   **One colour, no arrows, no shapes, and NO undo today** (the brief says "undo must still work" — there is none to
+   keep; Q6 would add it). Clears on each new problem.
+5. **Number lines (Q7).** Three, all horizontal: `numline` in `Diagrams.tsx:192` (display, any min/max incl.
+   negatives, 83 uses in content); `line` in `Pictures.tsx:153` (Screen 8 tap-to-jump scratch line, from 0, 19 uses);
+   a vertical scale exists only inside `measure` as a thermometer/jug. **No number-line TOOL the child opens.**
+   Negative numbers live in **g7m2** (8 topics); Grade 6 has no negative-numbers module.
+6. **Parent Progress (Q4).** `Performance.tsx:62`: a "Topics mastered" **count** tile only; no list. Dates exist:
+   `point_events` has one `reason = 'mastered'` row per topic (unique index), with `created_at` — **no migration
+   needed**. ⚠️ The Progress tab reads points for the last 30 days only; the list needs its own all-time read of the
+   mastered rows. A topic mastered before the 17 Sep points wipe can have `lesson_progress.mastered` and no event:
+   show it without a date.
+7. **Module complete (Q3).** The last topic's finish screen already says "Module complete!" with a badge image
+   (`LessonPlayer.tsx:416`). **No summary**: no topics list, no module points total, no "got really good at", no
+   Practice again per topic. The topic map's stops already reopen a topic; ModuleHome says "Learn again".
+8. **Font size (Q5).** Nothing exists. Child screens use inline px (84 `fontSize` in `features/lessons`), the
+   dashboard 151 — a root rem change would scale almost nothing.
+9. **Home motion (Q8).** `PAGE_BG` (`Pictures.tsx:16`) is three static soft circles on sand; no animation. Global
+   reduced-motion fallback in `globals.css:801`; `Pictures.tsx:280` stops lesson animations under reduced motion.
+10. **Gates that new strings must pass.** `childWords.test.ts` reads every sentence of 11 child files + `sessionCopy.ts`
+    (EN + ES). Child screens have **no language switch**; Spanish exists as drafts in `sessionCopy.ts`. Parent strings
+    go through `features/dashboard/i18n.tsx` (`dashboardSpanish.test.ts`). Doc 08 is gated by `doc08SignedOut.test.ts`.
+
+### Q0 — the founder's decisions (24 Sep 2026, question tool, all eight on the recommended option)
+
+1. **Tracker:** five dots that fill (●●●○○) in a topic's practice, reset at each checkpoint. No count, no %.
+2. **Not yet right:** soft yellow + a ↻ icon + "Try again!" text (never colour alone), the big idea as today; red never.
+3. **Right:** green + ✓ + a short cheer rotating on screen ("Right!", "Nice!", "You got it!", "Great thinking!"); the
+   voice keeps saying "Right!" (the only line with a recorded clip). No sound effect.
+4. **Font size:** Normal / Large / Extra large = 100 / 115 / 130 %, the whole screen (text and buttons together).
+5. **Where:** an "Aa" control on the child's modules home + the same setting in the parent's Account; one device key.
+6. **Module summary:** "Module complete! ⭐" · topics done · points · "You got really good at:" (mastered) ·
+   "Let's keep practicing:" (done, not mastered) · a Practice again button per topic.
+7. **Vertical number line:** all 8 topics of g7m2, −10 to 10, beside the scratch pad.
+8. **Home motion:** the three background circles drift slowly (CSS only), off under reduced motion, home screen only.
