@@ -8,6 +8,8 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { loadSchema, grantedConsent, FIXTURE_NOTICE } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', CHILD = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
@@ -97,4 +99,24 @@ describe('deleted with the child', () => {
     expect((await as(PARENT, `select public.withdraw_my_consent()`)).err).toBeUndefined()
     expect((await db.query(`select 1 from public.lesson_progress where learner_id = '${SIB}'`)).rows).toEqual([])
   })
+})
+
+describe('the migration refuses to land wrong — and takes everything with it', () => {
+  const FILE = '20260925100000_practice_run.sql'
+  const sqlOf = () => readFileSync(resolve(__dirname, '../../supabase/migrations', FILE), 'utf8')
+  const plant = (line: string) => sqlOf().replace('-- ── Closing assertions', `${line}\n-- ── Closing assertions`)
+  const hasColumn = async (d: PGlite) => (await d.query(`select 1 from information_schema.columns where table_name = 'lesson_progress' and column_name = 'run'`)).rows.length === 1
+
+  it.each([
+    ['anon can call it', 'grant execute on function public.save_practice_run(uuid, text, jsonb) to anon;'],
+    ['browsers can update the table', 'grant update on public.lesson_progress to authenticated;'],
+    ['the consent gate is gone', 'drop trigger trg_enforce_child_consent on public.lesson_progress;'],
+  ])('%s → the file raises and the column is not there afterwards', async (_why, line) => {
+    const { db: fresh } = await loadSchema({ before: FILE })
+    await expect(fresh.exec(plant(line))).rejects.toThrow(/practice-run: .* rolled back/)
+    expect(await hasColumn(fresh)).toBe(false)
+    // Positive control: the same database takes the file as written.
+    await fresh.exec(sqlOf())
+    expect(await hasColumn(fresh)).toBe(true)
+  }, 120_000)
 })
