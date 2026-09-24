@@ -52,7 +52,7 @@ vi.mock('@/data/supabase/client', () => {
   }
 })
 
-const ORIGIN = 'https://adaptivelearn.radlor.com'
+const ORIGIN = 'https://radlic.com'
 const MANIFEST = readFileSync(resolve(__dirname, '../../docs/legal/SURFACE.md'), 'utf8')
 
 /** The rows of the table under `## <heading>`, as objects keyed by the header cells. */
