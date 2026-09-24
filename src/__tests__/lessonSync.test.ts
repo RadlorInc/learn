@@ -130,7 +130,7 @@ describe('where the child is in practice (short sessions)', () => {
     expect(db.selects[1]).not.toMatch(/\brun\b/)
   })
 
-  it('a malformed run from the account is ignored, not saved', async () => {
+  it('a malformed run from the account is never used', async () => {
     rpc.mockResolvedValue({ error: null })
     rows = [{ lesson_id: 'g3m2-t1', done: false, level: 0, streak: 0, mastered: false, run: { asked: 'x' } }]
     await pullLessonProgress('L', ['g3m2-t1'])
