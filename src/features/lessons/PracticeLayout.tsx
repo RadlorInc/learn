@@ -6,9 +6,11 @@
  * Also used by a lesson's Screen 8 ("Now you try"). `pad={false}` drops the pad (the finish screen).
  */
 import type { CSSProperties, ReactNode } from 'react'
-import { pill, INK, PAGE_BG, shell, topBar, LESSON_KEYFRAMES } from './Pictures'
-import { LANDSCAPE } from './Frame'
+import { pill, INK, GOOD, PAGE_BG, shell, topBar, LESSON_KEYFRAMES } from './Pictures'
+import { LANDSCAPE, idea, right, tick } from './Frame'
 import { ScratchPad } from './ScratchPad'
+import { C } from './sessionCopy'
+import { CHECKPOINT } from './adaptive'
 
 export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit practice', pad, padKey, feedback, children }: {
   corner: string; crumb: string; feedback?: ReactNode; title: string; onExit: () => void; exitLabel?: string
@@ -37,6 +39,35 @@ export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit
     </div>
   )
 }
+
+/**
+ * Where the child is in the current set of five (Review 1, founder 2026-09-24): five dots that fill, reset at each
+ * checkpoint. Never a count of a total, never a percentage. Filled vs hollow is the signal, not colour alone.
+ */
+export function SetDots({ n }: { n: number }) {
+  return (
+    <span role="img" aria-label={C.setDots(n)} data-testid="set-dots" style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+      {Array.from({ length: CHECKPOINT }, (_, i) => (
+        <span key={i} data-filled={i < n || undefined} style={{ width: 20, height: 20, borderRadius: '50%', border: `3px solid ${INK}`,
+          background: i < n ? GOOD : '#fff', transition: 'background .3s' }} />
+      ))}
+    </span>
+  )
+}
+
+/** A right answer: green, a ✓ and a short cheer. `k` picks the cheer, so it changes from one problem to the next. */
+export const Cheer = ({ k }: { k: number }) =>
+  <p role="status" style={right}><span style={tick} aria-hidden>✓</span>{C.cheers[k % C.cheers.length]}</p>
+
+/** Not right yet: warm yellow, never red, with a ↻ and words — never colour alone. The big idea, as before, under it. */
+export const TryAgain = ({ children }: { children: ReactNode }) => (
+  <div role="status" style={{ ...idea, display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+      <span aria-hidden style={{ ...tick, background: '#fff', color: INK }}>↻</span>{C.tryAgain}
+    </span>
+    <span style={{ fontWeight: 700 }}>{children}</span>
+  </div>
+)
 
 /** Hint, bottom left — as big as Check, but white. */
 /** A right practice answer: the green "Right!" stays this long, then the next problem comes by itself (founder,

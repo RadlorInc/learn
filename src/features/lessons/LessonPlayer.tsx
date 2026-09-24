@@ -16,7 +16,7 @@ import {
   START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
-import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, FRESH, type Run, type Pause } from './adaptive'
+import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
 import { ladderOf, ladderAnswers } from './ladders'
 import { findLesson } from './modules'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
@@ -32,7 +32,7 @@ import { Chalkboard } from './Chalkboard'
 import { beatMs } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
-import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
+import { PracticeLayout, hintBtn, RIGHT_MS, SetDots, Cheer, TryAgain } from './PracticeLayout'
 import { Feedback } from './Feedback'
 
 /** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder,
@@ -265,11 +265,15 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     // eslint-disable-next-line react-hooks/refs -- the latest handler for the timer, as useLatestRef does (idempotent)
     nextRef.current = nextProblem
     const of = ladder ? '' : ' of 5'
+    // The five dots: answers in this set, the one on screen counted the moment it is over; all five while the checkpoint
+    // is up. A resumed run continues its set (asked is saved).
+    const setDone = pause === 'checkpoint' ? CHECKPOINT : (run && ladder ? run.asked : s.practice) % CHECKPOINT + (answering ? 0 : 1)
     return (
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
         exitLabel={ladder ? C.takeBreak : undefined}
         onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
+        <SetDots n={setDone} />
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
           <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
@@ -282,8 +286,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
             {box}
           </form>
         )}
-        {(s.feedback === 'idea' || (asked && answering)) && <p style={idea}>{bigIdea}</p>}
-        {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right!</p>}
+        {s.feedback === 'idea' ? <TryAgain>{bigIdea}</TryAgain> : asked && answering && <p style={idea}>{bigIdea}</p>}
+        {s.feedback === 'right' && <Cheer k={s.practice} />}
         {worked && <>
           <div style={hint}>
             <b>Here&apos;s how this one works:</b>

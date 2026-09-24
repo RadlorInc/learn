@@ -1,5 +1,6 @@
 /**
- * Every child-facing line of short practice sessions (checkpoint, break, welcome back, the prerequisite nudge), in one
+ * Every child-facing line of short practice sessions (checkpoint, break, welcome back, the prerequisite nudge, the set's
+ * dots, answer feedback), in one
  * place so `childWords.test.ts` can hold all of them to the words a child must never see.
  *
  * Wording approved by the founder, 2026-09-24. ⚠️ SPANISH IS AN UNREVIEWED DRAFT: the child screens have no language
@@ -24,6 +25,11 @@ export const SESSION_COPY = {
     practiseFirst: (prev: string) => `Practice ${prev} first`,
     goAnyway: (next: string) => `Go to ${next} anyway`,
     progressLabel: (prev: string) => `How far you are with ${prev}`,
+    // Review 1 (founder, 2026-09-24): the five dots, and gentle answer feedback. Shown on screen only — the voice keeps
+    // saying "Right!", the one line with a recorded clip.
+    setDots: (n: number) => (n === 1 ? '1 question done in this set' : `${n} questions done in this set`),
+    tryAgain: 'Try again!',
+    cheers: ['Right!', 'Nice!', 'You got it!', 'Great thinking!'],
   },
   // REVIEWED-BY: (unreviewed draft)
   es: {
@@ -44,6 +50,9 @@ export const SESSION_COPY = {
     practiseFirst: (prev: string) => `Practicar ${prev} primero`,
     goAnyway: (next: string) => `Ir a ${next} de todos modos`,
     progressLabel: (prev: string) => `Cuánto llevas en ${prev}`,
+    setDots: (n: number) => (n === 1 ? '1 pregunta hecha en esta ronda' : `${n} preguntas hechas en esta ronda`),
+    tryAgain: '¡Inténtalo otra vez!',
+    cheers: ['¡Correcto!', '¡Muy bien!', '¡Lo lograste!', '¡Qué buena idea!'],
   },
 } as const
 
