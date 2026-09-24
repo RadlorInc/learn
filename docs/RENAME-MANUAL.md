@@ -11,6 +11,8 @@ Everything below that needs you is in order. The build record is `docs/legal/LOO
 ## A. Before merging the rename PR (so the new domain works on day one)
 
 1. [ ] Confirm you own `radlic.com` (registrar), and where its DNS is managed.
+   ⚠️ Measured 24 Sep 2026 by accident (see §F.5): `radlic.com` currently answers as a **parked domain** that
+   redirects to `/lander`. If that is not yours, stop here.
 2. [ ] Vercel → project → **Domains**: add `radlic.com`, and `www.radlic.com` → redirect to the apex. Set the DNS
    records Vercel shows; wait for the certificate.
 3. [ ] Supabase → **Authentication → URL Configuration**: Site URL `https://radlic.com`; add redirect URLs
@@ -18,42 +20,96 @@ Everything below that needs you is in order. The build record is `docs/legal/LOO
 4. [ ] Google Cloud → **OAuth consent screen**: app name **Radlic**, authorized domain `radlic.com`,
    homepage/privacy/terms URLs on `radlic.com`. **Credentials**: add the Supabase callback; keep the old one during
    the switch.
-5. [ ] Vercel → Production env: **`NEXT_PUBLIC_SITE_URL`** — a name check; you set the value. This one variable is
-   also the switch for the old-domain redirect (see N2 below): while it says `https://adaptivelearn.radlor.com` the
-   old domain serves the app as today; set it to `https://radlic.com` and redeploy, and the old domain 308s to the
-   new one with the path, the query and the `#fragment` kept.
+5. [ ] Vercel → Production env: **`NEXT_PUBLIC_SITE_URL`** — a name check; you set the value. **This one variable is
+   the switch** for canonical URLs, every link in an email, and the old-domain redirect:
+   - while it says `https://adaptivelearn.radlor.com`, the old domain serves the app exactly as today and nothing
+     redirects (safe to merge before the new domain is ready);
+   - set it to `https://radlic.com` **and redeploy** (a `NEXT_PUBLIC_` value is baked in at build time), and the old
+     domain 308s to the new one with the path, the query and the `#fragment` kept; `/api/*` keeps answering on both.
+   - ⚠️ If the variable is **unset**, the app falls back to Vercel's production domain — so making `radlic.com` the
+     project's primary production domain flips the switch on its own. Set the variable explicitly rather than rely on
+     that.
 
-## B. Merge the rename PR, and check the screens
+## B. Merge the rename PR — in THIS order — and check the screens
 
-(list filled in at N7)
+1. [ ] Merge the PR. `deploy.yml` offers the migration **`20260924120000_notice_v6_radlic.sql`** behind
+   `production-db`. Take a backup first, as before.
+2. [ ] **Approve `production-db` BEFORE promoting to `release`.** ⚠️ The database refuses a consent request for a notice
+   version it does not know, so an app sending `notice-v6` against a database without this row takes **no** new
+   consent at all. The other order is harmless (the row sits unused; v5 stays current). The log must name only
+   `20260924120000_notice_v6_radlic.sql`.
+3. [ ] Proof, in the SQL editor: `select version, seq, reconsent_required from public.consent_notice_versions order by seq;`
+   → a `notice-v6 | 6 | false` row.
+4. [ ] Promote to `release`. Then check, signed in as a test parent:
+   - landing `/`, sign-in and create-account (`/auth`), the set-password page — the wordmark "Radlic", no fox image;
+   - the parent dashboard with a child and **empty** ("Welcome to Radlic!", no fox), the role picker, Account, Help;
+   - add a child → the notice says Radlic / radlic.com and "Withdraw permission for all **your** children";
+   - the child's home (`/modules`) — unchanged, no mascot;
+   - `/help`, a `/legal/*` page (still dark), a 404, the offline page, the install banner (it shows the new icon);
+   - the emails: **B1** (subject "Please confirm: permission for your children to use Radlic", sender **Radlic**),
+     **B3**, the cancellation email; every link goes to `radlic.com`;
+   - the browser tab title, and "Add to Home Screen" (name and icon: a plain "Radlic" wordmark).
 
 ## C. After merging
 
 6. [ ] Visit an old consent link on `adaptivelearn.radlor.com` and confirm it lands on `radlic.com` with the
-   `#t=` token intact.
+   `#t=` token intact. (Proven locally in a real Chromium — `e2e/old-domain-redirect.spec.ts` — but not on the real
+   domains.)
 7. [ ] Supabase **Auth email templates**: "Milo"/"AdaptiveLearn" → "Radlic", links → the new domain.
-8. [ ] **Resend**: the sender display name, in both places that send mail — the app (`RESEND_API_KEY` in Vercel, which
-   must stay a **Full access** key because B3 cancellation needs it; server only, never `NEXT_PUBLIC_`) and Supabase
-   Auth SMTP (its own sending-only key). Change the display name only. Never paste a key anywhere.
-9. [ ] **Stripe**: the product names and the card statement descriptor (e.g. `RADLIC`).
+8. [ ] **Resend**: the sender display name. ⚠️ For the **app's** mail it is set in code (`EMAIL_FROM =
+   'Radlic <noreply@radlor.com>'`) and changes with the deploy — nothing to do in Resend for it. `RESEND_API_KEY` in
+   Vercel must stay a **Full access** key (B3 cancellation needs it; server only, never `NEXT_PUBLIC_`). For
+   **Supabase Auth SMTP** (its own sending-only key) the display name lives in Supabase → Auth → SMTP: change the
+   name only. Never paste a key anywhere.
+9. [ ] **Stripe**: the product names and the card statement descriptor (e.g. `RADLIC`). The lookup keys
+   (`milo_family_monthly_v1`, `milo_family_annual_v1`) are identifiers and stay. ⚠️ **Also the webhook endpoint URL**
+   → `https://radlic.com/api/stripe/webhook` (the old one keeps working: `/api/*` is never redirected).
 10. [ ] After 30 days with no traffic on the old domain: remove the old redirect URLs from Supabase and Google.
 
 ## D. Outside the product
 
-- [ ] **A new logo and favicon** (the mascot is gone). Today the PWA icons are a plain "Radlic" wordmark made in
-  code and the favicon is still Vercel's default triangle.
-- [ ] Social handles; any marketing pages outside this repo (radlor.com's product page and its `@id` reference).
+- [ ] **A new logo and favicon** (the mascot is gone). Today the PWA icons are a plain "Radlic" wordmark in the app's
+  display font (Fredoka), made in code — not a logo. The favicon is still Vercel's default triangle.
+- [ ] Social handles; any marketing pages outside this repo.
+- [ ] **radlor.com** (`../radlor-site`): its product page and JSON-LD reference the app's entity id. The app now
+  declares `APP_ID = https://radlic.com/#app` (was `https://adaptivelearn.radlor.com/#app`); update `site.ts` there to
+  the same string, or the two sites describe two products.
+- [ ] Kaggle notebooks (`scripts/kaggle/*.ipynb`) and their zip names say `milo-voice-…` — identifiers on your Kaggle
+  account; rename only if you publish them.
 
 ## E. Trademark
 
 - [ ] A USPTO clearance search for "Radlic" (education software / online classes) through the attorney, before
-  public launch.
+  public launch. (Also in ATTORNEY-PACKET.md, A11.)
 
-## F. Questions (BLOCKED items, the build continued past them)
+## F. Questions and warnings (the build continued past each)
 
-(filled in as found)
-
----
+1. **BLOCKED — the 23 hidden legacy story chapters are built around Milo.** His sprites
+   (`public/assets/characters/milo_*.png`), his spoken lines (the voice corpora) and their stories. They are hidden
+   (`LEGACY_CHAPTERS_HIDDEN`, unreachable on every route) so no one sees him today, and I did not rewrite them.
+   **Decide:** delete them, or rewrite them without a mascot before they are ever shown. Until then
+   `renameGate.test.ts` fails if the flag is turned off.
+2. **Moving domains signs everyone out and strands what is stored on the old origin.** `localStorage`, IndexedDB,
+   the service worker and the sign-in session are per-origin: after the switch every device starts signed out on
+   radlic.com with an empty local store. That includes a child's **unsent** answers, if any were queued offline at
+   the moment of the switch. **The old-origin app cannot flush them first**: the redirect is server-side, so on the
+   old domain the app never loads again once it is on. (Answers queued before the switch are sent whenever the app
+   was opened online before it — the existing sync does that — so the gap is only work still queued at switch time.)
+   Every account is a test account today, so this is acceptable **now** — and it is a reason to switch **before the
+   first real family**, not after.
+3. **The old-origin service worker stays installed** on devices that used the old domain. It is network-first for
+   pages and never caches a redirect, so navigations reach the 308; it simply stops updating there. Harmless; not
+   removable from the server side.
+4. **Re-consent.** `notice-v6` is registered with `reconsent_required = false`: parents who agreed to the Milo
+   notice are not asked again. Whether a name/domain change is a material change is ATTORNEY-PACKET.md **A11**; if
+   yes, one UPDATE of that row asks everyone again.
+5. **An accidental request to the real radlic.com**, while building the redirect test (24 Sep 2026): Playwright's
+   request routing does not catch the request a browser makes by following a redirect, so two test runs made plain
+   GETs to `https://radlic.com/consent/withdraw` (no cookies, no data, a dummy token) and got a parked-domain
+   redirect to `/lander`. The test was rewritten so that is impossible (Chromium's resolver maps every other
+   hostname to NOTFOUND). It is also how we know the domain is parked today (§A.1).
+6. **`e2e/old-domain-redirect.spec.ts` runs locally only** — no CI job runs Playwright (a known gap, not new). CI runs
+   the redirect's server half (`oldDomainRedirect.test.ts`).
 
 ## N0. Inventory (24 September 2026, before any change)
 

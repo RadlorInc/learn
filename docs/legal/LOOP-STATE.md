@@ -510,3 +510,34 @@ It would save one email for email/password parents only. Recommendation: keep B1
 | C4 withdrawal | done | per child unchanged; whole account from Account settings (`withdraw_my_consent` then R3's drain) and from B3's link (`consent_withdraw` on an account token); both idempotent, both cancel B3. `/consent/withdraw` shows the every-child wording for an account token (seen on the real page from a real token). Breaks: skip the drain call; ignore scope — each red |
 | C5 legal text | done | notice-v5 (pin `6f9af556a754`), B1 (+"covers every child"), B2, B3, the new screens in doc 03 — held to `copy.ts` both ways; docs 06, 11, 12 (EN + ES drafts, still unreviewed/unpublished); placeholder count **66, unchanged**; attorney packet A1 updated, **A8–A10** new (the two founder questions, Option B, the signup email as consent email). `withdrawalScope` break (old doc 06) → red |
 | C6 verification | done | full vitest **119 files / 3,686 passed**, `tsc` 0, `next build` OK; **local end-to-end** (real Next routes, local Supabase stack, Resend stand-in; `scripts/consent-once-e2e.mjs`): sign up with the tick → one B1 → grant → B3 scheduled → a child without the tick refused (P0C01) → two children with ticks only (still 2 emails in total) → delete one → the other remains, consent still granted, no B3 cancelled → withdraw the account → 0 children, consent `withdrawn` + unlinked, B3 cancelled, a new child refused, a second withdrawal harmless → a second parent's B3 **link** withdraws every child and cancels its B3: **ALL PASSED**. Screenshots: `docs/legal/screenshots/consent-once/` |
+
+## Rename (24 September 2026) — the product becomes Radlic at radlic.com; the mascot goes
+
+Founder's decisions (final): product **Radlic**, domain **radlic.com** (the old one a permanent redirect), company
+unchanged (**Radlor Inc.**, its addresses), **no mascot** (a child's avatar stays). Rules: no production, no merges,
+PR with green CI; rename what people see, keep what machines depend on; history is not rewritten. Built on `main`
+after #202–#204 (no open PR touched visible text, checked on GitHub first). Branch `rename-radlic`, one PR.
+Everything that needs the founder, in order: **`docs/RENAME-MANUAL.md`**.
+
+| step | state | proof |
+|---|---|---|
+| N0 inventory | done | `scripts/rename-inventory.mjs` → `docs/rename/inventory.tsv`, 5,368 rows, categorised (visible 206 · mascot 3,921 — mostly the hidden legacy chapters · identifier 499 · historical 629 · url-domain 59 · third-party 54) |
+| N1 app UI + mascot | done | Radlic in every naming position; no fox as brand/splash, no `milo-happy.png`, no character lines; PWA icons = plain wordmark. `renameGate.test.ts` **mascot** grep 0 |
+| N2 domain | done | `SITE_URL` → radlic.com (env still wins, and is the switch); `next.config` 308 old host → new, `/api/*` excluded. `oldDomainRedirect.test.ts` (3 planted breaks, exit 0 each); `e2e/old-domain-redirect.spec.ts` in real Chromium keeps path, query, `#t=` (a planted `#x` in Location turned 5/5 red). Probed: 308 with path+query, `/api/health` 200 on the old host |
+| N3 emails | done | sender `Radlic <noreply@radlor.com>`; B1, B3, signup summary, cancellation + both footers (doc 03, doc 09) EN+ES; `consentCopy`, `billingCancel`, `emailSuppression` green |
+| N4 legal + notice | done | **notice-v6** (pin `b24962a84278`; the hashing reproduces v5's `6f9af556a754` on the old tree); "all **your** children" in the notice and doc 06 (EN+ES); every public legal doc EN+ES; placeholder audit green (count unchanged); ATTORNEY-PACKET rename line + A11. ⚠️ migration `20260924120000_notice_v6_radlic.sql` — apply BEFORE `release` |
+| N5 internal docs | done | README (was describing 70 chapters and a webcam), CLAUDE.md "The product is Radlic", one dated handoff line, living docs; code comments in N1 |
+| N6 identifiers in view | done | the export download `milo-<child>-<date>.json` → `radlic-…` (nothing reads it back); planted break exit 0. All other identifiers kept |
+| N7 verification | done | Node 20: `tsc` 0, vitest 122 files / 3,701 passed (11 skipped, as before), `next build` OK, `npm audit` 0. Gate planted controls, each exit 0 on its own assertion: name in the wordmark, old domain in the notice, fox as brand, Milo in a Spanish draft, old name in the manifest, notice changed without a version bump. Built artefact: host-scoped 308 in `routes-manifest.json`; 0 × Milo/AdaptiveLearn/old domain in the prerendered `/`, `/auth`, `/help`. sw v231. Before/after: `docs/rename/before.jpg`, `after.jpg` |
+
+**Exceptions to the zero-hit greps** (each named in `renameGate.test.ts`, each must still match): the child's avatar
+list (🦊 as an avatar); `llms.txt`'s "Earlier names" paragraph; two dated comments (layout, site); the redirect code
+(`OLD_HOST`, one next.config comment); the attorney packet's rename record; the README/CLAUDE.md history lines; one
+historical row of CLAUDE.md's defect table. **Out of the greps' scope by rule 3:** LOOP-STATE, ROUND-2,
+CONSENT-ONCE-ROUND2, `docs/legal/sql/`, doc 14 (dated findings), the handoff archive; and the hidden legacy chapters
+(`src/features/chapters/`), which are pinned hidden by the same test instead.
+
+**Unexpected:** (1) the database refuses unknown notice versions, so the rename needs a data migration and a deploy
+order; (2) machines POST to the old domain (Stripe webhook, one-click unsubscribe, cron) — so `/api/*` is not
+redirected; (3) radlic.com is a parked domain today, found when the first test build leaked two GETs to it (see
+RENAME-MANUAL §F.5); (4) the README was stale (it still described 70 chapters, six age bands and webcam answers).
