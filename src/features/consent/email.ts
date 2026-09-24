@@ -35,7 +35,7 @@ export function renderB1(lang: Lang, agreeUrl: string, firstName: string | null)
   ].join(''))
   const text = [
     hi, t(B1.thanks), t(B1.before), [t(B1.store), ...B1.list.map(x => `- ${t(x)}`)].join('\n'), t(B1.doNot), toText(t(B1.details)),
-    `☐ ${t(B1.tick)}: ${agreeUrl}`,
+    `☐ ${t(B1.tick)}\n${agreeUrl}`,
     t(B1.ignore), B1.address,
   ].map(s => toText(s)).join('\n\n')
   return { subject: t(B1.subject), html, text }

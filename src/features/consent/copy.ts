@@ -139,7 +139,7 @@ export const B1 = {
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
   // ── the tick is the email's checkbox-link AND the page's box (/consent/respond); ticking the page's box IS the grant ──
   covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
-  tick: { en: "I've read and agree to the Privacy Policy", es: 'He leído y acepto la Política de privacidad' },
+  tick: { en: "I’ve Read and I Agree to the Privacy Policy.", es: 'He leído y acepto la Política de privacidad.' },
   decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
 }
 

@@ -204,10 +204,10 @@ describe('the rendered emails and screen say nothing the documents do not', () =
     const b3 = renderB3('en', 'https://x.test/w')
     const htmlLines = (h: string) => h.split(/<\/(?:p|li)>/).map(s => s.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"))
     // The renderer's own lines: the two buttons in the text part carry their URL.
-    const own = (l: string) => /^☐ I've read and agree to the Privacy Policy: https:/.test(l)
+    const own = (l: string) => l === '☐ I’ve Read and I Agree to the Privacy Policy.' || /^https:\/\/x\.test\/g$/.test(l)
     for (const [name, m] of [['B1', b1], ['B3', b3]] as const) {
       expect(extra(m.text.split('\n').filter(l => !own(l))), `${name} text part`).toEqual([])
-      expect(extra(htmlLines(m.html).filter(l => !/^I've read and agree to the Privacy Policy$/.test(l.trim()) && !own(l))), `${name} html part`).toEqual([])
+      expect(extra(htmlLines(m.html).filter(l => l.trim() !== 'I’ve Read and I Agree to the Privacy Policy.' && !own(l))), `${name} html part`).toEqual([])
       expect(m.text.length, `control: ${name} rendered`).toBeGreaterThan(200)
     }
   })

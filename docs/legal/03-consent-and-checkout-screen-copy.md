@@ -133,7 +133,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
 >
-> **[ I've read and agree to the Privacy Policy ]** (a link drawn as an empty checkbox; it opens the page below)
+> **[ I’ve Read and I Agree to the Privacy Policy. ]** (a link drawn as an empty checkbox; it opens the page below)
 >
 > Didn't sign up? Ignore this email.
 >
@@ -147,7 +147,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
 
-**Checkbox (unticked):** `I've read and agree to the Privacy Policy` (ticking it records the permission; there is no separate button)
+**Checkbox (unticked):** `I’ve Read and I Agree to the Privacy Policy.` (ticking it records the permission; there is no separate button)
 
 **Button:** `No — cancel this request`
 
