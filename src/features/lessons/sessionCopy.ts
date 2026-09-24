@@ -16,6 +16,9 @@ export const SESSION_COPY = {
     spotSaved: 'Your spot is saved.',
     points: (n: number) => (n === 1 ? '+1 point' : `+${n} points`),
     backToTopics: 'Back to topics',
+    // Review 1 Q6: the scratch pad's tools.
+    padPencil: 'Pencil', padArrow: 'Arrow', padEraser: 'Eraser', padUndo: 'Undo', padClear: 'Clear pad', padColors: 'Colors',
+    padInk: 'Black', padBlue: 'Blue', padGreen: 'Green', padOrange: 'Orange', padPurple: 'Purple',
     welcomeTitle: 'Welcome back! ⭐',
     keepPractising: 'Keep practicing',
     watchFirst: 'Watch the lesson first',
@@ -36,6 +39,8 @@ export const SESSION_COPY = {
     spotSaved: 'Guardamos tu lugar.',
     points: (n: number) => (n === 1 ? '+1 punto' : `+${n} puntos`),
     backToTopics: 'Volver a los temas',
+    padPencil: 'Lápiz', padArrow: 'Flecha', padEraser: 'Borrador', padUndo: 'Deshacer', padClear: 'Borrar todo', padColors: 'Colores',
+    padInk: 'Negro', padBlue: 'Azul', padGreen: 'Verde', padOrange: 'Naranja', padPurple: 'Morado',
     welcomeTitle: '¡Qué bueno verte! ⭐',
     keepPractising: 'Seguir practicando',
     watchFirst: 'Ver la lección primero',
