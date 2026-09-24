@@ -6,7 +6,7 @@ production. Every PR is a **Draft**.
 
 ## 1. The PRs, in the order to merge them
 
-All seven were trial-merged onto `main` **in this order**, one after another, with no conflict. The full unit suite was
+The seven Q-PRs were trial-merged onto `main` **in this order**, one after another, with no conflict. The full unit suite was
 run on the merged result: **138 files, 3,793 passed, 11 skipped** (tsc clean). Each PR is independent; the order only keeps each diff small and conflict-free.
 
 | # | PR | item | migration | notes |
@@ -18,6 +18,7 @@ run on the merged result: **138 files, 3,793 passed, 11 skipped** (tsc clean). E
 | 5 | [#216](https://github.com/RadlorInc/learn/pull/216) | Q6 pad: colours, Arrow, Undo | none | |
 | 6 | [#217](https://github.com/RadlorInc/learn/pull/217) | Q7 vertical number line (g7m2) | none | |
 | 7 | [#218](https://github.com/RadlorInc/learn/pull/218) | Q8 home motion | none | |
+| 8 | [#221](https://github.com/RadlorInc/learn/pull/221) | Privacy at 320 px + the sweep finishes + Save/Cancel clears the home bar | none | independent of the seven; any time |
 
 For each: mark it *Ready for review* only when you mean to merge, then merge. `main` deploys through `deploy.yml` →
 `release`. **No `migrate-prod` step for any of them.**
@@ -38,8 +39,9 @@ device setting, and Q4 reads a table the Progress tab already reads.
    kept for Normal) (read from the code, 24 Sep 2026)"* · Until you clear it · Functional.
 2. The signed-out paragraph, after "local storage held `milo-kv-migrated`", adds: *"…and holds `al-text-size` only if a
    bigger text size was chosen on this device."* (The "Aa" button also shows to a visitor who is not signed in.)
-3. **Your call:** the page's *Effective: 25 September 2026* line was **not** changed. Does an added functional row need
-   a new date, or an "updated" line? (Attorney question if unsure.)
+3. ✅ **Approved by the founder (24 Sep 2026)**, rows 1 and 2 as written. *Effective* stays 25 September 2026; a
+   **"Last updated"** line (EN + ES) carries **the day #219 merges**. ⏳ It goes in once the founder names that day.
+   ATTORNEY-PACKET has a one-line note (on #219).
 
 **Doc 02 (the notice) and doc 11 (Privacy):** no change. Nothing new about a child is collected, stored or shared, so
 **no notice bump**.
@@ -74,11 +76,13 @@ dashboard, `es/08` for doc 08). The child screens still have no language switch.
   After one miss the child retries the same problem with the big idea shown. The review may have meant the first miss.
 - `/ui-preview` still shows a fox avatar on the demo child, which the rename (#205) retired elsewhere.
 - The number line's numbers are 26 px tall targets (WCAG 2.2 AA asks 24; the app usually uses 44).
-- **Two pre-existing problems the responsive sweep reports, identical on `main`** (measured 24 Sep 2026, same command,
-  the same two findings): `/legal/privacy` scrolls sideways at 320 px, and the sweep's scripted step still taps a
-  **Change** button that #212 removed from the Lessons tab, so `npm run sweep:responsive` now always ends
-  "could not look" (exit 2) until its route script is updated. Neither was touched in this loop.
+- **Fixed in #221** (founder, 24 Sep 2026): `/legal/privacy` scrolled sideways at 320 px, and the sweep still tapped
+  #212's removed Change button. Once the sweep could look it also found **the Lessons tab's Save / Cancel under the
+  home bar** on six phones (fixed there too) and two faults in the sweep itself (fixed).
+- **Written down, not fixed:** when a device is really offline, the "📡 You're offline" banner covers **Sign out** on
+  the parent home at iPad Pro landscape (seen once in a sweep when the machine's connection dropped; the layout is real).
 
 ## 6. Blocked
 
-Nothing.
+- **"Last updated" on doc 08:** waiting for the day #219 will merge (§3).
+- **The service-worker bump:** opened as a one-line Draft **after the last Q-PR merges** (founder, 24 Sep 2026).
