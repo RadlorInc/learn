@@ -1,7 +1,7 @@
 {
   "name": "Radlic",
   "short_name": "Radlic",
-  "description": "Adaptive math for grades 3 to 8. A lesson explains one idea step by step, then practice adapts to your child.",
+  "description": "Adaptive math from KG to grade 8. A lesson explains one idea step by step, then practice adapts to your child.",
   "start_url": "/",
   "scope": "/",
   "display": "fullscreen",

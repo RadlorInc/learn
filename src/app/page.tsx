@@ -52,7 +52,7 @@ function AppJsonLd() {
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web browser',
         description:
-          'Math for grades 3 to 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents and teachers choose the lessons.',
+          'Math from KG to grade 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents and teachers choose the lessons.',
         publisher: { '@id': COMPANY_ID },
         brand: { '@id': COMPANY_ID },
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -114,7 +114,7 @@ export default function RootPage() {
         <p style={{ fontSize: 18, lineHeight: 1.6, color: '#5b4c39', margin: '0 0 26px' }}>
           Each lesson explains one idea step by step, the way a good teacher would at the board. Then
           practice adapts to what your child gets right and wrong, and brings back what they found hard.
-          Grades 3 to 8, for parents and teachers.
+          KG to grade 8, for parents and teachers.
         </p>
 
         {/* ⚠️ The old check + demo buttons below only return if the legacy chapters are un-hidden (src/core/chapters.ts);
