@@ -126,8 +126,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={FONT_VARS}>
+    // suppressHydrationWarning: /text-size.js sets `data-text` on <html> before React hydrates (Review 1 Q5).
+    <html lang="en" className={FONT_VARS} suppressHydrationWarning>
       <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts -- deliberate: the chosen text size must apply before
+            the first paint, or the page jumps. Static, not inline, like /sw-register.js. */}
+        <script src="/text-size.js" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
         <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png" />

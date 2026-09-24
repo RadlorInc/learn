@@ -15,6 +15,8 @@ import { showDay } from './progressReport'
 import { Thing, INK, TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
 import { chosenModules, mixedPractice } from './modules'
+import { C } from './sessionCopy'
+import { TEXT_SIZES, saveTextSize, useTextSize, type TextSize } from '@/infra/storage/textSize'
 import type { Obj } from './script'
 
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
@@ -72,7 +74,10 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
           {back && 'href' in back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link>
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Grade {grade}</span>
-          {points === null ? <span /> : <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
+          <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+            {points !== null && <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
+            <TextSizeMenu />
+          </span>
         </div>
 
         <div role="tablist" aria-label="Grades" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: 'clamp(14px, 3vw, 24px) clamp(14px, 3vw, 24px) 0' }}>
@@ -133,6 +138,28 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
         </p>
       </div>
     </div>
+  )
+}
+
+/** "Aa": the text size on this device (Review 1 Q5). A native <details>: keyboard open/close comes with it. */
+const SIZE_LABEL: Record<TextSize, string> = { normal: C.sizeNormal, large: C.sizeLarge, xl: C.sizeXl }
+function TextSizeMenu() {
+  const size = useTextSize()
+  return (
+    <details style={{ position: 'relative' }}>
+      <summary className="ts-summary" aria-label={C.textSize} title={C.textSize} style={{ ...pill, listStyle: 'none', cursor: 'pointer', minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span aria-hidden>A<span style={{ fontSize: '1.3em' }}>a</span></span>
+      </summary>
+      <div role="group" aria-label={C.textSize} style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50, background: '#fff', border: `4px solid ${INK}`,
+        borderRadius: 16, boxShadow: `4px 4px 0 ${INK}`, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
+        {TEXT_SIZES.map((s, i) => (
+          <button key={s} type="button" aria-pressed={size === s} onClick={() => saveTextSize(s)}
+            style={{ ...pill, fontSize: 16 + i * 3, textAlign: 'left', background: size === s ? TEAL : '#fff', color: size === s ? '#fff' : INK }}>
+            {size === s ? '✓ ' : ''}{SIZE_LABEL[s]}
+          </button>
+        ))}
+      </div>
+    </details>
   )
 }
 

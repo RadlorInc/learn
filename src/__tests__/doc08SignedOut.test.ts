@@ -12,6 +12,7 @@ import { saveStanding } from '@/infra/storage/lessonStanding'
 import { markLessonDone } from '@/infra/storage/lessonProgress'
 import { saveRun } from '@/infra/storage/lessonRun'
 import { syncLesson, syncRun, syncModulePractice } from '@/infra/storage/lessonSync'
+import { saveTextSize } from '@/infra/storage/textSize'
 
 const doc = readFileSync(resolve(__dirname, '../../docs/legal/08-cookie-and-tracking-notice.md'), 'utf8')
 const para = doc.split('\n').find(l => l.startsWith('**If you are not signed in'))!
@@ -36,5 +37,17 @@ describe('doc 08: what a signed-out device keeps', () => {
     const perTopic = named.filter(k => k.includes('<topic>'))
     expect(written.filter(k => !named.some(n => pattern(n).test(k))), 'written but not on the page').toEqual([])
     expect(perTopic.filter(n => !written.some(k => pattern(n).test(k))), 'on the page but never written').toEqual([])
+  })
+
+  it('the text size (Review 1 Q5): the key a bigger size writes is named in the table AND the signed-out paragraph; Normal keeps nothing', () => {
+    localStorage.clear()
+    saveTextSize('large')
+    const written = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!)
+    expect(written.length, 'control: a bigger size wrote something').toBe(1)
+    const table = doc.split('\n').filter(l => l.startsWith('| `')).map(l => l.match(/^\| `([^`]+)`/)![1])
+    expect(table, 'a row in the table').toContain(written[0])
+    expect(named, 'named in the signed-out paragraph').toContain(written[0])
+    saveTextSize('normal')
+    expect(localStorage.length, 'Normal keeps nothing').toBe(0)
   })
 })

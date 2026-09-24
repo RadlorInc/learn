@@ -7,6 +7,11 @@
  */
 export const SESSION_COPY = {
   en: {
+    // Review 1 Q5: the text-size control on the child's home.
+    textSize: 'Text size',
+    sizeNormal: 'Normal',
+    sizeLarge: 'Large',
+    sizeXl: 'Extra large',
     checkpoint: (n: number) => `${n} questions done! ⭐ Nice work.`,
     mastered: "You've got this topic! ⭐",
     keepGoing: 'Keep going',
@@ -27,6 +32,10 @@ export const SESSION_COPY = {
   },
   // REVIEWED-BY: (unreviewed draft)
   es: {
+    textSize: 'Tamaño del texto',
+    sizeNormal: 'Normal',
+    sizeLarge: 'Grande',
+    sizeXl: 'Muy grande',
     checkpoint: (n: number) => `¡${n} preguntas hechas! ⭐ Buen trabajo.`,
     mastered: '¡Ya dominas este tema! ⭐',
     keepGoing: 'Seguir',
