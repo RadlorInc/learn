@@ -25,7 +25,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
         { t: 'Add more students', d: 'One at a time, or a list of usernames.', tour: { title: 'Add more students', steps: [
           { url: `/parent?class=${k}&tab=students`, target: 'add-students', title: 'Add students', text: 'Each new student gets a temporary password, and the class’s modules.' }] } },
         { t: 'Help a student who can’t sign in', d: 'Give them a new temporary password.', tour: { title: 'Help a student sign in', steps: [
-          { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Find them in the list', text: '“New password” gives them a temporary one; they choose their own at first sign-in. “Set a login” for anyone without one.' }] } },
+          { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Find them in the list', text: '“New password” gives them a temporary one; they choose their own at first sign-in. “Set up login” for anyone without one.' }] } },
         { t: 'Look at one student', d: 'Their progress, lessons and due dates.', tour: { title: 'Look at one student', steps: [
           { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Tap a name', text: 'Their own page: progress, the lessons they see, due dates and their login.' }] } },
       ] },

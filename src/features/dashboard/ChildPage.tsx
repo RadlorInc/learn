@@ -67,7 +67,7 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
               : login === undefined ? t('{name} has no login yet. With one, they can sign in on any device and go straight to their lessons.', { name })
               : t('Set a username and password so they can sign in on any device.')}
           </p>
-          {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? t('Set a login') : t('Change login or password')}</button>
+          {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? t('Set up login') : t('Change login or password')}</button>
             : <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>{t('Only the adult who added {name} can change it.', { name })}</p>}
         </section>
         <section style={dcard} data-tour="share-card">

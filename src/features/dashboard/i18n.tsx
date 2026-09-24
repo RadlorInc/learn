@@ -170,7 +170,7 @@ export const ES: Record<string, string> = {
   '{name} signs in with it on any device and goes straight to their lessons.': '{name} entra con él en cualquier dispositivo y va directo a sus lecciones.',
   '{name} has no login yet. With one, they can sign in on any device and go straight to their lessons.': '{name} todavía no tiene inicio de sesión. Con uno, puede entrar en cualquier dispositivo e ir directo a sus lecciones.',
   'Set a username and password so they can sign in on any device.': 'Cree un usuario y una contraseña para que pueda entrar en cualquier dispositivo.',
-  'Set a login': 'Crear inicio de sesión',
+  'Set up login': 'Crear inicio de sesión',
   'Change login or password': 'Cambiar usuario o contraseña',
   'Only the adult who added {name} can change it.': 'Solo el adulto que agregó a {name} puede cambiarlo.',
   'Share with another adult': 'Compartir con otro adulto',

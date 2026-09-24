@@ -53,7 +53,7 @@ export function childReminders(c: ChildFacts, today: Day, now: Date, titleOf: (l
   if (c.owner && c.login === undefined) {
     out.push({ ...base, id: `login:${c.id}`, kind: 'setup', title: t('{name} has no login yet', { name }),
       detail: t('With a username and password {name} can sign in on any device and go straight to their lessons.', { name }),
-      action: t('Set a login'), to: `?child=${c.id}&tab=login` })
+      action: t('Set up login'), to: `?child=${c.id}&tab=login` })
   }
   const passed = (c.lessonIds ?? []).filter(id => assignmentStatus(c.isDone(id), c.due[id], today) === 'late')
   if (passed.length) {
