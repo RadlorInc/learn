@@ -23,7 +23,7 @@ const LABELS = ['10', '9', '8', '7', '6', '5', '4', '3', '2', '1', '0', '−1', 
 let host: HTMLDivElement, root: Root
 async function mount(topic: string, padKey = 0) {
   if (!host) { host = document.createElement('div'); document.body.append(host); root = createRoot(host) }
-  await act(async () => { root.render(createElement(PracticeLayout, { corner: 'c', crumb: 'x', title: 'Problem 1', onExit: () => {}, pad: true, padKey, topic }, createElement('p', null, 'q'))) })
+  await act(async () => { root.render(createElement(PracticeLayout, { corner: 'c', crumb: 'x', title: 'Problem 1', onExit: () => {}, pad: true, padKey, topic, children: createElement('p', null, 'q') })) })
 }
 const toggle = () => [...host.querySelectorAll('button')].find(b => b.getAttribute('aria-controls') === 'pr-vline')
 const numbers = () => [...host.querySelectorAll('[role="group"][aria-label="Number line"] li button')] as HTMLButtonElement[]
