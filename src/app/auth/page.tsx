@@ -10,6 +10,7 @@ import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
 import { APP_NAME } from '@/app/site'
+import { firstNameOf } from '@/features/consent/firstName'
 
 type Mode = 'login' | 'signup'
 
@@ -70,6 +71,7 @@ export default function AuthPage() {
   const [mode,     setMode]     = useState<Mode>('login')
   const [email,    setEmail]    = useState(() => getLeadEmail() ?? '')   // prefill from the checkup lead capture
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')   // signup only: the name the consent email greets
   const [confirm,  setConfirm]  = useState('')     // signup only: typed twice, compared before anything is sent
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
@@ -85,6 +87,10 @@ export default function AuthPage() {
       setError(t('Password must be at least 6 characters'))
       return
     }
+    if (mode === 'signup' && !firstNameOf({ first_name: firstName })) {
+      setError(t('Please enter your first name'))
+      return
+    }
     if (mode === 'signup' && confirm !== password) {
       setError(t('Passwords do not match'))
       return
@@ -98,6 +104,7 @@ export default function AuthPage() {
           email.trim(),
           password,
           `${window.location.origin}/auth/callback`,
+          { first_name: firstNameOf({ first_name: firstName }) },
         )
         // V10 REVERSED (founder's call, 2026-09-22): say plainly that the email already has an account,
         // as most apps do. The cost is account enumeration — anyone can learn whether an address is
@@ -285,6 +292,24 @@ export default function AuthPage() {
                 borderRadius: 12, padding: '10px 14px',
                 fontSize: 13, color: '#33610F', fontWeight: 600,
               }}>{success}</div>
+            )}
+
+            {mode === 'signup' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label htmlFor="auth-first-name" style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>{t('First name')}</label>
+                <input
+                  id="auth-first-name"
+                  type="text"
+                  value={firstName}
+                  maxLength={40}
+                  onChange={e => { setFirstName(e.target.value); reset() }}
+                  onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}
+                  autoComplete="given-name"
+                  style={field}
+                  onFocus={e => { e.target.style.borderColor = C.accent }}
+                  onBlur={e => { e.target.style.borderColor = C.edge }}
+                />
+              </div>
             )}
 
             {/* Email input */}

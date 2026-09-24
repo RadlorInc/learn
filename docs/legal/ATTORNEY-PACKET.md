@@ -69,6 +69,10 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 - **Decided and not built:** the founder first asked to drop the email step and keep only a checkbox. The engineering agent declined to build that without your written sign-off, because a checkbox alone is not verifiable consent under § 312.5(b). The founder then kept the email and dropped the checkbox.
 - **Decide:** is it enough that the direct notice is shown and the email request is started from the dashboard, with no notice or acknowledgement at signup? (A9 "Option B" assumed the signup checkbox, which is now gone.)
 
+### A13. A shorter consent email, and the "yes" is a tick box on our page *(new, 25 September 2026; doc 03 B1, B1b)*
+- **Today (founder's call, branch `kg-to-8`, not merged yet):** B1 greets the parent by first name (typed at email signup, or taken from their Google profile), lists what we store in four short lines, says we never sell or advertise, and has **one** button, "Review and confirm", plus the Privacy Policy link and our address. The earlier text ("Someone — we believe you — …", the seven-line list, the "one permission covers every child" paragraph and the in-email decline button) is gone from the email. On the page the button opens, the parent reads the "covers every child" paragraph, ticks "I'm the parent or legal guardian, and I give permission." and presses **Confirm**, which stays disabled until the box is ticked. "No — cancel this request" is on the same page. B3 a day later is unchanged. A working checkbox cannot be put inside the email itself, because mail clients strip form controls.
+- **Decide:** does the shortened B1 still carry every element § 312.4(c)(1) requires of an email-plus request, given that the full notice (doc 02) is shown on the dashboard right before it is sent? In particular: must the email itself say that we delete the parent's address if no consent arrives within a reasonable time?
+
 ---
 
 ## B. Parent rights — needed before the Parent Rights page publishes *(06 notes 1–5)*

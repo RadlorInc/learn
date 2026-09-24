@@ -478,6 +478,8 @@ export const ES: Record<string, string> = {
   'Enter your email address first, then tap this again': 'Primero escriba su correo y luego vuelva a tocar aquí',
   'Children: ask your parent or teacher to set a new password for you.': 'Niños: pídanle a su papá, mamá o maestro que les ponga una contraseña nueva.',
   'If that email has an account, a reset link is on its way.': 'Si ese correo tiene una cuenta, le llegará un enlace para restablecer la contraseña.',
+  'First name': 'Nombre',
+  'Please enter your first name': 'Escriba su nombre',
   'Adaptive math · KG to grade 8': 'Matemáticas adaptativas · de kínder a 8.º grado',
   'Quiet insight into how your child actually learns.': 'Una mirada tranquila a cómo aprende de verdad su hijo.',
   'No vanity streaks or frantic countdowns. We track mathematical intuition step by step and report the real milestones straight to you.': 'Sin rachas de vanidad ni cuentas regresivas agobiantes. Seguimos paso a paso su intuición matemática y le informamos directamente de los logros reales.',

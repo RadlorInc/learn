@@ -58,6 +58,7 @@ import { TextSizeCard } from '@/features/dashboard/TextSizeCard'
 import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
 import { AccountConsentCard } from '@/features/consent/AccountConsent'
 import { longDate } from '@/features/consent/consentState'
+import { firstNameOf } from '@/features/consent/firstName'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
 import { BILLING_LIVE } from '@/app/legal/registry'
@@ -142,7 +143,7 @@ function Dashboard() {
       const session = await getCurrentSession()
       const user = session?.user
       if (!user) { router.replace('/auth'); return }
-      setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')
+      setParentName(firstNameOf(user.user_metadata) ?? 'there')
       setUid(user.id)
       setChosenLang(loadLang())
       // This device's helper choices, read once per visit; the visit BEFORE this one is what "since your last visit" means.

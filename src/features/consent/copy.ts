@@ -121,26 +121,25 @@ export const NOTICE = {
 // ─────────────────────── Document 03 · B1 — the consent request email ───────────────────────
 export const B1 = {
   subject: { en: 'Please confirm: permission for your children to use Radlic', es: 'Confirme, por favor: permiso para que sus hijos usen Radlic' },
-  hi: { en: 'Hi,', es: 'Hola:' },
-  someone: { en: 'Someone — we believe you — created a Radlic account and asked to add children to it.', es: 'Alguien — creemos que usted — creó una cuenta de Radlic y pidió añadir niños a ella.' },
-  before: { en: 'Before we collect anything from any child on this account, US law requires your permission. Here is exactly what we would collect about each child you add:', es: 'Antes de recopilar cualquier dato de cualquier niño de esta cuenta, la ley de los EE. UU. exige su permiso. Esto es exactamente lo que recopilaríamos sobre cada niño que añada:' },
+  /** "{name}" is the parent's first name (typed at signup, or from Google); with none, the line is "Hi,". */
+  hi: { en: 'Hi {name},', es: 'Hola, {name}:' },
+  before: { en: 'Thanks for signing up to Radlic. Before your children can use it, US law asks for your permission. For each child you add, we store:', es: 'Gracias por registrarse en Radlic. Antes de que sus hijos puedan usarla, la ley de los EE. UU. exige su permiso. Por cada niño que añada, guardamos:' },
   list: [
-    { en: "your child's first name or nickname", es: 'el nombre de pila o el apodo de su hijo' },
-    { en: 'the lessons you choose for them, and a grade band (grades 3–5 or 6–8) worked out from those lessons', es: 'las lecciones que usted elija para su hijo y una franja de grados (grados 3 a 5 o 6 a 8) deducida de esas lecciones' },
-    { en: 'the avatar you pick and the username your child signs in with', es: 'el avatar que usted elija y el nombre de usuario con el que su hijo inicia sesión' },
-    { en: 'their answers to maths questions, their scores, their points and progress, and anything they save in a game', es: 'sus respuestas a preguntas de matemáticas, sus puntuaciones, sus puntos y progreso, y todo lo que guarde en un juego' },
-    { en: 'any feedback they send us about a lesson', es: 'cualquier comentario que nos envíe sobre una lección' },
-    { en: 'a small number of product events, such as a lesson starting', es: 'un pequeño número de eventos del producto, como el inicio de una lección' },
-    { en: 'basic technical information from the device, to keep the app working and secure', es: 'información técnica básica del dispositivo, para que la aplicación funcione y sea segura' },
+    { en: 'their first name or nickname, the avatar you pick and their username', es: 'su nombre de pila o apodo, el avatar que usted elija y su nombre de usuario' },
+    { en: 'the lessons you choose, and a grade band (grades 3–5 or 6–8) worked out from them', es: 'las lecciones que usted elija y una franja de grados (grados 3 a 5 o 6 a 8) deducida de ellas' },
+    { en: 'their answers, points and progress', es: 'sus respuestas, puntos y progreso' },
+    { en: 'any feedback they send, a few product events and basic device information', es: 'los comentarios que envíe, algunos eventos del producto e información básica del dispositivo' },
   ] as L[],
-  doNot: { en: "We do not ask your child for a last name, email, phone number, address, photo, voice recording, or location. We do not sell your child's information, and we do not use it for advertising.",
-           es: 'No le pedimos a su hijo apellido, correo electrónico, número de teléfono, dirección, foto, grabación de voz ni ubicación. No vendemos la información de su hijo ni la usamos para publicidad.' },
-  covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
-  grant:   { en: 'I give permission', es: 'Doy mi permiso' },
-  decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
-  ignore: { en: 'If you did nothing, you can ignore this email and nothing will happen.', es: 'Si usted no hizo nada, puede ignorar este correo y no pasará nada.' },
+  doNot: { en: "We never sell your child's information or use it for advertising.", es: 'Nunca vendemos la información de su hijo ni la usamos para publicidad.' },
+  review: { en: 'Review and confirm', es: 'Revisar y confirmar' },
+  ignore: { en: "Didn't sign up? Ignore this email and nothing will happen.", es: '¿No se registró? Ignore este correo y no pasará nada.' },
   details: { en: 'Full details: [Privacy Policy](https://radlic.com/legal/privacy)', es: 'Todos los detalles: [Política de privacidad](https://radlic.com/legal/privacy) (en inglés)' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
+  // ── the page the button opens (/consent/respond) — the parent ticks the box there, then confirms ──
+  covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
+  tick: { en: "I'm the parent or legal guardian, and I give permission.", es: 'Soy el padre, la madre o el tutor legal, y doy mi permiso.' },
+  confirm: { en: 'Confirm', es: 'Confirmar' },
+  decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
 }
 
 // ─────────────────────── Document 03 · B2 — the screen after "I give permission" ───────────────────────

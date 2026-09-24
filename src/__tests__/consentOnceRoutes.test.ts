@@ -19,6 +19,7 @@ vi.mock('@/features/consent/server', async orig => {
     ...real,
     requireConfig: () => {},
     userFromBearer: async () => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    adultFromBearer: async () => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'p@x.test', firstName: 'Maya' }),
     rpc: vi.fn(async (fn: string, args: Record<string, unknown>) => {
       log.push(`rpc:${fn}`); calls[fn] = args
       if (fn === 'consent_request') { if (requestErr) throw requestErr; return [{ consent_id: 'c1', email: 'p@x.test' }] }

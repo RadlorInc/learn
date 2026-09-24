@@ -5,7 +5,7 @@ import { NOTICE_VERSION } from '@/features/consent/copy'
 import { PENDING_TTL_DAYS } from '@/features/consent/config'
 import { renderB1 } from '@/features/consent/email'
 import {
-  ConfigMissing, requireConfig, ackTime, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, userFromBearer, type RpcError,
+  ConfigMissing, requireConfig, ackTime, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, adultFromBearer, type RpcError,
 } from '@/features/consent/server'
 
 /**
@@ -29,7 +29,8 @@ export async function POST(req: Request) {
 
   try {
     requireConfig()
-    const parent = await userFromBearer(req)
+    const adult = await adultFromBearer(req)
+    const parent = adult?.id
     if (!parent) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
 
     const token = newToken()
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
     // a Referer header. The page reads it and POSTs it; a mail scanner that prefetches the link sees a
     // page with buttons and changes nothing.
     const link = `${SITE_URL}/consent/respond#t=${token}`
-    const id = await sendEmail('transactional', row.email, renderB1(lang, link, `${link}&choice=decline`), `consent-${row.consent_id}-b1`)
+    const id = await sendEmail('transactional', row.email, renderB1(lang, link, adult.firstName), `consent-${row.consent_id}-b1`)
     await rpc('consent_record_request_sent', { p_id: row.consent_id, p_provider_id: id })
     return NextResponse.json({ ok: true, email: row.email, days: PENDING_TTL_DAYS })
   } catch (e) {

@@ -18,18 +18,21 @@ const button = (label: string, href: string, primary: boolean) =>
   `<a href="${esc(href)}" style="display:inline-block;margin:0 10px 10px 0;padding:12px 20px;border-radius:999px;` +
   `font-weight:700;text-decoration:none;${primary ? 'background:#E0591F;color:#fff' : 'border:2px solid #E0591F;color:#E0591F'}">${esc(label)}</a>`
 
-export function renderB1(lang: Lang, grantUrl: string, declineUrl: string): Rendered {
+/** B1. One button, to the page where the parent ticks the box and confirms: an email cannot carry a working
+ *  checkbox (mail clients strip form controls), and a GET that granted would be granted by mail scanners. */
+export function renderB1(lang: Lang, reviewUrl: string, firstName: string | null): Rendered {
   const t = (x: L) => x[lang]
+  const hi = firstName ? t(B1.hi).replace('{name}', firstName) : t(B1.hi).replace(/,? \{name\}/, '')
   const html = wrap([
-    p(t(B1.hi)), p(t(B1.someone)), p(t(B1.before)),
+    p(hi), p(t(B1.before)),
     `<ul style="margin:0 0 14px;padding-left:22px">${B1.list.map(x => `<li>${toHtml(t(x))}</li>`).join('')}</ul>`,
-    p(t(B1.doNot)), p(t(B1.covers)),
-    `<p style="margin:18px 0 8px">${button(t(B1.grant), grantUrl, true)}${button(t(B1.decline), declineUrl, false)}</p>`,
+    p(t(B1.doNot)),
+    `<p style="margin:18px 0 8px">${button(t(B1.review), reviewUrl, true)}</p>`,
     p(t(B1.ignore)), small(t(B1.details)), small(B1.address),
   ].join(''))
   const text = [
-    t(B1.hi), t(B1.someone), t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot), t(B1.covers),
-    `${t(B1.grant)}: ${grantUrl}\n${t(B1.decline)}: ${declineUrl}`,
+    hi, t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot),
+    `${t(B1.review)}: ${reviewUrl}`,
     t(B1.ignore), toText(t(B1.details)), B1.address,
   ].map(s => toText(s)).join('\n\n')
   return { subject: t(B1.subject), html, text }

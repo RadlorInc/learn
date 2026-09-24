@@ -12,6 +12,7 @@
  * ⚠️ AND NO ERROR FROM HERE GOES THROUGH `reportCrash` — that path writes `error_events` with a
  * `learner_id`, which the consent gate refuses for exactly the children whose consent is missing.
  */
+import { firstNameOf } from './firstName'
 import { createHash, randomBytes } from 'node:crypto'
 import { pageBySlug, type LegalPage } from '@/app/legal/registry'
 import { readPublic } from '@/app/legal/source'
@@ -89,14 +90,14 @@ export async function learnerName(id: string): Promise<string | null> {
 }
 
 /** The signed-in adult behind a bearer token, verified by the auth server — never a claim we decode. */
-export async function adultFromBearer(req: Request): Promise<{ id: string; email: string | null } | null> {
+export async function adultFromBearer(req: Request): Promise<{ id: string; email: string | null; firstName: string | null } | null> {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
   if (!token) return null
   const url = env('NEXT_PUBLIC_SUPABASE_URL'), anon = env('NEXT_PUBLIC_SUPABASE_ANON_KEY')
   const r = await fetch(`${url}/auth/v1/user`, { headers: { apikey: anon, Authorization: `Bearer ${token}` }, cache: 'no-store' })
   if (!r.ok) return null
   const u = await r.json().catch(() => null)
-  return typeof u?.id === 'string' ? { id: u.id, email: typeof u.email === 'string' ? u.email : null } : null
+  return typeof u?.id === 'string' ? { id: u.id, email: typeof u.email === 'string' ? u.email : null, firstName: firstNameOf(u.user_metadata) } : null
 }
 export const userFromBearer = async (req: Request): Promise<string | null> => (await adultFromBearer(req))?.id ?? null
 

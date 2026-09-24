@@ -136,14 +136,18 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     await s.done()
   })
 
-  it('email signup sends no consent metadata — nothing was agreed on this page', async () => {
+  it('email signup asks for a first name: without one nothing is sent; with one it is stored for the consent email', async () => {
     const s = await signup()
     await type(s.host.querySelector('#auth-email'), 'p@x.test')
     await type(s.host.querySelector('#auth-password'), 'secret123')
     await type(s.host.querySelector('#auth-confirm'), 'secret123')
     await click(s.email())
+    expect(signUp, 'signed up with no first name').not.toHaveBeenCalled()
+    expect(s.host.textContent).toContain('Please enter your first name')
+    await type(s.host.querySelector('#auth-first-name'), '  Maya  ')
+    await click(s.email())
     expect(signUp).toHaveBeenCalledTimes(1)
-    expect((signUp.mock.calls[0] as unknown[])[3]).toBeUndefined()
+    expect((signUp.mock.calls[0] as unknown[])[3]).toEqual({ first_name: 'Maya' })
     await s.done()
   })
 
@@ -325,6 +329,31 @@ describe('withdraw permission for all my children', () => {
     expect(m.host.querySelector('h1')?.textContent).toBe('Withdraw permission')
     expect(button(m.host, /^Withdraw permission and delete my child's data$/)).toBeTruthy()
     expect(m.host.textContent).not.toContain('all your children')
+    await m.done()
+  })
+})
+
+// ─────────────── B1's page: the box IS the grant (founder, 2026-09-25) ───────────────
+describe('the page B1 opens: Confirm waits for the box, and nothing is granted on arrival', () => {
+  it('unticked → Confirm disabled and a press sends nothing; ticked → exactly one grant; cancel stays available', async () => {
+    fetchAnswer = (_u, b) => b.action === 'lookup' ? { status: 'pending', lang: 'en', scope: 'account' } : { status: 'granted', lang: 'en' }
+    window.location.hash = `#t=${'A'.repeat(43)}`
+    const { ConsentLink } = await import('@/features/consent/ConsentLink')
+    const m = await mount(createElement(ConsentLink, { mode: 'respond' }))
+    const box = m.host.querySelector('[data-consent="respond"] input[type="checkbox"]') as HTMLInputElement
+    expect(box, 'the page has no box').toBeTruthy()
+    expect(box.checked, 'the box must start UNTICKED').toBe(false)
+    expect(box.closest('label')?.textContent?.trim()).toBe("I'm the parent or legal guardian, and I give permission.")
+    const confirm = button(m.host, /^Confirm$/) as HTMLButtonElement
+    expect(confirm.disabled, 'Confirm works without the tick').toBe(true)
+    await click(confirm)
+    expect(fetchLog.filter(f => (f.body as { action?: string })?.action === 'grant'), 'granted without the tick').toEqual([])
+    expect((button(m.host, /^No — cancel this request$/) as HTMLButtonElement).disabled).toBe(false)
+    await click(box)
+    expect(confirm.disabled).toBe(false)
+    await click(confirm)
+    expect(fetchLog.filter(f => (f.body as { action?: string })?.action === 'grant')).toHaveLength(1)
+    expect(m.host.textContent).toContain('Thank you — permission recorded')
     await m.done()
   })
 })
