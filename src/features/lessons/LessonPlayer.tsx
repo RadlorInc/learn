@@ -175,7 +175,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   if (welcome) {
     return (
-      <Frame crumb={C.welcomeTitle} at={7} total={9} title={C.welcomeTitle}
+      <Frame crumb={lesson.title} at={7} total={9} title={C.welcomeTitle}
         picture={<div style={{ ...stage, alignItems: 'center' }}><span style={{ fontSize: 96 }} aria-hidden>⭐</span></div>}
         words={<p style={bubble}>{C.spotSaved}</p>}
         back={<button type="button" style={hintBtn} onClick={() => setWelcome(false)}>{C.watchFirst}</button>}
