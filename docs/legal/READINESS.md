@@ -87,6 +87,10 @@ every box marked 👪 is ticked.** Boxes marked 💳 must be ticked **before any
 - [ ] 👪 **Deletion audit trail** — a record of who deleted which child's data, and when. Decided 24 Sep 2026 after ~1,440 event rows were deleted on or about 17 Sep with no record (04 §7).
 - [ ] 👪 **B3 cancel: retry refused rows in the daily cron + make a refused cancel visible (error log + SQL check).** Found 24 Sep: sending-only Resend key caused silent 401s.
 
+### For the content loop (curriculum gaps, not launch blockers)
+- [ ] **Grade 6 has no negative-numbers module (CCSS 6.NS.5–7).** Signed numbers first appear in Grade 7 Module 2
+  (`docs/new-flow/curriculum.md`). Found in Review 1 Q0 (24 Sep 2026); logged by the founder for the content loop.
+
 ### Publish
 - [ ] 👪 **Publish the legal pages.** For each page in `src/app/legal/registry.ts`: 0 placeholders in its public part, the `STATUS: DRAFT` line removed, attorney sign-off recorded, and Spanish signed. Then set `published: true` in a reviewed PR. The switch refuses anything short of that. Flip `BILLING_LIVE` only when billing is live (💳).
 

@@ -19,6 +19,7 @@ run on the merged result: **138 files, 3,793 passed, 11 skipped** (tsc clean). E
 | 6 | [#217](https://github.com/RadlorInc/learn/pull/217) | Q7 vertical number line (g7m2) | none | |
 | 7 | [#218](https://github.com/RadlorInc/learn/pull/218) | Q8 home motion | none | |
 | 8 | [#221](https://github.com/RadlorInc/learn/pull/221) | Privacy at 320 px + the sweep finishes + Save/Cancel clears the home bar | none | independent of the seven; any time |
+| 9 | [#222](https://github.com/RadlorInc/learn/pull/222) | The offline bar no longer covers Sign out (iPad Pro); sweep `OFFLINE=1` | none | independent; any time |
 
 For each: mark it *Ready for review* only when you mean to merge, then merge. `main` deploys through `deploy.yml` →
 `release`. **No `migrate-prod` step for any of them.**
@@ -70,17 +71,18 @@ dashboard, `es/08` for doc 08). The child screens still have no language switch.
 
 ## 5. Found on the way, not built (for you to decide)
 
-- **Grade 6 has no negative-numbers module**; signed numbers first appear in Grade 7 Module 2. That's a curriculum
-  question for the content loops, not a quick win.
-- A wrong answer already brings an **easier kind** of question, but only after the **second** miss (the worked steps).
-  After one miss the child retries the same problem with the big idea shown. The review may have meant the first miss.
+- **Grade 6 has no negative-numbers module (CCSS 6.NS.5–7)**; signed numbers first appear in Grade 7 Module 2.
+  ✅ Logged in `READINESS.md` → *For the content loop* (founder, 24 Sep 2026).
+- A wrong answer brings an **easier kind** of question after the **second** miss (the worked steps); after one miss
+  the child retries the same problem with the big idea shown. ✅ **Kept as is, by design** (founder, 24 Sep 2026).
 - `/ui-preview` still shows a fox avatar on the demo child, which the rename (#205) retired elsewhere.
 - The number line's numbers are 26 px tall targets (WCAG 2.2 AA asks 24; the app usually uses 44).
 - **Fixed in #221** (founder, 24 Sep 2026): `/legal/privacy` scrolled sideways at 320 px, and the sweep still tapped
   #212's removed Change button. Once the sweep could look it also found **the Lessons tab's Save / Cancel under the
   home bar** on six phones (fixed there too) and two faults in the sweep itself (fixed).
-- **Written down, not fixed:** when a device is really offline, the "📡 You're offline" banner covers **Sign out** on
-  the parent home at iPad Pro landscape (seen once in a sweep when the machine's connection dropped; the layout is real).
+- **The offline bar covered Sign out** on the parent dashboard at iPad Pro landscape: fixed in
+  [#222](https://github.com/RadlorInc/learn/pull/222) (founder, 24 Sep 2026). The bar now keeps its own height clear,
+  and the sweep checks every screen offline too (`OFFLINE=1`).
 
 ## 6. Blocked
 
