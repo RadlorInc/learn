@@ -62,7 +62,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
                     {` · ${done} lesson${done === 1 ? '' : 's'} done`}
                   </div>
                 </div>
-                <button type="button" style={small} data-tour={user ? undefined : 'new-pw'} onClick={() => onLogin(s.id)}>{user ? 'New password' : 'Set a login'}</button>
+                <button type="button" style={small} data-tour={user ? undefined : 'new-pw'} onClick={() => onLogin(s.id)}>{user ? 'New password' : 'Set up login'}</button>
               </li>
             )
           })}</ul>

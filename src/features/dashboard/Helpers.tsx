@@ -159,8 +159,11 @@ export function TourRunner({ tour, onEnd }: { tour: Tour | null; onEnd: (finishe
     }
     place()
     const again = () => place()
+    // Also once a sheet finishes sliding in: measured mid-animation, the spotlight lands where the target WAS
+    // (on a phone the add-a-child sheet rises from below the screen, so step 1 pointed off the bottom).
     window.addEventListener('resize', again)
-    return () => { stop = true; window.removeEventListener('resize', again) }
+    document.addEventListener('animationend', again)
+    return () => { stop = true; window.removeEventListener('resize', again); document.removeEventListener('animationend', again) }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on WHICH step, not the object: a derived tour is rebuilt every render
   }, [stepKey])
   useEffect(() => { coach.current?.querySelector<HTMLButtonElement>('[data-next]')?.focus() }, [box])

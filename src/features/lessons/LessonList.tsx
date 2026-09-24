@@ -2,18 +2,18 @@
 /**
  * The new-flow topic list, drawn as a winding path: one module's topics in teaching order, one stop per topic.
  * Portrait (phone): the path runs top to bottom. Landscape (tablet sideways, laptop): it runs left to right.
- * The first unfinished topic glows (no "Next up" badge — founder, 2026-09-22); every other stop is dimmed — a done one with a green tick, one still
- * ahead with its number (founder, 2026-09-21). Nothing is locked: a child may replay or jump ahead.
+ * The first unfinished topic glows and breathes, says "Click here" and carries its number in a small badge (founder,
+ * 2026-09-24); every other stop is dimmed and shows only its number — a done one also gets a green tick. An arrow on
+ * each stretch of trail points the way. Nothing is locked: a child may replay or jump ahead.
  */
 import { showDay } from './progressReport'
 import Link from 'next/link'
-import { useSyncExternalStore, type CSSProperties } from 'react'
+import { useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import type { Module } from './modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { loadRun } from '@/infra/storage/lessonRun'
 import { C } from './sessionCopy'
-import { Thing, INK, TEAL, GOOD, pill, PAGE_BG, shell, topBar } from './Pictures'
-import type { Lesson, Obj } from './script'
+import { INK, TEAL, GOOD, pill, PAGE_BG, shell, topBar } from './Pictures'
 
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 const subscribe = (cb: () => void) => { const m = matchMedia(LANDSCAPE); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb) }
@@ -22,11 +22,6 @@ const STEP = 128   // distance between stops along the path
 const CROSS = 44   // how far a stop swings off the centre line (% of the width when vertical; px when horizontal)
 const H = 480      // height of the horizontal map (room above and below for the labels)
 
-/** The object a topic is about, from its first picture — so each stop shows cookies, chairs, straws… */
-const objOf = (l: Lesson): Obj | null => {
-  const p = l.screens[0].pictures.find(p => 'obj' in p)
-  return p && 'obj' in p ? p.obj : null
-}
 
 /** `due` = the parent's due date per assigned lesson (Assign lessons); shown on each topic not done yet. */
 export function LessonList({ module, learnerId, back, due }: { module: Module; learnerId: string | null; back?: { href: string; label: string }; due?: Record<string, string> | null }) {
@@ -36,12 +31,29 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
   const done = lessons.filter(l => lessonDone(learnerId, l.id)).map(l => l.id)
   const nextUp = lessons.find(l => !done.includes(l.id))?.id
   const n = lessons.length
+  // The map's width in px: a vertical trail is drawn in % across, and an arrow needs the real slope to point along it.
+  const box = useRef<HTMLDivElement>(null)
+  const [w, setW] = useState(0)
+  useLayoutEffect(() => {
+    const el = box.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setW(el.clientWidth))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   // Stop i's position. Vertical: left in %, top in px. Horizontal: both in px (the map scrolls sideways if it is wider than the screen).
   const along = (i: number) => STEP / 2 + i * STEP
   const side = (i: number) => (i % 2 ? 1 : -1)
   const pos = (i: number) => across ? { x: along(i) + 30, y: H / 2 + side(i) * (CROSS + 20) } : { x: 50 + side(i) * (CROSS / 2), y: along(i) }
   const W = across ? n * STEP + 60 : 100
+  /** Where the arrow on stretch i sits (the curve's midpoint) and which way it points, in degrees (0 = right). */
+  const arrow = (i: number) => {
+    const a = pos(i), b = pos(i + 1)
+    // The curve's direction at its midpoint: vertical (1.5·dx, 0.75·STEP), horizontal (0.75·STEP, 1.5·dy).
+    const deg = across ? Math.atan2(1.5 * (b.y - a.y), 0.75 * STEP) : Math.atan2(0.75 * STEP, 1.5 * (b.x - a.x) / 100 * w)
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, deg: deg * 180 / Math.PI }
+  }
   const trail = (i: number) => {
     const a = pos(i), b = pos(i + 1)
     return across
@@ -51,7 +63,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
 
   return (
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 32px', display: 'flex', justifyContent: 'center' }}>
-      <style>{`@keyframes lp-bob { 0%,100% { transform: translate(-50%, -50%) } 50% { transform: translate(-50%, calc(-50% - 5px)) } }
+      <style>{`@keyframes lp-breathe { 0%,100% { transform: translate(-50%, -50%) scale(1) } 50% { transform: translate(-50%, -50%) scale(1.1) } }
 @keyframes lp-glow { 0%,100% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166 } 50% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 10px #ffd16666, 0 0 34px 14px #ffd166 } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important } }`}</style>
       <div style={{ ...shell, maxWidth: across ? 1180 : 620, alignSelf: 'flex-start' }}>
@@ -64,7 +76,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
           <h1 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 4.5vw, 36px)', color: INK, lineHeight: 1.1 }}>{module.title}</h1>
 
           <div style={{ overflowX: across ? 'auto' : 'visible', paddingBottom: across ? 8 : 0 }}>
-            <div style={{ position: 'relative', margin: '0 auto', ...(across ? { width: W, height: H } : { height: n * STEP }) }}>
+            <div ref={box} style={{ position: 'relative', margin: '0 auto', ...(across ? { width: W, height: H } : { height: n * STEP }) }}>
               {/* The trail. Vertical: stretched to the box (non-scaling strokes keep an even width). A segment turns solid teal once its topic is done. */}
               <svg viewBox={`0 0 ${W} ${across ? H : n * STEP}`} preserveAspectRatio="none" aria-hidden
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
@@ -73,11 +85,18 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                     stroke={done.includes(l.id) ? TEAL : INK} strokeWidth={done.includes(l.id) ? 12 : 5} strokeDasharray={done.includes(l.id) ? undefined : '2 14'} />
                 ))}
               </svg>
+              {/* One arrow per stretch, pointing to the next topic. */}
+              {lessons.slice(0, -1).map((l, i) => {
+                const { x, y, deg } = arrow(i)
+                return <span key={l.id} aria-hidden style={{ position: 'absolute', display: 'block', top: y, left: across ? x : `${x}%`, width: 0, height: 0,
+                  borderLeft: `18px solid ${done.includes(l.id) ? TEAL : INK}`, borderTop: '6px solid transparent', borderBottom: '6px solid transparent',
+                  transform: `translate(-50%, -50%) rotate(${deg}deg)`, pointerEvents: 'none' }} />
+              })}
 
               <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                 {lessons.map((l, i) => {
                   const isDone = done.includes(l.id), isNext = l.id === nextUp
-                  const obj = objOf(l), size = isNext ? 84 : 68, { x, y } = pos(i)
+                  const size = isNext ? 84 : 68, { x, y } = pos(i)
                   const gap = size / 2 + 12
                   // Dimmed with solid muted colours, not opacity: a see-through stop shows the trail running through it.
                   const dim: CSSProperties = isNext ? {} : { opacity: 0.5 }
@@ -92,11 +111,11 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                     <li key={l.id} style={{ position: 'absolute', top: y, left: across ? x : `${x}%`, width: 0, height: 0 }}>
                       <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : isNext ? ', next up' : ''}`}
                         style={{ ...stop, width: size, height: size, background: isNext ? '#ffd166' : '#fff', ...dimStop,
-                          ...(isNext ? { animation: 'lp-bob 1.8s ease-in-out infinite, lp-glow 1.8s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166` } : {}) }}>
-                        {obj
-                          ? <span style={{ display: 'flex', gap: 3, '--lp-u': isNext ? '20px' : '16px', ...faded } as CSSProperties}><Thing obj={obj} /><Thing obj={obj} /><Thing obj={obj} /></span>
-                          : <b style={{ fontSize: 24, ...faded }}>{i + 1}</b>}
-                        {!isDone && <span style={{ ...badge, ...(isNext ? { background: '#ff6b4a', color: '#fff' } : { background: '#f3ede6', color: MUTED, borderColor: MUTED }) }}>{i + 1}</span>}
+                          ...(isNext ? { animation: 'lp-breathe 2.4s ease-in-out infinite, lp-glow 2.4s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166` } : {}) }}>
+                        {isNext
+                          ? <b style={{ fontSize: 15, lineHeight: 1.05, textAlign: 'center', fontFamily: 'var(--font-display)' }}>Click here</b>
+                          : <b style={{ fontSize: 26, ...faded }}>{i + 1}</b>}
+                        {isNext && <span style={{ ...badge, background: '#ff6b4a', color: '#fff' }}>{i + 1}</span>}
                       </Link>
                       {/* Outside the dimmed stop, so the tick itself is not dimmed. */}
                       {isDone && <span aria-hidden style={{ ...badge, top: -size / 2 - 6, left: size / 2 - 22, width: 32, height: 32, fontSize: 18, background: GOOD, color: '#fff', pointerEvents: 'none' }}>✓</span>}

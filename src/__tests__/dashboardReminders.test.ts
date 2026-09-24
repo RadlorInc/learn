@@ -37,10 +37,10 @@ describe('a child’s reminders', () => {
 
   it('quiet for 5+ days → a nudge with the count; never practised → says so; unread points → nothing', () => {
     expect(childReminders(kid({ lastProblemAt: '2026-09-15T12:00:00Z' }), '2026-09-21', NOW, title).map(x => x.title))
-      .toEqual(['Aarav hasn’t practised for 6 days'])
+      .toEqual(['Aarav hasn’t practiced for 6 days'])
     expect(childReminders(kid({ lastProblemAt: '2026-09-17T12:00:00Z' }), '2026-09-21', NOW, title)).toEqual([])
     expect(childReminders(kid({ lastProblemAt: null, createdAt: '2026-09-01T00:00:00Z' }), '2026-09-21', NOW, title).map(x => x.title))
-      .toEqual(['Aarav hasn’t started practising yet'])
+      .toEqual(['Aarav hasn’t started practicing yet'])
     // A brand-new child is not nagged on day two.
     expect(childReminders(kid({ lastProblemAt: null, createdAt: '2026-09-20T00:00:00Z' }), '2026-09-21', NOW, title)).toEqual([])
     expect(childReminders(kid({ lastProblemAt: undefined, createdAt: '2026-01-01T00:00:00Z' }), '2026-09-21', NOW, title)).toEqual([])

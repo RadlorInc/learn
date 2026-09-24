@@ -12,8 +12,8 @@
  * ponytail: two paths while only some modules have ladders; delete mixedPractice once every module does.
  */
 import Link from 'next/link'
-import { useRef, useState } from 'react'
-import { solutionOf, stepsOf, showAnswer, isCorrect, type Problem, type Lesson } from './script'
+import { useEffect, useRef, useState } from 'react'
+import { solutionOf, stepsOf, isCorrect, type Problem, type Lesson } from './script'
 import { rng, freshSeed, draw, step, nextModuleTopic, FRESH, MODULE_PROBLEMS, type Outcome } from './adaptive'
 import { ladderOf, ladderAnswers } from './ladders'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
@@ -21,7 +21,7 @@ import { syncLesson, syncModulePractice } from '@/infra/storage/lessonSync'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { Pic, tapCue, pill } from './Pictures'
 import { stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
-import { PracticeLayout, hintBtn } from './PracticeLayout'
+import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
 import { mixedPractice, type Module } from './modules'
 
 type Feedback = null | 'idea' | 'worked' | 'right'
@@ -51,6 +51,14 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
   const [value, setValue] = useState('')
   const [taps, setTaps] = useState(0)
   const outcomes = useRef<Outcome[]>([])   // an exercise's result, question by question
+  // A right answer moves on by itself (RIGHT_MS); the button stays for a child who wants to go sooner.
+  const nextRef = useRef<() => void>(() => {})
+  const rightAt = feedback === 'right' ? i : -1
+  useEffect(() => {
+    if (rightAt < 0) return
+    const id = setTimeout(() => nextRef.current(), RIGHT_MS)
+    return () => clearTimeout(id)
+  }, [rightAt])
 
   const done = i >= total
   const page = (crumb: string, title: string, left: React.ReactNode, pad: boolean) => (
@@ -87,6 +95,8 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
     }
     setI(i + 1); setMisses(0); setFeedback(null); setAsked(false); setValue(''); setTaps(0)
   }
+  // eslint-disable-next-line react-hooks/refs -- the latest handler for the timer, as useLatestRef does (idempotent)
+  nextRef.current = nextProblem
   const answering = feedback !== 'right' && feedback !== 'worked'
 
   // A count of a total reads as a score to a child (founder, 2026-09-24): only a class exercise, a teacher's fixed list, shows "of".
@@ -108,7 +118,7 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
     )}
 
     {(feedback === 'idea' || (asked && answering)) && <p style={idea}>{lesson.bigIdea}</p>}
-    {feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {showAnswer(solutionOf(problem))}.</p>}
+    {feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right!</p>}
     {feedback === 'worked' && <>
       <div style={hint}>
         <b>Here&apos;s how this one works:</b>

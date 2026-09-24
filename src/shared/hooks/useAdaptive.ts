@@ -74,7 +74,7 @@ const PRAISE = [
 export const ENCOURAGEMENT = [
   ['Good try!', 'Nearly there!', 'Let\'s look again…', 'Almost!'],
   ['Not quite — but you\'re getting it!', 'Keep going!', 'Try again — you can do it!'],
-  ['Oops! No worries — let\'s try another!', 'Keep practising!', 'Don\'t give up!'],
+  ['Oops! No worries — let\'s try another!', 'Keep practicing!', 'Don\'t give up!'],
 ]
 
 const ON_FIRE = [

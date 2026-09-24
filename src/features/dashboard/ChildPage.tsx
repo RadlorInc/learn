@@ -64,15 +64,15 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
           <h2 style={h2}>{t('{name}’s login', { name })}</h2>
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>
             {login ? <>{t('Username')} <b style={{ color: 'var(--ink)' }}>{login}</b>. {t('{name} signs in with it on any device and goes straight to their lessons.', { name })}</>
-              : login === undefined ? t('{name} has no login yet. With one, they can sign in on any device and go straight to their lessons.', { name })
+              : login === undefined ? t('There is no user account for {name} yet. With a user account, they can sign in on any device and go straight to their lessons.', { name })
               : t('Set a username and password so they can sign in on any device.')}
           </p>
-          {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? t('Set a login') : t('Change login or password')}</button>
+          {owner ? <button type="button" style={login === undefined ? dbtn : dghost} onClick={onLogin}>{login === undefined ? t('Set up login') : t('Change login or password')}</button>
             : <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>{t('Only the adult who added {name} can change it.', { name })}</p>}
         </section>
         <section style={dcard} data-tour="share-card">
           <h2 style={h2}>{t('Share with another adult')}</h2>
-          <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Let a partner or grandparent see {name}’s progress with their own sign-in.', { name })}</p>
+          <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>{t('Share {name}’s progress with family or a school teacher.', { name })}</p>
           <Link href="/parent/invites" style={dghost}>{t('Invite someone')}</Link>
         </section>
         {owner && <section style={dcard} data-tour="correct-card"><CorrectCard key={`${name}-${avatarIndex}`} name={name} avatarIndex={avatarIndex} onCorrect={onCorrect} /></section>}
@@ -90,7 +90,7 @@ const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'va
 function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarIndex: number; onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | 'error'> }) {
   const t = useT()
   const [value, setValue] = useState(name)
-  const [avatar, setAvatar] = useState(avatarIndex)
+  const [avatar, setAvatar] = useState<number | null>(null)   // none picked = keep the current one
   const [band, setBand] = useState<'' | Band>('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -99,12 +99,12 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
     const trimmed = value.trim()
     if (!trimmed) return
     setBusy(true)
-    const r = await onCorrect(trimmed, band || null, avatar)
+    const r = await onCorrect(trimmed, band || null, avatar ?? avatarIndex)
     setBusy(false)
     setMsg(r === 'ok' ? t('Saved.') : t('Could not save. Check your connection and try again.'))
   }
   return <>
-    <h2 style={h2}>{t('Correct {name}’s details', { name })}</h2>
+    <h2 style={h2}>{t('Update {name}’s details', { name })}</h2>
     <label style={{ display: 'block', margin: '10px 0', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Name or nickname')}
       <input value={value} maxLength={30} onChange={e => setValue(e.target.value)} style={{ ...field, marginTop: 4 }} /></label>
     <fieldset style={{ border: 0, margin: '0 0 10px', padding: 0 }}>
@@ -148,7 +148,7 @@ function GameTimeCard({ name, wallet, canEdit, onSave }: {
             <div><div style={{ fontSize: 26, fontWeight: 900, color: P.ink }}>{wallet.minutes_used_today} / {wallet.minutes_per_day}</div><div style={{ fontSize: 12, color: P.ink3, fontWeight: 600 }}>{t('minutes played today')}</div></div>
           </div>
           <p style={{ margin: '0 0 12px', fontSize: 14, color: P.ink2, lineHeight: 1.45 }}>
-            {t('{name} earns points by practising and spends {n} points for each minute of game.', { name, n: wallet.points_per_minute })}
+            {t('{name} earns points by practicing and spends {n} points for each minute of game.', { name, n: wallet.points_per_minute })}
           </p>
           {canEdit ? (
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>

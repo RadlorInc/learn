@@ -93,7 +93,7 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
               <h2 style={h2}>{t('Needs help with')}</h2>
               {r.stuck.length === 0
                 ? <p style={{ margin: 0, fontSize: 14, color: 'var(--ink-soft)' }}>
-                    {t('Nothing right now. A topic shows here after {n} or more practice problems when fewer than half were right on the first try.', { n: STUCK_MIN })}
+                    {t('Nothing right now. A topic shows here after {n} or more practice problems, when fewer than half were right on the first try.', { n: STUCK_MIN })}
                   </p>
                 : <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {r.stuck.map(s => {

@@ -119,9 +119,9 @@ export default function UiPreviewPage() {
 }
 
 const DEMO_REMINDERS: Reminder[] = [
-  { id: 'login:b', kind: 'setup', who: 'b', whoName: 'Maya', title: 'Maya has no login yet', detail: 'With a username and password Maya can sign in on any device and go straight to their lessons.', action: 'Set a login', to: '?child=b&tab=login' },
+  { id: 'login:b', kind: 'setup', who: 'b', whoName: 'Maya', title: 'Maya has no login yet', detail: 'With a username and password Maya can sign in on any device and go straight to their lessons.', action: 'Set up login', to: '?child=b&tab=login' },
   { id: 'stuck:a', kind: 'help', who: 'a', whoName: 'Aarav', title: 'Aarav is finding “Divide by 10, 100, 1,000” hard', detail: 'Fewer than half of the practice problems on it were right on the first try.', action: 'See progress', to: '?child=a&tab=progress' },
-  { id: 'quiet:b', kind: 'nudge', who: 'b', whoName: 'Maya', title: 'Maya hasn’t practised for 6 days', detail: 'A few minutes a day works better than a long session once a week.', action: 'Start a lesson with Maya', to: 'start:b' },
+  { id: 'quiet:b', kind: 'nudge', who: 'b', whoName: 'Maya', title: 'Maya hasn’t practiced for 6 days', detail: 'A few minutes a day works better than a long session once a week.', action: 'Start a lesson with Maya', to: 'start:b' },
 ]
 
 /** The dashboard's parts with in-memory data and saves — layout and state, never the database. */

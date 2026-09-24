@@ -1,6 +1,6 @@
 /**
  * SHORT PRACTICE SESSIONS, THE SCREEN (founder, 2026-09-24) — the real LessonPlayer on a real topic, rendered and
- * clicked: a saved run greets the child with a choice; Keep practising puts back the SAME problem; a checkpoint after
+ * clicked: a saved run greets the child with a choice; Keep practicing puts back the SAME problem; a checkpoint after
  * the 5th and the 10th answer; Keep going; Take a break celebrates with the points; the topic becomes done at 12.
  * ⚠️ Every expected line is written out here, never imported from sessionCopy.ts (a check that imports the value it
  * asserts passes because the code equals itself). Only the network and the voice are replaced.
@@ -77,7 +77,7 @@ describe('short practice sessions', () => {
     expect(text()).toContain('Welcome back! ⭐')
     expect(text()).toContain('Your spot is saved.')
     const saved = loadRun(L, lesson.id)!.current.problem.text
-    await click('Keep practising')
+    await click('Keep practicing')
     expect(text()).toContain(saved)                                  // exactly where the child stopped
 
     await answerNotRight()                                           // 4
@@ -95,20 +95,37 @@ describe('short practice sessions', () => {
     expect(loadRun(L, lesson.id)!.asked).toBe(12)
 
     await click('Take a break')                                      // the top bar's, mid-round
-    expect(text()).toContain('Great work, 9 questions done! ⭐')
-    expect(text()).toContain('Your spot is saved.')
+    // Practice is complete, so this is Screen 9 (founder, 2026-09-24): Screen 8's sentence and the math-word sticker —
+    // not the break screen, which is for a topic still in progress (next test).
+    expect(text()).toContain('Screen 9 of 9')
+    expect(text()).toContain('You got it')
+    expect(host.querySelector('[data-sticker]')?.textContent).toBe(`⭐ ${lesson.won.sticker}`)
+    expect(text()).not.toContain('Your spot is saved.')
     expect(text()).toContain('+19 points')                           // 9 answers × 1, + 10 for the topic becoming done
     expect(text()).not.toMatch(/\b\d+ of \d+\b|%/)
     await click('Back to topics')
     expect(onExit).toHaveBeenCalledTimes(1)
   })
 
+  it('a right answer says "Right!" and the next problem comes by itself — no Next problem tap (founder, 2026-09-24)', async () => {
+    await click('Keep practicing')
+    const run = loadRun(L, lesson.id)!
+    await type(String(solutionOf(run.current.problem)))
+    expect(text()).toContain('Right!')
+    expect(text()).not.toContain('The answer is')
+    expect(loadRun(L, lesson.id)!.asked).toBe(3)                    // still on it, "Right!" showing
+    await act(async () => { await new Promise(r => setTimeout(r, 1600)) })
+    expect(loadRun(L, lesson.id)!.asked).toBe(4)                    // moved on without a tap
+    expect(text()).not.toContain('Right!')
+  })
+
   it('Take a break from the checkpoint', async () => {
-    await click('Keep practising')
+    await click('Keep practicing')
     await answerNotRight(); await answerNotRight()
     expect(dialog()).toContain('5 questions done! ⭐ Nice work.')
     await click('Take a break')
     expect(text()).toContain('Great work, 2 questions done! ⭐')
+    expect(text()).not.toContain('Screen 9 of 9')                   // not done yet: the break, not Screen 9
     expect(loadRun(L, lesson.id)!.asked).toBe(5)
   })
 

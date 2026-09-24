@@ -25,7 +25,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
         { t: 'Add more students', d: 'One at a time, or a list of usernames.', tour: { title: 'Add more students', steps: [
           { url: `/parent?class=${k}&tab=students`, target: 'add-students', title: 'Add students', text: 'Each new student gets a temporary password, and the class’s modules.' }] } },
         { t: 'Help a student who can’t sign in', d: 'Give them a new temporary password.', tour: { title: 'Help a student sign in', steps: [
-          { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Find them in the list', text: '“New password” gives them a temporary one; they choose their own at first sign-in. “Set a login” for anyone without one.' }] } },
+          { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Find them in the list', text: '“New password” gives them a temporary one; they choose their own at first sign-in. “Set up login” for anyone without one.' }] } },
         { t: 'Look at one student', d: 'Their progress, lessons and due dates.', tour: { title: 'Look at one student', steps: [
           { url: `/parent?class=${k}&tab=students`, target: 'roster', title: 'Tap a name', text: 'Their own page: progress, the lessons they see, due dates and their login.' }] } },
       ] },
@@ -50,8 +50,8 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
       { t: t('Set up a new child'), d: t('Add them, give them a login, choose their lessons.'), tour: { title: t('Set up a new child'), steps: [
         { url: '/parent', target: 'add-child', title: t('Add a child'), text: t('Their name, and the modules they should see.') },
         ...(c ? [{ url: `/parent?child=${c}&tab=login`, target: 'login-card', title: t('Give them a login'), text: t('With a username and password they can sign in on any device, on their own.') },
-                 { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Choose what they learn'), text: t('Tap “Change” and tick modules or single topics, from any grade.') },
-                 { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: t('Game time (optional)'), text: t('They earn minutes of the game by practising. It starts on, at 20 minutes a day; turn it off or change the limit here.') }] : [])] } },
+                 { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Choose what they learn'), text: t('Tick modules or single topics, from any grade, then Save.') },
+                 { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: t('Game time (optional)'), text: t('They earn minutes of the game by practicing. It starts on, at 20 minutes a day; turn it off or change the limit here.') }] : [])] } },
       ...(c ? [{ t: t('Let my child start learning here'), d: t('Open their lessons on this device.'), tour: { title: t('Start learning'), steps: [
         { url: `/parent?child=${c}`, target: 'start-learning', title: t('Start learning'), text: t('Opens their lessons on this device. On their own device they sign in with their login instead.') }] } }] : []),
     ] },
@@ -61,16 +61,16 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
           { url: '/parent', target: `child-${c}`, title: t('Every child has a card'), text: t('Their next lesson and how far along they are.') },
           { url: `/parent?child=${c}&tab=progress`, target: 'tab-progress', title: t('Their progress'), text: t('Lessons finished, topics mastered, and what they find hard.') }] } },
         { t: t('Change what my child learns'), d: t('Whole modules or single topics, any grade.'), tour: { title: t('Change what they learn'), steps: [
-          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('What they see'), text: t('“Change” opens the list: tick whole modules or single topics from any grade, or give them every topic. Then Save.') }] } },
+          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('What they see'), text: t('Tick whole modules or single topics from any grade, or give them every topic. Then Save.') }] } },
         { t: t('Give homework with a due date'), d: t('Pick a lesson and a day.'), tour: { title: t('Give homework'), steps: [
-          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Check they can see it'), text: t('“Change” adds a module or a single topic.') },
+          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Check they can see it'), text: t('Tick a module or a single topic here, then Save.') },
           { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-due', title: t('Add a due date'), text: t('The lesson goes to the top of their list, with the date. It saves straight away.') }] } },
       ] },
       { h: t('Login and game time'), items: [
         { t: t('Give my child a login, or a new password'), d: t('So they can sign in on their own device.'), tour: { title: t('Their login'), steps: [
           { url: `/parent?child=${c}&tab=login`, target: 'login-card', title: t('Their login'), text: t('Set a username and password, or change them if they forgot.') }] } },
         { t: t('Set game time'), d: t('Turn it on or off, and the most minutes a day.'), tour: { title: t('Game time'), steps: [
-          { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: t('Game time'), text: t('They earn points by practising and spend them on minutes of the game. You choose on/off and the daily limit.') }] } },
+          { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: t('Game time'), text: t('They earn points by practicing and spend them on minutes of the game. You choose on/off and the daily limit.') }] } },
       ] },
       { h: t('Family and data'), items: [
         { t: t('Share with my partner'), d: t('Let another adult see the dashboard.'), tour: { title: t('Share with my partner'), steps: [

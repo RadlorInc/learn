@@ -168,7 +168,7 @@ export default function RootPage() {
         ))}
 
         <p style={{ fontSize: 15, lineHeight: 1.6, color: '#5b4c39', margin: '22px 0 0' }}>
-          Children earn points by practising and can spend them on game time, up to a daily limit you set.
+          Children earn points by practicing and can spend them on game time, up to a daily limit you set.
           If the connection drops during a lesson, their answers are kept on the device and sent when it is back.
         </p>
 
