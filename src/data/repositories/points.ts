@@ -83,6 +83,18 @@ export async function getRecentPoints(learnerId: string, days: number): Promise<
   } catch { return null }
 }
 
+/** When each topic was first mastered, all time: lesson id → timestamp. null = could not read. */
+export async function getMasteredDates(learnerId: string): Promise<Record<string, string> | null> {
+  try {
+    const { data, error } = await db().from('point_events').select('lesson_id, created_at')
+      .eq('learner_id', learnerId).eq('reason', 'mastered').order('created_at')
+    if (error) return null
+    const out: Record<string, string> = {}
+    for (const r of data as { lesson_id: string | null; created_at: string }[]) if (r.lesson_id && !out[r.lesson_id]) out[r.lesson_id] = r.created_at
+    return out
+  } catch { return null }
+}
+
 /** 'unavailable' = not migrated yet; null = could not read. */
 export async function getWallet(learnerId: string): Promise<Wallet | 'unavailable' | null> {
   try {
