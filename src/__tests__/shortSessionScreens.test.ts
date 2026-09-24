@@ -107,6 +107,18 @@ describe('short practice sessions', () => {
     expect(onExit).toHaveBeenCalledTimes(1)
   })
 
+  it('a right answer says "Right!" and the next problem comes by itself — no Next problem tap (founder, 2026-09-24)', async () => {
+    await click('Keep practicing')
+    const run = loadRun(L, lesson.id)!
+    await type(String(solutionOf(run.current.problem)))
+    expect(text()).toContain('Right!')
+    expect(text()).not.toContain('The answer is')
+    expect(loadRun(L, lesson.id)!.asked).toBe(3)                    // still on it, "Right!" showing
+    await act(async () => { await new Promise(r => setTimeout(r, 1600)) })
+    expect(loadRun(L, lesson.id)!.asked).toBe(4)                    // moved on without a tap
+    expect(text()).not.toContain('Right!')
+  })
+
   it('Take a break from the checkpoint', async () => {
     await click('Keep practicing')
     await answerNotRight(); await answerNotRight()

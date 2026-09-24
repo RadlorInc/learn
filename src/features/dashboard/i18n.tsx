@@ -245,6 +245,8 @@ export const ES: Record<string, string> = {
   'Grades 3–5': 'Grados 3 a 5',
   'Grades 6–8': 'Grados 6 a 8',
   'Grade {n}': 'Grado {n}',
+  '1 topic chosen': '1 tema elegido',
+  '{n} topics chosen': '{n} temas elegidos',
   'Date removed.': 'Fecha quitada.',
   'Remove': 'Quitar',
   'Lesson': 'Lección',

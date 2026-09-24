@@ -13,7 +13,7 @@ import { setSceneVoice, prefetchClips, setClipRate } from '@/infra/voiceClipPlay
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
-  START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, showAnswer, outcomeOf, SAY,
+  START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
 import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, FRESH, type Run, type Pause } from './adaptive'
@@ -32,7 +32,7 @@ import { Chalkboard } from './Chalkboard'
 import { beatMs } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
-import { PracticeLayout, hintBtn } from './PracticeLayout'
+import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
 import { Feedback } from './Feedback'
 
 /** After her last line on a teaching screen, how long the finished board stays before the lesson moves on. Founder,
@@ -92,8 +92,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const [session, setSession] = useState({ answered: 0, points: 0, mastered: false })
   const keep = (next: Run) => { setRun(next); saveRun(learnerId, lesson.id, toSaved(next)); syncRun(learnerId, lesson.id) }
   const firstTry = useRef(false)              // Screen 8 solved with no miss: adaptive practice starts one level up
-  const doneHere = useRef(false)              // the topic became done in this session (mastered, or its 12th answer)
-  const wonAt = useRef<ReturnType<typeof wonFor> | null>(null)   // how Screen 8 ended — Screen 9 says it after practice
+  const [doneHere, setDoneHere] = useState(false)   // the topic became done in this session (mastered, or its 12th answer)
+  const [wonAt, setWonAt] = useState<ReturnType<typeof wonFor> | null>(null)   // how Screen 8 ended — Screen 9 says it after practice
 
   // The beat clock. A teaching screen with `beats` reveals itself line by line — her words on the right, what she
   // puts on the board on the left — so BOTH columns read `shown`, and it has to live above the early returns below.
@@ -112,6 +112,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     if (spoken) say(spoken)
     // A laddered topic is done by its run (see nextProblem); its 'finish' screen is only the break.
     if (n.mode === 'finish' && s.mode !== 'finish' && !ladder) onFinish()
+    if (n.mode === 'won' && s.mode !== 'won') setWonAt(wonFor(lesson, n))
   }
   const screenSay = SAY.screen
   // Screen 1 has no beats, so the beat clock never speaks it — and since the audio button went (2026-09-20) nothing
@@ -170,12 +171,20 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const won = s.mode === 'won'
   useEffect(() => {
     if (!won) return
-    wonAt.current = wonFor(lesson, s)
     // A child who did not solve the twin gets no check: nothing to celebrate, so no pause either.
     const id = setTimeout(startPractice, wonFor(lesson, s).helped ? 0 : 1500)
     return () => clearTimeout(id)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per arrival on the won state, with that render's state
   }, [won])
+  // A right practice answer moves on by itself; the button stays for a child who wants to go sooner. Not after the
+  // worked steps — those are there to be read.
+  const nextRef = useRef<() => void>(() => {})
+  const rightAt = s.mode === 'practice' && s.feedback === 'right' ? s.practice : -1
+  useEffect(() => {
+    if (rightAt < 0) return
+    const id = setTimeout(() => nextRef.current(), RIGHT_MS)
+    return () => clearTimeout(id)
+  }, [rightAt])
 
 
   // "Didn't get it?" on every screen, for a signed-in child only (the row belongs to a learner). Opening it pauses the
@@ -248,11 +257,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       const before = (id: string) => (id === lesson.id ? run.standing : run.review?.standing ?? FRESH)
       const gained = (outcome === 'first' ? 2 : 1) + moved.saved.filter(([id, st]) => st.level > before(id).level).length * 3
         + (!was && runDone(moved.run) ? 10 : 0) + (!was && moved.pause === 'mastered' ? 15 : 0)
-      if (runDone(moved.run) && !was) { onFinish(); doneHere.current = true }
+      if (runDone(moved.run) && !was) { onFinish(); setDoneHere(true) }
       setSession(x => ({ answered: x.answered + 1, points: x.points + gained, mastered: x.mastered || moved.pause === 'mastered' }))
       setPause(moved.pause)
       go({ ...s, practice: s.practice + 1, misses: 0, feedback: null })
     }
+    // eslint-disable-next-line react-hooks/refs -- the latest handler for the timer, as useLatestRef does (idempotent)
+    nextRef.current = nextProblem
     const of = ladder ? '' : ' of 5'
     return (
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
@@ -272,7 +283,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           </form>
         )}
         {(s.feedback === 'idea' || (asked && answering)) && <p style={idea}>{bigIdea}</p>}
-        {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right! The answer is {showAnswer(solutionOf(problem))}.</p>}
+        {s.feedback === 'right' && <p style={right}><span style={tick} aria-hidden>✓</span>Right!</p>}
         {worked && <>
           <div style={hint}>
             <b>Here&apos;s how this one works:</b>
@@ -401,12 +412,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   } else {
     crumb = 'Done!'; at = 8
     // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
-    const topicDone = !ladder || doneHere.current || lessonDone(learnerId, lesson.id)
+    const topicDone = !ladder || doneHere || lessonDone(learnerId, lesson.id)
     const allDone = topicDone && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
     // Screen 9, once practice is complete: Screen 8's sentence and the math word (README: the math word appears ONLY
     // here). A child who needed the worked steps on the twin never hears "You got it" — the big idea instead.
-    const w = topicDone ? wonAt.current ?? { title: 'You got it', ...lesson.won, helped: false } : null
+    const w = topicDone ? wonAt ?? { title: 'You got it', ...lesson.won, helped: false } : null
     picture = <div style={stage}>
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
       {w

@@ -39,6 +39,10 @@ export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit
 }
 
 /** Hint, bottom left — as big as Check, but white. */
+/** A right practice answer: the green "Right!" stays this long, then the next problem comes by itself (founder,
+ * 2026-09-24: no "Next problem" tap needed). Both practice screens use it. */
+export const RIGHT_MS = 1400
+
 export const hintBtn: CSSProperties = { ...pill, minHeight: 56, padding: '12px 24px', fontSize: 20, borderWidth: 4, borderRadius: 16, boxShadow: `4px 4px 0 ${INK}` }
 
 // Landscape: problem on the left, scratch pad on the right (the template's 1.1 : 0.9). Portrait: problem, then the pad.

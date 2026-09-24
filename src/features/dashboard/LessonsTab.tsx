@@ -180,7 +180,7 @@ function Chooser({ name, initial, onClose, onSave }: {
             const n = MODULES.filter(m => m.grade === g).flatMap(m => m.lessons).filter(l => chosen.has(l.id)).length
             return <button key={g} type="button" aria-pressed={g === grade} onClick={() => { setGrade(g); setOpen(null) }}
               style={{ padding: '6px 14px', minHeight: 40, borderRadius: 999, border: '2px solid', borderColor: g === grade ? 'var(--milo-orange)' : 'var(--card-border)', background: g === grade ? 'var(--milo-orange-soft)' : 'var(--paper-soft)', fontWeight: 800, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
-              {t('Grade {g}', { g })}{n > 0 ? ` · ${n}` : ''}</button>
+              {t('Grade {g}', { g })}{n > 0 ? ` · ${t(n === 1 ? '1 topic chosen' : '{n} topics chosen', { n })}` : ''}</button>
           })}
         </div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
