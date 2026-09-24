@@ -212,7 +212,7 @@ function Chooser({ name, initial, onClose, onSave }: {
           })}
         </div>
       </>}
-      {dirty && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, position: 'sticky', bottom: 0, background: 'var(--paper-soft)', padding: '14px 0 4px', marginTop: 14, borderTop: '1px solid var(--card-border)' }}>
+      {dirty && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, position: 'sticky', bottom: 0, background: 'var(--paper-soft)', padding: '14px 0 calc(4px + env(safe-area-inset-bottom))', marginTop: 14, borderTop: '1px solid var(--card-border)' }}>
         <button type="button" style={dghost} onClick={onClose}>{t('Cancel')}</button>
         <button type="button" style={dbtn} disabled={busy || (!!draft && !draft.length)}
           onClick={async () => { setBusy(true); await onSave(draft); setBusy(false) }}>{busy ? t('Saving…') : t('Save')}</button>

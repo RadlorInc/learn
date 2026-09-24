@@ -422,7 +422,9 @@ function inspect([T, B, L, R]) {
       // …or over the PAGE, when the page can scroll far enough to lift this control above the bar. ⚠️ Not merely "the
       // page scrolls": a control at the very end of the page that can never leave the bar's shadow must still count.
       if (fixedish(h) && !fixedish(e)) {
-        const bar = h.getBoundingClientRect(), room = document.documentElement.scrollHeight - (scrollY + H)
+        // The PINNED box itself (h may be a button inside it, which ends above the screen's edge by the bar's padding).
+        let pin = h; for (let n = h; n && n !== document.body; n = n.parentElement) { const p = getComputedStyle(n).position; if (p === 'fixed' || p === 'sticky') { pin = n; break } }
+        const bar = pin.getBoundingClientRect(), room = document.documentElement.scrollHeight - (scrollY + H)
         if (bar.bottom >= H - 2 && room >= r.bottom - bar.top) continue   // a bar pinned to the bottom, and room to scroll past it
       }
       out.push(['covered', `${sel(e)} is under ${sel(h)}`])
