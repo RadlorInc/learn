@@ -309,6 +309,10 @@ describe('withdraw permission for all my children', () => {
     expect(nav.pushed).toEqual(['/parent'])
     expect(m.card(), 'still on the Account view after withdrawing').toBeNull()
     expect(m.host.textContent).toContain('We have stopped collecting information about every child on your account and deleted what we held about them. Your account stays open.')
+    // …and ABOVE the notice that now follows it: the full notice is long, and a banner under it is not seen.
+    const text = m.host.textContent ?? ''
+    expect(text.indexOf('Before your child starts: what we collect'), 'control: the notice is on the dashboard').toBeGreaterThan(-1)
+    expect(text.indexOf('We have stopped collecting'), 'the result banner is below the notice').toBeLessThan(text.indexOf('Before your child starts: what we collect'))
     await m.done()
   })
 

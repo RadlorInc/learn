@@ -425,15 +425,17 @@ function Dashboard() {
   const h1 = { margin: 0, fontSize: 28, fontWeight: 900, color: P.ink, fontFamily: 'var(--font-display)' } as const
 
   const notices = <>
-    {/* Consent-once (C2): a PARENT with no granted account consent sees the notice, or "waiting", here.
-        Never blocking — the dashboard stays usable; only adding a child waits for the consent. */}
-    {role === 'parent' && ack !== undefined && <AccountConsentCard lang={lang} ack={ack} />}
+    {/* The result of what the adult just did comes FIRST — after withdrawing for every child the full notice follows, and
+        a banner under it is a banner nobody sees (2026-09-24). */}
     {actionMsg && (
       <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, fontWeight:600, color:'#166534', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         ✅ {actionMsg}
         <button onClick={() => setActionMsg(null)} aria-label={t('Dismiss')} style={{ background:'none', border:'none', cursor:'pointer', fontSize:18, color:P.ink3, minWidth:44, minHeight:44 }}>×</button>
       </div>
     )}
+    {/* Consent-once (C2): a PARENT with no granted account consent sees the notice, or "waiting", here.
+        Never blocking — the dashboard stays usable; only adding a child waits for the consent. */}
+    {role === 'parent' && ack !== undefined && <AccountConsentCard lang={lang} ack={ack} />}
     {invites.length > 0 && (
       <div style={{ marginBottom:20 }}>
         {inviteMsg && <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:12, fontSize:14, fontWeight:600, color:'#166534' }}>✅ {inviteMsg}</div>}
