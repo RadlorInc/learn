@@ -27,6 +27,7 @@ vi.mock('@/features/consent/server', async orig => {
     ...real,
     requireConfig: () => {},
     userFromBearer: async () => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+    adultFromBearer: async () => ({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', email: 'p@x.test', firstName: 'Maya' }),
     rpc: vi.fn(async (fn: string) => {
       log.push(`rpc:${fn}`)
       if (fn === 'consent_lookup') return lookup ? [lookup] : []
@@ -169,14 +170,15 @@ describe('request', () => {
     expect(r.status).toBe(409)
     expect(log).toEqual([])
   })
-  it('sends B1 to the ACCOUNT\'s address with both links, then records that it went', async () => {
+  it('sends B1 to the ACCOUNT\'s address, greeting the parent by first name, with ONE link (to the page with the box), then records that it went', async () => {
     const r = await req({ noticeVersion: NOTICE_VERSION, lang: 'en' })
     expect(r.status).toBe(200)
     expect(log).toEqual(['rpc:consent_request', 'send:Please confi', 'rpc:consent_record_request_sent'])
     expect(sent[0].to).toBe('p@x.test')
     expect(sent[0].at, 'B1 goes now, not later').toBeUndefined()
-    expect(sent[0].html).toMatch(/\/consent\/respond#t=[A-Za-z0-9_-]{43}"/)
-    expect(sent[0].html).toMatch(/\/consent\/respond#t=[A-Za-z0-9_-]{43}&amp;choice=decline"/)
+    expect(sent[0].html).toContain('Hi Maya,')
+    expect(sent[0].html.match(/\/consent\/respond#t=[A-Za-z0-9_-]{43}"/g), 'exactly one link to the page').toHaveLength(1)
+    expect(sent[0].html).not.toContain('choice=decline')
   })
   // ⚠️ CONSENT-ONCE: needs the request route change. consent_request (20260924100000) takes p_scope and p_ack_at and
   // refuses anything but 'account'; a route still sending the seven old parameters names a function that no longer

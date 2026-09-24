@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createHash } from 'node:crypto'
-import { NOTICE, B1, B2, B3, WITHDRAW, WITHDRAW_ALL, SIGNUP, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
+import { NOTICE, B1, B2, B3, WITHDRAW, WITHDRAW_ALL, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
 
 const ROOT = resolve(__dirname, '../..')
 const doc = (f: string) => readFileSync(resolve(ROOT, 'docs/legal', f), 'utf8')
@@ -80,12 +80,12 @@ const bDoc = units(
   l => /^#{2,3} /.test(l) || l === '**Body:**' || l.startsWith('**Timing:**'),
 )
 const bCopy = en([
-  B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.covers, B1.grant, B1.decline, B1.ignore, B1.details, B1.address,
+  B1.subject, B1.hi, B1.thanks, B1.before, B1.store, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.address, B1.covers, B1.tick, B1.decline,
   B2.heading, ...B2.body,
   B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
   WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
   // consent-once (2026-09-24): the new screens, each held to document 03 both ways
-  ...Object.values(WITHDRAW_ALL), ...Object.values(SIGNUP), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
+  ...Object.values(WITHDRAW_ALL), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
 ])
 
 /**
@@ -163,10 +163,10 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
     NOTICE.permission, NOTICE.permissionHow, NOTICE.rightsHeading, NOTICE.rightsIntro, ...NOTICE.rightsList,
     NOTICE.rightsHow, NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect, NOTICE.detailsHeading,
     NOTICE.details, NOTICE.contactHeading, NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
-    B1.subject, B1.hi, B1.someone, B1.before, ...B1.list, B1.doNot, B1.covers, B1.grant, B1.decline, B1.ignore, B1.details,
+    B1.subject, B1.hi, B1.thanks, B1.before, B1.store, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.covers, B1.tick, B1.decline,
     B2.heading, ...B2.body, B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime,
     WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep, ...Object.values(PROPOSED),
-    ...Object.values(WITHDRAW_ALL), ...Object.values(SIGNUP), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
+    ...Object.values(WITHDRAW_ALL), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
   ]
   it('every string has a Spanish version that is not just the English', () => {
     expect(all.length).toBeGreaterThan(80)
@@ -198,13 +198,16 @@ describe('the rendered emails and screen say nothing the documents do not', () =
 
   it('B1 and B3, both parts', async () => {
     const { renderB1, renderB3 } = await import('@/features/consent/email')
-    const b1 = renderB1('en', 'https://x.test/g', 'https://x.test/d'), b3 = renderB3('en', 'https://x.test/w')
+    // The parent's first name is the one thing the renderer fills in; put the document's {name} back before comparing.
+    const named = renderB1('en', 'https://x.test/g', 'Maya')
+    const b1 = { ...named, text: named.text.replace('Hi Maya,', 'Hi {name},'), html: named.html.replace('Hi Maya,', 'Hi {name},') }
+    const b3 = renderB3('en', 'https://x.test/w')
     const htmlLines = (h: string) => h.split(/<\/(?:p|li)>/).map(s => s.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"))
     // The renderer's own lines: the two buttons in the text part carry their URL.
-    const own = (l: string) => /^(I give permission|No — cancel this request): https:/.test(l)
+    const own = (l: string) => l === '☐ I’ve Read and I Agree to the Privacy Policy.' || /^https:\/\/x\.test\/g$/.test(l)
     for (const [name, m] of [['B1', b1], ['B3', b3]] as const) {
       expect(extra(m.text.split('\n').filter(l => !own(l))), `${name} text part`).toEqual([])
-      expect(extra(htmlLines(m.html).filter(l => !/^(I give permission|No — cancel this request)+$/.test(l.trim()) && !own(l))), `${name} html part`).toEqual([])
+      expect(extra(htmlLines(m.html).filter(l => l.trim() !== 'I’ve Read and I Agree to the Privacy Policy.' && !own(l))), `${name} html part`).toEqual([])
       expect(m.text.length, `control: ${name} rendered`).toBeGreaterThan(200)
     }
   })

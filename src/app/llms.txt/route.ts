@@ -23,7 +23,7 @@ const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
 export function GET() {
   const text = `# ${APP_NAME}
 
-> Adaptive math for grades 3 to 8: a lesson, then practice that adapts to what the child gets wrong.
+> Adaptive math from KG to grade 8: a lesson, then practice that adapts to what the child gets wrong.
 
 ${APP_NAME} is made by ${COMPANY} (${COMPANY_URL}) and lives at ${SITE_URL}.
 

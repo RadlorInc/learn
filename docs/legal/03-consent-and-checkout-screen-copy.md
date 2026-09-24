@@ -117,30 +117,39 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 **Body:**
 
-> Hi,
+> Hi {name},
 >
-> Someone — we believe you — created a Radlic account and asked to add children to it.
+> Thanks for signing up with Radlic.
 >
-> Before we collect anything from any child on this account, US law requires your permission. Here is exactly what we would collect about each child you add:
+> Before your children can use it, US law requires your permission.
 >
-> - your child's first name or nickname
-> - the lessons you choose for them, and a grade band (grades 3–5 or 6–8) worked out from those lessons
-> - the avatar you pick and the username your child signs in with
-> - their answers to maths questions, their scores, their points and progress, and anything they save in a game
-> - any feedback they send us about a lesson
-> - a small number of product events, such as a lesson starting
-> - basic technical information from the device, to keep the app working and secure
+> For each child you add, we store:
+> - their first name or nickname, the avatar you pick and their username
+> - the lessons you choose, and a grade band (grades 3–5 or 6–8) worked out from them
+> - their answers, points and progress
+> - any feedback they send, a few product events and basic device information
 >
-> We do not ask your child for a last name, email, phone number, address, photo, voice recording, or location. We do not sell your child's information, and we do not use it for advertising.
+> We never sell your child's information or use it for advertising.
 >
+> Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
+>
+> **[ I’ve Read and I Agree to the Privacy Policy. ]** (a link drawn as an empty checkbox; it opens the page below)
+>
+> Didn't sign up? Ignore this email.
+>
+> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+
+### B1b. The page the tick link opens — ticking the box there gives the permission
+
+**Heading:** `Please confirm: permission for your children to use Radlic`
+
 > This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.
 >
-> **[ I give permission ]**    **[ No — cancel this request ]**
->
-> If you did nothing, you can ignore this email and nothing will happen.
->
-> Full details: [Privacy Policy](https://radlic.com/legal/privacy)
-> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+> Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
+
+**Checkbox (unticked):** `I’ve Read and I Agree to the Privacy Policy.` (ticking it records the permission; there is no separate button)
+
+**Button:** `No — cancel this request`
 
 ### B2. Confirmation screen after the parent clicks
 
@@ -204,23 +213,6 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ---
 
-## Signup page — shown before the signup buttons, which stay disabled until the box is ticked
-
-**Heading:** `Before you create an account: what we collect about your children`
-
-> For each child you add, Radlic stores their first name or nickname, the avatar you pick, the lessons you choose and a grade band, their answers and progress, and basic technical information from the device. We never ask a child for an email address, phone number, home address, photograph or voice recording, and we never sell their information or use it for advertising.
-
-**Link:** `Read the full notice` (opens the full notice, document 02)
-
-**Checkbox (unticked):** `I'm a parent or legal guardian, I've read what we collect, and I agree.`
-
-> After you sign up, we will email you once to ask for your permission. You can add your children as soon as you have given it.
-
-> Signing up as a teacher, not a parent?
-
-**Button:** `Continue as a teacher` (enables the signup buttons without the parent's tick; a teacher's account cannot add a child until it has given the permission above)
-
----
 
 ## Waiting for permission — the parent dashboard, until "I give permission" is clicked
 

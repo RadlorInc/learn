@@ -11,9 +11,9 @@
  *   none, after a withdrawal / decline / expiry → the notice only (never an automatic email)
  *                            otherwise the notice, and B1 only after "I'm the parent… — continue"
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PROPOSED, REASK, WAITING, NOTICE, type Lang, type L } from './copy'
-import { readAccountConsent, requestAccountConsent, daysLeft, type Ack, type AccountConsent } from './consentState'
+import { readAccountConsent, requestAccountConsent, daysLeft, type AccountConsent } from './consentState'
 import { Notice, S } from './Notice'
 import { Md } from './Md'
 
@@ -22,15 +22,12 @@ export type View =
   | { k: 'loading' } | { k: 'notice' } | { k: 'reask' } | { k: 'sending'; reask?: boolean }
   | { k: 'waiting'; email: string; days: number } | { k: 'error'; stale?: boolean } | Granted
 
-export function useAccountConsent({ lang, auto, ack }: { lang: Lang; auto?: boolean; ack?: Ack | null }) {
+export function useAccountConsent({ lang }: { lang: Lang }) {
   const [view, setView] = useState<View>({ k: 'loading' })
-  const asked = useRef(false)
 
-  async function ask(ackAt?: string, reask?: boolean) {
-    if (asked.current && ackAt) return   // the automatic request goes out once per visit
-    if (ackAt) asked.current = true
+  async function ask(reask?: boolean) {
     setView({ k: 'sending', reask })
-    const r = await requestAccountConsent(lang, ackAt)
+    const r = await requestAccountConsent(lang)
     setView(r.ok ? { k: 'waiting', email: r.email, days: r.days } : { k: 'error', stale: r.error === 'stale' })
   }
 
@@ -42,17 +39,12 @@ export function useAccountConsent({ lang, auto, ack }: { lang: Lang; auto?: bool
       if (s.k === 'pending') return setView({ k: 'waiting', email: s.email, days: daysLeft(s.until) })
       if (s.k === 'reask') return setView({ k: 'reask' })
       if (s.k === 'error') return setView({ k: 'error' })
-      // ⚠️ ONLY FOR AN ACCOUNT WITH NO CONSENT HISTORY. A parent who withdrew, declined or let a request lapse still
-      // has their signup tick on the device — sending B1 by itself then would email a consent request to someone who
-      // just said no. They see the notice and choose.
-      if (auto && ack && s.fresh) return void ask(ack.at)
       setView({ k: 'notice' })
     })
     return () => { live = false }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  return { view, ask: () => ask(undefined, view.k === 'reask') }
+  return { view, ask: () => ask(view.k === 'reask') }
 }
 
 /** Every non-granted state as one block of content. Pure: the preview route renders it with made-up states. */
@@ -93,8 +85,8 @@ export function ConsentPanel({ lang, view, onAsk, onClose }: { lang: Lang; view:
 }
 
 /** The dashboard's card: C2. Renders nothing once the account consent is granted and current. */
-export function AccountConsentCard({ lang, ack }: { lang: Lang; ack: Ack | null }) {
-  const { view, ask } = useAccountConsent({ lang, auto: true, ack })
+export function AccountConsentCard({ lang }: { lang: Lang }) {
+  const { view, ask } = useAccountConsent({ lang })
   const [hidden, setHidden] = useState(false)
   if (hidden || view.k === 'granted' || view.k === 'loading') return null
   return (

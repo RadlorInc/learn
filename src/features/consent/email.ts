@@ -14,23 +14,29 @@ const small = (s: string) => `<p style="margin:22px 0 0;font-size:13px;color:#7a
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 /** Both halves escaped: the decline link carries `&choice=`, and an unescaped attribute is also how a
  *  label with a quote in it would break the button — caught by consentRoutes.test.ts, not by a reader. */
-const button = (label: string, href: string, primary: boolean) =>
-  `<a href="${esc(href)}" style="display:inline-block;margin:0 10px 10px 0;padding:12px 20px;border-radius:999px;` +
-  `font-weight:700;text-decoration:none;${primary ? 'background:#E0591F;color:#fff' : 'border:2px solid #E0591F;color:#E0591F'}">${esc(label)}</a>`
+/** A link drawn as an empty checkbox: an email cannot carry a working one (mail clients strip form controls). */
+const checkbox = (label: string, href: string) =>
+  `<a href="${esc(href)}" style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border:2px solid #E0591F;` +
+  `border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;color:#2B1D14">` +
+  `<span style="display:inline-block;width:20px;height:20px;border:2px solid #E0591F;border-radius:4px;background:#fff"></span>${esc(label)}</a>`
 
-export function renderB1(lang: Lang, grantUrl: string, declineUrl: string): Rendered {
+/** B1. The "☐ I've read and agreed…" link opens the page whose box IS the grant. Clicking in the email cannot grant by itself: mail
+ *  scanners open every link, so a link that granted would agree for every parent before anyone read it. */
+export function renderB1(lang: Lang, agreeUrl: string, firstName: string | null): Rendered {
   const t = (x: L) => x[lang]
+  const hi = firstName ? t(B1.hi).replace('{name}', firstName) : t(B1.hi).replace(/,? \{name\}/, '')
   const html = wrap([
-    p(t(B1.hi)), p(t(B1.someone)), p(t(B1.before)),
+    p(hi), p(t(B1.thanks)), p(t(B1.before)),
+    `<p style="margin:0">${toHtml(t(B1.store))}</p>`,
     `<ul style="margin:0 0 14px;padding-left:22px">${B1.list.map(x => `<li>${toHtml(t(x))}</li>`).join('')}</ul>`,
-    p(t(B1.doNot)), p(t(B1.covers)),
-    `<p style="margin:18px 0 8px">${button(t(B1.grant), grantUrl, true)}${button(t(B1.decline), declineUrl, false)}</p>`,
-    p(t(B1.ignore)), small(t(B1.details)), small(B1.address),
+    p(t(B1.doNot)), p(t(B1.details)),
+    `<p style="margin:4px 0 18px">${checkbox(t(B1.tick), agreeUrl)}</p>`,
+    p(t(B1.ignore)), small(B1.address),
   ].join(''))
   const text = [
-    t(B1.hi), t(B1.someone), t(B1.before), B1.list.map(x => `- ${t(x)}`).join('\n'), t(B1.doNot), t(B1.covers),
-    `${t(B1.grant)}: ${grantUrl}\n${t(B1.decline)}: ${declineUrl}`,
-    t(B1.ignore), toText(t(B1.details)), B1.address,
+    hi, t(B1.thanks), t(B1.before), [t(B1.store), ...B1.list.map(x => `- ${t(x)}`)].join('\n'), t(B1.doNot), toText(t(B1.details)),
+    `☐ ${t(B1.tick)}\n${agreeUrl}`,
+    t(B1.ignore), B1.address,
   ].map(s => toText(s)).join('\n\n')
   return { subject: t(B1.subject), html, text }
 }

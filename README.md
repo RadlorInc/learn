@@ -1,6 +1,6 @@
 # Radlic
 
-Adaptive maths for grades 3 to 8, made by Radlor Inc. A lesson explains one idea step by step, the
+Adaptive maths from KG to grade 8, made by Radlor Inc. A lesson explains one idea step by step, the
 way a teacher would at a board; then practice adapts — two right in a row bring a harder *kind* of
 question, a miss brings worked steps. The product rule is *maths without fear*: no timers, no red
 crosses, no visible level. A parent or teacher chooses what each child sees.

@@ -104,8 +104,8 @@ const SURFACES: Record<string, { paint: () => Promise<string>; control: string }
     control: 'Before your child starts',
   },
   'consent-email': {
-    paint: async () => (await import('@/features/consent/email')).renderB1('en', `${ORIGIN}/consent/respond#t=x`, `${ORIGIN}/consent/respond#t=x&choice=decline`).html,
-    control: 'Someone — we believe you',
+    paint: async () => (await import('@/features/consent/email')).renderB1('en', `${ORIGIN}/consent/respond#t=x`, 'Maya').html,
+    control: 'Thanks for signing up with Radlic',
   },
   'withdraw-email': {
     paint: async () => (await import('@/features/consent/email')).renderB3('en', `${ORIGIN}/consent/withdraw#t=x`).html,

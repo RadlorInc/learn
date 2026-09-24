@@ -8,7 +8,8 @@
  * grant it for every parent before they read the email, and email-plus would verify nothing. So the
  * page looks the token up (read-only) and shows the choice; the POST is the parent's own click.
  *
- *   respond  — heading: B1's subject; buttons: B1's two labels; after granting: B2, verbatim
+ *   respond  — heading: B1's subject; the Privacy Policy line, then B1's tick box (unticked) — ticking it IS the grant, there is no
+ *              separate button; after granting: B2, verbatim
  *   withdraw — the withdrawal screen from document 03, verbatim
  * Every other message on this page is from `PROPOSED` in copy.ts and awaits the founder's approval.
  */
@@ -20,9 +21,9 @@ import { WithdrawAll } from './WithdrawAll'
 
 type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'already_consented' | 'declined' | 'withdrawn' | 'expired' | 'unknown' | 'kept' | 'error'
 
-function fragment(): { t: string; choice: string } {
+function fragment(): { t: string } {
   const h = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.hash.slice(1))
-  return { t: h.get('t') ?? '', choice: h.get('choice') ?? '' }
+  return { t: h.get('t') ?? '' }
 }
 
 async function call(t: string, action: string): Promise<{ status: Status; lang?: Lang; name?: string | null; scope?: 'account' | 'child' }> {
@@ -37,7 +38,6 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
   const [status, setStatus] = useState<Status>('loading')
   const [lang, setLang] = useState<Lang>('en')
   const [busy, setBusy] = useState(false)
-  const [choice, setChoice] = useState('')
   const [name, setName] = useState<string | null>(null)
   // consent-once: an ACCOUNT consent's B3 link withdraws for every child, so it gets document 03's "all" screen.
   const [scope, setScope] = useState<'account' | 'child'>('child')
@@ -45,7 +45,6 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
 
   useEffect(() => {
     const f = fragment()
-    setChoice(f.choice)
     void call(f.t, 'lookup').then(r => { if (r.lang) setLang(r.lang); setName(r.name ?? null); if (r.scope === 'account') setScope('account'); setStatus(r.status) })
   }, [])
 
@@ -61,14 +60,17 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
   let content: React.ReactNode
   if (status === 'loading') content = <p style={S.p}>…</p>
   else if (mode === 'respond' && status === 'pending') {
-    const declineFirst = choice === 'decline'
     content = (
       <div data-consent="respond">
         <h1 style={S.h1}>{t(B1.subject)}</h1>
-        <div style={{ display: 'flex', flexDirection: declineFirst ? 'column-reverse' : 'column', gap: 12, marginTop: 20 }}>
-          <button type="button" disabled={busy} onClick={() => act('grant')} style={declineFirst ? S.ghost : S.primary}>{t(B1.grant)}</button>
-          <button type="button" disabled={busy} onClick={() => act('decline')} style={declineFirst ? S.primary : S.ghost}>{t(B1.decline)}</button>
-        </div>
+        <p style={S.p}>{t(B1.covers)}</p>
+        <p style={S.p}><Md s={t(B1.details)} /></p>
+        <label style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 16, lineHeight: 1.4, color: 'var(--ink)', fontWeight: 800, cursor: busy ? 'wait' : 'pointer', padding: '14px 16px', margin: '8px 0 16px', border: '2px solid var(--milo-orange)', borderRadius: 14, minHeight: 48, boxSizing: 'border-box' }}>
+          <input type="checkbox" checked={busy} disabled={busy} onChange={e => { if (e.target.checked) void act('grant') }}
+            style={{ width: 26, height: 26, flex: '0 0 auto', margin: 0, accentColor: '#F26B2C' }} />
+          <span>{t(B1.tick)}</span>
+        </label>
+        <button type="button" disabled={busy} onClick={() => act('decline')} style={S.ghost}>{t(B1.decline)}</button>
       </div>
     )
   } else if (mode === 'withdraw' && status === 'granted' && scope === 'account') {
