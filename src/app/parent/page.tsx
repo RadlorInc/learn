@@ -377,7 +377,7 @@ function Dashboard() {
           { url: '/parent', target: 'upnext', title: t('The one thing to do next'), text: t('We’ll always put the most useful thing here.') },
           { target: first ? `child-${first}` : 'add-child', title: t('One card per child'), text: t('Open a child and everything about them is inside: progress, lessons, game time, login.') },
           { target: 'bell', title: t('Reminders'), text: t('Anything else worth a look waits here.') }, helpStep] }
-    if (id === 'inside-child') return { title: t('Inside a child'), steps: [
+    if (id === 'inside-child') return { title: t('Inside a child’s profile'), steps: [
       { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
       { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
       { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }

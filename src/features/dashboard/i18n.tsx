@@ -64,7 +64,7 @@ export const ES: Record<string, string> = {
   'Open a child and everything about them is inside: progress, lessons, game time, login.': 'Abra la tarjeta de un niño y encontrará todo sobre él: progreso, lecciones, tiempo de juego e inicio de sesión.',
   'Reminders': 'Recordatorios',
   'Anything else worth a look waits here.': 'Aquí espera todo lo demás que vale la pena revisar.',
-  'Inside a child': 'Dentro de la página de un niño',
+  'Inside a child’s profile': 'Dentro del perfil de un niño',
   'Progress': 'Progreso',
   'How they’re doing, and what they find hard.': 'Cómo le va y qué se le hace difícil.',
   'Lessons': 'Lecciones',
