@@ -688,3 +688,22 @@ sees **grade → module → topic** (a *topic* = one `Lesson`: 9 teaching screen
   the pop-in frame: the spec now asserts full opacity, and that passes.
 - **Neighbouring defect, written down:** doc 08 line 33 ("signed out … the on-device store was empty") is false as measured
   today (`milo-newflow-standing-device-*`), and it predates this loop (ROUND2 §5).
+
+### Change of plan — Part B before the launch (24 Sep 2026, founder)
+
+Decisions: keep #209 (live); parent line = option (a), from progress; #210 is updated in place and stays a **Draft**.
+
+| step | status | proof |
+|---|---|---|
+| Rebase #210 onto `main` (#209 merged) | done | clean; the two #209 follow-ups (`lock` regex, welcome crumb) were already in #210 and survive it |
+| Parent line from progress, no events | done | `startedAhead()`; `getRecentNudges` and the nudge's `track` call deleted; e2e asserts **no event** is written; 5 planted breaks red (threshold, never-started, never shown, list ignored ×2) |
+| Doc 08 lines 20 + 33 true (published) | done | signed-out store **measured** (Playwright, fake backend): exactly `milo-newflow-standing-device-<topic>`, `milo-newflow-done-device-<topic>`, `milo-kv-migrated`; nothing in session storage, no cookies, no calls. Gated by `doc08SignedOut.test.ts` (3 breaks red) + the e2e re-measure (a served-tree break red). Rendered page checked: codes shown as code, no raw backticks |
+| CLAUDE.md Draft rule | done | top of CLAUDE.md |
+| Migration for #210 | **none** | `git diff origin/main -- supabase/` empty |
+
+**Found on the way:** with option (a) the line could name a previous topic outside the child's chosen list, which is
+not on their map. Seen in the parent screenshot; now excluded (as the card already was), tested and broken.
+⚠️ **And one of mine, recorded because the rule exists for exactly this:** a `playwright test … | grep && git commit`
+committed screenshots from a run with **1 failure**. The `grep` succeeded, so the `&&` did too, which is CLAUDE.md's
+*never chain a test run to a commit*. It was caught before the push (local only), undone with `reset --soft`, the cause
+was found (the new list filter correctly hid the old line), and the commit was redone after a read 6/6 run.
