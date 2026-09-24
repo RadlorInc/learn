@@ -516,7 +516,7 @@ It would save one email for email/password parents only. Recommendation: keep B1
 Founder's decisions (final): product **Radlic**, domain **radlic.com** (the old one a permanent redirect), company
 unchanged (**Radlor Inc.**, its addresses), **no mascot** (a child's avatar stays). Rules: no production, no merges,
 PR with green CI; rename what people see, keep what machines depend on; history is not rewritten. Built on `main`
-after #202–#204 (no open PR touched visible text, checked on GitHub first). Branch `rename-radlic`, one PR.
+after #202–#204 (no open PR touched visible text, checked on GitHub first). Branch `rename-radlic`, one PR: **#205** (open, green CI, not merged).
 Everything that needs the founder, in order: **`docs/RENAME-MANUAL.md`**.
 
 | step | state | proof |
