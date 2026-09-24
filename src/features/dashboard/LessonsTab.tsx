@@ -5,7 +5,8 @@
  *
  * ⚠️ SAME CHOICES AS BEFORE — the founder's condition: every topic (null), or whole modules and single topics from ANY
  * grade; coming-soon modules cannot be ticked. In two parts so it stays calm: the tab shows only what the child sees,
- * and the choosing happens in a panel opened by "Change" (Save / Cancel).
+ * and the choosing sits right in it, for the parent who can edit (founder, 2026-09-24: no "Change" button — show the
+ * options directly). Save commits; Cancel appears once something is changed, and puts the saved choice back.
  *
  * Due dates keep the storage rule: they live on a chosen list (`lesson_due`), and "every topic" has none — so adding a
  * date never narrows what the child sees, which is what Assign lessons used to do.
@@ -13,7 +14,7 @@
 import { useState, type CSSProperties } from 'react'
 import { MODULES, GRADES, findLesson, searchModule } from '@/features/lessons/modules'
 import { assignmentStatus, localDay, showDay } from '@/features/lessons/progressReport'
-import { Sheet, dbtn, dghost, dcard, dlink } from './Helpers'
+import { dbtn, dghost, dcard, dlink } from './Helpers'
 import { useT, useLang, en, type T } from './i18n'
 
 export type SaveResult = 'ok' | 'not_ready' | 'error'
@@ -45,7 +46,7 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
   onSave: (ids: string[] | null, due: Record<string, string>) => Promise<SaveResult>
 }) {
   const t = useT(), lang = useLang()
-  const [choosing, setChoosing] = useState(false)
+  const [draftKey, setDraftKey] = useState(0)   // bumped to throw a draft away (Cancel) or after a save
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [adding, setAdding] = useState<{ id: string; day: string } | null>(null)
   const today = localDay(new Date())
@@ -70,10 +71,14 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <section style={dcard} data-tour="lessons-what">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          <div><h2 style={h2}>{t('What {name} sees', { name })}</h2><p style={{ margin: '2px 0 0', color: 'var(--ink-soft)' }}>{describe(ids, name, t)}</p></div>
-          {canEdit && <button type="button" style={dghost} onClick={() => { setMsg(null); setChoosing(true) }}>{t('Change')}</button>}
+          <div><h2 style={h2}>{t('What {name} sees', { name })}</h2>{!canEdit && <p style={{ margin: '2px 0 0', color: 'var(--ink-soft)' }}>{describe(ids, name, t)}</p>}</div>
         </div>
-        {items.length > 0 && (
+        {canEdit && <Chooser key={`${(ids ?? []).join()}#${draftKey}`} name={name} initial={ids} onClose={() => { setMsg(null); setDraftKey(k => k + 1) }}
+          onSave={async next => {
+            const kept = Object.fromEntries(Object.entries(due).filter(([id]) => next?.includes(id)))
+            if (await save(next, kept, `${t('Saved.')} ${describe(next, name, t)}`)) setDraftKey(k => k + 1)
+          }} />}
+        {!canEdit && items.length > 0 && (
           <ul style={{ listStyle: 'none', margin: '12px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {items.slice(0, 5).map(({ m, n }) => (
               <li key={m.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '8px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--card-border)' }}>
@@ -81,7 +86,12 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
                 {n < m.lessons.length && <span style={muted}>{t('{n} of {total} topics', { n, total: m.lessons.length })}</span>}
               </li>
             ))}
-            {items.length > 5 && <li><button type="button" style={dlink} onClick={() => setChoosing(true)}>{t('+ {n} more', { n: items.length - 5 })}</button></li>}
+            {items.slice(5).map(({ m, n }) => (
+              <li key={m.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '8px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--card-border)' }}>
+                <b style={{ color: 'var(--ink)' }}>{t('Grade {g}', { g: m.grade })} · {m.title}</b>
+                {n < m.lessons.length && <span style={muted}>{t('{n} of {total} topics', { n, total: m.lessons.length })}</span>}
+              </li>
+            ))}
           </ul>
         )}
         {!canEdit && <p style={{ ...muted, margin: '10px 0 0' }}>{t('Only the parent who added {name} can change their lessons.', { name })}</p>}
@@ -95,7 +105,7 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
         </div>
         {!ids?.length ? (
           <p style={{ margin: '8px 0 0', color: 'var(--ink-soft)' }}>
-            {t('Due dates go on lessons you choose.')} {canEdit && t('Use Change above to choose {name}’s lessons first.', { name })}
+            {t('Due dates go on lessons you choose.')} {canEdit && t('Choose {name}’s lessons above first.', { name })}
           </p>
         ) : <>
           {dated.length === 0 && !adding && <p style={{ margin: '8px 0 0', color: 'var(--ink-soft)' }}>{t('None yet. A lesson with a date goes to the top of {name}’s list.', { name })}</p>}
@@ -132,16 +142,11 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
         </>}
       </section>
 
-      {choosing && <Chooser name={name} initial={ids} onClose={() => setChoosing(false)}
-        onSave={async next => {
-          const kept = Object.fromEntries(Object.entries(due).filter(([id]) => next?.includes(id)))
-          if (await save(next, kept, `${t('Saved.')} ${describe(next, name, t)}`)) setChoosing(false)
-        }} />}
     </div>
   )
 }
 
-/** The panel behind "Change": every topic, or whole modules and single topics from any grade. */
+/** The choosing, in place on the tab: every topic, or whole modules and single topics from any grade. */
 function Chooser({ name, initial, onClose, onSave }: {
   name: string; initial: string[] | null; onClose: () => void; onSave: (ids: string[] | null) => Promise<void>
 }) {
@@ -154,11 +159,12 @@ function Chooser({ name, initial, onClose, onSave }: {
   const [busy, setBusy] = useState(false)
   const toggle = (ids: string[], on: boolean) => setChosen(prev => { const n = new Set(prev); for (const id of ids) n[on ? "add" : "delete"](id); return n })
   const draft = every ? null : ORDER.filter(id => chosen.has(id))
+  const saved = initial?.length ? ORDER.filter(id => initial.includes(id)) : null
+  const dirty = JSON.stringify(draft) !== JSON.stringify(saved)
 
   return (
-    <Sheet open onClose={onClose} label={t('Choose what {name} learns', { name })}>
-      <h2 style={{ ...h2, fontSize: 22 }}>{t('Choose what {name} learns', { name })}</h2>
-      <p style={{ margin: '4px 0 14px', fontWeight: 800, color: 'var(--ink)' }}>{draft && !draft.length ? t('{name} can’t see any lessons yet.', { name }) : describe(draft, name, t)}</p>
+    <div>
+      <p style={{ margin: '2px 0 14px', fontWeight: 800, color: 'var(--ink)' }}>{draft && !draft.length ? t('{name} can’t see any lessons yet.', { name }) : describe(draft, name, t)}</p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div><b style={{ color: 'var(--ink)' }}>{t('Every topic')}</b><div style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>{t('Every module in every grade, now and later.')}</div></div>
         <button type="button" role="switch" aria-checked={every} aria-label={t('Every topic')} onClick={() => setEvery(!every)}
@@ -206,12 +212,12 @@ function Chooser({ name, initial, onClose, onSave }: {
           })}
         </div>
       </>}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, position: 'sticky', bottom: -22, background: 'var(--paper-soft)', padding: '14px 0 4px', marginTop: 14, borderTop: '1px solid var(--card-border)' }}>
+      {dirty && <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, position: 'sticky', bottom: 0, background: 'var(--paper-soft)', padding: '14px 0 4px', marginTop: 14, borderTop: '1px solid var(--card-border)' }}>
         <button type="button" style={dghost} onClick={onClose}>{t('Cancel')}</button>
         <button type="button" style={dbtn} disabled={busy || (!!draft && !draft.length)}
           onClick={async () => { setBusy(true); await onSave(draft); setBusy(false) }}>{busy ? t('Saving…') : t('Save')}</button>
-      </div>
-    </Sheet>
+      </div>}
+    </div>
   )
 }
 

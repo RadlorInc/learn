@@ -50,7 +50,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
       { t: t('Set up a new child'), d: t('Add them, give them a login, choose their lessons.'), tour: { title: t('Set up a new child'), steps: [
         { url: '/parent', target: 'add-child', title: t('Add a child'), text: t('Their name, and the modules they should see.') },
         ...(c ? [{ url: `/parent?child=${c}&tab=login`, target: 'login-card', title: t('Give them a login'), text: t('With a username and password they can sign in on any device, on their own.') },
-                 { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Choose what they learn'), text: t('Tap “Change” and tick modules or single topics, from any grade.') },
+                 { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Choose what they learn'), text: t('Tick modules or single topics, from any grade, then Save.') },
                  { url: `/parent?child=${c}&tab=game`, target: 'game-card', title: t('Game time (optional)'), text: t('They earn minutes of the game by practicing. It starts on, at 20 minutes a day; turn it off or change the limit here.') }] : [])] } },
       ...(c ? [{ t: t('Let my child start learning here'), d: t('Open their lessons on this device.'), tour: { title: t('Start learning'), steps: [
         { url: `/parent?child=${c}`, target: 'start-learning', title: t('Start learning'), text: t('Opens their lessons on this device. On their own device they sign in with their login instead.') }] } }] : []),
@@ -61,9 +61,9 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
           { url: '/parent', target: `child-${c}`, title: t('Every child has a card'), text: t('Their next lesson and how far along they are.') },
           { url: `/parent?child=${c}&tab=progress`, target: 'tab-progress', title: t('Their progress'), text: t('Lessons finished, topics mastered, and what they find hard.') }] } },
         { t: t('Change what my child learns'), d: t('Whole modules or single topics, any grade.'), tour: { title: t('Change what they learn'), steps: [
-          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('What they see'), text: t('“Change” opens the list: tick whole modules or single topics from any grade, or give them every topic. Then Save.') }] } },
+          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('What they see'), text: t('Tick whole modules or single topics from any grade, or give them every topic. Then Save.') }] } },
         { t: t('Give homework with a due date'), d: t('Pick a lesson and a day.'), tour: { title: t('Give homework'), steps: [
-          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Check they can see it'), text: t('“Change” adds a module or a single topic.') },
+          { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-what', title: t('Check they can see it'), text: t('Tick a module or a single topic here, then Save.') },
           { url: `/parent?child=${c}&tab=lessons`, target: 'lessons-due', title: t('Add a due date'), text: t('The lesson goes to the top of their list, with the date. It saves straight away.') }] } },
       ] },
       { h: t('Login and game time'), items: [
