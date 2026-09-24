@@ -106,7 +106,10 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                   const label: CSSProperties = across
                     ? { left: 0, width: STEP + 16, transform: 'translateX(-50%)', textAlign: 'center', display: 'flex', alignItems: 'center',
                         ...(side(i) < 0 ? { bottom: gap, flexDirection: 'column-reverse' } : { top: gap, flexDirection: 'column' }) }
-                    : { top: 0, transform: 'translateY(-50%)', width: 'min(210px, 42vw)', ...(side(i) < 0 ? { left: gap } : { right: gap, textAlign: 'right' }) }
+                    // Half the map's measured width, not `42vw`: a page zoomed for a bigger text size (Review 1 Q5) zooms vw
+                    // too, so a vw label outgrew its map and was cut off at 375 px. (A stop sits at 28% or 72% across,
+                    // so half the width always leaves room for the gap.)
+                    : { top: 0, transform: 'translateY(-50%)', width: w ? Math.min(210, Math.floor(w / 2)) : 'min(210px, 42vw)', ...(side(i) < 0 ? { left: gap } : { right: gap, textAlign: 'right' }) }
                   return (
                     <li key={l.id} style={{ position: 'absolute', top: y, left: across ? x : `${x}%`, width: 0, height: 0 }}>
                       <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : isNext ? ', next up' : ''}`}

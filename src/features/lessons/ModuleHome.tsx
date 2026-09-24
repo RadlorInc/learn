@@ -74,7 +74,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
           {back && 'href' in back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link>
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Grade {grade}</span>
-          <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
             {points !== null && <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
             <TextSizeMenu />
           </span>
