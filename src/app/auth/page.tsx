@@ -210,7 +210,7 @@ export default function AuthPage() {
             display: 'inline-block', background: 'var(--milo-orange-soft)', color: C.ink,
             borderRadius: 999, padding: '6px 14px', fontSize: 12, fontWeight: 800,
             letterSpacing: 0.3, textTransform: 'uppercase',
-          }}>{t('Adaptive math · grades 3 to 8')}</span>
+          }}>{t('Adaptive math · grades KG to 8')}</span>
           <h2 style={{
             fontSize: 38, lineHeight: 1.15, fontWeight: 900, color: C.ink,
             margin: '18px 0 14px', fontFamily: 'var(--font-display)', maxWidth: 520,
@@ -220,14 +220,6 @@ export default function AuthPage() {
           <p style={{ fontSize: 16, lineHeight: 1.6, color: C.ink2, margin: 0, maxWidth: 480 }}>
             {t('No vanity streaks or frantic countdowns. We track mathematical intuition step by step and report the real milestones straight to you.')}
           </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 26 }}>
-            {[t('Curriculum aligned UK & US'), t('Private by default — no public profiles')].map(chip => (
-              <span key={chip} style={{
-                background: C.card, border: `1.5px solid ${C.edge}`, borderRadius: 999,
-                padding: '8px 14px', fontSize: 12.5, fontWeight: 700, color: C.ink2,
-              }}>{chip}</span>
-            ))}
-          </div>
         </aside>
 
         {/* The form half */}
@@ -248,7 +240,7 @@ export default function AuthPage() {
               fontFamily: 'var(--font-display)',
             }}>{APP_NAME}</h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
-              {t('Adaptive math for grades 3 to 8')}
+              {t('Adaptive math for grades KG to 8')}
             </p>
           </div>
 
