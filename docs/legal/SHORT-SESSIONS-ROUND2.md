@@ -40,6 +40,8 @@ Use a signed-in **test** child. Grade 5 · Module 1 is the example; any module w
 | 2 | Tap **Go to … anyway** | Screen 1 of the lesson, straight away |
 | 3 | Leave, and open topic 12 again the same day | **no card** |
 | 4 | Topic 1 of any module | never a card |
+| 4b | (after the due-date PR) Parent → Lessons: tick the whole module, **no due dates** → child opens a later topic whose previous one is under halfway | **the card shows** (a list is not an assignment) |
+| 4c | Give that topic a **due date** → open it again (another day, or a fresh device) | **no card**: it is assigned |
 | 5 | Go through the lesson; in practice, answer 5 | popup **"5 questions done! ⭐ Nice work."** with [Take a break] [Keep going] |
 | 6 | Keep going, then answer 5 more | the popup again at 10 |
 | 7 | Take a break | **"Great work, 10 questions done! ⭐"**, "Your spot is saved.", "+N points"; no "of 10", no red |
