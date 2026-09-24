@@ -113,7 +113,8 @@ describe('the migration refuses to land wrong — and takes everything with it',
     ['the consent gate is gone', 'drop trigger trg_enforce_child_consent on public.lesson_progress;'],
   ])('%s → the file raises and the column is not there afterwards', async (_why, line) => {
     const { db: fresh } = await loadSchema({ before: FILE })
-    await expect(fresh.exec(plant(line))).rejects.toThrow(/practice-run: .* rolled back/)
+    const refused = await fresh.exec(plant(line)).then(() => 'LANDED', (e: Error) => e.message)
+    expect(refused).toMatch(/practice-run: .* rolled back/)
     expect(await hasColumn(fresh)).toBe(false)
     // Positive control: the same database takes the file as written.
     await fresh.exec(sqlOf())
