@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { oldDomainRedirects } from './src/app/site'
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -54,6 +55,10 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@supabase/supabase-js'],
   },
 
+  // The old domain (adaptivelearn.radlor.com) → radlic.com, once SITE_URL has moved. See `oldDomainRedirects`.
+  async redirects() {
+    return oldDomainRedirects()
+  },
   async headers() {
     return [
       {

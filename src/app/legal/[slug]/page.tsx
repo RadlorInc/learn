@@ -112,7 +112,7 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
 function inline(text: string, key: string) {
   return segments(text).map((x, i) => {
     let n: React.ReactNode = x.href
-      ? <a key={`${key}-${i}`} href={x.href.replace('https://adaptivelearn.radlor.com', '')} style={{ color: '#F26B2C' }}>{x.text}</a>
+      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/radlic\.com(?=\/|$)/, '')} style={{ color: '#F26B2C' }}>{x.text}</a>
       : x.text
     if (x.em) n = <em key={`${key}-${i}`}>{n}</em>
     if (x.bold) n = <strong key={`${key}-${i}`}>{n}</strong>
