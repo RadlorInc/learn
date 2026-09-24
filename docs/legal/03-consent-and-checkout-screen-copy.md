@@ -132,7 +132,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > **[ I've read and agreed to the Privacy Policy ]** (a link drawn as an empty checkbox; it opens the page below)
 >
-> Didn't sign up? Ignore this email and nothing will happen.
+> Didn't sign up? Ignore this email.
 >
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 

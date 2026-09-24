@@ -131,7 +131,7 @@ export const B1 = {
     { en: 'any feedback they send, a few product events and basic device information', es: 'los comentarios que envíe, algunos eventos del producto e información básica del dispositivo' },
   ] as L[],
   doNot: { en: "We never sell your child's information or use it for advertising.", es: 'Nunca vendemos la información de su hijo ni la usamos para publicidad.' },
-  ignore: { en: "Didn't sign up? Ignore this email and nothing will happen.", es: '¿No se registró? Ignore este correo y no pasará nada.' },
+  ignore: { en: "Didn't sign up? Ignore this email.", es: '¿No se registró? Ignore este correo.' },
   details: { en: "Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)", es: 'Aquí está nuestra Política de privacidad detallada: [Política de privacidad](https://radlic.com/legal/privacy) (en inglés)' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
   // ── the tick is the email's checkbox-link AND the page's box (/consent/respond); ticking the page's box IS the grant ──
