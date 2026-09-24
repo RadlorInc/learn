@@ -25,7 +25,11 @@ import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, SUPPORT_EMAIL, SITE
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ResumeSignedIn from './ResumeSignedIn'
-import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
+import LessonDemo, { type Demo } from './LessonDemo'
+import { G3M5 } from '@/features/lessons/content/g3m5'
+import { G8M4 } from '@/features/lessons/content/g8m4'
+import type { Lesson } from '@/features/lessons/script'
+import s from './landing.module.css'
 
 export const metadata: Metadata = {
   // The root inherits the layout's title/description; only the canonical is page-specific.
@@ -52,7 +56,7 @@ function AppJsonLd() {
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web browser',
         description:
-          'Math for grades 3 to 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents and teachers choose the lessons.',
+          'Math for grades KG to 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents and teachers choose the lessons.',
         publisher: { '@id': COMPANY_ID },
         brand: { '@id': COMPANY_ID },
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
@@ -63,137 +67,135 @@ function AppJsonLd() {
   return <script type="application/ld+json">{JSON.stringify(json)}</script>
 }
 
-const POINTS: { h: string; p: string }[] = [
+
+/**
+ * Two real teaching screens, read on the server so only their marks and lines reach the browser (the modules
+ * themselves are ~230 KB). A missing topic or screen throws at build time rather than shipping an empty board.
+ */
+function demo(lessons: Lesson[], id: string, screen: number, tag: string): Demo {
+  const sc = lessons.find(l => l.id === id)?.screens[screen]
+  if (!sc?.chalk || !sc.beats) throw new Error(`landing demo: ${id} screen ${screen + 1} has no chalkboard`)
+  return { id, tag, title: sc.title, label: sc.text, marks: sc.chalk, says: sc.beats.map(b => b.say) }
+}
+const DEMOS: Demo[] = [
+  demo(G3M5, 'g3m5-t1', 4, 'Grade 3 · Fractions'),
+  demo(G8M4, 'g8m4-t1', 3, 'Grade 8 · Geometry'),
+]
+
+const STEPS: { h: string; p: string }[] = [
+  { h: 'Watch', p: 'Each lesson explains one idea step by step, the way a good teacher would at the board. A voice reads every line as the chalk goes up.' },
+  { h: 'Practice', p: 'Two right answers in a row bring a different, harder kind of question — from a picture to bare numbers to a word problem. A miss brings the worked steps and an easier kind.' },
+  { h: 'Review', p: 'Topics they found hard come back later for review, so nothing slips away quietly.' },
+]
+
+const AUDIENCE: { h: string; items: string[] }[] = [
   {
-    h: 'You choose what they learn',
-    p: 'Pick whole modules or single topics, from any grade from 3 to 8, and add a due date if you like. You see which lessons they finished and what they find hard. Teachers do the same for a whole class, and can give class exercises.',
+    h: 'For parents',
+    items: [
+      'Pick whole modules or single topics, from any grade from KG to 8',
+      'Add a due date if you like',
+      'See which lessons they finished and what they find hard',
+      'Children earn points by practicing and spend them on game time, up to a daily limit you set',
+    ],
   },
   {
-    h: 'Practice that adapts',
-    p: 'Two right answers in a row bring a different, harder kind of question — for example, from a picture to bare numbers to a word problem. A miss brings the worked steps and an easier kind. Topics they found hard come back later for review.',
-  },
-  {
-    h: 'Nothing to be scared of',
-    p: 'No timer, and no red cross anywhere. Your child never sees a level. A wrong answer gets another go, then the worked steps — never a mark.',
+    h: 'For teachers',
+    items: [
+      'Set up a class with usernames and temporary passwords',
+      'Choose the modules for the whole class',
+      'Give class exercises, and see results per student and per question',
+    ],
   },
 ]
 
-/** A footer link's hit area: 44px tall (the aim this repo states everywhere) bought entirely in
- *  padding, so the row still reads as a line of small text. */
-const tapRow = { display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 8px' } as const
+const Check = () => (
+  <svg className={s.check} viewBox="0 0 20 20" aria-hidden="true">
+    <path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
 
 export default function RootPage() {
   return (
-    <main style={{
-      minHeight: '100dvh',
-      background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
-      padding: '32px 20px 56px',
-    }}>
+    <main className={s.page}>
       <ResumeSignedIn />
 
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 30 }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: '#F26B2C' }}>
-            {APP_NAME}
-          </span>
-          <Link href="/auth" style={{
-            marginLeft: 'auto', fontSize: 15, fontWeight: 700, color: '#7a6a55', textDecoration: 'none',
-            minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 8px',
-          }}>
-            Log in
-          </Link>
-        </header>
+      <header className={s.nav}>
+        <span className={s.brand}>{APP_NAME}</span>
+        <Link href="/help" className={s.navLink}>Help</Link>
+        <Link href="/auth" className={s.navLink}>Log in</Link>
+      </header>
 
-        <h1 style={{
-          fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 34, lineHeight: 1.2,
-          color: '#3d2516', margin: '0 0 14px',
-        }}>
-          Math lessons that adapt to your child
-        </h1>
+      <section className={s.hero}>
+        <div className={s.heroText}>
+          <p className={s.eyebrow}>Math · Grade KG to 8</p>
+          <h1 className={s.h1}>Math lessons that adapt to your child</h1>
+          <p className={s.lead}>
+            A teacher at the board, one idea at a time. Then practice that follows what your child gets right
+            and wrong, and brings back what they found hard. For parents and teachers.
+          </p>
+          <div className={s.ctaRow}>
+            <Link href="/auth" className={s.cta}>Sign up free</Link>
+            <a href="#how" className={s.ctaGhost}>How it works</a>
+          </div>
+        </div>
+        <div className={s.heroDemo}>
+          <LessonDemo demos={DEMOS} />
+          <p className={s.demoNote}>Two real lesson screens, exactly as a child sees them.</p>
+        </div>
+      </section>
 
-        <p style={{ fontSize: 18, lineHeight: 1.6, color: '#5b4c39', margin: '0 0 26px' }}>
-          Each lesson explains one idea step by step, the way a good teacher would at the board. Then
-          practice adapts to what your child gets right and wrong, and brings back what they found hard.
-          Grades 3 to 8, for parents and teachers.
+      <section id="how" className={s.section}>
+        <h2 className={s.h2}>How a lesson works</h2>
+        <ol className={s.steps}>
+          {STEPS.map(({ h, p }, k) => (
+            <li key={h} className={s.step}>
+              <span className={s.stepN}>{k + 1}</span>
+              <h3 className={s.h3}>{h}</h3>
+              <p>{p}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className={s.calm}>
+        <h2 className={s.h2}>Nothing to be scared of</h2>
+        <p>
+          No timer, and no red cross anywhere. Your child never sees a level. A wrong answer gets another go,
+          then the worked steps — never a mark.
         </p>
+      </section>
 
-        {/* ⚠️ The old check + demo buttons below only return if the legacy chapters are un-hidden (src/core/chapters.ts);
-            /diagnostic itself was deleted (#145), so that branch would need its link rewritten first. */}
-        {LEGACY_CHAPTERS_HIDDEN ? (
-          <Link href="/auth" style={{
-            minHeight: 56, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)', color: '#fff',
-            borderRadius: 50, padding: '16px 36px', fontSize: 18, fontWeight: 800, textDecoration: 'none', marginBottom: 34,
-          }}>
-            Sign up free
-          </Link>
-        ) : <>
-        <Link href="/diagnostic" style={{
-          minHeight: 56, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)', color: '#fff',
-          borderRadius: 50, padding: '16px 36px', fontSize: 18, fontWeight: 800, textDecoration: 'none',
-        }}>
-          Start the free check
-        </Link>
-        <p style={{ fontSize: 14, color: '#8a7a63', margin: '12px 0 14px' }}>
-          No account needed to start. It takes about ten minutes.
-        </p>
-        {/**
-          * ⚠️ THE SECOND DOOR IS FOR THE PARENT WHO WILL NOT SPEND TEN MINUTES ON A STRANGER'S
-          * WEBSITE, AND THAT IS MOST OF THEM. The check is the better product and stays the primary
-          * CTA; this one asks for an age and nothing else, because a parent who watches their child
-          * enjoy a chapter is a warmer lead than one who abandoned a placement test at question
-          * fifteen. It is deliberately quieter than the check — a link, not a second button
-          * competing with it.
-          */}
-        <Link href="/demo" style={{
-          minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: '#F26B2C', fontSize: 15, fontWeight: 700, textDecoration: 'underline', marginBottom: 34,
-        }}>
-          Or just try two chapters first →
-        </Link>
-        </>}
-
-        {POINTS.map(({ h, p }) => (
-          <section key={h} style={{
-            background: 'rgba(255,255,255,.65)', border: '2px solid rgba(61,37,22,.10)',
-            borderRadius: 16, padding: '14px 16px', marginBottom: 12,
-          }}>
-            <h2 style={{
-              fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 17,
-              color: '#3d2516', margin: '0 0 6px',
-            }}>{h}</h2>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: '#5b4c39' }}>{p}</p>
-          </section>
-        ))}
-
-        <p style={{ fontSize: 15, lineHeight: 1.6, color: '#5b4c39', margin: '22px 0 0' }}>
-          Children earn points by practicing and can spend them on game time, up to a daily limit you set.
+      <section className={s.section}>
+        <h2 className={s.h2}>You choose what they learn</h2>
+        <div className={s.cards}>
+          {AUDIENCE.map(({ h, items }) => (
+            <div key={h} className={s.card}>
+              <h3 className={s.h3}>{h}</h3>
+              <ul className={s.list}>
+                {items.map(t => <li key={t}><Check />{t}</li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <p className={s.small}>
           If the connection drops during a lesson, their answers are kept on the device and sent when it is back.
         </p>
+      </section>
 
-        {/*
-          ⚠️ THESE ARE STANDALONE CONTROLS, NOT WORDS IN A SENTENCE, so they owe a real tap target.
-          At `fontSize: 14` with no padding each one measured 19px tall at EVERY viewport — under
-          even WCAG 2.5.8 AA's 24px floor, on the most public page in the product. `tapRow` buys the
-          height in PADDING, so nothing looks different: the text, the colour and the row spacing are
-          unchanged and only the hit area grows. Row `gap` drops to 4 because each link now carries
-          its own 15px of breathing room.
-        */}
-        <footer style={{
-          marginTop: 34, paddingTop: 8, borderTop: '2px solid rgba(61,37,22,.10)',
-          display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 4, fontSize: 14,
-        }}>
-          <Link href="/help" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Help</Link>
-          <Link href="/legal/privacy" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Privacy</Link>
-          <Link href="/legal/terms" style={{ ...tapRow, color: '#F26B2C', fontWeight: 700, textDecoration: 'none' }}>Terms</Link>
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ ...tapRow, color: '#7a6a55', textDecoration: 'none' }}>{SUPPORT_EMAIL}</a>
-          <a href={COMPANY_URL} style={{ ...tapRow, color: '#7a6a55', textDecoration: 'none', marginLeft: 'auto' }}>
-            {APP_NAME} is made by {COMPANY}
-          </a>
-        </footer>
-        <AppJsonLd />
-      </div>
+      <section className={s.final}>
+        <h2 className={s.h2}>Start with one lesson tonight</h2>
+        <Link href="/auth" className={s.cta}>Sign up free</Link>
+      </section>
+
+      {/* Standalone controls, so each owes a 44px tap target — bought in padding (`.foot a`). */}
+      <footer className={s.foot}>
+        <Link href="/help">Help</Link>
+        <Link href="/legal/privacy">Privacy</Link>
+        <Link href="/legal/terms">Terms</Link>
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
+        <a href={COMPANY_URL} className={s.maker}>{APP_NAME} is made by {COMPANY}</a>
+      </footer>
+      <AppJsonLd />
     </main>
   )
 }
