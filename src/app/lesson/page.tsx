@@ -53,7 +53,7 @@ function Lesson() {
       onExit={() => router.push(`/lesson?module=${module.id}`)}
       // Signed-in children only: the nudge reads the child's own standing on the previous topic.
       nudge={learnerId ? nudgeFor(lesson, module, {
-        lessonIds: learner?.lesson_ids, standingOf: x => loadStanding(learnerId, x), levelsOf: x => ladderOf(x)?.length,
+        lessonIds: learner?.lesson_ids, due: learner?.lesson_due, standingOf: x => loadStanding(learnerId, x), levelsOf: x => ladderOf(x)?.length,
         started: !!loadRun(learnerId, lesson.id), shownToday: nudgeShownToday(learnerId, lesson.id),
       }) : null}
       onPractise={prev => router.push(`/lesson?id=${prev}`)}

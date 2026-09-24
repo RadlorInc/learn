@@ -3,9 +3,12 @@
  * the same module is below PREREQ_THRESHOLD of the way (the ladder position, `progressOf`) shows a friendly card —
  * "Practise <prev> first" or "Go to <next> anyway", both fine — before the topic starts.
  *
- * Never shown: on a module's first topic; when a parent or teacher chose the child's topics (they already decided —
- * and a previous topic outside that list is not even on the child's map); when the child already started this topic
- * (never mid-session); more than once per topic per day.
+ * Never shown: on a module's first topic; for an ASSIGNED topic — one with a due date (the adult already decided);
+ * when the previous topic is not on the child's chosen list (it is not on their map); when the child already started
+ * this topic (never mid-session); more than once per topic per day.
+ * ⚠️ A chosen list alone is NOT an assignment (founder, 2026-09-24): a parent who ticks a whole module in the Lessons
+ * tab chose which topics the child sees, not the order — and treating the list as "assigned" switched the card off for
+ * every topic in the module, live on radlic.com. Only a due date says "do this one".
  */
 import type { Lesson } from './script'
 import type { Module } from './modules'
@@ -19,6 +22,8 @@ export interface Nudge { prev: Lesson; progress: number }
 export function nudgeFor(lesson: Lesson, module: Module, ctx: {
   /** The child's chosen topics (`learners.lesson_ids`); null/empty = no choice made. */
   lessonIds: readonly string[] | null | undefined
+  /** Due date per assigned topic (`learners.lesson_due`); a topic with one is assigned. */
+  due: Readonly<Record<string, string>> | null | undefined
   standingOf: (id: string) => Standing | null
   levelsOf: (id: string) => number | undefined
   /** This topic has a saved practice run: the child is part-way through it. */
@@ -28,7 +33,8 @@ export function nudgeFor(lesson: Lesson, module: Module, ctx: {
   const i = module.lessons.findIndex(l => l.id === lesson.id)
   const prev = i > 0 ? module.lessons[i - 1] : undefined
   if (!prev || ctx.started || ctx.shownToday) return null
-  if (ctx.lessonIds?.length && (ctx.lessonIds.includes(lesson.id) || !ctx.lessonIds.includes(prev.id))) return null
+  if (ctx.due?.[lesson.id]) return null
+  if (ctx.lessonIds?.length && !ctx.lessonIds.includes(prev.id)) return null
   const levels = ctx.levelsOf(prev.id)
   if (!levels) return null
   const progress = progressOf(ctx.standingOf(prev.id), levels)
