@@ -64,8 +64,13 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
   const firstObj = (m.lessons[0]?.screens[0].pictures.find(p => 'obj' in p) as { obj: Obj } | undefined)?.obj ?? 'cookie'
 
   return (
-    <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 26px', display: 'flex', justifyContent: 'center' }}>
-      <style>{`.mh-grid { display: grid; gap: 18px }
+    <div className="mh-page" style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 26px', display: 'flex', justifyContent: 'center' }}>
+      {/* Review 1 Q8 (founder, 2026-09-24): the three soft circles behind the home drift, slowly — CSS only, so the first
+          paint waits for nothing; the home screen only, never practice; still for anyone who asks for reduced motion. */}
+      <style>{`@keyframes mh-drift { 0%, 100% { background-position: 0 0, 0 0, 0 0 } 33% { background-position: 26px 18px, -22px 24px, 18px -26px } 66% { background-position: -16px 22px, 20px -14px, -24px 12px } }
+.mh-page { animation: mh-drift 30s ease-in-out infinite }
+@media (prefers-reduced-motion: reduce) { .mh-page { animation: none } }
+.mh-grid { display: grid; gap: 18px }
 /* Portrait: the chosen module and its Learn / Practice buttons first, the list of modules under it. */
 @media not all and ${LANDSCAPE} { .mh-grid nav { order: 2 } }
 @media ${LANDSCAPE} { .mh-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: start } }`}</style>
