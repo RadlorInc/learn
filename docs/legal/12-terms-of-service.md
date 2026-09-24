@@ -9,7 +9,7 @@
 > One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
 
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** Milo
+**Product:** Radlic
 **Effective date:** [PLACEHOLDER — date]
 **Last updated:** [PLACEHOLDER — date]
 
@@ -17,9 +17,9 @@
 
 ## 1. This agreement
 
-These Terms are an agreement between you and Radlor Inc., a Delaware corporation ("Radlor", "we", "us"). They govern your use of Milo (the "Service").
+These Terms are an agreement between you and Radlor Inc., a Delaware corporation ("Radlor", "we", "us"). They govern your use of Radlic (the "Service").
 
-By creating an account or using the Service, you agree to these Terms and to our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy). If you do not agree, do not use the Service.
+By creating an account or using the Service, you agree to these Terms and to our [Privacy Policy](https://radlic.com/legal/privacy). If you do not agree, do not use the Service.
 
 ## 2. Who may hold an account
 
@@ -31,7 +31,7 @@ You confirm that the information you give us at sign-up is accurate, and that yo
 
 ## 3. What the Service is
 
-Milo is an adaptive learning tool. It presents lessons, questions and practice, adapts to how a child answers, and reports progress to you.
+Radlic is an adaptive learning tool. It presents lessons, questions and practice, adapts to how a child answers, and reports progress to you.
 
 **It is an educational support tool and nothing more.** It is not schooling, not tutoring by a licensed professional, and not any form of assessment, diagnosis or treatment — educational, psychological or medical. It does not identify learning disabilities or any other condition. If you have a concern about your child's learning, speak to a teacher or a qualified professional.
 
@@ -43,17 +43,17 @@ Because the Service is used by children, additional rules apply:
 
 - Before we collect anything about your children, we give you a **direct notice** telling you exactly what we collect, and we obtain your **verifiable consent**. You give it once, for your account, and it covers every child you add to it. Each time you add a child, you confirm that you are that child's parent or legal guardian, and we record when you did.
 - **We keep a record of that consent** — the date, how it was given, your email address, and the version of each document you were shown. We keep it so that we can show, later, exactly what you agreed to. If you close your account, that record is deleted along with everything else. [PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]
-- You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://adaptivelearn.radlor.com/legal/parent-rights).
+- You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://radlic.com/legal/parent-rights).
 - You can withdraw consent for one child or for every child on the account. For one child, we stop collecting, delete what we hold about that child, and close their profile; this applies only to that child, and the account and any other children are not affected. For every child, we do the same for each of them; your account stays open, and adding a child later needs your consent again. You are never charged for exercising a privacy right. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing consent also cancels or reduces a subscription, and any refund. Nothing does this today (billing is off). The earlier text promised cancellation and a pro-rata refund; decide before billing goes live.]
 
-Our [Privacy Policy](https://adaptivelearn.radlor.com/legal/privacy) describes all of this in full and forms part of these Terms.
+Our [Privacy Policy](https://radlic.com/legal/privacy) describes all of this in full and forms part of these Terms.
 
 ## 5. Subscriptions, renewal and cancellation
 
 - Plans, prices and billing periods are shown at checkout before you pay.
 - **Subscriptions renew automatically** until you cancel. The renewal amount and date are disclosed to you before you subscribe and repeated in the confirmation email we send you.
 - **You can cancel at any time**, online, in the same number of steps it took to subscribe: in the app, under **Account → Plan & billing**. Cancelling stops all future charges; your access continues until the end of the period you have paid for, and we email you a confirmation with that date.
-- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://adaptivelearn.radlor.com/legal/refunds), which forms part of these Terms.
+- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://radlic.com/legal/refunds), which forms part of these Terms.
 - You are responsible for any applicable taxes.
 
 ## 6. Acceptable use

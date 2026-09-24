@@ -96,7 +96,7 @@ async function account(email, name, role) {
  * version must be one `consent_notice_versions` knows (the gate refuses an unknown one as not current), and
  * every child attests to that same version.
  */
-const SEED_NOTICE = 'notice-v5'
+const SEED_NOTICE = 'notice-v6'
 async function grantedConsent(parentId, email) {
   const [have] = must('parental_consents lookup')(await db.from('parental_consents').select('id')
     .eq('parent_id', parentId).eq('scope', 'account').eq('state', 'granted').eq('notice_version', SEED_NOTICE))

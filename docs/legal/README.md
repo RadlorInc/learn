@@ -1,4 +1,4 @@
-# Radlor / Milo — US Legal Document Set
+# Radlor / Radlic — US Legal Document Set
 
 **Drafted:** 2026-09-22 · **Jurisdiction:** United States only · **Status of every document here: DRAFT**
 

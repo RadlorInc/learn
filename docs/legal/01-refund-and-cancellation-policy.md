@@ -7,7 +7,7 @@
 > **This policy must be published before the first payment is taken, not after.** A refund and cancellation policy that appears after money has changed hands is too late to have done its job.
 
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** Milo
+**Product:** Radlic
 **Effective date:** [PLACEHOLDER — effective date]
 **Last updated:** [PLACEHOLDER — last updated date]
 
@@ -15,7 +15,7 @@
 
 ## 1. What this policy covers
 
-This policy explains how subscriptions to Milo are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, **the Terms of Service control.**
+This policy explains how subscriptions to Radlic are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, **the Terms of Service control.**
 
 ## 2. Our plans
 

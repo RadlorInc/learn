@@ -14,9 +14,9 @@ REVIEWED-BY:
 
 ## 1. Este acuerdo
 
-Estos Términos son un acuerdo entre usted y Radlor Inc., una sociedad anónima (corporation) de Delaware ("Radlor", "nosotros"). Regulan su uso de Milo (el "Servicio").
+Estos Términos son un acuerdo entre usted y Radlor Inc., una sociedad anónima (corporation) de Delaware ("Radlor", "nosotros"). Regulan su uso de Radlic (el "Servicio").
 
-Al crear una cuenta o usar el Servicio, usted acepta estos Términos y nuestra [Política de privacidad](https://adaptivelearn.radlor.com/legal/privacy). Si no está de acuerdo, no use el Servicio.
+Al crear una cuenta o usar el Servicio, usted acepta estos Términos y nuestra [Política de privacidad](https://radlic.com/legal/privacy). Si no está de acuerdo, no use el Servicio.
 
 ## 2. Quién puede tener una cuenta
 
@@ -28,7 +28,7 @@ Usted confirma que la información que nos da al registrarse es exacta y que tie
 
 ## 3. Qué es el Servicio
 
-Milo es una herramienta de aprendizaje adaptativo. Presenta lecciones, preguntas y práctica, se adapta a la forma en que responde un niño y le informa a usted del progreso.
+Radlic es una herramienta de aprendizaje adaptativo. Presenta lecciones, preguntas y práctica, se adapta a la forma en que responde un niño y le informa a usted del progreso.
 
 **Es una herramienta de apoyo educativo y nada más.** No es escolarización, no es tutoría a cargo de un profesional con licencia y no es ninguna forma de evaluación, diagnóstico o tratamiento — educativo, psicológico o médico. No identifica dificultades de aprendizaje ni ninguna otra condición. Si le preocupa el aprendizaje de su hijo, hable con un maestro o con un profesional cualificado.
 
@@ -40,17 +40,17 @@ Como el Servicio lo usan niños, se aplican normas adicionales:
 
 - Antes de recopilar cualquier dato sobre sus hijos, le damos un **aviso directo** que le dice exactamente qué recopilamos, y obtenemos su **consentimiento verificable**. Lo da una sola vez, para su cuenta, y cubre a todos los niños que añada a ella. Cada vez que añade un niño, usted confirma que es su padre, madre o tutor legal, y registramos cuándo lo hizo.
 - **Guardamos un registro de ese consentimiento** — la fecha, cómo se dio, su dirección de correo electrónico y la versión de cada documento que se le mostró. Lo guardamos para poder demostrar, más adelante, exactamente qué aceptó usted. Si usted cierra su cuenta, ese registro se elimina junto con todo lo demás. [PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]
-- Usted puede ver, corregir o eliminar la información de su hijo, o retirar su consentimiento, en cualquier momento y sin costo. Consulte nuestra [página de Derechos de los padres](https://adaptivelearn.radlor.com/legal/parent-rights).
+- Usted puede ver, corregir o eliminar la información de su hijo, o retirar su consentimiento, en cualquier momento y sin costo. Consulte nuestra [página de Derechos de los padres](https://radlic.com/legal/parent-rights).
 - Puede retirar su consentimiento para un niño o para todos los niños de la cuenta. Para un niño, dejamos de recopilar, eliminamos lo que tenemos sobre ese niño y cerramos su perfil; esto se aplica solo a ese niño, y la cuenta y los demás niños no se ven afectados. Para todos, hacemos lo mismo con cada uno; su cuenta sigue abierta, y añadir un niño más adelante requiere de nuevo su consentimiento. Nunca se le cobra por ejercer un derecho de privacidad. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing consent also cancels or reduces a subscription, and any refund. Nothing does this today (billing is off). The earlier text promised cancellation and a pro-rata refund; decide before billing goes live.]
 
-Nuestra [Política de privacidad](https://adaptivelearn.radlor.com/legal/privacy) describe todo esto en detalle y forma parte de estos Términos.
+Nuestra [Política de privacidad](https://radlic.com/legal/privacy) describe todo esto en detalle y forma parte de estos Términos.
 
 ## 5. Suscripciones, renovación y cancelación
 
 - Los planes, precios y periodos de facturación se muestran al pagar, antes de que usted pague.
 - **Las suscripciones se renuevan automáticamente** hasta que usted cancele. El importe y la fecha de la renovación se le informan antes de suscribirse y se repiten en el correo de confirmación que le enviamos.
 - **Puede cancelar en cualquier momento**, en línea, en el mismo número de pasos que le llevó suscribirse: en la aplicación, en **Cuenta → Plan y facturación**. La cancelación detiene todos los cobros futuros; su acceso continúa hasta el final del periodo que ya pagó, y le enviamos por correo electrónico una confirmación con esa fecha.
-- Los reembolsos, los cambios de precio, los pagos fallidos y el procedimiento completo de cancelación se establecen en nuestra [Política de reembolsos y cancelaciones](https://adaptivelearn.radlor.com/legal/refunds), que forma parte de estos Términos.
+- Los reembolsos, los cambios de precio, los pagos fallidos y el procedimiento completo de cancelación se establecen en nuestra [Política de reembolsos y cancelaciones](https://radlic.com/legal/refunds), que forma parte de estos Términos.
 - Usted es responsable de los impuestos que correspondan.
 
 ## 6. Uso aceptable

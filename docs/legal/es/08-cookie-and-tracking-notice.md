@@ -15,7 +15,7 @@ REVIEWED-BY:
 
 ## Versión sencilla
 
-**Milo no usa ninguna cookie.** Guarda una pequeña cantidad de información en su propio dispositivo para que la aplicación pueda funcionar sin conexión, recordar su configuración y mantener su sesión iniciada. Esa información se queda en el dispositivo. **No usamos cookies publicitarias, no realizamos ningún tipo de seguimiento por parte de terceros y nadie puede seguir a su hijo desde Milo hasta otro sitio web o aplicación.**
+**Radlic no usa ninguna cookie.** Guarda una pequeña cantidad de información en su propio dispositivo para que la aplicación pueda funcionar sin conexión, recordar su configuración y mantener su sesión iniciada. Esa información se queda en el dispositivo. **No usamos cookies publicitarias, no realizamos ningún tipo de seguimiento por parte de terceros y nadie puede seguir a su hijo desde Radlic hasta otro sitio web o aplicación.**
 
 ## Qué guardamos en el dispositivo
 
@@ -42,7 +42,7 @@ REVIEWED-BY:
 
 - Ninguna cookie.
 - Ningún almacenamiento publicitario ni de marketing.
-- Ningún script, baliza ni píxel de seguimiento de terceros — **ninguno, en ninguna parte**. La política de seguridad que el sitio envía a su navegador solo permite conexiones con el propio Milo y con nuestro proveedor de base de datos, por lo que el navegador no puede llegar a una empresa de publicidad o de analítica, ni siquiera en principio.
+- Ningún script, baliza ni píxel de seguimiento de terceros — **ninguno, en ninguna parte**. La política de seguridad que el sitio envía a su navegador solo permite conexiones con el propio Radlic y con nuestro proveedor de base de datos, por lo que el navegador no puede llegar a una empresa de publicidad o de analítica, ni siquiera en principio.
 - Ninguna huella digital del dispositivo, ningún identificador publicitario, ningún identificador entre sitios.
 - Ninguna grabación de sesiones.
 
@@ -50,7 +50,7 @@ REVIEWED-BY:
 
 Registramos un pequeño número de eventos del producto — como el inicio de una sesión — para ver qué partes de la aplicación se usan. Se guardan en nuestra propia base de datos, están vinculados al identificador interno de un niño y no a un nombre, y **se eliminan automáticamente a los 90 días**. No se comparten con nadie y no se usan para publicidad.
 
-Nuestros proveedores de base de datos y de alojamiento también conservan sus propios registros de solicitudes, que incluyen la dirección IP y el tipo de navegador de cada visita. Esto se describe en nuestra [Política de privacidad](https://adaptivelearn.radlor.com/legal/privacy).
+Nuestros proveedores de base de datos y de alojamiento también conservan sus propios registros de solicitudes, que incluyen la dirección IP y el tipo de navegador de cada visita. Esto se describe en nuestra [Política de privacidad](https://radlic.com/legal/privacy).
 
 ## Sus opciones
 

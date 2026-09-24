@@ -60,7 +60,7 @@ describe('consent-once — withdrawal for EVERY child is described exactly as bu
   })
   it('/legal/parent-rights names both in-app controls', () => {
     const text = pub('parent-rights')
-    expect(text).toContain('Withdraw permission for all my children')
+    expect(text).toContain('Withdraw permission for all your children')
     expect(text).toContain("Delete name's profile")
   })
 })

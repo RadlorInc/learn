@@ -1,4 +1,4 @@
-# Attorney packet — Milo (Radlor Inc.)
+# Attorney packet — Radlic (Radlor Inc.)
 
 **For:** the US attorney reviewing Radlor's legal drafts before any page is published.
 **Prepared:** 23 September 2026, from the repository and from what was measured on production that day.
@@ -6,16 +6,18 @@
 
 ## Context in one paragraph
 
-Milo is a maths app for children in grades 3 to 8 in the US. A **parent** (or teacher) holds the account; children never give an email address. Every child profile requires **verifiable parental consent by "email plus"**: an on-screen notice, an email the parent must click ("I give permission"), and a second confirming email about a day later that carries a withdrawal link. That gate is **live on production with no exemptions**: the database refuses to store a child without a granted consent record (measured 23 September 2026). Every legal page (`/legal/privacy`, `/terms`, `/refunds`, `/parent-rights`, `/subprocessors`, `/cookies`, `/retention`) is deployed but **dark**. It shows a "draft — not in force" banner and no body, and the build refuses to publish a page until its placeholders are resolved, its `STATUS: DRAFT` line is gone, **your sign-off is recorded**, and a reviewed Spanish version exists. **No real family has been invited**; every account on production is a team or intern test account (the founder's statement). **No payment has ever been taken**: billing code exists but enforcement is off.
+Radlic is a maths app for children in grades 3 to 8 in the US. A **parent** (or teacher) holds the account; children never give an email address. Every child profile requires **verifiable parental consent by "email plus"**: an on-screen notice, an email the parent must click ("I give permission"), and a second confirming email about a day later that carries a withdrawal link. That gate is **live on production with no exemptions**: the database refuses to store a child without a granted consent record (measured 23 September 2026). Every legal page (`/legal/privacy`, `/terms`, `/refunds`, `/parent-rights`, `/subprocessors`, `/cookies`, `/retention`) is deployed but **dark**. It shows a "draft — not in force" banner and no body, and the build refuses to publish a page until its placeholders are resolved, its `STATUS: DRAFT` line is gone, **your sign-off is recorded**, and a reviewed Spanish version exists. **No real family has been invited**; every account on production is a team or intern test account (the founder's statement). **No payment has ever been taken**: billing code exists but enforcement is off.
 
 The documents referred to below are in `docs/legal/`. They are numbered 01 (Refund & Cancellation), 02 (Direct notice), 03 (Consent & checkout screen copy), 04 (Retention), 05 (Security program), 06 (Parent rights), 07 (Subprocessors), 08 (Cookies), 09 (Email), 11 (Privacy Policy) and 12 (Terms).
+
+**Product renamed to Radlic and moved to radlic.com on [date]. Trademark clearance for 'Radlic' has not been done.** (Added 24 September 2026. The product was called Milo, then AdaptiveLearn at adaptivelearn.radlor.com, which now redirects. The company is unchanged: Radlor Inc. The rename changed the consent notice, so it is a new version, `notice-v6`; see A11.)
 
 ---
 
 ## A. Children's consent (COPPA) — decide before the first real family
 
 ### A1. Withdrawal: one child, or the whole account? *(06 note 0, 06 Part A §4, 12 §4)*
-- **Today (after the consent-once change, see A8):** a parent can withdraw for **one child** (deleting that child's profile: every row about them and their own sign-in; the account, its consent and the other children stay) or for **every child** (Account → *Withdraw permission for all my children*, or the second email's link: every child deleted, the consent record kept as `withdrawn`, the account stays open with no children, and a new child needs a new consent). Single-child deletion was proven on real production rows on 23 September 2026; the every-child path is built and tested, not yet run on production.
+- **Today (after the consent-once change, see A8):** a parent can withdraw for **one child** (deleting that child's profile: every row about them and their own sign-in; the account, its consent and the other children stay) or for **every child** (Account → *Withdraw permission for all your children*, or the second email's link: every child deleted, the consent record kept as `withdrawn`, the account stays open with no children, and a new child needs a new consent). Single-child deletion was proven on real production rows on 23 September 2026; the every-child path is built and tested, not yet run on production.
 - **Draft:** until Round 1, docs 06 and 12 said withdrawal **closes the whole account**, including other children, with a pro-rata refund. They now describe the build (Round 1, PR #195). The notice, both emails and the withdrawal screen already said "your account stays open".
 - **Decide:** (a) Does per-child withdrawal satisfy the revocation right, or must or should withdrawal close the account? (b) What happens to a subscription when consent for one child is withdrawn (see C4)?
 
@@ -56,6 +58,11 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 ### A10. Could the signup confirmation email be the consent email? *(proposed, not built — we recommend against)*
 - It would save one email, and only for email/password parents. **Google sign-in parents get no confirmation email**, so they would need B1 anyway: two flows instead of one. The auth service's templates live in its dashboard (not in our versioned code) and cannot schedule B3. A confirmation click proves control of an inbox, not agreement to the notice. The same email type is also used for password resets and address changes, which muddies the evidence.
 - **Decide:** only if you see an advantage we have missed.
+
+### A11. The rename: does a parent who agreed to the old notice have to agree again? *(new, 24 September 2026; doc 02)*
+- **Today (once the rename ships):** the notice a parent agrees to changed only in the product's name and web address (Milo → Radlic, adaptivelearn.radlor.com → radlic.com), plus one wording fix ("Withdraw permission for all **your** children", matching the button). What is collected, why, and every right are unchanged. It is recorded as a new notice version, `notice-v6`. We set it so that **earlier consents stay valid** (no one is asked again).
+- **Draft:** doc 02 as renamed.
+- **Decide:** is a change of product name and domain, with nothing else changed, a "material change" that requires fresh consent from parents who agreed to the old notice? If yes, one setting makes every earlier consent non-current and each parent is asked again the next time they add a child. Also: trademark clearance for "Radlic" (education software / online classes) has not been done.
 
 ---
 

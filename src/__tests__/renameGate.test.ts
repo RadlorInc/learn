@@ -32,7 +32,8 @@ const inScope = (f: string) => TEXT.test(f) && (
   || ['README.md', 'CLAUDE.md', 'AGENTS.md', 'next.config.ts', 'vercel.json'].includes(f)
 )
 /** Records of what was. They keep the old names by design (rule 3 of the rename brief). */
-const HISTORICAL = [/^docs\/legal\/LOOP-STATE\.md$/, /^docs\/legal\/ROUND-2\.md$/, /^docs\/legal\/CONSENT-ONCE-ROUND2\.md$/, /^docs\/legal\/sql\//]
+const HISTORICAL = [/^docs\/legal\/LOOP-STATE\.md$/, /^docs\/legal\/ROUND-2\.md$/, /^docs\/legal\/CONSENT-ONCE-ROUND2\.md$/, /^docs\/legal\/sql\//,
+  /^docs\/legal\/14-supabase-findings-and-ai-content\.md$/]   // 14: dated findings, 2026-09-22
 
 /** Each exception: the file, the lines it covers, which greps it may silence, and why. */
 const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] = [
@@ -44,6 +45,14 @@ const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] =
     why: 'a dated historical note in a comment' },
   { file: 'src/app/site.ts', line: /"AdaptiveLearn", the product's name until 2026-09-24/, kinds: ['name'],
     why: 'a dated historical note in a comment' },
+  { file: 'src/app/site.ts', line: /^export const OLD_HOST = 'adaptivelearn\.radlor\.com'$/, kinds: ['domain'],
+    why: 'the redirect code: the old host it answers for' },
+  { file: 'next.config.ts', line: /^\/\/ The old domain \(adaptivelearn\.radlor\.com\) → radlic\.com, once SITE_URL has moved/, kinds: ['domain'],
+    why: 'the redirect code' },
+  { file: 'docs/legal/ATTORNEY-PACKET.md', line: /^\*\*Product renamed to Radlic and moved to radlic\.com on \[date\]|^- \*\*Today \(once the rename ships\):\*\* the notice a parent agrees to changed only in the product's name/, kinds: ['name', 'domain'],
+    why: 'the rename itself, told to the attorney (brief N4)' },
+  { file: 'CLAUDE.md', line: /^\| ⚠️⚠️ \*\*a gate grepping `menu\/page\.tsx` for `'Milo picked this to close the gap'`/, kinds: ['name'],
+    why: 'a historical record in the defect table (rule 3: records of what was stay)' },
 ]
 
 const files = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n').filter(inScope)
