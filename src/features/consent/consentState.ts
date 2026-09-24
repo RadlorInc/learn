@@ -49,38 +49,18 @@ export async function readAccountConsent(): Promise<AccountConsent> {
 
 export type AskResult = { ok: true; email: string; days: number } | { ok: false; error: 'stale' | 'not_ready' | 'failed' }
 
-/** POST /api/consent/request → B1. `ackAt`: when the parent ticked the notice, if they did so at signup. */
-export async function requestAccountConsent(lang: Lang, ackAt?: string): Promise<AskResult> {
+/** POST /api/consent/request → B1. (The route still accepts an optional `ackAt` from app versions that had the
+ *  signup tick; this one never sends it.) */
+export async function requestAccountConsent(lang: Lang): Promise<AskResult> {
   const { data } = await createClient().auth.getSession()
   const r = await fetch('/api/consent/request', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session?.access_token ?? ''}` },
-    body: JSON.stringify({ noticeVersion: NOTICE_VERSION, lang, ...(ackAt ? { ackAt } : {}) }),
+    body: JSON.stringify({ noticeVersion: NOTICE_VERSION, lang }),
   }).catch(() => null)
   const j = await r?.json().catch(() => null)
   if (r?.ok && j?.ok) return { ok: true, email: j.email, days: j.days }
   return { ok: false, error: r?.status === 409 ? 'stale' : j?.error === 'not_ready' ? 'not_ready' : 'failed' }
-}
-
-// ── The signup tick ─────────────────────────────────────────────────────────────────────────────
-export interface Ack { noticeVersion: string; at: string }
-export const ACK_KEY = 'consent-signup-ack'
-
-export function saveAck(a: Ack | null): void {
-  try { if (a) localStorage.setItem(ACK_KEY, JSON.stringify(a)); else localStorage.removeItem(ACK_KEY) } catch { /* private mode: user_metadata still carries it for email signup */ }
-}
-export function loadAck(): Ack | null {
-  try {
-    const a = JSON.parse(localStorage.getItem(ACK_KEY) ?? 'null')
-    return typeof a?.noticeVersion === 'string' && typeof a?.at === 'string' ? a : null
-  } catch { return null }
-}
-
-/** A tick that counts: on this device or in the account's metadata, for the notice the app shows NOW. */
-export function currentAck(metadata?: Record<string, unknown> | null): Ack | null {
-  const m = metadata?.consent_ack as Ack | undefined
-  for (const a of [loadAck(), m]) if (a && a.noticeVersion === NOTICE_VERSION && typeof a.at === 'string') return a
-  return null
 }
 
 /** "{date}" in ATTEST.tick: the day the account consent was confirmed, as a long date in the parent's language. */

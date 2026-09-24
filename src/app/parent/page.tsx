@@ -57,7 +57,7 @@ import { LangContext, loadLang, saveLang, makeT, useT, useLang, type Lang } from
 import { TextSizeCard } from '@/features/dashboard/TextSizeCard'
 import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
 import { AccountConsentCard } from '@/features/consent/AccountConsent'
-import { currentAck, longDate, type Ack } from '@/features/consent/consentState'
+import { longDate } from '@/features/consent/consentState'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
 import { BILLING_LIVE } from '@/app/legal/registry'
@@ -132,7 +132,6 @@ function Dashboard() {
   const [chosenLang, setChosenLang] = useState<Lang>('en')
   // Consent-once (C2): the tick the parent gave at signup, on this device or in the account's metadata.
   // `undefined` until the session is read, so the card never asks before it knows whether a tick exists.
-  const [ack, setAck] = useState<Ack | null | undefined>(undefined)
 
   // `quiet`: refresh the data without the full-screen splash, so an open panel (a class's new passwords) stays on screen.
   async function loadAll(quiet?: boolean) {
@@ -146,7 +145,6 @@ function Dashboard() {
       setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')
       setUid(user.id)
       setChosenLang(loadLang())
-      setAck(currentAck(user.user_metadata))
       // This device's helper choices, read once per visit; the visit BEFORE this one is what "since your last visit" means.
       setPrefsState(prev => {
         if (prev) return prev
@@ -443,7 +441,7 @@ function Dashboard() {
     )}
     {/* Consent-once (C2): a PARENT with no granted account consent sees the notice, or "waiting", here.
         Never blocking — the dashboard stays usable; only adding a child waits for the consent. */}
-    {role === 'parent' && ack !== undefined && <AccountConsentCard lang={lang} ack={ack} />}
+    {role === 'parent' && <AccountConsentCard lang={lang} />}
     {invites.length > 0 && (
       <div style={{ marginBottom:20 }}>
         {inviteMsg && <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:12, fontSize:14, fontWeight:600, color:'#166534' }}>✅ {inviteMsg}</div>}

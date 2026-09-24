@@ -109,62 +109,38 @@ const type = async (el: Element | null, value: string) => {
 const button = (host: HTMLElement, text: RegExp) => [...host.querySelectorAll('button')].find(b => text.test(b.textContent ?? ''))
 
 // ─────────────────────────────── C2 — signup ───────────────────────────────
-describe('signup: both buttons wait for the tick', () => {
+describe('signup: no tick box (founder, 2026-09-25) — consent is the email the dashboard starts', () => {
   async function signup() {
     const { default: AuthPage } = await import('@/app/auth/page')
     const m = await mount(createElement(AuthPage))
     await click(button(m.host, /^Create account$/))            // the mode toggle
     const email = () => m.host.querySelector('[data-auth="email"]') as HTMLButtonElement
     const google = () => m.host.querySelector('[data-auth="google"]') as HTMLButtonElement
-    return { ...m, email, google, box: () => m.host.querySelector('[data-consent="signup"] input[type="checkbox"]') as HTMLInputElement }
+    return { ...m, email, google }
   }
 
-  it('disabled until ticked, enabled after — and the tick is kept with its notice version and time', async () => {
+  it('the summary is on screen, there is no checkbox, and both buttons work straight away', async () => {
     const s = await signup()
-    expect(s.host.textContent, 'the signup notice is not on the screen').toContain('Before you create an account: What we collect about your child/children')
-    expect(s.box().checked, 'the box must start UNTICKED').toBe(false)
-    expect(s.email().disabled, '"Create account" works without the tick').toBe(true)
-    expect(s.google().disabled, '"Continue with Google" works without the tick').toBe(true)
-    await click(s.google())
-    expect(google, 'Google sign-up ran without the tick').not.toHaveBeenCalled()
-
-    const before = Date.now()
-    await click(s.box())
+    const box = s.host.querySelector('[data-consent="signup"]')
+    expect(box?.textContent, 'the signup notice is not on the screen').toContain('Before you create an account: What we collect about your child/children')
+    expect(s.host.querySelectorAll('input[type="checkbox"]')).toHaveLength(0)
+    expect(s.host.textContent).not.toContain("I've read what we collect")
+    expect(s.host.textContent).not.toContain('Continue as a teacher')
     expect(s.email().disabled).toBe(false)
     expect(s.google().disabled).toBe(false)
-    const ack = JSON.parse(localStorage.getItem('consent-signup-ack') ?? 'null')
-    expect(ack?.noticeVersion).toBe('notice-v6')
-    expect(Date.parse(ack?.at)).toBeGreaterThanOrEqual(before - 1000)
-    expect(Date.parse(ack?.at)).toBeLessThanOrEqual(Date.now())
-
-    await click(s.box())                                         // untick: the buttons go back, the record goes
-    expect(s.email().disabled).toBe(true)
-    expect(s.google().disabled).toBe(true)
-    expect(localStorage.getItem('consent-signup-ack')).toBeNull()
+    await click(s.google())
+    expect(google).toHaveBeenCalledTimes(1)
     await s.done()
   })
 
-  it('email signup carries the tick into the account metadata (survives another device)', async () => {
+  it('email signup sends no consent metadata — nothing was agreed on this page', async () => {
     const s = await signup()
-    await click(s.box())
     await type(s.host.querySelector('#auth-email'), 'p@x.test')
     await type(s.host.querySelector('#auth-password'), 'secret123')
     await type(s.host.querySelector('#auth-confirm'), 'secret123')
     await click(s.email())
     expect(signUp).toHaveBeenCalledTimes(1)
-    const data = (signUp.mock.calls[0] as unknown[])[3] as { consent_ack?: { noticeVersion: string; at: string } }
-    expect(data?.consent_ack?.noticeVersion).toBe('notice-v6')
-    expect(typeof data?.consent_ack?.at).toBe('string')
-    await s.done()
-  })
-
-  it('the box reads only "I\'ve read what we collect, and I agree." — no teacher escape, no "after you sign up" line (founder, 2026-09-25)', async () => {
-    const s = await signup()
-    const box = s.host.querySelector('[data-consent="signup"] label')
-    expect(box?.textContent?.trim()).toBe("I've read what we collect, and I agree.")
-    expect(s.host.textContent).not.toContain('Continue as a teacher')
-    expect(s.host.textContent).not.toContain('Signing up as a teacher')
-    expect(s.host.textContent).not.toContain('After you sign up, we will email you once')
+    expect((signUp.mock.calls[0] as unknown[])[3]).toBeUndefined()
     await s.done()
   })
 
@@ -253,26 +229,18 @@ describe('add a child: the sheet opens only on a granted, current account consen
   })
 })
 
-describe('the dashboard sends B1 by itself when the signup tick is for the current notice', () => {
-  it('a current tick → one request with its time; a stale tick → the notice and no request', async () => {
+describe('the dashboard never sends B1 by itself — the parent reads the notice and presses continue', () => {
+  it('a fresh account sees the full notice and no request; "continue" sends exactly one, with no tick time', async () => {
     const React = await import('react')
     const { AccountConsentCard } = await import('@/features/consent/AccountConsent')
     fetchAnswer = () => ({ ok: true, email: 'p@x.test', days: 7 })
-    const at = new Date(Date.now() - 60_000).toISOString()
-    let m = await mount(React.createElement(AccountConsentCard, { lang: 'en', ack: { noticeVersion: 'notice-v6', at } }))
+    const m = await mount(React.createElement(AccountConsentCard, { lang: 'en' }))
+    expect(fetchLog, 'B1 went out without the parent pressing anything').toEqual([])
+    expect(m.host.querySelector('[data-consent="account-notice"]'), 'the notice is not shown').toBeTruthy()
+    await click(button(m.host, /^I'm the parent or legal guardian — continue$/))
     expect(fetchLog.map(f => f.url)).toEqual(['/api/consent/request'])
-    expect(fetchLog[0].body).toMatchObject({ noticeVersion: 'notice-v6', ackAt: at })
+    expect(fetchLog[0].body).toEqual({ noticeVersion: 'notice-v6', lang: 'en' })
     expect(m.host.textContent).toContain('Waiting for your permission')
-    await m.done()
-
-    fetchLog.length = 0
-    const { currentAck } = await import('@/features/consent/consentState')
-    expect(currentAck({ consent_ack: { noticeVersion: 'notice-v4', at } }), 'a tick for an older notice counts').toBeNull()
-    expect(currentAck({ consent_ack: { noticeVersion: 'notice-v5', at } }), 'a tick for the pre-rename (Milo) notice counts for the Radlic one').toBeNull()
-    expect(currentAck({ consent_ack: { noticeVersion: 'notice-v6', at } })).toEqual({ noticeVersion: 'notice-v6', at })
-    m = await mount(React.createElement(AccountConsentCard, { lang: 'en', ack: null }))
-    expect(fetchLog, 'B1 went out without a tick').toEqual([])
-    expect(m.host.querySelector('[data-consent="account-notice"]')).toBeTruthy()
     await m.done()
   })
 })

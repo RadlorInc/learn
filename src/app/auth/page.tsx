@@ -10,9 +10,7 @@ import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
 import { SignupConsent } from '@/features/consent/SignupConsent'
-import { saveAck, loadAck } from '@/features/consent/consentState'
 import { APP_NAME } from '@/app/site'
-import { NOTICE_VERSION } from '@/features/consent/copy'
 
 type Mode = 'login' | 'signup'
 
@@ -77,20 +75,9 @@ export default function AuthPage() {
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
-  // Consent-once (C2): signup waits for the tick on the notice (parents and teachers alike).
-  const [ticked,   setTicked]   = useState(false)
-  const blocked = mode === 'signup' && !ticked
-
-  function tick(on: boolean) {
-    setTicked(on)
-    // Kept on the device with the version and the moment it was ticked; unticking takes it back.
-    saveAck(on ? { noticeVersion: NOTICE_VERSION, at: new Date().toISOString() } : null)
-  }
-
   function reset() { setError(null); setSuccess(null) }
 
   async function handleEmailAuth() {
-    if (blocked) return
     if (!email.trim() || !password.trim()) {
       setError(mode === 'login' ? t('Please enter your email or username, and your password') : t('Please enter your email and password'))
       return
@@ -112,8 +99,6 @@ export default function AuthPage() {
           email.trim(),
           password,
           `${window.location.origin}/auth/callback`,
-          // The tick travels with the account, so opening the confirmation link on another device keeps it.
-          ticked ? { consent_ack: loadAck() ?? { noticeVersion: NOTICE_VERSION, at: new Date().toISOString() } } : undefined,
         )
         // V10 REVERSED (founder's call, 2026-09-22): say plainly that the email already has an account,
         // as most apps do. The cost is account enumeration — anyone can learn whether an address is
@@ -162,7 +147,6 @@ export default function AuthPage() {
   }
 
   async function signInWithGoogle() {
-    if (blocked) return
     setLoading(true); reset()
     try {
       const { error } = await signInWithGoogleOAuth(`${window.location.origin}/auth/callback`)
@@ -382,7 +366,7 @@ export default function AuthPage() {
               </div>
             )}
 
-            {mode === 'signup' && <SignupConsent lang={lang} ticked={ticked} onTick={tick} />}
+            {mode === 'signup' && <SignupConsent lang={lang} />}
 
             {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the
                 adult commits rather than after. This is the consent record — without it we cannot show
@@ -392,19 +376,19 @@ export default function AuthPage() {
             <button
               data-auth="email"
               onClick={handleEmailAuth}
-              disabled={loading || blocked}
+              disabled={loading}
               style={{
                 width: '100%', padding: '14px', minHeight: 44,
-                background: loading || blocked ? C.edge : C.accent,
-                color: loading || blocked ? C.ink3 : '#fff',
+                background: loading ? C.edge : C.accent,
+                color: loading ? C.ink3 : '#fff',
                 border: 'none', borderRadius: 50,
                 fontSize: 16, fontWeight: 800,
-                cursor: loading ? 'wait' : blocked ? 'not-allowed' : 'pointer',
-                boxShadow: loading || blocked ? 'none' : '0 4px 14px rgba(242,107,44,0.28)',
+                cursor: loading ? 'wait' : 'pointer',
+                boxShadow: loading ? 'none' : '0 4px 14px rgba(242,107,44,0.28)',
                 transition: 'all 0.2s',
               }}
-              onMouseEnter={e => { if (!loading && !blocked) e.currentTarget.style.background = C.hover }}
-              onMouseLeave={e => { if (!loading && !blocked) e.currentTarget.style.background = C.accent }}
+              onMouseEnter={e => { if (!loading) e.currentTarget.style.background = C.hover }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = C.accent }}
             >
               {loading ? t('Please wait…') : mode === 'login' ? t('Sign in') : t('Create account')}
             </button>
@@ -423,13 +407,12 @@ export default function AuthPage() {
             <button
               data-auth="google"
               onClick={signInWithGoogle}
-              disabled={loading || blocked}
+              disabled={loading}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 gap: 10, width: '100%', padding: '13px 20px', minHeight: 44,
                 background: C.card, border: `2px solid ${C.edge}`,
-                borderRadius: 50, cursor: loading ? 'wait' : blocked ? 'not-allowed' : 'pointer',
-                opacity: blocked ? 0.5 : 1,
+                borderRadius: 50, cursor: loading ? 'wait' : 'pointer',
                 fontSize: 15, fontWeight: 700, color: C.ink,
                 transition: 'all 0.2s',
               }}
