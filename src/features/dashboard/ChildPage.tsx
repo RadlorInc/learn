@@ -90,7 +90,7 @@ const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'va
 function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarIndex: number; onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | 'error'> }) {
   const t = useT()
   const [value, setValue] = useState(name)
-  const [avatar, setAvatar] = useState(avatarIndex)
+  const [avatar, setAvatar] = useState<number | null>(null)   // none picked = keep the current one
   const [band, setBand] = useState<'' | Band>('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
@@ -99,12 +99,12 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
     const trimmed = value.trim()
     if (!trimmed) return
     setBusy(true)
-    const r = await onCorrect(trimmed, band || null, avatar)
+    const r = await onCorrect(trimmed, band || null, avatar ?? avatarIndex)
     setBusy(false)
     setMsg(r === 'ok' ? t('Saved.') : t('Could not save. Check your connection and try again.'))
   }
   return <>
-    <h2 style={h2}>{t('Correct {name}’s details', { name })}</h2>
+    <h2 style={h2}>{t('Update {name}’s details', { name })}</h2>
     <label style={{ display: 'block', margin: '10px 0', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Name or nickname')}
       <input value={value} maxLength={30} onChange={e => setValue(e.target.value)} style={{ ...field, marginTop: 4 }} /></label>
     <fieldset style={{ border: 0, margin: '0 0 10px', padding: 0 }}>

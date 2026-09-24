@@ -43,6 +43,15 @@ describe('correct a child\'s details', () => {
     expect(onCorrect).toHaveBeenCalledWith('Bea', '12-14', 2)
     expect(card!.textContent).toContain('Saved.')
   })
+  it('no avatar is picked to start with, and saving without a pick keeps the current one', async () => {
+    const onCorrect = vi.fn(async () => 'ok' as const)
+    const { host, act } = await mount(true, onCorrect)
+    const card = host.querySelector('[data-tour="correct-card"]')!
+    const pressed = [...card.querySelectorAll('button[aria-pressed]')].map(b => b.getAttribute('aria-pressed'))
+    expect(pressed).toEqual(['false', 'false', 'false', 'false'])
+    await act(async () => { [...card.querySelectorAll('button')].find(b => b.textContent === 'Save')!.click() })
+    expect(onCorrect).toHaveBeenCalledWith('Ana', null, 0)
+  })
   it('an adult who only views the child does not get the card', async () => {
     const { host } = await mount(false, async () => 'ok')
     expect(host.textContent, 'control: the login tab rendered').toContain('Share with another adult')

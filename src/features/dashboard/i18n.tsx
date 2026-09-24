@@ -237,7 +237,7 @@ export const ES: Record<string, string> = {
   'Due {day}': 'Para el {day}',
   'Due date for {title}': 'Fecha de entrega de {title}',
   'Saved.': 'Guardado.',
-  'Correct {name}’s details': 'Corregir los datos de {name}',
+  'Update {name}’s details': 'Actualizar los datos de {name}',
   'Name or nickname': 'Nombre o apodo',
   'Keep the grade as it is': 'Mantener el grado como está',
   'Keep it as it is': 'Dejarlo como está',
