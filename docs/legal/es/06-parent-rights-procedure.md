@@ -12,7 +12,7 @@ REVIEWED-BY:
 
 ---
 
-**En vigor desde:** [PLACEHOLDER — date]
+**En vigor desde:** 25 de septiembre de 2026
 
 Si su hijo usa Radlic, usted tiene el control de su información. Tiene cuatro derechos y puede ejercer cualquiera de ellos en cualquier momento, sin costo.
 
@@ -22,7 +22,7 @@ Puede pedirnos una copia de todo lo que hemos recopilado de su hijo. Se la envia
 
 ### 2. Corregirlo
 
-**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → **Corregir los datos de *nombre***. Ahí puede cambiar el nombre o el apodo de su hijo, su avatar y su franja de grados (grados 3 a 5 o grados 6 a 8). Solo el adulto que agregó al niño puede hacer este cambio. **O escríbanos** a support@radlor.com y lo corregiremos por usted.
+**En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → **Corregir los datos de nombre**. Ahí puede cambiar el nombre o el apodo de su hijo, su avatar y su franja de grados (grados 3 a 5 o grados 6 a 8). Solo el adulto que agregó al niño puede hacer este cambio. **O escríbanos** a support@radlor.com y lo corregiremos por usted.
 
 ### 3. Eliminarlo
 
@@ -38,7 +38,7 @@ Usted nos da su permiso una sola vez, para su cuenta, y cubre a todos los niños
 
 Guardamos un registro de que el permiso se dio y después se retiró, y de cuándo, sin los datos de los niños. Para eliminarlo todo, incluida la propia cuenta, use **Cuenta → Cerrar su cuenta**.
 
-Nunca se le cobra por ejercer un derecho de privacidad. [PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing permission for a child also cancels or reduces a subscription, and whether any part is refunded. Nothing does this today: billing is off and no subscription can be bought (`BILLING_LIVE = false`). An earlier version of this page promised cancellation and a pro-rata refund; decide and build it before billing goes live, then write it here.]
+Nunca se le cobra por ejercer un derecho de privacidad.
 
 ### Cómo hacer una solicitud
 

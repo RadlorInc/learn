@@ -85,9 +85,21 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
             </div>
           </div>
         ) : (
-          <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516' }}>
-            {renderDoc(body)}
-          </div>
+          <>
+            {/* The private beta (founder, 2026-09-24): the version, its date, and the promise about changes, on the page. */}
+            {page.beta && (
+              <p data-legal="beta" style={{
+                background: '#FFF8E6', border: '2px solid #F2C94C', borderRadius: 12, padding: '10px 14px',
+                margin: '0 0 22px', fontSize: 15, lineHeight: 1.5, color: '#3d2516',
+              }}>
+                <strong>Beta version.</strong> In effect from {page.beta.effective}. We will email parents before we make
+                any material change to it.
+              </p>
+            )}
+            <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516' }}>
+              {renderDoc(body)}
+            </div>
+          </>
         )}
 
         <p style={{ marginTop: 28, fontSize: 14, color: '#6b5c47' }}>
@@ -109,11 +121,21 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
  *
  * It never sees a placeholder: `assertRenderable` refuses the text before it gets here.
  */
+/** A name in backticks (a cookie, a table) is shown as code, never as bare backticks — which `segments` does not handle,
+ *  and which put "`milo-auth`" in front of parents (found 2026-09-24, the first time a page was published). Applied INSIDE
+ *  each bold/italic/link segment, so code within bold ("**… `20260923180000` …**") keeps its bold. */
+function code(text: string, key: string): React.ReactNode {
+  const parts = text.split(/`([^`]+)`/)
+  return parts.length === 1 ? text : parts.map((part, i) => i % 2
+    ? <code key={`${key}-c${i}`} style={{ fontSize: '0.92em', background: 'rgba(61,37,22,.07)', borderRadius: 4, padding: '0 4px' }}>{part}</code>
+    : part)
+}
+
 function inline(text: string, key: string) {
   return segments(text).map((x, i) => {
     let n: React.ReactNode = x.href
-      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/radlic\.com(?=\/|$)/, '')} style={{ color: '#F26B2C' }}>{x.text}</a>
-      : x.text
+      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/radlic\.com(?=\/|$)/, '')} style={{ color: '#F26B2C' }}>{code(x.text, `${key}-${i}`)}</a>
+      : code(x.text, `${key}-${i}`)
     if (x.em) n = <em key={`${key}-${i}`}>{n}</em>
     if (x.bold) n = <strong key={`${key}-${i}`}>{n}</strong>
     return <span key={`${key}-${i}`}>{n}</span>

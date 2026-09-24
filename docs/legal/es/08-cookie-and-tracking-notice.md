@@ -34,7 +34,7 @@ REVIEWED-BY:
 | `milo-auth` | Almacenamiento local | Mantiene su sesión iniciada | Hasta que cierre la sesión o esta caduque | Estrictamente necesario |
 | `milo_active_learner` | Almacenamiento de sesión | Qué perfil de niño está usando esta pestaña del navegador | Hasta que se cierre la pestaña | Estrictamente necesario |
 
-> [PLACEHOLDER — the last two rows are read from the application's configuration rather than observed in a live signed-in session. Before publication, sign a child in and enumerate the storage again, so every row in this table has been seen rather than inferred.]
+> Las dos últimas filas también se observaron en una sesión real de un niño con la sesión iniciada, el 24 de septiembre de 2026.
 
 **Si no ha iniciado sesión, no se guarda nada sobre su hijo.** Verificado: después de una lección completa y una sesión de práctica sin iniciar sesión, el almacén del dispositivo estaba vacío.
 
@@ -56,7 +56,7 @@ Nuestros proveedores de base de datos y de alojamiento también conservan sus pr
 
 Todo lo que guardamos en el dispositivo es necesario para que la aplicación funcione o para recordar su configuración, así que no hay nada que desactivar — desactivarlo haría que la aplicación dejara de funcionar. Puede borrar el almacenamiento de su navegador en cualquier momento; si lo hace, se cerrará su sesión y la copia sin conexión de sus lecciones se volverá a descargar la próxima vez.
 
-[PLACEHOLDER — if any non-essential storage is ever added, this section must be replaced with a real consent mechanism, and the default must be off.]
+No añadiremos ningún almacenamiento que la aplicación no necesite sin preguntarle antes, y estará desactivado a menos que usted lo active.
 
 ## Preguntas
 

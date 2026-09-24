@@ -115,5 +115,35 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 
 ---
 
+## Decided by the founder for the beta (24 September 2026) — attorney to review
+
+A private beta with families the founder knows (real US children) starts **25 September 2026**, before you have
+reviewed anything. The founder decided each point below for the beta; **every one is "decided by founder for
+beta on 2026-09-24, attorney to review"**. Only what the product does is described; nothing unbuilt is promised.
+Published in English only (the Spanish drafts stay unpublished and unreviewed), with a banner: *"Beta version. In
+effect from 25 September 2026. We will email parents before we make any material change to it."*
+
+| # | Where | Decision (decided by founder for beta on 2026-09-24, attorney to review) | Questions this touches |
+|---|---|---|---|
+| — | Which pages | **Published:** Privacy Policy, Parent rights, Subprocessors, Cookies, Retention. **Dark:** Terms (two points below still open), Refund policy (billing is off). | — |
+| — | The beta is free | Terms §5 now says the beta is free and no payment is taken, and that parents will be emailed and asked to agree to updated Terms before any paid plan. Subscription, refund and "amount paid" text removed from Terms and Privacy; the plan card and plans page are hidden while `BILLING_LIVE` is false; Stripe is listed as "not used during the beta". | C1–C4 |
+| 57, 24 | Terms §4; Retention §5 | A consent record is **deleted with the account**, as the system does today. No anonymised consent log survives deletion (none is built). | A2 |
+| 50 | Privacy §9 | Consent records: kept until the account is closed; a withdrawn consent is kept, marked as withdrawn. | A2 |
+| 58, 34 | Terms §4; Parent rights | What withdrawal does to a subscription: **left out for the beta** (there is no subscription). "You are never charged for exercising a privacy right" stays. | A1, C |
+| 59 | Terms §7 | Ownership line kept (the Service belongs to us or our licensors, used under a licence), plus: *"We do not claim copyright in any part of the Service beyond what the law gives us; your use is governed by this licence and by these Terms."* No blanket copyright claim. | D |
+| 61 | Terms §9 | If a change is unwanted: *"you can stop using the Service and close your account at any time."* No refund promise (nothing is paid). | D |
+| 64 | Terms §15 | Informal resolution first: we reply within **30 days**. | D |
+| 65 | Terms §15 | **No arbitration and no class-action waiver.** The Delaware courts clause applies. | D |
+| 66 | Terms §16 | Material changes to the Terms: emailed at least **14 days** before they take effect. | D |
+| 68 | Terms §14 | The copyright agent is **not registered** with the US Copyright Office for now; the note was removed and no safe-harbour claim is made. | D |
+| 52 | Privacy §10 | The security paragraph was checked against the Security Program on 24 Sep 2026. One claim was reworded to what is implemented: internal records are in a separate system with no children's data, and the in-product admin view shows only totals, never an individual child. | E |
+| 44 | Cookies | A promise: no storage the app does not need will be added without asking first, and it will be off unless switched on. | E |
+| **62** | Terms §11 | **Still open:** the liability floor. Terms stays dark until the founder decides it. | D |
+| **67** | Terms §14 | **Still open:** a phone number for copyright complaints, or §14 reworded as a plain contact. Terms stays dark until decided. | D |
+
+Measured facts entered at the same time (not decisions): provider log windows (hosting 1 hour on Hobby, database 7
+days on Pro, from the dashboards), GitHub backup location and 30-day expiry, no Stripe key in production, the two
+browser-storage rows seen in a live child session.
+
 ## What we are not asking you
 Prices, dates, regions, the DMCA agent's identity, provider log-retention periods and the reviewer's name are the founder's or providers' to supply. They are tracked in `PLACEHOLDERS.md`.

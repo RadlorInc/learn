@@ -13,9 +13,12 @@ REVIEWED-BY:
 ---
 
 **Empresa:** Radlor Inc., una sociedad anónima (corporation) de Delaware
+
 **Producto:** Radlic
-**Fecha de entrada en vigor:** [PLACEHOLDER — date]
-**Última actualización:** [PLACEHOLDER — date]
+
+**Fecha de entrada en vigor:** 25 de septiembre de 2026
+
+**Última actualización:** 25 de septiembre de 2026
 
 ---
 
@@ -67,7 +70,7 @@ No le pedimos a un niño más información de la razonablemente necesaria para p
 | Qué | Por qué |
 |---|---|
 | Nombre y dirección de correo electrónico | Para crear la cuenta, para comunicarnos con usted sobre ella y para verificar su identidad cuando haga una solicitud sobre los datos de su hijo |
-| Datos de la suscripción y de facturación | Para cobrar y administrar la suscripción. **Los pagos los procesa nuestro proveedor de pagos. Nunca recibimos ni guardamos el número completo de su tarjeta ni su código de seguridad** — recibimos una referencia del pago, su dirección de correo electrónico, el plan que eligió y el número de plazas. [PLACEHOLDER — confirm the exact fields returned once billing is switched on.] |
+| Datos de la suscripción y de facturación | Ninguno durante la beta: el Servicio es gratuito, la facturación está desactivada y no recopilamos datos de pago. |
 | Su registro de consentimiento — el método, la fecha, su dirección de correo electrónico y la versión de cada documento que se le mostró — y, por cada niño que añada, cuándo confirmó que es su padre, madre o tutor legal y a qué versión del aviso se refería esa confirmación | Porque la ley nos exige poder demostrar que se dio el consentimiento, y demostrar exactamente qué se aceptó. Si usted cierra su cuenta, este registro se elimina junto con todo lo demás |
 | Los mensajes que nos envía | Para responderle |
 
@@ -86,7 +89,7 @@ Ejercer cualquiera de estos derechos es gratuito. Confirmaremos que la solicitud
 
 **Cuánto tardamos:** 10 días.
 
-Todos los detalles, incluido lo que sucede con una suscripción si usted retira su consentimiento, están en nuestra página de Derechos de los padres en https://radlic.com/legal/parent-rights.
+Todos los detalles están en nuestra página de Derechos de los padres en https://radlic.com/legal/parent-rights.
 
 ## 6. Cómo usamos la información
 
@@ -94,7 +97,6 @@ Usamos lo que recopilamos solo para:
 
 - prestar el servicio a su hijo — enseñar, adaptarnos, hacer seguimiento del progreso;
 - mostrarle a usted el progreso de su hijo;
-- cobrar y administrar su suscripción;
 - mantener el servicio seguro, detectar abusos y corregir fallos;
 - comunicarnos con usted sobre su cuenta;
 - cumplir nuestras obligaciones legales.
@@ -112,7 +114,7 @@ Usamos lo que recopilamos solo para:
 
 No vendemos información y no revelamos la información de un niño a nadie para sus propios fines.
 
-Sí usamos proveedores de servicios que tratan la información siguiendo nuestras instrucciones y sin ningún fin propio — alojamiento, base de datos, envío de correo electrónico y procesamiento de pagos. La lista actual, y exactamente lo que recibe cada uno, está publicada en https://radlic.com/legal/subprocessors.
+Sí usamos proveedores de servicios que tratan la información siguiendo nuestras instrucciones y sin ningún fin propio — alojamiento, base de datos y envío de correo electrónico. La lista actual, y exactamente lo que recibe cada uno, está publicada en https://radlic.com/legal/subprocessors.
 
 También podemos revelar información cuando la ley nos obligue a hacerlo — por ejemplo, en respuesta a un proceso legal válido — o para proteger la seguridad de una persona. Si alguna vez estamos obligados a hacerlo en relación con un niño, se lo diremos al padre o la madre, salvo que la ley lo prohíba.
 
@@ -132,8 +134,8 @@ Conservamos la información de un niño solo mientras la necesitamos para presta
 | Eventos del producto | 90 días; después se eliminan automáticamente cada noche |
 | Registros de fallos | 90 días; después se eliminan automáticamente |
 | Cuenta del padre o la madre | Hasta que usted la cierre |
-| Registros de consentimiento | [PLACEHOLDER — period, to be set by the attorney once consent records exist] |
-| Los registros de solicitudes de nuestros proveedores, que incluyen la dirección IP y el tipo de navegador | [PLACEHOLDER — the providers' retention periods must be established and stated here before publication] |
+| Registros de consentimiento | Hasta que cierre su cuenta. Si retira su consentimiento, el registro se conserva, marcado como retirado, para poder mostrar cuándo y cómo terminó |
+| Los registros de solicitudes de nuestros proveedores, que incluyen la dirección IP y el tipo de navegador | Disponibles para nosotros hasta 7 días (proveedor de base de datos) y 1 hora (proveedor de alojamiento) en nuestros planes actuales, según sus paneles el 24 de septiembre de 2026 |
 | Copias de seguridad | Diseñadas para caducar a los 30 días |
 
 Si usted nos pide eliminar la información de su hijo, la eliminamos de nuestros sistemas activos de inmediato; las copias que haya en las copias de seguridad desaparecen cuando esas copias caducan, y nunca restauramos desde una copia de seguridad el registro de un niño que haya sido eliminado. Nuestro calendario completo de conservación está en https://radlic.com/legal/retention.
@@ -142,7 +144,7 @@ Si usted nos pide eliminar la información de su hijo, la eliminamos de nuestros
 
 Mantenemos un programa de seguridad por escrito que abarca la información de los niños y que se revisa al menos una vez al año.
 
-En la práctica: todas las conexiones con Radlic están cifradas; la base de datos aplica reglas para que los registros de una familia no puedan ser leídos por otra; las claves que permitirían un acceso amplio nunca se envían a su navegador; y nuestras herramientas internas se mantienen en un sistema aparte que no contiene datos de niños. [PLACEHOLDER — this paragraph must be checked against the Information Security Program immediately before publication, and any control that is not implemented on that day must be removed from it.]
+En la práctica: todas las conexiones con Radlic están cifradas; la base de datos aplica reglas para que los registros de una familia no puedan ser leídos por otra; las claves que permitirían un acceso amplio nunca se envían a su navegador; y nuestros registros internos se mantienen en un sistema aparte que no contiene datos de niños; la vista de administración dentro del producto solo muestra totales, nunca a un niño concreto.
 
 Ningún sistema es perfectamente seguro. Si una filtración afecta a la información de su hijo, se lo diremos según lo exija la ley, y le diremos con claridad qué sucedió.
 

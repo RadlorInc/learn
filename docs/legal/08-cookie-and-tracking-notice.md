@@ -1,9 +1,9 @@
 # Cookie and Tracking Notice
 
-> **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY BEFORE PUBLICATION.**
+> **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > The table below was read off a real session driven on production on 22 September 2026, not written from memory. One gap remains, marked in the table: a signed-in child's session could not be observed, because that needs a real account.
 
-**Effective:** [PLACEHOLDER — date]
+**Effective:** 25 September 2026
 
 ---
 
@@ -28,7 +28,7 @@
 | `milo-auth` | Local storage | Keeps you signed in | Until sign-out or expiry | Strictly necessary |
 | `milo_active_learner` | Session storage | Which child's profile this browser tab is using | Until the tab closes | Strictly necessary |
 
-> [PLACEHOLDER — the last two rows are read from the application's configuration rather than observed in a live signed-in session. Before publication, sign a child in and enumerate the storage again, so every row in this table has been seen rather than inferred.]
+> The last two rows were also seen in a live signed-in child session on 24 September 2026.
 
 **If you are not signed in, nothing is stored about your child at all.** Verified: after a full lesson and practice session signed out, the on-device store was empty.
 
@@ -50,7 +50,7 @@ Our database and hosting providers also keep their own request logs, which inclu
 
 Everything we store on the device is needed for the app to work or to remember your settings, so there is nothing to switch off — turning it off would stop the app working. You can clear your browser's storage at any time; if you do, you will be signed out and the offline copy of your lessons will be downloaded again next time.
 
-[PLACEHOLDER — if any non-essential storage is ever added, this section must be replaced with a real consent mechanism, and the default must be off.]
+We will not add storage that the app does not need without first asking you, and it will be off unless you switch it on.
 
 ## Questions
 

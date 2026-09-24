@@ -36,12 +36,39 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
     }
   })
 
-  it('no page is published today', () => {
-    expect(LEGAL_PAGES.filter(p => p.published).map(p => p.slug)).toEqual([])
-    expect(PUBLISHED_LEGAL_ROUTES).toEqual([])
+  // The private beta (founder, 2026-09-24): exactly these five are published. Terms waits on two founder decisions
+  // (§11's liability floor, §14's contact); refunds waits on billing. Written out by hand, never read from the registry.
+  const BETA = ['privacy', 'parent-rights', 'subprocessors', 'cookies', 'retention']
+  const DARK = ['terms', 'refunds']
+  it('exactly the beta pages are published, and nothing else', () => {
+    expect(LEGAL_PAGES.filter(p => p.published).map(p => p.slug).sort()).toEqual([...BETA].sort())
+    expect([...PUBLISHED_LEGAL_ROUTES].sort()).toEqual(BETA.map(s => `/legal/${s}`).sort())
+    expect(LEGAL_PAGES.map(p => p.slug).sort(), 'control: every page is either published or dark').toEqual([...BETA, ...DARK].sort())
   })
 
-  it.each(LEGAL_PAGES.map(p => [p.slug] as const))('/legal/%s renders the banner and none of the document', async slug => {
+  it.each(BETA.map(s => [s] as const))('/legal/%s renders its document, the beta label, and no placeholder', async slug => {
+    const { renderToStaticMarkup } = await import('react-dom/server')
+    const { default: LegalPageView, generateMetadata } = await import('@/app/legal/[slug]/page')
+    const html = renderToStaticMarkup(await LegalPageView({ params: Promise.resolve({ slug }) }))
+    const text = flat(html.replace(/<[^>]*>/g, ' ').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&'))
+    expect(text).toContain(pageBySlug(slug)!.title)
+    // Markdown the renderer could not parse shows up as bare asterisks — a parent reads "**Or email us" (found 2026-09-24).
+    expect(text.match(/.{0,40}[*`].{0,40}/g), `/legal/${slug} shows unparsed markdown (a bare * or \`)`).toBeNull()
+    const line = pub(slug).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim()).sort((a, b) => b.length - a.length)[0]
+    expect(line.length).toBeGreaterThan(80)
+    const tight = (x: string) => x.replace(/\s+([,.;:)])/g, '$1')   // a bold word ends in a tag, which leaves "word ,"
+    expect(tight(text), `/legal/${slug} is published and does not render its document`).toContain(tight(flat(line)).slice(0, 60))
+    // The founder's three requirements for the beta label, written out.
+    expect(text).toContain('Beta version.')
+    expect(text).toContain('In effect from 25 September 2026.')
+    expect(text).toContain('We will email parents before we make any material change to it.')
+    expect(text).not.toContain('DRAFT — NOT IN FORCE')
+    expect(text).not.toContain(REG_MARKER)
+    const m = await generateMetadata({ params: Promise.resolve({ slug }) })
+    expect(m.robots, `/legal/${slug} is published but marked noindex`).toBeUndefined()
+  })
+
+  it.each(DARK.map(s => [s] as const))('/legal/%s renders the banner and none of the document', async slug => {
     const { renderToStaticMarkup } = await import('react-dom/server')
     const { default: LegalPageView, generateMetadata } = await import('@/app/legal/[slug]/page')
     const html = renderToStaticMarkup(await LegalPageView({ params: Promise.resolve({ slug }) }))
@@ -62,7 +89,8 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
     const { default: sitemap } = await import('@/app/sitemap')
     const urls = sitemap().map(e => e.url)
     expect(urls.some(u => u.endsWith('/help')), 'control: the sitemap lists public routes at all').toBe(true)
-    expect(urls.filter(u => u.includes('/legal/'))).toEqual([])
+    expect(urls.filter(u => DARK.some(s => u.endsWith(`/legal/${s}`))), 'a dark page is in the sitemap').toEqual([])
+    expect(urls.filter(u => u.includes('/legal/')).length, 'control: the published pages are in it').toBe(BETA.length)
   })
 
   it('refuses to render a document that carries a placeholder — every page, on its real text', () => {
@@ -267,9 +295,10 @@ describe('a draft legal document never reaches published content', () => {
      */
     expect(files.length, 'the walk found no published files — this gate is blind, not clean')
       .toBeGreaterThan(100)
-    expect(read('docs/legal/11-privacy-policy.md'),
-      `positive control: "${MARKER}" was not found in a draft that is known to carry thirty of ` +
-      `them, so this search could not have found one in src/ either`).toContain(MARKER)
+    // (The Privacy Policy was the control until the beta cleared it, 2026-09-24; the refund policy still carries some.)
+    expect(read('docs/legal/01-refund-and-cancellation-policy.md'),
+      `positive control: "${MARKER}" was not found in a draft that is known to carry them, ` +
+      `so this search could not have found one in src/ either`).toContain(MARKER)
 
     const hits = files.filter(f => read(f).includes(MARKER))
     expect(hits, `a legal draft's placeholder marker has reached published content. Those markers ` +

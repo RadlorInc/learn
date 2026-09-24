@@ -11,6 +11,7 @@
  * contain no timer at all (`chapterGate.test.ts`). A product for children does not manufacture
  * urgency at their parents.
  */
+import { BILLING_LIVE } from '@/app/legal/registry'
 import { RoleGate } from '@/shared/ui/RoleGate'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -35,11 +36,26 @@ const P = {
 const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`
 const SEATS = Array.from({ length: MAX_SEATS }, (_, i) => i + 1)
 
+// The private beta is free (founder, 2026-09-24). A parent who arrives here from an old link or a bookmark is told so,
+// and sees no prices, no checkout and no link to the refund policy (which is not published while billing is off).
 export default function PlanPage() {
-  return <RoleGate role="parent"><PlanInner /></RoleGate>
+  return <RoleGate role="parent">{BILLING_LIVE ? <PlanCheckout /> : <BetaFree />}</RoleGate>
 }
 
-function PlanInner() {
+function BetaFree() {
+  return (
+      <main data-plan="beta-free" style={{ minHeight: '100dvh', background: 'var(--paper)', padding: '40px 20px', fontFamily: 'var(--font-body)' }}>
+        <div style={{ maxWidth: 520, margin: '0 auto' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 26, color: 'var(--ink)', margin: '0 0 10px' }}>Radlic is free during the beta</h1>
+          <p style={{ fontSize: 16, lineHeight: 1.55, color: 'var(--ink-soft)', margin: '0 0 18px' }}>There are no plans to choose and nothing to pay. Before any paid plan starts, we will email you first.</p>
+          <Link href="/parent?view=account" style={{ color: 'var(--milo-orange)', fontWeight: 800 }}>← Back to Account</Link>
+        </div>
+      </main>
+  )
+}
+
+/** The checkout screen. Unreachable while the beta is free, and still held to its legal links (legalSurface, legalLinksOnCollection). */
+export function PlanCheckout() {
   const [cadence, setCadence] = useState<Cadence>('monthly')
   const [seats, setSeats] = useState(1)
   const [busy, setBusy] = useState(false)

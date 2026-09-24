@@ -6,17 +6,17 @@ Round 1, item R11 (24 September 2026). **This table is re-measured on every test
 placeholder and the test goes red until this table says so. The Spanish drafts (`docs/legal/es/`) mirror the
 English counts and are held by `legalSpanish.test.ts`, not here.
 
-**Total: 53**
+**Total: 24**
 
 | category | count | meaning |
 |---|---|---|
 | built | 0 | blocked on something engineering has now built and proven — resolve under rule 6 (none left) |
 | repo | 0 | a fact measurable from the repository — resolve with evidence (none left) |
-| rafi | 16 | a founder decision or a fact only the founder has |
-| attorney | 16 | a legal judgement — see `ATTORNEY-PACKET.md` |
-| provider | 6 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — ROUND-2.md §4 |
-| date | 12 | set on the day of publication or adoption |
-| marker | 3 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker |
+| rafi | 14 | a founder decision or a fact only the founder has |
+| attorney | 4 | a legal judgement — see `ATTORNEY-PACKET.md` |
+| provider | 1 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — ROUND-2.md §4 |
+| date | 4 | set on the day of publication or adoption |
+| marker | 1 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker |
 
 ## Resolved in Round 1 (each listed in ROUND-2.md §6 for approval)
 
@@ -56,6 +56,42 @@ Each value below is what Rafi confirmed, from memory or from the named dashboard
 | #60 | 12-terms-of-service.md | the measured review process (written in advance, blind solver + tests, not every lesson read by a person) |
 | #63 | 12-terms-of-service.md | agent = Copyright Agent, Radlor Inc. (address, email); phone → new #67 (rafi), registration → new #68 (attorney) |
 
+## Resolved for the private beta (24 September 2026)
+
+Published on the founder's decisions, without an attorney; every attorney row decided here is recorded in `ATTORNEY-PACKET.md` → *Decided by the founder for the beta*. The provider values are what the founder read from each dashboard.
+
+| # (before) | where | category |
+|---|---|---|
+| #21 | 04-data-retention-policy.md | date |
+| #22 | 04-data-retention-policy.md | provider |
+| #24 | 04-data-retention-policy.md | attorney |
+| #25 | 04-data-retention-policy.md | provider |
+| #33 | 06-parent-rights-procedure.md | date |
+| #34 | 06-parent-rights-procedure.md | attorney |
+| #38 | 07-subprocessors.md | provider |
+| #40 | 07-subprocessors.md | provider |
+| #42 | 08-cookie-and-tracking-notice.md | date |
+| #43 | 08-cookie-and-tracking-notice.md | rafi |
+| #44 | 08-cookie-and-tracking-notice.md | attorney |
+| #46 | 11-privacy-policy.md | marker |
+| #47 | 11-privacy-policy.md | date |
+| #48 | 11-privacy-policy.md | date |
+| #49 | 11-privacy-policy.md | rafi |
+| #50 | 11-privacy-policy.md | attorney |
+| #51 | 11-privacy-policy.md | provider |
+| #52 | 11-privacy-policy.md | date |
+| #54 | 12-terms-of-service.md | marker |
+| #55 | 12-terms-of-service.md | date |
+| #56 | 12-terms-of-service.md | date |
+| #57 | 12-terms-of-service.md | attorney |
+| #58 | 12-terms-of-service.md | attorney |
+| #59 | 12-terms-of-service.md | attorney |
+| #61 | 12-terms-of-service.md | attorney |
+| #64 | 12-terms-of-service.md | attorney |
+| #65 | 12-terms-of-service.md | attorney |
+| #66 | 12-terms-of-service.md | attorney |
+| #68 | 12-terms-of-service.md | attorney |
+
 ## The table
 
 | # | file | line | text | category | owner | what resolves it |
@@ -77,39 +113,10 @@ Each value below is what Rafi confirmed, from memory or from the named dashboard
 | 17 | 03-consent-and-checkout-screen-copy.md | 99 | `[PLACEHOLDER — date]` | rafi | Rafi | Renewal date — a per-purchase field of an unbuilt receipt email (not a publication date). |
 | 18 | 03-consent-and-checkout-screen-copy.md | 100 | `[PLACEHOLDER — amount]` | rafi | Rafi | Renewal amount in the receipt. |
 | 19 | 03-consent-and-checkout-screen-copy.md | 157 | `[PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]` | attorney | Attorney | B3 delay. Build: 24 h, refused outside 24–48 h in production (`config.ts`). Attorney confirms. |
-| 21 | 04-data-retention-policy.md | 8 | `[PLACEHOLDER — date]` | date | Rafi | Adoption date. |
-| 22 | 04-data-retention-policy.md | 34 | `[PLACEHOLDER — the provider's retention for this plan could not be read from the API; confirm from the dashboard or the provider's documentation]` | provider | Vercel | Hosting request/console log retention for this plan. |
-| 24 | 04-data-retention-policy.md | 40 | `[PLACEHOLDER — attorney to decide; until then the cascade stands, because inventing a retention rule for evidence about children would be worse than naming the gap.]` | attorney | Attorney | Consent-record retention vs the account-closure cascade (packet A2). |
-| 25 | 04-data-retention-policy.md | 60 | `[PLACEHOLDER — establish the provider's retention period for these logs and state it here; if it is configurable, configure it.]` | provider | Supabase | Platform (API/auth) log retention; configure if possible. |
 | 28 | 05-information-security-program.md | 8 | `[PLACEHOLDER — date]` | date | Rafi | Adoption date. |
 | 29 | 05-information-security-program.md | 35 | `[PLACEHOLDER — obtain written confirmation from the provider and keep it as evidence]` | provider | Supabase | Written confirmation of encryption at rest. |
 | 30 | 05-information-security-program.md | 63 | `[PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]` | rafi | Rafi | Name the staging/test environment once created (R14 prepared it; ROUND-2 §4). |
 | 31 | 05-information-security-program.md | 71 | `[PLACEHOLDER — attorney: can a school consent on a parent's behalf here, and under what conditions? Until that is answered, the teacher path and the consent gate cannot both be live.]` | attorney | Attorney | School consent (packet A3). |
-| 33 | 06-parent-rights-procedure.md | 10 | `[PLACEHOLDER — date]` | date | Rafi | Effective date. |
-| 34 | 06-parent-rights-procedure.md | 36 | `[PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing permission for a child also cancels or reduces a subscription, and whether any part is refunded. Nothing does this today: billing is off and no subscription can be bought (`BILLING_LIVE = false`). An earlier version of this page promised cancellation and a pro-rata refund; decide and build it before billing goes live, then write it here.]` | attorney | Attorney + Rafi | Subscription consequence of withdrawal (packet A1/C4). Added in Round 1 (R8). |
-| 38 | 07-subprocessors.md | 22 | `[PLACEHOLDER — confirm region]` | provider | Stripe | Data region. |
-| 40 | 07-subprocessors.md | 25 | `[PLACEHOLDER — confirm]` | provider | GitHub | Where backup artifacts are stored / retained. |
-| 42 | 08-cookie-and-tracking-notice.md | 6 | `[PLACEHOLDER — date]` | date | Rafi | Effective date. |
-| 43 | 08-cookie-and-tracking-notice.md | 31 | `[PLACEHOLDER — the last two rows are read from the application's configuration rather than observed in a live signed-in session. Before publication, sign a child in and enumerate the storage again, so every row in this table has been seen rather than inferred.]` | rafi | Rafi | Sign a child in and enumerate on-device storage; confirm every row, including the six added in Round 1 "read from the code". |
-| 44 | 08-cookie-and-tracking-notice.md | 53 | `[PLACEHOLDER — if any non-essential storage is ever added, this section must be replaced with a real consent mechanism, and the default must be off.]` | attorney | Attorney | A standing rule, not a blank — attorney to confirm the no-banner position and whether it moves to an internal note (08 notes 1–2). |
 | 45 | 09-email-compliance.md | 20 | `[PLACEHOLDER — confirm with the attorney whether this applies to our sends, given the recipient relationship.]` | attorney | Attorney | Whether the "advertisement" label applies (packet E7). |
-| 46 | 11-privacy-policy.md | 4 | `[PLACEHOLDER — ...]` | marker | — | Not a blank: the rule itself. Delete when publishing. |
-| 47 | 11-privacy-policy.md | 14 | `[PLACEHOLDER — date]` | date | Rafi | Effective date. |
-| 48 | 11-privacy-policy.md | 15 | `[PLACEHOLDER — date]` | date | Rafi | Last-updated date. |
-| 49 | 11-privacy-policy.md | 67 | `[PLACEHOLDER — confirm the exact fields returned once billing is switched on.]` | rafi | Rafi | Exact billing fields once billing is switched on. |
-| 50 | 11-privacy-policy.md | 132 | `[PLACEHOLDER — period, to be set by the attorney once consent records exist]` | attorney | Attorney | Consent-record retention period (packet A2). |
-| 51 | 11-privacy-policy.md | 133 | `[PLACEHOLDER — the providers' retention periods must be established and stated here before publication]` | provider | Supabase + Vercel | Request-log retention periods. |
-| 52 | 11-privacy-policy.md | 142 | `[PLACEHOLDER — this paragraph must be checked against the Information Security Program immediately before publication, and any control that is not implemented on that day must be removed from it.]` | date | Rafi | Publication-day check of the security paragraph against doc 05. |
-| 54 | 12-terms-of-service.md | 4 | `[PLACEHOLDER — ...]` | marker | — | Not a blank: the rule itself. Delete when publishing. |
-| 55 | 12-terms-of-service.md | 13 | `[PLACEHOLDER — date]` | date | Rafi | Effective date. |
-| 56 | 12-terms-of-service.md | 14 | `[PLACEHOLDER — date]` | date | Rafi | Last-updated date. |
-| 57 | 12-terms-of-service.md | 45 | `[PLACEHOLDER — ATTORNEY: this last sentence describes what the system does today. It follows from "we delete everything we hold about you", and it is the opposite of what record-keeping for children's consent usually wants. Please advise whether an anonymised consent log should survive account deletion, and if so what it may contain.]` | attorney | Attorney | Anonymised consent log surviving account closure (packet A2). |
-| 58 | 12-terms-of-service.md | 47 | `[PLACEHOLDER — ATTORNEY and RAFI: whether withdrawing consent also cancels or reduces a subscription, and any refund. Nothing does this today (billing is off). The earlier text promised cancellation and a pro-rata refund; decide before billing goes live.]` | attorney | Attorney + Rafi | Subscription consequence of withdrawal (packet C4). Added in Round 1 (R8). |
-| 59 | 12-terms-of-service.md | 78 | `[PLACEHOLDER — ATTORNEY: the previous draft said this material "is protected by copyright and other laws". Most of the lesson content is AI-generated. In the United States, material produced by a machine without sufficient human authorship is not protected by copyright, and a bare claim of copyright over it may be both unenforceable and inaccurate. Please advise on the right formulation — we expect protection to rest on the selection, arrangement and editing that humans contributed, on these Terms as a contract, and on the acceptable-use restrictions, rather than on a blanket copyright assertion.]` | attorney | Attorney | Copyright formulation for AI-generated content (packet D3). |
-| 61 | 12-terms-of-service.md | 97 | `[PLACEHOLDER — state the remedy: a pro-rata refund, or the right to cancel]` | attorney | Attorney | Service-change remedy (packet C3). |
-| 62 | 12-terms-of-service.md | 119 | `[PLACEHOLDER — a floor amount]` | attorney | Attorney | Liability floor (packet D2). |
-| 67 | 12-terms-of-service.md | 131 | `[PLACEHOLDER — phone number]` | rafi | Rafi | The DMCA agent's phone number (the agent itself was filled on 24 Sep 2026: Radlor Inc.). |
-| 68 | 12-terms-of-service.md | 133 | `[PLACEHOLDER — ATTORNEY: to rely on the DMCA safe harbour the agent must also be registered with the US Copyright Office. Confirm whether registration is needed given that the Service hosts little or no user-posted material.]` | attorney | Attorney | Whether the DMCA agent must be registered (split out of #63). |
-| 64 | 12-terms-of-service.md | 139 | `[PLACEHOLDER — number]` | attorney | Attorney | Days to respond before proceedings (packet D7). |
-| 65 | 12-terms-of-service.md | 141 | `[PLACEHOLDER — ARBITRATION AND CLASS ACTION WAIVER. This is a deliberate business decision, not a blank to be filled casually. If Radlor wants binding arbitration and a class-action waiver, the attorney must draft it, including the opt-out right and the notice formatting several courts require. If Radlor does not want it, the clause below applies instead and this note is deleted.]` | attorney | Attorney | Arbitration / class waiver (packet D1). |
-| 66 | 12-terms-of-service.md | 148 | `[PLACEHOLDER — number]` | attorney | Attorney | Days of notice before material changes (packet D7). |
+| 62 | 12-terms-of-service.md | 117 | `[PLACEHOLDER — a floor amount]` | attorney | Attorney | Liability floor (packet D2). |
+| 67 | 12-terms-of-service.md | 129 | `[PLACEHOLDER — phone number]` | rafi | Rafi | The DMCA agent's phone number (the agent itself was filled on 24 Sep 2026: Radlor Inc.). |

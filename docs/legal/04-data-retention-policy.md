@@ -1,11 +1,11 @@
 # Data Retention and Deletion Policy
 
-> **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY.**
+> **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > Internal policy. The amended COPPA Rule requires a written retention policy for children's personal information, and requires the retention practice to be published in the online privacy notice.
 > **Every period below is marked as either enforced by a job that has been watched working, or not enforced.** A period written here that no job enforces would be a published claim that is false, which is worse than having no policy.
 
 **Owner:** Rakif Bobre
-**Adopted:** [PLACEHOLDER — date]
+**Adopted:** 25 September 2026
 **Review cycle:** annually, and on any material change to the product, the vendor set, or the data collected.
 **Facts in this document were measured on 22 September 2026.**
 
@@ -31,13 +31,13 @@ We keep children's personal information only for as long as it is reasonably nec
 | Cancellations of the second consent email — the email provider's id for that message, the id of the consent it belonged to, when it was due, and whether cancelling it worked. No name, no address, nothing about the child | `consent_b3_cancellations` | Currently kept indefinitely — **including after the consent record and the account are deleted**, because it is filled at the moment they are deleted so the email can still be cancelled | **No scheduled job** |
 | Live sessions, including IP address and browser | `auth.sessions` | Until the session expires | Provider-managed |
 | Provider request logs — IP address, browser, IP-derived city/region/country, account id | Our database provider's own platform logs | **Unknown.** The project is 20 days old and nothing has aged out, so "kept indefinitely" cannot yet be distinguished from "kept at least 20 days" | **Outside our jobs entirely** |
-| Hosting request and console logs | Hosting provider | [PLACEHOLDER — the provider's retention for this plan could not be read from the API; confirm from the dashboard or the provider's documentation] | Provider-managed |
+| Hosting request and console logs | Hosting provider | Available to us for 1 hour on our plan (Hobby), from the provider's dashboard, 24 September 2026 | Provider-managed |
 | Backups | Encrypted build artifact, 30-day expiry by design | 30 days | **Working — restore proven 23 Sep 2026.** See Section 6 |
 | Support correspondence with parents | Email | 12 months | Not automated |
 
 **Consent records — `parental_consents`, built 23 September 2026.** Holds the adult, the child, the method, the timestamps, the version of each document shown, and the state. It is linked to the adult account and **cascades on account deletion**, so closing an account erases the only evidence that consent was ever given or withdrawn.
 
-That is a genuine tension, not an oversight: it is what "we delete everything we hold about you" requires, and it is the opposite of what record-keeping for children's consent usually wants. Resolving it needs an anonymised consent log that survives deletion, plus a sentence in the Privacy Policy describing it — neither exists. [PLACEHOLDER — attorney to decide; until then the cascade stands, because inventing a retention rule for evidence about children would be worse than naming the gap.]
+That is a genuine tension, not an oversight: it is what "we delete everything we hold about you" requires, and it is the opposite of what record-keeping for children's consent usually wants. Resolving it needs an anonymised consent log that survives deletion, plus a sentence in the Privacy Policy describing it — neither exists. **Decided by the founder for the beta on 24 September 2026, for attorney review:** the cascade stands until an anonymised consent log is built, and the Privacy Policy and Terms say so.
 
 ## 3. Deletion on request
 
@@ -57,7 +57,7 @@ Two things sit outside our deletion jobs, and both must be described honestly to
 
 **Backups.** Deleting a record from the live database does not remove it from a backup. Backups are designed to expire after 30 days, so a deleted record can survive in a backup for up to that long. We never restore a deleted child's record from a backup. A backup holds everything in the database, including parents' sign-in session tokens, so it is encrypted and the passphrase is held only in the password manager and the code host's secret store.
 
-**The database provider's platform logs.** These record the IP address, browser type and an IP-derived approximate location for every request, including requests made by children's devices. They are the provider's own logs, not our tables, and none of our deletion jobs reach them. [PLACEHOLDER — establish the provider's retention period for these logs and state it here; if it is configurable, configure it.]
+**The database provider's platform logs.** These record the IP address, browser type and an IP-derived approximate location for every request, including requests made by children's devices. They are the provider's own logs, not our tables, and none of our deletion jobs reach them. On our plan the provider makes these logs available to us for 7 days (from its dashboard, 24 September 2026).
 
 ## 6. How this is enforced
 
