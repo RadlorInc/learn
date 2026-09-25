@@ -28,6 +28,8 @@
 --     path its caller names. The new function gets the old one's revoke verbatim (public, anon,
 --     authenticated, service_role — callable only from the three DEFINER callers), and the old one is DROPPED.
 --   · the cron command of `purge-old-learner-events` is updated in place (same name, same schedule).
+--   · the three prune functions repeat the exact revoke their own files applied (public, anon, authenticated) —
+--     a no-op on production, where it already holds; it stops this file ever re-creating one API-callable.
 -- The new table: RLS ENABLED with NO policies, and every privilege revoked from public, anon, authenticated
 -- and service_role; service_role then gets SELECT only. Nothing reachable from the browser can read, write or
 -- erase it — the absence of a policy IS the mechanism — and the server can read it but never alter it.
@@ -354,6 +356,9 @@ as $$
   select 'prune_unconfirmed', 'system', jsonb_build_object('auth.users', count(*))       -- FND-15
     from gone having count(*) > 0;                                                       -- FND-15
 $$;
+-- The revoke 20260923180100 already applied, repeated so this file never leaves the function API-callable even on a
+-- database that somehow lacks it (it is a no-op where it holds). Not a grant change: asserted below.
+revoke all on function public.prune_unconfirmed_users() from public, anon, authenticated;
 
 -- Copied from 20260817174352 (its last definition).
 create or replace function public.prune_error_events()
@@ -369,6 +374,9 @@ as $$
   select 'retention', 'system', jsonb_build_object('error_events', count(*))             -- FND-15
     from gone having count(*) > 0;                                                       -- FND-15
 $$;
+-- The revoke 20260817174723 already applied, repeated so this file never leaves the function API-callable even on a
+-- database that somehow lacks it (it is a no-op where it holds). Not a grant change: asserted below.
+revoke all on function public.prune_error_events() from public, anon, authenticated;
 
 -- Copied from 20260823213619 (its last definition).
 create or replace function public.prune_diagnostic_items()
@@ -384,6 +392,9 @@ as $$
   select 'retention', 'system', jsonb_build_object('diagnostic_items', count(*))         -- FND-15
     from gone having count(*) > 0;                                                       -- FND-15
 $$;
+-- The revoke 20260823213619 already applied, repeated so this file never leaves the function API-callable even on a
+-- database that somehow lacks it (it is a no-op where it holds). Not a grant change: asserted below.
+revoke all on function public.prune_diagnostic_items() from public, anon, authenticated;
 
 -- Copied from 20260823215352 (its last schedule).
 -- FND-15: the command is the same delete, wrapped so the rows it removed are counted into the log. Same job
