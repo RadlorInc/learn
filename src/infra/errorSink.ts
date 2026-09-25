@@ -26,6 +26,7 @@
  * `onRequestError` runs inside request handling and the client route is answering a browser that
  * has just died.
  */
+import { safeUrl } from '@/infra/safeUrl'
 
 export interface ErrorRecord {
   at: string
@@ -34,6 +35,8 @@ export interface ErrorRecord {
   stack?: string
   componentStack?: string
   url?: string
+  /** Next's `request.path` — carries the query string, so it is scrubbed like `url`. */
+  path?: string
   ua?: string
   method?: string
   routePath?: string
@@ -61,7 +64,10 @@ export const toRow = (r: ErrorRecord) => ({
   learner_id: UUID.test(r.learnerId ?? '') ? r.learnerId : null,
 })
 
-export async function sinkError(record: ErrorRecord): Promise<void> {
+export async function sinkError(input: ErrorRecord): Promise<void> {
+  // ⚠️ SEC-06: scrub BEFORE any sink sees it. The client already does this, but /api/report-error
+  // is public and onRequestError's `path` carries the raw query — so the server never trusts it.
+  const record: ErrorRecord = { ...input, url: safeUrl(input.url), path: safeUrl(input.path) }
   // 1. Always, and FIRST — this is the sink that needs no configuration and cannot be misconfigured.
   console.error(record.source === 'client' ? '[milo.client-error]' : '[milo.error]', JSON.stringify(record))
 
