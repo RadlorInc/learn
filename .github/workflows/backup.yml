@@ -1,13 +1,15 @@
 name: Backup (prod database)
 
-# WHY THIS EXISTS: the Supabase org is on the FREE plan, and Supabase's own docs say
-# "Database backups are not available for download for Free Plan projects" — so there is currently
-# NO restorable copy of the children's data that the founder controls. Their stated recommendation
-# for this tier is to export regularly with the CLI and keep it off-site. This is that export.
+# WHY THIS EXISTS: it was written (2026-09-03) when the Supabase org was on the FREE plan, which has no
+# downloadable backup. The org has since moved to Pro (founder read it from the dashboard 2026-09-24,
+# recorded in docs/legal/LOOP-STATE.md), whose daily
+# backups are kept 7 days but restore only as a WHOLE-PROJECT, in-place replacement in the dashboard.
+# This dump is the only copy the founder holds himself, restorable into a throwaway database
+# (docs/backup-restore-runbook.md; restore proven 2026-09-23). KEEP IT even if PITR is ever bought —
+# PITR is another in-place restore, not an off-site copy. PITR is NOT bought as far as the repo
+# records (2026-09-26); see docs/runbooks/rollback.md for what a data rollback can and cannot do.
 #
-# It is a stop-gap, not a backup strategy: retention is capped by GitHub's artifact limit and a
-# nightly dump means an RPO of up to 24 hours. The real answer is Pro + PITR (see docs/devops.md);
-# delete this workflow the day that is enabled, rather than keeping two half-strategies.
+# Nightly means an RPO of up to 24 hours, and retention is capped by GitHub's artifact limit.
 #
 # ⚠️ THE DUMP IS ENCRYPTED, AND THAT IS NOT OPTIONAL. It contains learner display names and every
 # session a child has played. A workflow artifact is readable by anyone with repo access, so an

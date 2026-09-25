@@ -1,8 +1,10 @@
-// Auto-generated types matching our Supabase schema
-// Re-run: npx supabase gen types typescript --local > src/lib/supabase/types.ts
+// HAND-WRITTEN, NOT GENERATED, AND STALE. It describes early tables (several since emptied or dropped) and
+// none of lesson_progress / point_events / parental_consents; the Supabase client is not typed with it, so
+// nothing checks it against the real schema (review ARC-05, 2026-09-26). Do not trust a column from here —
+// read the migrations. Regenerating it from a local stack is ARC-05's fix, not done yet.
 import type { AgeGroup, ChapterType } from '@/core/chapters'
 
-// Chapter ids live in the single registry (src/lib/chapters.ts); re-exported
+// Chapter ids live in the single registry (src/core/chapters.ts); re-exported
 // here so existing `@/data/supabase/types` imports keep working.
 export type { ChapterType } from '@/core/chapters'
 export type UserRole    = 'parent' | 'learner' | 'teacher'

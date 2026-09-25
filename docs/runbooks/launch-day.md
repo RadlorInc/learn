@@ -135,6 +135,11 @@ thing that would have been discovered at 9pm on launch night.
 
 **A — FASTEST, and what to reach for first (Vercel Instant Rollback).**
 
+⚠️ **On Vercel Hobby (added 2026-09-26, from https://vercel.com/docs/instant-rollback):** it goes back
+ONE deployment only, and afterwards Vercel turns OFF auto-assignment of production domains — later
+pushes build but do not go live until you press **Undo Rollback**. The full sequence is in
+[`rollback.md`](rollback.md) → route A; do not use this route without it.
+
 ```
 Vercel dashboard → adaptivelearn → Deployments
   → the last known-good deployment with target "production"
