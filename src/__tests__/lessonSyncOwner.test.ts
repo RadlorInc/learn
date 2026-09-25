@@ -71,6 +71,17 @@ describe('BUG-01 a queued answer is not deleted because the wrong session flushe
     expect(queued()).toHaveLength(0)
   })
 
+  it('an item queued before this fix (no account on it) is not sent, so not deleted, by a flush with no session', async () => {
+    // Written out by hand: the exact shape a device updated from the old code still holds.
+    kv.set('milo-lesson-sync-queue', JSON.stringify([{ id: 'old-1', learnerId: 'kidA', lessonId: 'g3m1-t1', outcome: 'first', event: 'e-1' }]))
+    world.session = null
+    await flushLessonSync()
+    expect(queued(), 'a pre-fix item was sent with no session and deleted').toHaveLength(1)
+    world.session = 'parentA'
+    await flushLessonSync()
+    expect(world.delivered).toEqual(['kidA:g3m1-t1'])
+  })
+
   it('another account on the same device: A\'s answer is kept for A, and B\'s own answer still goes up', async () => {
     await answerOffline('parentA', 'kidA', 'g3m1-t2')
     world.session = 'parentB'
