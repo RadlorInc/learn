@@ -30,8 +30,9 @@ async function drain(req: Request) {
     res = NextResponse.json({ tried })
   } catch (e) {
     if (e instanceof ConfigMissing) {
+      console.error('[consent/cancel-second-notice] not configured: missing', e.message)
       outcome = `not configured (${e.message})`
-      res = NextResponse.json({ error: 'not_configured', missing: e.message }, { status: 503 })
+      res = NextResponse.json({ error: 'not_configured' }, { status: 503 })
     } else {
       console.error('[consent/cancel-second-notice] failed', e)
       outcome = 'failed'

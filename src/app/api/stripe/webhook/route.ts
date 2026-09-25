@@ -75,10 +75,9 @@ export async function POST(req: Request) {
   } catch (e) {
     // Not sinkError: an unsigned POST to a public URL is a scan, not a crash, and logging it as one
     // would make a crash sink noisy exactly when somebody starts probing.
-    return NextResponse.json(
-      { error: 'bad_signature', detail: e instanceof Error ? e.message : 'unverifiable' },
-      { status: 400 },
-    )
+    // SEC-17: the library's text stays in the log, not in the answer to an anonymous caller.
+    console.warn('[stripe/webhook] bad signature:', e instanceof Error ? e.message : 'unverifiable')
+    return NextResponse.json({ error: 'bad_signature' }, { status: 400 })
   }
 
   // ── 1. Idempotency, in the database ────────────────────────────────────────

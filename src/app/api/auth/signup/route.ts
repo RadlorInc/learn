@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     if (!link.ok) {
       // V10 REVERSED (founder, 2026-09-22): an existing account is said plainly, as the old signUp path did.
       if (link.reason === 'exists') return NextResponse.json({ error: 'exists' }, { status: 409 })
-      return NextResponse.json({ error: link.reason, message: link.message }, { status: 400 })
+      // SEC-17: the auth server's own message stays in the log; the client reads only the code.
+      console.warn('[auth/signup] refused:', link.reason, link.message)
+      return NextResponse.json({ error: link.reason }, { status: 400 })
     }
     // The role the account was FIRST created with wins: re-sending must not turn a teacher's sign-up into a consent.
     const asParent = (link.metadata.role ?? role) === 'parent'
