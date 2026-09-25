@@ -228,8 +228,8 @@ function withCommercialFooter(m: Rendered, unsubscribeUrl: string): Rendered {
 
 /**
  * Cancel one scheduled message and say what happened, as the string the queue records:
- * 'cancelled' · 'refused: …' (Resend said no — already cancelled, already sent, unknown id; retrying
- * cannot change that) · 'error: …' (Resend unreachable, rate-limited or 5xx; worth retrying).
+ * 'cancelled' · 'refused: …' (Resend said no — already cancelled, already sent, unknown id, or a key
+ * without the right permission, as on 24 Sep) · 'error: …' (Resend unreachable, rate-limited or 5xx; worth retrying).
  * Never throws: a cancel is always best-effort next to the thing that asked for it.
  */
 export async function cancelOutcome(id: string): Promise<string> {
@@ -251,8 +251,8 @@ export const cancelEmail = async (id: string): Promise<boolean> => (await cancel
  * Cancel every B3 the database has queued and record each outcome (20260923200000). The queue is
  * filled by a trigger in the same transaction that ends a consent — withdrawal, deleting the child,
  * closing the account — so the id cannot be lost to the cascade that deletes the consent row.
- * Idempotent: a settled row is never picked again, and a second cancel of the same message is
- * recorded as 'refused', not thrown.
+ * Idempotent: a 'cancelled' row is never picked again; a 'refused' or 'error' one is retried while
+ * its B3 is still ahead (20260926100300 — a bad API key once made every cancel 'refused').
  * Returns how many it tried, or null when the queue does not exist yet (client deployed before the
  * migration) — the caller decides whether it has a fallback.
  */
@@ -262,8 +262,13 @@ export async function drainB3Cancellations(): Promise<number | null> {
     if ((e as RpcError)?.code === 'PGRST202') return null
     throw e
   }
+  let notCancelled = 0
   for (const { provider_id } of due) {
-    await rpc('consent_b3_record', { p_provider_id: provider_id, p_result: await cancelOutcome(provider_id) })
+    const result = await cancelOutcome(provider_id)
+    if (result !== 'cancelled') notCancelled++
+    await rpc('consent_b3_record', { p_provider_id: provider_id, p_result: result })
   }
+  // FND-11: a refused or failed cancel is retried by the next drain, and is never silent.
+  if (notCancelled) console.error(`[consent] B3 cancel not done for ${notCancelled} of ${due.length}; retried next drain`)
   return due.length
 }

@@ -210,16 +210,31 @@ describe('the drain is idempotent and never blocks on Resend', () => {
     expect(resendCalls).toEqual([])
   })
 
-  it('Resend refusing (already cancelled or sent) is recorded, not thrown, and not retried', async () => {
+  it('Resend refusing is recorded, not thrown — and RETRIED by the next drain while the B3 is still ahead (FND-11)', async () => {
+    // 24 Sep: a sending-only Resend key made every cancel come back 401, recorded as 'refused' and, until
+    // 20260926100300, never tried again — so a withdrawn parent's B3 stayed scheduled with nothing saying so.
     const A = await newParent()
     await child(A, 're_refused')
-    resendAnswer = () => ({ status: 422, body: { name: 'invalid_parameter', message: 'Email cannot be canceled' } })
+    resendAnswer = () => ({ status: 401, body: { name: 'restricted_api_key', message: 'This API key is restricted to only send emails' } })
     await asUser(A, `select public.withdraw_my_consent()`)
     await expect(drain()).resolves.toBeGreaterThan(0)
-    expect((await queued('re_refused'))?.cancel_result).toBe('refused: 422 Email cannot be canceled')
+    expect((await queued('re_refused'))?.cancel_result).toBe('refused: 401 This API key is restricted to only send emails')
+    resendCalls.length = 0
+    resendAnswer = () => ({ status: 200, body: {} })   // the key is fixed
+    await drain()
+    expect(resendCalls, 'the refused cancel was not retried').toContain('re_refused')
+    expect((await queued('re_refused'))?.cancel_result).toBe('cancelled')
+    // …and once cancelled it is final: a third drain asks Resend for nothing.
     resendCalls.length = 0
     await drain()
     expect(resendCalls).not.toContain('re_refused')
+  })
+
+  it('a refused B3 whose send time has passed is no longer retried', async () => {
+    await q(`insert into public.consent_b3_cancellations (provider_id, consent_id, scheduled_for, queued_because, cancel_result)
+      values ('re_refused_past', gen_random_uuid(), now() - interval '1 hour', 'withdrawn', 'refused: 401 x')`)
+    await drain()
+    expect(resendCalls).not.toContain('re_refused_past')
   })
 
   it('Resend down: the deletion already happened, the failure is recorded, and the next drain retries', async () => {
