@@ -9,7 +9,7 @@ description: >-
 # passes exactly the secrets it already had; nothing new is exposed by this file.
 inputs:
   project-ref:
-    description: the production project ref (the caller asserts it first where it matters)
+    description: the production project ref (checked against scripts/assert-prod-ref.sh's literal before any dump)
     required: true
   access-token:
     description: secrets.SUPABASE_ACCESS_TOKEN
@@ -27,6 +27,15 @@ inputs:
 runs:
   using: composite
   steps:
+    # OPS-17: never dump an unasserted ref. Here, not in each caller, so backup.yml (nightly) and
+    # migrate-prod both get it and a future caller cannot forget it. A wrong ref does not fail, it
+    # SUCCEEDS against the wrong database — see the script's header.
+    - name: Refuse unless the ref is this repo's production
+      shell: bash
+      env:
+        PROD_PROJECT_REF: ${{ inputs.project-ref }}
+      run: scripts/assert-prod-ref.sh
+
     - name: Dump schema + data
       shell: bash
       env:
@@ -72,7 +81,7 @@ runs:
         fi
 
     - name: Upload
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: ${{ inputs.artifact-name }}
         path: milo-backup.tar.gz.enc
