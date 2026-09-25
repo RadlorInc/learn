@@ -144,6 +144,20 @@ jobs:
         env:
           PROD_PROJECT_REF: ${{ vars.PROD_PROJECT_REF }}
         run: scripts/assert-prod-ref.sh
+      # ⚠️ A BACKUP BEFORE EVERY PRODUCTION MIGRATION (OPS-08). There is no PITR, so the only undo for
+      # a bad migration is a restore — and before this the newest copy could be up to a day old (on
+      # D6 the manual backup finished 23 s before the migration applied, by luck). This is the SAME
+      # composite backup.yml runs nightly: read-only pg_dump, encrypted, uploaded as an artifact with
+      # the same 30-day retention. It sits AFTER the ref assertion (never dump an unasserted ref) and
+      # BEFORE `db push`; if it fails, the job stops here and nothing is applied.
+      - name: Back up production before migrating
+        uses: ./.github/actions/prod-backup
+        with:
+          project-ref: ${{ vars.PROD_PROJECT_REF }}
+          access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          db-password: ${{ secrets.PROD_DB_PASSWORD }}
+          passphrase: ${{ secrets.BACKUP_PASSPHRASE }}
+          artifact-name: milo-db-backup-premigrate-${{ github.run_id }}
       - name: Apply migrations to prod
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
