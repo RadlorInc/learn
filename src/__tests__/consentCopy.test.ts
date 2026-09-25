@@ -82,7 +82,7 @@ const bDoc = units(
 )
 const bCopy = en([
   B1.subject, B1.hi, B1.thanks, B1.before, B1.store, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.address, B1.covers, B1.tick, B1.decline,
-  // B0 / B0t (one email, 2026-09-25): the sign-up emails
+  // B0 / B0t (the one sign-up email, 2026-09-25)
   SIGNUP.subject, SIGNUP.confirms, ...Object.values(CONFIRM_EMAIL),
   B2.heading, ...B2.body,
   B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
@@ -151,9 +151,6 @@ describe('the consent copy is the documents, verbatim', () => {
       // v6, 2026-09-24 (the Radlic rename): the product's name and web address (Milo → Radlic, adaptivelearn.radlor.com
       // → radlic.com), and "Withdraw permission for all YOUR children" (was "my"), matching the button and doc 03.
       'notice-v6': 'b24962a84278',
-      // v7, 2026-09-25 (one email): no second confirmation email; an email-and-password sign-up's request is in the
-      // email that confirms the address; withdrawal is in the app (the second email that carried a link is gone).
-      'notice-v7': 'a60891483516',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()
@@ -214,6 +211,7 @@ describe('the rendered emails and screen say nothing the documents do not', () =
     const b0t = renderConfirm('en', 'https://x.test/g')
     const htmlLines = (h: string) => h.split(/<\/(?:p|li)>/).map(s => s.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"))
     // The renderer's own lines: the two buttons in the text part carry their URL.
+    // The renderer's own lines: the button's URL in the text part (the email draws a button, not a checkbox).
     const own = (l: string) => /^https:\/\/x\.test\/g$/.test(l)
     for (const [name, m] of [['B1', b1], ['B3', b3], ['B0', b0], ['B0t', b0t]] as const) {
       expect(extra(m.text.split('\n').filter(l => !own(l))), `${name} text part`).toEqual([])

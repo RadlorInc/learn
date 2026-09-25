@@ -17,6 +17,8 @@ import {
  * one email: for a parent, B0 — B1's words, and a link that confirms the address and opens the consent page; for a
  * teacher, B0t — the confirmation alone. A Google sign-in never comes here (it has no confirmation email) and still
  * gets B1 from the dashboard.
+ * ⚠️ STILL EMAIL-PLUS (founder, 2026-09-25): the request is written as `email_plus`, the grant on the consent page
+ * schedules B3 a day later exactly as B1's does, and withdrawal cancels it. Only the FIRST email changed.
  *
  * ⚠️ The confirmation token rides in the QUERY (Supabase's `token_hash`, which the confirm page must read on load) and
  * the consent token in the FRAGMENT, exactly as B1's link carries it: never sent to a server, never in a log.

@@ -34,7 +34,7 @@ Usted nos da su permiso una sola vez, para su cuenta, y cubre a todos los niños
 
 **Para un niño:** elimine el perfil de ese niño (la tarjeta de su hijo → **Inicio de sesión y datos** → *Eliminar el perfil de nombre*). Esto se aplica solo a ese niño: su cuenta, su permiso y los demás niños que tenga en ella no se ven afectados. (Si dio su permiso antes del 24 de septiembre de 2026 para un solo niño, el enlace del segundo correo de ese permiso hace lo mismo para ese niño).
 
-**Para todos los niños de la cuenta:** use **Cuenta → Retirar el permiso para todos sus hijos**, o el enlace del segundo correo de confirmación si le enviamos uno (dejamos de enviarlo en septiembre de 2026). Se eliminan todos los niños de la cuenta. **Su cuenta sigue abierta**, sin niños; si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.
+**Para todos los niños de la cuenta:** use **Cuenta → Retirar el permiso para todos sus hijos**, o el enlace del segundo correo que le enviamos después de que dé su permiso. Se eliminan todos los niños de la cuenta. **Su cuenta sigue abierta**, sin niños; si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.
 
 Guardamos un registro de que el permiso se dio y después se retiró, y de cuándo, sin los datos de los niños. Para eliminarlo todo, incluida la propia cuenta, use **Cuenta → Cerrar su cuenta**.
 

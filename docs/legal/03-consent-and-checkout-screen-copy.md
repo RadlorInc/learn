@@ -141,13 +141,13 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B0. Sign-up email for a parent — one email confirms the address and asks for permission
 
-**Sent:** when a parent signs up with an email address and a password, INSTEAD of a separate confirmation email and B1 (founder, 2026-09-25: one email). A parent who signs in with Google has no confirmation email and gets B1. The link confirms the address and opens the page below (B1b), where ticking the box gives the permission.
+**Sent:** when a parent signs up with an email address and a password, INSTEAD of a separate confirmation email and B1 (founder, 2026-09-25). A parent who signs in with Google has no confirmation email and gets B1. The button confirms the address and opens the page below (B1b), where ticking the box gives the permission; B3 follows as for B1.
 
 **Subject:** `Confirm your email and give permission for your children`
 
-**Body:** B1's body, word for word, with this line directly above the checkbox:
+**Body:** B1's body, word for word, with this line directly above the button:
 
-> Ticking the box also confirms your email address.
+> Clicking the button also confirms your email address.
 
 ### B0t. Sign-up email for a teacher — confirms the address only
 
@@ -184,10 +184,12 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 **Body:**
 
 > We have recorded your permission. You can add your children now.
+>
+> We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about any child on the account.
 
 ### B3. Second confirmation email — sent after a delay
 
-**Timing:** ⚠️ NO LONGER SENT (founder, 2026-09-25: one email; see ATTORNEY-PACKET A4). A second email scheduled before that change still arrives, and its link still works — which is the only reason this text is kept.
+**Timing:** [PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]
 
 **Subject:** `Confirming the permission you gave for your children`
 

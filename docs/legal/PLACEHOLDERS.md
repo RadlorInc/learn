@@ -6,14 +6,14 @@ Round 1, item R11 (24 September 2026). **This table is re-measured on every test
 placeholder and the test goes red until this table says so. The Spanish drafts (`docs/legal/es/`) mirror the
 English counts and are held by `legalSpanish.test.ts`, not here.
 
-**Total: 23**
+**Total: 24**
 
 | category | count | meaning |
 |---|---|---|
 | built | 0 | blocked on something engineering has now built and proven — resolve under rule 6 (none left) |
 | repo | 0 | a fact measurable from the repository — resolve with evidence (none left) |
 | rafi | 14 | a founder decision or a fact only the founder has |
-| attorney | 3 | a legal judgement — see `ATTORNEY-PACKET.md` |
+| attorney | 4 | a legal judgement — see `ATTORNEY-PACKET.md` |
 | provider | 1 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — ROUND-2.md §4 |
 | date | 4 | set on the day of publication or adoption |
 | marker | 1 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker |
@@ -112,6 +112,7 @@ Published on the founder's decisions, without an attorney; every attorney row de
 | 16 | 03-consent-and-checkout-screen-copy.md | 99 | `[PLACEHOLDER — every month / every 12 months]` | rafi | Rafi | Cadence in the receipt. |
 | 17 | 03-consent-and-checkout-screen-copy.md | 99 | `[PLACEHOLDER — date]` | rafi | Rafi | Renewal date — a per-purchase field of an unbuilt receipt email (not a publication date). |
 | 18 | 03-consent-and-checkout-screen-copy.md | 100 | `[PLACEHOLDER — amount]` | rafi | Rafi | Renewal amount in the receipt. |
+| 19 | 03-consent-and-checkout-screen-copy.md | 192 | `[PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]` | attorney | Attorney | B3 delay. Build: 24 h, refused outside 24–48 h in production (`config.ts`). Attorney confirms. |
 | 28 | 05-information-security-program.md | 8 | `[PLACEHOLDER — date]` | date | Rafi | Adoption date. |
 | 29 | 05-information-security-program.md | 35 | `[PLACEHOLDER — obtain written confirmation from the provider and keep it as evidence]` | provider | Supabase | Written confirmation of encryption at rest. |
 | 30 | 05-information-security-program.md | 63 | `[PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]` | rafi | Rafi | Name the staging/test environment once created (R14 prepared it; ROUND-2 §4). |

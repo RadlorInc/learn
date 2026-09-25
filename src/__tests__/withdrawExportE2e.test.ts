@@ -195,7 +195,7 @@ async function rowsAbout(f: Family) {
 
 let A: Family, B: Family
 let siblingA = ''   // a second child under family A's ACCOUNT consent (consent-once): the B3 link must take it too
-let b3Stored: string | null = '', token = ''
+let b3Stored = '', token = ''
 const kidTokenFromB3 = (html: string) => html.match(/\/consent\/withdraw#t=([A-Za-z0-9_-]{43})/)?.[1] ?? ''
 
 beforeAll(async () => {
@@ -224,11 +224,8 @@ beforeAll(async () => {
   const r2 = await respond(new Request('http://x/api/consent/respond', { method: 'POST', headers: { 'x-forwarded-for': '10.7.0.2' },
     body: JSON.stringify({ t: b1Token, action: 'grant' }) }))
   expect((await r2.json()).status).toBe('granted')
-  // ONE EMAIL (2026-09-25): no second email is sent any more. The withdrawal link a parent may still hold is in a B3
-  // scheduled BEFORE that change, and it carries the SAME token as B1 — so B1's token drives the withdrawal route here.
-  expect(resendCalls.length, 'the grant sent a second email').toBe(1)
-  token = b1Token
-  expect(token, 'B1 carries no link').toHaveLength(43)
+  token = kidTokenFromB3(String(resendCalls[1].body?.html))
+  expect(token, 'B3 carries no withdrawal link').toHaveLength(43)
   // ⚠️ CONSENT-ONCE: this needs the request route change (p_scope: 'account', p_ack_at). Until the route sends the
   // new parameters, consent_request resolves to no function and `r1` above is a 502 — this file is red for that
   // reason alone. The route is not this test's to change.
@@ -237,7 +234,7 @@ beforeAll(async () => {
   expect(consentA.scope, 'the route asked for something other than ACCOUNT consent').toBe('account')
   expect(consentA.notice).toBe(NOTICE_VERSION)
   b3Stored = consentA.b3
-  expect(b3Stored, 'the grant stored a second email that was never sent').toBeNull()
+  expect(b3Stored, 'the grant did not store the B3 Resend returned').toBe('re_2')
 
   // The children, created as the parent under that consent with the parent's attestation (the gate refuses anything else).
   const addA = (name: string) => asCaller(`Bearer ${jwtFor(PARENT_A)}`, async tx => (await tx.query<{ id: string }>(`insert into public.learners
@@ -395,8 +392,8 @@ describe('withdrawal from the B3 link — the real route, the real functions', (
     expect(rec.withdrawn_at).not.toBeNull()
   })
 
-  it('cancels nothing — there is no scheduled second email to cancel', () => {
-    expect(resendCalls.map(c => c.path)).toEqual([])
+  it('cancels the scheduled B3 — the id the grant stored — and nothing else', () => {
+    expect(resendCalls.map(c => c.path)).toEqual([`/emails/${b3Stored}/cancel`])
   })
 
   it('leaves the other family exactly as it was', async () => {

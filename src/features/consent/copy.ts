@@ -28,7 +28,7 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v7'
+export const NOTICE_VERSION = 'notice-v6'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
@@ -89,8 +89,8 @@ export const NOTICE = {
                 es: 'Antes de recopilar cualquiera de estos datos, necesitamos su consentimiento verificable.' },
   /** Document 02 follows this with a drafters' placeholder for the card path, which is not built. A placeholder
    *  is a note to the drafters and is never rendered — so there is nothing here for it. */
-  permissionHow: { en: "We send a consent request to your email address, and you confirm it. If you sign up with an email address and a password, the request is in the email that confirms your address. This one permission covers every child you add to this account, now or later: each time you add a child, you confirm in the app that you are that child's parent or legal guardian, and we record when you did. You can withdraw your permission in the app, at any time.",
-                   es: 'Enviamos una solicitud de consentimiento a su dirección de correo electrónico, y usted la confirma. Si se registra con una dirección de correo electrónico y una contraseña, la solicitud está en el correo que confirma su dirección. Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante: cada vez que añada un niño, usted confirma en la aplicación que es su padre, madre o tutor legal, y registramos cuándo lo hizo. Puede retirar su permiso en la aplicación, en cualquier momento.' },
+  permissionHow: { en: "We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. This one permission covers every child you add to this account, now or later: each time you add a child, you confirm in the app that you are that child's parent or legal guardian, and we record when you did. You can withdraw your permission from the second email or in the app, at any time.",
+                   es: 'Enviamos una solicitud de consentimiento a su dirección de correo electrónico, usted la confirma y, un día después, enviamos un segundo correo de confirmación a la misma dirección. Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante: cada vez que añada un niño, usted confirma en la aplicación que es su padre, madre o tutor legal, y registramos cuándo lo hizo. Puede retirar su permiso desde el segundo correo o en la aplicación, en cualquier momento.' },
   rightsHeading: { en: 'Your rights as a parent', es: 'Sus derechos como padre o madre' },
   rightsIntro: { en: 'At any time, you can:', es: 'En cualquier momento, usted puede:' },
   rightsList: [
@@ -144,10 +144,10 @@ export const B1 = {
 }
 
 // ─────────── Document 03 · B0 / B0t — the sign-up email (email-and-password sign-ups, 2026-09-25) ───────────
-/** B0: the parent's sign-up email — B1's body word for word, its own subject, and `confirms` above the checkbox. */
+/** B0: the parent's sign-up email — B1's body word for word, its own subject, and `confirms` above the button. */
 export const SIGNUP = {
   subject: { en: 'Confirm your email and give permission for your children', es: 'Confirme su correo y dé permiso para sus hijos' },
-  confirms: { en: 'Ticking the box also confirms your email address.', es: 'Al marcar la casilla también confirma su dirección de correo electrónico.' },
+  confirms: { en: 'Clicking the button also confirms your email address.', es: 'Al hacer clic en el botón también confirma su dirección de correo electrónico.' },
 }
 /** B0t: a teacher's sign-up email — confirms the address, asks nothing. `ignore` and the address are B1's. */
 export const CONFIRM_EMAIL = {
@@ -162,6 +162,8 @@ export const B2 = {
   heading: { en: 'Thank you — permission recorded', es: 'Gracias — permiso registrado' },
   body: [
     { en: 'We have recorded your permission. You can add your children now.', es: 'Hemos registrado su permiso. Ya puede añadir a sus hijos.' },
+    { en: "We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about any child on the account.",
+      es: 'Dentro de un rato le enviaremos un correo más para confirmar que realmente fue usted. Si no lo fue, ese correo le permitirá cancelar de inmediato y eliminaremos todo lo que tenemos sobre cualquier niño de la cuenta.' },
   ] as L[],
 }
 

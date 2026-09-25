@@ -2,9 +2,8 @@
 /**
  * THE CONSENT ROUTES — the ordering and the links, which the database cannot see.
  *
- * ONE EMAIL (founder, 2026-09-25): a grant sends NOTHING more. B3 survives only as the fallback for a database without
- * 20260926090000, which still refuses an email-plus grant with no second email (23514). For that fallback, what only
- * the route can get right is the ORDER (B3 is scheduled, and its id recorded, before anything is granted), the DELAY
+ * `consentFlow.test.ts` proves the database refuses a grant without B3. What only the route can get
+ * right is the ORDER (B3 is scheduled, and its id recorded, before anything is granted), the DELAY
  * (B3 is due a day later — the wording says "Yesterday"), the LINK inside B3 (it must lead to the
  * withdrawal screen with the same token), and that no link can change anything on a GET, because
  * mail scanners open every link in every email.
@@ -19,8 +18,6 @@ import { NOTICE_VERSION } from '@/features/consent/copy'
 const log: string[] = []
 let lookup: Record<string, unknown> | null
 let grantAnswer = 'granted'
-/** The first consent_grant throws this (an old database refusing a grant without a second email), once. */
-let grantRefusal: { code: string } | null = null
 let drainAnswer: number | null = 1
 const sent: { to: string; subject: string; html: string; key: string; at?: Date }[] = []
 
@@ -34,7 +31,7 @@ vi.mock('@/features/consent/server', async orig => {
     rpc: vi.fn(async (fn: string) => {
       log.push(`rpc:${fn}`)
       if (fn === 'consent_lookup') return lookup ? [lookup] : []
-      if (fn === 'consent_grant') { if (grantRefusal) { const e = grantRefusal; grantRefusal = null; throw e } return grantAnswer }
+      if (fn === 'consent_grant') return grantAnswer
       if (fn === 'consent_withdraw') return 'withdrawn'
       if (fn === 'consent_request') return [{ consent_id: 'c1', email: 'p@x.test' }]
       return null
@@ -58,53 +55,47 @@ const pending = (over: Record<string, unknown> = {}) => ({
   learner_id: null, second_email_provider_id: null, second_notice_scheduled_for: null, ...over,
 })
 
-beforeEach(() => { log.length = 0; sent.length = 0; grantAnswer = 'granted'; grantRefusal = null; drainAnswer = 1; lookup = pending(); delete process.env.CONSENT_SECOND_NOTICE_DELAY_MINUTES })
+beforeEach(() => { log.length = 0; sent.length = 0; grantAnswer = 'granted'; drainAnswer = 1; lookup = pending(); delete process.env.CONSENT_SECOND_NOTICE_DELAY_MINUTES })
 
 describe('grant', () => {
-  it('grants with NO second email: nothing is sent, and the grant records none', async () => {
+  it('schedules B3 FIRST, a day ahead, and only then grants — with that B3\'s id', async () => {
+    const t0 = Date.now()
     expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('granted')
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_grant'])
-    expect(sent).toHaveLength(0)
+    expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant'])
+
+    const b3 = sent[0]
+    // ⚠️ Asserted, not dereferenced. The first draft read `b3.at!.getTime()`, so with B3 sent at once it
+    // went red on a TypeError — and `npm run break` refused to certify that (exit 4: red for the wrong
+    // reason). A check that only catches a defect by crashing on it says nothing about what it found.
+    expect(b3.at, 'B3 was sent immediately — it must be SCHEDULED, a day after the grant').toBeInstanceOf(Date)
+    const delay = b3.at!.getTime() - t0
+    expect(delay, 'B3 must be due a day after the grant — its first word is "Yesterday"').toBeGreaterThanOrEqual(24 * 3600_000 - 5_000)
+    expect(delay).toBeLessThan(24 * 3600_000 + 60_000)
+    expect(b3.key, 'B3 carries an idempotency key, or a double click schedules two').toBe('consent-c1-b3')
+
     const { rpc } = await import('@/features/consent/server')
     const grantArgs = (rpc as unknown as { mock: { calls: [string, Record<string, unknown>][] } }).mock.calls.find(c => c[0] === 'consent_grant')![1]
-    expect([grantArgs.p_second_provider_id, grantArgs.p_second_scheduled_for]).toEqual([null, null])
+    expect(grantArgs.p_second_provider_id).toBe('re_1')
   })
 
-  it('a grant the database closes (already consented, or expired in a race) sends nothing either', async () => {
-    for (const a of ['already_consented', 'expired']) {
-      log.length = 0; grantAnswer = a
-      expect((await post({ t: TOKEN, action: 'grant' })).status).toBe(a)
-      expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_grant'])
-    }
-    expect(sent).toHaveLength(0)
+  it('B3\'s link is the withdrawal screen, carrying the same token', async () => {
+    await post({ t: TOKEN, action: 'grant' })
+    expect(sent[0].html).toContain(`/consent/withdraw#t=${TOKEN}`)
+    expect(sent[0].html).not.toContain('/consent/respond')
   })
 
-  describe('fallback — a database without the one-email migration refuses that grant (23514)', () => {
-    it('then schedules B3 FIRST, a day ahead, and only then grants — with that B3\'s id', async () => {
-      grantRefusal = { code: '23514' }
-      const t0 = Date.now()
-      expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('granted')
-      expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_grant', 'send:Confirming t', 'rpc:consent_grant'])
-      const b3 = sent[0]
-      // ⚠️ Asserted, not dereferenced: a TypeError is red for the wrong reason (`npm run break` exit 4).
-      expect(b3.at, 'B3 was sent immediately — it must be SCHEDULED, a day after the grant').toBeInstanceOf(Date)
-      const delay = b3.at!.getTime() - t0
-      expect(delay, 'B3 must be due a day after the grant — its first word is "Yesterday"').toBeGreaterThanOrEqual(24 * 3600_000 - 5_000)
-      expect(delay).toBeLessThan(24 * 3600_000 + 60_000)
-      expect(b3.key, 'B3 carries an idempotency key, or a double click schedules two').toBe('consent-c1-b3')
-      expect(sent[0].html).toContain(`/consent/withdraw#t=${TOKEN}`)
-      expect(sent[0].html).not.toContain('/consent/respond')
-    })
-    it('and cancels that B3 when the grant then loses (expired, already consented)', async () => {
-      grantRefusal = { code: '23514' }; grantAnswer = 'expired'
-      expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('expired')
-      expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_grant', 'send:Confirming t', 'rpc:consent_grant', 'cancel:re_1'])
-    })
-    it('any OTHER database error is a failure, never a reason to send B3', async () => {
-      grantRefusal = { code: '42501' }
-      expect((await post({ t: TOKEN, action: 'grant' })).error).toBe('failed')
-      expect(sent).toHaveLength(0)
-    })
+  it('a grant that loses a race to expiry cancels the B3 it scheduled', async () => {
+    grantAnswer = 'expired'
+    expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('expired')
+    expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant', 'cancel:re_1'])
+  })
+
+  it('consent-once: a parent who already holds a current account consent is told so, and the B3 just scheduled is cancelled', async () => {
+    // consent_grant answers 'already_consented' (and closes this request) — nothing was granted, so a B3 saying
+    // "Yesterday you gave permission" must not go out for it.
+    grantAnswer = 'already_consented'
+    expect((await post({ t: TOKEN, action: 'grant' })).status).toBe('already_consented')
+    expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant', 'cancel:re_1'])
   })
 
   it('a repeat click schedules nothing new and cancels nothing', async () => {

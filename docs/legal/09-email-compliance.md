@@ -81,7 +81,7 @@ Measured from the repository on 2026-09-23. The Supabase Auth templates and the 
 | Password reset | Supabase Auth | "Forgot password" on the sign-in page | transactional |
 | Invitation (set your password) | Supabase Auth | no code in the app sends one — only the Supabase dashboard can; the app handles its link | transactional |
 | B1 — the consent request | `sendEmail` (Resend API) | a parent who signed in with Google (or an older account) pressing continue on the notice | transactional |
-| B3 — the second consent notice, a day later | `sendEmail` (Resend API, scheduled) | **no longer sent** (founder, 2026-09-25). Only as a fallback if the database lacks migration 20260926090000; B3s scheduled before the change still arrive | transactional |
+| B3 — the second consent notice, a day later | `sendEmail` (Resend API, scheduled) | a parent granting consent | transactional |
 | Payment receipts | Stripe, if receipts are turned on in Stripe's dashboard | a payment | transactional — whether Stripe sends them is a provider setting that cannot be read from the repository |
 
 Not email: the dashboard's "reminders" are shown inside the app only, and every "Contact support" link opens the reader's own mail program. Children's sign-in accounts use addresses that cannot receive mail, and are created already confirmed, so nothing is sent to them. **No commercial email exists.** The suppression list in §7 guards the first one.

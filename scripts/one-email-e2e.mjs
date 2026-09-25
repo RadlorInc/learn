@@ -3,9 +3,9 @@
 // `node scripts/resend-standin.mjs &` → next dev -p 3099 with that stack's URL/keys and RESEND_API_URL=http://127.0.0.1:4719 →
 // `node scripts/one-email-e2e.mjs stack.env`. It refuses any API that is not 127.0.0.1.
 //
-// ONE EMAIL (founder, 2026-09-25): the real Next routes against a LOCAL Supabase stack. Asserts, per path, how many
-// emails a person receives — counted at the Resend stand-in (ours) AND at the stack's own mailbox (Supabase's), because
-// "one email" is a claim about the inbox, not about our code.
+// ONE SIGN-UP EMAIL, STILL EMAIL-PLUS (founder, 2026-09-25): the real Next routes against a LOCAL Supabase stack.
+// Per path: how many emails go out NOW (ours, at the Resend stand-in, and Supabase's own mailbox), and that B3 is
+// SCHEDULED a day after the grant — and cancelled on withdrawal.
 import { readFileSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
 
@@ -19,15 +19,22 @@ const ok = (c, m) => { if (!c) { console.log('  ✗ ' + m); process.exitCode = 1
 async function j(url, init = {}) { const r = await fetch(url, init); let b = null; try { b = await r.json() } catch {} ; return { status: r.status, body: b } }
 const svcH = { apikey: SVC, Authorization: `Bearer ${SVC}`, 'Content-Type': 'application/json' }
 const json = { 'Content-Type': 'application/json' }
-const ours = async to => ((await j(`${RESEND}/__calls`)).body ?? []).filter(c => c.path === '/emails' && c.body?.to?.[0] === to).map(c => c.body)
-const supabases = async to => ((await j(`${MAIL}/api/v1/search?query=${encodeURIComponent('to:' + to)}`)).body?.messages ?? []).length
+const sent = async to => ((await j(`${RESEND}/__calls`)).body ?? []).filter(c => c.path === '/emails' && c.body?.to?.[0] === to).map(c => c.body)
+/** Delivered at once (not scheduled): what lands in the inbox today. */
+const ours = async to => (await sent(to)).filter(m => !m.scheduled_at)
+const scheduled = async to => (await sent(to)).filter(m => m.scheduled_at)
+const cancels = async () => ((await j(`${RESEND}/__calls`)).body ?? []).filter(c => /\/cancel$/.test(c.path)).length
+// Supabase's own emails: the stack's mailbox, MINUS anything from our sender (a local stand-in may copy ours into the
+// same mailbox so a person can read them — counting those would call our email Supabase's).
+const supabases = async to => ((await j(`${MAIL}/api/v1/search?query=${encodeURIComponent('to:' + to)}`)).body?.messages ?? [])
+  .filter(m => m.From?.Address !== 'noreply@radlor.com').length
 const signup = (email, role, password = randomBytes(12).toString('base64url')) =>
   j(`${APP}/api/auth/signup`, { method: 'POST', headers: json, body: JSON.stringify({ email, password, firstName: 'Pat', role, lang: 'en' }) })
 const linkOf = m => /(https?:\/\/[^\s]+\/auth\/confirm\?th=[^\s#]+)(?:#t=([A-Za-z0-9_-]{43}))?/.exec(m.text) ?? []
 const confirm = async th => j(`${API}/auth/v1/verify`, { method: 'POST', headers: { apikey: ANON, ...json }, body: JSON.stringify({ type: 'signup', token_hash: decodeURIComponent(th) }) })
 const consents = async email => (await j(`${API}/rest/v1/parental_consents?email_address=eq.${encodeURIComponent(email)}&select=method,state,second_email_provider_id,parent_ack_at&order=created_at`, { headers: svcH })).body
 
-console.log('\n── A. a parent signs up with email + password: ONE email, it confirms and asks; the grant sends nothing more')
+console.log('\n── A. a parent signs up with email + password: ONE email now, it confirms and asks; the grant schedules B3')
 {
   const email = `parent-${Date.now()}@example.test`
   const r = await signup(email, 'parent')
@@ -35,7 +42,7 @@ console.log('\n── A. a parent signs up with email + password: ONE email, it 
   const [m] = await ours(email)
   ok((await ours(email)).length === 1, `one email from us (${(await ours(email)).length})`)
   ok(m?.subject === 'Confirm your email and give permission for your children', `its subject: "${m?.subject}"`)
-  ok(/Ticking the box also confirms your email address\./.test(m?.text ?? ''), 'it says the box also confirms the address')
+  ok(/Clicking the button also confirms your email address\./.test(m?.text ?? ''), 'it says the button also confirms the address')
   ok(/For each child you add, we store:/.test(m?.text ?? ''), 'it carries B1\'s notice lines')
   const [, url, th, t] = (() => { const x = linkOf(m ?? { text: '' }); return [x[0], x[1], x[1] && new URL(x[1]).searchParams.get('th'), x[2]] })()
   ok(!!th && !!t, 'the link carries the confirmation token (query) and the consent token (fragment)')
@@ -44,10 +51,18 @@ console.log('\n── A. a parent signs up with email + password: ONE email, it 
   const g = await j(`${APP}/api/consent/respond`, { method: 'POST', headers: json, body: JSON.stringify({ t, action: 'grant' }) })
   ok(g.body?.status === 'granted', `ticking the box grants (${g.body?.status})`)
   const [c] = await consents(email)
-  ok(c?.method === 'email' && c.state === 'granted' && c.second_email_provider_id === null, `consent recorded: ${JSON.stringify(c)}`)
+  ok(c?.method === 'email_plus' && c.state === 'granted' && !!c.second_email_provider_id, `consent recorded as email-plus with its B3: ${JSON.stringify(c)}`)
   ok(c?.parent_ack_at === null, 'no on-screen tick is claimed for the sign-up')
-  ok((await ours(email)).length === 1, `still one email after the grant (${(await ours(email)).length}) — no second email`)
+  ok((await ours(email)).length === 1, `still one email delivered now (${(await ours(email)).length})`)
+  const [b3] = await scheduled(email)
+  const delay = b3 ? new Date(b3.scheduled_at).getTime() - Date.now() : 0
+  ok(!!b3 && /permission you gave/.test(b3.subject), `B3 scheduled: "${b3?.subject}" at ${b3?.scheduled_at}`)
+  ok(delay > 0, `B3 is in the future (${Math.round(delay / 60000)} min — the local run sets CONSENT_SECOND_NOTICE_DELAY_MINUTES; production refuses anything but 24–48 h)`)
   ok(await supabases(email) === 0, `Supabase sent nothing (${await supabases(email)})`)
+  const before = await cancels()
+  const w = await j(`${APP}/api/consent/respond`, { method: 'POST', headers: json, body: JSON.stringify({ t, action: 'withdraw' }) })
+  ok(w.body?.status === 'withdrawn', `withdrawal (${w.body?.status})`)
+  ok(await cancels() === before + 1, 'withdrawing cancels the scheduled B3')
   void url
 }
 
@@ -88,19 +103,19 @@ console.log('\n── D. an address that already has a confirmed account: told s
   ok((await ours(email)).length === 0 && await supabases(email) === 0, 'no email from us or from Supabase')
 }
 
-console.log('\n── E. a Google-style parent (confirmed, no confirmation email): B1 from the dashboard, and no second email')
+console.log('\n── E. a Google-style parent (confirmed, no confirmation email): B1 from the dashboard, then B3 scheduled')
 {
   const email = `google-${Date.now()}@example.test`, password = randomBytes(12).toString('base64url')
   const u = await j(`${API}/auth/v1/admin/users`, { method: 'POST', headers: svcH, body: JSON.stringify({ email, password, email_confirm: true, user_metadata: { full_name: 'Sam Lee' } }) })
   await j(`${API}/rest/v1/profiles?id=eq.${u.body.id}`, { method: 'PATCH', headers: { ...svcH, Prefer: 'return=minimal' }, body: JSON.stringify({ role: 'parent' }) })
   const tok = (await j(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON, ...json }, body: JSON.stringify({ email, password }) })).body.access_token
-  const r = await j(`${APP}/api/consent/request`, { method: 'POST', headers: { ...json, Authorization: `Bearer ${tok}` }, body: JSON.stringify({ noticeVersion: 'notice-v7', lang: 'en' }) })
+  const r = await j(`${APP}/api/consent/request`, { method: 'POST', headers: { ...json, Authorization: `Bearer ${tok}` }, body: JSON.stringify({ noticeVersion: 'notice-v6', lang: 'en' }) })
   ok(r.status === 200, `B1 requested (${r.status})`)
   const [b1] = await ours(email)
   const t = /respond#t=([A-Za-z0-9_-]{43})/.exec(b1?.text ?? '')?.[1]
   const g = await j(`${APP}/api/consent/respond`, { method: 'POST', headers: json, body: JSON.stringify({ t, action: 'grant' }) })
   ok(g.body?.status === 'granted', `granted (${g.body?.status})`)
-  ok((await ours(email)).length === 1, `one email in all (${(await ours(email)).length}) — no second email`)
-  ok((await consents(email))[0]?.method === 'email', 'recorded as method "email"')
+  ok((await ours(email)).length === 1 && (await scheduled(email)).length === 1, `B1 now, B3 scheduled (${(await ours(email)).length} + ${(await scheduled(email)).length})`)
+  ok((await consents(email))[0]?.method === 'email_plus', 'recorded as email-plus')
 }
 console.log(process.exitCode ? '\nFAILED' : '\nALL PASSED')

@@ -3,7 +3,7 @@ import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { secondNoticeDelayMs } from '@/features/consent/config'
 import { renderB3 } from '@/features/consent/email'
-import { ConfigMissing, requireConfig, cancelEmail, drainB3Cancellations, hashToken, learnerName, looksLikeToken, rpc, sendEmail, type RpcError } from '@/features/consent/server'
+import { ConfigMissing, requireConfig, cancelEmail, drainB3Cancellations, hashToken, learnerName, looksLikeToken, rpc, sendEmail } from '@/features/consent/server'
 
 interface Found {
   consent_id: string; state: string; lang: 'en' | 'es'; expired: boolean; email: string
@@ -66,21 +66,19 @@ export async function POST(req: Request) {
         if (row.expired) return ok(await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: null, p_second_scheduled_for: null }))
 
         /**
-         * ⚠️ ONE EMAIL (founder, 2026-09-25): the grant no longer schedules a second email. A database without
-         * 20260926090000 still refuses a grant with no second email (`parental_consents_email_plus_second_notice`,
-         * 23514) — then, and only then, the old way: schedule B3 first, grant second, cancel B3 if the grant lost.
-         * Deploy order is migration first, so on production this branch is the safety net, not the path.
+         * ⚠️ B3 FIRST, GRANT SECOND. Without the second email this is not email-plus and the consent does
+         * not stand, so it is scheduled BEFORE anything is granted, and the grant records its id in the
+         * same statement — `parental_consents_email_plus_second_notice` refuses a grant without one. If
+         * Resend is down, nothing is granted and the parent can simply click again.
          */
-        try {
-          const s = await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: null, p_second_scheduled_for: null })
-          return ok(s)
-        } catch (e) {
-          if ((e as RpcError).code !== '23514') throw e
-        }
         const when = new Date(Date.now() + secondNoticeDelayMs())
         const withdraw = `${SITE_URL}/consent/withdraw#t=${t}`
         const b3 = await sendEmail('transactional', row.email, renderB3(lang, withdraw), `consent-${row.consent_id}-b3`, when)
         const s = await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: b3, p_second_scheduled_for: when.toISOString() })
+        // Lost a race to expiry or a decline — or 'already_consented' (consent-once: the account already holds a
+        // current consent, so this request was closed): the email we just scheduled must never arrive. A repeat
+        // click is 'already_granted', and because B3 carries an idempotency key its id IS the real
+        // B3 — so that one is left alone.
         if (s !== 'granted' && s !== 'already_granted') await cancelEmail(b3)
         return ok(s)
       }
