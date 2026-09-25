@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * CONSENT-ONCE, THE ROUTES: the request asks for an ACCOUNT consent with the parent's tick time; an old
- * database is "not ready", not a crash; a grant the account no longer needs cancels the B3 it scheduled;
+ * database is "not ready", not a crash; a grant sends no second email (2026-09-25);
  * the lookup tells the withdrawal screen which consent it is looking at. And the export names the
  * attestation. Expected values written by hand.
  */
@@ -54,22 +54,22 @@ beforeEach(() => {
 describe('request: an ACCOUNT consent, stamped with the tick', () => {
   it('sends p_scope = account and the tick time it was given', async () => {
     const at = new Date(Date.now() - 3600_000).toISOString()
-    const r = await request({ noticeVersion: 'notice-v6', lang: 'en', ackAt: at })
+    const r = await request({ noticeVersion: 'notice-v7', lang: 'en', ackAt: at })
     expect(r.status).toBe(200)
-    expect(calls.consent_request).toMatchObject({ p_scope: 'account', p_ack_at: at, p_notice_version: 'notice-v6' })
+    expect(calls.consent_request).toMatchObject({ p_scope: 'account', p_ack_at: at, p_notice_version: 'notice-v7' })
     expect(log).toEqual(['rpc:consent_request', 'send:Please confi', 'rpc:consent_record_request_sent'])
   })
   it('an implausible tick time is dropped (the database records now): future, too old, not a time', async () => {
     for (const ackAt of [new Date(Date.now() + 3600_000).toISOString(), new Date(Date.now() - 31 * 86_400_000).toISOString(), 'yesterday', 12345]) {
-      await request({ noticeVersion: 'notice-v6', lang: 'en', ackAt })
+      await request({ noticeVersion: 'notice-v7', lang: 'en', ackAt })
       expect(calls.consent_request?.p_ack_at, `kept ${String(ackAt)}`).toBeNull()
     }
-    await request({ noticeVersion: 'notice-v6', lang: 'en' })
+    await request({ noticeVersion: 'notice-v7', lang: 'en' })
     expect(calls.consent_request.p_ack_at).toBeNull()
   })
   it('a database without consent-once (PGRST202) → 503 not_ready, and no email', async () => {
     requestErr = { status: 404, code: 'PGRST202' }
-    const r = await request({ noticeVersion: 'notice-v6', lang: 'en' })
+    const r = await request({ noticeVersion: 'notice-v7', lang: 'en' })
     expect(r.status).toBe(503)
     expect(await r.json()).toEqual({ error: 'not_ready' })
     expect(log).toEqual(['rpc:consent_request'])
@@ -82,13 +82,10 @@ describe('request: an ACCOUNT consent, stamped with the tick', () => {
 })
 
 describe('respond', () => {
-  it('grant → already_consented: the B3 it just scheduled is cancelled', async () => {
+  it('grant → already_consented: nothing is sent and nothing cancelled (one email, 2026-09-25: no second email)', async () => {
     grantAnswer = 'already_consented'
     expect((await respond({ t: TOKEN, action: 'grant' })).status).toBe('already_consented')
-    const b3 = log.find(l => l.startsWith('send:'))
-    expect(b3, 'no B3 was scheduled before the grant').toBeDefined()
-    expect(log.at(-1)).toMatch(/^cancel:re_/)
-    expect(log).toEqual(['rpc:consent_lookup', 'send:Confirming t', 'rpc:consent_grant', `cancel:re_2`])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_grant'])
   })
   it('grant → granted cancels nothing (the positive twin)', async () => {
     expect((await respond({ t: TOKEN, action: 'grant' })).status).toBe('granted')

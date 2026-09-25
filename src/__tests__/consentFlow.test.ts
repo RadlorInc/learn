@@ -168,14 +168,39 @@ describe('request', () => {
 })
 
 describe('grant', () => {
-  it('is refused unless the second email has been scheduled — B3 is a precondition, not a follow-up', async () => {
+  it('a request made now is method "email" and grants with NO second email (one email, 2026-09-25)', async () => {
     const P = await newParent()
-    const { hash } = await request('7 days', P)
+    const { hash, id } = await request('7 days', P)
+    expect((await grant(hash, null)).rows![0].s).toBe('granted')
+    expect(await one(`select method, state, second_email_provider_id from public.parental_consents where id = '${id}'`))
+      .toEqual({ method: 'email', state: 'granted', second_email_provider_id: null })
+  })
+
+  it('an EMAIL-PLUS row is still refused without its second email — the old evidence keeps its rule', async () => {
+    const P = await newParent()
+    const hash = `ep-${++n}`
+    await db.exec(`insert into public.parental_consents (parent_id, method, state, notice_version, privacy_version, terms_version,
+      email_address, token_hash, expires_at, scope, request_email_provider_id)
+      values ('${P}', 'email_plus', 'pending', '${NOTICE}', 'p', 't', 'x@x.test', '${hash}', now() + interval '7 days', 'account', 're_b1')`)
     const noB3 = await grant(hash, null)
     expect(noB3.err ?? 'ALLOWED').toContain('parental_consents_email_plus_second_notice')
-    // …and the refusal left it pending, so the parent's next click can still succeed.
+    // …and the refusal left it pending, so a grant with its second email still succeeds (positive twin).
     expect(await one(`select state from public.parental_consents where token_hash = '${hash}'`)).toEqual({ state: 'pending' })
     expect((await grant(hash)).rows![0].s).toBe('granted')
+  })
+
+  it('at sign-up: a request for an UNCONFIRMED parent is made by the server alone, claims no on-screen tick, and a teacher gets none', async () => {
+    const id = `bbbbbbbb-bbbb-4bbb-8bbb-${String(++n).padStart(12, '0')}`, teacher = `cccccccc-cccc-4ccc-8ccc-${String(++n).padStart(12, '0')}`
+    await db.exec(`insert into auth.users (id, email, raw_user_meta_data) values
+      ('${id}', 'signup${n}@x.test', '{"role":"parent"}'), ('${teacher}', 'teach${n}@x.test', '{"role":"teacher"}')`)
+    const call = (who: string, h: string) => `select * from public.consent_request_at_signup('${who}', '${NOTICE}', 'p', 't', 'en', '${h}', interval '7 days')`
+    const r = await svc(call(id, `su-${n}`))
+    const c = r.rows?.[0]?.consent_id as string
+    expect(await one(`select method, state, scope, parent_ack_at from public.parental_consents where id = '${c}'`))
+      .toEqual({ method: 'email', state: 'pending', scope: 'account', parent_ack_at: null })
+    expect((await svc(call(teacher, `su-t-${n}`))).err ?? 'ALLOWED').toMatch(/cannot request parental consent/)
+    for (const role of ['authenticated', 'anon'] as const)
+      expect((await as(role, id, call(id, `su-x-${n}`))).err ?? 'ALLOWED', `${role} could call it`).toMatch(/permission denied for function consent_request_at_signup/)
   })
 
   it('a child is refused before the grant and created after it — and one account consent covers several', async () => {

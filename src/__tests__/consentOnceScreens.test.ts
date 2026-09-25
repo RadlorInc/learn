@@ -19,7 +19,7 @@ const st = vi.hoisted(() => ({
   current: true,
   withdrawErr: null as null | { code?: string; message: string },
 }))
-const signUp = vi.hoisted(() => vi.fn(async () => ({ data: { user: { identities: [{}] } }, error: null })))
+const signUp = vi.hoisted(() => vi.fn(async (_body: Record<string, unknown>) => 'ok'))
 const google = vi.hoisted(() => vi.fn(async () => ({ error: null })))
 const created = vi.hoisted(() => vi.fn(async () => ({ id: 'kid-1', age_group: '9-11' })))
 
@@ -34,7 +34,7 @@ vi.mock('next/navigation', () => ({
 }))
 vi.mock('@/data/auth', async orig => ({
   ...(await orig<Record<string, unknown>>()),
-  signUpWithEmail: signUp,
+  signUpOneEmail: signUp,
   signInWithGoogleOAuth: google,
   getCurrentSession: async () => ({ user: { id: 'p1', email: 'p@x.test', user_metadata: {} } }),
 }))
@@ -136,7 +136,7 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     await s.done()
   })
 
-  it('email signup asks for a first name: without one nothing is sent; with one it is stored for the consent email', async () => {
+  it('email signup asks for a first name and Parent or Teacher: without either nothing is sent; with both they go to the one email', async () => {
     const s = await signup()
     await type(s.host.querySelector('#auth-email'), 'p@x.test')
     await type(s.host.querySelector('#auth-password'), 'secret123')
@@ -146,8 +146,12 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     expect(s.host.textContent).toContain('Please enter your first name')
     await type(s.host.querySelector('#auth-first-name'), '  Maya  ')
     await click(s.email())
+    expect(signUp, 'signed up without choosing Parent or Teacher').not.toHaveBeenCalled()
+    expect(s.host.textContent).toContain('Please choose Parent or Teacher')
+    await click([...s.host.querySelectorAll('[role="radio"]')].find(b => b.textContent === 'Parent') ?? null)
+    await click(s.email())
     expect(signUp).toHaveBeenCalledTimes(1)
-    expect((signUp.mock.calls[0] as unknown[])[3]).toEqual({ first_name: 'Maya' })
+    expect(signUp.mock.calls[0][0]).toMatchObject({ email: 'p@x.test', firstName: 'Maya', role: 'parent', lang: 'en' })
     await s.done()
   })
 
@@ -211,7 +215,7 @@ describe('add a child: the sheet opens only on a granted, current account consen
     fetchAnswer = () => ({ ok: true, email: 'p@x.test', days: 7 })
     await click(button(m.host, /legal guardian — continue/))
     expect(fetchLog[0]?.url).toBe('/api/consent/request')
-    expect(fetchLog[0]?.body).toMatchObject({ noticeVersion: 'notice-v6', lang: 'en' })
+    expect(fetchLog[0]?.body).toMatchObject({ noticeVersion: 'notice-v7', lang: 'en' })
     expect(m.host.textContent).toContain('Waiting for your permission')
     await m.done()
   })
@@ -246,7 +250,7 @@ describe('the dashboard never sends B1 by itself — the parent reads the notice
     expect(m.host.querySelector('[data-consent="account-notice"]'), 'the notice is not shown').toBeTruthy()
     await click(button(m.host, /^I'm the parent or legal guardian — continue$/))
     expect(fetchLog.map(f => f.url)).toEqual(['/api/consent/request'])
-    expect(fetchLog[0].body).toEqual({ noticeVersion: 'notice-v6', lang: 'en' })
+    expect(fetchLog[0].body).toEqual({ noticeVersion: 'notice-v7', lang: 'en' })
     expect(m.host.textContent).toContain('Waiting for your permission')
     await m.done()
   })

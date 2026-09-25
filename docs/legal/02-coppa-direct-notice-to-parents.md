@@ -54,7 +54,7 @@ We use this information only to run Radlic for your child: to teach, to track pr
 
 Before we collect any of the above, we need your verifiable consent.
 
-We send a consent request to your email address, you confirm it, and then we send a second confirmation email a day later to the same address. This one permission covers every child you add to this account, now or later: each time you add a child, you confirm in the app that you are that child's parent or legal guardian, and we record when you did. You can withdraw your permission from the second email or in the app, at any time.
+We send a consent request to your email address, and you confirm it. If you sign up with an email address and a password, the request is in the email that confirms your address. This one permission covers every child you add to this account, now or later: each time you add a child, you confirm in the app that you are that child's parent or legal guardian, and we record when you did. You can withdraw your permission in the app, at any time.
 
 [PLACEHOLDER — a second method, verification through the payment card at checkout, is specified in document 03 and is not built. Add it here only when it exists; describing a choice a parent cannot make is worse than offering one method plainly.]
 

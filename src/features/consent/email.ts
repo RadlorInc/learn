@@ -2,7 +2,7 @@
  * B1 and B3, rendered from copy.ts — the words are the documents', only the links and layout are ours.
  * Both an HTML and a plain-text part, so a mail client that shows either shows every sentence.
  */
-import { B1, B3, type Lang, type L } from './copy'
+import { B1, B3, SIGNUP, CONFIRM_EMAIL, type Lang, type L } from './copy'
 import { toHtml, toText } from './marks'
 
 export interface Rendered { subject: string; html: string; text: string }
@@ -23,22 +23,43 @@ const checkbox = (label: string, href: string) =>
 /** B1. The "☐ I've read and agreed…" link opens the page whose box IS the grant. Clicking in the email cannot grant by itself: mail
  *  scanners open every link, so a link that granted would agree for every parent before anyone read it. */
 export function renderB1(lang: Lang, agreeUrl: string, firstName: string | null): Rendered {
+  return renderRequest(lang, agreeUrl, firstName, B1.subject, null)
+}
+
+/** B0: the parent's sign-up email — B1 with its own subject and one line above the checkbox. Its link confirms the address
+ *  (Supabase's token_hash) and then opens the same page B1's does, where the tick is the grant. */
+export function renderSignup(lang: Lang, url: string, firstName: string | null): Rendered {
+  return renderRequest(lang, url, firstName, SIGNUP.subject, SIGNUP.confirms)
+}
+
+/** B0t: a teacher's sign-up email — confirms the address, asks for nothing. */
+export function renderConfirm(lang: Lang, url: string): Rendered {
+  const t = (x: L) => x[lang]
+  const html = wrap([p(t(CONFIRM_EMAIL.thanks)), p(t(CONFIRM_EMAIL.please)),
+    `<p style="margin:4px 0 18px"><a href="${esc(url)}" style="display:inline-block;padding:12px 20px;border-radius:10px;background:#0B4FA8;color:#fff;font-weight:700;text-decoration:none">${esc(t(CONFIRM_EMAIL.button))}</a></p>`,
+    p(t(B1.ignore)), small(B1.address)].join(''))
+  const text = [t(CONFIRM_EMAIL.thanks), t(CONFIRM_EMAIL.please), `${t(CONFIRM_EMAIL.button)}\n${url}`, t(B1.ignore), B1.address].map(toText).join('\n\n')
+  return { subject: t(CONFIRM_EMAIL.subject), html, text }
+}
+
+function renderRequest(lang: Lang, agreeUrl: string, firstName: string | null, subject: L, beforeTick: L | null): Rendered {
   const t = (x: L) => x[lang]
   const hi = firstName ? t(B1.hi).replace('{name}', firstName) : t(B1.hi).replace(/,? \{name\}/, '')
   const html = wrap([
     p(hi), p(t(B1.thanks)), p(t(B1.before)),
     `<p style="margin:0">${toHtml(t(B1.store))}</p>`,
     `<ul style="margin:0 0 14px;padding-left:22px">${B1.list.map(x => `<li>${toHtml(t(x))}</li>`).join('')}</ul>`,
-    p(t(B1.doNot)), p(t(B1.details)),
+    p(t(B1.doNot)), p(t(B1.details)), ...(beforeTick ? [p(t(beforeTick))] : []),
     `<p style="margin:4px 0 18px">${checkbox(t(B1.tick), agreeUrl)}</p>`,
     p(t(B1.ignore)), small(B1.address),
   ].join(''))
   const text = [
     hi, t(B1.thanks), t(B1.before), [t(B1.store), ...B1.list.map(x => `- ${t(x)}`)].join('\n'), t(B1.doNot), toText(t(B1.details)),
+    ...(beforeTick ? [t(beforeTick)] : []),
     `☐ ${t(B1.tick)}\n${agreeUrl}`,
     t(B1.ignore), B1.address,
   ].map(s => toText(s)).join('\n\n')
-  return { subject: t(B1.subject), html, text }
+  return { subject: t(subject), html, text }
 }
 
 export function renderB3(lang: Lang, withdrawUrl: string): Rendered {

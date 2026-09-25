@@ -139,6 +139,32 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
+### B0. Sign-up email for a parent — one email confirms the address and asks for permission
+
+**Sent:** when a parent signs up with an email address and a password, INSTEAD of a separate confirmation email and B1 (founder, 2026-09-25: one email). A parent who signs in with Google has no confirmation email and gets B1. The link confirms the address and opens the page below (B1b), where ticking the box gives the permission.
+
+**Subject:** `Confirm your email and give permission for your children`
+
+**Body:** B1's body, word for word, with this line directly above the checkbox:
+
+> Ticking the box also confirms your email address.
+
+### B0t. Sign-up email for a teacher — confirms the address only
+
+**Subject:** `Confirm your email for Radlic`
+
+**Body:**
+
+> Thanks for signing up with Radlic.
+>
+> Please confirm your email address.
+>
+> **[ Confirm my email ]**
+>
+> Didn't sign up? Ignore this email.
+>
+> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+
 ### B1b. The page the tick link opens — ticking the box there gives the permission
 
 **Heading:** `Please confirm: permission for your children to use Radlic`
@@ -158,12 +184,10 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 **Body:**
 
 > We have recorded your permission. You can add your children now.
->
-> We will send you one more email in a little while to confirm it was really you. If it wasn't, that email will let you cancel immediately and we will delete everything we hold about any child on the account.
 
 ### B3. Second confirmation email — sent after a delay
 
-**Timing:** [PLACEHOLDER — delay; a reasonable time after the first, commonly 24 hours. Confirm with the attorney.]
+**Timing:** ⚠️ NO LONGER SENT (founder, 2026-09-25: one email; see ATTORNEY-PACKET A4). A second email scheduled before that change still arrives, and its link still works — which is the only reason this text is kept.
 
 **Subject:** `Confirming the permission you gave for your children`
 

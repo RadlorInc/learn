@@ -18,7 +18,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { createHash } from 'node:crypto'
-import { NOTICE, B1, B2, B3, WITHDRAW, WITHDRAW_ALL, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
+import { NOTICE, B1, B2, B3, SIGNUP, CONFIRM_EMAIL, WITHDRAW, WITHDRAW_ALL, WAITING, ATTEST, REASK, PROPOSED, NOTICE_VERSION, type L } from '@/features/consent/copy'
 
 const ROOT = resolve(__dirname, '../..')
 const doc = (f: string) => readFileSync(resolve(ROOT, 'docs/legal', f), 'utf8')
@@ -77,10 +77,13 @@ const noticeCopy = en([
 const D03 = doc('03-consent-and-checkout-screen-copy.md')
 const bDoc = units(
   between(D03, '### B1. Consent request email — sent when the parent asks to start', '### Notes for the attorney'),
-  l => /^#{2,3} /.test(l) || l === '**Body:**' || l.startsWith('**Timing:**'),
+  // `**Sent:**` and a `**Body:**` line that says which body are notes to the reader about WHEN / WHAT, not words sent.
+  l => /^#{2,3} /.test(l) || l.startsWith('**Body:**') || l.startsWith('**Timing:**') || l.startsWith('**Sent:**'),
 )
 const bCopy = en([
   B1.subject, B1.hi, B1.thanks, B1.before, B1.store, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.address, B1.covers, B1.tick, B1.decline,
+  // B0 / B0t (one email, 2026-09-25): the sign-up emails
+  SIGNUP.subject, SIGNUP.confirms, ...Object.values(CONFIRM_EMAIL),
   B2.heading, ...B2.body,
   B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime, B3.address,
   WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep,
@@ -148,6 +151,9 @@ describe('the consent copy is the documents, verbatim', () => {
       // v6, 2026-09-24 (the Radlic rename): the product's name and web address (Milo → Radlic, adaptivelearn.radlor.com
       // → radlic.com), and "Withdraw permission for all YOUR children" (was "my"), matching the button and doc 03.
       'notice-v6': 'b24962a84278',
+      // v7, 2026-09-25 (one email): no second confirmation email; an email-and-password sign-up's request is in the
+      // email that confirms the address; withdrawal is in the app (the second email that carried a link is gone).
+      'notice-v7': 'a60891483516',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()
@@ -164,6 +170,7 @@ describe('Spanish — present everywhere, and never claimed to be reviewed', () 
     NOTICE.rightsHow, NOTICE.keepHeading, NOTICE.keep, NOTICE.protectHeading, NOTICE.protect, NOTICE.detailsHeading,
     NOTICE.details, NOTICE.contactHeading, NOTICE.primary, NOTICE.secondary, NOTICE.tertiary,
     B1.subject, B1.hi, B1.thanks, B1.before, B1.store, ...B1.list, B1.doNot, B1.ignore, B1.details, B1.covers, B1.tick, B1.decline,
+    SIGNUP.subject, SIGNUP.confirms, ...Object.values(CONFIRM_EMAIL),
     B2.heading, ...B2.body, B3.subject, B3.hi, B3.yesterday, B3.ifYou, B3.ifNot, B3.anyTime,
     WITHDRAW.heading, ...WITHDRAW.body, WITHDRAW.confirm, WITHDRAW.keep, ...Object.values(PROPOSED),
     ...Object.values(WITHDRAW_ALL), ...Object.values(WAITING), ...Object.values(ATTEST), ...Object.values(REASK),
@@ -197,18 +204,21 @@ describe('the rendered emails and screen say nothing the documents do not', () =
     .filter(l => l && !docLines.has(l))
 
   it('B1 and B3, both parts', async () => {
-    const { renderB1, renderB3 } = await import('@/features/consent/email')
+    const { renderB1, renderB3, renderSignup, renderConfirm } = await import('@/features/consent/email')
     // The parent's first name is the one thing the renderer fills in; put the document's {name} back before comparing.
     const named = renderB1('en', 'https://x.test/g', 'Maya')
     const b1 = { ...named, text: named.text.replace('Hi Maya,', 'Hi {name},'), html: named.html.replace('Hi Maya,', 'Hi {name},') }
     const b3 = renderB3('en', 'https://x.test/w')
+    const su = renderSignup('en', 'https://x.test/g', 'Maya')
+    const b0 = { ...su, text: su.text.replace('Hi Maya,', 'Hi {name},'), html: su.html.replace('Hi Maya,', 'Hi {name},') }
+    const b0t = renderConfirm('en', 'https://x.test/g')
     const htmlLines = (h: string) => h.split(/<\/(?:p|li)>/).map(s => s.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'"))
     // The renderer's own lines: the two buttons in the text part carry their URL.
     const own = (l: string) => l === '☐ I’ve Read and I Agree to the Privacy Policy.' || /^https:\/\/x\.test\/g$/.test(l)
-    for (const [name, m] of [['B1', b1], ['B3', b3]] as const) {
+    for (const [name, m] of [['B1', b1], ['B3', b3], ['B0', b0], ['B0t', b0t]] as const) {
       expect(extra(m.text.split('\n').filter(l => !own(l))), `${name} text part`).toEqual([])
       expect(extra(htmlLines(m.html).filter(l => l.trim() !== 'I’ve Read and I Agree to the Privacy Policy.' && !own(l))), `${name} html part`).toEqual([])
-      expect(m.text.length, `control: ${name} rendered`).toBeGreaterThan(200)
+      expect(m.text.length, `control: ${name} rendered`).toBeGreaterThan(name === 'B0t' ? 80 : 200)
     }
   })
 

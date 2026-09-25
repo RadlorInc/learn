@@ -29,7 +29,7 @@ You give us permission once, for your account, and it covers every child you add
 
 **For one child:** delete that child's profile (your child's card → **Login & data** → *Delete name's profile*). This applies only to that child: your account, your permission and any other children on it are not affected. (If you gave permission before 24 September 2026 for a single child, the link in the second email of that permission does the same for that child.)
 
-**For every child on the account:** use **Account → Withdraw permission for all your children**, or the link in the second email we send after you give permission. Every child on the account is deleted. **Your account stays open**, with no children; if you add a child again later, we will ask for your permission again first.
+**For every child on the account:** use **Account → Withdraw permission for all your children**, or the link in the second confirmation email if we sent you one (we stopped sending it in September 2026). Every child on the account is deleted. **Your account stays open**, with no children; if you add a child again later, we will ask for your permission again first.
 
 We keep a record that permission was given and then withdrawn, and when, without the children's details. To delete everything, including the account itself, use **Account → Close your account**.
 
