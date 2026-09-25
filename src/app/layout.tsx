@@ -99,7 +99,8 @@ export const metadata: Metadata = {
     // Naming one back would override the file-based route and reinstate the square.
   },
   twitter: {
-    card: 'summary',
+    // The card image is `opengraph-image.tsx`'s 1200×630 — `summary` would crop it to a small square (SEO-05).
+    card: 'summary_large_image',
     title: `${APP_NAME} — math lessons that adapt to your child, KG to grade 8`,
     description:
       'Math from KG to grade 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
