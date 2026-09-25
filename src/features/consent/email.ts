@@ -8,17 +8,17 @@ import { toHtml, toText } from './marks'
 export interface Rendered { subject: string; html: string; text: string }
 
 const wrap = (inner: string) =>
-  `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#2b2118;max-width:560px">${inner}</div>`
+  `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#083D85;max-width:560px">${inner}</div>`
 const p = (s: string) => `<p style="margin:0 0 14px">${toHtml(s)}</p>`
-const small = (s: string) => `<p style="margin:22px 0 0;font-size:13px;color:#7a6a58">${toHtml(s)}</p>`
+const small = (s: string) => `<p style="margin:22px 0 0;font-size:13px;color:#3D6FB8">${toHtml(s)}</p>`
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 /** Both halves escaped: the decline link carries `&choice=`, and an unescaped attribute is also how a
  *  label with a quote in it would break the button — caught by consentRoutes.test.ts, not by a reader. */
 /** A link drawn as an empty checkbox: an email cannot carry a working one (mail clients strip form controls). */
 const checkbox = (label: string, href: string) =>
-  `<a href="${esc(href)}" style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border:2px solid #E0591F;` +
-  `border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;color:#2B1D14">` +
-  `<span style="display:inline-block;width:20px;height:20px;border:2px solid #E0591F;border-radius:4px;background:#fff"></span>${esc(label)}</a>`
+  `<a href="${esc(href)}" style="display:inline-flex;align-items:center;gap:10px;padding:10px 16px 10px 12px;border:2px solid #0B4FA8;background:#E3F3FE;` +
+  `border-radius:10px;font-weight:700;font-size:16px;text-decoration:none;color:#0B4FA8">` +
+  `<span style="display:inline-block;width:20px;height:20px;border:2px solid #0B4FA8;border-radius:4px;background:#fff"></span>${esc(label)}</a>`
 
 /** B1. The "☐ I've read and agreed…" link opens the page whose box IS the grant. Clicking in the email cannot grant by itself: mail
  *  scanners open every link, so a link that granted would agree for every parent before anyone read it. */

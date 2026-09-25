@@ -37,8 +37,8 @@ export function renderCancelled(endsIso: string | null): { subject: string; html
   const text = [...lines, TRANSACTIONAL_FOOTER].join('\n\n')
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const html =
-    `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#2b2118;max-width:560px">` +
+    `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#083D85;max-width:560px">` +
     lines.map(l => `<p style="margin:0 0 14px">${esc(l)}</p>`).join('') +
-    `<p style="margin:22px 0 0;font-size:13px;color:#7a6a58;white-space:pre-line">${esc(TRANSACTIONAL_FOOTER)}</p></div>`
+    `<p style="margin:22px 0 0;font-size:13px;color:#3D6FB8;white-space:pre-line">${esc(TRANSACTIONAL_FOOTER)}</p></div>`
   return { subject: 'Your Radlic subscription is cancelled', html, text }
 }

@@ -193,7 +193,7 @@ function withCommercialFooter(m: Rendered, unsubscribeUrl: string): Rendered {
     `Radlor Inc.\n${POSTAL_ADDRESS}`,
     'We will still send you essential messages about your account and your subscription, such as receipts and renewal reminders.',
   ]
-  const html = lines.map(l => `<p style="color:#666;font-size:12px">${l
+  const html = lines.map(l => `<p style="color:#3D6FB8;font-size:12px">${l
     .replace(unsubscribeUrl, `<a href="${unsubscribeUrl}">${unsubscribeUrl}</a>`).replace('\n', '<br>')}</p>`).join('')
   return { subject: m.subject, text: `${m.text}\n\n--\n${lines.join('\n\n')}`, html: `${m.html}<hr>${html}` }
 }
