@@ -102,7 +102,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
           )}
         </div>
 
-        {storyGrade !== null ? <StoryChapters grade={storyGrade} learnerId={learnerId} /> :
+        {storyGrade !== null ? <StoryChapters key={storyGrade} grade={storyGrade} learnerId={learnerId} /> :
         <div className="mh-grid" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
           <nav aria-label="Modules" style={{ background: '#fff', border: `4px solid ${INK}`, borderRadius: 20, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {modulesOf(grade).map(x => {
@@ -154,28 +154,44 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
   )
 }
 
-/** A KG–2 tab: that grade's story chapters as tiles; a tile plays the chapter at /game, and its Back returns here. */
+/**
+ * A KG–2 tab, laid out like Grades 3–8 (founder, 2026-09-25): each story chapter is a module — the numbered list on the
+ * left, the chosen one on the right with one Play card. Play opens the chapter at /game; its Back returns to this tab.
+ */
 function StoryChapters({ grade, learnerId }: { grade: number; learnerId: string | null }) {
+  const chapters = chaptersForGrade(grade)
+  const [picked, setPicked] = useState(0)
+  const c = chapters[picked] ?? chapters[0]
+  const isDone = (id: string) => lessonDone(learnerId, chapterKey(id))
   return (
-    <section aria-label={`${gradeLabel(grade)} stories`} style={{ padding: 'clamp(14px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <p style={bubble}>Pick a story and play!</p>
-      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 220px), 1fr))' }}>
-        {chaptersForGrade(grade).map(c => {
-          const done = lessonDone(learnerId, chapterKey(c.id))
+    <div className="mh-grid" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
+      <nav aria-label="Modules" style={{ background: '#fff', border: `4px solid ${INK}`, borderRadius: 20, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {chapters.map((x, i) => {
+          const on = i === picked, all = isDone(x.id)
           return (
-            <li key={c.id}>
-              <Link href={`/game?c=${c.id}`} style={{ ...row, height: '100%', boxSizing: 'border-box', textDecoration: 'none', background: '#fff', color: INK, alignItems: 'flex-start' }}>
-                <span aria-hidden style={{ fontSize: 34, lineHeight: 1 }}>{c.emoji}</span>
-                <span style={{ flex: 1 }}>{c.name}
-                  <small style={{ display: 'block', fontSize: 15, fontWeight: 600, marginTop: 4 }}>{c.hint}</small>
-                </span>
-                {done && <span aria-label="Done" style={{ ...num, background: '#9cf0d8', color: INK }}>✓</span>}
-              </Link>
-            </li>
+            <button key={x.id} type="button" aria-pressed={on} onClick={() => setPicked(i)}
+              style={{ ...row, background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK }}>
+              <span style={{ ...num, background: all ? '#9cf0d8' : on ? '#fff' : '#fbdbba', color: INK }}>{all ? '✓' : i + 1}</span>
+              <span style={{ flex: 1 }}>{x.name}</span>
+            </button>
           )
         })}
-      </ul>
-    </section>
+      </nav>
+
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>Module {picked + 1}</p>
+        <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(28px, 4vw, 40px)', color: INK, lineHeight: 1.1 }}>{c.name}</h1>
+        <p style={bubble}>{c.hint}</p>
+        <div style={{ ...card, background: '#9cf0d8' }}>
+          <div style={{ flex: 1 }}>
+            <strong style={cardTitle}>Story</strong>
+            {isDone(c.id) ? 'Done! Play it again any time.' : 'Watch first, then it is your turn.'}
+          </div>
+          <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{c.emoji}</span>
+          <Link href={`/game?c=${c.id}`} style={primary}>{isDone(c.id) ? 'Play again' : 'Play'}</Link>
+        </div>
+      </section>
+    </div>
   )
 }
 
