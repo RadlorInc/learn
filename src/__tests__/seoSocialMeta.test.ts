@@ -72,7 +72,7 @@ const url = (u: URL | string | undefined | null) => (u ? String(u).replace(/\/$/
 describe('SEO-04: /demo is kept out of the index', () => {
   it('/demo resolves to index: false', async () => {
     const r = await routes()
-    expect(r['/demo'].robots?.basic).toMatch(/\bnoindex\b/)
+    expect(r['/demo'].robots?.basic ?? '').toMatch(/\bnoindex\b/)
   })
 
   // Positive control: the two public pages must stay indexable — a robots rule that leaked to the root would pass
