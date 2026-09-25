@@ -805,3 +805,33 @@ terminology, unit tests, formula sheets) are later loops.
 - The seven PRs first conflicted in three places (`sessionCopy.ts`, `childWords.test.ts`, `PracticeLayout.tsx`). They
   were fixed at the source, not left for a merge: Q1's components moved to `AnswerFeedback.tsx`, and each item's lines
   sit at their own anchor.
+
+## Deep review (started 26 September 2026) — find and fix in one loop
+
+Brief: the founder's "deep review" prompt (26 Sep 2026). Phase 1 = read-only reports R0–R8 in `docs/review/`;
+Phase 2 = one Draft PR per safe fix (rule 10), everything else in `docs/review/NEEDS-RAFI.md`. Base: `main` =
+`06cee602` (worktree `../w-review`, branch `deep-review`; radlor-site read-only at `../w-review-site`, `b672ba5`).
+No production access of any kind; production facts are asked for as SQL in `docs/review/sql/`. No deploy freeze is
+recorded anywhere in the repo (searched `LOOP-STATE`, `READINESS`, `CLAUDE.md`, 26 Sep).
+
+**Baseline on `06cee602` (measured 26 Sep, local, Node 26):** vitest 141 files / 3,810 passed / 11 skipped; `tsc`
+clean; `npm run build` OK, 48 routes.
+
+### Phase 1 — reports
+
+| report | file | state |
+|---|---|---|
+| R0 architecture map | `docs/review/ARCHITECTURE.md` | done (26 Sep) |
+| R1 founder stress test | `docs/review/FOUNDER-STRESS-TEST.md` | done (26 Sep) |
+| R2 architecture review | `docs/review/ARCHITECTURE-REVIEW.md` | done (26 Sep) |
+| R3 latent bugs | `docs/review/LATENT-BUGS.md` | done (26 Sep) |
+| R4 performance | `docs/review/PERFORMANCE.md` | done (26 Sep) |
+| R5 security | `docs/review/SECURITY-AUDIT.md` | done (26 Sep) |
+| R6 devops | `docs/review/DEVOPS.md` | done (26 Sep) |
+| R7 SEO | `docs/review/SEO.md` | done (26 Sep) |
+| R8 summary | `docs/review/SUMMARY.md` + `NEEDS-RAFI.md` | done (26 Sep): 127 findings — 1 Critical (legal, FND-01), 27 High, 40 Medium, 59 Low |
+
+### Phase 2 — fixes (one row per Draft PR)
+
+| finding | PR | test red before / green after | planted break | CI |
+|---|---|---|---|---|
