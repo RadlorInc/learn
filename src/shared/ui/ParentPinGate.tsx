@@ -34,7 +34,9 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
   async function load() {
     setStage('loading'); setMsg(null)
     if (!(await getCurrentSession())) { setStage('open'); return }
-    const role = await getMyRole().catch(() => null)
+    // A failed read is not "an adult with no role" (BUG-07): show the gate's own could-not-open screen.
+    let role
+    try { role = await getMyRole() } catch { setStage('error'); return }
     if (role === 'learner') { setStage('open'); return }
     setTeacher(role === 'teacher')
     const s = await getPinStatus()
