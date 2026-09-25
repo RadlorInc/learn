@@ -31,7 +31,9 @@ beforeEach(() => {
   ;(window as unknown as { speechSynthesis: unknown }).speechSynthesis = {
     speak: (u: SpeechSynthesisUtterance) => { utterances.push(u) },
     cancel: () => {},   // like Chrome after cancel(): no onend for the line it dropped
-    getVoices: () => [], addEventListener: () => {},
+    // One ON-DEVICE voice: #237 (MAP-04) refuses to speak without one, and this test is about the interval, not the voice.
+    getVoices: () => [{ name: 'Samantha', lang: 'en-US', localService: true, default: true, voiceURI: 'Samantha' }],
+    addEventListener: () => {},
     speaking: false, pending: false, paused: false,
   }
   const realSet = globalThis.setInterval
