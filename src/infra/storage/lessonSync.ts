@@ -12,9 +12,11 @@ import { lessonDone, markLessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { FRESH, type Outcome, type SavedRun } from '@/features/lessons/adaptive'
-import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows } from '@/data/repositories/points'
+import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows, sessionUserId } from '@/data/repositories/points'
 
-type Item = { id: string; learnerId: string } & (
+// `owner` = the account that queued it (stamped by the first flush after it was queued, which is the flush the enqueue
+// itself starts). The queue is one per DEVICE, so it can hold items of an account that is not signed in right now.
+type Item = { id: string; learnerId: string; owner?: string } & (
   | { lessonId: string; outcome?: Outcome; event?: string }
   | { moduleId: string; event: string }
   | { runOf: string })
@@ -49,11 +51,15 @@ export function syncRun(learnerId: string | null, lessonId: string): void {
   void flushLessonSync()
 }
 
-/** How many uploads are waiting. The offline banner's number — it used to count `sessions`. */
-export const pendingLessonUploads = (): number => read().length
+// The signed-in account as of the last flush; undefined before the first one on this page.
+let me: string | null | undefined
+const mine = (x: Item, who: string | null | undefined) => who === undefined || (x.owner ?? who) === who
+
+/** How many of this account's uploads are waiting. The offline banner's number — it used to count `sessions`. */
+export const pendingLessonUploads = (): number => read().filter(x => mine(x, me)).length
 
 let flushing: Promise<void> | null = null
-/** Sends the queue in order and stops at the first item that should be retried, so order is kept. */
+/** Sends the signed-in account's queued items in order; a learner stops at its first item to retry, so its order is kept. */
 export function flushLessonSync(): Promise<void> {
   // ⚠️ Cleared in `.finally`, never inside `send`: with an empty queue `send` finishes synchronously, and a
   // `finally { flushing = null }` in there ran BEFORE the assignment — leaving a settled promise that every later
@@ -62,12 +68,22 @@ export function flushLessonSync(): Promise<void> {
 }
 
 async function send(): Promise<void> {
-  const sent = new Set<string>()
+  me = await sessionUserId()
+  // ⚠️ No session, or another account: its items are NOT sent. Sent, they come back 42501 (anon has no EXECUTE; the
+  // function refuses a learner the caller cannot reach) and 42501 is 'drop' — the child's answers and points were
+  // deleted on the /auth page after a sign-out, or under the next account on a shared device (BUG-01). They wait for
+  // their owner instead. For the owner itself, 42501 does mean "never": the learner was deleted or access removed.
+  if (!me) return
+  const who = me
+  if (read().some(x => !x.owner)) write(read().map(x => x.owner ? x : { ...x, owner: who }))
+  const tried = new Set<string>(), held = new Set<string>()
   for (;;) {
-    const [item] = read()
-    // Seen twice = the queue could not be written (storage full): stop rather than send it forever.
-    if (!item || sent.has(item.id)) return
-    sent.add(item.id)
+    // Re-read each time: something may have been queued while the last one was sending. A learner with an item to
+    // retry is held, so that learner's order is kept, but nobody else's uploads wait behind it (BUG-04).
+    const item = read().find(x => !tried.has(x.id) && (x.owner ?? who) === who && !held.has(x.learnerId))
+    // Tried already = the queue could not be written (storage full): stop rather than send it forever.
+    if (!item) return
+    tried.add(item.id)
     const r = 'runOf' in item
       ? await recordPracticeRun(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
       : 'moduleId' in item
@@ -75,8 +91,7 @@ async function send(): Promise<void> {
       : await recordLessonProgress(item.learnerId, item.lessonId,
           { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH) },
           item.outcome, item.event)
-    if (r === 'retry') return
-    // Re-read: something may have been queued while this one was sending.
+    if (r === 'retry') { held.add(item.learnerId); continue }
     write(read().filter(x => x.id !== item.id))
   }
 }

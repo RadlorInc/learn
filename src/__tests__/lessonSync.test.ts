@@ -12,7 +12,7 @@ let rows: unknown = []
 const db = vi.hoisted(() => ({ noRunColumn: false, selects: [] as string[] }))
 vi.mock('@/data/repositories/_shared', async (orig) => {
   const actual = await orig<typeof import('@/data/repositories/_shared')>()
-  return { ...actual, db: () => ({ rpc, from: () => ({ select: (cols: string) => ({ eq: async () => {
+  return { ...actual, db: () => ({ rpc, auth: { getSession: async () => ({ data: { session: { user: { id: 'parent' } } } }) }, from: () => ({ select: (cols: string) => ({ eq: async () => {
     db.selects.push(cols)
     if (db.noRunColumn && /\brun\b/.test(cols)) return { error: { code: '42703', message: 'column lesson_progress.run does not exist' } }
     return rows === null ? { error: { code: 'x' } } : { data: rows }
