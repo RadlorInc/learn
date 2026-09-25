@@ -61,10 +61,10 @@ export default function AuthCallbackPage() {
     <div style={{
       minHeight: '100dvh', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
+      background: 'linear-gradient(180deg, #EAF5FE 0%, #EFF8FF 100%)',
       gap: 16,
     }}>
-      <p style={{ fontSize: 16, fontWeight: 600, color: '#888' }}>{t('Signing you in…')}</p>
+      <p style={{ fontSize: 16, fontWeight: 600, color: '#3D6FB8' }}>{t('Signing you in…')}</p>
       <style>{`@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }`}</style>
     </div>
   )

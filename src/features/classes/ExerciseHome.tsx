@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react'
 import { saveExerciseResult, type ExerciseOutcome } from '@/data/repositories'
 import { ModulePractice } from '@/features/lessons/ModulePractice'
 import { findModule } from '@/features/lessons/modules'
-import { INK, TEAL, PAGE_BG, shell, topBar, pill } from '@/features/lessons/Pictures'
+import { INK, TEAL, ON_TEAL, PAGE_BG, shell, topBar, pill } from '@/features/lessons/Pictures'
 import { bubble } from '@/features/lessons/Frame'
 import { exerciseItems, isOpen, type Exercise } from './exercise'
 
@@ -64,7 +64,7 @@ export function ExerciseHome({ learnerId, classId, className, exercises, back }:
           {back && <button type="button" onClick={back.onClick} style={{ ...pill, minHeight: 40 }}>{back.label}</button>}
         </div>
         <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {unsent > 0 && <p role="status" style={{ ...bubble, fontSize: 16, background: '#fff1c9' }}>Your answers will be sent to your teacher when you are back online.</p>}
+          {unsent > 0 && <p role="status" style={{ ...bubble, fontSize: 16, background: '#eaf5fe' }}>Your answers will be sent to your teacher when you are back online.</p>}
           {list.length === 0 ? (
             <p style={bubble}>Your teacher has not set any exercises yet. Check back soon!</p>
           ) : list.map(ex => {
@@ -74,12 +74,12 @@ export function ExerciseHome({ learnerId, classId, className, exercises, back }:
                 <div style={{ flex: '1 1 220px', minWidth: 0 }}>
                   <div style={{ fontSize: 22, fontWeight: 900, color: INK }}>Exercise {n + 1}{done ? ' ✓' : ''}</div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: INK, marginTop: 2 }}>Grade {m.grade} · {m.title}</div>
-                  <div style={{ fontSize: 15, color: '#6d4c3d', marginTop: 2 }}>{ex.count} question{ex.count === 1 ? '' : 's'} · Level {ex.level}</div>
+                  <div style={{ fontSize: 15, color: '#3d6fb8', marginTop: 2 }}>{ex.count} question{ex.count === 1 ? '' : 's'} · Level {ex.level}</div>
                   {!open && <div style={{ fontSize: 15, fontWeight: 700, color: INK, marginTop: 4 }}>🔒 Your teacher will open this one.</div>}
                 </div>
                 {open && (
                   <button type="button" onClick={() => setPlaying({ ex, n })}
-                    style={{ minHeight: 56, padding: '10px 22px', borderRadius: 16, border: `4px solid ${INK}`, background: TEAL, color: '#fff', fontSize: 20, fontWeight: 900, cursor: 'pointer' }}>
+                    style={{ minHeight: 56, padding: '10px 22px', borderRadius: 16, border: `4px solid ${INK}`, background: TEAL, color: ON_TEAL, fontSize: 20, fontWeight: 900, cursor: 'pointer' }}>
                     {done ? 'Do again' : 'Start'}
                   </button>
                 )}

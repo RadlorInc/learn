@@ -31,7 +31,7 @@ export default function Page() {
         <h1>Unsubscribe from Radlic updates</h1>
         <p>Press the button and we will stop sending this address updates and offers. You will still get essential messages about your account.</p>
         <button type="button" onClick={go} disabled={state === 'busy'}
-          style={{ font: 'inherit', padding: '12px 20px', borderRadius: 8, border: 0, background: '#1f2937', color: '#fff', cursor: 'pointer' }}>
+          style={{ font: 'inherit', padding: '12px 20px', borderRadius: 8, border: 0, background: '#083d85', color: '#fff', cursor: 'pointer' }}>
           Unsubscribe
         </button>
         {state === 'error' && <p role="alert">Something went wrong. Please try again, or write to support@radlor.com.</p>}

@@ -5,7 +5,7 @@ import { segments } from './marks'
 export function Md({ s }: { s: string }): ReactNode {
   return segments(s).map((x, i) => {
     let n: ReactNode = x.href
-      ? <a key={i} href={x.href} target={x.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" style={{ color: '#E0591F', fontWeight: 700 }}>{x.text}</a>
+      ? <a key={i} href={x.href} target={x.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" style={{ color: '#083D85', fontWeight: 700 }}>{x.text}</a>
       : x.text
     if (x.em) n = <em key={i}>{n}</em>
     if (x.bold) n = <strong key={i}>{n}</strong>

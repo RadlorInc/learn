@@ -41,7 +41,7 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
     // card at the top with no way to scroll back to it — measured at 640×320, the short-landscape
     // phone this band is played on, where the old card lost its top 189px.
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(61,37,22,0.7)',
+      position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(8,61,133,0.7)',
       display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
       overflowY: 'auto', overscrollBehavior: 'contain', padding: 'min(24px, 2vh)',
     }}>
@@ -57,7 +57,7 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
           Nice work — that one is finished.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={onPlayAgain} style={btn('#F26B2C', '#fff')}>▶ Play again</button>
+          <button onClick={onPlayAgain} style={btn('#0B4FA8', '#fff')}>▶ Play again</button>
           <button onClick={onExit} style={btn('transparent', 'var(--ink-soft)')}>{exitLabel}</button>
         </div>
       </div>
@@ -67,6 +67,6 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
 
 const btn = (background: string, color: string) => ({
   background, color, minHeight: 52, padding: '13px 22px', borderRadius: 50,
-  border: background === 'transparent' ? '2px solid var(--ink-mute, #bbb)' : 'none',
+  border: background === 'transparent' ? '2px solid var(--ink-mute, #9DB3D1)' : 'none',
   fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 17, cursor: 'pointer',
 } as const)

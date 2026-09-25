@@ -405,17 +405,17 @@ function Dashboard() {
   }
 
   if (loading) return (
-    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#FCEAB6' }} aria-busy="true" />
+    <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#EFF8FF' }} aria-busy="true" />
   )
 
   // One-time gate: a fresh account (role still null) picks Teacher or Parent before seeing the dashboard.
   if (role === null) return <RolePicker name={parentName} onPick={handlePickRole} />
 
   if (loadError) return (
-    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, background:'#FCEAB6', padding:24, textAlign:'center' }}>
-      <p style={{ fontSize:18, fontWeight:700, color:'#3D2516', margin:0 }}>{t('Hmm, we couldn’t load your dashboard.')}</p>
-      <p style={{ fontSize:14, color:'#7a6a55', margin:0 }}>{t('Check your connection and try again.')}</p>
-      <button onClick={() => loadAll()} style={{ padding:'14px 28px', background:'linear-gradient(135deg,#F26B2C 0%,#e05a1f 100%)', color:'#fff', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>{t('Try again')}</button>
+    <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16, background:'#EFF8FF', padding:24, textAlign:'center' }}>
+      <p style={{ fontSize:18, fontWeight:700, color:'#083D85', margin:0 }}>{t('Hmm, we couldn’t load your dashboard.')}</p>
+      <p style={{ fontSize:14, color:'#3d6fb8', margin:0 }}>{t('Check your connection and try again.')}</p>
+      <button onClick={() => loadAll()} style={{ padding:'14px 28px', background:'var(--accent-fill)', color:'var(--on-accent-fill)', border:'none', borderRadius:50, fontSize:16, fontWeight:800, cursor:'pointer' }}>{t('Try again')}</button>
     </div>
   )
 
@@ -447,7 +447,7 @@ function Dashboard() {
       <div style={{ marginBottom:20 }}>
         {inviteMsg && <div style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:12, fontSize:14, fontWeight:600, color:'#166534' }}>✅ {inviteMsg}</div>}
         {invites.map(inv => (
-          <div key={inv.id} style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:12, boxShadow:'0 4px 20px rgba(242,107,44,0.15)', border:'2px solid #F26B2C' }}>
+          <div key={inv.id} style={{ background:'#fff', borderRadius:20, padding:'18px 16px', marginBottom:12, boxShadow:'0 4px 20px rgba(76,180,248,0.15)', border:'2px solid #0B4FA8' }}>
             <div style={{ fontSize:15, fontWeight:800, color:P.ink }}>{t('You’ve been invited!')}</div>
             <div style={{ fontSize:13, color:P.ink3, margin:'2px 0 14px' }}>{t('Access to:')} <strong>{inv.learner_name ?? t('a learner')}</strong></div>
             <div style={{ display:'flex', gap:10 }}>
@@ -511,7 +511,7 @@ function Dashboard() {
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
                     {d.accessRole === 'owner' ? t('Yes, delete') : t('Yes, remove me')}
                   </button>
-                  <button onClick={() => setConfirming(null)} style={{ flex:1, padding:'12px', background:'#fff', color:'#888', border:'1.5px solid #e5e7eb', borderRadius:50, fontSize:14, fontWeight:700, cursor:'pointer' }}>{t('Cancel')}</button>
+                  <button onClick={() => setConfirming(null)} style={{ flex:1, padding:'12px', background:'#fff', color:'#3D6FB8', border:'1.5px solid #d3e9f9', borderRadius:50, fontSize:14, fontWeight:700, cursor:'pointer' }}>{t('Cancel')}</button>
                 </div>
               </div>
             ) : (
@@ -562,7 +562,7 @@ function Dashboard() {
               <div key={k} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, padding:'10px 0', borderTop:`1px solid ${P.edge}` }}>
                 <div><b style={{ color:P.ink }}>{title}</b><div style={{ fontSize:13.5, color:P.ink2 }}>{d}</div></div>
                 <button type="button" role="switch" aria-checked={on} aria-label={title} onClick={() => setPrefs(p => ({ ...p, off: on ? [...p.off, k] : p.off.filter(x => x !== k) }))}
-                  style={{ width:52, height:30, borderRadius:99, border:0, flexShrink:0, cursor:'pointer', position:'relative', background: on ? '#157347' : '#d9ccb8' }}>
+                  style={{ width:52, height:30, borderRadius:99, border:0, flexShrink:0, cursor:'pointer', position:'relative', background: on ? '#157347' : '#d3e9f9' }}>
                   <span style={{ position:'absolute', top:3, left: on ? 25 : 3, width:24, height:24, borderRadius:'50%', background:'#fff', transition:'left .15s' }} />
                 </button>
               </div>
@@ -678,10 +678,10 @@ function Dashboard() {
         <div style={{ padding:'8px 16px 28px', textAlign:'center' }}>
           <SupportPanel learnerId={childId ?? undefined} />
           {/* ⚠️ BOTH DOCUMENTS, REACHABLE FROM INSIDE THE APP: a parent who agreed at signup must be able to read what they agreed to. */}
-          <p style={{ margin:'18px 0 0', fontSize:12, color:'#9a8b78' }}>
-            <Link href="/legal/terms" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>{t('Terms of Service')}</Link>
+          <p style={{ margin:'18px 0 0', fontSize:12, color:'#3d6fb8' }}>
+            <Link href="/legal/terms" style={{ color:'#3d6fb8', fontWeight:700, textDecoration:'none' }}>{t('Terms of Service')}</Link>
             <span style={{ margin:'0 8px', opacity:0.5 }}>·</span>
-            <Link href="/legal/privacy" style={{ color:'#8a7a63', fontWeight:700, textDecoration:'none' }}>{t('Privacy Policy')}</Link>
+            <Link href="/legal/privacy" style={{ color:'#3d6fb8', fontWeight:700, textDecoration:'none' }}>{t('Privacy Policy')}</Link>
           </p>
         </div>
       </div>
@@ -766,7 +766,7 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
   return (
     <div style={{
         background:P.card, border:`2px solid ${P.edge}`, borderRadius:24,
-        boxShadow:'0 6px 28px rgba(61,37,22,0.08)',
+        boxShadow:'0 6px 28px rgba(8,61,133,0.08)',
         padding:'44px 24px', margin:'8px auto 0', maxWidth:520,
         textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14,
       }}>
@@ -774,7 +774,7 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
         <p style={{ fontSize:15, color:P.ink2, margin:0, maxWidth:340, lineHeight:1.5 }}>
           {t('Add your first learner and we’ll find where to start.')}
         </p>
-        <button onClick={onAdd} style={{ marginTop:4, background:P.accent, color:'#fff', border:'none', borderRadius:50, padding:'16px 34px', minHeight:44, fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(242,107,44,0.28)' }}>
+        <button onClick={onAdd} style={{ marginTop:4, background:'var(--accent-fill)', color:'var(--on-accent-fill)', border:'none', borderRadius:50, padding:'16px 34px', minHeight:44, fontSize:17, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 16px rgba(76,180,248,0.28)' }}>
           {t('+ Add your first learner')}
         </button>
       </div>
@@ -820,7 +820,7 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
                 padding:'18px 20px', minHeight:44, background:P.card,
                 border:`2px solid ${on ? P.accent : P.edge}`, borderRadius:20,
                 cursor: busy ? 'default' : 'pointer', opacity: busy && !on ? 0.55 : 1,
-                boxShadow: on ? '0 4px 16px rgba(242,107,44,0.18)' : '0 2px 10px rgba(61,37,22,0.06)',
+                boxShadow: on ? '0 4px 16px rgba(76,180,248,0.18)' : '0 2px 10px rgba(8,61,133,0.06)',
                 transition:'border-color 150ms ease, box-shadow 150ms ease, opacity 150ms ease',
                 position:'relative', width:'100%', boxSizing:'border-box',
               }}
@@ -852,11 +852,11 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
         disabled={!picked || busy}
         style={{
           width:'100%', maxWidth:340, padding:'15px', minHeight:44,
-          background: !picked || busy ? P.edge : P.accent,
-          color: !picked || busy ? P.ink3 : '#fff',
+          background: !picked || busy ? P.edge : 'var(--accent-fill)',
+          color: !picked || busy ? P.ink3 : 'var(--on-accent-fill)',
           border:'none', borderRadius:50, fontSize:16, fontWeight:800,
           cursor: busy ? 'wait' : picked ? 'pointer' : 'default',
-          boxShadow: !picked || busy ? 'none' : '0 4px 14px rgba(242,107,44,0.28)',
+          boxShadow: !picked || busy ? 'none' : '0 4px 14px rgba(76,180,248,0.28)',
           transition:'all 200ms ease',
         }}
       >{busy ? 'Setting up…' : 'Continue →'}</button>
@@ -938,7 +938,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
      `.sheet-card` carry the switch, including the two entrance animations and the
      `prefers-reduced-motion` opt-out. */
   return (
-    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label={t('Add a learner')} style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(61,37,22,0.45)' }} onClick={onClose}>
+    <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label={t('Add a learner')} style={{ position:'fixed', inset:0, zIndex:50, background:'rgba(8,61,133,0.45)' }} onClick={onClose}>
       <div className="sheet-card" style={{ background:P.card, padding:'28px 24px 40px', overflowY:'auto', WebkitOverflowScrolling:'touch', boxSizing:'border-box' }} onClick={e => e.stopPropagation()}>
         <h3 style={{ fontSize:20, fontWeight:800, margin:'0 0 4px', color:P.ink, fontFamily:'var(--font-display)' }}>{t('Add a learner')}</h3>
         <p style={{ fontSize:13, color:P.ink2, margin:'0 0 18px', lineHeight:1.45 }}>{t('Quiet, private progress tracking for home or class.')}</p>
@@ -947,7 +947,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
             <button key={i} onClick={() => setAvatarIndex(i)} aria-pressed={avatarIndex===i} aria-label={t('Avatar {n}', { n: i + 1 })} style={{ position:'relative', width:64, height:64, fontSize:32, borderRadius:16, cursor:'pointer', background:avatarIndex===i?'var(--milo-orange-soft)':P.page, border:avatarIndex===i?`3px solid ${P.accent}`:`2px solid ${P.edge}`, transition:'border-color 0.15s, background 0.15s' }}>
               {emoji}
               {avatarIndex===i && (
-                <span aria-hidden="true" style={{ position:'absolute', top:-4, right:-4, width:20, height:20, borderRadius:'50%', background:P.accent, color:'#fff', fontSize:11, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' }}>✓</span>
+                <span aria-hidden="true" style={{ position:'absolute', top:-4, right:-4, width:20, height:20, borderRadius:'50%', background:'var(--accent-fill)', color:'var(--on-accent-fill)', fontSize:11, fontWeight:900, display:'flex', alignItems:'center', justifyContent:'center' }}>✓</span>
               )}
             </button>
           ))}
@@ -1005,7 +1005,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
         {attest && (
           <div data-consent="attest" data-tour="add-attest" style={{ margin:'14px 0 0', padding:'12px 14px', border:`1.5px solid ${P.edge}`, borderRadius:14, background:P.page }}>
             <label style={{ display:'flex', gap:10, alignItems:'flex-start', fontSize:14, lineHeight:1.45, color:P.ink, fontWeight:600, cursor:'pointer' }}>
-              <input type="checkbox" checked={attested} onChange={e => setAttested(e.target.checked)} style={{ width:22, height:22, flex:'0 0 auto', marginTop:1, accentColor:'#F26B2C' }} />
+              <input type="checkbox" checked={attested} onChange={e => setAttested(e.target.checked)} style={{ width:22, height:22, flex:'0 0 auto', marginTop:1, accentColor:'#0B4FA8' }} />
               <span>{ATTEST.tick[lang].replace('{date}', longDate(attest.confirmedAt, lang))}</span>
             </label>
             <button type="button" onClick={() => setShowNotice(v => !v)} aria-expanded={showNotice}
@@ -1013,7 +1013,7 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
             {showNotice && <div style={{ marginTop:8 }}><Notice lang={lang} /></div>}
           </div>
         )}
-        <button data-tour="add-submit" onClick={handleAdd} disabled={loading || !attest || !attested} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading||!attest||!attested?P.edge:P.accent, color:loading||!attest||!attested?P.ink3:'#fff', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':!attest||!attested?'not-allowed':'pointer', boxShadow:loading||!attest||!attested?'none':'0 4px 14px rgba(242,107,44,0.28)' }}>
+        <button data-tour="add-submit" onClick={handleAdd} disabled={loading || !attest || !attested} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading||!attest||!attested?P.edge:'var(--accent-fill)', color:loading||!attest||!attested?P.ink3:'var(--on-accent-fill)', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':!attest||!attested?'not-allowed':'pointer', boxShadow:loading||!attest||!attested?'none':'0 4px 14px rgba(76,180,248,0.28)' }}>
           {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>
       </div>

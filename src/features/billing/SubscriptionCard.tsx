@@ -10,8 +10,8 @@ import { endDate, endsLine } from '@/features/billing/cancelNotice'
 import { cancelMySubscription, getMySubscription, type MySubscription } from '@/data/repositories/billing'
 
 const card: React.CSSProperties = { background: '#fff', borderRadius: 20, padding: '18px 16px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }
-const p: React.CSSProperties = { fontSize: 14, lineHeight: 1.55, color: '#3c2a14', margin: '0 0 10px' }
-const btn: React.CSSProperties = { minHeight: 44, padding: '0 18px', borderRadius: 999, cursor: 'pointer', fontWeight: 800, fontSize: 14, background: '#fff', color: '#3c2a14', border: '2px solid rgba(61,37,22,.2)', marginRight: 8, marginTop: 6 }
+const p: React.CSSProperties = { fontSize: 14, lineHeight: 1.55, color: '#083d85', margin: '0 0 10px' }
+const btn: React.CSSProperties = { minHeight: 44, padding: '0 18px', borderRadius: 999, cursor: 'pointer', fontWeight: 800, fontSize: 14, background: '#fff', color: '#083d85', border: '2px solid rgba(8,61,133,.2)', marginRight: 8, marginTop: 6 }
 
 export function SubscriptionCard() {
   const [sub, setSub] = useState<MySubscription | null | undefined | 'loading'>('loading')
@@ -63,7 +63,7 @@ export function SubscriptionCard() {
 
   return (
     <section style={card} aria-label="Your subscription">
-      <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 10px', color: '#1a1a1a' }}>Your subscription</h2>
+      <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 10px', color: '#083d85' }}>Your subscription</h2>
       {body}
       {note && <p style={{ ...p, margin: '10px 0 0' }}>{note}</p>}
     </section>

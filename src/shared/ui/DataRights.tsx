@@ -123,7 +123,7 @@ export function DataRights({ name, learnerId, bundle, children }: {
   return (
     <section style={{
       marginTop: 20, padding: '16px 18px', borderRadius: 16,
-      background: 'rgba(255,255,255,.6)', border: '2px solid rgba(61,37,22,.12)',
+      background: 'rgba(255,255,255,.6)', border: '2px solid rgba(8,61,133,.12)',
     }}>
       <h3 style={{ margin: '0 0 4px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: 'var(--ink)' }}>
         {t('{name}’s data', { name })}
@@ -143,6 +143,6 @@ const btn: React.CSSProperties = {
   /** 44px is the tap floor this repo holds everywhere. */
   minHeight: 44, padding: '0 18px', borderRadius: 999, cursor: 'pointer',
   fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14,
-  background: '#fff', color: 'var(--ink)', border: '2px solid rgba(61,37,22,.2)',
+  background: '#fff', color: 'var(--ink)', border: '2px solid rgba(8,61,133,.2)',
   marginBottom: 12,
 }

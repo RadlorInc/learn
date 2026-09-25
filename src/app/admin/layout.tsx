@@ -45,7 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (path === '/admin/login') return <>{children}</>
 
   return (
-    <div style={{ background: '#f5f7fa', minHeight: '100vh' }}>
+    <div style={{ background: '#f3f9ff', minHeight: '100vh' }}>
       {/* ⚠️ PERSISTENT, ON EVERY PAGE, whenever the threshold is below 5. The point is to be
           reminded rather than to quietly forget that a bucket of one or two names a person. */}
       {/* Below 5 the risk is identification, so the warning is loud and permanent. At 5 and above
@@ -56,18 +56,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           individual. Treat every figure on this page as potentially about one child.
         </div>
       )}
-      <header style={{ background: '#fff', borderBottom: '1px solid #e3e8ef', padding: '12px 24px', display: 'flex', gap: 18, alignItems: 'center' }}>
+      <header style={{ background: '#fff', borderBottom: '1px solid #d3e9f9', padding: '12px 24px', display: 'flex', gap: 18, alignItems: 'center' }}>
         <strong style={{ fontSize: 14 }}>Radlic · usage</strong>
         <nav style={{ display: 'flex', gap: 14 }}>
           {TABS.map(t => (
             <Link key={t.href} href={t.href} style={{
               fontSize: 13, textDecoration: 'none', paddingBottom: 2,
-              color: path === t.href ? '#1d2430' : '#6b7683',
-              borderBottom: path === t.href ? '2px solid #3d6fd1' : '2px solid transparent',
+              color: path === t.href ? '#1d2430' : '#3d6fb8',
+              borderBottom: path === t.href ? '2px solid #0b4fa8' : '2px solid transparent',
             }}>{t.label}</Link>
           ))}
         </nav>
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#8b95a3' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#3d6fb8' }}>
           aggregate only · read-only · US Eastern
           {/* ⚠️ ALWAYS SHOWN, at every threshold. The red banner only appears below 5, so at the
               default of 5 the page filled with em dashes and NOTHING said why — a correct page that

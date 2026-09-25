@@ -43,7 +43,7 @@ export default function Learning() {
         </Def>
         <table style={{ width: '100%', borderSpacing: 0, fontSize: 13 }}>
           <thead><tr>{['Chapter', 'Started', 'Finished', 'Rate'].map(h =>
-            <th key={h} style={{ textAlign: h === 'Chapter' ? 'left' : 'right', color: '#8b95a3', fontSize: 11, fontWeight: 600, padding: '4px 8px', borderBottom: '1px solid #e3e8ef' }}>{h}</th>)}</tr></thead>
+            <th key={h} style={{ textAlign: h === 'Chapter' ? 'left' : 'right', color: '#3d6fb8', fontSize: 11, fontWeight: 600, padding: '4px 8px', borderBottom: '1px solid #d3e9f9' }}>{h}</th>)}</tr></thead>
           <tbody>
             {(data.chapter_funnel ?? []).map((r: any) => (
               <tr key={r.chapter}>
@@ -65,7 +65,7 @@ export default function Learning() {
           each and the share who have completed at least one. Denominator is all learners in that band.</Def>
         <table style={{ width: '100%', borderSpacing: 0, fontSize: 13 }}>
           <thead><tr>{['Band', 'Learners', 'Median chapters', 'Completed ≥1'].map(h =>
-            <th key={h} style={{ textAlign: h === 'Band' ? 'left' : 'right', color: '#8b95a3', fontSize: 11, fontWeight: 600, padding: '4px 8px', borderBottom: '1px solid #e3e8ef' }}>{h}</th>)}</tr></thead>
+            <th key={h} style={{ textAlign: h === 'Band' ? 'left' : 'right', color: '#3d6fb8', fontSize: 11, fontWeight: 600, padding: '4px 8px', borderBottom: '1px solid #d3e9f9' }}>{h}</th>)}</tr></thead>
           <tbody>{(data.curriculum_position ?? []).map((b: any) => (
             <tr key={b.band}>
               <td style={td}>{b.band}</td>
@@ -102,13 +102,13 @@ export default function Learning() {
   )
 }
 
-const td: React.CSSProperties = { padding: '6px 8px', borderBottom: '1px solid #f0f3f7' }
+const td: React.CSSProperties = { padding: '6px 8px', borderBottom: '1px solid #f3f9ff' }
 function Stat({ label, v, sub }: { label: string; v: any; sub?: string }) {
   return (
     <div>
-      <div style={{ fontSize: 11, color: '#8b95a3', fontWeight: 600, marginBottom: 2 }}>{label}</div>
+      <div style={{ fontSize: 11, color: '#3d6fb8', fontWeight: 600, marginBottom: 2 }}>{label}</div>
       <N v={v === null || v === undefined ? null : Number(v)} />
-      {sub && <div style={{ fontSize: 11, color: '#8b95a3' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 11, color: '#3d6fb8' }}>{sub}</div>}
     </div>
   )
 }

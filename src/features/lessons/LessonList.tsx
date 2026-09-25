@@ -64,7 +64,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
   return (
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 32px', display: 'flex', justifyContent: 'center' }}>
       <style>{`@keyframes lp-breathe { 0%,100% { transform: translate(-50%, -50%) scale(1) } 50% { transform: translate(-50%, -50%) scale(1.1) } }
-@keyframes lp-glow { 0%,100% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166 } 50% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 10px #ffd16666, 0 0 34px 14px #ffd166 } }
+@keyframes lp-glow { 0%,100% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #fbdbba } 50% { box-shadow: 4px 4px 0 ${INK}, 0 0 0 10px #ffd16666, 0 0 34px 14px #fbdbba } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important } }`}</style>
       <div style={{ ...shell, maxWidth: across ? 1180 : 620, alignSelf: 'flex-start' }}>
         <div style={topBar}>
@@ -72,8 +72,8 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
           <span style={{ fontSize: 'clamp(15px, 3.6vw, 18px)', textAlign: 'center' }}>Grade {module.grade} · Module {module.n}</span>
           {/* Every topic done: the chip becomes the way back to the module summary (Review 1 Q3). */}
           {done.length === n
-            ? <Link href={`/lesson?module=${module.id}&summary=1`} style={{ ...pill, background: '#ffd166', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{C.seeSummary}</Link>
-            : <span style={{ background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>{done.length} of {n} done</span>}
+            ? <Link href={`/lesson?module=${module.id}&summary=1`} style={{ ...pill, background: '#fbdbba', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>{C.seeSummary}</Link>
+            : <span style={{ background: '#fbdbba', border: `3px solid ${INK}`, borderRadius: 999, padding: '6px 12px', whiteSpace: 'nowrap' }}>{done.length} of {n} done</span>}
         </div>
         <div style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
           <h1 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(26px, 4.5vw, 36px)', color: INK, lineHeight: 1.1 }}>{module.title}</h1>
@@ -103,7 +103,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                   const gap = size / 2 + 12
                   // Dimmed with solid muted colours, not opacity: a see-through stop shows the trail running through it.
                   const dim: CSSProperties = isNext ? {} : { opacity: 0.5 }
-                  const dimStop: CSSProperties = isNext ? {} : { background: '#f3ede6', borderColor: MUTED, boxShadow: `4px 4px 0 ${MUTED}`, color: MUTED }
+                  const dimStop: CSSProperties = isNext ? {} : { background: '#eef3f8', borderColor: MUTED, boxShadow: `4px 4px 0 ${MUTED}`, color: MUTED }
                   const faded: CSSProperties = isNext ? {} : { opacity: 0.45 }
                   // The label sits on the open side of its stop: right/left when vertical, above/below when horizontal.
                   const label: CSSProperties = across
@@ -116,12 +116,12 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                   return (
                     <li key={l.id} style={{ position: 'absolute', top: y, left: across ? x : `${x}%`, width: 0, height: 0 }}>
                       <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : isNext ? ', next up' : ''}`}
-                        style={{ ...stop, width: size, height: size, background: isNext ? '#ffd166' : '#fff', ...dimStop,
-                          ...(isNext ? { animation: 'lp-breathe 2.4s ease-in-out infinite, lp-glow 2.4s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #ffd166` } : {}) }}>
+                        style={{ ...stop, width: size, height: size, background: isNext ? '#fbdbba' : '#fff', ...dimStop,
+                          ...(isNext ? { animation: 'lp-breathe 2.4s ease-in-out infinite, lp-glow 2.4s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #fbdbba` } : {}) }}>
                         {isNext
                           ? <b style={{ fontSize: 15, lineHeight: 1.05, textAlign: 'center', fontFamily: 'var(--font-display)' }}>Click here</b>
                           : <b style={{ fontSize: 26, ...faded }}>{i + 1}</b>}
-                        {isNext && <span style={{ ...badge, background: '#ff6b4a', color: '#fff' }}>{i + 1}</span>}
+                        {isNext && <span style={{ ...badge, background: '#0b4fa8', color: '#fff' }}>{i + 1}</span>}
                       </Link>
                       {/* Outside the dimmed stop, so the tick itself is not dimmed. */}
                       {isDone && <span aria-hidden style={{ ...badge, top: -size / 2 - 6, left: size / 2 - 22, width: 32, height: 32, fontSize: 18, background: GOOD, color: '#fff', pointerEvents: 'none' }}>✓</span>}
@@ -132,7 +132,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                           background: '#fff', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>⭐ {C.started}</span>}
                         {/* Never "late" to a child: the date is information, not a mark against them. */}
                         {!isDone && due?.[l.id] && <span style={{ display: 'block', width: 'fit-content', ...(!across && side(i) > 0 ? { marginLeft: 'auto' } : {}), marginTop: 6,
-                          background: '#ffd166', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>Due {showDay(due[l.id])}</span>}
+                          background: '#fbdbba', border: `3px solid ${INK}`, borderRadius: 999, padding: '2px 10px', fontWeight: 800, fontSize: 14 }}>Due {showDay(due[l.id])}</span>}
                       </Link>
                     </li>
                   )
@@ -147,7 +147,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
 }
 
 /** A dimmed stop's ink: done, or not reached yet. */
-const MUTED = '#b3a79e'
+const MUTED = '#9db3d1'
 const stop: CSSProperties = { position: 'absolute', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', justifyContent: 'center',
   borderRadius: '50%', border: `4px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`, textDecoration: 'none', color: INK }
 const badge: CSSProperties = { position: 'absolute', top: -6, right: -6, width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center',

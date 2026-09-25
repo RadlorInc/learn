@@ -9,7 +9,7 @@
  * the finished strokes if a long drawing ever lags on a slow tablet.
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { pill, INK, TEAL } from './Pictures'
+import { pill, INK, TEAL, ON_TEAL } from './Pictures'
 import { C } from './sessionCopy'
 
 type Pt = { x: number; y: number }
@@ -114,7 +114,7 @@ export function ScratchPad({ clearKey }: { clearKey: string | number }) {
   }
 
   const onScreen = strokes.slice(strokes.map(s => s.tool).lastIndexOf('clear') + 1).length > 0
-  const toolBtn = (on: boolean): CSSProperties => ({ ...pill, background: on ? TEAL : '#fff', color: on ? '#fff' : INK })
+  const toolBtn = (on: boolean): CSSProperties => ({ ...pill, background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK })
   const TOOLS: [Tool, string][] = [['pencil', C.padPencil], ['arrow', C.padArrow], ['eraser', C.padEraser]]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' } as CSSProperties}>
@@ -137,8 +137,8 @@ export function ScratchPad({ clearKey }: { clearKey: string | number }) {
       <canvas ref={canvas} aria-label="Scratch pad: draw or write your working here"
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
         style={{ flex: 1, width: '100%', minHeight: 260, touchAction: 'none', cursor: tool === 'eraser' ? 'cell' : 'crosshair',
-          border: `4px solid ${INK}`, borderRadius: 18, backgroundColor: '#fffce8', backgroundSize: '28px 28px',
-          backgroundImage: 'linear-gradient(#f1d98a 1px, transparent 1px), linear-gradient(90deg, #f1d98a 1px, transparent 1px)' }} />
+          border: `4px solid ${INK}`, borderRadius: 18, backgroundColor: '#F7FBFF', backgroundSize: '28px 28px',
+          backgroundImage: 'linear-gradient(#CFE3F7 1px, transparent 1px), linear-gradient(90deg, #CFE3F7 1px, transparent 1px)' }} />
     </div>
   )
 }

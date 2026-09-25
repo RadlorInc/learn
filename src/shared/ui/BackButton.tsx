@@ -36,13 +36,13 @@ export default function BackButton({
       background:   'var(--paper)',
       color:        'var(--milo-orange)',
       border:       '3px solid var(--milo-orange)',
-      boxShadow:    '0 3px 0 rgba(242,107,44,.25)',
+      boxShadow:    '0 3px 0 rgba(76,180,248,.25)',
     },
     solid: {
       background:   'linear-gradient(135deg, var(--milo-orange) 0%, var(--milo-orange-deep) 100%)',
       color:        '#fff',
       border:       '3px solid var(--milo-orange-deep)',
-      boxShadow:    '0 4px 0 rgba(61,37,22,.2)',
+      boxShadow:    '0 4px 0 rgba(8,61,133,.2)',
     },
     ghost: {
       background:   'rgba(255,255,255,0.15)',

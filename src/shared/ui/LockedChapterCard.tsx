@@ -21,30 +21,30 @@ export function LockedChapterCard({ chapterId, onBack }: { chapterId: string; on
   return (
     <main style={{
       minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 24, background: '#FCEAB6', fontFamily: 'system-ui, -apple-system, sans-serif',
+      padding: 24, background: '#EFF8FF', fontFamily: 'system-ui, -apple-system, sans-serif',
     }}>
       <div style={{
         maxWidth: 460, textAlign: 'center', background: '#fff', borderRadius: 20,
         padding: '30px 26px', boxShadow: '0 10px 30px rgba(60,42,20,.14)',
       }}>
         <div style={{ fontSize: 44, lineHeight: 1 }}>{copy.emoji}</div>
-        <h1 style={{ fontSize: 22, margin: '14px 0 8px', color: '#3c2a14' }}>
+        <h1 style={{ fontSize: 22, margin: '14px 0 8px', color: '#083d85' }}>
           {copy.title} is waiting for you
         </h1>
-        <p style={{ fontSize: 15, lineHeight: 1.55, color: '#6b5a42', margin: '0 0 6px' }}>
+        <p style={{ fontSize: 15, lineHeight: 1.55, color: '#3d6fb8', margin: '0 0 6px' }}>
           {copy.what}
         </p>
-        <p style={{ fontSize: 15, lineHeight: 1.55, color: '#6b5a42', margin: '10px 0 20px', fontWeight: 700 }}>
+        <p style={{ fontSize: 15, lineHeight: 1.55, color: '#3d6fb8', margin: '10px 0 20px', fontWeight: 700 }}>
           Ask a grown-up to open it for you.
         </p>
         {onBack ? (
           <button onClick={onBack} style={{
-            background: '#F26B2C', color: '#fff', fontWeight: 800, fontSize: 15, border: 'none',
+            background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', fontWeight: 800, fontSize: 15, border: 'none',
             borderRadius: 50, padding: '12px 26px', cursor: 'pointer',
           }}>← Pick something else</button>
         ) : (
           <Link href="/menu" style={{
-            display: 'inline-block', background: '#F26B2C', color: '#fff', fontWeight: 800,
+            display: 'inline-block', background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', fontWeight: 800,
             fontSize: 15, borderRadius: 50, padding: '12px 26px', textDecoration: 'none',
           }}>← Pick something else</Link>
         )}

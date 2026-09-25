@@ -24,7 +24,7 @@ import type { AgeGroup } from '@/core/chapters'
 
 const P = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', accent: 'var(--milo-orange)', soft: 'var(--milo-orange-soft)' } as const
 const card = { background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 16, padding: 16 } as const
-const btn = { background: P.accent, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', minHeight: 44, fontSize: 14, fontWeight: 800, cursor: 'pointer' } as const
+const btn = { background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none', borderRadius: 10, padding: '10px 14px', minHeight: 44, fontSize: 14, fontWeight: 800, cursor: 'pointer' } as const
 const ghost = { ...btn, background: P.card, color: P.ink, border: `1.5px solid ${P.edge}` } as const
 const input = { padding: '12px 14px', minHeight: 44, fontSize: 16, color: P.ink, background: P.page, border: `2px solid ${P.edge}`, borderRadius: 12, outline: 'none', boxSizing: 'border-box', width: '100%' } as const
 const chip = (on: boolean) => ({ padding: '8px 14px', minHeight: 40, borderRadius: 50, border: '2px solid', borderColor: on ? P.accent : P.edge, background: on ? P.soft : P.card, color: P.ink, cursor: 'pointer', fontSize: 14, fontWeight: 700 }) as const
@@ -231,7 +231,7 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
           {good.length} student{good.length === 1 ? '' : 's'} added{made.length > good.length ? ` · ${made.length - good.length} not added` : ''}
         </p>
         {good.length > 0 && (
-          <p style={{ margin: 0, fontSize: 13.5, color: '#92400E', background: '#FFF7E6', border: '1.5px solid #F5D08A', borderRadius: 10, padding: '10px 12px', fontWeight: 600 }}>
+          <p style={{ margin: 0, fontSize: 13.5, color: '#92400E', background: '#F3F9FF', border: '1.5px solid #F5D08A', borderRadius: 10, padding: '10px 12px', fontWeight: 600 }}>
             ⚠️ These temporary passwords are shown only now. Download or print them before you close this. Each student signs in with their username and this password, then makes their own.
           </p>
         )}

@@ -18,14 +18,14 @@ type Mode = 'login' | 'signup'
    values the Stitch parent-suite designs use — `page`/`card`/`cardBorder`/`textPrimary`/… were
    already in this repo under different names, so the design system did not have to be imported. */
 const C = {
-  page:   'var(--paper)',            // #FFF8EC
-  card:   'var(--paper-soft)',       // #FFFEFA
-  edge:   'var(--card-border)',      // #E7D8BE
-  ink:    'var(--ink)',              // #3D2516
-  ink2:   'var(--ink-soft)',         // #6F4E36
-  ink3:   'var(--ink-muted)',        // #A0856E
-  accent: 'var(--milo-orange)',      // #F26B2C
-  hover:  'var(--milo-orange-hover)',// #DD5D22
+  page:   'var(--paper)',            // #F7FBFF
+  card:   'var(--paper-soft)',       // #FFFFFF
+  edge:   'var(--card-border)',      // #D3E9F9
+  ink:    'var(--ink)',              // #083D85
+  ink2:   'var(--ink-soft)',         // #3D6FB8
+  ink3:   'var(--ink-muted)',        // #3D6FB8
+  accent: 'var(--milo-orange)',      // #0B4FA8
+  hover:  'var(--milo-orange-hover)',// #083D85
 } as const
 
 const field: React.CSSProperties = {
@@ -228,13 +228,12 @@ export default function AuthPage() {
                   background: lang === l ? 'var(--milo-orange-soft)' : C.card, color: C.ink, fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>{label}</button>
             ))}
           </div>
-          {/* The wordmark — plain text until there is a logo (the mascot image went with the Radlic rename). */}
+          {/* The logo (public/brand/). The alt keeps the heading's name, so "Radlic" is still what a screen reader hears. */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <h1 style={{
-              fontSize: 28, fontWeight: 800,
-              color: C.accent, margin: 0,
-              fontFamily: 'var(--font-display)',
-            }}>{APP_NAME}</h1>
+            <h1 style={{ margin: 0, lineHeight: 0 }}>
+              <img src="/brand/radlic-logo-640.png" alt={APP_NAME} width={640} height={167}
+                style={{ height: 56, width: 'auto', maxWidth: '100%' }} />
+            </h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
               {t('Adaptive math from KG to grade 8')}
             </p>
@@ -245,7 +244,7 @@ export default function AuthPage() {
             background: C.card, borderRadius: 24,
             padding: '24px 22px',
             width: '100%',
-            boxShadow: '0 6px 28px rgba(61,37,22,0.10)',
+            boxShadow: '0 6px 28px rgba(8,61,133,0.10)',
             display: 'flex', flexDirection: 'column', gap: 15,
             border: `2px solid ${C.edge}`,
             boxSizing: 'border-box',
@@ -268,8 +267,8 @@ export default function AuthPage() {
                     flex: 1, padding: '9px', minHeight: 44,
                     borderRadius: 9, border: 'none',
                     fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                    background: mode === m ? C.accent : 'transparent',
-                    color: mode === m ? '#fff' : C.ink2,
+                    background: mode === m ? 'var(--accent-fill)' : 'transparent',
+                    color: mode === m ? 'var(--on-accent-fill)' : C.ink2,
                     transition: 'all 0.15s',
                   }}
                 >
@@ -401,16 +400,16 @@ export default function AuthPage() {
               disabled={loading}
               style={{
                 width: '100%', padding: '14px', minHeight: 44,
-                background: loading ? C.edge : C.accent,
-                color: loading ? C.ink3 : '#fff',
+                background: loading ? C.edge : 'var(--accent-fill)',
+                color: loading ? C.ink3 : 'var(--on-accent-fill)',
                 border: 'none', borderRadius: 50,
                 fontSize: 16, fontWeight: 800,
                 cursor: loading ? 'wait' : 'pointer',
-                boxShadow: loading ? 'none' : '0 4px 14px rgba(242,107,44,0.28)',
+                boxShadow: loading ? 'none' : '0 4px 14px rgba(76,180,248,0.28)',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={e => { if (!loading) e.currentTarget.style.background = C.hover }}
-              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = C.accent }}
+              onMouseLeave={e => { if (!loading) e.currentTarget.style.background = 'var(--accent-fill)' }}
             >
               {loading ? t('Please wait…') : mode === 'login' ? t('Sign in') : t('Create account')}
             </button>
@@ -459,7 +458,7 @@ export default function AuthPage() {
           {!LEGACY_CHAPTERS_HIDDEN && <a href="/diagnostic" style={{
             display: 'block', width: '100%', marginTop: 16,
             textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box',
-            background: C.card, border: `2px dashed rgba(242,107,44,0.5)`, borderRadius: 18,
+            background: C.card, border: `2px dashed rgba(76,180,248,0.5)`, borderRadius: 18,
             padding: '14px 18px', color: C.accent, fontWeight: 700, fontSize: 15,
           }}>
             Not sure where they are? Take the free check →

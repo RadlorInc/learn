@@ -38,7 +38,7 @@ export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit
             <div className="pr-left">{children}</div>
             {pad && <div className="pr-pad">
               {line && <button type="button" aria-expanded={lineOpen} aria-controls="pr-vline" onClick={() => setLineOpen(o => !o)}
-                style={{ ...pill, alignSelf: 'flex-start', marginBottom: 10, background: lineOpen ? '#ffd166' : '#fff' }}>↕ {lineOpen ? C.hideLine : C.showLine}</button>}
+                style={{ ...pill, alignSelf: 'flex-start', marginBottom: 10, background: lineOpen ? '#fbdbba' : '#fff' }}>↕ {lineOpen ? C.hideLine : C.showLine}</button>}
               <div style={{ flex: 1, display: 'flex', gap: 10, minHeight: 0 }}>
                 {line && lineOpen && <div id="pr-vline" style={{ flexShrink: 0, width: 96 }}><VerticalNumberLine clearKey={padKey} /></div>}
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}><ScratchPad clearKey={padKey} /></div>

@@ -66,7 +66,7 @@ export default function NewPasswordPage() {
             onChange={e => { setConfirm(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && submit()} style={field} disabled={saving || who === null} />
         </label>
         <button onClick={submit} disabled={saving || who === null}
-          style={{ minHeight: 48, borderRadius: 50, border: 'none', background: C.accent, color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+          style={{ minHeight: 48, borderRadius: 50, border: 'none', background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', fontSize: 17, fontWeight: 800, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
           {saving ? 'Saving…' : 'Save and start'}
         </button>
       </div>

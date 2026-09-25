@@ -64,7 +64,7 @@ export default function StorageGate({ children }: { children: React.ReactNode })
   // client-side nav INTO the app instant) — only the splash is skipped.
   if (!ready && needsStorage(pathname)) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6' }} aria-busy="true" />
+      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EFF8FF' }} aria-busy="true" />
     )
   }
   return <>{children}</>

@@ -67,7 +67,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
         <p style={S.p}><Md s={t(B1.details)} /></p>
         <label style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 16, lineHeight: 1.4, color: 'var(--ink)', fontWeight: 800, cursor: busy ? 'wait' : 'pointer', padding: '14px 16px', margin: '8px 0 16px', border: '2px solid var(--milo-orange)', borderRadius: 14, minHeight: 48, boxSizing: 'border-box' }}>
           <input type="checkbox" checked={busy} disabled={busy} onChange={e => { if (e.target.checked) void act('grant') }}
-            style={{ width: 26, height: 26, flex: '0 0 auto', margin: 0, accentColor: '#F26B2C' }} />
+            style={{ width: 26, height: 26, flex: '0 0 auto', margin: 0, accentColor: '#0B4FA8' }} />
           <span>{t(B1.tick)}</span>
         </label>
         <button type="button" disabled={busy} onClick={() => act('decline')} style={S.ghost}>{t(B1.decline)}</button>
@@ -120,7 +120,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
 const S = {
   h1: { fontSize: 22, fontWeight: 800, margin: '0 0 12px', color: 'var(--ink)', fontFamily: 'var(--font-display)', lineHeight: 1.3 },
   p:  { fontSize: 15, lineHeight: 1.6, color: 'var(--ink-soft)', margin: '0 0 12px' },
-  primary: { width: '100%', padding: 16, minHeight: 48, background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 50, fontSize: 16, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' },
+  primary: { width: '100%', padding: 16, minHeight: 48, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none', borderRadius: 50, fontSize: 16, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' },
   ghost: { width: '100%', padding: 14, minHeight: 48, background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--card-border)', borderRadius: 50, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
   danger: { width: '100%', padding: 16, minHeight: 48, background: '#991B1B', color: '#fff', border: 'none', borderRadius: 50, fontSize: 16, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' },
 } as const

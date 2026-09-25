@@ -12,7 +12,7 @@ import type { Reminder } from './reminders'
 import { useT } from './i18n'
 
 const ink: CSSProperties = { color: 'var(--ink)' }
-export const dbtn: CSSProperties = { background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 16px', minHeight: 44, fontSize: 14, fontWeight: 900, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }
+export const dbtn: CSSProperties = { background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none', borderRadius: 12, padding: '10px 16px', minHeight: 44, fontSize: 14, fontWeight: 900, cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }
 export const dghost: CSSProperties = { ...dbtn, background: 'var(--paper-soft)', color: 'var(--ink)', border: '1.5px solid var(--card-border)' }
 export const dcard: CSSProperties = { background: 'var(--paper-soft)', border: '1.5px solid var(--card-border)', borderRadius: 16, padding: 18 }
 export const dlink: CSSProperties = { background: 'none', border: 0, padding: '6px 0', minHeight: 36, fontWeight: 800, color: 'var(--ink-soft)', textDecoration: 'underline', textUnderlineOffset: 3, cursor: 'pointer', fontSize: 14 }
@@ -184,7 +184,7 @@ export function TourRunner({ tour, onEnd }: { tour: Tour | null; onEnd: (finishe
     <div className="dash-spot" style={{ left: box.l, top: box.t, width: box.w, height: box.h }} />
     <div ref={coach} className="dash-coach" role="dialog" aria-live="polite" aria-label={tour.title}
       style={{ top: fitsBelow ? below : Math.max(12 + inset('top'), box.t - 234), left: Math.max(minL, Math.min(box.l, maxL)) }}>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>{tour.steps.map((_, k) => <i key={k} style={{ height: 5, flex: 1, borderRadius: 9, background: k <= i ? 'var(--milo-orange)' : 'var(--card-border)' }} />)}</div>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>{tour.steps.map((_, k) => <i key={k} style={{ height: 5, flex: 1, borderRadius: 9, background: k <= i ? 'var(--sky-blue)' : 'var(--card-border)' }} />)}</div>
       <div style={{ color: 'var(--milo-orange)', fontWeight: 900, fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em' }}>{tour.title} · {t('{i} of {n}', { i: i + 1, n })}</div>
       <h3 style={{ margin: '4px 0', fontSize: 19, fontFamily: 'var(--font-display)', ...ink }}>{step.title}</h3>
       <p style={{ margin: '0 0 12px', color: 'var(--ink-soft)' }}>{step.text}</p>

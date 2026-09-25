@@ -47,17 +47,17 @@ export class MiloErrorBoundary extends React.Component<
           minHeight: '100dvh',
           display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center',
-          background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
+          background: 'linear-gradient(180deg, #EAF5FE 0%, #EFF8FF 100%)',
           padding: 24, gap: 20, textAlign: 'center',
         }}>
           <h1 style={{
             fontSize: 24, fontWeight: 800,
-            color: '#F26B2C', margin: 0,
+            color: '#0B4FA8', margin: 0,
           }}>
             Oops! Something went wrong
           </h1>
           <p style={{
-            fontSize: 16, color: '#888',
+            fontSize: 16, color: '#3D6FB8',
             maxWidth: 320, margin: 0, lineHeight: 1.5,
           }}>
             Something went wrong. Don&apos;t worry — your progress is saved!
@@ -68,8 +68,8 @@ export class MiloErrorBoundary extends React.Component<
               window.location.href = '/parent'
             }}
             style={{
-              background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)',
-              color: '#fff', border: 'none', borderRadius: 50,
+              background: 'var(--accent-fill)',
+              color: 'var(--on-accent-fill)', border: 'none', borderRadius: 50,
               padding: '14px 32px', fontSize: 16, fontWeight: 800,
               cursor: 'pointer',
             }}

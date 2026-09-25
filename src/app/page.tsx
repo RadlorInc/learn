@@ -58,19 +58,19 @@ export default function RootPage() {
   return (
     <main style={{
       minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: 18, padding: '32px 20px', background: '#FFF8EC', textAlign: 'center',
+      gap: 18, padding: '32px 20px', background: '#F7FBFF', textAlign: 'center',
     }}>
       <ResumeSignedIn />
-      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: '#B2440F' }}>{APP_NAME}</span>
-      <p style={{ fontSize: 17, color: '#5a4632', margin: 0 }}>Math lessons that adapt to your child.</p>
+      <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 28, color: '#083D85' }}>{APP_NAME}</span>
+      <p style={{ fontSize: 17, color: '#3d6fb8', margin: 0 }}>Math lessons that adapt to your child.</p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
         <Link href="/auth" style={{
           minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 26px', borderRadius: 999,
-          background: '#C9501A', color: '#fff', fontWeight: 800, textDecoration: 'none',
+          background: '#083D85', color: '#fff', fontWeight: 800, textDecoration: 'none',
         }}>Log in or sign up</Link>
         <a href={LANDING_URL} style={{
           minHeight: 48, display: 'inline-flex', alignItems: 'center', padding: '0 20px', borderRadius: 999,
-          border: '2px solid rgba(46,29,18,.14)', color: '#2e1d12', fontWeight: 700, textDecoration: 'none',
+          border: '2px solid rgba(8,30,70,.14)', color: '#083d85', fontWeight: 700, textDecoration: 'none',
         }}>What is {APP_NAME}?</a>
       </div>
       <footer style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 4, fontSize: 14, marginTop: 12 }}>
@@ -86,4 +86,4 @@ export default function RootPage() {
 }
 
 /** A footer link's hit area: 44px tall, bought in padding. */
-const tapRow = { display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 8px', color: '#5a4632', textDecoration: 'none' } as const
+const tapRow = { display: 'inline-flex', alignItems: 'center', minHeight: 44, padding: '0 8px', color: '#3d6fb8', textDecoration: 'none' } as const

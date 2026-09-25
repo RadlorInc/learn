@@ -18,7 +18,7 @@ export const CRASH_UI = {
     minHeight: '100dvh',
     display: 'flex', flexDirection: 'column' as const,
     alignItems: 'center', justifyContent: 'center',
-    background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
+    background: 'linear-gradient(180deg, #EAF5FE 0%, #EFF8FF 100%)',
     padding: 24, gap: 18, textAlign: 'center' as const,
     fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   },
@@ -45,17 +45,17 @@ export function CrashScreen({
 }) {
   return (
     <div style={style}>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#F26B2C', margin: 0 }}>{title}</h1>
-      <p style={{ fontSize: 16, color: '#7a6a55', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>{body}</p>
+      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0B4FA8', margin: 0 }}>{title}</h1>
+      <p style={{ fontSize: 16, color: '#3d6fb8', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>{body}</p>
 
       {/* ⚠️ TWO WAYS OUT, because the first one can fail. `retry()` re-renders the segment, which
           fixes a transient error and does nothing at all for a deterministic one — and a screen
           whose only control does nothing is a dead end. The link always works. */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginTop: 6 }}>
-        <button onClick={primary.onClick} style={{ ...BTN, background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)', color: '#fff' }}>
+        <button onClick={primary.onClick} style={{ ...BTN, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)' }}>
           {primary.label}
         </button>
-        <a href={secondary.href} style={{ ...BTN, background: '#fff', color: '#F26B2C', border: '2px solid #F26B2C', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+        <a href={secondary.href} style={{ ...BTN, background: '#fff', color: '#0B4FA8', border: '2px solid #0B4FA8', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           {secondary.label}
         </a>
       </div>
@@ -68,7 +68,7 @@ export function CrashScreen({
         * fixable report.
         */}
       {digest && (
-        <code style={{ fontSize: 11, color: '#9c8d78', letterSpacing: 0.5, marginTop: 4, opacity: 0.85 }}>
+        <code style={{ fontSize: 11, color: '#3d6fb8', letterSpacing: 0.5, marginTop: 4, opacity: 0.85 }}>
           {digest}
         </code>
       )}

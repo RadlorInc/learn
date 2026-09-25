@@ -51,7 +51,7 @@ export function ToastProvider() {
     }}>
       {toasts.map(t => (
         <div key={t.id} style={{
-          background: t.type === 'error' ? '#DC2626' : t.type === 'success' ? '#16a34a' : '#1f2937',
+          background: t.type === 'error' ? '#DC2626' : t.type === 'success' ? '#16a34a' : '#083d85',
           color: '#fff', borderRadius: 50,
           padding: '12px 24px', fontSize: 14, fontWeight: 700,
           boxShadow: '0 4px 16px rgba(0,0,0,0.2)',

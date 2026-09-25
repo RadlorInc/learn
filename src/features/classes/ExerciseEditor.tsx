@@ -12,7 +12,7 @@ import { GRADES, modulesOf, findModule } from '@/features/lessons/modules'
 import { exerciseItems, newExercise, isOpen, summarize, LEVELS, MAX_COUNT, type Exercise } from './exercise'
 
 const P = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', accent: 'var(--milo-orange)', soft: 'var(--milo-orange-soft)' } as const
-const btn = { background: P.accent, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 14px', minHeight: 44, fontSize: 14, fontWeight: 800, cursor: 'pointer' } as const
+const btn = { background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none', borderRadius: 10, padding: '10px 14px', minHeight: 44, fontSize: 14, fontWeight: 800, cursor: 'pointer' } as const
 const ghost = { ...btn, background: P.card, color: P.ink, border: `1.5px solid ${P.edge}` } as const
 const chip = (on: boolean) => ({ padding: '8px 14px', minHeight: 40, borderRadius: 50, border: '2px solid', borderColor: on ? P.accent : P.edge, background: on ? P.soft : P.card, color: P.ink, cursor: 'pointer', fontSize: 14, fontWeight: 700 }) as const
 const LEVEL_HINT: Record<number, string> = { 1: 'simplest', 2: 'easy', 3: 'medium', 4: 'harder', 5: 'hardest' }
@@ -45,7 +45,7 @@ export function ExerciseEditor({ cls, students, onUpdate }: { cls: ClassRow; stu
               <div key={ex.id} style={{ padding: '10px 12px', borderRadius: 12, border: `1.5px solid ${open ? '#86EFAC' : P.edge}`, background: P.page }}>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   <b style={{ color: P.ink }}>Exercise {n + 1}</b>
-                  <span style={{ fontSize: 12.5, fontWeight: 800, padding: '3px 10px', borderRadius: 50, background: open ? '#DCFCE7' : '#F3F4F6', color: open ? '#166534' : '#374151' }}>{open ? '🟢 Open' : '🔒 Locked'}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 800, padding: '3px 10px', borderRadius: 50, background: open ? '#DCFCE7' : '#F3F9FF', color: open ? '#166534' : '#083d85' }}>{open ? '🟢 Open' : '🔒 Locked'}</span>
                   <span style={{ fontSize: 14, color: P.ink2, flex: '1 1 200px' }}>{m ? `Grade ${m.grade} · Module ${m.n} · ${m.title}` : ex.module} · Level {ex.level} · {ex.count} questions{done !== null ? ` · ${done}/${students.length} done` : ''}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>

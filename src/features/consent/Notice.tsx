@@ -17,7 +17,7 @@ export const S = {
   h4: { fontSize: 15, fontWeight: 800, margin: '20px 0 8px', color: P.ink },
   p:  { fontSize: 14, lineHeight: 1.55, color: P.ink2, margin: '0 0 10px' },
   ul: { fontSize: 14, lineHeight: 1.55, color: P.ink2, margin: '0 0 10px', paddingLeft: 20 },
-  primary: { width: '100%', padding: 16, minHeight: 44, background: P.accent, color: '#fff', border: 'none', borderRadius: 50, fontSize: 16, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' },
+  primary: { width: '100%', padding: 16, minHeight: 44, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none', borderRadius: 50, fontSize: 16, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' },
   ghost: { padding: '12px 18px', minHeight: 44, background: 'transparent', color: P.ink, border: `1.5px solid ${P.edge}`, borderRadius: 50, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' },
   danger: { width: '100%', padding: 16, minHeight: 48, background: '#991B1B', color: '#fff', border: 'none', borderRadius: 50, fontSize: 16, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' },
 } as const

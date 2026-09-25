@@ -20,7 +20,7 @@ import { LADDER, MAX_SEATS, totalCents, type Cadence } from '@/core/billing'
 import { SubscriptionCard } from '@/features/billing/SubscriptionCard'
 
 /* The adult surface's palette, from globals.css — same tokens the other parent screens use.
-   These pages previously mixed ad-hoc greys (#888 / #6b7280 / #1a1a1a / #f7f8fa) with the brand
+   These pages previously mixed ad-hoc greys (#3D6FB8 / #3d6fb8 / #083d85 / #f3f9ff) with the brand
    colours, so each one read as a slightly different product. */
 const P = {
   page:   'var(--paper)',
@@ -110,37 +110,37 @@ export function PlanCheckout() {
           {(['monthly', 'annual'] as Cadence[]).map(c => (
             <button key={c} onClick={() => setCadence(c)} style={{
               flex: 1, padding: '10px 12px', borderRadius: 50, cursor: 'pointer', fontWeight: 800, fontSize: 14,
-              border: cadence === c ? 'none' : '1.5px solid #d9c9a8',
-              background: cadence === c ? '#F26B2C' : 'transparent', color: cadence === c ? '#fff' : '#6b5a42',
+              border: cadence === c ? 'none' : '1.5px solid #d3e9f9',
+              background: cadence === c ? 'var(--accent-fill)' : 'transparent', color: cadence === c ? 'var(--on-accent-fill)' : '#3d6fb8',
             }}>{c === 'monthly' ? 'Monthly' : 'Yearly'}</button>
           ))}
         </div>
 
         <div style={{ background: '#fff', borderRadius: 20, padding: '18px 16px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#3c2a14', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#083d85', marginBottom: 8 }}>
             <span>First child</span><strong>{usd(LADDER[cadence].first)}</strong>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#3c2a14' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, color: '#083d85' }}>
             <span>Each additional child</span><strong>{usd(LADDER[cadence].extra)}</strong>
           </div>
-          <p style={{ fontSize: 12, color: '#8a7a63', margin: '12px 0 0', lineHeight: 1.5 }}>
+          <p style={{ fontSize: 12, color: '#3d6fb8', margin: '12px 0 0', lineHeight: 1.5 }}>
             {cadence === 'monthly' ? 'Per month.' : 'Per year.'} Up to {MAX_SEATS} children on one
             subscription. Cancel whenever you like — your child keeps everything they have already done.
           </p>
         </div>
 
         <div style={{ background: '#fff', borderRadius: 20, padding: '18px 16px', marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-          <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 12px', color: '#1a1a1a' }}>How many children?</h2>
+          <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 12px', color: '#083d85' }}>How many children?</h2>
           <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
             {SEATS.map(n => (
               <button key={n} onClick={() => setSeats(n)} style={{
                 flex: 1, padding: '12px 0', borderRadius: 14, cursor: 'pointer', fontWeight: 800, fontSize: 16,
-                border: seats === n ? '2px solid #F26B2C' : '1.5px solid #e5e7eb',
-                background: seats === n ? '#FFF3EC' : '#fff', color: '#1a1a1a',
+                border: seats === n ? '2px solid #0B4FA8' : '1.5px solid #d3e9f9',
+                background: seats === n ? '#E3F3FE' : '#fff', color: '#083d85',
               }}>{n}</button>
             ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 15, color: '#3c2a14' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 15, color: '#083d85' }}>
             <span>{seats} {seats === 1 ? 'child' : 'children'}</span>
             <strong style={{ fontSize: 22 }}>{usd(totalCents(seats, cadence))}</strong>
           </div>
@@ -149,25 +149,25 @@ export function PlanCheckout() {
         {/* ⚠️ NEXT TO THE PRICE AND BEFORE PAYMENT, not in a footer. Section 8 of the Terms is what
             says the subscription renews automatically and how to cancel; a parent has to be able to
             read that on the screen where they decide, not after they have been charged. */}
-        <p style={{ fontSize: 12, color: '#8a7a63', margin: '0 0 14px', lineHeight: 1.5, textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: '#3d6fb8', margin: '0 0 14px', lineHeight: 1.5, textAlign: 'center' }}>
           {usd(totalCents(seats, cadence))} {cadence === 'monthly' ? 'per month' : 'per year'}, renewing
           until you cancel. See the{' '}
-          <Link href="/legal/terms" style={{ color: '#F26B2C', fontWeight: 700 }}>Terms of Service</Link>
+          <Link href="/legal/terms" style={{ color: '#0B4FA8', fontWeight: 700 }}>Terms of Service</Link>
           ,{' '}
-          <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
+          <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>
           {' '}and{' '}
-          <Link href="/legal/refunds" style={{ color: '#F26B2C', fontWeight: 700 }}>Refund and Cancellation Policy</Link>.
+          <Link href="/legal/refunds" style={{ color: '#0B4FA8', fontWeight: 700 }}>Refund and Cancellation Policy</Link>.
         </p>
 
         {error && <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 700, margin: '0 0 12px' }}>{error}</p>}
 
         <button onClick={checkout} disabled={busy} style={{
-          width: '100%', background: '#F26B2C', color: '#fff', fontWeight: 800, fontSize: 16,
+          width: '100%', background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', fontWeight: 800, fontSize: 16,
           border: 'none', borderRadius: 50, padding: '14px 26px', cursor: busy ? 'default' : 'pointer',
           opacity: busy ? 0.6 : 1,
         }}>{busy ? 'Opening checkout…' : `Continue — ${usd(totalCents(seats, cadence))}`}</button>
 
-        <p style={{ fontSize: 12, color: '#8a7a63', margin: '14px 0 0', lineHeight: 1.5, textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: '#3d6fb8', margin: '14px 0 0', lineHeight: 1.5, textAlign: 'center' }}>
           Payment is handled by Stripe. We never see your card details.
         </p>
       </div>

@@ -168,7 +168,7 @@ function Chooser({ name, initial, onClose, onSave }: {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div><b style={{ color: 'var(--ink)' }}>{t('Every topic')}</b><div style={{ fontSize: 13.5, color: 'var(--ink-soft)' }}>{t('Every module in every grade, now and later.')}</div></div>
         <button type="button" role="switch" aria-checked={every} aria-label={t('Every topic')} onClick={() => setEvery(!every)}
-          style={{ width: 52, height: 30, borderRadius: 99, border: 0, flexShrink: 0, cursor: 'pointer', position: 'relative', background: every ? '#157347' : '#d9ccb8' }}>
+          style={{ width: 52, height: 30, borderRadius: 99, border: 0, flexShrink: 0, cursor: 'pointer', position: 'relative', background: every ? '#157347' : '#d3e9f9' }}>
           <span style={{ position: 'absolute', top: 3, left: every ? 25 : 3, width: 24, height: 24, borderRadius: '50%', background: '#fff', transition: 'left .15s' }} />
         </button>
       </div>

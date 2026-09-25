@@ -6,7 +6,7 @@
  */
 import { useRef, useState, type CSSProperties } from 'react'
 import { sendLessonFeedback, type FeedbackReason } from '@/data/repositories/lessonFeedback'
-import { pill, INK, TEAL } from './Pictures'
+import { pill, INK, TEAL, ON_TEAL } from './Pictures'
 
 const LABELS: Record<FeedbackReason, string> = {
   fast: '🐇 It went too fast',
@@ -48,14 +48,14 @@ export function Feedback({ learnerId, lessonId, screen, onOpen }: {
             {(Object.keys(LABELS) as FeedbackReason[]).map(r => {
               const on = picked.includes(r)
               return <button key={r} type="button" aria-pressed={on} onClick={() => toggle(r)}
-                style={{ ...pill, whiteSpace: 'normal', textAlign: 'left', fontSize: 18, padding: '10px 14px', background: on ? TEAL : '#fff', color: on ? '#fff' : INK }}>{LABELS[r]}</button>
+                style={{ ...pill, whiteSpace: 'normal', textAlign: 'left', fontSize: 18, padding: '10px 14px', background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK }}>{LABELS[r]}</button>
             })}
           </div>
           {state === 'failed' && <p role="alert" style={{ margin: '10px 0 0', fontSize: 17, fontWeight: 700, color: INK }}>That didn&apos;t send. Please try again.</p>}
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 14 }}>
             <button type="button" style={{ ...pill, fontSize: 18, padding: '10px 16px' }} onClick={close}>Cancel</button>
             <button type="button" disabled={picked.length === 0 || state === 'sending'} onClick={send}
-              style={{ ...pill, fontSize: 18, padding: '10px 20px', background: TEAL, color: '#fff', opacity: picked.length === 0 ? 0.5 : 1 }}>
+              style={{ ...pill, fontSize: 18, padding: '10px 20px', background: TEAL, color: ON_TEAL, opacity: picked.length === 0 ? 0.5 : 1 }}>
               {state === 'sending' ? 'Sending…' : 'Send'}</button>
           </div>
         </>}
@@ -63,4 +63,4 @@ export function Feedback({ learnerId, lessonId, screen, onOpen }: {
   </>
 }
 
-const dialog: CSSProperties = { width: 'min(420px, calc(100vw - 32px))', padding: 20, borderRadius: 22, border: `4px solid ${INK}`, background: '#fff8ef' }
+const dialog: CSSProperties = { width: 'min(420px, calc(100vw - 32px))', padding: 20, borderRadius: 22, border: `4px solid ${INK}`, background: '#f7fbff' }

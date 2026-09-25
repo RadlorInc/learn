@@ -55,13 +55,13 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
 
   return (
     <main style={{
-      minHeight: '100dvh', background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
+      minHeight: '100dvh', background: 'linear-gradient(180deg, #EAF5FE 0%, #EFF8FF 100%)',
       padding: '28px 20px 60px',
     }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← Radlic</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#0B4FA8', textDecoration: 'none' }}>← Radlic</Link>
 
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#3d2516', margin: '14px 0 20px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#083d85', margin: '14px 0 20px' }}>
           {page.title}
         </h1>
 
@@ -89,8 +89,8 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
             {/* The private beta (founder, 2026-09-24): the version, its date, and the promise about changes, on the page. */}
             {page.beta && (
               <p data-legal="beta" style={{
-                background: '#FFF8E6', border: '2px solid #F2C94C', borderRadius: 12, padding: '10px 14px',
-                margin: '0 0 22px', fontSize: 15, lineHeight: 1.5, color: '#3d2516',
+                background: '#F3F9FF', border: '2px solid #F2C94C', borderRadius: 12, padding: '10px 14px',
+                margin: '0 0 22px', fontSize: 15, lineHeight: 1.5, color: '#083d85',
               }}>
                 <strong>Beta version.</strong> In effect from {page.beta.effective}. We will email parents before we make
                 any material change to it.
@@ -98,17 +98,17 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
             )}
             {/* break-word, not `anywhere`: a long URL wraps instead of widening the page at 320 px, while a table keeps
                 its natural column widths and scrolls in its own box. */}
-            <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#3d2516', overflowWrap: 'break-word' }}>
+            <div data-legal="published" style={{ fontSize: 16, lineHeight: 1.65, color: '#083d85', overflowWrap: 'break-word' }}>
               {renderDoc(body)}
             </div>
           </>
         )}
 
-        <p style={{ marginTop: 28, fontSize: 14, color: '#6b5c47' }}>
+        <p style={{ marginTop: 28, fontSize: 14, color: '#3d6fb8' }}>
           Questions about your child&apos;s data? Email{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#F26B2C' }}>{SUPPORT_EMAIL}</a>.
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8' }}>{SUPPORT_EMAIL}</a>.
           You can download or delete everything from the{' '}
-          <Link href="/parent" style={{ color: '#F26B2C' }}>parent dashboard</Link>.
+          <Link href="/parent" style={{ color: '#0B4FA8' }}>parent dashboard</Link>.
         </p>
       </div>
     </main>
@@ -129,14 +129,14 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
 function code(text: string, key: string): React.ReactNode {
   const parts = text.split(/`([^`]+)`/)
   return parts.length === 1 ? text : parts.map((part, i) => i % 2
-    ? <code key={`${key}-c${i}`} style={{ fontSize: '0.92em', background: 'rgba(61,37,22,.07)', borderRadius: 4, padding: '0 4px' }}>{part}</code>
+    ? <code key={`${key}-c${i}`} style={{ fontSize: '0.92em', background: 'rgba(8,61,133,.07)', borderRadius: 4, padding: '0 4px' }}>{part}</code>
     : part)
 }
 
 function inline(text: string, key: string) {
   return segments(text).map((x, i) => {
     let n: React.ReactNode = x.href
-      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/radlic\.com(?=\/|$)/, '')} style={{ color: '#F26B2C' }}>{code(x.text, `${key}-${i}`)}</a>
+      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/radlic\.com(?=\/|$)/, '')} style={{ color: '#0B4FA8' }}>{code(x.text, `${key}-${i}`)}</a>
       : code(x.text, `${key}-${i}`)
     if (x.em) n = <em key={`${key}-${i}`}>{n}</em>
     if (x.bold) n = <strong key={`${key}-${i}`}>{n}</strong>
@@ -156,7 +156,7 @@ function renderDoc(body: string) {
     const k = `b${b}`
 
     if (block === '---') {
-      out.push(<hr key={k} style={{ border: 0, borderTop: '1px solid #e7d9bc', margin: '26px 0' }} />)
+      out.push(<hr key={k} style={{ border: 0, borderTop: '1px solid #d3e9f9', margin: '26px 0' }} />)
       return
     }
     const h = /^(#{1,4})\s+(.*)$/.exec(block.split('\n')[0])
@@ -166,7 +166,7 @@ function renderDoc(body: string) {
       out.push(
         <h2 key={k} style={{
           fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: size,
-          color: '#3d2516', margin: '30px 0 8px', lineHeight: 1.25,
+          color: '#083d85', margin: '30px 0 8px', lineHeight: 1.25,
         }}>{inline(h[2], k)}</h2>,
       )
       if (rest) out.push(<p key={`${k}-p`} style={{ margin: '0 0 14px' }}>{inline(rest, `${k}-p`)}</p>)
@@ -175,8 +175,8 @@ function renderDoc(body: string) {
     if (block.startsWith('>')) {
       out.push(
         <blockquote key={k} style={{
-          margin: '0 0 18px', padding: '12px 14px', background: '#FFF9E8',
-          borderLeft: '4px solid #F6C453', borderRadius: 8, fontSize: 15, color: '#6b5c47',
+          margin: '0 0 18px', padding: '12px 14px', background: '#F7FBFF',
+          borderLeft: '4px solid #F6C453', borderRadius: 8, fontSize: 15, color: '#3d6fb8',
         }}>{inline(block.split('\n').map(l => l.replace(/^>\s?/, '')).join(' '), k)}</blockquote>,
       )
       return
@@ -218,6 +218,6 @@ function renderDoc(body: string) {
 }
 
 const cell = (head: boolean): React.CSSProperties => ({
-  border: '1px solid #e7d9bc', padding: '8px 10px', textAlign: 'left', verticalAlign: 'top',
-  background: head ? '#FFF9E8' : undefined, fontWeight: head ? 800 : 400,
+  border: '1px solid #d3e9f9', padding: '8px 10px', textAlign: 'left', verticalAlign: 'top',
+  background: head ? '#F7FBFF' : undefined, fontWeight: head ? 800 : 400,
 })

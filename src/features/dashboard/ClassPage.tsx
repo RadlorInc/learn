@@ -58,7 +58,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
                 <div style={{ flex: '1 1 160px', minWidth: 0 }}>
                   <Link href={`/parent?child=${s.id}`} style={{ fontWeight: 800, color: 'var(--ink)' }}>{s.name}</Link>
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700, marginTop: 2 }}>
-                    {user ? `@${user}` : logins === null ? '' : <span className="home-pill" style={{ background: '#fff1c9', color: 'var(--ink)' }}>No login</span>}
+                    {user ? `@${user}` : logins === null ? '' : <span className="home-pill" style={{ background: '#eaf5fe', color: 'var(--ink)' }}>No login</span>}
                     {` · ${done} lesson${done === 1 ? '' : 's'} done`}
                   </div>
                 </div>

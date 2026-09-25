@@ -10,14 +10,16 @@ import type { CSSProperties } from 'react'
 import { scratchLineMax, type Obj, type Picture } from './script'
 import { Diagram, Ink, wrap, useTextWidth, type InkRow } from './Diagrams'
 
-export const INK = '#2a1c14', SOFT = '#6d4c3d', ACCENT = '#ff6b4a', TEAL = '#0f8a7a', GOOD = '#1f7a43', BAD = '#c1121f', CARD = '#FFFFFF', LINE = '#d9c3a0'
+// Sky light · flat (founder, 2026-09-25): ink is deep blue (never black), ACCENT (math highlights) is the logo's violet; TEAL is the filled control — soft blue
+// with ON_TEAL deep-blue text on it (white text on it would be 1.5:1). The chalkboard keeps its own colours.
+export const INK = '#083D85', SOFT = '#3D6FB8', ACCENT = '#6D4FE0', TEAL = '#A5D6FB', ON_TEAL = '#0B4FA8', GOOD = '#1f7a43', BAD = '#c1121f', CARD = '#FFFFFF', LINE = '#BFDDF6'
 
 // The frame from the founder's SampleUI template, shared by the topic path and the lesson player.
-export const PAGE_BG = 'radial-gradient(circle at 12% 20%, #ffe08a 0 90px, transparent 91px), radial-gradient(circle at 88% 10%, #ffb3a3 0 70px, transparent 71px), radial-gradient(circle at 80% 85%, #9cf0d8 0 110px, transparent 111px), #f3c98b'
-export const shell: CSSProperties = { width: '100%', background: '#fff6e8', borderRadius: 28, border: `6px solid ${INK}`, boxShadow: `10px 10px 0 ${INK}`,
+export const PAGE_BG = 'radial-gradient(circle at 12% 20%, #CFE9FD 0 90px, transparent 91px), radial-gradient(circle at 88% 10%, #E4D9FF 0 70px, transparent 71px), radial-gradient(circle at 80% 85%, #D7F3FF 0 110px, transparent 111px), #EAF5FE'
+export const shell: CSSProperties = { width: '100%', background: '#F7FBFF', borderRadius: 28, border: `6px solid ${INK}`, boxShadow: `10px 10px 0 ${INK}`,
   overflow: 'hidden', display: 'flex', flexDirection: 'column', color: INK }
 // Wraps on a narrow screen or a bigger text size (Review 1 Q5), so a control at the right end is never cut off.
-export const topBar: CSSProperties = { display: 'flex', flexWrap: 'wrap', rowGap: 8, justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#ff8a65', color: INK, fontWeight: 800 }
+export const topBar: CSSProperties = { display: 'flex', flexWrap: 'wrap', rowGap: 8, justifyContent: 'space-between', alignItems: 'center', gap: 8, padding: '10px 14px', background: TEAL, color: INK, fontWeight: 800 }
 
 /** One object's size. The player sets `--lp-u` from the viewport so the picture grows on a tablet; 20px is the phone size. */
 const u = (k: number) => `calc(var(--lp-u, 20px) * ${k})`
@@ -70,7 +72,7 @@ export function Thing({ obj, empty, n, style }: { obj: Obj; empty?: boolean; n?:
   )
 }
 
-const box: CSSProperties = { background: '#fff6e8', border: `3px solid ${INK}`, borderRadius: 16, padding: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', justifyContent: 'center' }
+const box: CSSProperties = { background: '#F7FBFF', border: `3px solid ${INK}`, borderRadius: 16, padding: 10, display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', justifyContent: 'center' }
 const label: CSSProperties = { fontFamily: 'var(--font-display)', fontWeight: 800, color: INK }
 
 /** The tap cue for a scratch picture, or null when a tap does nothing (or has its own labelled button). */
@@ -276,7 +278,7 @@ export const LESSON_KEYFRAMES = `
 @keyframes lp-turn { to { transform: rotate(90deg) } }
 @keyframes lp-pop { from { transform: scale(.85) rotate(var(--lp-tilt, 0deg)); opacity: 0 } to { transform: scale(1) rotate(var(--lp-tilt, 0deg)); opacity: 1 } }
 @keyframes lp-nudge { 50% { transform: scale(1.06) } }
-button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #2a1c14 !important }
+button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #083D85 !important }
 button:disabled { opacity: .5; box-shadow: none !important; cursor: default }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-delay: 0ms !important } }
 `

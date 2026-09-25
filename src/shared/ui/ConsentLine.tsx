@@ -14,7 +14,7 @@
  */
 import Link from 'next/link'
 
-export function ConsentLine({ align = 'center', color = '#8a7a63', linkColor = '#F26B2C', lang = 'en' }: {
+export function ConsentLine({ align = 'center', color = '#3d6fb8', linkColor = '#0B4FA8', lang = 'en' }: {
   align?: 'center' | 'left'; color?: string; linkColor?: string; lang?: 'en' | 'es'
 }) {
   // ⚠️ In Spanish the sentence SAYS the documents are in English — they are, and consent to a document the reader
