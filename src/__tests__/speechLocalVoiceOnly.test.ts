@@ -103,7 +103,7 @@ describe('only an on-device voice ever speaks (MAP-04)', () => {
     expect(SPOKEN.map(u => [u.text, u.voice?.name])).toEqual([[NAME_LINE, 'Samantha']])
   })
 
-  it('control: a list that arrives late is still used once it arrives', async () => {
+  it('a list that arrives late is still used once it arrives (not spoken early with the default voice)', async () => {
     const list: FakeVoice[] = []
     install(list)
     const s = await speaker()
