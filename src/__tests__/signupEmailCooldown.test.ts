@@ -103,12 +103,14 @@ describe('SEC-04: one sign-up email per address per 2 minutes', () => {
   })
 
   it('positive control: a different address is unaffected — including one that CONTAINS the first', async () => {
-    await signUp('pat@example.test')
-    vi.setSystemTime(T0 + 5_000)
-    await signUp('other@example.test')
+    // `filter` is a substring match, so `xpat@` is returned when looking up `pat@` — its send must not hold pat's.
     await signUp('xpat@example.test')
-    expect(sentTo('other@example.test')).toBe(1)
+    vi.setSystemTime(T0 + 5_000)
+    await signUp('pat@example.test')
+    await signUp('other@example.test')
     expect(sentTo('xpat@example.test')).toBe(1)
+    expect(sentTo('pat@example.test')).toBe(1)
+    expect(sentTo('other@example.test')).toBe(1)
   })
 
   it('a teacher sign-up is held the same way', async () => {
