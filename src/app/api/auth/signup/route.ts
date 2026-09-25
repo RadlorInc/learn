@@ -56,6 +56,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: link.reason, message: link.message }, { status: 400 })
     }
     // The role the account was FIRST created with wins: re-sending must not turn a teacher's sign-up into a consent.
+    // ⚠️ MEASURED FALSE on a local stack (2026-09-26, SEC-04): a second generate_link REPLACES user_metadata with the
+    // new `data` (teacher → parent came back role 'parent'), while the FIRST password is kept. Recorded, not changed here:
+    // it belongs with SEC-01 (Rafi's N2).
     const asParent = (link.metadata.role ?? role) === 'parent'
     const confirm = `${SITE_URL}/auth/confirm?th=${encodeURIComponent(link.hashedToken)}`
     const key = `signup-${link.userId}-${link.hashedToken.slice(0, 16)}`
