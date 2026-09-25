@@ -289,7 +289,7 @@ const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => voi
     const t = page.targets[seq]
     const c = COLORS[t.color].label
     const cancel = speakSteps([
-      `Let's do this one together. The ${t.noun} is glowing — that is the bit we colour.`,
+      `Let's do this one together. The ${t.noun} is glowing — that is the bit we color.`,
       `We want ${c}. Remember the ${c} in the garden? This is the ${c} paint.`,
       `Watch the ${t.noun} turn ${c}!`,
     ], {
@@ -597,7 +597,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     const c = COLORS[t.color].label
     // `speakAfterCurrent`: a correct fill says "red! the tulip is red." and immediately advances
     // the step, so this beat's own line used to arrive on top of it.
-    speakAfterCurrent(`This colour is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`)
+    speakAfterCurrent(`This color is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`)
   }, [phase, stepIdx])
 
   // Depends on the open page and nothing that changes DURING a round, so picking up a pot can never
@@ -634,7 +634,7 @@ export default function RainbowTown({ onFinish, onExit }: {
   // Landscape-first, like the rest of the 3–5 set: the picture is wide and the paint box needs the
   // width. Sits BELOW every hook — an early return above one makes turning the phone change the hook
   // count, which tore chapter 2 into the error boundary.
-  if (needsRotate) return <RotateGate line="The colouring book plays in landscape! 🎨" />
+  if (needsRotate) return <RotateGate line="The coloring book plays in landscape! 🎨" />
 
   const target = page.targets[stepIdx]
 

@@ -19,6 +19,7 @@ import { COUNTING_WORLDS, storytellingById, type Storytelling } from '@/features
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
+import { ChapterTakeContext } from '@/features/chapters/story/take'
 
 export default function CountingStoryChapter(props: { onComplete: (correct: number, wrong: number) => void; onExit?: () => void; childName: string }) {
   const router = useRouter()
@@ -32,6 +33,7 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
   const chapter = useMemo(() => (story ? makeCountingChapter(story) : null), [story])
   const doneRef = useRef(false)
   const [done, setDone] = useState(false)   // opens the end card; the ref stops a double-score
+  const [take, setTake] = useState<number | undefined>()   // a sitting stopped after 5 questions, run unfinished
   useEffect(() => { setBody(document.body) }, [])
 
   const finish = useCallback((correct: number, wrong: number, mastered?: boolean) => {
@@ -50,11 +52,13 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
       {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={exit} />}
       {story && chapter && (
         <>
-          <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={exit} />
+          <ChapterTakeContext.Provider value={setTake}>
+            <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={exit} />
+          </ChapterTakeContext.Provider>
           {/* Chapter 1 keeps its own wrapper, so it needs the directions card wired by hand. */}
           <DirectionsCard chapter="counting" />
           {/* Renders inside the same portal so it layers over the forest, not a blank screen. */}
-          <ChapterDone open={done} childName={props.childName} onExit={exit} onPlayAgain={restart} />
+          <ChapterDone open={done || !!take} take={done ? undefined : take} childName={props.childName} onExit={exit} onPlayAgain={restart} />
         </>
       )}
     </div>,

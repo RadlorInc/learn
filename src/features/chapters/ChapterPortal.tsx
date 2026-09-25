@@ -21,6 +21,7 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { stopSpeech } from '@/infra/useMiloSpeaker'
 import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
+import { ChapterTakeContext } from '@/features/chapters/story/take'
 import type { ChapterType } from '@/core/chapters'
 
 export type ChapterProps = {
@@ -89,8 +90,10 @@ function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
   }, [finishAndSync, skill])
 
   const replay = useCallback(() => { doneRef.current = false; setDone(false); setRunKey(k => k + 1) }, [])
+  // A sitting that stopped after CHAPTER_TAKE questions, run unfinished: the card says the spot is saved.
+  const [take, setTake] = useState<number | undefined>()
 
-  return { router, body, runKey, finish, replay, done }
+  return { router, body, runKey, finish, replay, done, take, setTake }
 }
 
 // ─── Story chapters (3–11) ──────────────────────────────────────────────────
@@ -103,15 +106,17 @@ export type StoryInner = React.ComponentType<StoryProps>
 
 export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInner) {
   return function StoryChapter(props: ChapterProps) {
-    const { router, body, runKey, finish, replay, done } = usePortalRun(skill, false, props.onComplete)
+    const { router, body, runKey, finish, replay, done, take, setTake } = usePortalRun(skill, false, props.onComplete)
     if (!body) return null
     const exit = () => props.onExit ? props.onExit() : router.push('/menu')
     return createPortal(
       <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
-        <Inner key={runKey} onFinish={finish} onExit={exit} />
+        <ChapterTakeContext.Provider value={setTake}>
+          <Inner key={runKey} onFinish={finish} onExit={exit} />
+        </ChapterTakeContext.Provider>
         {/* The typed "what to do" note, in one place for all 24 story chapters rather than 24 copies. */}
         <DirectionsCard chapter={skill} />
-        <ChapterDone open={done} childName={props.childName} onExit={exit} onPlayAgain={replay} />
+        <ChapterDone open={done || !!take} take={done ? undefined : take} childName={props.childName} onExit={exit} onPlayAgain={replay} />
       </div>,
       body,
     )

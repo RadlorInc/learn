@@ -13,6 +13,8 @@ import { isChapterVisible, getChapter, type ChapterType } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
+import { setSceneVoice } from '@/infra/voiceClipPlayer'
+import { JOSH } from '@/infra/storage/voicePref'
 
 export default function GamePage() {
   // useSearchParams needs a Suspense boundary on a static page (next docs: use-search-params).
@@ -61,6 +63,10 @@ function Game() {
     if (navigator.onLine) flushQueue()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // A KG–2 chapter speaks in Josh, like every lesson (founder, 2026-09-25): its clips are rendered in Josh
+  // (scripts/.voice-corpus-chapters-josh.json), and a line with no clip yet is browser speech, as before.
+  useEffect(() => { setSceneVoice(JOSH); return () => setSceneVoice(null) }, [])
 
   useEffect(() => {
     if (currentChapter) {

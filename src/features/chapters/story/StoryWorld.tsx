@@ -11,7 +11,7 @@
  * re-explanation + warm wrong-answers), so they're present in every scene by
  * construction, no matter how the story changes.
  */
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import React, { useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { speak, speakAfterCurrent, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
@@ -28,6 +28,7 @@ import { CSS as KIT_CSS } from '../lessons/_kit'
 import { Backdrop, type BackdropKind } from './art'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { CHAPTER_TAKE, ChapterTakeContext } from './take'
 
 const STORY_CSS = `
 @keyframes s_bobIn { 0%{transform:translateY(18px) scale(.8);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
@@ -166,6 +167,7 @@ export function useChapterShell(
 // (THREE, not two), the round they just missed is re-explained in-story, and the run then moves ON
 // to the next round — it is NOT a retry of the same question. The engine has already eased the tier
 // by then: it demotes on the SECOND miss, so the round being re-explained was built one tier down.
+
 export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Beat<any>; onComplete: (correct: number, wrong: number, mastered?: boolean) => void; onInterlude?: () => Promise<void>; onRound?: (data: any, round: number) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   // ⚠️ THE BAND RESUMES AT THE TIER THE CHILD LEFT OFF ON — founder's call, 2026-08-20, replacing
   // the earlier "3–11 NEVER resumes" rule. The fault that rule was written for (a nine-year-old
@@ -189,6 +191,8 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   // counted — before this, `onComplete` never fired and the whole run was discarded. Null for a
   // logged-out preview, for a finished chapter, and for a run older than the store's TTL.
   const [resume] = useState(() => getChapterResume(learnerId, beat.skillId))
+  const onTakeEnd = useContext(ChapterTakeContext)
+  const [takeStart] = useState(resume?.round ?? 0)   // where this sitting began; the take ends CHAPTER_TAKE answers later
   const ada = useAdaptive(beat.skillId, startDiff)
   const adaRef = useLatestRef(ada)
   const [roundIdx, setRoundIdx] = useState(resume?.round ?? 0)
@@ -271,6 +275,8 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (res.mastered && covered) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong, true); return }
       const next = roundIdx + 1
       if (next >= beat.rounds) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong); return }
+      // The take is over: the resume point written above already says `next`, so the next sitting starts there.
+      if (onTakeEnd && next - takeStart >= CHAPTER_TAKE) { onTakeEnd(next - takeStart); return }
       // Storyline interlude: the scene walks on a few steps before certain rounds (a scene/
       // biome change), or every `walkEvery` rounds. The adaptive streak/tally carry
       // across it untouched.
@@ -282,7 +288,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       }
       setPhase('play'); setRoundIdx(next)
     }, 1300)
-  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId])
+  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId, onTakeEnd, takeStart])
 
   const finishReteach = useCallback(() => {
     setWrongRun(0)
@@ -296,9 +302,10 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
         round: next, correct: tally.current.correct, wrong: tally.current.wrong,
         seen: [...seen.current], asked: asked.current,
       })
+      if (onTakeEnd && next - takeStart >= CHAPTER_TAKE) { onTakeEnd(next - takeStart); return }
       setPhase('play'); setRoundIdx(next)
     }
-  }, [roundIdx, beat, onComplete, learnerId])
+  }, [roundIdx, beat, onComplete, learnerId, onTakeEnd, takeStart])
 
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
