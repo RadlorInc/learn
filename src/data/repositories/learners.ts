@@ -145,15 +145,6 @@ export async function correctLearner(learnerId: string, fields: { display_name?:
   return data && data.length > 0 ? 'ok' : 'error'
 }
 
-export async function deleteLearner(learnerId: string) {
-  const supabase = db()
-  const { error } = await supabase
-    .from('learners')
-    .delete()
-    .eq('id', learnerId)
-  if (error) console.error('[deleteLearner]', error.message)
-}
-
 /** Get the current user's access role for a learner */
 export async function getMyAccessRole(
   learnerId: string
