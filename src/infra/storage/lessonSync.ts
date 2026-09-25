@@ -9,7 +9,7 @@
  */
 import { kv } from '@/infra/storage/kv'
 import { lessonDone, markLessonDone } from '@/infra/storage/lessonProgress'
-import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
+import { loadStanding, saveStanding, standingAt } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { FRESH, type Outcome, type SavedRun } from '@/features/lessons/adaptive'
 import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows } from '@/data/repositories/points'
@@ -73,7 +73,8 @@ async function send(): Promise<void> {
       : 'moduleId' in item
       ? await recordModulePractice(item.learnerId, item.moduleId, item.event)
       : await recordLessonProgress(item.learnerId, item.lessonId,
-          { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH) },
+          { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH),
+            at: standingAt(item.learnerId, item.lessonId) },
           item.outcome, item.event)
     if (r === 'retry') return
     // Re-read: something may have been queued while this one was sending.
@@ -99,7 +100,7 @@ export async function pullLessonProgress(learnerId: string, lessonIds: readonly 
     if (!row) { if (localDone || local) upload.push(id); if (localRun) runs.push(id); continue }
     if (localDone && !row.done) upload.push(id)
     if (row.done) markLessonDone(learnerId, id)
-    saveStanding(learnerId, id, { level: row.level, streak: row.streak, mastered: row.mastered })
+    saveStanding(learnerId, id, { level: row.level, streak: row.streak, mastered: row.mastered }, row.answered_at ? Date.parse(row.answered_at) : 0)
     // Where the child is in practice: the account's copy wins, as the standing does; one only this device has goes up.
     // (Stored as it came: `loadRun` checks the shape of every run it reads, from whichever side it came.)
     if (row.run) saveRun(learnerId, id, row.run as SavedRun)
