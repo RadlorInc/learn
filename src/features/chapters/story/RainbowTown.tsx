@@ -13,19 +13,19 @@
  * What makes it a colouring page is that the SCENE is the thing, the areas come from the drawing,
  * and there are far more of them than there are questions.
  *
- * THE LESSON RIDES ON TOP OF THAT, it does not replace it. Milo asks for a colour AND a thing —
+ * THE LESSON RIDES ON TOP OF THAT, it does not replace it. The voice asks for a colour AND a thing —
  * "colour the roof red" — so the child learns the colour word and the object word together, and a
- * wrong tap names what was actually touched. Everything Milo has NOT asked for is still colourable,
+ * wrong tap names what was actually touched. Everything NOT asked for is still colourable,
  * with any colour, ungraded: that is the child's picture, and taking it away to protect the quiz
  * would be exactly the mistake the first two versions made.
  *
  * THE SKILL IS COLOUR, SO ONLY THE COLOUR IS GRADED. The asked-for area GLOWS. Finding which shape
  * is "the roof" is a second, unrelated hurdle standing in front of the thing this chapter measures,
- * and a child who knows red perfectly well could fail on it. So Milo names the thing AND shows it,
+ * and a child who knows red perfectly well could fail on it. So the voice names the thing AND the page shows it,
  * and the one decision left is which paint. Tapping the wrong area is a redirect, never a mark
  * against them; picking the wrong paint is the only thing that counts as wrong.
  *
- * AND MILO NEVER ASKS FOR A COLOUR THE THING CANNOT HONESTLY BE. The box holds six paints and none
+ * AND THE VOICE NEVER ASKS FOR A COLOUR THE THING CANNOT HONESTLY BE. The box holds six paints and none
  * of them is white, grey or brown, so the clouds and the tree trunk are simply not questions — they
  * stay free to colour, they are just never asked for. A chapter that says "colour the cloud purple"
  * teaches a three-year-old that the colour words do not mean anything.
@@ -248,38 +248,17 @@ function PaintBox({ pots, loaded, onPick, hint }: {
   )
 }
 
-// ─── Milo ────────────────────────────────────────────────────────────────────────────
-function MiloPainter() {
-  const [step, setStep] = useState(0)
-  const { short } = useLayout()
-  const srcs = ['/assets/characters/milo_painter.png', '/assets/characters/milo_idle.png']
-  const dim = short ? 'min(19vh, 90px)' : 'min(22vh, 160px)'
-  return (
-    <div aria-hidden style={{ position: 'fixed', left: '6%', bottom: 0, transform: 'translateX(-50%)', zIndex: 26,
-      width: dim, height: dim, pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'rt_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 70, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>🐴</span>
-            </div>
-          : <img src={srcs[step]} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
-
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
 export const promptFor = (page: Page, d: ColorRound) => {
   const t = page.targets[d.seq]
-  return `Colour the ${t.noun} ${COLORS[t.color].label}!`
+  return `Color the ${t.noun} ${COLORS[t.color].label}!`
 }
 export const sayFor = (page: Page, d: ColorRound) => {
   const t = page.targets[d.seq]
   const c = COLORS[t.color].label
   // Names the colour twice and the glow once. The glow settles WHERE, so all the words can spend
   // themselves on the one thing being learned.
-  return `Colour the ${t.noun} ${c}. See it glowing? Find the ${c} paint, then tap it!`
+  return `Color the ${t.noun} ${c}. See it glowing? Find the ${c} paint, then tap it!`
 }
 
 /**
@@ -325,7 +304,6 @@ const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => voi
 
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 const RT_CSS = `
-@keyframes rt_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 /* Strong on purpose. At .10–.44 a big shape like the sky read fine and a tulip did not — 76px of
    pale grey on a white page, next to an identical tulip that is not the answer, is not a signpost.
    The floor matters as much as the peak: at the bottom of the pulse the mark has to still be there. */
@@ -347,7 +325,7 @@ const RT_CSS = `
  * beats followed by a demo and a guided round would be three kinds of hand-holding in a row.
  *
  * ⚠️ `start` IS ONE TAP AND CANNOT BE REMOVED, however much it looks like a screen worth deleting.
- * `unlockSpeech()` has to run inside a real user gesture or mobile autoplay policy silences Milo for
+ * `unlockSpeech()` has to run inside a real user gesture or mobile autoplay policy silences the voice for
  * the whole chapter, and nothing upstream unlocks it — every chapter in the app does its own. This
  * is the ONE chapter that is unanswerable without voice, because naming the colour IS the question.
  * So it is stripped to a single button over the picture, with no explaining card and no page picker:
@@ -383,7 +361,7 @@ export default function RainbowTown({ onFinish, onExit }: {
    * see it, they can pick up another pot and paint straight over it as often as they like, and
    * nothing is graded until Ready.
    * ⚠️ THE LESSON IS DELIBERATELY UNCHANGED — there the wrong pot is still refused before it touches
-   * the page and Milo points at the one that is jumping, because that half of the chapter is
+   * the page and the voice points at the one that is jumping, because that half of the chapter is
    * teaching the word rather than measuring it.
    */
   const [pendingPaint, setPendingPaint] = useState<ColorName | null>(null)
@@ -435,9 +413,9 @@ export default function RainbowTown({ onFinish, onExit }: {
   const pageRef = useLatestRef(page)
 
   /**
-   * Light up the area Milo is asking for. The child should never have to work out WHICH shape is the
+   * Light up the area being asked for. The child should never have to work out WHICH shape is the
    * roof — that is object vocabulary, not colour recognition, and failing it would be scored as
-   * though they did not know red. Milo says the word and the shape glows; the only open question is
+   * though they did not know red. The voice says the word and the shape glows; the only open question is
    * the paint. Repainted whenever the round moves on, and wiped the moment the area is filled.
    */
   useEffect(() => {
@@ -452,7 +430,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (r) paintRegion(ctx, p, r, HINT_HEX)
   }, [stepIdx, phase, ready, page])
 
-  /** Colour a NAMED area outright — Milo's demo and the re-teach both use this. */
+  /** Colour a NAMED area outright — the lesson's demo and the re-teach both use this. */
   const fillTarget = useCallback((seq: number) => {
     const p = bmp.current
     if (!p) return
@@ -467,7 +445,7 @@ export default function RainbowTown({ onFinish, onExit }: {
    * A tap on the picture. The flood answers both questions at once: which pixels to colour, and what
    * the child actually touched — by testing each named point against the flooded area.
    *
-   * Anything Milo has NOT asked for simply fills, in whatever colour is on the brush, ungraded. That
+   * Anything NOT asked for simply fills, in whatever colour is on the brush, ungraded. That
    * is the difference between a colouring game and a quiz with a paint bucket, and it costs nothing:
    * the named areas are still graded, so the lesson is intact.
    */
@@ -534,7 +512,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (!hit) {
       // Free colouring, and it stays free — but a child can otherwise paint the whole page without
       // ever meeting the question, with nothing telling them they have wandered off it. After a few
-      // strokes Milo asks again and the glow gets a nudge. It never says which paint; it repeats the
+      // strokes the voice asks again and the glow gets a nudge. It never says which paint; it repeats the
       // question they already have.
       fill(area, COLORS[brush].hex)
       strayFills.current += 1
@@ -579,7 +557,7 @@ export default function RainbowTown({ onFinish, onExit }: {
 
   /**
    * Ready. Only now is the colour on the glowing part judged — and a wrong one is still retried in
-   * place, exactly as a wrong pot used to be: Milo names what they used and what is wanted, and the
+   * place, exactly as a wrong pot used to be: the voice names what they used and what is wanted, and the
    * child paints over it. The ring, the fill and the bar say nothing about which paint is right.
    */
   const commitPaint = useCallback(() => {
@@ -709,7 +687,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       </div>
 
       {/* One button on the open page — no explaining card, no picker. It exists only to carry the
-          speech unlock (see the Phase comment); everything it used to say, Milo now says out loud in
+          speech unlock (see the Phase comment); everything it used to say is now said out loud in
           the first beat of the lesson, which is where a three-year-old was going to get it anyway. */}
       {phase === 'start' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(251,247,238,.55)' }}>
@@ -756,7 +734,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       {phase === 'bridge' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: short ? 12 : 20, background: 'rgba(251,247,238,.94)', padding: '0 12px' }}>
           <div style={{ maxWidth: '78%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: short ? '10px 18px' : '14px 22px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 15 : 18, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            You know all six colours now! 🎨 Milo has a new picture — the toy room. This time nobody shows you which paint. Listen carefully!
+            You know all six colors now! 🎨 Here is a new picture — the toy room. This time nobody shows you which paint. Listen carefully!
           </div>
           <button onClick={() => {
             stopSpeech()
@@ -779,7 +757,6 @@ export default function RainbowTown({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase !== 'start' && <MiloPainter />}
     </div>
   )
 }

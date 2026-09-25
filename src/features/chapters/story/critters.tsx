@@ -73,16 +73,16 @@ export interface Kind {
  * hovering it in the sky band read as wrong the moment it was on screen.
  */
 export const CAST: Kind[] = [
-  { src: '/assets/objects/rabbit_side.png', facesLeft: true, little: 'bunny', plural: 'bunnies', mother: 'Mummy Rabbit', home: 'meadow' },
-  { src: '/assets/objects/fish_side.png', little: 'fish', plural: 'fish', mother: 'Mummy Fish', home: 'reef' },
-  { src: '/assets/objects/butterfly_side.png', scale: 0.85, little: 'butterfly', plural: 'butterflies', mother: 'Mummy Butterfly', home: 'sky' },
-  { src: '/assets/objects/squirrel_side.png', scale: 0.95, little: 'squirrel', plural: 'squirrels', mother: 'Mummy Squirrel', home: 'meadow' },
-  { src: '/assets/objects/turtle_side.png', scale: 0.95, little: 'turtle', plural: 'turtles', mother: 'Mummy Turtle', home: 'reef' },
-  { src: '/assets/objects/ladybug_side.png', scale: 0.8, little: 'ladybug', plural: 'ladybugs', mother: 'Mummy Ladybug', home: 'meadow' },
-  { src: '/assets/objects/ant_side.png', scale: 0.82, little: 'ant', plural: 'ants', mother: 'Mummy Ant', home: 'meadow' },
-  { src: '/assets/objects/crab_side.png', scale: 0.85, little: 'crab', plural: 'crabs', mother: 'Mummy Crab', home: 'reef' },
-  { src: '/assets/objects/firefly_side.png', scale: 0.78, little: 'firefly', plural: 'fireflies', mother: 'Mummy Firefly', home: 'sky' },
-  { src: '/assets/objects/shark_side.png', facesLeft: true, scale: 1.05, little: 'shark', plural: 'sharks', mother: 'Mummy Shark', home: 'reef' },
+  { src: '/assets/objects/rabbit_side.png', facesLeft: true, little: 'bunny', plural: 'bunnies', mother: 'Mommy Rabbit', home: 'meadow' },
+  { src: '/assets/objects/fish_side.png', little: 'fish', plural: 'fish', mother: 'Mommy Fish', home: 'reef' },
+  { src: '/assets/objects/butterfly_side.png', scale: 0.85, little: 'butterfly', plural: 'butterflies', mother: 'Mommy Butterfly', home: 'sky' },
+  { src: '/assets/objects/squirrel_side.png', scale: 0.95, little: 'squirrel', plural: 'squirrels', mother: 'Mommy Squirrel', home: 'meadow' },
+  { src: '/assets/objects/turtle_side.png', scale: 0.95, little: 'turtle', plural: 'turtles', mother: 'Mommy Turtle', home: 'reef' },
+  { src: '/assets/objects/ladybug_side.png', scale: 0.8, little: 'ladybug', plural: 'ladybugs', mother: 'Mommy Ladybug', home: 'meadow' },
+  { src: '/assets/objects/ant_side.png', scale: 0.82, little: 'ant', plural: 'ants', mother: 'Mommy Ant', home: 'meadow' },
+  { src: '/assets/objects/crab_side.png', scale: 0.85, little: 'crab', plural: 'crabs', mother: 'Mommy Crab', home: 'reef' },
+  { src: '/assets/objects/firefly_side.png', scale: 0.78, little: 'firefly', plural: 'fireflies', mother: 'Mommy Firefly', home: 'sky' },
+  { src: '/assets/objects/shark_side.png', facesLeft: true, scale: 1.05, little: 'shark', plural: 'sharks', mother: 'Mommy Shark', home: 'reef' },
 ]
 export const kindAt = (i: number) => CAST[i % CAST.length]
 export const homeOf = (k: Kind) => HABITATS[k.home]
@@ -200,7 +200,7 @@ export function clusterSpot(k: number, w: Habitat, anchor: number, colPct: numbe
     // Grows LEFTWARD from the leader, so the first to arrive stands right beside the character it
     // came to and the group extends back from there — which is how a group actually collects round
     // someone. Filling from a fixed left edge instead left the first two arrivals standing a
-    // quarter of the screen away from Milo, gathered with nobody.
+    // quarter of the screen away from the leader, gathered with nobody.
     left: Math.max(anchor - col * colPct - row * colPct * 0.5, minLeft),
     top: w.lineY + row * 3.5,
     // Per species — see clusterScale. `src` is REQUIRED rather than defaulted: a default is exactly
@@ -210,7 +210,7 @@ export function clusterSpot(k: number, w: Habitat, anchor: number, colPct: numbe
 }
 
 /**
- * Where the biggest character (mother, or Milo) can actually stand. Anchored on its CENTRE, so a
+ * Where the biggest character (mother, or the lead creature) can actually stand. Anchored on its CENTRE, so a
  * wide sprite at a fixed right-hand % simply ran off the edge and the leader was cut in half. Its
  * half-width is measured from the sprite's own aspect and it is pulled back only as far as it needs
  * to be, because every % it keeps is a % the waiting huddle loses.
@@ -238,7 +238,7 @@ export const STRIP_PX = 64
  * behind it. A flat "short" nudge cannot fix that either, because it moves them the wrong way for
  * the high habitats and the right way only for the low one. So the constraint is stated instead.
  *
- * `leadScale` is the biggest thing standing on the far band (mother at 1.25×, Milo at his own
+ * `leadScale` is the biggest thing standing on the far band (mother at 1.25×, any other lead at its own
  * scale) — clearance has to be measured against THAT, not against the smaller creatures beside it.
  */
 export function fitBands(h: Habitat, vh: number, sizePx: number, leadScale = 1.25, topPx = 0): Habitat {
@@ -445,12 +445,12 @@ export const HOP_STRIDE = 1.5
  *     `moving` flag exists to enforce. For a hop the cycle runs the WHOLE time — the crouch is
  *     animation too — while the translation happens only over the airborne part. So the two cannot
  *     share one flag here, and that is precisely why `Arrive` cannot be bent to do this.
- *  3. THE VERTICAL IS ALREADY DRAWN. A generated hop carries its arc inside the frames (Milo's feet
- *     lift 0 → 47 → 0 px in a 256px cell). Adding a CSS arc on top makes him rise twice.
+ *  3. THE VERTICAL IS ALREADY DRAWN. A generated hop carries its arc inside the frames (the pony hop's feet
+ *     lift 0 → 47 → 0 px in a 256px cell). Adding a CSS arc on top makes it rise twice.
  *
  * The happy consequence of (3): the CONTAINER never leaves the ground — only the pixels inside it
  * do — so a contact shadow sitting at the container's bottom stays on the ground by construction
- * while travelling horizontally with him. No shadow/feet desync is possible here.
+ * while travelling horizontally with it. No shadow/feet desync is possible here.
  *
  * Timing is locked the same way a walk's is: one cycle carries one hop. The sheet's own
  * `frames / fps` IS the hop duration, so the legs and the ground can never disagree.
@@ -493,7 +493,7 @@ export function Hop({ src, h, facesLeft, distPx, delayMs = 0, resetKey, onLand, 
   onLand?: (index: number) => void
   onDone?: () => void
   /**
-   * Anything that must travel WITH him — a sign over his head, a label, a held object. It renders
+   * Anything that must travel WITH the hopper — a sign over its head, a label, a held object. It renders
    * inside the moving element, positioned against the sprite's own box, because two things that
    * must move as one should BE one element: left outside, they are one duration change away from
    * drifting apart, which is the shadow-outran-the-feet bug this repo has already shipped once.

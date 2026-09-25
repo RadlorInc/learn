@@ -41,6 +41,8 @@ export interface ChapterMeta {
   asset:       string        // image on the menu "next up" card
   hint:        string        // one-line hint in the chapter picker
   ageGroups:   AgeGroup[]    // which age groups this chapter belongs to
+  /** The school grade whose tab lists it on the child's home: 0 = KG. Founder's split, 2026-09-25. */
+  grade:       0 | 1 | 2
 }
 
 /**
@@ -48,44 +50,51 @@ export interface ChapterMeta {
  * All current chapters belong to the 3–5 group.
  */
 export const CHAPTERS: ChapterMeta[] = [
-  { id: 'counting',           name: 'Counting',           parentLabel: 'Counting',          emoji: '🌟', asset: '/assets/objects/firefly.png',        hint: 'Tap each one to count!',     ageGroups: ['3-5'] },
-  { id: 'numberOrdering',     name: 'Number Order',       parentLabel: 'Number Order',      emoji: '🔢', asset: '/assets/objects/star.png',           hint: 'Put numbers in order!',      ageGroups: ['3-5'] },
-  { id: 'numberRecognition',  name: 'Nest Tree',          parentLabel: 'Nest Tree',         emoji: '🐣', asset: '/assets/objects/nest_side.png',      hint: 'Feed the nest you hear!',  ageGroups: ['3-5'] },
-  { id: 'matchingQuantities', name: 'Home Time',          parentLabel: 'Home Time',         emoji: '🏡', asset: '/assets/objects/rabbit_side.png',    hint: 'Send exactly how many are asked for!', ageGroups: ['3-5'] },
-  { id: 'numberComparison',   name: 'Bigger or Smaller',  parentLabel: 'Bigger or Smaller', emoji: '⚖️', asset: '/assets/objects/squirrel_side.png',  hint: 'Which bunch has more?',      ageGroups: ['3-5'] },
-  { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Tap the shape that fits the empty hole!",        ageGroups: ['3-5'] },
-  { id: 'colors',             name: 'Rainbow Town',       parentLabel: 'Rainbow Town',      emoji: '🌈', asset: '/assets/objects/flower-red.png',     hint: 'Tap the color you hear!', ageGroups: ['3-5'] },
-  { id: 'patterns',           name: 'Bead Shop',          parentLabel: 'Bead Shop',         emoji: '📿', asset: '/assets/objects/star.png',           hint: 'Tap the bead that comes next!', ageGroups: ['3-5'] },
-  { id: 'addition',           name: 'Play Time',          parentLabel: 'Addition',          emoji: '🎈', asset: '/assets/objects/rabbit_side.png',    hint: 'More friends come to play!', ageGroups: ['3-5'] },
-  { id: 'subtraction',        name: 'Time to Go',         parentLabel: 'Subtraction',       emoji: '👋', asset: '/assets/objects/fish_side.png',      hint: 'How many are left?',         ageGroups: ['3-5'] },
-  { id: 'measurement',        name: 'Measuring',          parentLabel: 'Measuring',       emoji: '📏', asset: '/assets/objects/star.png',           hint: 'Lay blocks, then tap Done!', ageGroups: ['3-5'] },
+  { id: 'counting',           name: 'Counting',           parentLabel: 'Counting',          emoji: '🌟', asset: '/assets/objects/firefly.png',        hint: 'Tap each one to count!',     ageGroups: ['3-5'], grade: 0 },
+  { id: 'numberOrdering',     name: 'Number Order',       parentLabel: 'Number Order',      emoji: '🔢', asset: '/assets/objects/star.png',           hint: 'Put numbers in order!',      ageGroups: ['3-5'], grade: 0 },
+  { id: 'numberRecognition',  name: 'Nest Tree',          parentLabel: 'Nest Tree',         emoji: '🐣', asset: '/assets/objects/nest_side.png',      hint: 'Feed the nest you hear!',  ageGroups: ['3-5'], grade: 0 },
+  { id: 'matchingQuantities', name: 'Home Time',          parentLabel: 'Home Time',         emoji: '🏡', asset: '/assets/objects/rabbit_side.png',    hint: 'Send exactly how many are asked for!', ageGroups: ['3-5'], grade: 0 },
+  { id: 'numberComparison',   name: 'Bigger or Smaller',  parentLabel: 'Bigger or Smaller', emoji: '⚖️', asset: '/assets/objects/squirrel_side.png',  hint: 'Which bunch has more?',      ageGroups: ['3-5'], grade: 0 },
+  { id: 'shapes',             name: 'Shape House',        parentLabel: 'Shape House',       emoji: '🏠', asset: '/assets/shapes/house-complete.png',  hint: "Tap the shape that fits the empty hole!",        ageGroups: ['3-5'], grade: 0 },
+  { id: 'colors',             name: 'Rainbow Town',       parentLabel: 'Rainbow Town',      emoji: '🌈', asset: '/assets/objects/flower-red.png',     hint: 'Tap the color you hear!', ageGroups: ['3-5'], grade: 0 },
+  { id: 'patterns',           name: 'Bead Shop',          parentLabel: 'Bead Shop',         emoji: '📿', asset: '/assets/objects/star.png',           hint: 'Tap the bead that comes next!', ageGroups: ['3-5'], grade: 0 },
+  { id: 'addition',           name: 'Play Time',          parentLabel: 'Addition',          emoji: '🎈', asset: '/assets/objects/rabbit_side.png',    hint: 'More friends come to play!', ageGroups: ['3-5'], grade: 1 },
+  { id: 'subtraction',        name: 'Time to Go',         parentLabel: 'Subtraction',       emoji: '👋', asset: '/assets/objects/fish_side.png',      hint: 'How many are left?',         ageGroups: ['3-5'], grade: 1 },
+  { id: 'measurement',        name: 'Measuring',          parentLabel: 'Measuring',       emoji: '📏', asset: '/assets/objects/star.png',           hint: 'Lay blocks, then tap Done!', ageGroups: ['3-5'], grade: 0 },
 
   // ── 6–8 ──
-  { id: 'numbersTo100',       name: 'Numbers to 100',     parentLabel: 'Numbers to 100',    emoji: '💯', asset: '/assets/objects/star.png',           hint: 'Read big numbers up to 100!', ageGroups: ['6-8'] },
-  { id: 'placeValue',         name: 'Tens & Ones',        parentLabel: 'Tens & Ones',       emoji: '🧱', asset: '/assets/objects/star.png',           hint: 'Tens and ones make a number!', ageGroups: ['6-8'] },
-  { id: 'skipCounting',       name: 'Skip Counting',      parentLabel: 'Skip Counting',     emoji: '🐰', asset: '/assets/objects/star.png',           hint: 'Count by 2s, 5s and 10s!', ageGroups: ['6-8'] },
-  { id: 'storyProblems',      name: 'Story Problems',     parentLabel: 'Story Problems',    emoji: '📖', asset: '/assets/objects/apple.png',          hint: 'Listen, then add or take away!', ageGroups: ['6-8'] },
-  { id: 'multiplication',     name: 'Multiplication',     parentLabel: 'Multiplication',    emoji: '✖️', asset: '/assets/objects/star.png',           hint: 'Equal groups make multiplying!', ageGroups: ['6-8'] },
-  { id: 'fractions',          name: 'Fractions',          parentLabel: 'Fractions',         emoji: '🍕', asset: '/assets/objects/apple.png',          hint: 'Halves, thirds and quarters!', ageGroups: ['6-8'] },
-  { id: 'money',              name: 'Money',              parentLabel: 'Money',             emoji: '🪙', asset: '/assets/objects/star.png',           hint: 'Count the coins!', ageGroups: ['6-8'] },
-  { id: 'time',               name: 'Time',               parentLabel: 'Time',              emoji: '🕐', asset: '/assets/objects/star.png',           hint: 'Read the clock!', ageGroups: ['6-8'] },
-  { id: 'compareNumbers',     name: 'Compare Numbers',    parentLabel: 'Compare Numbers',   emoji: '⚖️', asset: '/assets/objects/star-alt.png',       hint: 'Bigger, smaller or equal?', ageGroups: ['6-8'] },
-  { id: 'additionTo100',      name: 'Add to 100',         parentLabel: 'Add to 100',        emoji: '➕', asset: '/assets/objects/apple.png',          hint: 'Add two-digit numbers!', ageGroups: ['6-8'] },
-  { id: 'subtractionTo100',   name: 'Subtract to 100',    parentLabel: 'Subtract to 100',   emoji: '➖', asset: '/assets/objects/firefly.png',        hint: 'Subtract two-digit numbers!', ageGroups: ['6-8'] },
-  { id: 'shapes2d3d',         name: 'Shapes 2D & 3D',     parentLabel: 'Shapes 2D & 3D',    emoji: '🔷', asset: '/assets/shapes/house-complete.png',  hint: 'Name shapes and count sides!', ageGroups: ['6-8'] },
+  { id: 'numbersTo100',       name: 'Numbers to 100',     parentLabel: 'Numbers to 100',    emoji: '💯', asset: '/assets/objects/star.png',           hint: 'Read big numbers up to 100!', ageGroups: ['6-8'], grade: 1 },
+  { id: 'placeValue',         name: 'Tens & Ones',        parentLabel: 'Tens & Ones',       emoji: '🧱', asset: '/assets/objects/star.png',           hint: 'Tens and ones make a number!', ageGroups: ['6-8'], grade: 1 },
+  { id: 'skipCounting',       name: 'Skip Counting',      parentLabel: 'Skip Counting',     emoji: '🐰', asset: '/assets/objects/star.png',           hint: 'Count by 2s, 5s and 10s!', ageGroups: ['6-8'], grade: 2 },
+  { id: 'storyProblems',      name: 'Story Problems',     parentLabel: 'Story Problems',    emoji: '📖', asset: '/assets/objects/apple.png',          hint: 'Listen, then add or take away!', ageGroups: ['6-8'], grade: 1 },
+  { id: 'multiplication',     name: 'Multiplication',     parentLabel: 'Multiplication',    emoji: '✖️', asset: '/assets/objects/star.png',           hint: 'Equal groups make multiplying!', ageGroups: ['6-8'], grade: 2 },
+  { id: 'fractions',          name: 'Fractions',          parentLabel: 'Fractions',         emoji: '🍕', asset: '/assets/objects/apple.png',          hint: 'Halves, thirds and quarters!', ageGroups: ['6-8'], grade: 2 },
+  { id: 'money',              name: 'Money',              parentLabel: 'Money',             emoji: '🪙', asset: '/assets/objects/star.png',           hint: 'Count the coins!', ageGroups: ['6-8'], grade: 2 },
+  { id: 'time',               name: 'Time',               parentLabel: 'Time',              emoji: '🕐', asset: '/assets/objects/star.png',           hint: 'Read the clock!', ageGroups: ['6-8'], grade: 1 },
+  { id: 'compareNumbers',     name: 'Compare Numbers',    parentLabel: 'Compare Numbers',   emoji: '⚖️', asset: '/assets/objects/star-alt.png',       hint: 'Bigger, smaller or equal?', ageGroups: ['6-8'], grade: 1 },
+  { id: 'additionTo100',      name: 'Add to 100',         parentLabel: 'Add to 100',        emoji: '➕', asset: '/assets/objects/apple.png',          hint: 'Add two-digit numbers!', ageGroups: ['6-8'], grade: 2 },
+  { id: 'subtractionTo100',   name: 'Subtract to 100',    parentLabel: 'Subtract to 100',   emoji: '➖', asset: '/assets/objects/firefly.png',        hint: 'Subtract two-digit numbers!', ageGroups: ['6-8'], grade: 2 },
+  { id: 'shapes2d3d',         name: 'Shapes 2D & 3D',     parentLabel: 'Shapes 2D & 3D',    emoji: '🔷', asset: '/assets/shapes/house-complete.png',  hint: 'Name shapes and count sides!', ageGroups: ['6-8'], grade: 2 },
 
 ]
 
 /**
- * ⚠️ NEW TEACHING FLOW — founder's call, 2026-09-13: every chapter above is hidden while the
- * new-flow lessons are built, and will be deleted later. Hidden = absent from every LIST
- * (`chaptersForAge`, `CHAPTER_ORDER`) and refused at play (`GuardedChapter`, `/game`, `/story`).
- * `CHAPTER_IDS` / `CHAPTER_NAMES` stay complete so saved stars, past sessions and /admin still
- * resolve. Flip to `false` to bring every chapter back.
+ * ⚠️ THE OLD SURFACES STAY OFF — founder's call, 2026-09-13: the age-band menu, the logged-out
+ * demo, the `/story` preview and the age-band plan (`chaptersForAge`, `CHAPTER_ORDER`) list no
+ * chapter. `CHAPTER_IDS` / `CHAPTER_NAMES` stay complete so saved progress and /admin still resolve.
+ *
+ * ⚠️ BUT THE CHAPTERS PLAY AGAIN — founder's call, 2026-09-25: they are the KG, Grade 1 and
+ * Grade 2 tabs on the child's home (`chaptersForGrade`), rewritten without the mascot, and `/game`
+ * plays any chapter that has a grade — all 23 do.
  */
 export const LEGACY_CHAPTERS_HIDDEN = true
-export const isChapterVisible = (_id: string): boolean => !LEGACY_CHAPTERS_HIDDEN
-const VISIBLE = CHAPTERS.filter(c => isChapterVisible(c.id))
+export const isChapterVisible = (id: string): boolean => CHAPTERS.some(c => c.id === id)
+const VISIBLE = LEGACY_CHAPTERS_HIDDEN ? [] : CHAPTERS
+
+/** The story chapters a KG–2 tab lists, in play order. `grade` 0 = KG. */
+export const chaptersForGrade = (grade: number): ChapterMeta[] => CHAPTERS.filter(c => c.grade === grade)
+export const STORY_GRADES = [0, 1, 2] as const
+export const gradeLabel = (g: number) => g === 0 ? 'KG' : `Grade ${g}`
 
 // ── Lookups ──────────────────────────────────────────────────────────────
 const BY_ID: Record<ChapterType, ChapterMeta> =

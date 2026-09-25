@@ -260,7 +260,7 @@ test.beforeEach(async ({ page }) => { await page.setViewportSize(FRAME) })
     await page.waitForTimeout(2500)
     const probe = await page.evaluate(() => {
       const banner = [...document.querySelectorAll('div')]
-        .filter(e => !e.children.length && /^Colour the /.test((e.textContent || '').trim()))
+        .filter(e => !e.children.length && /^Color the /.test((e.textContent || '').trim()))
         .map(e => e.getBoundingClientRect())[0]
       if (!banner) return { found: false as const }
       const x = banner.left + banner.width / 2, y = banner.top + banner.height / 2

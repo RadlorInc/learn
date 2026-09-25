@@ -13,11 +13,11 @@
  * UNITISING: the leap where five stops being five things and becomes ONE FIVE, so you can count
  * one five, two fives, three fives. That is the bridge to multiplication the curriculum asks for.
  *
- * So: Milo needs a number of little ones. They are NOT in a countable row — they are in FAMILIES,
- * alive and milling, so counting by ones is not available and the only stable thing on screen is the
- * family. He hops to a family (a real ballistic hop, see `Hop` in critters.tsx) and it falls in
- * behind him; his sign goes up by the family's SIZE, not by one. There are always more families than
- * he needs, and nothing on screen says "that's enough" — deciding it is the skill (HomeTime's rule).
+ * So: the child needs a number of little ones. They are NOT in a countable row — they are in
+ * FAMILIES, alive and milling, so counting by ones is not available and the only stable thing on
+ * screen is the family. A frog hops to a family (a real ballistic hop, see `Hop` in critters.tsx) and
+ * it falls in behind; the frog's sign goes up by the family's SIZE, not by one. There are always more
+ * families than needed, and nothing on screen says "that's enough" — deciding it is the skill (HomeTime's rule).
  *
  * ⚠️ THE SIGN SHOWS THE RUNNING TOTAL (founder's call) AND THAT IS NOT HOT/COLD, for one reason: it
  * updates only AFTER a family has landed. The decision to fetch a fourth family of five is taken
@@ -40,7 +40,8 @@ import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
-const MILO = '/assets/characters/milo_hop_side.png'
+/** The hopper that fetches each family. A frog because its sheet is a real hop (see sheets.ts). */
+const HOPPER = '/assets/objects/frog_side.png'
 
 // ─── Settings ────────────────────────────────────────────────────────────────────────
 /**
@@ -56,7 +57,7 @@ const MILO = '/assets/characters/milo_hop_side.png'
  */
 interface Setting { id: string; label: string; bg: string; ground: number; family: string; airOk: boolean }
 /**
- * ⚠️ `airOk` — CAN A HOVERING GROUP BE SEEN AGAINST THIS SCENE? A flier sits at Milo's head, ~41% of
+ * ⚠️ `airOk` — CAN A HOVERING GROUP BE SEEN AGAINST THIS SCENE? A flier sits at the hopper's head height, ~41% of
  * the frame, and what a backdrop paints THERE decides whether the child can count them. Measured as
  * the pixel variation across that band (mean per-channel σ), not judged by eye:
  *
@@ -169,8 +170,8 @@ export interface FetchRound {
   w: Setting; item: Kid
   group: number      // how many little ones in one family — the UNIT
   need: number       // families required
-  target: number     // group × need, the number Milo asks for
-  families: number   // how many are out there (always more than he needs)
+  target: number     // group × need, the number asked for
+  families: number   // how many are out there (always more than needed)
 }
 
 export function makeFetch(slot: Slot, d: 1 | 2 | 3): FetchRound {
@@ -189,14 +190,14 @@ export function makeFetch(slot: Slot, d: 1 | 2 | 3): FetchRound {
  * while the screen falls apart.
  */
 export interface FetchLayout {
-  kidPx: number; gotPx: number; miloPx: number
+  kidPx: number; gotPx: number; hopperPx: number
   cols: number; clusterW: number
-  miloStart: number
+  hopperStart: number
   famX: (k: number) => number
-  /** Where he stands once he has fetched `taken` families. */
-  miloAt: (taken: number) => number
-  /** Where a gathered little one stands in the crowd behind him. */
-  gotSpot: (i: number, miloXPct: number) => { left: number; lift: number; scale: number }
+  /** Where the hopper stands once it has fetched `taken` families. */
+  hopperAt: (taken: number) => number
+  /** Where a gathered little one stands in the crowd behind the hopper. */
+  gotSpot: (i: number, hopperXPct: number) => { left: number; lift: number; scale: number }
   /**
    * How far the whole party must travel to clear the right edge, as % of viewport width — measured
    * from the TAIL of the line, so the last one out still gets fully off frame. A flat offset clears
@@ -206,25 +207,25 @@ export interface FetchLayout {
   /**
    * How high a FLYING group hovers above the ground line, px. A flier laid out on the ground line
    * reads as standing on the grass, which is what the founder caught: butterflies and dragonflies
-   * planted in the lawn beside a walking Milo. Derived from Milo's own height so they sit around
-   * his head at every size, rather than a constant that happens to look right on one screen.
+   * planted in the lawn beside the hopper. Derived from the hopper's own height so they sit at the
+   * same place at every size, rather than a constant that happens to look right on one screen.
    * Zero for anything that walks or crawls.
    */
   flyLift: number
-  /** How far below the top of Milo's CELL his head actually is — his sheet's cell reserves headroom
-   *  for the airborne frames, so anything anchored to the cell top floats well above him. */
+  /** How far below the top of the hopper's CELL its head actually is — the hop sheet's cell reserves
+   *  headroom for the airborne frames, so anything anchored to the cell top floats well above it. */
   headPx: number
 }
 /**
  * ⚠️ THE LESSON THIS FUNCTION EXISTS TO HOLD (chapter-craft.md): a layout here is a set of
  * INVARIANTS, not a set of nice numbers. The first version guessed a per-family width and a fixed
  * trail gap, and on screen the rightmost family hung off the frame while the gathered cluster was
- * drawn straight over Milo. Both are derived now.
+ * drawn straight over the hopper. Both are derived now.
  *
  * The load-bearing decision: the gathered families are a HUDDLE, not a line of clusters. Five spread
  * clusters plus the families still waiting cannot both fit a landscape frame at a readable size — an
  * overlapping crowd packs the same twenty little ones into a third of the width. The grouping stays
- * visible where it is being COUNTED (the waiting families); once gathered they are simply his.
+ * visible where it is being COUNTED (the waiting families); once gathered they simply follow the hopper.
  */
 export function fetchLayout(vw: number, vh: number, r: { group: number; families: number; flier?: boolean }): FetchLayout {
   const short = vh < 470
@@ -232,8 +233,8 @@ export function fetchLayout(vw: number, vh: number, r: { group: number; families
   // arrangement in which ten reads as ten at a glance rather than as "lots".
   const cols = r.group >= 10 ? 5 : r.group >= 5 ? Math.ceil(r.group / 2) : r.group
   const rows = Math.ceil(r.group / cols)
-  const miloPx = Math.round(Math.max(74, Math.min(short ? 0.30 * vh : 0.34 * vh, 170)))
-  const miloW = miloPx * 0.62                                   // his cellAspect
+  const hopperPx = Math.round(Math.max(74, Math.min(short ? 0.30 * vh : 0.34 * vh, 170)))
+  const hopperW = hopperPx * 0.637                                  // the frog's cellAspect (sheets.ts)
 
   // Every family that will EVER be on screen has to fit the waiting band at once — that is the
   // worst case (nothing gathered yet), so size against it rather than against how many are left.
@@ -267,27 +268,27 @@ export function fetchLayout(vw: number, vh: number, r: { group: number; families
   const xN = 100 - 4 - BAND + clusterW / 2
   const span = Math.max(0, x0 - xN)
   const famX = (k: number) => (r.families <= 1 ? (x0 + xN) / 2 : xN + (span * k) / (r.families - 1))
-  const miloHalf = (miloW / 2 / vw) * 100
+  const hopperHalf = (hopperW / 2 / vw) * 100
   const gotPx = Math.round(kidPx * 0.82)    // gathered ones read as further back
-  const miloAt = (taken: number) => taken === 0 ? miloHalf + 2 : famX(taken - 1) - clusterW / 2 - miloHalf - 0.5
-  const gotSpot = (i: number, miloXPct: number) => {
+  const hopperAt = (taken: number) => taken === 0 ? hopperHalf + 2 : famX(taken - 1) - clusterW / 2 - hopperHalf - 0.5
+  const gotSpot = (i: number, hopperXPct: number) => {
     // Two rows, overlapping — a crowd, not a queue. Derived from the sprite's own width so a wide
     // creature packs no tighter than it can be read at.
     const col = Math.floor(i / 2), back = i % 2 === 1
     const step = (kidPx * 0.62) / vw * 100
     return {
-      left: miloXPct - miloHalf - 3 - col * step,
+      left: hopperXPct - hopperHalf - 3 - col * step,
       lift: back ? kidPx * 0.30 : 0,
       scale: back ? 0.9 : 1,
     }
   }
   return {
     kidPx, gotPx,
-    miloPx, cols, clusterW,
+    hopperPx, cols, clusterW,
     // Derived from his OWN half-width, not picked: a flat 5% put him at left:-2px on a 1024 frame,
     // i.e. half off the screen. Every founder-visible layout fault in this repo has been a constant
     // that happened to hold at one size.
-    miloStart: miloHalf + 2,
+    hopperStart: hopperHalf + 2,
     famX,
     /**
      * He lands BESIDE a family, never on its spot — which is both what you would actually do and
@@ -295,16 +296,19 @@ export function fetchLayout(vw: number, vh: number, r: { group: number; families
      * Landing on the spot put him 0.33% inside the neighbouring cluster at group 2, which the gate
      * caught and the eye would not have.
      */
-    miloAt,
+    hopperAt,
     gotSpot,
     exitPct: (taken, group) => {
-      const tail = taken > 0 ? gotSpot(taken * group - 1, miloAt(taken)).left : miloAt(taken)
+      const tail = taken > 0 ? gotSpot(taken * group - 1, hopperAt(taken)).left : hopperAt(taken)
       return 100 - tail + (gotPx / 2 / vw) * 100 + 4
     },
-    headPx: Math.round(miloPx * 0.16),
-    // His drawn body fills ~84% of his cell, so his head tops out at 0.84 × miloPx above the ground.
-    // 0.52 puts a two-row swarm's span around his head and shoulders.
-    flyLift: r.flier ? Math.round(miloPx * 0.52) : 0,
+    // The frog's standing head is 0.36 of its cell below the top (alpha top 93 of 256); 0.34 hangs
+    // the sign just above it.
+    headPx: Math.round(hopperPx * 0.34),
+    // The frog's standing head tops out at ~0.64 × hopperPx above the ground (measured: alpha top at
+    // 93 of a 256px cell). Unchanged from the earlier hopper, 0.52 hovers a two-row swarm just
+    // around and above that height, where airOk measured the backdrops.
+    flyLift: r.flier ? Math.round(hopperPx * 0.52) : 0,
   }
 }
 
@@ -312,7 +316,7 @@ export function fetchLayout(vw: number, vh: number, r: { group: number; families
 function Family({ r, size, cols, lit, onTap, startle, walking }: {
   r: FetchRound; size: number; cols: number; lit: boolean; onTap?: () => void
   /**
-   * Bumped when Milo lands next to this family. Each member reacts STAGGERED BY ITS INDEX, so the
+   * Bumped when the hopper lands next to this family. Each member reacts STAGGERED BY ITS INDEX, so the
    * reaction crosses the group as a wave — which is what reads as alive. Everything jolting at once
    * reads as a switch being flipped, and that difference is most of what separates this from a
    * screen of independent moving parts.
@@ -368,7 +372,7 @@ function Family({ r, size, cols, lit, onTap, startle, walking }: {
   )
 }
 
-// ─── Milo's sign: the running total ──────────────────────────────────────────────────
+// ─── The hopper's sign: the running total ──────────────────────────────────────────────────
 /**
  * A painted marker, not a UI pill — warm cream, ink-brown numeral, soft shadow, the same idiom the
  * counting chapter uses. ⚠️ IDENTICAL AT EVERY COUNT, including the exact target: any change of
@@ -406,7 +410,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
   const busy = useRef(false)
   const nudgeT = useRef<number | undefined>(undefined)
 
-  const miloX = L.miloAt(taken)
+  const hopperX = L.hopperAt(taken)
   const total = taken * data.group
 
   /**
@@ -434,7 +438,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
   useEffect(() => () => window.clearTimeout(nudgeT.current), [])
 
   useEffect(() => {
-    if (mode === 'guided') tellNext(`Milo needs ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
+    if (mode === 'guided') tellNext(`We need ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -447,8 +451,8 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
     if (busy.current || committed) return
     if (next < 0 || next > data.families || next === taken) return
     busy.current = true
-    const from = L.miloAt(taken), to = L.miloAt(next)
-    const j = hopOf(MILO, L.miloPx, (to - from) / 100 * vw)
+    const from = L.hopperAt(taken), to = L.hopperAt(next)
+    const j = hopOf(HOPPER, L.hopperPx, (to - from) / 100 * vw)
     setFlight({ from, to })
     if (next < taken) setReturning(next)          // the family that is walking home
     // Choreographed off the journey's OWN numbers, never a guessed timer — so the family falls in
@@ -467,8 +471,8 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
     if (total !== data.target) {
       erred.current = true
       tell(total < data.target
-        ? `Not enough yet — Milo needs ${data.target}. Fetch another ${data.w.family}!`
-        : `That's too many — Milo only needs ${data.target}. Tap the ones behind him to send a ${data.w.family} back.`)
+        ? `Not enough yet — we need ${data.target}. Fetch another ${data.w.family}!`
+        : `That's too many — we only need ${data.target}. Tap the ones behind the frog to send a ${data.w.family} back.`)
       return
     }
     setCommitted(true)
@@ -484,14 +488,14 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
   /**
    * THE WALK-OFF. Two rules meet here and a flat offset breaks both.
    *
-   * ① MEASURE FROM THE TAIL, NOT FROM MILO. A fixed `translateX(46vw)` clears whoever is furthest
+   * ① MEASURE FROM THE TAIL, NOT FROM THE HOPPER. A fixed `translateX(46vw)` clears whoever is furthest
    *    right and strands everyone behind them — chapter 2 shipped exactly that and ended its rounds
    *    with half the family still standing in frame. The distance is what the LAST one in the line
    *    needs to cross the right edge, so everybody clears by construction.
    * ② IT IS A JOURNEY, SO THE LEGS MUST AGREE WITH IT. Deriving the duration from each creature's
    *    own gait (`inFlowJourney`) is what keeps one cycle carrying one stride over a distance that
    *    changes with the count; a constant 2200ms would have them skating at whatever speed the
-   *    arithmetic happened to produce. Milo HOPS out, because that is his gait.
+   *    arithmetic happened to produce. The frog HOPS out, because that is its gait.
    */
   const exitPct = L.exitPct(taken, data.group)
   const exitPx = (exitPct / 100) * vw
@@ -506,9 +510,9 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
     </div>
   )
   const kidExit = inFlowJourney(data.item.img, L.gotPx, exitPx)
-  const miloExit = hopOf(MILO, L.miloPx, exitPx)
+  const hopperExit = hopOf(HOPPER, L.hopperPx, exitPx)
   const EXIT_STAGGER = 45
-  const exitMs = Math.max(miloExit.totalMs, kidExit.ms + EXIT_STAGGER * Math.max(0, taken * data.group - 1))
+  const exitMs = Math.max(hopperExit.totalMs, kidExit.ms + EXIT_STAGGER * Math.max(0, taken * data.group - 1))
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 30, pointerEvents: 'none' }}>
@@ -520,7 +524,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
         // to its own patch on its own legs. `Arrive` exists for exactly this and already runs the
         // cycle for precisely the interval the body is covering ground.
         const back = k === returning
-        const fromPx = back ? (L.gotSpot(0, L.miloAt(k + 1)).left - L.famX(k)) / 100 * vw : 0
+        const fromPx = back ? (L.gotSpot(0, L.hopperAt(k + 1)).left - L.famX(k)) / 100 * vw : 0
         const body = (moving: boolean) => (
           <Family r={data} size={L.kidPx} cols={L.cols} lit={next && !back}
             walking={moving} onTap={next && !back ? () => go(taken + 1) : undefined} />
@@ -545,7 +549,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
              one little one into another's slot, and each follows with a longer delay than the one in
              front, so the crowd RIPPLES after him instead of sliding as one board. ── */}
       {Array.from({ length: (returning != null ? returning : taken) * data.group }).map((_, i) => {
-        const s = L.gotSpot(i, miloX)
+        const s = L.gotSpot(i, hopperX)
         // The LAST family he took is the one that can leave next, so it is the tappable one — a
         // stack, which is the only ordering a child can predict. ⚠️ It is tappable at EVERY count,
         // never only when he has too many: an affordance that appears when the set is wrong is a
@@ -597,27 +601,27 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
         )
       })}
 
-      {/* ── Milo, and his sign ── */}
-      <div style={{ position: 'absolute', left: `${flight ? flight.from : miloX}%`, top: groundTop,
+      {/* ── the hopper, and its sign ── */}
+      <div style={{ position: 'absolute', left: `${flight ? flight.from : hopperX}%`, top: groundTop,
         transform: 'translate(-50%, -100%)', zIndex: 26 }}>
         {committed
           // He HOPS out of frame rather than sliding out on a transform. It is his gait, so it is
           // what he should leave on — and it means the exit obeys the same one-cycle-one-hop timing
           // as every other journey he makes.
-          ? <Hop src={MILO} h={L.miloPx} distPx={exitPx} resetKey="exit">{sign}</Hop>
+          ? <Hop src={HOPPER} h={L.hopperPx} distPx={exitPx} resetKey="exit">{sign}</Hop>
           : flight
             // He FACES the way he is going. Hopping backwards to send one home with his legs running
             // forwards is the moonwalk, and the layout can no longer guarantee direction now that the
             // journey runs both ways — so the facing is derived from it.
-            ? <Hop src={MILO} h={L.miloPx} facesLeft={flight.to < flight.from}
+            ? <Hop src={HOPPER} h={L.hopperPx} facesLeft={flight.to < flight.from}
                 distPx={(flight.to - flight.from) / 100 * vw} resetKey={`${taken}-${flight.to}`}>{sign}</Hop>
             : <span style={{ display: 'block', position: 'relative' }}>
                 {sign}
-                <SheetCell src={MILO} h={L.miloPx} moving={false} breathe />
+                <SheetCell src={HOPPER} h={L.hopperPx} moving={false} breathe />
               </span>}
       </div>
 
-      {/* ── what Milo just said, WRITTEN. See `tell` — a response that exists only as speech is a
+      {/* ── what was just said, WRITTEN. See `tell` — a response that exists only as speech is a
              tap that does nothing on any device without a voice. ── */}
       {nudge && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: short ? 46 : 70, display: 'flex',
@@ -635,7 +639,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
         <div style={{ background: 'var(--paper)', border: '3px solid var(--outline)', borderRadius: 999,
           padding: short ? '6px 14px' : '9px 20px', fontFamily: 'var(--font-display)', fontWeight: 800,
           fontSize: short ? 13 : 16, color: 'var(--ink)' }}>
-          Milo needs {data.target} {data.item.many}
+          We need {data.target} {data.item.many}
         </div>
         <button onClick={ready} disabled={committed} style={{
           padding: short ? '8px 20px' : '12px 30px', borderRadius: 999, border: 'none',
@@ -650,8 +654,8 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
 
 // ─── The demo, which IS the lesson ───────────────────────────────────────────────────
 /**
- * The joke is the teaching. Milo counts the little ones one at a time — and they wander, cross behind
- * one another, and he loses his place. Then they settle into families and he gets there in four hops.
+ * The joke is the teaching. We count the little ones one at a time — and they wander, cross behind
+ * one another, and we lose our place. Then they settle into families and the frog gets there in four hops.
  * **That contrast is the whole chapter**, and it is the one beat a child would rewatch.
  *
  * It plays on the SAME surface as the round rather than in a modal white card over the scene, which
@@ -670,12 +674,12 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
   useEffect(() => {
     const lines: string[] = []
     const acts: Array<() => void> = []
-    lines.push(`Milo has to count all the ${r.item.many}.`); acts.push(() => { setBeat(0); setOnes(0) })
+    lines.push(`We have to count all the ${r.item.many}.`); acts.push(() => { setBeat(0); setOnes(0) })
     // He gets a little way in one at a time — and they keep moving.
     for (let i = 1; i <= 5; i++) { lines.push(String(i)); acts.push(() => { setOnes(i); setJig(j => j + 1) }) }
-    lines.push(`Oh no — they keep moving. I've lost count!`); acts.push(() => setBeat(1))
+    lines.push(`Oh no — they keep moving. We lost count!`); acts.push(() => setBeat(1))
     lines.push(`But look — they sit in ${r.w.family}s of ${group}.`); acts.push(() => { setBeat(2); setOnes(0) })
-    lines.push(`So I can count the ${r.w.family}s instead — much faster!`); acts.push(() => setBeat(2))
+    lines.push(`So we can count the ${r.w.family}s instead — much faster!`); acts.push(() => setBeat(2))
     for (let k = 1; k <= need; k++) { lines.push(String(k * group)); acts.push(() => setBeat(2 + k)) }
     lines.push(`${total}! ${need} ${r.w.family}s of ${group} makes ${total}.`); acts.push(() => setBeat(2 + need))
     return speakSteps(lines, {
@@ -688,7 +692,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
 
   const groundTop = `${slot.w.ground * 100}%`
   const taken = Math.max(0, beat - 2)
-  const miloX = beat < 2 ? L.miloStart : L.miloAt(taken)
+  const hopperX = beat < 2 ? L.hopperStart : L.hopperAt(taken)
 
   /**
    * ⚠️ HE HOPS IN THE DEMO TOO. This moved him with a `transition: left` and `moving={false}`, so in
@@ -706,14 +710,14 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
   const [seen, setSeen] = useState(0)
   if (seen !== taken) {
     setSeen(taken)
-    setFlight(taken === 0 ? null : { from: L.miloAt(seen), to: L.miloAt(taken) })
+    setFlight(taken === 0 ? null : { from: L.hopperAt(seen), to: L.hopperAt(taken) })
   }
   useEffect(() => {
     if (!flight) return
-    const j = hopOf(MILO, L.miloPx, (flight.to - flight.from) / 100 * vw)
+    const j = hopOf(HOPPER, L.hopperPx, (flight.to - flight.from) / 100 * vw)
     const t = window.setTimeout(() => setFlight(null), j.totalMs + 40)
     return () => window.clearTimeout(t)
-  }, [flight, L.miloPx, vw])
+  }, [flight, L.hopperPx, vw])
 
   const sign = (
     <div style={{ position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)',
@@ -751,7 +755,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
       )}
 
       {beat >= 2 && Array.from({ length: taken * group }).map((_, i) => {
-        const s = L.gotSpot(i, miloX)
+        const s = L.gotSpot(i, hopperX)
         // Same two journeys as the played round — join from the family's patch, or close up behind
         // him — and the same reason they go through `Arrive`: a crowd that slides with its feet
         // parked is the fault this whole chapter was rebuilt to delete, and the demo is the first
@@ -759,7 +763,7 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
         const justJoined = i >= (taken - 1) * group
         const fromPx = justJoined
           ? (L.famX(taken - 1) - s.left) / 100 * vw
-          : (L.miloAt(taken - 1) - L.miloAt(taken)) / 100 * vw
+          : (L.hopperAt(taken - 1) - L.hopperAt(taken)) / 100 * vw
         return (
           <div key={i} style={{ position: 'absolute', left: `${s.left}%`, top: groundTop,
             transform: `translate(-50%, calc(-100% - ${s.lift + L.flyLift}px)) scale(${s.scale})`,
@@ -773,14 +777,14 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
 
       {/* No `transition: left` — the movement IS the hop, and a transition beside it would slide him
           there as well. His sign rides inside whatever is carrying him so it cannot lag behind. */}
-      <div style={{ position: 'absolute', left: `${flight ? flight.from : miloX}%`, top: groundTop,
+      <div style={{ position: 'absolute', left: `${flight ? flight.from : hopperX}%`, top: groundTop,
         transform: 'translate(-50%, -100%)', zIndex: 26 }}>
         {flight
-          ? <Hop src={MILO} h={L.miloPx} facesLeft={flight.to < flight.from}
+          ? <Hop src={HOPPER} h={L.hopperPx} facesLeft={flight.to < flight.from}
               distPx={(flight.to - flight.from) / 100 * vw} resetKey={`d${taken}`}>{sign}</Hop>
           : <span style={{ display: 'block', position: 'relative' }}>
               {sign}
-              <SheetCell src={MILO} h={L.miloPx} moving={false} breathe />
+              <SheetCell src={HOPPER} h={L.hopperPx} moving={false} breathe />
             </span>}
       </div>
     </div>
@@ -798,7 +802,7 @@ export function makeBeat(): Beat<FetchRound> {
     // SkillBeat renders nothing when this is empty, and the chapter's own ask sits by the Ready
     // button. Two pills saying the same thing land on top of each other at 640×320.
     prompt: () => '',
-    say: d => `Milo needs ${d.target} ${d.item.many}. They come in ${d.w.family}s of ${d.group}.`,
+    say: d => `We need ${d.target} ${d.item.many}. They come in ${d.w.family}s of ${d.group}.`,
     Play: ({ data, onSubmit }) => <FetchPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <Demo slot={{ w: data.w, item: data.item }} group={data.group} need={data.need} onDone={onDone} />,
   }
@@ -840,7 +844,7 @@ export default function HopAlong({ onFinish, onExit }: {
 
   // The early return sits BELOW every hook — putting it above one changes the hook count when the
   // phone turns and React tears the chapter into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo's meadow is nice and wide!" />
+  if (needsRotate) return <RotateGate line="The meadow is nice and wide!" />
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
@@ -866,8 +870,8 @@ export default function HopAlong({ onFinish, onExit }: {
           <div style={{ maxWidth: '72%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18,
             padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 19,
             color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            Milo needs to gather the little ones — but they never stand still! Luckily they sit in
-            equal families, so he can hop from family to family and count the fast way.
+            We need to gather the little ones — but they never stand still! Luckily they sit in
+            equal families, so the frog can hop from family to family and count the fast way.
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }} style={{ padding: '14px 38px', borderRadius: 50,
             border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))',

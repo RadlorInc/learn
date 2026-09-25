@@ -1,7 +1,7 @@
 /**
  * THE RADLIC RENAME (2026-09-24) — the old names, the old domain and the mascot stay gone from everything a person sees.
  *
- * Three greps over the VISIBLE surfaces (the app's source outside the hidden legacy chapters, `public/` text, the
+ * Three greps over the VISIBLE surfaces (the app's source — the KG–2 story chapters included since 2026-09-25 —, `public/` text, the
  * legal documents, the docs people read). Each hit must be ZERO except a line matched by a named exception below,
  * and every exception must still match something — an exception that matches nothing is an inert clause, and it
  * would silently let its pattern back in anywhere in that file.
@@ -15,7 +15,6 @@
 import { describe, it, expect } from 'vitest'
 import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 
 const GREPS = {
   name: /\bMilo\b|\bMILO\b|AdaptiveLearn|ADAPTIVELEARN|\bAdaptive Learn\b/,
@@ -26,7 +25,7 @@ type Kind = keyof typeof GREPS
 
 const TEXT = /\.(tsx?|jsx?|mjs|css|html|json|txt|md|webmanifest)$/
 const inScope = (f: string) => TEXT.test(f) && (
-  (f.startsWith('src/') && !f.startsWith('src/features/chapters/') && !f.startsWith('src/__tests__/'))
+  (f.startsWith('src/') && !f.startsWith('src/__tests__/'))
   || (f.startsWith('public/') && !f.startsWith('public/audio/') && !f.startsWith('public/assets/'))
   || (f.startsWith('docs/legal/') && !HISTORICAL.some(r => r.test(f)))
   || ['README.md', 'CLAUDE.md', 'AGENTS.md', 'next.config.ts', 'vercel.json'].includes(f)
@@ -51,8 +50,8 @@ const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] =
     why: 'the redirect code' },
   { file: 'docs/legal/ATTORNEY-PACKET.md', line: /^\*\*Product renamed to Radlic and moved to radlic\.com on \[date\]|^- \*\*Today \(once the rename ships\):\*\* the notice a parent agrees to changed only in the product's name/, kinds: ['name', 'domain'],
     why: 'the rename itself, told to the attorney (brief N4)' },
-  { file: 'README.md', line: /^The product was called \*\*Milo\*\* until August 2026 and \*\*AdaptiveLearn\*\* until September 2026|^\*\*Live:\*\* https:\/\/radlic\.com \(until the domain switch, https:\/\/adaptivelearn\.radlor\.com|^around the retired Milo character/, kinds: ['name', 'domain'],
-    why: 'the earlier names, the switch, and the hidden chapters — history a reader of the repo needs' },
+  { file: 'README.md', line: /^The product was called \*\*Milo\*\* until August 2026 and \*\*AdaptiveLearn\*\* until September 2026|^\*\*Live:\*\* https:\/\/radlic\.com \(until the domain switch, https:\/\/adaptivelearn\.radlor\.com/, kinds: ['name', 'domain'],
+    why: 'the earlier names and the switch — history a reader of the repo needs' },
   { file: 'CLAUDE.md', line: /^called Milo, then AdaptiveLearn at adaptivelearn\.radlor\.com, which becomes a 308 to radlic\.com|^\*\*There is no mascot\*\*: no named character, no "Milo says…"/, kinds: ['name', 'domain'],
     why: 'the rename, told to future sessions' },
   { file: 'CLAUDE.md', line: /^\| ⚠️⚠️ \*\*a gate grepping `menu\/page\.tsx` for `'Milo picked this to close the gap'`/, kinds: ['name'],
@@ -93,7 +92,9 @@ describe('the Radlic rename — nothing visible still says Milo, AdaptiveLearn, 
   it('control: the scope is real — it holds the files that carried the most visible hits before the rename', () => {
     expect(files.length, 'the gate is looking at almost nothing').toBeGreaterThan(400)
     for (const f of ['src/features/consent/copy.ts', 'src/features/dashboard/DashNav.tsx', 'src/app/layout.tsx', 'public/manifest.json',
-      'docs/legal/11-privacy-policy.md', 'docs/legal/es/11-privacy-policy.md', 'src/features/consent/server.ts'])
+      'docs/legal/11-privacy-policy.md', 'docs/legal/es/11-privacy-policy.md', 'src/features/consent/server.ts',
+      // The story chapters: KG–2 children see them (2026-09-25), and before that day they were the mascot's home.
+      'src/features/chapters/story/StoryTime.tsx', 'src/features/chapters/story/HomeTime.tsx', 'src/features/chapters/story/ForestWalk.tsx'])
       expect(files, `${f} is out of the gate's scope`).toContain(f)
   })
 
@@ -112,10 +113,4 @@ describe('the Radlic rename — nothing visible still says Milo, AdaptiveLearn, 
     expect(exportFilename('Ava Rose', new Date('2026-09-24T12:00:00Z'))).toBe('radlic-ava-rose-2026-09-24.json')
   })
 
-  it('the hidden legacy chapters are built around the Milo character — they may not be unhidden until that is decided', () => {
-    // RENAME-MANUAL.md §F: delete them, or rewrite them without the mascot. Until then the flag is the gate.
-    const character = execFileSync('git', ['grep', '-c', '-w', 'Milo', '--', 'src/features/chapters'], { encoding: 'utf8' })
-    expect(character.length, 'control: the legacy chapters no longer mention Milo — this check can go').toBeGreaterThan(0)
-    expect(LEGACY_CHAPTERS_HIDDEN, 'unhiding the legacy chapters brings the Milo mascot back to every child').toBe(true)
-  })
 })

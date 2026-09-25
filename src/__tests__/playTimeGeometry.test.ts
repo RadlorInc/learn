@@ -80,15 +80,15 @@ describe('Play Time layout invariants', () => {
           const first = playSpot(0, n, L.band, L.edgePct, L.rows, L.rightPct)
           if (first.left <= EXIT_X) failures.push(`${tag}: slot 0 (${first.left.toFixed(1)}%) is not right of the entry point (${EXIT_X}%)`)
 
-          // Milo must fit, and stand clear of the set rather than on top of it.
-          const mHalf = (L.size * 1.3 * aspectOf(L.miloSrc)) / 2
+          // The host must fit, and stand clear of the set rather than on top of it.
+          const mHalf = (L.size * 1.3 * aspectOf(L.hostSrc)) / 2
           const mRight = L.mx / 100 * vw + mHalf
-          if (mRight > vw + 1) failures.push(`${tag}: Milo off the right edge (${mRight.toFixed(0)} > ${vw})`)
+          if (mRight > vw + 1) failures.push(`${tag}: host off the right edge (${mRight.toFixed(0)} > ${vw})`)
           const setRight = boxes[n - 1].right
-          if (L.mx / 100 * vw - mHalf < setRight - 1) failures.push(`${tag}: Milo overlaps the set`)
+          if (L.mx / 100 * vw - mHalf < setRight - 1) failures.push(`${tag}: host overlaps the set`)
 
           // The march has to clear the frame from the LEFTMOST of them, or the tail is still on
-          // screen when Milo has gone.
+          // screen when the host has gone.
           const marchDist = OFF_RIGHT - playGeom(n, L.edgePct, L.rightPct).left
           if (boxes[0].left + marchDist / 100 * vw < vw) failures.push(`${tag}: march leaves the tail in frame`)
 

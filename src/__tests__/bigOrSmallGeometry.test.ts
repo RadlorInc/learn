@@ -102,11 +102,11 @@ describe('Bigger or Smaller layout invariants', () => {
             if (between < 4) fail.push(`${tag}: bunches ${gi}/${gi + 1} touch (${between.toFixed(0)}px)`)
           }
 
-          // Milo must fit and stand clear of the bunches.
-          const mHalf = (L.size * 1.3 * aspectOf(L.miloSrc)) / 2
-          if (L.mx / 100 * vw + mHalf > vw + 1) fail.push(`${tag}: Milo off the right edge`)
+          // The host must fit and stand clear of the bunches.
+          const mHalf = (L.size * 1.3 * aspectOf(L.hostSrc)) / 2
+          if (L.mx / 100 * vw + mHalf > vw + 1) fail.push(`${tag}: host off the right edge`)
           const setRight = boxes[boxes.length - 1].slice(-1)[0].right
-          if (L.mx / 100 * vw - mHalf < setRight - 1) fail.push(`${tag}: Milo overlaps the bunches`)
+          if (L.mx / 100 * vw - mHalf < setRight - 1) fail.push(`${tag}: host overlaps the bunches`)
 
           // Every winning bunch must be able to clear the frame — including the LEFTMOST one, which
           // has the furthest to go.

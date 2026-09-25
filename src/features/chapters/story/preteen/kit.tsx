@@ -2,12 +2,12 @@
 /**
  * Pre-teen "Mission HUD" design kit (ages 9–11) — a bold, vivid game/mission look: a deep-navy space
  * backdrop with a faint grid + starfield, neon accents that glow, dark-glass panels, monospace
- * numerals, and Milo as an explorer. Deliberately more grown-up and energetic than the 3–8 storybook
+ * numerals. Deliberately more grown-up and energetic than the 3–8 storybook
  * worlds, and more playful/vivid than the muted teen "Field Lab" dark theme. Code-drawn backdrops
  * (no photographic scenes → the background-reuse rule is moot). Shared by the 9–11 chapters that opt
  * into the pre-teen look.
  */
-import React, { useState } from 'react'
+import React from 'react'
 import { speak, unlockSpeech } from '@/infra/useMiloSpeaker'
 
 export const PT = {
@@ -43,7 +43,7 @@ export const ACCENTS: Record<string, Accent> = {
 
 /**
  * Panel widths. A hard px cap (`min(94vw, 520px)`) is a PHONE size that never grows, so on a laptop
- * the chapter renders at ~21% of the screen with 380px of dead navy either side and Milo/Continue
+ * the chapter renders at ~21% of the screen with 380px of dead navy either side and the guide figure/Continue
  * stranded in opposite corners. The teen band fixed this in July with a vw term; the fix never
  * reached this kit. `min(<vw guard>, clamp(<old cap>, <vw>, <max>))` keeps small frames BYTE-IDENTICAL
  * (the old cap is the clamp floor) and only lets a roomy frame use the room it has.
@@ -52,8 +52,7 @@ export const PANEL_W = 'min(94vw, clamp(520px, 52vw, 860px))'
 export const CARD_W = 'min(92vw, clamp(460px, 42vw, 700px))'
 export const PROMPT_W = 'min(92vw, clamp(660px, 54vw, 1000px))'
 
-export const PT_CSS = `@keyframes pt_float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-@keyframes pt_pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+export const PT_CSS = `@keyframes pt_pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes pt_blink{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes pt_twinkle{0%,100%{opacity:.25}50%{opacity:.8}}`
 
@@ -155,20 +154,6 @@ export function ChoiceButton({ label, accent, state, size, onClick, disabled }: 
   )
 }
 
-// ─── Milo the explorer (bottom-left guide) ─────────────────────────────────────────────
-export function PtMilo({ left = 9 }: { left?: number }) {
-  const [missing, setMissing] = useState(false)
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(20vh,160px)', height: 'min(20vh,160px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'pt_float 3.6s ease-in-out infinite' }}>
-        {missing
-          ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}><span style={{ fontSize: 58, filter: 'drop-shadow(0 0 10px rgba(120,160,255,.6))' }}>🦊</span></div>
-          : <img src="/assets/characters/milo_explorer.png" alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setMissing(true)} style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 6px 14px rgba(0,0,0,.5))' }} />}
-      </div>
-    </div>
-  )
-}
-
 // ─── Mission picker ────────────────────────────────────────────────────────────────────
 export interface Mission { id: string; label: string; tag: string; accent: Accent; glyph: React.ReactNode }
 
@@ -199,7 +184,7 @@ export function PtReadout({ label, value, accent, warn }: { label: string; value
 }
 
 // The Explore-phase scaffold: eyebrow header (top) · sim in a scrollable dark-glass panel (center) ·
-// neon Continue (bottom-right, clear of Milo). Renders over the chapter's LabBackdrop/BackChip/PtMilo.
+// neon Continue (bottom-right, clear of the bottom-left corner). Renders over the chapter's LabBackdrop/BackChip.
 export function ExploreScaffold({ title, intro, accent, short, onContinue, continueLabel = 'Continue', children }: {
   title: string; intro?: string; accent: Accent; short?: boolean; onContinue: () => void; continueLabel?: string; children: React.ReactNode
 }) {

@@ -9,7 +9,7 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { track } from '@/infra/analytics'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
-import { isChapterVisible, type ChapterType } from '@/core/chapters'
+import { isChapterVisible, getChapter, type ChapterType } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
@@ -104,7 +104,9 @@ function Game() {
 
   if (!ready && !playingChapter) return null
 
-  const props = { onComplete: handleComplete, childName: childName || 'friend' }
+  // Back goes to the chapter's own grade tab (KG, 1 or 2) on the child's home, not to the top of it.
+  const onExit = () => router.push(`/modules?grade=${playingChapter ? getChapter(playingChapter)?.grade ?? 0 : 0}`)
+  const props = { onComplete: handleComplete, onExit, childName: childName || 'friend' }
 
   // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
   // same way the camera guard refuses the render rather than disabling a control.

@@ -54,7 +54,6 @@ export interface NestWorld {
   chick: string                        // the baby sprite in every nest
   noun: string                         // "chick" / "duckling"
   dusk?: boolean                       // darken the scene a touch
-  milo: { src: string; emoji: string; accessory: string }
   intro: string
 }
 export const WORLDS: NestWorld[] = [
@@ -62,22 +61,19 @@ export const WORLDS: NestWorld[] = [
     id: 'forest', label: 'Forest Nests', emoji: '🌳',
     scenes: ['/assets/backgrounds/forest_2.jpeg', '/assets/backgrounds/forest_3.jpeg', '/assets/backgrounds/forest_4.jpeg'],
     chick: '/assets/objects/chick.png', noun: 'chick',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌳' },
-    intro: 'The baby birds are hungry! Listen for the number, then tap that nest. First, watch Milo!',
+    intro: 'The baby birds are hungry! Listen for the number, then tap that nest. First, watch how it works!',
   },
   {
     id: 'meadow', label: 'Meadow Nests', emoji: '🌼',
     scenes: ['/assets/backgrounds/garden_meadow.png', '/assets/backgrounds/garden_fence.png', '/assets/backgrounds/garden_park.png'],
     chick: '/assets/objects/duckling.png', noun: 'duckling',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' },
-    intro: 'The ducklings are hungry! Listen for the number, then tap that nest. First, watch Milo!',
+    intro: 'The ducklings are hungry! Listen for the number, then tap that nest. First, watch how it works!',
   },
   {
     id: 'evening', label: 'Evening Nests', emoji: '🌙',
     scenes: ['/assets/backgrounds/sky.jpeg', '/assets/backgrounds/lake.jpeg', '/assets/backgrounds/forest_3.jpeg'],
     chick: '/assets/objects/chick.png', noun: 'chick', dusk: true,
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌙' },
-    intro: 'One last feed before bedtime! Listen for the number, then tap that nest. First, watch Milo!',
+    intro: 'One last feed before bedtime! Listen for the number, then tap that nest. First, watch how it works!',
   },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
@@ -351,9 +347,9 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const lines = [
-      `This ${world.noun} is hungry. Milo says nest number ${target}.`,
+      `This ${world.noun} is hungry. Listen: nest number ${target}.`,
       `${target}! Find the nest that says ${target}.`,
-      `There it is! Mummy bird feeds nest number ${target}.`,
+      `There it is! Mommy bird feeds nest number ${target}.`,
     ]
     const cancel = speakSteps(lines, {
       onStep: (i) => {
@@ -376,7 +372,7 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
       ))}
       <Mother at={at} h={Math.round(size * 0.62)} facingLeft={false} />
       {/* Sits in the demo banner's own band, below it — the nests are on the branch further down
-          and Milo is bottom-left, so this is the one strip of the frame nothing else occupies. */}
+          and the mother bird perches top-left, so this is the one strip of the frame nothing else occupies. */}
       {line && (
         <div style={{ position: 'absolute', top: 96, left: 0, right: 0, zIndex: 44, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
           <div style={{ maxWidth: '76%', background: 'rgba(255,255,255,.94)', border: '3px solid var(--outline)', borderRadius: 16, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 1.6vh, 17px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(61,37,22,.12)' }}>{line}</div>
@@ -415,7 +411,6 @@ export function makeNestBeat(world: NestWorld): Beat<NestRound> {
 
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 const NT_CSS = `
-@keyframes nt_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes nt_peep { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
 @keyframes nt_pop { 0%{transform:scale(1)} 45%{transform:scale(1.09)} 100%{transform:scale(1)} }
 @keyframes nt_shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px) rotate(-2deg)} 75%{transform:translateX(6px) rotate(2deg)} }
@@ -499,7 +494,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
       {noVoice && phase !== 'demo' && (
         <div style={{ position: 'fixed', top: 96, left: 0, right: 0, zIndex: 46, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
           <div style={{ maxWidth: '78%', background: 'rgba(255,248,235,.96)', border: '3px solid var(--milo-orange)', borderRadius: 14, padding: '7px 16px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'clamp(12px, 1.6vh, 15px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(242,107,44,.2)' }}>
-            🔇 This game needs sound — Milo says the number out loud and never writes it down.
+            🔇 This game needs sound — the number is said out loud and never written down.
             This browser has no voice available.
           </div>
         </div>
@@ -519,7 +514,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
         <NestExplain key={`demo${demoIdx}`} world={world} data={DEMO_ROUNDS[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
-      {phase === 'guided' && (<>{Banner(`Now you! Tap the nest Milo says`, () => speak(guidedSay(world, GUIDED_ROUND.nums[GUIDED_ROUND.answerIdx])))}
+      {phase === 'guided' && (<>{Banner(`Now you! Tap the nest you hear`, () => speak(guidedSay(world, GUIDED_ROUND.nums[GUIDED_ROUND.answerIdx])))}
         <NestPlay key="guided" world={world} data={GUIDED_ROUND} mode="guided" onComplete={() => setPhase('practice')} /></>)}
 
       {phase === 'practice' && (
@@ -529,27 +524,6 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
             onComplete={tally} />
         </div>
       )}
-
-      {<MiloHost left={11} milo={world.milo} />}
-    </div>
-  )
-}
-
-// ─── Milo ────────────────────────────────────────────────────────────────────────────
-function MiloHost({ left, milo }: { left: number; milo: NestWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(30vh, 260px)', height: 'min(30vh, 260px)' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'nt_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 100, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 20, fontSize: 46 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
     </div>
   )
 }

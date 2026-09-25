@@ -19,7 +19,7 @@ import Link from 'next/link'
 import { GuardedChapter } from '@/features/chapters/GuardedChapter'
 import { CHAPTER_NAMES, LEGACY_CHAPTERS_HIDDEN, type AgeGroup } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
-import { PT, ACCENTS, LabBackdrop, PtMilo, type Accent } from '@/features/chapters/story/preteen/kit'
+import { PT, ACCENTS, LabBackdrop, type Accent } from '@/features/chapters/story/preteen/kit'
 import { kv } from '@/infra/storage/kv'
 import { track } from '@/infra/analytics'
 import {
@@ -132,7 +132,6 @@ function Shell({ children }: { children: React.ReactNode }) {
         position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'safe center', gap: 20, padding: '16px 6vw', overflowY: 'auto',
       }}>{children}</div>
-      <PtMilo left={9} />
     </div>
   )
 }

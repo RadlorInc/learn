@@ -18,7 +18,7 @@
  * chapter used none of, which is precisely the weakness BlockYard's own header admits to.
  *
  * **So the chapter is a WALK now.** Seven market stalls, each a painted scene with its own animated
- * stallholder; Milo walks in from off-frame at every stall, buys one thing, counts the coins out of
+ * stallholder; a shopper walks in from off-frame at every stall, buys one thing, counts the coins out of
  * the purse card and carries them up to the keeper, then walks off with it. The scene, the keeper and
  * the goods change every round, and the reward for a right answer is the journey rather than a number
  * turning green.
@@ -60,8 +60,9 @@ import { SheetCell, inFlowJourney, CRITTER_CSS, Arrive, aspectOf } from './critt
 import { Shadow, YARD_CSS, bannerBottom } from './yard'
 import {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot, type Stall,
-  SCENE_W, SCENE_H, fitFor, groundPxFor, miloHFor, miloHalfPct, PURSE_MAX, CARD_BAND, cardMetrics,
-  aOrAn, OFF_X, MILO_X, PAY_X, MILO_ASPECT,
+  SCENE_W, SCENE_H, fitFor, groundPxFor, PURSE_MAX, CARD_BAND, cardMetrics,
+  aOrAn, OFF_X, PAY_X,
+  customerHFor as buyerHFor, CUSTOMER_X as BUYER_X,
   SHOPPERS, shopperAt, SHOPPER_X, SHOPPER_LIFT, SHOPPER_SCALE,
 } from './market'
 import { rint, pick } from '@/core/rand'
@@ -70,12 +71,16 @@ import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 export {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
-  fitFor, groundPxFor, miloHFor, miloHalfPct, PURSE_MAX, CARD_BAND, cardMetrics,
-  MILO_X, PAY_X,
+  fitFor, groundPxFor, PURSE_MAX, CARD_BAND, cardMetrics,
+  PAY_X,
 }
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
-const MILO = '/assets/characters/milo_side.png'
+/** The shopper the child pays for — the foreman bear, a real walk cycle. Chosen over the badger
+ *  because his dominant colour is the old walker's (a 15–30° brown, measured 23.6° against 23.3°), so
+ *  the ground-contrast gate in coinShopPay.test.ts still describes the sprite on screen; the badger's
+ *  green jacket would stand on green grass. */
+const BUYER = '/assets/objects/foreman_bear_side.png'
 
 // ─── The coins ────────────────────────────────────────────────────────────────────────
 /**
@@ -134,7 +139,7 @@ export interface MoneyRound {
    * ⚠️ This is the read direction, and it is a presentation flag rather than a third question type on
    * purpose — the gesture, the grading and the card are identical either way, so a `read` kind would
    * have been a second code path for one changed sentence. What differs is only where the amount comes
-   * from: a number Milo is told, or a handful he has to count.
+   * from: a number the child is told, or a handful to count.
    */
   asPile: boolean
 }
@@ -224,7 +229,7 @@ export function makeRound(d: 1 | 2 | 3, round = 0): MoneyRound {
  * painting; the thirteen-frame strips that ship beside these scenes are deliberately unused. Why is
  * in [market.ts](./market.ts), and it is the one thing to read before adding an animated patch
  * back: a character generated inside its scene can only ever wiggle inside its own rectangle, which
- * measured out as **93–96% of the picture holding still**. Milo is the only thing that moves here.
+ * measured out as **93–96% of the picture holding still**. The shoppers are the only things that move here.
  */
 /**
  * THE KEEPER'S SPEECH BUBBLE — and it is now the chapter's ONLY question region.
@@ -298,35 +303,35 @@ function Bubble({ st, text, price, coins, ok, vw, vh, band }: {
 }
 
 /**
- * MILO'S WALK — three legs, and each one is a separate journey rather than a position that happens
+ * THE BUYER'S WALK — three legs, and each one is a separate journey rather than a position that happens
  * to change. ⚠️ A hand-rolled `transition: left` beside `Arrive` is how a dozen creatures ended up
  * sliding with their feet parked in HopAlong; `Arrive` hands its child the moving flag so the cycle
  * and the travel cannot be given different numbers.
  */
 export type Leg = 0 | 1 | 2
 const LEGS: { x: number; from: number; leave: boolean; facesLeft: boolean }[] = [
-  { x: MILO_X, from: OFF_X, leave: false, facesLeft: true },   // in from off-frame right
-  { x: PAY_X, from: MILO_X, leave: false, facesLeft: true },   // up to the stall to pay
+  { x: BUYER_X, from: OFF_X, leave: false, facesLeft: true },   // in from off-frame right
+  { x: PAY_X, from: BUYER_X, leave: false, facesLeft: true },   // up to the stall to pay
   { x: PAY_X, from: OFF_X, leave: true, facesLeft: false },    // away with the goods
 ]
 export const legDistPct = (leg: Leg) => Math.abs(LEGS[leg].from - LEGS[leg].x)
 
-function Milo({ leg, groundPx, miloH, vw, resetKey }: {
-  leg: Leg; groundPx: number; miloH: number; vw: number; resetKey: string
+function Buyer({ leg, groundPx, buyerH, vw, resetKey }: {
+  leg: Leg; groundPx: number; buyerH: number; vw: number; resetKey: string
 }) {
   const L = LEGS[leg]
   const dist = (legDistPct(leg) / 100) * vw
-  const j = inFlowJourney(MILO, miloH, dist)
-  const w = Math.round(miloH * MILO_ASPECT)
+  const j = inFlowJourney(BUYER, buyerH, dist)
+  const w = Math.round(buyerH * aspectOf(BUYER))
   return (
     <div style={{ position: 'fixed', left: `${L.x}%`, top: groundPx,
       transform: 'translate(-50%,-100%)', zIndex: 30, pointerEvents: 'none' }}>
       <Arrive dist={dist} ms={j.ms} leave={L.leave} resetKey={`${resetKey}-${leg}`}>
         {moving => (
-          <span style={{ display: 'block', position: 'relative', width: w, height: miloH }}>
-            <Shadow w={Math.round(w * 0.72)} h={Math.round(miloH * 0.1)} />
+          <span style={{ display: 'block', position: 'relative', width: w, height: buyerH }}>
+            <Shadow w={Math.round(w * 0.72)} h={Math.round(buyerH * 0.1)} />
             <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-              <SheetCell src={MILO} h={miloH} moving={moving} facesLeft={L.facesLeft}
+              <SheetCell src={BUYER} h={buyerH} moving={moving} facesLeft={L.facesLeft}
                 breathe cycleScale={j.cycleScale} />
             </span>
           </span>
@@ -336,10 +341,10 @@ function Milo({ leg, groundPx, miloH, vw, resetKey }: {
   )
 }
 
-/** How long one of Milo's legs takes, so the choreography is timed off the SAME numbers the sprite
+/** How long one of the buyer's legs takes, so the choreography is timed off the SAME numbers the sprite
  *  is animated with rather than a duration guessed beside them. */
-export const legMs = (leg: Leg, miloH: number, vw: number) =>
-  inFlowJourney(MILO, miloH, (legDistPct(leg) / 100) * vw).ms
+export const legMs = (leg: Leg, buyerH: number, vw: number) =>
+  inFlowJourney(BUYER, buyerH, (legDistPct(leg) / 100) * vw).ms
 
 // ─── The stall's state ────────────────────────────────────────────────────────────────
 interface Till {
@@ -353,25 +358,25 @@ const EMPTY: Till = { laid: [], settled: 0, swept: false, key: 'a' }
 /**
  * A SHOPPER — the market's own life, and the only thing on screen that is genuinely animated.
  *
- * They come in from off-frame right on their own legs, stand browsing beside Milo while the child
+ * They come in from off-frame right on their own legs, stand browsing beside the buyer while the child
  * counts, and leave when he does. ⚠️ **Further back means HIGHER and SMALLER and drawn BEHIND**, all
  * three, because a child reading depth off size and a child reading it off height must get the same
  * answer. And it travels through `Arrive` like everything else here: a hand-rolled `transition:
  * left` is how a dozen creatures ended up sliding with their feet parked in HopAlong.
  */
-function Shopper({ slot, groundPx, miloH, vw, vh, leaving, resetKey }: {
-  slot: number; groundPx: number; miloH: number; vw: number; vh: number
+function Shopper({ slot, groundPx, buyerH, vw, vh, leaving, resetKey }: {
+  slot: number; groundPx: number; buyerH: number; vw: number; vh: number
   leaving: boolean; resetKey: string
 }) {
   const k = shopperAt(slot)
-  const h = Math.round(miloH * SHOPPER_SCALE * k.scale)
+  const h = Math.round(buyerH * SHOPPER_SCALE * k.scale)
   const w = Math.round(h * aspectOf(k.src))
   const dist = ((OFF_X - SHOPPER_X) / 100) * vw
   const j = inFlowJourney(k.src, h, dist)
   return (
     <div style={{ position: 'fixed', left: `${SHOPPER_X}%`, top: groundPx - Math.round(vh * SHOPPER_LIFT),
       transform: 'translate(-50%,-100%)', zIndex: 26, pointerEvents: 'none' }}>
-      {/* a beat behind Milo, so the two arrivals read as two people rather than one movement */}
+      {/* a beat behind the buyer, so the two arrivals read as two people rather than one movement */}
       <Arrive dist={dist} ms={j.ms} delayMs={leaving ? 260 : 700} leave={leaving} resetKey={`${resetKey}-shop`}>
         {moving => (
           <span style={{ display: 'block', position: 'relative', width: w, height: h }}>
@@ -394,15 +399,15 @@ function Scene({ st, slot, leg, vw, vh, band, resetKey }: {
   st: Stall; slot: number; leg: Leg; vw: number; vh: number; band: number; resetKey: string
 }) {
   const groundPx = groundPxFor(st, vw, vh, band)
-  const miloH = miloHFor(vh, groundPx, bannerBottom(vh))
+  const buyerH = buyerHFor(vh, groundPx, bannerBottom(vh))
   // ⚠️ Only people stand here. The stallholders are painted into their stalls, the goods and the
   // price live in the bubble, and the coins live in the card — so the open grass carries nothing but
   // the two who are actually shopping, which is what the founder was pointing at.
   return (
     <>
-      <Shopper slot={slot} groundPx={groundPx} miloH={miloH} vw={vw} vh={vh}
+      <Shopper slot={slot} groundPx={groundPx} buyerH={buyerH} vw={vw} vh={vh}
         leaving={leg === 2} resetKey={resetKey} />
-      <Milo leg={leg} groundPx={groundPx} miloH={miloH} vw={vw} resetKey={resetKey} />
+      <Buyer leg={leg} groundPx={groundPx} buyerH={buyerH} vw={vw} resetKey={resetKey} />
     </>
   )
 }
@@ -414,7 +419,7 @@ function Scene({ st, slot, leg, vw, vh, band, resetKey }: {
 // cloth they used to name does not exist any more either — a line that describes furniture the
 // chapter has deleted is the header-comment fault in its smallest form.
 /**
- * What the keeper says as Milo arrives — ONE renderer, because it is both spoken and (via `askFor`)
+ * What the keeper says as the buyer arrives — ONE renderer, because it is both spoken and (via `askFor`)
  * written in the bubble, and those two drifting apart is how a chapter narrates one thing while the
  * screen says another.
  *
@@ -473,7 +478,7 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
   // ⚠️ The band is the one the card actually needs — see CARD_BAND. Every round is a paying round.
   const band = CARD_BAND(vh)
   const groundPx = groundPxFor(st, vw, vh, band)
-  const miloH = miloHFor(vh, groundPx, bannerBottom(vh))
+  const buyerH = buyerHFor(vh, groundPx, bannerBottom(vh))
   const pool = useMemo(() => poolFor(price), [price])
   const best = useMemo(() => fewestFor(price, pool).length, [price, pool])
 
@@ -492,9 +497,9 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
 
   useEffect(() => {
     setT(EMPTY); setNote(''); setOk(false); setLive(false); setLeg(0)
-    // The question opens when Milo has actually ARRIVED, timed off the same journey he walks.
-    const walkIn = legMs(0, miloH, vw)
-    // `speakAfterCurrent`: the walk-in is timed off Milo's journey, which is shorter than the
+    // The question opens when the buyer has actually ARRIVED, timed off the same journey he walks.
+    const walkIn = legMs(0, buyerH, vw)
+    // `speakAfterCurrent`: the walk-in is timed off the buyer's journey, which is shorter than the
     // previous round's "the apple is yours!" — a plain `speak` cut the sale line off every round.
     after(walkIn, () => { setLive(true); speakAfterCurrent(openerFor(st, data)) })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -505,9 +510,9 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
   function finish(correct: boolean) {
     done.current = true; setOk(true); setLive(false)
     after(300, () => { setT(s => ({ ...s, swept: true })); setLeg(1) })
-    const toStall = 300 + legMs(1, miloH, vw)
+    const toStall = 300 + legMs(1, buyerH, vw)
     after(toStall + 500, () => setLeg(2))
-    after(toStall + 500 + legMs(2, miloH, vw), () => onComplete(mode === 'practice' ? !erred.current && correct : true))
+    after(toStall + 500 + legMs(2, buyerH, vw), () => onComplete(mode === 'practice' ? !erred.current && correct : true))
   }
 
   /** ⚠️ Reads the tray INSIDE the updater, never from the render's closure — three taps inside one
@@ -640,7 +645,7 @@ function CoinCard({ pool, laid, band, vw, live, full, swept, onLay, onBack, onPa
 
 // ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
 /**
- * ⚠️ **THE SECOND EXAMPLE IS THE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** Milo pays the
+ * ⚠️ **THE SECOND EXAMPLE IS THE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** The demo pays the
  * SAME price twice — 30 as six 5s, then as one 25 and one 5 — so the child sees that the amount did
  * not change and the handful did. No amount of counting coins says that.
  */
@@ -655,7 +660,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
   useEffect(() => {
     const plan = fewestFor(data.price, poolFor(data.price))
     const set = data.kind === 'fewest' ? plan : data.shown
-    // He is talking to Milo, so he says what it costs — he does not narrate himself in the third
+    // He is talking to the buyer, so he says what it costs — he does not narrate himself in the third
     // person, which is what a bubble makes obvious and a top banner hid.
     const lines: string[] = [`${aOrAn(st.one)[0].toUpperCase()}${aOrAn(st.one).slice(1)} ${st.one} — that is ${numberToWords(data.price)}.`]
     const steps: Array<() => void> = [() => { setT({ ...EMPTY, key: 'd' }); setLeg(0) }]
@@ -751,7 +756,7 @@ export default function CoinShop({ onFinish, onExit }: {
    * Both teaching examples pay the SAME price — see CoinExplain.
    *
    * ⚠️ **THE SECOND ONE ALSO SHOWS THE PILE, so both directions are demonstrated before either is
-   * scored.** It costs nothing: the keeper holds out thirty as six 5s while Milo pays it as one 25 and
+   * scored.** It costs nothing: the keeper holds out thirty as six 5s while the buyer pays it as one 25 and
    * one 5, which is word-for-word the lesson that example already narrates — the amount did not
    * change and the handful did. The cost, stated: the pile direction gets a DEMO but not a hands-on
    * guided round, because the one guided round is spent on the simpler numeral gesture. Its first
@@ -766,7 +771,7 @@ export default function CoinShop({ onFinish, onExit }: {
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.
-  if (needsRotate) return <RotateGate line="Turn your phone sideways to walk Milo round the market!" />
+  if (needsRotate) return <RotateGate line="Turn your phone sideways to walk around the market!" />
 
   const active = phase === 'practice' ? slotIdx : phase === 'guided' ? GUIDED_SLOT : DEMO[Math.min(demoIdx, DEMO.length - 1)].slot
 
@@ -774,7 +779,7 @@ export default function CoinShop({ onFinish, onExit }: {
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#dfe7d4' }}>
       <style>{CRITTER_CSS}{YARD_CSS}{CS_CSS}</style>
 
-      {/* Every scene stays mounted so a stall Milo has already visited cross-fades back rather than
+      {/* Every scene stays mounted so a stall already visited cross-fades back rather than
           flashing in — and so the keeper strip is decoded before its round opens.
           ⚠️ Laid out by `fitFor`, NOT `object-fit: cover`: the keeper patch and the ground line are
           both placed through that transform, so the moment the backdrop uses a different one they
@@ -818,8 +823,8 @@ export default function CoinShop({ onFinish, onExit }: {
               were told to do was look in the wrong place. The in-round words are HIS ("Count that out
               for me"), so the intro is written to hand over to him rather than to describe scenery.
             */}
-            Milo is walking round the market. At each stall the keeper will tell you what his goods
-            cost — tap the coins in your purse to count out exactly that much, then pay. Watch Milo
+            Let&apos;s walk around the market. At each stall the keeper will tell you what his goods
+            cost — tap the coins in your purse to count out exactly that much, then pay. Watch us
             buy two things first!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}

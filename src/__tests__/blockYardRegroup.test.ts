@@ -12,11 +12,11 @@
  * chapter's DATA cannot see how the chapter INDEXES it — hence `scoredSlot`, not the RUN array.
  */
 import { describe, it, expect } from 'vitest'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
   makeRound, needsRegroup, loadPlan, slotAt, scoredSlot, GUIDED_SLOT, DEMO_SLOTS,
-  spotOf, queueOf, rodSpot, QUEUE_PER_ROW, MILO_X, RODS_X0, ONES_X0, ONES_COL,
+  spotOf, queueOf, rodSpot, QUEUE_PER_ROW, WALKER_X, RODS_X0, ONES_X0, ONES_COL,
   ROD_SEGMENTS, GROUND, groundOf, PAD_BAND, bannerBottom, yardUnit, rodBudget,
   MATERIALS, MAT_SAT, MAT_VAL, type Op,
 } from '@/features/chapters/story/BlockYard'
@@ -193,10 +193,10 @@ describe('everything the round can put on screen is actually ON the screen', () 
     expect(w.lift).toBeGreaterThan(one.lift + 2)    // and further up the frame — the cues agree
   })
 
-  it('the ones, Milo and the rod row do not sit on each other', () => {
+  it('the ones, the walker and the rod row do not sit on each other', () => {
     const lastOne = spotOf(9).x
-    expect(MILO_X).toBeGreaterThan(lastOne + 4)
-    expect(RODS_X0).toBeGreaterThan(MILO_X + 4)
+    expect(WALKER_X).toBeGreaterThan(lastOne + 4)
+    expect(RODS_X0).toBeGreaterThan(WALKER_X + 4)
     expect(ONES_X0).toBeGreaterThan(queueOf(0).x)       // the pile waits BEHIND the run
   })
 
@@ -223,11 +223,16 @@ describe('everything the round can put on screen is actually ON the screen', () 
     expect(groundOf(900)).toBe(GROUND)          // a roomy frame keeps the designed ground line
   })
 
-  it('Milo still has a registered drawn cycle', () => {
-    // ⚠️ A block has no legs, so Milo is the ONLY living thing left in this chapter — "something
-    // arrives on its own legs" rests entirely on him. Without a sheet `SheetCell` silently falls
-    // back to a still, and a still that travels is a sticker being dragged.
-    expect(hasSheet('/assets/characters/milo_side.png')).toBe(true)
+  it('the walker is the foreman bear, with a registered drawn cycle, and no mascot is drawn', () => {
+    // ⚠️ A block has no legs, so the walker is the ONLY living thing left in this chapter —
+    // "something arrives on its own legs" rests entirely on him. Without a sheet `SheetCell` silently
+    // falls back to a still, and a still that travels is a sticker being dragged.
+    // The path is written out HERE, not imported: the product has no mascot (2026-09-25), and a
+    // chapter drifting back to `characters/milo_*` must go red.
+    const src = readFileSync(join(process.cwd(), 'src', 'features', 'chapters', 'story', 'BlockYard.tsx'), 'utf8')
+    expect(src).toContain("'/assets/objects/foreman_bear_side.png'")
+    expect(src).not.toMatch(/characters\/milo|MiloSprite|🦊/)
+    expect(hasSheet('/assets/objects/foreman_bear_side.png')).toBe(true)
   })
 })
 
@@ -271,7 +276,7 @@ describe('the run is one straight sequence — a setting never wraps back', () =
 
     it(`${op}: every backdrop holds WALKABLE GROUND right across the yard`, async () => {
       // ⚠️ THE ONE THE SCREEN CAUGHT. `farm_pond.png` opened the subtraction run, and the yard
-      // spans nearly the full width — so the blocks, Milo and the whole rod row stood on OPEN
+      // spans nearly the full width — so the blocks, the walker and the whole rod row stood on OPEN
       // WATER. Measured: only 27–35% of the band is walkable there, against 100% on a barnyard.
       // "Does the picture have ground in it" is not the test; the test is the pixel where the
       // blocks actually land, right across the width.
@@ -351,8 +356,8 @@ describe('the run is one straight sequence — a setting never wraps back', () =
       }
     })
 
-    it(`${op}: no flat-VECTOR backdrop is cast under a painted Milo`, () => {
-      // pond / lake / pond_top / sky / fishing_bg are thick-outlined vector cartoons; Milo is
+    it(`${op}: no flat-VECTOR backdrop is cast under a painted walker`, () => {
+      // pond / lake / pond_top / sky / fishing_bg are thick-outlined vector cartoons; the walker is
       // painted, and no ground line or shadow fixes a style mismatch.
       const VECTOR = /^(pond|lake|pond_top|sky|fishing_bg|River)\b/
       for (let i = 0; i < 13; i++) expect(slotAt(op, i).scene, `slot ${i}`).not.toMatch(VECTOR)

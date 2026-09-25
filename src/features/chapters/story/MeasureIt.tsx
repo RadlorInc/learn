@@ -2,7 +2,7 @@
 /**
  * Chapter 11 — MEASUREMENT (skill `measurement`). The verb is **MEASURE IT**.
  *
- * The child lays a repeating unit — one of Milo's blocks — end to end against the thing, and
+ * The child lays a repeating unit — one block — end to end against the thing, and
  * decides when the run has reached the end of it. A ruler is nothing but repeated units, counted;
  * this chapter is that idea before the ruler exists.
  *
@@ -105,16 +105,13 @@ export interface MWorld {
   things: Thing[]
   tint: string                       // the blocks' colour — chosen to sit apart from the scene
   word: string                       // "tall" / "long"
-  milo: { src: string; emoji: string; accessory: string }
   intro: string
 }
 export const WORLDS: MWorld[] = [
   { id: 'forest', label: 'Tall Forest', emoji: '🌳', axis: 'up', things: FOREST, tint: '#e2643c', word: 'tall',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '📏' },
-    intro: "Milo measures things with his blocks! Stack them up beside it until you reach the very top — then count how many. Watch Milo first!" },
+    intro: "Let's measure things with blocks! Stack them up beside it until you reach the very top — then count how many. Watch first!" },
   { id: 'trail', label: 'Long Trail', emoji: '🐛', axis: 'along', things: TRAIL, tint: '#3f8fd8', word: 'long',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '📐' },
-    intro: "Milo measures things with his blocks! Lay them along it until you reach the very end — then count how many. Watch Milo first!" },
+    intro: "Let's measure things with blocks! Lay them along it until you reach the very end — then count how many. Watch first!" },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.things[0].bg }))
@@ -325,7 +322,7 @@ const MeasurePlay: React.FC<{
   </>)
 }
 
-// ─── Milo does it (opening demo + the 3-wrong re-teach) ─────────────────────────────
+// ─── Watch it done (opening demo + the 3-wrong re-teach) ─────────────────────────────
 const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void }> = ({ world, thing, onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const { unit, band } = measureLayout(world.axis, vw, vh)
@@ -348,14 +345,14 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
      */
     const LAY = 1000
     const lines = [
-      `How ${world.word} is the ${thing.noun}? Let's lay Milo's blocks!`,
+      `How ${world.word} is the ${thing.noun}? Let's lay the blocks!`,
       ...Array.from({ length: thing.units }, (_, i) => String(i + 1)),
       `We reached ${end}! So the ${thing.noun} is ${thing.units} blocks ${world.word}.`,
     ]
-    // ⚠️ The opening line ran ~3.5s with a real clip and the first count landed at 2200ms, so Milo
+    // ⚠️ The opening line ran ~3.5s with a real clip and the first count landed at 2200ms, so the voice
     // was cut off mid-sentence on the very first thing this chapter says. `speakPaced` keeps the
     // deterministic pacing the note above is about (a block a second, timer-driven, never hanging
-    // on a speech event) and simply will not START the next step while he is still talking.
+    // on a speech event) and simply will not START the next step while the voice is still talking.
     const cancel = speakPaced(lines, {
       onStep: (i) => {
         if (i === 0) return
@@ -391,25 +388,6 @@ function Notebook({ rows, tint }: { rows: Thing[]; tint: string }) {
           <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: tint }}>{t.units}</span>
         </div>
       ))}
-    </div>
-  )
-}
-
-function MiloHost({ milo }: { milo: MWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: '7%', bottom: BOTTOM_BAND - 8, transform: 'translateX(-50%)', zIndex: 26,
-      width: 'min(22vh, 190px)', height: 'min(22vh, 190px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'mi_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 72, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 32 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(30,42,60,.3))' }} />}
-      </div>
     </div>
   )
 }
@@ -451,7 +429,6 @@ export function makeMeasureBeat(world: MWorld, onRecord: (t: Thing) => void): Be
 
 // ─── Orchestrator ───────────────────────────────────────────────────────────────────
 const MI_CSS = `
-@keyframes mi_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes mi_in  { 0%{transform:translate(46px,38px) scale(.5);opacity:0} 100%{transform:translate(0,0) scale(1);opacity:1} }
 @keyframes mi_out { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(46px,38px) scale(.5);opacity:0} }
 `
@@ -524,7 +501,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo measure  (${demoIdx + 1}/${demos.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch how to measure  (${demoIdx + 1}/${demos.length})`)}
         <MeasureExplain key={`demo${demoIdx}`} world={world} thing={demos[demoIdx]}
           onDone={() => { if (demoIdx + 1 < demos.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -540,7 +517,6 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
       )}
 
       <Notebook rows={book} tint={world.tint} />
-      <MiloHost milo={world.milo} />
     </div>
   )
 }

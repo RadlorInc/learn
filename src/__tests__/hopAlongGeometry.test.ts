@@ -8,7 +8,7 @@
  *
  * The first version of this chapter's layout was hand-tuned and BOTH of its faults were caught by
  * eye rather than by arithmetic: the rightmost family hung off the frame, and the gathered crowd was
- * drawn straight over Milo. Those two are the first assertions below.
+ * drawn straight over the hopper. Those two are the first assertions below.
  */
 import { describe, it, expect } from 'vitest'
 import {
@@ -53,30 +53,30 @@ describe('HopAlong layout', () => {
     }
   })
 
-  it('no waiting family overlaps Milo, wherever he has hopped to', () => {
+  it('no waiting family overlaps the hopper, wherever it has hopped to', () => {
     for (const [vw, vh] of SIZES) for (const c of CASES) {
       const L = fetchLayout(vw, vh, c)
-      const miloHalf = (L.miloPx * 0.62) / 2 / vw * 100
+      const hopperHalf = (L.hopperPx * 0.637) / 2 / vw * 100
       for (let taken = 0; taken < c.families; taken++) {
-        const miloX = L.miloAt(taken)
-        // Families still waiting are those from `taken` on; he stands beside the one before.
+        const hopperX = L.hopperAt(taken)
+        // Families still waiting are those from `taken` on; it stands beside the one before.
         for (let k = taken; k < c.families; k++) {
-          const gap = (L.famX(k) - L.clusterW / 2) - (miloX + miloHalf)
+          const gap = (L.famX(k) - L.clusterW / 2) - (hopperX + hopperHalf)
           expect(gap, `${vw}x${vh} g${c.group} taken${taken} fam${k}`).toBeGreaterThan(-0.001)
         }
       }
     }
   })
 
-  it('Milo himself is fully on screen wherever he stands', () => {
-    // He shipped at left:-2px on a 1024 frame because his start was a flat 5% — less than his own
+  it('the hopper itself is fully on screen wherever it stands', () => {
+    // The hopper shipped at left:-2px on a 1024 frame because its start was a flat 5% — less than its own
     // half-width. Caught on screen, not by arithmetic, which is why this assertion exists.
     for (const [vw, vh] of SIZES) for (const c of CASES) {
       const L = fetchLayout(vw, vh, c)
-      const half = (L.miloPx * 0.62) / 2 / vw * 100
+      const half = (L.hopperPx * 0.637) / 2 / vw * 100
       for (let taken = 0; taken <= c.need; taken++) {
-        expect(L.miloAt(taken) - half, `${vw}x${vh} g${c.group} taken${taken}`).toBeGreaterThanOrEqual(0)
-        expect(L.miloAt(taken) + half, `${vw}x${vh} g${c.group} taken${taken}`).toBeLessThanOrEqual(100)
+        expect(L.hopperAt(taken) - half, `${vw}x${vh} g${c.group} taken${taken}`).toBeGreaterThanOrEqual(0)
+        expect(L.hopperAt(taken) + half, `${vw}x${vh} g${c.group} taken${taken}`).toBeLessThanOrEqual(100)
       }
     }
   })
@@ -84,8 +84,8 @@ describe('HopAlong layout', () => {
   it('the gathered crowd never runs off the left edge', () => {
     for (const [vw, vh] of SIZES) for (const c of CASES) {
       const L = fetchLayout(vw, vh, c)
-      const miloX = L.miloAt(c.need)                      // the furthest he ever gets
-      const last = L.gotSpot(c.need * c.group - 1, miloX) // the furthest back of the crowd
+      const hopperX = L.hopperAt(c.need)                      // the furthest it ever gets
+      const last = L.gotSpot(c.need * c.group - 1, hopperX) // the furthest back of the crowd
       const halfKid = L.gotPx / 2 / vw * 100
       expect(last.left - halfKid, `${vw}x${vh} g${c.group} n${c.need}`).toBeGreaterThan(-0.001)
     }
@@ -99,11 +99,11 @@ describe('HopAlong layout', () => {
       const L = fetchLayout(vw, vh, c)
       const d = L.exitPct(c.need, c.group)
       const halfKid = (L.gotPx / 2 / vw) * 100
-      const halfMilo = (L.miloPx * 0.62) / 2 / vw * 100
-      // the furthest-back little one, and Milo himself, both end beyond the right edge
-      const tail = L.gotSpot(c.need * c.group - 1, L.miloAt(c.need)).left
+      const halfHopper = (L.hopperPx * 0.637) / 2 / vw * 100
+      // the furthest-back little one, and the hopper itself, both end beyond the right edge
+      const tail = L.gotSpot(c.need * c.group - 1, L.hopperAt(c.need)).left
       expect(tail - halfKid + d, `${vw}x${vh} g${c.group} tail`).toBeGreaterThanOrEqual(100)
-      expect(L.miloAt(c.need) - halfMilo + d, `${vw}x${vh} g${c.group} milo`).toBeGreaterThanOrEqual(100)
+      expect(L.hopperAt(c.need) - halfHopper + d, `${vw}x${vh} g${c.group} hopper`).toBeGreaterThanOrEqual(100)
     }
   })
 
@@ -120,12 +120,12 @@ describe('HopAlong layout', () => {
   })
 
   it('the sign clears the headroom the hop sheet reserves', () => {
-    // Milo's cell is tall enough to hold the airborne frames, so anything hung off the cell top
-    // floats well above his head. headPx is the correction, and it must be a real offset.
+    // The hopper's cell is tall enough to hold the airborne frames, so anything hung off the cell top
+    // floats well above its head. headPx is the correction, and it must be a real offset.
     for (const [vw, vh] of SIZES) {
       const L = fetchLayout(vw, vh, { group: 5, families: 5 })
       expect(L.headPx).toBeGreaterThan(0)
-      expect(L.headPx).toBeLessThan(L.miloPx * 0.5)
+      expect(L.headPx).toBeLessThan(L.hopperPx * 0.5)
     }
   })
 })
@@ -173,8 +173,8 @@ describe('HopAlong run', () => {
     const air = fetchLayout(1024, 620, { group: 5, families: 5, flier: true })
     const ground = fetchLayout(1024, 620, { group: 5, families: 5, flier: false })
     expect(ground.flyLift).toBe(0)
-    expect(air.flyLift).toBeGreaterThan(air.miloPx * 0.3)   // genuinely up around his head
-    expect(air.flyLift).toBeLessThan(air.miloPx * 0.84)     // not above the top of him
+    expect(air.flyLift).toBeGreaterThan(air.hopperPx * 0.3)   // genuinely up off the ground
+    expect(air.flyLift).toBeLessThan(air.hopperPx * 0.64)     // not above the top of the frog's head (0.64 of its cell)
   })
 
   it('never casts a flier into a scene it would disappear against', () => {
@@ -192,7 +192,7 @@ describe('HopAlong run', () => {
 })
 
 describe('HopAlong rounds', () => {
-  it('always offers more families than he needs, so stopping is a real decision', () => {
+  it('always offers more families than needed, so stopping is a real decision', () => {
     for (const d of [1, 2, 3] as const) for (let i = 0; i < 200; i++) {
       const r = makeFetch(RUN[3], d)
       expect(r.families).toBeGreaterThan(r.need)

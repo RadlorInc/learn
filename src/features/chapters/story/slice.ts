@@ -19,7 +19,7 @@
  * counting parts, not naming a fraction. (Its three choice chips were also `[2,3,4]` unshuffled, so
  * position alone gave it away.)
  *
- * So the verb is **FIT IT**: Milo holds out a piece, the child lays copies of it into the whole and
+ * So the verb is **FIT IT**: the child is handed a piece and lays copies of it into the whole and
  * finds how many fit. Equality is not supplied, it is DISCOVERED — copies of one piece are equal by
  * construction, and a piece that does not fit a whole number of times is not a fraction of the whole
  * at all. The inverse relationship then comes free: a smaller piece visibly fits more times.
@@ -29,7 +29,6 @@
  *   · **TAKE** — the number is given, the child finds the piece.  "Which piece makes thirds?"
  * and ONE grader for both: *the whole is exactly full, with the right piece.*
  */
-import { SHEETS } from './canvas/sheets'
 
 // ─── words ────────────────────────────────────────────────────────────────────────────
 /** Only ever 1..12 here — everything on screen has to stay countable by eye. */
@@ -54,7 +53,7 @@ export type On = 'shape' | 'group'
 export type Shape = 'round' | 'bar'
 
 export interface FrRound {
-  slot: number      // which of Milo's ten orders — fixes the treat, the shape and the scene
+  slot: number      // which of the shop's ten orders — fixes the treat, the shape and the scene
   den: Den
   on: On
   n: number         // how many things are in the pile; 0 for a shape
@@ -168,9 +167,9 @@ export const perShare = (r: FrRound) => (r.on === 'group' ? r.n / r.den : 0)
 export const isSolved = (r: FrRound, got: { den: Den; laid: number }) =>
   got.den === r.den && got.laid === r.den
 
-// ─── Milo's day at the shop ───────────────────────────────────────────────────────────
+// ─── a day at the shop ─────────────────────────────────────────────────────────────────
 export interface Order {
-  what: string        // what Milo is doing — the reason to cut anything
+  what: string        // what the shop is doing — the reason to cut anything
   treat: string       // the whole
   art: string         // the REAL sprite the whole is drawn from — never a flat colour
   shape: Shape
@@ -178,7 +177,7 @@ export interface Order {
   item: string        // the sprite a PILE is made of
   items: string       // that sprite's plural, for the spoken ask
   colors: { base: string; shaded: string; edge: string }
-  topping?: string    // real art laid on the piece Milo takes
+  topping?: string    // real art laid on the piece being shared
   emoji: string
 }
 
@@ -257,13 +256,13 @@ export { SHOPPERS as FRIENDS, shopperAt as friendAt } from './market'
  * How many friends are at the counter right now.
  *
  * ⚠️ A FIT ROUND MUST OPEN WITH SOMEBODY ALREADY WAITING, and it shipped without one. The count was
- * simply `laid`, so at the start of a fit round the board asked *"how many friends can he give one
- * to?"* over an **empty counter** — a question about people who were not there, and the friends only
+ * simply `laid`, so at the start of a fit round the board asked *"how many friends can get one?"*
+ * over an **empty counter** — a question about people who were not there, and the friends only
  * appeared after the child had already tapped. The whole reason this chapter has friends is that
  * they are what the question is ABOUT; asking before any of them exists puts it straight back to
  * being a question about geometry.
  *
- * So one friend is standing there from the first frame — she is why Milo cut a piece at all — and
+ * So one friend is standing there from the first frame — she is why a piece was cut at all — and
  * each further piece brings the next one in on her own legs. That gives nothing away: there is
  * always exactly ONE more waiting than have been served, whatever the answer turns out to be, and
  * at the end nobody is left empty-handed because the last piece serves the last arrival.
@@ -273,7 +272,7 @@ export { SHOPPERS as FRIENDS, shopperAt as friendAt } from './market'
  */
 export const friendsShown = (ask: Ask, den: Den, laid: number) =>
   ask === 'take' ? den : Math.max(1, laid)
-/** What Milo calls each of them, in the same order — so a miss line can name who went without. */
+/** What each of them is called, in the same order — so a miss line can name who went without. */
 export const FRIEND_NAMES = ['Bunny', 'Duck', 'Squirrel', 'Lamb', 'Duckling', 'Chick'] as const
 export const friendName = (i: number) => FRIEND_NAMES[i % FRIEND_NAMES.length]
 
@@ -293,7 +292,7 @@ export function makeFrRound(d: 1 | 2 | 3, round: number, asked: readonly string[
   }
 }
 
-// ─── what Milo says ───────────────────────────────────────────────────────────────────
+// ─── what the shop says ───────────────────────────────────────────────────────────────
 /**
  * ONE renderer for the ask, because SkillBeat speaks it and the bubble writes it, and those two
  * drifting apart is how a chapter ends up narrating one thing while the screen says another.
@@ -311,7 +310,7 @@ export function askTextFor(r: FrRound): string {
     return `${who} are waiting, and there are ${numWord(r.n)} ${o.items}. Share them out so everyone gets the same!`
   }
   if (r.ask === 'fit') {
-    return `Milo cut a piece of ${o.treat} this big. How many friends can he give one to? Lay them in!`
+    return `Here is a piece of ${o.treat} this big. How many friends can get one? Lay them in!`
   }
   return `${who} want some ${o.treat}, and they must ALL get the same. Which piece is fair?`
 }
@@ -370,36 +369,30 @@ export function missFor(r: FrRound, got: { den: Den; laid: number }): string {
 }
 
 // ─── layout ───────────────────────────────────────────────────────────────────────────
-/** Milo's walking sprite. He is the only thing in this chapter that travels. */
-export const MILO = '/assets/characters/milo_side.png'
-/** DERIVED from the registered sheet rather than typed here. A hand-copied aspect is a second source
- *  of truth that goes wrong silently the day the strip is re-cut — the sprite just draws stretched,
- *  which nothing checks. The gate asserts the sheet exists. */
-export const MILO_ASPECT = SHEETS[MILO]?.cellAspect ?? 0.586
-
 export { CHROME_PAD, menuBtn, chromeTop } from './chrome'
 import { chromeTop } from './chrome'
-/** The share of the height a shopkeeper gets — the SAME number CoinShop draws him at, imported
- *  rather than retyped, because two chapters disagreeing about how big Milo is is exactly how this
- *  one ended up with a 200px cap nobody noticed. */
-import { MILO_SHARE } from './market'
+/** The share of the height a figure standing in a shop gets — the SAME number CoinShop draws its
+ *  customer at, imported rather than retyped, because two chapters disagreeing about how big the
+ *  cast is is exactly how this one ended up with a 200px cap nobody noticed. */
+import { CUSTOMER_SHARE } from './market'
 
 /**
  * Every band on screen, in one place, derived rather than picked — because every founder-visible
  * layout fault in this repo has been a hand-tuned percentage that happened to hold at one size. The
  * gate drives THIS function, so it cannot check a second copy of the numbers.
  *
- * ⚠️ THE BAR IS MEASURED OFF MILO, NOT GUESSED. He stands bottom-left and the bar starts to the
- * right of him; two independent percentages of the width is exactly how StoryTime once put its
- * answer box 29px inside its own button row.
+ * ⚠️ THERE IS NO SHOPKEEPER. A figure used to stand bottom-left and the bar, the bubble and the board
+ * were all measured off his right-hand edge; he was taken out (the product has no mascot), and the
+ * column he held went back to the scene. Everything now starts at ONE left margin, `sideL` — still a
+ * single number the bands share, never two independent percentages of the width, which is exactly
+ * how StoryTime once put its answer box 29px inside its own button row.
  *
  * ⚠️ AND THE BOARD YIELDS TO THE BAR, NOT THE OTHER WAY ROUND. The bar holds the tap targets — the
  * pieces the child lays — so it keeps its height and the world takes what is left.
  *
- * ⚠️ THE BUBBLE IS A BAND, NOT A FLOATING PANEL. Anchored freely at Milo's mouth it runs straight
- * over the board on a narrow frame, putting the two things a child must read at once on top of each
- * other. Stacked (chrome · bubble · board · bar) an overlap is not expressible, and the tail keeps
- * the words visibly HIS.
+ * ⚠️ THE BUBBLE IS A BAND, NOT A FLOATING PANEL. Floated freely it runs straight over the board on a
+ * narrow frame, putting the two things a child must read at once on top of each other. Stacked
+ * (chrome · bubble · board · bar) an overlap is not expressible.
  */
 export function layoutFor(vw: number, vh: number) {
   const short = vh < 470
@@ -409,64 +402,60 @@ export function layoutFor(vw: number, vh: number) {
   const bubbleH = short ? 46 : 60
 
   /**
-   * ⚠️ HIS HEIGHT IS THE ROOM UNDER HIS OWN BUBBLE, NOT A FLAT CAP. The first cut was
-   * `min(vh * 0.26, 200)`, so on any frame taller than 770 the 200 bound and he — and with him
-   * every friend, at 0.62 of him — stopped growing: a 1000-tall window drew a 200px shopkeeper and
-   * a 124px rabbit in a scene sized for the window. The founder read it as "characters chhote hai",
-   * and he is the same character CoinShop draws at `MILO_SHARE` (0.40) of the height with no cap.
-   * Buy height from the chrome, cap by the gap that actually exists.
+   * ⚠️ THE CAST'S HEIGHT IS THE ROOM UNDER THE BUBBLE, NOT A FLAT CAP. The first cut was
+   * `min(vh * 0.26, 200)`, so on any frame taller than 770 the 200 bound and every friend stopped
+   * growing: a 1000-tall window drew a 124px rabbit in a scene sized for the window. The founder
+   * read it as "characters chhote hai". Buy height from the chrome, cap by the gap that actually
+   * exists. `standH` is the height a full-size figure standing in the shop would get; the friends
+   * are drawn at a share of it.
    */
-  const miloH = Math.max(74, Math.round(Math.min(
-    (short ? 0.30 : MILO_SHARE) * vh,
+  const standH = Math.max(74, Math.round(Math.min(
+    (short ? 0.30 : CUSTOMER_SHARE) * vh,
     vh - (bubbleTop + bubbleH) - (short ? 6 : 14),
   )))
-  const miloW = Math.round(miloH * MILO_ASPECT)
-  const miloLeft = Math.round(vw * 0.05)
-  const miloRight = miloLeft + miloW
+  /** The one left margin every band starts from. */
+  const sideL = Math.round(vw * 0.05)
 
   // The tray of pieces plus the take-back and commit buttons, all at a real tap size.
   const barH = short ? 62 : 82
   const barBottom = short ? 6 : 14
-  const barLeft = miloRight + (short ? 8 : 18)
+  const barLeft = sideL
   const barW = Math.max(240, vw - barLeft - (short ? 10 : 22))
 
-  const bubbleLeft = miloLeft
-  // Capped on a roomy frame or it reads as a banner pinned to the top rather than as something Milo
-  // said; a short frame needs every pixel, so it is not capped there.
+  const bubbleLeft = sideL
+  // Capped on a roomy frame or it reads as a banner pinned to the top; a short frame needs every
+  // pixel, so it is not capped there.
   const bubbleW = Math.max(200, Math.min(vw - bubbleLeft - (short ? 12 : 26), short ? Infinity : 840))
-  /** Where the tail points — Milo's mouth, as a share of the bubble's own width. */
-  const tailPct = Math.min(40, Math.round(((miloW * 0.55) / bubbleW) * 100))
 
   const boardTop = bubbleTop + bubbleH + (short ? 4 : 10)
   const boardBand = vh - boardTop - barH - barBottom - (short ? 6 : 16)
 
   /**
    * ⚠️ THE FRIENDS STAND ON THE RIGHT, AND THE FOOD MOVES LEFT TO MAKE ROOM — they are not a
-   * decoration squeezed in beside the board, they are the question. Landscape exists so a shopkeeper,
-   * the thing being shared and the people waiting for it can all be on screen at once, which is also
-   * why this band is the one that keeps its width when the frame gets narrow.
+   * decoration squeezed in beside the board, they are the question. Landscape exists so the thing
+   * being shared and the people waiting for it can both be on screen at once, which is also why this
+   * band is the one that keeps its width when the frame gets narrow.
    */
-  const friendH = Math.round(Math.min(miloH * 0.62, boardBand * 0.62))
+  const friendH = Math.round(Math.min(standH * 0.62, boardBand * 0.62))
   const friendsLeft = Math.round(vw * 0.54)
   const friendsW = vw - friendsLeft - (short ? 8 : 16)
   /** They stand on the floor of the board band, so they share a ground line with the counter. */
   const friendsBottom = barBottom + barH + (short ? 2 : 6)
 
-  /** Where the food sits — centred in the room between Milo and the friends, never over either. */
-  const boardCentre = Math.round((miloRight + friendsLeft) / 2)
-  const boardRoom = Math.max(120, friendsLeft - miloRight - (short ? 10 : 20))
+  /** Where the food sits — centred in the room between the left margin and the friends. */
+  const boardCentre = Math.round((sideL + friendsLeft) / 2)
+  const boardRoom = Math.max(120, friendsLeft - sideL - (short ? 10 : 20))
   /** A round treat is square, so height binds; a bar is drawn wider than tall from the same number.
-   *  Capped by the room between Milo and the friends as well as by the band. */
+   *  Capped by the room left of the friends as well as by the band. */
   const wholePx = Math.max(88, Math.round(Math.min(boardBand, boardRoom, 260)))
 
   return {
-    short, top, miloH, miloW, miloLeft, miloRight,
+    short, top, sideL,
     barH, barBottom, barLeft, barW,
-    bubbleTop, bubbleH, bubbleLeft, bubbleW, tailPct,
+    bubbleTop, bubbleH, bubbleLeft, bubbleW,
     boardTop, boardBand, wholePx, boardCentre, boardRoom,
     friendH, friendsLeft, friendsW, friendsBottom,
-    /** Where the board's centre sits — in the room left of nothing and right of Milo, so the whole
-     *  and the bar below it share one vertical axis instead of drifting apart. */
+    /** Where the bar's centre sits, as a share of the width. */
     boardCentrePct: Math.round(((barLeft + barW / 2) / vw) * 100),
   }
 }
