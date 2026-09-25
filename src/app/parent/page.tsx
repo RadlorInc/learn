@@ -40,7 +40,7 @@ import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner
 import type { AgeGroup } from '@/core/chapters'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
-import { chosenModules, MODULES, GRADES, findLesson } from '@/features/lessons/modules'
+import { chosenModules, ALL_MODULES as MODULES, GRADES, findLesson } from '@/features/lessons/modules'
 import { ModuleChecklist, NewClass, bandOf } from '@/features/classes/Classes'
 import { summarize } from '@/features/classes/exercise'
 import { buildReport, localDay, type Report, type PointRow } from '@/features/lessons/progressReport'

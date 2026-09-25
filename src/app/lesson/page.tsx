@@ -1,10 +1,10 @@
 'use client'
 /** /lesson?id=g3m1-t1 plays one new-flow lesson (`&practice=1`: straight into its practice); /lesson?module=g3m2 shows that
  *  module's topic path (Module 1 without either), and `&summary=1` its summary once every topic the child has is done. */
-import { Suspense, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useSyncExternalStore } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { findLesson, chosenModules } from '@/features/lessons/modules'
+import { findLesson, findModule, chosenModules } from '@/features/lessons/modules'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { LessonList } from '@/features/lessons/LessonList'
 import { ModuleSummary } from '@/features/lessons/ModuleSummary'
@@ -34,11 +34,15 @@ function Lesson() {
   if (!mounted) return null
 
   const learner = getActiveLearner(), learnerId = learner?.id ?? null
+  // A KG–2 story chapter (a dashboard link, or its module id) plays at /game — it has no lesson screens.
+  const story = findLesson(id)?.module.story ?? findModule(moduleId)?.story
+  if (story) return <GoTo href={`/game?c=${story}`} />
   const found = findLesson(id)
   if (!found) {
     // The topic path shows only the topics the parent chose (all of them when no choice was made).
-    const mods = chosenModules(learner?.lesson_ids)
-    const module = mods.find(x => x.id === moduleId && x.lessons.length > 0) ?? mods.find(x => x.lessons.length > 0)!
+    const mods = chosenModules(learner?.lesson_ids).filter(x => !x.story)
+    const module = mods.find(x => x.id === moduleId && x.lessons.length > 0) ?? mods.find(x => x.lessons.length > 0)
+    if (!module) return <GoTo href="/modules" />
     // The summary only for a module that is really complete; otherwise the topic path (a stale or typed link).
     if (summary && module.lessons.every(l => lessonDone(learnerId, l.id))) {
       const whole = findLesson(module.lessons[0].id)!.module
@@ -69,4 +73,10 @@ function Lesson() {
       onModuleComplete={() => router.push(`/lesson?module=${module.id}&summary=1`)}
     />
   )
+}
+
+function GoTo({ href }: { href: string }) {
+  const router = useRouter()
+  useEffect(() => { router.replace(href) }, [router, href])
+  return null
 }

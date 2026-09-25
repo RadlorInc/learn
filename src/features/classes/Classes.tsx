@@ -16,7 +16,7 @@ import {
   createClass, updateClass, createLearner, deleteLearner, setChildLogin, setClassLessons,
   type ClassRow,
 } from '@/data/repositories'
-import { GRADES, MODULES, modulesOf, hasModule } from '@/features/lessons/modules'
+import { GRADES, LESSON_GRADES, ALL_MODULES as MODULES, modulesOf, hasModule, gradeName } from '@/features/lessons/modules'
 import { parseRoster, tempPassword, rosterCsv, type RosterRow } from '@/core/classRoster'
 import { normalizeUsername } from '@/core/childLogin'
 import type { AgeGroup } from '@/core/chapters'
@@ -30,7 +30,8 @@ const input = { padding: '12px 14px', minHeight: 44, fontSize: 16, color: P.ink,
 const chip = (on: boolean) => ({ padding: '8px 14px', minHeight: 40, borderRadius: 50, border: '2px solid', borderColor: on ? P.accent : P.edge, background: on ? P.soft : P.card, color: P.ink, cursor: 'pointer', fontSize: 14, fontWeight: 700 }) as const
 
 /** `learners.age_group` is a legacy band that is still required; a class child gets the band their grade sits in. */
-export const bandOf = (grade: number): AgeGroup => (grade <= 5 ? '9-11' : '12-14')
+// KG–2 (story chapters, 2026-09-25) map to the two bands those chapters were built for.
+export const bandOf = (grade: number): AgeGroup => (grade <= 0 ? '3-5' : grade <= 2 ? '6-8' : grade <= 5 ? '9-11' : '12-14')
 
 export interface ClassStudent { id: string; name: string }
 
@@ -58,7 +59,8 @@ export function NewClass({ onClose, onCreated }: { onClose: () => void; onCreate
       <div>
         <p style={{ margin: '0 0 6px', fontSize: 13, fontWeight: 700, color: P.ink2 }}>Grade</p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>Grade {g}</button>)}
+          {/* A class's own grade is 3–8 (a database check); KG–2 story chapters can still be given to it below. */}
+          {LESSON_GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>Grade {g}</button>)}
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
@@ -87,7 +89,7 @@ export function ModuleChecklist({ grade, setGrade, pick, setPick }: {
   return (
     <>
       <div className="chip-scroll" aria-label="Grade">
-        {GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>Grade {g}</button>)}
+        {GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>{gradeName(g)}</button>)}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {modulesOf(grade).map(m => {
@@ -97,7 +99,7 @@ export function ModuleChecklist({ grade, setGrade, pick, setPick }: {
               <input type="checkbox" checked={on} disabled={soon} style={{ width: 20, height: 20, accentColor: 'var(--milo-orange)' }}
                 onChange={e => setPick(p => { const n = new Set(p); if (e.target.checked) n.add(m.id); else n.delete(m.id); return n })} />
               <span style={{ fontSize: 14, fontWeight: 700, color: P.ink }}>Module {m.n} · {m.title}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 12, color: P.ink3 }}>{soon ? 'coming soon' : `${m.lessons.length} topics`}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 12, color: P.ink3 }}>{soon ? 'coming soon' : m.story ? 'story' : `${m.lessons.length} topics`}</span>
             </label>
           )
         })}

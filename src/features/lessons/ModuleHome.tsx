@@ -14,11 +14,11 @@ import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSe
 import { showDay } from './progressReport'
 import { Thing, INK, TEAL, ON_TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
-import { chosenModules, mixedPractice } from './modules'
+import { chosenModules, mixedPractice, type Module } from './modules'
 import { C } from './sessionCopy'
 import { TEXT_SIZES, saveTextSize, useTextSize, type TextSize } from '@/infra/storage/textSize'
 import type { Obj } from './script'
-import { CHAPTER_IDS, STORY_GRADES, chaptersForGrade, chapterKey, gradeLabel } from '@/core/chapters'
+import { getChapter, chapterKey, gradeLabel } from '@/core/chapters'
 
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
@@ -33,7 +33,10 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
   const [fresh, setFresh] = useState<{ ids: string[] | null; due: Record<string, string> | null } | null>(null)
   const lessonIds = fresh ? fresh.ids : savedIds
   const due = fresh ? fresh.due : getActiveLearner()?.lesson_due ?? null
-  const mods = chosenModules(lessonIds)
+  const all = chosenModules(lessonIds)
+  // KG–2 story modules get their own layout (one Play card each); Grades 3–8 are the lesson modules.
+  const storyMods = all.filter(x => x.story), mods = all.filter(x => !x.story)
+  const STORY_TABS = [...new Set(storyMods.map(x => x.grade))]
   const GRADES = [...new Set(mods.map(x => x.grade))]
   const modulesOf = (g: number) => mods.filter(x => x.grade === g)
   const firstOf = (g: number) => { const ms = modulesOf(g); return (ms.find(x => x.lessons.length > 0) ?? ms[0]).id }
@@ -51,15 +54,16 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
       setFresh({ ids: me.lesson_ids ?? null, due: me.lesson_due ?? null })
     }).catch(() => { /* offline: the saved copy stands */ })
     // The wallet after the pull, so points earned by uploads it just sent are counted.
-    pullLessonProgress(learnerId, [...chosenModules(null).flatMap(x => x.lessons.map(l => l.id)), ...CHAPTER_IDS.map(chapterKey)])
+    pullLessonProgress(learnerId, chosenModules(null).flatMap(x => x.lessons.map(l => l.id)))
       .then(ok => { if (live && ok) redraw(n => n + 1); return getWallet(learnerId) })
       .then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
     return () => { live = false }
   }, [learnerId])
-  const [picked, setPicked] = useState(() => firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]))
-  // KG–2 are story chapters, not modules: a tab on its own, shown to every child (a parent's lesson picks cover 3–8 only).
-  const [storyGrade, setStoryGrade] = useState<number | null>(() => (STORY_GRADES as readonly number[]).includes(startGrade) ? startGrade : null)
-  const m = mods.find(x => x.id === picked) ?? mods[0]
+  const [picked, setPicked] = useState(() => GRADES.length ? firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]) : '')
+  // A story tab is open when the child asked for KG–2, or when the parent chose nothing from Grades 3–8.
+  const [storyTab, setStoryTab] = useState<number | null>(() => STORY_TABS.includes(startGrade) ? startGrade : GRADES.length ? null : STORY_TABS[0] ?? null)
+  const storyGrade = storyTab !== null && STORY_TABS.includes(storyTab) ? storyTab : GRADES.length ? null : STORY_TABS[0] ?? null
+  const m = mods.find(x => x.id === picked) ?? mods[0] ?? storyMods[0]
   const grade = m.grade, ready = m.lessons.length > 0
   // Read during render: every caller mounts this on the client only, after kv has hydrated.
   const doneIn = (lessons: typeof m.lessons) => lessons.filter(l => lessonDone(learnerId, l.id)).length
@@ -89,12 +93,12 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
         </div>
 
         <div role="tablist" aria-label="Grades" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: 'clamp(14px, 3vw, 24px) clamp(14px, 3vw, 24px) 0' }}>
-          {STORY_GRADES.map(g => (
-            <button key={g} type="button" role="tab" aria-selected={g === storyGrade} onClick={() => setStoryGrade(g)}
+          {STORY_TABS.map(g => (
+            <button key={g} type="button" role="tab" aria-selected={g === storyGrade} onClick={() => setStoryTab(g)}
               style={{ ...pill, background: g === storyGrade ? TEAL : '#fff', color: g === storyGrade ? ON_TEAL : INK }}>{gradeLabel(g)}</button>
           ))}
           {GRADES.map(g => (
-            <button key={g} type="button" role="tab" aria-selected={storyGrade === null && g === grade} onClick={() => { setStoryGrade(null); setPicked(firstOf(g)) }}
+            <button key={g} type="button" role="tab" aria-selected={storyGrade === null && g === grade} onClick={() => { setStoryTab(null); setPicked(firstOf(g)) }}
               style={{ ...pill, background: storyGrade === null && g === grade ? TEAL : '#fff', color: storyGrade === null && g === grade ? ON_TEAL : INK }}>Grade {g}</button>
           ))}
           {exercises && exercises.count > 0 && (
@@ -102,7 +106,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
           )}
         </div>
 
-        {storyGrade !== null ? <StoryChapters key={storyGrade} grade={storyGrade} learnerId={learnerId} /> :
+        {storyGrade !== null ? <StoryChapters key={storyGrade} modules={storyMods.filter(x => x.grade === storyGrade)} learnerId={learnerId} /> :
         <div className="mh-grid" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
           <nav aria-label="Modules" style={{ background: '#fff', border: `4px solid ${INK}`, borderRadius: 20, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {modulesOf(grade).map(x => {
@@ -158,8 +162,8 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
  * A KG–2 tab, laid out like Grades 3–8 (founder, 2026-09-25): each story chapter is a module — the numbered list on the
  * left, the chosen one on the right with one Play card. Play opens the chapter at /game; its Back returns to this tab.
  */
-function StoryChapters({ grade, learnerId }: { grade: number; learnerId: string | null }) {
-  const chapters = chaptersForGrade(grade)
+function StoryChapters({ modules, learnerId }: { modules: Module[]; learnerId: string | null }) {
+  const chapters = modules.map(x => getChapter(x.story!))
   const [picked, setPicked] = useState(0)
   const c = chapters[picked] ?? chapters[0]
   const isDone = (id: string) => lessonDone(learnerId, chapterKey(id))
@@ -171,7 +175,7 @@ function StoryChapters({ grade, learnerId }: { grade: number; learnerId: string 
           return (
             <button key={x.id} type="button" aria-pressed={on} onClick={() => setPicked(i)}
               style={{ ...row, background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK }}>
-              <span style={{ ...num, background: all ? '#9cf0d8' : on ? '#fff' : '#fbdbba', color: INK }}>{all ? '✓' : i + 1}</span>
+              <span style={{ ...num, background: all ? '#9cf0d8' : on ? '#fff' : '#fbdbba', color: INK }}>{all ? '✓' : modules[i].n}</span>
               <span style={{ flex: 1 }}>{x.name}</span>
             </button>
           )
@@ -179,7 +183,7 @@ function StoryChapters({ grade, learnerId }: { grade: number; learnerId: string 
       </nav>
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>Module {picked + 1}</p>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>Module {modules[picked]?.n ?? picked + 1}</p>
         <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(28px, 4vw, 40px)', color: INK, lineHeight: 1.1 }}>{c.name}</h1>
         <p style={bubble}>{c.hint}</p>
         <div style={{ ...card, background: '#9cf0d8' }}>
