@@ -39,7 +39,7 @@ function lines(copy: Record<string, unknown>): string[] {
 
 /** Style code, not words: a `style={…}` attribute, a `<style>` element, or the value of a CSS property in an object
  *  (`{ width: '100%' }`). ⚠️ Only a key the browser knows as a CSS property: a child's sentence kept in an object
- *  (`{ failed: "The game couldn't start…" }` on /play) must still be read — the control below proves it is. */
+ *  (`{ kept: 'Your points are saved…' }` on /play) must still be read — the control below proves it is. */
 function isStyle(n: ts.Node): boolean {
   for (let p: ts.Node | undefined = n.parent; p; p = p.parent) {
     if (ts.isJsxAttribute(p) && p.name.getText() === 'style') return true
@@ -84,7 +84,7 @@ describe('child-facing words', () => {
     expect(sentences('src/features/lessons/ModuleHome.tsx').join('\n')).toContain('Keep learning')
     expect(sentences('src/features/lessons/LessonPlayer.tsx').join('\n')).toContain('Here&apos;s how this one works:')
     // A sentence kept as an object's value is read; a CSS value is not.
-    expect(sentences('src/app/play/page.tsx')).toContain("The game couldn't start. Try again.")
+    expect(sentences('src/app/play/page.tsx')).toContain('Your points are saved. Nothing is taken away. Keep practicing to earn more!')
     expect(sentences('src/features/lessons/Frame.tsx').some(t => t.includes('* 100)}%'))).toBe(false)
     for (const w of ['You failed', 'That is wrong', 'Locked', 'Skip the lock', 'Incomplete', 'Not completed', 'Quit', 'Leave now', '23%', '7 %'])
       expect(EN.test(w) || PERCENT.test(w), w).toBe(true)

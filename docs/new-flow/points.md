@@ -12,8 +12,10 @@ queue, and the dashboard and `/play` say game time is coming soon.
   roles in `src/__tests__/lessonPoints.test.ts`.
 - **Sync:** `src/infra/storage/lessonSync.ts` — every change is queued and uploaded; the child's home and the parent
   dashboard pull the account's progress onto the device. `src/__tests__/lessonSync.test.ts`.
-- **Child:** points on the home bar → `/play` (spend points, the clock). ⚠️ The game itself is not in yet: the
-  founder is sending its files; it mounts where `/play` says "Your game goes here".
+- **Child:** points on the home bar → `/play`, which says **"Games are coming soon!"** and shows the points. ⚠️ Since
+  2026-09-26 `/play` spends NOTHING (founder: a child bought minutes, got "Time's up!" over an empty placeholder and
+  lost the points). The app no longer calls `start_game_time`, and `gameTimeNotSpent.test.ts` fails if anything in
+  `src/` calls it again. When a game is attached, bring the spending screen back from git history with it.
 - **Parent:** the dashboard's 🎮 Game time card (points, minutes played today, on/off, most minutes per day — the
   owning parent only) and the Topics card (done / mastered per module). XP, coins, levels and the old chapter
   history were removed from the dashboard, and the old `/profile` page was deleted (founder, 2026-09-17). The old
