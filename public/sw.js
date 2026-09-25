@@ -1,4 +1,4 @@
-const VERSION      = 'v235'
+const VERSION      = 'v237'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -7,7 +7,8 @@ const ASSETS_CACHE = `milo-assets-${VERSION}`
 // /parent); a service worker cannot return a cached redirected response to a
 // navigation (the browser fails it with ERR_FAILED). The root is handled by a
 // dedicated passthrough in the fetch handler below.
-const APP_PAGES = ['/menu', '/game', '/parent', '/auth', '/profile', '/shop', '/offline.html', '/manifest.json']
+// Only routes the build serves (/profile and /shop were deleted and answered 404). Gated by swTakeover.test.ts.
+const APP_PAGES = ['/menu', '/game', '/parent', '/auth', '/offline.html', '/manifest.json']
 
 // ─── Install — pre-cache all app pages ───────────────────────
 self.addEventListener('install', event => {
@@ -19,6 +20,10 @@ self.addEventListener('install', event => {
 })
 
 // ─── Activate ─────────────────────────────────────────────────
+// ⚠️ This also drops milo-assets-* (voice clips, art) ON PURPOSE. A clip's URL hashes the line's TEXT, not the
+// audio, and clips have been re-rendered in place (56 trimmed, 2026-09-19); /assets/ art has been rewritten in place
+// too. Both are cache-first, so the bump is the only thing that refreshes them. Keep them across bumps only once
+// their URLs change with their bytes. Gated by swTakeover.test.ts.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
