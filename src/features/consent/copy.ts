@@ -143,6 +143,20 @@ export const B1 = {
   decline: { en: 'No — cancel this request', es: 'No — cancelar esta solicitud' },
 }
 
+// ─────────── Document 03 · B0 / B0t — the sign-up email (email-and-password sign-ups, 2026-09-25) ───────────
+/** B0: the parent's sign-up email — B1's body word for word, its own subject, and `confirms` above the button. */
+export const SIGNUP = {
+  subject: { en: 'Confirm your email and give permission for your children', es: 'Confirme su correo y dé permiso para sus hijos' },
+  confirms: { en: 'Clicking the button also confirms your email address.', es: 'Al hacer clic en el botón también confirma su dirección de correo electrónico.' },
+}
+/** B0t: a teacher's sign-up email — confirms the address, asks nothing. `ignore` and the address are B1's. */
+export const CONFIRM_EMAIL = {
+  subject: { en: 'Confirm your email for Radlic', es: 'Confirme su correo para Radlic' },
+  thanks: { en: 'Thanks for signing up with Radlic.', es: 'Gracias por registrarse en Radlic.' },
+  please: { en: 'Please confirm your email address.', es: 'Confirme su dirección de correo electrónico, por favor.' },
+  button: { en: 'Confirm my email', es: 'Confirmar mi correo' },
+}
+
 // ─────────────────────── Document 03 · B2 — the screen after "I give permission" ───────────────────────
 export const B2 = {
   heading: { en: 'Thank you — permission recorded', es: 'Gracias — permiso registrado' },

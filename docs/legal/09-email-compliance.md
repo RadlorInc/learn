@@ -76,10 +76,11 @@ Measured from the repository on 2026-09-23. The Supabase Auth templates and the 
 
 | Email | Sent by | Triggered by | Kind |
 |---|---|---|---|
-| Sign-up confirmation | Supabase Auth | an adult signing up with email and password | transactional |
+| Sign-up email for a parent (B0) — confirms the address AND asks for consent, one email | `sendEmail` (Resend API), from `/api/auth/signup` | a parent signing up with email and password (since 2026-09-25; Supabase no longer sends its own confirmation for this sign-up) | transactional |
+| Sign-up email for a teacher (B0t) — confirms the address | `sendEmail` (Resend API), from `/api/auth/signup` | a teacher signing up with email and password | transactional |
 | Password reset | Supabase Auth | "Forgot password" on the sign-in page | transactional |
 | Invitation (set your password) | Supabase Auth | no code in the app sends one — only the Supabase dashboard can; the app handles its link | transactional |
-| B1 — the consent request | `sendEmail` (Resend API) | a parent adding a child | transactional |
+| B1 — the consent request | `sendEmail` (Resend API) | a parent who signed in with Google (or an older account) pressing continue on the notice | transactional |
 | B3 — the second consent notice, a day later | `sendEmail` (Resend API, scheduled) | a parent granting consent | transactional |
 | Payment receipts | Stripe, if receipts are turned on in Stripe's dashboard | a payment | transactional — whether Stripe sends them is a provider setting that cannot be read from the repository |
 
