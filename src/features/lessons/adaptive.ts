@@ -14,7 +14,7 @@
  * The topic counts as done once mastered, or after DONE_AFTER answers across all its sessions.
  * Lesson practice, module practice and the review problem all move the same per-topic Standing with `step`.
  */
-import type { Problem } from './script'
+import type { Answer, Problem } from './script'
 
 export type Rng = () => number
 
@@ -175,3 +175,7 @@ export function nextModuleTopic(ids: readonly string[], standingOf: (id: string)
   const tie = new Map(pool.map(id => [id, r()]))
   return pool.sort((a, b) => score(a) - score(b) || tie.get(a)! - tie.get(b)!)[0]
 }
+
+/** A few answers from every level, so the answer box can take its shape from the whole ladder (a "−" key, a whole-number box). */
+export const ladderAnswers = (ladder: readonly Level[]): Answer[] =>
+  ladder.flatMap((lv, i) => Array.from({ length: 20 }, (_, s) => lv.make(rng(i * 1000 + s)).answer!))
