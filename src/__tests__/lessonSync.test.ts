@@ -61,7 +61,7 @@ describe('pulling the account onto a device', () => {
     rpc.mockResolvedValue({ error: null })
     rows = [{ lesson_id: 'g3m2-t1', done: true, level: 3, streak: 1, mastered: true }]
     markLessonDone('L', 'g3m2-t2')   // done here before sync existed
-    expect(await pullLessonProgress('L', ['g3m2-t1', 'g3m2-t2', 'g3m2-t3'])).toBe(true)
+    expect(await pullLessonProgress('L', ['g3m2-t1', 'g3m2-t2', 'g3m2-t3'])).not.toBeNull()
     expect(lessonDone('L', 'g3m2-t1')).toBe(true)
     expect(loadStanding('L', 'g3m2-t1')).toEqual({ level: 3, streak: 1, mastered: true })
     await flushLessonSync()
@@ -80,7 +80,7 @@ describe('pulling the account onto a device', () => {
   it('leaves the device alone when the account cannot be read', async () => {
     saveStanding('L', 'g3m2-t1', { level: 2, streak: 0, mastered: false })
     rows = null
-    expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(false)
+    expect(await pullLessonProgress('L', ['g3m2-t1'])).toBeNull()
     expect(loadStanding('L', 'g3m2-t1')).toEqual({ level: 2, streak: 0, mastered: false })
   })
 })
@@ -118,13 +118,13 @@ describe('where the child is in practice (short sessions)', () => {
   it('pulls the account\'s run onto this device; an older database without the column still pulls the rest', async () => {
     rpc.mockResolvedValue({ error: null })
     rows = [{ lesson_id: 'g3m2-t1', done: false, level: 2, streak: 1, mastered: false, run: RUN }]
-    expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(true)
+    expect(await pullLessonProgress('L', ['g3m2-t1'])).not.toBeNull()
     expect(loadRun('L', 'g3m2-t1')).toEqual(RUN)
     expect(db.selects.at(-1)).toMatch(/\brun\b/)
 
     localStorage.clear(); db.selects.length = 0; db.noRunColumn = true
     rows = [{ lesson_id: 'g3m2-t1', done: false, level: 2, streak: 1, mastered: false }]
-    expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(true)
+    expect(await pullLessonProgress('L', ['g3m2-t1'])).not.toBeNull()
     expect(loadStanding('L', 'g3m2-t1')).toEqual({ level: 2, streak: 1, mastered: false })
     expect(db.selects).toHaveLength(2)                       // asked with run, refused, asked again without
     expect(db.selects[1]).not.toMatch(/\brun\b/)
