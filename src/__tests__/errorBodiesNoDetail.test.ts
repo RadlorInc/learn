@@ -14,7 +14,9 @@ import { NOTICE_VERSION } from '@/features/consent/copy'
 let signupLink: unknown = null
 vi.mock('@/features/consent/server', async orig => {
   const real = await orig<typeof import('@/features/consent/server')>()
-  return { ...real, generateSignupLink: vi.fn(async () => signupLink) }
+  // `lastSignupLinkAt` exists once #251 (SEC-04's cooldown) is merged; stubbed so this test is about the error body,
+  // not about a network the test does not have. Harmless on a tree without it.
+  return { ...real, generateSignupLink: vi.fn(async () => signupLink), lastSignupLinkAt: vi.fn(async () => null) }
 })
 
 const ENV = { ...process.env }
