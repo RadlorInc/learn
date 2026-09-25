@@ -18,7 +18,7 @@
  * Watched red 2026-09-25: a planted reword of one TickTock lesson line failed assertion 1 naming it.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { clipKey } from '@/core/voiceClips'
 import { CHAPTERS } from '@/core/chapters'
 import { PRAISE } from '@/core/praise'
@@ -89,5 +89,15 @@ describe('the KG–2 Josh corpus is current with the chapter source', () => {
     expect(bad).toEqual([])
     expect(new Set(rows.map(r => r.key)).size, 'a key appears twice').toBe(rows.length)
     expect(rows.map(r => r.grade), 'rows are sorted by grade').toEqual([...rows.map(r => r.grade)].sort((a, b) => a - b))
+  })
+
+  // With the tests above, a chapter line reworded or added without a clip goes red here instead of
+  // quietly falling back to browser speech. All 10,347 were rendered and merged 2026-09-26.
+  // Watched red 2026-09-26 with one key dropped from the manifest.
+  it('every row has a Josh clip the player can find', () => {
+    const dir = 'public/audio/nzFihrBIvB34imQBuxub'
+    const manifest = new Set<string>(JSON.parse(readFileSync(`${dir}/manifest.json`, 'utf8')))
+    const noClip = rows.filter(r => !manifest.has(r.key) || !existsSync(`${dir}/${r.key}.mp3`))
+    expect(noClip.map(r => `${r.chapter}: ${r.spoken}`).slice(0, 10)).toEqual([])
   })
 })
