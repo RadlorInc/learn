@@ -99,8 +99,16 @@ jobs:
   # EVERY push to main — and because `concurrency` above queues runs without cancelling, the next
   # push's `promote` would sit behind that waiting approval, so no deploy could land until someone
   # approved or rejected a migration run that had nothing to apply.
+  #
+  # ⚠️ "THIS PUSH" IS THE WRONG QUESTION (OPS-02): a migration whose migrate-prod was rejected, failed
+  # or cancelled while pending would never be retried by a later app-only push. The script diffs from
+  # the last commit a migrate-prod SUCCEEDED on, and answers `true` whenever it cannot tell.
+  # Read-only: it only lists this workflow's runs and jobs (`actions: read`).
   migrations-changed:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
     steps:
@@ -108,12 +116,9 @@ jobs:
         with:
           fetch-depth: 0
       - id: diff
-        run: |
-          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- supabase/migrations; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"; echo "no migration files changed in this push"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"; git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- supabase/migrations
-          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/migrations-pending.sh "${{ github.sha }}"
 
   migrate-prod:
     # ⚠️⚠️ STAGING-FIRST IS SUSPENDED WHILE NO STAGING PROJECT EXISTS — AND ONLY THEN (2026-09-23,
