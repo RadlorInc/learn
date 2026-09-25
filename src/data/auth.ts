@@ -22,11 +22,17 @@ export async function getCurrentUser(): Promise<User | null> {
   return user
 }
 
-/** Email + password sign-up. Sends a confirmation email that returns to `emailRedirectTo`.
- *  `data` goes into the account's user_metadata — the signup consent tick rides there (consent-once C2),
- *  so it survives the confirmation link being opened on another device. */
-export function signUpWithEmail(email: string, password: string, emailRedirectTo: string, data?: Record<string, unknown>) {
-  return createClient().auth.signUp({ email, password, options: { emailRedirectTo, ...(data ? { data } : {}) } })
+/**
+ * Email + password sign-up, with ONE email (founder, 2026-09-25). The account is created by `/api/auth/signup`, which
+ * sends our own email — for a parent it confirms the address AND asks for consent; for a teacher it only confirms.
+ * Supabase's own confirmation email is not used for this path. The link lands on `/auth/confirm`.
+ */
+export type SignUpResult = 'ok' | 'exists' | 'weak_password' | 'invalid' | 'rate_limited' | 'failed'
+export async function signUpOneEmail(body: { email: string; password: string; firstName: string | null; role: 'parent' | 'teacher'; lang: 'en' | 'es' }): Promise<SignUpResult> {
+  const r = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (r.ok) return 'ok'
+  const e = (await r.json().catch(() => null))?.error
+  return e === 'exists' || e === 'weak_password' || e === 'invalid' || e === 'rate_limited' ? e : 'failed'
 }
 
 /**

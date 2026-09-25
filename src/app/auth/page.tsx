@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signUpWithEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
+import { signUpOneEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
 import { getMyRole, homeForRole, enterAsChild } from '@/data/repositories'
 import { loginEmail } from '@/core/childLogin'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
@@ -73,6 +73,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')   // signup only: the name the consent email greets
   const [confirm,  setConfirm]  = useState('')     // signup only: typed twice, compared before anything is sent
+  // signup only: a parent's sign-up email also asks for consent, a teacher's only confirms (founder, 2026-09-25)
+  const [role,     setRole]     = useState<'parent' | 'teacher' | null>(null)
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
@@ -95,34 +97,30 @@ export default function AuthPage() {
       setError(t('Passwords do not match'))
       return
     }
+    if (mode === 'signup' && !role) {
+      setError(t('Please choose Parent or Teacher'))
+      return
+    }
 
     setLoading(true); reset()
 
     try {
       if (mode === 'signup') {
-        const { data, error } = await signUpWithEmail(
-          email.trim(),
-          password,
-          `${window.location.origin}/auth/callback`,
-          { first_name: firstNameOf({ first_name: firstName }) },
-        )
-        // V10 REVERSED (founder's call, 2026-09-22): say plainly that the email already has an account,
-        // as most apps do. The cost is account enumeration — anyone can learn whether an address is
-        // registered — accepted because a parent who forgot they signed up got "check your email" and
-        // then nothing, with no way to know why.
-        // ⚠️ Supabase does NOT return an error for an existing CONFIRMED address: it answers with a
-        // fake user whose `identities` is EMPTY (measured on production). An existing UNCONFIRMED
-        // address gets a real resend and a non-empty list, so "check your email" stays right for it.
-        const exists = error
-          ? /already|registered|exists/i.test(error.message)
-          : data.user?.identities?.length === 0
-        if (exists) {
+        // ONE email (founder, 2026-09-25): the server creates the account and sends it — for a parent, the email that
+        // confirms the address also asks for permission. Supabase sends nothing of its own for this sign-up.
+        const r = await signUpOneEmail({ email: email.trim(), password, firstName: firstNameOf({ first_name: firstName }), role: role!, lang })
+        // V10 REVERSED (founder's call, 2026-09-22): say plainly that the email already has an account.
+        if (r === 'exists') {
           setMode('login'); setConfirm('')
           setError(t('This email already has an account. Sign in below, or tap “Forgot password?”'))
-        } else if (error) {
-          setError(error.message)
+        } else if (r === 'weak_password' || r === 'invalid') {
+          setError(t('Password must be at least 6 characters'))
+        } else if (r !== 'ok') {
+          setError(t('Something went wrong. Please try again.'))
         } else {
-          setSuccess(t('Check your email for a confirmation link!'))
+          setSuccess(role === 'parent'
+            ? t('Check your email: one message confirms your address and asks for your permission.')
+            : t('Check your email for a confirmation link!'))
         }
       } else {
         // A child types a username; `loginEmail` turns it into their account's address (core/childLogin.ts).
@@ -291,6 +289,22 @@ export default function AuthPage() {
                 borderRadius: 12, padding: '10px 14px',
                 fontSize: 13, color: '#33610F', fontWeight: 600,
               }}>{success}</div>
+            )}
+
+            {mode === 'signup' && (
+              <div role="radiogroup" aria-label={t('I am a…')} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>{t('I am a…')}</span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {(['parent', 'teacher'] as const).map(r => (
+                    <button key={r} type="button" role="radio" aria-checked={role === r} onClick={() => { setRole(r); reset() }}
+                      style={{ flex: 1, minHeight: 44, borderRadius: 12, cursor: 'pointer', fontWeight: 800, fontSize: 15,
+                        border: `2px solid ${role === r ? C.accent : C.edge}`,
+                        background: role === r ? 'var(--accent-fill)' : C.card, color: role === r ? 'var(--on-accent-fill)' : C.ink }}>
+                      {r === 'parent' ? t('Parent') : t('Teacher')}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             {mode === 'signup' && (

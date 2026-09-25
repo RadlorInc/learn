@@ -101,6 +101,34 @@ export async function adultFromBearer(req: Request): Promise<{ id: string; email
 }
 export const userFromBearer = async (req: Request): Promise<string | null> => (await adultFromBearer(req))?.id ?? null
 
+/**
+ * Create an email/password account WITHOUT Supabase sending its own confirmation email, and get the link's token
+ * so we can send ONE email of our own (founder, 2026-09-25). `generate_link` never emails (measured on a local stack:
+ * the inbox stayed empty), creates the user unconfirmed with `data` as user_metadata, applies the same password rules
+ * as a normal sign-up, and for an address that exists UNCONFIRMED issues a fresh token — so signing up again is also
+ * "send it again". An address that exists CONFIRMED answers `email_exists`.
+ */
+export type SignupLink =
+  | { ok: true; userId: string; hashedToken: string; metadata: Record<string, unknown> }
+  | { ok: false; reason: 'exists' | 'weak_password' | 'invalid'; message?: string }
+export async function generateSignupLink(email: string, password: string, data: Record<string, unknown>): Promise<SignupLink> {
+  const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
+  const r = await fetch(`${url}/auth/v1/admin/generate_link`, {
+    method: 'POST',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'signup', email, password, data }),
+    cache: 'no-store',
+  })
+  const b = await r.json().catch(() => null)
+  if (r.ok && typeof b?.id === 'string' && typeof b?.hashed_token === 'string') {
+    return { ok: true, userId: b.id, hashedToken: b.hashed_token, metadata: b.user_metadata ?? {} }
+  }
+  if (b?.error_code === 'email_exists' || b?.error_code === 'user_already_exists') return { ok: false, reason: 'exists' }
+  if (b?.error_code === 'weak_password') return { ok: false, reason: 'weak_password', message: b?.msg }
+  if (r.status === 400 || r.status === 422) return { ok: false, reason: 'invalid', message: b?.msg }
+  throw new Error(`generate_link ${r.status}: ${b?.error_code ?? b?.msg ?? 'no body'}`)
+}
+
 // ── Resend ──
 /** Resend's API unless overridden. The override exists for ONE reason: the local end-to-end run points
  *  it at a stand-in that records messages instead of delivering them. Unset in every real environment. */

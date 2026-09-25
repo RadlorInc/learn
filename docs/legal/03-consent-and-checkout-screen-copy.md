@@ -133,7 +133,33 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
 >
-> **[ I’ve Read and I Agree to the Privacy Policy. ]** (a link drawn as an empty checkbox; it opens the page below)
+> **[ I’ve Read and I Agree to the Privacy Policy. ]** (a button; it opens the page below, where the box is)
+>
+> Didn't sign up? Ignore this email.
+>
+> Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
+
+### B0. Sign-up email for a parent — one email confirms the address and asks for permission
+
+**Sent:** when a parent signs up with an email address and a password, INSTEAD of a separate confirmation email and B1 (founder, 2026-09-25). A parent who signs in with Google has no confirmation email and gets B1. The button confirms the address and opens the page below (B1b), where ticking the box gives the permission; B3 follows as for B1.
+
+**Subject:** `Confirm your email and give permission for your children`
+
+**Body:** B1's body, word for word, with this line directly above the button:
+
+> Clicking the button also confirms your email address.
+
+### B0t. Sign-up email for a teacher — confirms the address only
+
+**Subject:** `Confirm your email for Radlic`
+
+**Body:**
+
+> Thanks for signing up with Radlic.
+>
+> Please confirm your email address.
+>
+> **[ Confirm my email ]**
 >
 > Didn't sign up? Ignore this email.
 >
