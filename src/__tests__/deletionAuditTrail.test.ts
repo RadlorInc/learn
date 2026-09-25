@@ -41,9 +41,10 @@ const as = async (role: string, uid: string | null, sql: string) => {
 }
 
 type Row = { path: string; actor_kind: string; actor_id: string | null; account_id: string | null; learner_ids: string[]; row_counts: Record<string, number> }
-const logSince = async (mark: number) => q<Row>(`select path, actor_kind, actor_id, account_id, learner_ids, row_counts
-  from public.deletion_log order by at, id offset ${mark}`)
-const logCount = async () => Number((await q<{ n: number }>(`select count(*)::int n from public.deletion_log`))[0].n)
+/** The rows written since `mark` (the ids present then) — by identity, not by position: `at` can tie. */
+const logSince = async (mark: string[]) => (await db.query<Row>(`select path, actor_kind, actor_id, account_id, learner_ids, row_counts
+  from public.deletion_log where not (id = any($1::uuid[])) order by path, row_counts::text`, [mark])).rows
+const logIds = async () => (await q<{ id: string }>(`select id from public.deletion_log`)).map(r => r.id)
 
 const consentOf: Record<string, string> = {}
 async function child(name: string, parent: string, login: string | null = null) {
@@ -121,7 +122,7 @@ describe('the log exists, and holds ids and numbers only', () => {
 describe('each deletion path writes exactly one row, and still deletes what it did', () => {
   it('dashboard "Delete <name>\'s profile" → one delete_child row, signed-in parent as actor', async () => {
     const kid = await child('Deleted', P, KIDLOGIN)
-    const mark = await logCount()
+    const mark = await logIds()
     expect(await as('authenticated', P, `select public.delete_learner('${kid}')`)).toBeNull()
     expect(await countsFor(kid)).toEqual(ZERO)
     expect(await q(`select 1 from auth.users where id = '${KIDLOGIN}'`)).toEqual([])
@@ -132,7 +133,7 @@ describe('each deletion path writes exactly one row, and still deletes what it d
   })
 
   it('one-child withdrawal link (pre-consent-once) → one withdraw_consent_child row, server as actor', async () => {
-    const mark = await logCount()
+    const mark = await logIds()
     const [{ s }] = await q<{ s: string }>(`select public.consent_withdraw('${legacy.token}') s`)
     expect(s).toBe('withdrawn')
     expect(await countsFor(legacy.id)).toEqual(ZERO)
@@ -144,7 +145,7 @@ describe('each deletion path writes exactly one row, and still deletes what it d
 
   it('Account → Withdraw for all children → one withdraw_consent_account row PER child; the other family untouched', async () => {
     const a = await child('A', W), b = await child('B', W), keep = await child('Kept', OTHER)
-    const mark = await logCount()
+    const mark = await logIds()
     expect(await as('authenticated', W, `select public.withdraw_my_consent()`)).toBeNull()
     expect(await countsFor(a)).toEqual(ZERO)
     expect(await countsFor(b)).toEqual(ZERO)
@@ -160,7 +161,7 @@ describe('each deletion path writes exactly one row, and still deletes what it d
 
   it('Account → Close your account → one close_account row, and the row outlives the account it names', async () => {
     const a = await child('CA', C), b = await child('CB', C)
-    const mark = await logCount()
+    const mark = await logIds()
     const now = Math.floor(Date.now() / 1000)
     await db.exec(`select set_config('test.jwt', '${JSON.stringify({ email: 'c@x.test', iat: now, amr: [{ method: 'password', timestamp: now }] })}', false)`)
     expect(await as('authenticated', C, `select public.delete_my_account('c@x.test')`)).toBeNull()
@@ -176,12 +177,12 @@ describe('each deletion path writes exactly one row, and still deletes what it d
 
   it('the unconfirmed-user prune → one prune_unconfirmed row per run that deleted something, none when it deleted nothing', async () => {
     await db.exec(`insert into auth.users (id, email, created_at) values ('${UNCONF}', 'u@x.test', now() - interval '5 days')`)
-    const mark = await logCount()
+    const mark = await logIds()
     await db.exec(`select public.prune_unconfirmed_users()`)
     expect(await q(`select 1 from auth.users where id = '${UNCONF}'`)).toEqual([])
     expect(await logSince(mark)).toEqual([{ path: 'prune_unconfirmed', actor_kind: 'system', actor_id: null, account_id: null, learner_ids: [], row_counts: { 'auth.users': 1 } }])
     await db.exec(`select public.prune_unconfirmed_users()`)
-    expect(await logCount()).toBe(mark + 1)
+    expect(await logSince(mark)).toHaveLength(1)
   })
 
   it('the three retention jobs → one retention row each, counting what aged out; in-date rows kept', async () => {
@@ -193,14 +194,14 @@ describe('each deletion path writes exactly one row, and still deletes what it d
       insert into public.diagnostic_items (session_id, skill_id, correct, created_at)
         select id, 's', true, now() - interval '91 days' from public.diagnostic_sessions where learner_id = '${kid}';`)
     const [{ command }] = await q<{ command: string }>(`select command from cron.job where jobname = 'purge-old-learner-events'`)
-    const mark = await logCount()
+    const mark = await logIds()
     await db.exec(command)
     await db.exec(`select public.prune_error_events()`)
     await db.exec(`select public.prune_diagnostic_items()`)
-    expect((await logSince(mark)).map(r => [r.path, r.actor_kind, r.row_counts])).toEqual([
-      ['retention', 'system', { learner_events: 2 }],
+    expect((await logSince(mark)).map(r => [r.path, r.actor_kind, r.row_counts])).toEqual([   // ordered by row_counts text
+      ['retention', 'system', { diagnostic_items: 1 }],
       ['retention', 'system', { error_events: 1 }],
-      ['retention', 'system', { diagnostic_items: 1 }]])
+      ['retention', 'system', { learner_events: 2 }]])
     // In-date rows are untouched: the seed's own event and crash row are still there.
     expect(await countsFor(kid)).toMatchObject({ learner_events: 1, error_events: 1 })
   })
