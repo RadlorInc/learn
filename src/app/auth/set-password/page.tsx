@@ -70,7 +70,7 @@ function Frame({ subtitle, children }: { subtitle: string; children: React.React
       <div style={{
         background: C.card, borderRadius: 24, padding: '24px 22px',
         width: '100%', maxWidth: 420,
-        boxShadow: '0 6px 28px rgba(61,37,22,0.10)',
+        boxShadow: '0 6px 28px rgba(8,61,133,0.10)',
         display: 'flex', flexDirection: 'column', gap: 15,
         border: `2px solid ${C.edge}`, boxSizing: 'border-box',
       }}>
@@ -194,7 +194,7 @@ function SetPasswordForm() {
         style={{
           display: 'block', textAlign: 'center', textDecoration: 'none',
           width: '100%', padding: '14px', minHeight: 44, boxSizing: 'border-box',
-          background: C.accent, color: '#fff', borderRadius: 50,
+          background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', borderRadius: 50,
           fontSize: 16, fontWeight: 800,
         }}
       >{t('Back to sign in')}</Link>
@@ -265,16 +265,16 @@ function SetPasswordForm() {
         disabled={disabled}
         style={{
           width: '100%', padding: '14px', minHeight: 44,
-          background: disabled ? C.edge : C.accent,
-          color: disabled ? C.ink3 : '#fff',
+          background: disabled ? C.edge : 'var(--accent-fill)',
+          color: disabled ? C.ink3 : 'var(--on-accent-fill)',
           border: 'none', borderRadius: 50,
           fontSize: 16, fontWeight: 800,
           cursor: loading ? 'wait' : disabled ? 'default' : 'pointer',
-          boxShadow: disabled ? 'none' : '0 4px 14px rgba(242,107,44,0.28)',
+          boxShadow: disabled ? 'none' : '0 4px 14px rgba(76,180,248,0.28)',
           transition: 'all 0.2s',
         }}
         onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = C.hover }}
-        onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = C.accent }}
+        onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = 'var(--accent-fill)' }}
       >
         {loading ? t('Please wait…') : t('Set password and continue')}
       </button>

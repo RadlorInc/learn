@@ -101,7 +101,7 @@ export default function AccountPage() {
           all of their work. There is nothing to restore and nothing left for us to look up.
         </p>
         <p style={p}>Thank you for trying Radlic.</p>
-        <button style={{ ...btn, background: '#F26B2C', color: '#fff', border: 'none' }}
+        <button style={{ ...btn, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none' }}
           onClick={async () => { await signOut(); router.replace('/') }}>Close</button>
       </Shell>
     )
@@ -111,11 +111,11 @@ export default function AccountPage() {
 
   return (
     <Shell title="Close your account">
-      <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: '#8a7a63', textDecoration: 'none' }}>← Back to the dashboard</Link>
+      <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: '#3d6fb8', textDecoration: 'none' }}>← Back to the dashboard</Link>
       <p style={{ ...p, marginTop: 10, fontSize: 13 }}>
-        <Link href="/legal/parent-rights" style={{ color: '#F26B2C', fontWeight: 700 }}>Your rights as a parent</Link>
+        <Link href="/legal/parent-rights" style={{ color: '#0B4FA8', fontWeight: 700 }}>Your rights as a parent</Link>
         {' · '}
-        <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
+        <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>
       </p>
 
       <p style={{ ...p, marginTop: 14 }}>
@@ -171,13 +171,13 @@ export default function AccountPage() {
             placeholder="your email address" autoComplete="off" spellCheck={false}
             aria-label="Type your email address to confirm deletion"
             style={{ width: '100%', maxWidth: 380, minHeight: 44, padding: '0 14px', fontSize: 16,
-                     border: '2px solid #e5e7eb', borderRadius: 12, boxSizing: 'border-box' }}
+                     border: '2px solid #d3e9f9', borderRadius: 12, boxSizing: 'border-box' }}
           />
           {error && <p style={{ ...p, color: '#DC2626', fontWeight: 700 }}>{error}</p>}
           <div>
             <button onClick={confirmDelete} disabled={!match || busy}
-              style={{ ...btn, marginTop: 14, background: match ? '#DC2626' : '#f3f4f6',
-                       color: match ? '#fff' : '#9ca3af', border: 'none',
+              style={{ ...btn, marginTop: 14, background: match ? '#DC2626' : '#f3f9ff',
+                       color: match ? '#fff' : '#3d6fb8', border: 'none',
                        cursor: match && !busy ? 'pointer' : 'default' }}>
               {busy ? 'Deleting…' : 'Delete my account and all its data'}
             </button>
@@ -192,18 +192,18 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   return (
     <main style={{ minHeight: '100dvh', background: P.page, fontFamily: 'var(--font-body)' }}>
       <div className="adult-doc">
-        <h1 style={{ fontSize: 24, margin: '0 0 10px', color: '#3c2a14' }}>{title}</h1>
+        <h1 style={{ fontSize: 24, margin: '0 0 10px', color: '#083d85' }}>{title}</h1>
         {children}
       </div>
     </main>
   )
 }
 
-const p: React.CSSProperties = { fontSize: 14, lineHeight: 1.6, color: '#5a4a34', margin: '0 0 14px' }
-const h2: React.CSSProperties = { fontSize: 15, fontWeight: 800, color: '#3c2a14', margin: '26px 0 10px' }
+const p: React.CSSProperties = { fontSize: 14, lineHeight: 1.6, color: '#3d6fb8', margin: '0 0 14px' }
+const h2: React.CSSProperties = { fontSize: 15, fontWeight: 800, color: '#083d85', margin: '26px 0 10px' }
 const btn: React.CSSProperties = {
   minHeight: 44, padding: '0 18px', borderRadius: 999, cursor: 'pointer',
-  fontWeight: 800, fontSize: 14, background: '#fff', color: '#3c2a14', border: '2px solid rgba(61,37,22,.2)',
+  fontWeight: 800, fontSize: 14, background: '#fff', color: '#083d85', border: '2px solid rgba(8,61,133,.2)',
 }
 const warn: React.CSSProperties = {
   background: '#FEF2F2', border: '2px solid #FCA5A5', borderRadius: 14, padding: '14px 16px',

@@ -6,7 +6,7 @@
  * `stack` puts the picture above the words at every size (the "One thing not to do" cards read that way).
  */
 import type { CSSProperties, ReactNode } from 'react'
-import { pill, INK, TEAL, GOOD, LESSON_KEYFRAMES, PAGE_BG, shell, topBar } from './Pictures'
+import { pill, INK, TEAL, ON_TEAL, GOOD, LESSON_KEYFRAMES, PAGE_BG, shell, topBar } from './Pictures'
 
 export const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
@@ -64,12 +64,12 @@ export const stage: CSSProperties = { flex: 1, minWidth: 0, display: 'flex', fle
   background: '#fff', border: `4px solid ${INK}`, borderRadius: 22 }
 export const bubble: CSSProperties = { margin: 0, background: '#fff', border: `4px solid ${INK}`, borderRadius: 22, padding: '14px 18px',
   fontSize: 'clamp(20px, 2.6vw, 25px)', lineHeight: 1.3, color: INK, boxShadow: `5px 5px 0 ${INK}` }
-export const primary: CSSProperties = { minHeight: 56, padding: '12px 24px', borderRadius: 16, border: `4px solid ${INK}`, background: TEAL, color: '#fff',
+export const primary: CSSProperties = { minHeight: 56, padding: '12px 24px', borderRadius: 16, border: `4px solid ${INK}`, background: TEAL, color: ON_TEAL,
   fontWeight: 800, fontSize: 20, cursor: 'pointer', boxShadow: `4px 4px 0 ${INK}`, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
 // A hint is warm yellow, never red: a wrong answer is not marked wrong.
-export const hint: CSSProperties = { margin: 0, background: '#fff1c9', border: `4px solid ${INK}`, borderRadius: 16, padding: '12px 16px', fontSize: 20, fontWeight: 700, color: INK }
+export const hint: CSSProperties = { margin: 0, background: '#eaf5fe', border: `4px solid ${INK}`, borderRadius: 16, padding: '12px 16px', fontSize: 20, fontWeight: 700, color: INK }
 export const idea: CSSProperties = { margin: 0, background: '#ffd166', border: `4px solid ${INK}`, borderRadius: 22, padding: '16px 18px', fontSize: 'clamp(21px, 2.8vw, 28px)', fontWeight: 800, textAlign: 'center', color: INK }
-export const cue: CSSProperties = { alignSelf: 'center', margin: 0, padding: '6px 16px', borderRadius: 999, background: '#ffd166', border: `3px solid ${INK}`, color: INK, fontWeight: 800, fontSize: 17 }
+export const cue: CSSProperties = { alignSelf: 'center', margin: 0, padding: '6px 16px', borderRadius: 999, background: '#fbdbba', border: `3px solid ${INK}`, color: INK, fontWeight: 800, fontSize: 17 }
 export const tick: CSSProperties = { width: 34, height: 34, borderRadius: '50%', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
   background: GOOD, border: `3px solid ${INK}`, color: '#fff', fontWeight: 900, fontSize: 18 }
 export const right: CSSProperties = { ...hint, display: 'flex', alignItems: 'center', gap: 12, background: '#b7f0c6', fontWeight: 800, animation: 'lp-pop .3s ease-out' }

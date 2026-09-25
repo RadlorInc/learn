@@ -220,7 +220,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           <b style={{ fontSize: 20, color: INK }}>{nudging.prev.title}</b>
           <div role="img" aria-label={C.progressLabel(nudging.prev.title)}
             style={{ height: 26, borderRadius: 999, border: `3px solid ${INK}`, background: '#fff', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${Math.round(nudging.progress * 100)}%`, minWidth: 18, background: '#ffd166' }} />
+            <div style={{ height: '100%', width: `${Math.round(nudging.progress * 100)}%`, minWidth: 18, background: '#fbdbba' }} />
           </div>
         </div>}
         words={<p style={bubble}>{C.nudge(nudging.prev.title, lesson.title)}</p>}
@@ -545,7 +545,7 @@ function Checkpoint({ text, onKeep, onBreak }: { text: string; onKeep: () => voi
   return (
     <div role="dialog" aria-modal="true" aria-label={text} style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center',
       justifyContent: 'center', padding: 16, background: '#1f1a1466' }}>
-      <div style={{ background: '#fffaf0', border: `4px solid ${INK}`, borderRadius: 24, boxShadow: `6px 6px 0 ${INK}`, padding: '24px 22px',
+      <div style={{ background: '#f7fbff', border: `4px solid ${INK}`, borderRadius: 24, boxShadow: `6px 6px 0 ${INK}`, padding: '24px 22px',
         maxWidth: 440, width: '100%', display: 'flex', flexDirection: 'column', gap: 18, textAlign: 'center' }}>
         <p style={{ margin: 0, fontSize: 26, fontWeight: 800, color: INK }}>{text}</p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>

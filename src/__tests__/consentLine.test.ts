@@ -4,7 +4,7 @@
  * showed them neither the Terms nor the Privacy Policy. The check was deleted 2026-09-20 and ①
  * with it; if a second address-collecting surface ever ships, restore that assertion from history.
  * ② pins `/auth` byte-for-byte: the
- * expected markup was rendered from the component BEFORE the colour props were added, and is
+ * expected markup was rendered from the component (re-taken for the Sky light recolour, 2026-09-25) and is
  * written out here rather than re-rendered, so a changed default goes red. ③ measures the contrast
  * of both palettes with the WCAG formula — 12px text wants headroom over 4.5:1, not a hair past it.
  */
@@ -19,7 +19,7 @@ const hrefs = (html: string) => Array.from(html.matchAll(/href="([^"]+)"/g), m =
 describe('/auth is unchanged', () => {
   it('ConsentLine with no props renders the pre-change markup, byte for byte', () => {
     expect(renderToStaticMarkup(createElement(ConsentLine))).toBe(
-      '<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#8a7a63;text-align:center">By continuing you agree to our <a style="color:#F26B2C;font-weight:700" href="/legal/terms">Terms</a> and <a style="color:#F26B2C;font-weight:700" href="/legal/privacy">Privacy Policy</a>.</p>',
+      '<p style="margin:10px 0 0;font-size:12px;line-height:1.5;color:#3d6fb8;text-align:center">By continuing you agree to our <a style="color:#0B4FA8;font-weight:700" href="/legal/terms">Terms</a> and <a style="color:#0B4FA8;font-weight:700" href="/legal/privacy">Privacy Policy</a>.</p>',
     )
   })
 })
@@ -36,12 +36,11 @@ describe('contrast', () => {
   it('the formula is live (black on white = 21:1, positive control)', () => {
     expect(contrast('#000000', '#ffffff')).toBeCloseTo(21, 1)
   })
-  it('auth pair — recorded, not gated: it is pre-existing and this change leaves /auth byte-identical', () => {
-    // Measured 2026-09-09: #8a7a63 on the white card is 4.16:1 — UNDER the 4.5:1 floor for 12px
-    // text. Not touched here (the brief was "/auth unchanged"); it is the founder's call. Pinned so a
-    // silent shift in either direction shows up as a diff rather than a surprise.
-    expect(contrast('#8a7a63', '#ffffff')).toBeCloseTo(4.16, 2)
-    expect(contrast('#F26B2C', '#ffffff')).toBeCloseTo(3.04, 2)
+  it('auth pair clears 4.5:1 on the white card — gated since the Sky light recolour (2026-09-25)', () => {
+    // The warm pair it replaced measured 4.16:1 and 3.04:1 and was only recorded. Both blues are written
+    // out here, not imported, so a changed default goes red in ② and a paler one goes red here.
+    expect(contrast('#3d6fb8', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+    expect(contrast('#0B4FA8', '#ffffff')).toBeGreaterThanOrEqual(4.5)
   })
   it('diagnostic pair on the dark ground clears 4.5:1 with headroom', () => {
     // the panel is rgba(21,31,64,.72) over bg0 — composite it, and also take bare bg0 (the darker of the two)

@@ -9,7 +9,10 @@
  */
 import { useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
 import type { Picture } from './script'
-import { INK, TEAL, ACCENT } from './Pictures'
+import { INK, ACCENT } from './Pictures'
+// The drawings keep their own teal for the second colour of a figure (a hand, a ray, an answer row): it is
+// content, like the chalk, and Pictures' TEAL is now the pale button fill, which would vanish on a white figure.
+const TEAL = '#0f8a7a'
 
 export const TONE = ['#fff', '#9cf0d8', '#ffd166', '#ffb3a3', '#b9d4ff'] as const
 const F = 'var(--font-display), system-ui, sans-serif'

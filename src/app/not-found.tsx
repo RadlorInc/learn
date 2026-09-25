@@ -22,21 +22,21 @@ export default function NotFound() {
       minHeight: '100dvh',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(180deg, #FFF4D6 0%, #FCEAB6 100%)',
+      background: 'linear-gradient(180deg, #EAF5FE 0%, #EFF8FF 100%)',
       padding: 24, gap: 18, textAlign: 'center',
     }}>
       <div style={{ fontSize: 72, lineHeight: 1 }} aria-hidden>🗺️</div>
-      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#F26B2C', margin: 0 }}>
+      <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0B4FA8', margin: 0 }}>
         We can&apos;t find that page
       </h1>
-      <p style={{ fontSize: 16, color: '#7a6a55', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>
+      <p style={{ fontSize: 16, color: '#3d6fb8', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>
         It might have moved, or the link might be old. Nothing is lost — let&apos;s get you back.
       </p>
       <Link href="/menu" style={{
         marginTop: 6, minHeight: 52, minWidth: 160,
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)',
-        color: '#fff', borderRadius: 50, padding: '15px 34px',
+        background: 'var(--accent-fill)',
+        color: 'var(--on-accent-fill)', borderRadius: 50, padding: '15px 34px',
         fontSize: 17, fontWeight: 800, textDecoration: 'none',
       }}>
         Go back home

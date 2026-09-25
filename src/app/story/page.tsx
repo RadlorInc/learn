@@ -57,7 +57,7 @@ const ForestWalk = nextDynamic(() => import('@/features/chapters/story/ForestWal
 const Missing = ({ ch }: { ch: string }) => (
   <main style={{
     minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 24,
-    background: '#f6efe1', color: 'var(--ink, #3d2516)', fontFamily: 'var(--font-display)',
+    background: '#eaf5fe', color: 'var(--ink, #083d85)', fontFamily: 'var(--font-display)',
   }}>
     <div style={{ maxWidth: 620, textAlign: 'center' }}>
       <div style={{ fontSize: 44 }} aria-hidden>🗺️</div>

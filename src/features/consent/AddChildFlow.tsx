@@ -26,7 +26,7 @@ export function AddChildFlow({ lang, onClose, renderAdd }: {
 
   return (
     <div className="sheet-wrap" role="dialog" aria-modal="true" aria-label={t(NOTICE.title)}
-      style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(61,37,22,0.45)' }} onClick={onClose}>
+      style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'rgba(8,61,133,0.45)' }} onClick={onClose}>
       <div className="sheet-card" style={{ background: P.card, padding: '28px 24px 40px', overflowY: 'auto', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box' }}
         onClick={e => e.stopPropagation()}>
         <ConsentPanel lang={lang} view={view} onAsk={ask} onClose={onClose} />

@@ -226,7 +226,7 @@ export default function MainMenu() {
     <div style={{
       minHeight: '100dvh', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
-      background: '#FCEAB6',
+      background: '#EFF8FF',
     }} aria-busy="true" />
   )
 
@@ -339,7 +339,7 @@ export default function MainMenu() {
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 20 }}>Go on an adventure!</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 2 }}>The Picnic Party — count, knock, share &amp; more</div>
               </div>
-              <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--milo-orange)', border: '3px solid var(--milo-orange-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: '#fff' }}>Play ▶</span>
+              <span style={{ flexShrink: 0, whiteSpace: 'nowrap', background: 'var(--accent-fill)', border: '3px solid var(--milo-orange-deep)', borderRadius: 50, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 15, color: 'var(--on-accent-fill)' }}>Play ▶</span>
             </div>
           </button>
         )}

@@ -92,7 +92,7 @@ export function ChildLoginSheet({ learnerId, name, current, onClose, onChanged }
 
 const label: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }
 const field: CSSProperties = { padding: '12px 14px', fontSize: 15, minHeight: 44, border: '2px solid var(--card-border)', borderRadius: 12, boxSizing: 'border-box', color: 'var(--ink)', background: '#fff', fontWeight: 500 }
-const btn: CSSProperties = { background: 'var(--milo-orange)', color: '#fff', border: 'none', borderRadius: 12, padding: '10px 16px', minHeight: 44, fontSize: 15, fontWeight: 800, cursor: 'pointer' }
+const btn: CSSProperties = { background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none', borderRadius: 12, padding: '10px 16px', minHeight: 44, fontSize: 15, fontWeight: 800, cursor: 'pointer' }
 const ghost: CSSProperties = { ...btn, background: 'transparent', color: 'var(--ink)', border: '1.5px solid var(--card-border)' }
 
 /**

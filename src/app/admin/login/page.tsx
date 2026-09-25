@@ -22,14 +22,14 @@ export default function AdminLogin() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f5f7fa', fontFamily: 'ui-sans-serif, system-ui' }}>
-      <form onSubmit={submit} style={{ background: '#fff', border: '1px solid #e3e8ef', borderRadius: 10, padding: 24, width: 'min(320px, calc(100vw - 32px))', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f3f9ff', fontFamily: 'ui-sans-serif, system-ui' }}>
+      <form onSubmit={submit} style={{ background: '#fff', border: '1px solid #d3e9f9', borderRadius: 10, padding: 24, width: 'min(320px, calc(100vw - 32px))', boxSizing: 'border-box' }}>
         <h1 style={{ fontSize: 16, margin: '0 0 14px' }}>Sign in</h1>
         <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="Email"
                autoComplete="username" style={inp} />
         <input type="password" required value={pw} onChange={e => setPw(e.target.value)} placeholder="Password"
                autoComplete="current-password" style={inp} />
-        <button disabled={busy} style={{ ...inp, background: '#3d6fd1', color: '#fff', border: 0, cursor: 'pointer', marginBottom: 0 }}>
+        <button disabled={busy} style={{ ...inp, background: '#0b4fa8', color: '#fff', border: 0, cursor: 'pointer', marginBottom: 0 }}>
           {busy ? '…' : 'Sign in'}
         </button>
         {err && <p style={{ color: '#8a1c1c', fontSize: 12, marginBottom: 0 }}>{err}</p>}
@@ -37,4 +37,4 @@ export default function AdminLogin() {
     </div>
   )
 }
-const inp: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', padding: '9px 10px', marginBottom: 10, border: '1px solid #d7dde5', borderRadius: 6, fontSize: 14 }
+const inp: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', padding: '9px 10px', marginBottom: 10, border: '1px solid #d3e9f9', borderRadius: 6, fontSize: 14 }

@@ -54,7 +54,7 @@ function Surfaces() {
   const p = useSearchParams().get('p') ?? 'door'
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', gap: 14, padding: 16, background: 'var(--bg-page, #FDF6E3)', boxSizing: 'border-box' }}>
+      justifyContent: 'center', gap: 14, padding: 16, background: 'var(--bg-page, #F3F9FF)', boxSizing: 'border-box' }}>
       {/* ⚠️ THE THREE PARENT SURFACES A HARNESS CANNOT OTHERWISE REACH, and each for its own
           reason: the role picker needs an account whose `profiles.role` is still null, the empty
           dashboard needs one with zero learners, and the add-learner sheet needs a tap inside a

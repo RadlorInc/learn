@@ -10,7 +10,7 @@
 import type { CSSProperties } from 'react'
 import type { Answer } from './script'
 import { answerInput } from './Frame'
-import { INK, TEAL } from './Pictures'
+import { INK, TEAL, ON_TEAL } from './Pictures'
 
 export function AnswerInput({ answer, value, onChange, signed, mixed }: {
   answer: Answer; value: string; onChange: (v: string) => void; signed?: boolean; mixed?: boolean
@@ -22,7 +22,7 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
           const on = value === String(i)
           return (
             <button key={i} type="button" role="radio" aria-checked={on} onClick={() => onChange(String(i))}
-              style={{ ...choice, background: on ? TEAL : '#fff', color: on ? '#fff' : INK }}>{c}</button>
+              style={{ ...choice, background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK }}>{c}</button>
           )
         })}
       </div>
@@ -86,7 +86,7 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
 
 const signKey = (neg: boolean, flip: () => void) => (
   <button type="button" aria-label={neg ? 'Make it positive' : 'Make it negative'} aria-pressed={neg} onClick={flip}
-    style={{ ...choice, minWidth: 56, padding: '8px 0', fontSize: 28, background: neg ? TEAL : '#fff', color: neg ? '#fff' : INK }}>−</button>
+    style={{ ...choice, minWidth: 56, padding: '8px 0', fontSize: 28, background: neg ? TEAL : '#fff', color: neg ? ON_TEAL : INK }}>−</button>
 )
 
 /** Is there enough to Check? A fraction needs both numbers, a time both boxes. */

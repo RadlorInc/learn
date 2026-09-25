@@ -109,7 +109,7 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
                   <div key={d.day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' }}>
                     <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--ink)' }}>{d.problems || ''}</span>
                     <div title={t('{n} on {day}', { n: d.problems, day: showDay(d.day, lang) })}
-                      style={{ width: '100%', maxWidth: 36, height: `${Math.round(100 * d.problems / most)}%`, minHeight: 3, borderRadius: 6, background: d.problems ? 'var(--milo-orange)' : 'var(--card-border)' }} />
+                      style={{ width: '100%', maxWidth: 36, height: `${Math.round(100 * d.problems / most)}%`, minHeight: 3, borderRadius: 6, background: d.problems ? 'var(--sky-blue)' : 'var(--card-border)' }} />
                     <span style={{ fontSize: 11, color: 'var(--ink-muted)', fontWeight: 700 }}>
                       {new Date(`${d.day}T12:00:00`).toLocaleDateString(loc, { weekday: 'short' })}
                     </span>

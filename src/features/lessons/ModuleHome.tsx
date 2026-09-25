@@ -12,7 +12,7 @@ import { getWallet } from '@/data/repositories/points'
 import { getMyLearners } from '@/data/repositories/learners'
 import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { showDay } from './progressReport'
-import { Thing, INK, TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
+import { Thing, INK, TEAL, ON_TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
 import { chosenModules, mixedPractice } from './modules'
 import { C } from './sessionCopy'
@@ -88,10 +88,10 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
         <div role="tablist" aria-label="Grades" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: 'clamp(14px, 3vw, 24px) clamp(14px, 3vw, 24px) 0' }}>
           {GRADES.map(g => (
             <button key={g} type="button" role="tab" aria-selected={g === grade} onClick={() => setPicked(firstOf(g))}
-              style={{ ...pill, background: g === grade ? INK : '#fff', color: g === grade ? '#fff' : INK }}>Grade {g}</button>
+              style={{ ...pill, background: g === grade ? TEAL : '#fff', color: g === grade ? ON_TEAL : INK }}>Grade {g}</button>
           ))}
           {exercises && exercises.count > 0 && (
-            <button type="button" onClick={exercises.onOpen} style={{ ...pill, marginLeft: 'auto', background: '#ffd166', color: INK }}>✏️ Exercises ({exercises.count})</button>
+            <button type="button" onClick={exercises.onOpen} style={{ ...pill, marginLeft: 'auto', background: '#fbdbba', color: INK }}>✏️ Exercises ({exercises.count})</button>
           )}
         </div>
 
@@ -101,8 +101,8 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
               const ready = x.lessons.length > 0, on = x.id === picked, all = ready && doneIn(x.lessons) === x.lessons.length
               return (
                 <button key={x.id} type="button" disabled={!ready} aria-pressed={on} onClick={() => setPicked(x.id)}
-                  style={{ ...row, background: on ? TEAL : '#fff', color: on ? '#fff' : INK, ...(ready ? {} : { opacity: 0.55, boxShadow: 'none', cursor: 'default' }) }}>
-                  <span style={{ ...num, background: all ? '#9cf0d8' : on ? '#fff' : '#ffd166', color: INK }}>{all ? '✓' : x.n}</span>
+                  style={{ ...row, background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK, ...(ready ? {} : { opacity: 0.55, boxShadow: 'none', cursor: 'default' }) }}>
+                  <span style={{ ...num, background: all ? '#9cf0d8' : on ? '#fff' : '#fbdbba', color: INK }}>{all ? '✓' : x.n}</span>
                   <span style={{ flex: 1 }}>{x.title}{!ready && <small style={{ display: 'block', fontSize: 14, fontWeight: 700 }}>Coming soon</small>}</span>
                 </button>
               )
@@ -127,7 +127,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
               <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>
             </div>
 
-            <div style={{ ...card, background: '#ffd166' }}>
+            <div style={{ ...card, background: '#fbdbba' }}>
               <div style={{ flex: 1 }}>
                 <strong style={cardTitle}>2. Practice</strong>
                 {mixedPractice(m).length} mixed problems
@@ -159,7 +159,7 @@ function TextSizeMenu() {
         borderRadius: 16, boxShadow: `4px 4px 0 ${INK}`, padding: 10, display: 'flex', flexDirection: 'column', gap: 8, minWidth: 180 }}>
         {TEXT_SIZES.map((s, i) => (
           <button key={s} type="button" aria-pressed={size === s} onClick={() => saveTextSize(s)}
-            style={{ ...pill, fontSize: 16 + i * 3, textAlign: 'left', background: size === s ? TEAL : '#fff', color: size === s ? '#fff' : INK }}>
+            style={{ ...pill, fontSize: 16 + i * 3, textAlign: 'left', background: size === s ? TEAL : '#fff', color: size === s ? ON_TEAL : INK }}>
             {size === s ? '✓ ' : ''}{SIZE_LABEL[s]}
           </button>
         ))}

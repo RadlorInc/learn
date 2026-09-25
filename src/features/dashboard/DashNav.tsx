@@ -7,6 +7,10 @@
 import Link from 'next/link'
 import { useRef } from 'react'
 import { useT } from './i18n'
+import { APP_NAME } from '@/app/site'
+
+const Logo = ({ h }: { h: number }) =>
+  <img src="/brand/radlic-logo-640.png" alt={APP_NAME} width={640} height={167} style={{ height: h, width: 'auto', display: 'block' }} />
 
 export interface NavItem { label: string; href: string; on: boolean; tour?: string }
 
@@ -28,19 +32,19 @@ export function DashNav({ items, reminders, onBell, onSignOut }: {
   </>
   return <>
     <nav className="home-nav" aria-label={t('Dashboard')}>
-      <span className="home-logo">Radlic</span>
+      <span className="home-logo"><Logo h={30} /></span>
       {links(false)}
     </nav>
     <header className="dash-top">
       <button type="button" aria-label={t('Open menu')} aria-haspopup="dialog" data-tour="menu" onClick={() => drawer.current?.showModal()}><Burger /></button>
-      <span className="dash-top-logo">Radlic</span>
+      <span className="dash-top-logo"><Logo h={24} /></span>
       <button type="button" aria-label={t('Reminders, {n} waiting', { n: reminders })} data-tour="bell" onClick={onBell}>
         <Bell />{reminders > 0 && <span className="dash-count">{reminders}</span>}
       </button>
     </header>
     <dialog ref={drawer} className="dash-drawer" aria-label={t('Menu')} onClick={e => { if (e.target === e.currentTarget) close() }}>
       <nav className="dash-drawer-panel" aria-label={t('Dashboard')}>
-        <span className="home-logo">Radlic
+        <span className="home-logo"><Logo h={30} />
           <button type="button" aria-label={t('Close menu')} onClick={close} className="dash-x">×</button></span>
         {links(true)}
       </nav>

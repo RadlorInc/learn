@@ -30,7 +30,7 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 export const toHtml = (s: string) => segments(s).map(x => {
   let h = esc(x.text)
-  if (x.href) h = `<a href="${esc(x.href)}" style="color:#E0591F">${h}</a>`
+  if (x.href) h = `<a href="${esc(x.href)}" style="color:#0B4FA8">${h}</a>`
   if (x.em) h = `<em>${h}</em>`
   if (x.bold) h = `<strong>${h}</strong>`
   return h

@@ -115,7 +115,7 @@ function Game() {
   }
 
   if (authed === 'checking') return (
-    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FCEAB6' }} aria-busy="true" />
+    <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#EFF8FF' }} aria-busy="true" />
   )
 
   return (

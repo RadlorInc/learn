@@ -58,7 +58,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#F26B2C',
+  themeColor: '#EFF8FF',
   viewportFit: 'cover',
 }
 
@@ -119,7 +119,7 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': APP_NAME,
-    'msapplication-TileColor': '#F26B2C',
+    'msapplication-TileColor': '#0B4FA8',
     'msapplication-tap-highlight': 'no',
   },
 }

@@ -13,11 +13,11 @@ import { reportCrash } from '@/infra/reportCrash'
 
 export const S = {
   page:  { padding: 24, maxWidth: 1100, margin: '0 auto', fontFamily: 'ui-sans-serif, system-ui', color: '#1d2430' } as const,
-  card:  { background: '#fff', border: '1px solid #e3e8ef', borderRadius: 10, padding: 16, marginBottom: 16 } as const,
+  card:  { background: '#fff', border: '1px solid #d3e9f9', borderRadius: 10, padding: 16, marginBottom: 16 } as const,
   h2:    { fontSize: 15, fontWeight: 700, margin: '0 0 2px' } as const,
-  sub:   { fontSize: 12, color: '#6b7683', margin: '0 0 12px', lineHeight: 1.5 } as const,
+  sub:   { fontSize: 12, color: '#3d6fb8', margin: '0 0 12px', lineHeight: 1.5 } as const,
   num:   { fontSize: 30, fontWeight: 700, letterSpacing: -0.5 } as const,
-  dash:  { fontSize: 30, fontWeight: 700, color: '#c2c9d3' } as const,
+  dash:  { fontSize: 30, fontWeight: 700, color: '#bfddf6' } as const,
 }
 
 /** Small-cell suppression renders as an em dash — never a zero, which would read as "nobody". */
@@ -110,7 +110,7 @@ export function LoadError({ err, rid }: { err: string; rid?: string }) {
         <p style={S.sub}>{err}</p>
         {rid
           ? <p style={{ ...S.sub, marginBottom: 0 }}>
-              Request id <code style={{ background: '#f0f3f7', padding: '1px 6px', borderRadius: 4 }}>{rid}</code>
+              Request id <code style={{ background: '#f3f9ff', padding: '1px 6px', borderRadius: 4 }}>{rid}</code>
               {' '}— the server log for this id says which of the three it was.
             </p>
           : <p style={{ ...S.sub, marginBottom: 0 }}>No request id — the request did not reach the server.</p>}
@@ -137,12 +137,12 @@ export function Bars({ rows, incompleteKey, height = 120 }: {
           return (
             <g key={r.d}>
               <rect x={i * (w + 2)} y={height - h} width={w} height={h}
-                    fill={partial ? '#c9d3e0' : '#3d6fd1'}>
+                    fill={partial ? '#bfddf6' : '#0b4fa8'}>
                 <title>{r.d}: {r.n === null ? 'suppressed' : r.n}{partial ? ' (today — incomplete)' : ''}</title>
               </rect>
-              {r.n === null && <text x={i * (w + 2) + w / 2} y={height - 4} textAnchor="middle" fontSize="11" fill="#c2c9d3">—</text>}
+              {r.n === null && <text x={i * (w + 2) + w / 2} y={height - 4} textAnchor="middle" fontSize="11" fill="#bfddf6">—</text>}
               {(i === 0 || i === rows.length - 1) &&
-                <text x={i * (w + 2)} y={height + 16} fontSize="10" fill="#8b95a3">{r.d.slice(5)}</text>}
+                <text x={i * (w + 2)} y={height + 16} fontSize="10" fill="#3d6fb8">{r.d.slice(5)}</text>}
             </g>
           )
         })}
@@ -162,14 +162,14 @@ export function NotYet({ title, shows, why, since, meaningful }: {
   title: string; shows: string; why: string; since: string; meaningful: string
 }) {
   return (
-    <div style={{ ...S.card, background: '#fbfcfd', borderStyle: 'dashed' }}>
+    <div style={{ ...S.card, background: '#f7fbff', borderStyle: 'dashed' }}>
       <h2 style={S.h2}>{title} <span style={{ fontSize: 11, fontWeight: 600, color: '#a06a00', background: '#fff4e0', padding: '2px 7px', borderRadius: 20, marginLeft: 6 }}>not recordable yet</span></h2>
-      <table style={{ fontSize: 12, color: '#4a5462', borderSpacing: 0, marginTop: 8, lineHeight: 1.6 }}>
+      <table style={{ fontSize: 12, color: '#0b4fa8', borderSpacing: 0, marginTop: 8, lineHeight: 1.6 }}>
         <tbody>
-          <tr><td style={{ color: '#8b95a3', paddingRight: 12, verticalAlign: 'top' }}>Will show</td><td>{shows}</td></tr>
-          <tr><td style={{ color: '#8b95a3', paddingRight: 12, verticalAlign: 'top' }}>Empty because</td><td>{why}</td></tr>
-          <tr><td style={{ color: '#8b95a3', paddingRight: 12, verticalAlign: 'top' }}>Recording began</td><td>{since}</td></tr>
-          <tr><td style={{ color: '#8b95a3', paddingRight: 12, verticalAlign: 'top' }}>Meaningful when</td><td>{meaningful}</td></tr>
+          <tr><td style={{ color: '#3d6fb8', paddingRight: 12, verticalAlign: 'top' }}>Will show</td><td>{shows}</td></tr>
+          <tr><td style={{ color: '#3d6fb8', paddingRight: 12, verticalAlign: 'top' }}>Empty because</td><td>{why}</td></tr>
+          <tr><td style={{ color: '#3d6fb8', paddingRight: 12, verticalAlign: 'top' }}>Recording began</td><td>{since}</td></tr>
+          <tr><td style={{ color: '#3d6fb8', paddingRight: 12, verticalAlign: 'top' }}>Meaningful when</td><td>{meaningful}</td></tr>
         </tbody>
       </table>
     </div>

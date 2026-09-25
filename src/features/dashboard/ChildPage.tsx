@@ -188,8 +188,8 @@ export function ChildCard({ id, name, avatar, lastPlayed, next, done, total, onS
         <dt style={dt}>{t('Next lesson')}</dt><dd style={dd}>{next ?? t('All finished 🎉')}</dd>
         <dt style={dt}>{t('Done|lessons')}</dt><dd style={dd}>{t('{done} of {total} lessons', { done, total })}</dd>
       </dl>
-      <div role="img" aria-label={t('{done} of {total} lessons done', { done, total })} style={{ height: 10, background: '#f1e6d3', borderRadius: 99, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${total ? Math.round(100 * done / total) : 0}%`, background: 'var(--milo-orange)', borderRadius: 99 }} />
+      <div role="img" aria-label={t('{done} of {total} lessons done', { done, total })} style={{ height: 10, background: '#dcebf9', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${total ? Math.round(100 * done / total) : 0}%`, background: 'var(--sky-blue)', borderRadius: 99 }} />
       </div>
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
         <button type="button" style={dbtn} onClick={onStart}>▶ {t('Start learning')}</button>

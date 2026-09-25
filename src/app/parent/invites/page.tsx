@@ -96,7 +96,7 @@ export default function InvitesPage() {
   return (
     <div style={{
       minHeight: '100dvh',
-      background: 'linear-gradient(180deg, #FFF4D6 0%, #f9f9f9 40%)',
+      background: 'linear-gradient(180deg, #EAF5FE 0%, #f7fbff 40%)',
       fontFamily: 'var(--font-body)',
     }}>
       {/* Top bar */}
@@ -134,7 +134,7 @@ export default function InvitesPage() {
                     <div style={{ fontSize: 14, fontWeight: 700, color: '#166534' }}>
                       Access to: {inv.learner_name ?? 'a learner'}
                     </div>
-                    <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: '#3D6FB8', marginTop: 2 }}>
                       Expires {new Date(inv.expires_at).toLocaleDateString()}
                     </div>
                   </div>
@@ -158,14 +158,14 @@ export default function InvitesPage() {
           <h3 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 4px', color: 'var(--text-dark)' }}>
             ✉️ Send an invite
           </h3>
-          <p style={{ fontSize: 13, color: '#888', margin: '0 0 16px' }}>
+          <p style={{ fontSize: 13, color: '#3D6FB8', margin: '0 0 16px' }}>
             Share a learner&apos;s progress with a parent, teacher, or carer
           </p>
 
           {/* Learner selector */}
           {learners.length > 1 && (
             <div style={{ marginBottom: 14 }}>
-              <label style={{ fontSize: 13, fontWeight: 700, color: '#333', display: 'block', marginBottom: 6 }}>
+              <label style={{ fontSize: 13, fontWeight: 700, color: '#083D85', display: 'block', marginBottom: 6 }}>
                 Which learner?
               </label>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -173,7 +173,7 @@ export default function InvitesPage() {
                   <button key={l.id} onClick={() => onLearnerChange(l.id)} style={{
                     padding: '8px 14px', borderRadius: 50, fontSize: 13, fontWeight: 700,
                     border: '2px solid',
-                    borderColor: selectedId === l.id ? 'var(--milo-orange)' : '#e5e7eb',
+                    borderColor: selectedId === l.id ? 'var(--milo-orange)' : '#d3e9f9',
                     background: selectedId === l.id ? 'var(--milo-orange-soft)' : '#fff',
                     cursor: 'pointer',
                   }}>
@@ -185,7 +185,7 @@ export default function InvitesPage() {
           )}
 
           {/* Email input */}
-          <label style={{ fontSize: 13, fontWeight: 700, color: '#333', display: 'block', marginBottom: 6 }}>
+          <label style={{ fontSize: 13, fontWeight: 700, color: '#083D85', display: 'block', marginBottom: 6 }}>
             Their email address
           </label>
           <input
@@ -197,7 +197,7 @@ export default function InvitesPage() {
             style={{
               width: '100%', padding: '13px 16px',
               fontSize: 15, fontWeight: 500,
-              border: '2px solid #e5e7eb', borderRadius: 14,
+              border: '2px solid #d3e9f9', borderRadius: 14,
               outline: 'none', boxSizing: 'border-box',
               marginBottom: 12,
             }}
@@ -221,9 +221,9 @@ export default function InvitesPage() {
             style={{
               width: '100%', padding: '14px',
               background: sending || !email.trim()
-                ? '#e5e7eb'
+                ? '#d3e9f9'
                 : 'linear-gradient(135deg, var(--milo-orange) 0%, var(--milo-orange-deep) 100%)',
-              color: sending || !email.trim() ? '#9ca3af' : '#fff',
+              color: sending || !email.trim() ? '#3d6fb8' : '#fff',
               border: 'none', borderRadius: 50,
               fontSize: 16, fontWeight: 800,
               cursor: sending || !email.trim() ? 'not-allowed' : 'pointer',
@@ -234,7 +234,7 @@ export default function InvitesPage() {
           </button>
           {/* The email typed above is someone else's: the policy covering it is one tap away. */}
           <p style={{ margin: '10px 0 0', fontSize: 13, textAlign: 'center' }}>
-            <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>
+            <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>
           </p>
         </div>
 
@@ -248,12 +248,12 @@ export default function InvitesPage() {
               {sentInvites.map(inv => (
                 <div key={inv.id} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 12px', background: '#f9fafb',
+                  padding: '10px 12px', background: '#f3f9ff',
                   borderRadius: 12,
                 }}>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#333' }}>{inv.invited_email}</div>
-                    <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#083D85' }}>{inv.invited_email}</div>
+                    <div style={{ fontSize: 11, color: '#3D6FB8', marginTop: 2 }}>
                       {inv.status === 'accepted' ? '✅ Accepted' : `Expires ${new Date(inv.expires_at).toLocaleDateString()}`}
                     </div>
                   </div>

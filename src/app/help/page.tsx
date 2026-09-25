@@ -15,7 +15,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 /* The adult surface's palette, from globals.css — same tokens the other parent screens use.
-   These pages previously mixed ad-hoc greys (#888 / #6b7280 / #1a1a1a / #f7f8fa) with the brand
+   These pages previously mixed ad-hoc greys (#3D6FB8 / #3d6fb8 / #083d85 / #f3f9ff) with the brand
    colours, so each one read as a slightly different product. */
 const P = {
   page:   'var(--paper)',
@@ -64,7 +64,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: 'My child\u2019s progress has disappeared',
     a: <>Almost always it is still there. Finished lessons are saved to your child&apos;s profile, so check
        that the right child is signed in, or that you opened the right child from your{' '}
-       <Link href="/parent" style={{ color: '#F26B2C', fontWeight: 700 }}>dashboard</Link>. If the connection dropped, their answers are
+       <Link href="/parent" style={{ color: '#0B4FA8', fontWeight: 700 }}>dashboard</Link>. If the connection dropped, their answers are
        kept on the device and sent when it is back. Still missing? Email us — do not start again, we can look.</>,
   },
   {
@@ -103,9 +103,9 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     a: <>Their name, the lessons you chose for them, which lessons they finished and how their practice
        went, their points and game-time settings, and their login username if you set one. You can
        download a copy of all of it, or delete it permanently, from the Login &amp; data tab on their page in
-       your{' '}<Link href="/parent" style={{ color: '#F26B2C', fontWeight: 700 }}>dashboard</Link>.
+       your{' '}<Link href="/parent" style={{ color: '#0B4FA8', fontWeight: 700 }}>dashboard</Link>.
        Details are in the{' '}
-       <Link href="/legal/privacy" style={{ color: '#F26B2C', fontWeight: 700 }}>Privacy Policy</Link>.</>,
+       <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>.</>,
   },
   {
     q: 'What if the internet drops during a lesson?',
@@ -137,14 +137,14 @@ export default function HelpPage() {
       padding: '28px 20px 60px',
     }}>
       <div className="adult-doc">
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#F26B2C', textDecoration: 'none' }}>← Radlic</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#0B4FA8', textDecoration: 'none' }}>← Radlic</Link>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: P.ink, margin: '14px 0 20px' }}>
           Help
         </h1>
 
         {FAQ.map(({ q, a }, i) => (
           <section key={i} style={{
-            background: 'rgba(255,255,255,.65)', border: '2px solid rgba(61,37,22,.10)',
+            background: 'rgba(255,255,255,.65)', border: '2px solid rgba(8,61,133,.10)',
             borderRadius: 16, padding: '14px 16px', marginBottom: 12,
           }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, color: P.ink, margin: '0 0 6px' }}>{q}</h2>
@@ -154,7 +154,7 @@ export default function HelpPage() {
 
         <p style={{ marginTop: 24, fontSize: 15, color: P.ink2 }}>
           Still stuck? Email{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#F26B2C', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
           {' '}— tell us the device and browser, and we will come back to you.
         </p>
       </div>

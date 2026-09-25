@@ -27,13 +27,13 @@ export default function Funnel() {
           const prev = i === 0 ? null : Number(steps[i - 1].n)
           const drop = prev === null ? null : prev - n
           return (
-            <div key={s.step} style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '7px 0', borderBottom: '1px solid #f0f3f7' }}>
+            <div key={s.step} style={{ display: 'flex', alignItems: 'baseline', gap: 14, padding: '7px 0', borderBottom: '1px solid #f3f9ff' }}>
               <div style={{ width: 190, fontSize: 13 }}>{s.step}</div>
               <div style={{ width: 60 }}><N v={n} /></div>
-              <div style={{ flex: 1, background: '#eef1f6', height: 10, borderRadius: 5, overflow: 'hidden' }}>
-                <div style={{ width: `${first ? (n / first) * 100 : 0}%`, background: '#3d6fd1', height: '100%' }} />
+              <div style={{ flex: 1, background: '#f3f9ff', height: 10, borderRadius: 5, overflow: 'hidden' }}>
+                <div style={{ width: `${first ? (n / first) * 100 : 0}%`, background: '#0b4fa8', height: '100%' }} />
               </div>
-              <div style={{ width: 150, fontSize: 12, color: drop ? '#8a1c1c' : '#8b95a3', textAlign: 'right' }}>
+              <div style={{ width: 150, fontSize: 12, color: drop ? '#8a1c1c' : '#3d6fb8', textAlign: 'right' }}>
                 {drop === null ? `${first} accounts` : drop === 0 ? 'no drop' : `−${drop} lost here`}
               </div>
             </div>
@@ -69,9 +69,9 @@ export default function Funnel() {
                     const raw = by.get(o) as number | null | undefined
                     const pct = raw != null && Number(c.size) > 0 ? Math.round((Number(raw) / Number(c.size)) * 100) : null
                     return <td key={o} style={{ ...td, textAlign: 'right' }}>
-                      {raw === undefined ? <span style={{ color: '#c2c9d3' }}>0</span>
-                        : raw === null ? <span style={{ color: '#c2c9d3' }} title="suppressed">—</span>
-                        : <>{String(raw)} <span style={{ color: '#8b95a3', fontSize: 11 }}>({pct}%)</span></>}
+                      {raw === undefined ? <span style={{ color: '#bfddf6' }}>0</span>
+                        : raw === null ? <span style={{ color: '#bfddf6' }} title="suppressed">—</span>
+                        : <>{String(raw)} <span style={{ color: '#3d6fb8', fontSize: 11 }}>({pct}%)</span></>}
                     </td>
                   })}
                 </tr>
@@ -100,5 +100,5 @@ export default function Funnel() {
   )
 }
 
-const th: React.CSSProperties = { textAlign: 'right', color: '#8b95a3', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderBottom: '1px solid #e3e8ef' }
-const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid #f0f3f7' }
+const th: React.CSSProperties = { textAlign: 'right', color: '#3d6fb8', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderBottom: '1px solid #d3e9f9' }
+const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid #f3f9ff' }

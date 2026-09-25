@@ -50,7 +50,7 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
         onClick={openPanel}
         style={{
           background: 'none', border: 'none', padding: '8px 4px',
-          fontSize: 13, fontWeight: 600, color: '#888',
+          fontSize: 13, fontWeight: 600, color: '#3D6FB8',
           cursor: 'pointer', textDecoration: 'underline',
         }}
       >
@@ -78,10 +78,10 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
               boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
             }}
           >
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#1f2937' }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#083d85' }}>
               Report a problem
             </h2>
-            <p style={{ margin: 0, fontSize: 14, color: '#6b7280', lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: 14, color: '#3d6fb8', lineHeight: 1.5 }}>
               Tell us what happened. We&apos;ll attach some technical details about this device
               automatically — it helps us find the cause much faster.
             </p>
@@ -93,13 +93,13 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
               rows={4}
               style={{
                 width: '100%', boxSizing: 'border-box', resize: 'vertical',
-                border: '1.5px solid #e5e7eb', borderRadius: 12, padding: 12,
+                border: '1.5px solid #d3e9f9', borderRadius: 12, padding: 12,
                 fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5,
               }}
             />
 
             <details>
-              <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#6b7280' }}>
+              <summary style={{ cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#3d6fb8' }}>
                 What gets sent
               </summary>
               <textarea
@@ -108,17 +108,17 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
                 rows={12}
                 style={{
                   width: '100%', boxSizing: 'border-box', marginTop: 8,
-                  border: '1.5px solid #e5e7eb', borderRadius: 12, padding: 12,
+                  border: '1.5px solid #d3e9f9', borderRadius: 12, padding: 12,
                   fontSize: 11, fontFamily: 'ui-monospace, monospace',
-                  background: '#f9fafb', color: '#374151', lineHeight: 1.5,
+                  background: '#f3f9ff', color: '#083d85', lineHeight: 1.5,
                 }}
               />
-              <p style={{ margin: '6px 0 0', fontSize: 12, color: '#9ca3af' }}>
+              <p style={{ margin: '6px 0 0', fontSize: 12, color: '#3d6fb8' }}>
                 No passwords and no personal details about your child are included.
               </p>
             </details>
             <p style={{ margin: 0, fontSize: 12 }}>
-              <a href="/legal/privacy" style={{ color: '#6b7280', fontWeight: 700 }}>Privacy Policy</a>
+              <a href="/legal/privacy" style={{ color: '#3d6fb8', fontWeight: 700 }}>Privacy Policy</a>
             </p>
 
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
@@ -126,8 +126,8 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
                 href={supportMailto(block, note)}
                 style={{
                   flex: '1 1 180px', textAlign: 'center', textDecoration: 'none',
-                  background: 'linear-gradient(135deg, #F26B2C 0%, #e05a1f 100%)',
-                  color: '#fff', borderRadius: 50, padding: '12px 20px',
+                  background: 'var(--accent-fill)',
+                  color: 'var(--on-accent-fill)', borderRadius: 50, padding: '12px 20px',
                   fontSize: 15, fontWeight: 800,
                 }}
               >
@@ -136,9 +136,9 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
               <button
                 onClick={copy}
                 style={{
-                  flex: '0 1 auto', background: 'none', border: '1.5px solid #e5e7eb',
+                  flex: '0 1 auto', background: 'none', border: '1.5px solid #d3e9f9',
                   borderRadius: 50, padding: '12px 20px', fontSize: 14, fontWeight: 700,
-                  color: '#6b7280', cursor: 'pointer',
+                  color: '#3d6fb8', cursor: 'pointer',
                 }}
               >
                 {copied ? 'Copied ✓' : 'Copy'}
@@ -148,14 +148,14 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
                 style={{
                   flex: '0 1 auto', background: 'none', border: 'none',
                   padding: '12px 14px', fontSize: 14, fontWeight: 600,
-                  color: '#9ca3af', cursor: 'pointer',
+                  color: '#3d6fb8', cursor: 'pointer',
                 }}
               >
                 Close
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: 12, color: '#9ca3af', textAlign: 'center' }}>
+            <p style={{ margin: 0, fontSize: 12, color: '#3d6fb8', textAlign: 'center' }}>
               Or write to {SUPPORT_EMAIL} — we reply within 2 working days.
             </p>
           </div>
