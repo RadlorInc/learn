@@ -139,37 +139,39 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   window.speechSynthesis.addEventListener('voiceschanged', _loadVoices)
 }
 
+/**
+ * ⚠️⚠️ ONLY EVER AN ON-DEVICE VOICE (MAP-04, 2026-09-26). A voice with `localService === false` is
+ * synthesised on someone else's server — Chrome's "Google …" voices send the text to Google, Edge's
+ * "… Online (Natural)" ones to Microsoft — and lines here carry the child's first name ("Welcome
+ * back, Ava!"). Neither is a subprocessor we list. So this returns a LOCAL voice or null, and every
+ * caller below refuses to hand the engine an utterance without one: an utterance with no voice set
+ * gets the browser's DEFAULT voice, which on a network-only device is a network voice again.
+ * Cost: a device whose only voices are network ones hears no browser speech (recorded clips still
+ * play — they are our own files). One rule for every line, not a "this line has a name" flag, so a
+ * new line with a name in it cannot forget the flag.
+ */
 function _pickVoice(): SpeechSynthesisVoice | null {
   _loadVoices()
-  if (!_voices.length) return null
-  // Prefer a warm, kid-friendly, US-ENGLISH LOCAL voice. Two reasons for "local first": Chrome's
-  // "Google …" voices are network-backed and fail SILENTLY when the endpoint is unreachable (no
-  // sound, sometimes no error), whereas a local voice always produces audio. Reason for "US": the
-  // product is American English, so we must NOT fall onto the British/Australian/Irish system voices
-  // (Daniel/Karen/Moira) that ship alongside the US ones — they were in this list before and gave
-  // the voice a non-US accent. Ordered warmest/most kid-appropriate first (Samantha & the enhanced US
-  // female voices read best for young children); male US voices and the Windows voices follow.
+  const local = _voices.filter(v => v.localService)
+  if (!local.length) return null
+  // Prefer a warm, kid-friendly, US-ENGLISH voice. Reason for "US": the product is American
+  // English, so we must NOT fall onto the British/Australian/Irish system voices (Daniel/Karen/
+  // Moira) that ship alongside the US ones — they were in this list before and gave the voice a
+  // non-US accent. Ordered warmest/most kid-appropriate first (Samantha & the enhanced US female
+  // voices read best for young children); male US voices and the Windows voices follow.
   const LOCAL_PREFER = [
     'Samantha', 'Ava', 'Allison', 'Susan', 'Nicky',   // macOS/iOS US female (warm)
     'Aaron', 'Alex',                                   // macOS/iOS US male
     'Microsoft Aria', 'Microsoft Jenny', 'Microsoft Zira', 'Microsoft David', // Windows US
   ]
   for (const name of LOCAL_PREFER) {
-    const v = _voices.find(v => v.name.includes(name) && v.localService && (v.lang === 'en-US' || v.lang?.startsWith('en')))
+    const v = local.find(v => v.name.includes(name) && (v.lang === 'en-US' || v.lang?.startsWith('en')))
     if (v) return v
   }
-  // Any local US-English voice, then any local English voice as a floor.
-  const localEn =
-    _voices.find(v => v.localService && v.lang === 'en-US') ??
-    _voices.find(v => v.localService && v.lang?.startsWith('en'))
-  if (localEn) return localEn
-  // No local English voice at all → the US network voice, then any US voice, then any English.
-  const net = _voices.find(v => v.name.includes('Google US English')) ?? _voices.find(v => /US English/i.test(v.name))
-  if (net) return net
   return (
-    _voices.find(v => v.lang === 'en-US') ??
-    _voices.find(v => v.lang?.startsWith('en')) ??
-    _voices[0] ?? null
+    local.find(v => v.lang === 'en-US') ??
+    local.find(v => v.lang?.startsWith('en')) ??
+    local[0]
   )
 }
 
@@ -285,7 +287,17 @@ if (typeof window !== 'undefined') {
   ;(window as unknown as { __miloSpeech?: typeof speechDiary }).__miloSpeech = speechDiary
 }
 
-function _actuallySpeak(text: string, rate: number, pitch: number) {
+function _actuallySpeak(text: string, rate: number, pitch: number, tries = 0) {
+  const voice = _pickVoice()
+  if (!voice) {
+    // An empty list is "not loaded yet" (Chrome fills it async), not "none": ask again for ~1s.
+    // `_speakTimer` so a newer line still supersedes this one.
+    if (!_voices.length && tries < 10) {
+      _speakTimer = setTimeout(() => { _speakTimer = null; _actuallySpeak(text, rate, pitch, tries + 1) }, 100)
+      return
+    }
+    _setSpeaking(false); _lineDone(); return   // no on-device voice → silence, never a network voice
+  }
   const note: SpeechNote = { text, at: Math.round(Date.now()) }
   _remember(note)
   const u = new SpeechSynthesisUtterance(text)
@@ -293,8 +305,7 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
   u.pitch  = pitch
   u.volume = 1
   u.lang   = 'en-US'
-  const voice = _pickVoice()
-  if (voice) u.voice = voice
+  u.voice  = voice
 
   u.onstart = () => {
     note.started = Math.round(Date.now())
@@ -549,9 +560,10 @@ export function speakSeq(
     }
     const speakBrowser = () => {
       if (moved || cancelled) return
+      const v = _pickVoice(); if (!v) { advance(); return }   // no on-device voice (MAP-04, see _pickVoice)
       const u = new SpeechSynthesisUtterance(txt)
       u.rate = rate; u.pitch = pitch; u.volume = 1; u.lang = 'en-US'
-      const v = _pickVoice(); if (v) u.voice = v
+      u.voice = v
       u.onstart = () => {
         started = true; _setSpeaking(true); try { onWord?.(idx) } catch {}
         // It started — guard against an end event that never arrives.
@@ -768,9 +780,10 @@ export function speakWithHighlight(
   _speakTimer = setTimeout(() => {
     _speakTimer = null
     if (done) return
+    const v = _pickVoice(); if (!v) { startTimed(0, true); return }   // no on-device voice (MAP-04): silent sweep
     const u = new SpeechSynthesisUtterance(text)
     u.rate = rate; u.pitch = pitch; u.volume = 1; u.lang = 'en-US'
-    const v = _pickVoice(); if (v) u.voice = v
+    u.voice = v
 
     u.onboundary = (e: SpeechSynthesisEvent) => {
       if (done || mode === 'timed') return
