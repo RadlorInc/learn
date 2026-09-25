@@ -58,7 +58,7 @@ const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] =
     why: 'a historical record in the defect table (rule 3: records of what was stay)' },
 ]
 
-const files = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n').filter(inScope)
+const files = execFileSync('git', ['ls-files'], { encoding: 'utf8', maxBuffer: 64 << 20 }).split('\n').filter(inScope)
 
 function scan(sources: [file: string, text: string][]) {
   const hits: string[] = []
