@@ -52,8 +52,3 @@ export function getVoicePref(): VoiceId {
   } catch {}
   return VOICES[0]?.id ?? 'device'
 }
-
-export function setVoicePref(v: VoiceId): void {
-  try { kv.set(KEY, v) } catch {}
-  try { window.dispatchEvent(new CustomEvent('milo-voice-change', { detail: v })) } catch {}
-}

@@ -300,6 +300,7 @@ function _actuallySpeak(text: string, rate: number, pitch: number) {
     note.started = Math.round(Date.now())
     _setBlocked(false)
     _setSpeaking(true)
+    if (_keepalive) clearInterval(_keepalive)
     _keepalive = setInterval(() => {
       try {
         if (window.speechSynthesis.paused) window.speechSynthesis.resume()

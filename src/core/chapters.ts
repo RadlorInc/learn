@@ -127,10 +127,6 @@ export const CHAPTER_EMOJIS = Object.fromEntries(
   CHAPTERS.map(c => [c.id, c.emoji]),
 ) as Record<ChapterType, string>
 
-export const CHAPTER_PARENT_LABELS = Object.fromEntries(
-  CHAPTERS.map(c => [c.id, c.parentLabel]),
-) as Record<ChapterType, string>
-
 /**
  * A chapter's id in `lesson_progress` / `point_events`.
  *
