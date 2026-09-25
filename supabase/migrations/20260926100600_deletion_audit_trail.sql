@@ -340,6 +340,8 @@ $$;
 
 -- ── 5. The unattended deletions: prune_unconfirmed_users and the three retention jobs on child data ──
 -- Copied from 20260923180100 (its last definition).
+-- ⚠️ Copied from 20260926100100 (BUG-09, #241 — this PR is stacked on it): its guard line is KEPT. A copy of the
+-- older 20260923180100 body would silently remove BUG-09's protection of granted consent records.
 create or replace function public.prune_unconfirmed_users()
 returns void
 language sql
@@ -351,6 +353,7 @@ as $$
   where u.email_confirmed_at is null
     and u.created_at < now() - interval '3 days'
     and not exists (select 1 from public.learners l where l.created_by = u.id)
+    and not exists (select 1 from public.parental_consents c where c.parent_id = u.id and c.state in ('granted', 'withdrawn'))  -- BUG-09 (20260926100100), kept
   returning 1)                                                                           -- FND-15
   insert into public.deletion_log (path, actor_kind, row_counts)                         -- FND-15
   select 'prune_unconfirmed', 'system', jsonb_build_object('auth.users', count(*))       -- FND-15
@@ -463,5 +466,10 @@ begin
      or has_function_privilege('authenticated', 'public.prune_error_events()', 'execute')
      or has_function_privilege('authenticated', 'public.prune_diagnostic_items()', 'execute') then
     raise exception 'a retention function is callable from the API — rolled back';
+  end if;
+  -- BUG-09 (20260926100100) must survive this redefinition: the prune never deletes a granted/withdrawn consent.
+  if pg_get_functiondef('public.prune_unconfirmed_users()'::regprocedure)
+     !~ 'parental_consents c where c\.parent_id = u\.id and c\.state in \(''granted'', ''withdrawn''\)' then
+    raise exception 'prune_unconfirmed_users lost the BUG-09 granted-consent guard — rolled back';
   end if;
 end $$;
