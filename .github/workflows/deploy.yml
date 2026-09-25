@@ -40,6 +40,7 @@ jobs:
     needs: ci
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.7 min over 26 runs; 10 min floor (ARC-07; GitHub default 360)
     permissions:
       contents: write
     steps:
@@ -59,6 +60,7 @@ jobs:
     # (green), so the pipeline never shows a false failure before the dashboard setup is done.
     if: ${{ vars.STAGING_PROJECT_REF != '' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # never run yet; same shape as migrate-prod (ARC-07; GitHub default 360)
     environment: staging
     steps:
       - uses: actions/checkout@v4
@@ -106,6 +108,7 @@ jobs:
   # Read-only: it only lists this workflow's runs and jobs (`actions: read`).
   migrations-changed:
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.6 min over 26 runs; 10 min floor (ARC-07; GitHub default 360)
     permissions:
       contents: read
       actions: read
@@ -134,6 +137,7 @@ jobs:
     needs: [ci, migrate-staging, migrations-changed]
     if: ${{ !cancelled() && needs.ci.result == 'success' && needs.migrations-changed.outputs.changed == 'true' && vars.PROD_PROJECT_REF != '' && (needs.migrate-staging.result == 'success' || (needs.migrate-staging.result == 'skipped' && vars.STAGING_PROJECT_REF == '')) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.6 min over 5 runs. approval wait is not run time (separate 30-day gate limit, GitHub limits doc) (ARC-07; GitHub default 360)
     # A required-reviewer protection rule on this GitHub Environment means a human approves every
     # production schema change.
     environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
