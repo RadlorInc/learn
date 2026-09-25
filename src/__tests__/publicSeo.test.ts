@@ -33,9 +33,13 @@ const canonicalOf = (m: Metadata) => m.alternates?.canonical
 
 describe('every public route declares its own search surface', () => {
   const pages: [string, Metadata][] = [
-    ['/', home],
     ['/help', help],
   ]
+
+  // Since 2026-09-25 the home page is on radlor.com and radlic.com/ only routes there (signed out) or home.
+  it('/ points search engines at the landing page on radlor.com', () => {
+    expect(canonicalOf(home)).toBe('https://radlor.com/radlic')
+  })
 
   it.each(pages)('%s declares a canonical equal to its own path', (route, m) => {
     expect(canonicalOf(m)).toBe(route)

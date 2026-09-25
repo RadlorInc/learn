@@ -1,4 +1,4 @@
-import { APP_NAME, COMPANY, COMPANY_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, COMPANY, COMPANY_URL, LANDING_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL } from '@/app/site'
 import { LEGAL_PAGES } from '@/app/legal/registry'
 
 /**
@@ -16,7 +16,6 @@ import { LEGAL_PAGES } from '@/app/legal/registry'
 export const dynamic = 'force-static'
 
 const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
-  '/': `what ${APP_NAME} is and who it is for`,
   '/help': 'questions parents ask: lost progress, how lessons adapt, what is stored, child logins, game time',
 }
 
@@ -46,7 +45,8 @@ The software is called ${APP_NAME}. It was called Milo until August 2026 and Ada
 September 2026, at adaptivelearn.radlor.com, which now redirects here. There is no mascot.
 
 ## Pages
-${PUBLIC_ROUTES.map(r => `- [${BLURB[r]}](${SITE_URL}${r === '/' ? '' : r})`).join('\n')}
+- [what ${APP_NAME} is and who it is for](${LANDING_URL})
+${PUBLIC_ROUTES.map(r => `- [${BLURB[r]}](${SITE_URL}${r})`).join('\n')}
 ${LEGAL_PAGES.filter(p => p.published).map(p => `- [${p.title}](${SITE_URL}/legal/${p.slug})`).join('\n')}
 
 Everything else on this origin is a signed-in surface and renders nothing useful without an account.
