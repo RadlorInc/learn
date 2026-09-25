@@ -131,7 +131,9 @@ describe('BUG-08 a hung-IndexedDB boot must not orphan what it wrote', () => {
     }
     // Positive control: the scan sees keys we know exist (written out by hand, not derived).
     expect(keys).toEqual(expect.arrayContaining(['milo-lesson-sync-queue', 'milo_events_queue', 'milo-newflow-standing-zz', 'milo-newflow-run-zz']))
-    expect(keys.length).toBeGreaterThanOrEqual(15)
+    // 15 on main at 06cee602; #250 (ARC-16) deletes two dead files that wrote kv keys, leaving 11. The floor guards the
+    // scan against going blind, not the exact count — the hand-written keys above are the sharper control.
+    expect(keys.length).toBeGreaterThanOrEqual(10)
 
     const idb = new Map<string, string>()
     await hungDay(idb, {}, Object.fromEntries(keys.map(k => [k, '"v"'])))
