@@ -154,12 +154,45 @@ const PREV_SRC = SRC.replace(/const VERSION\s*=\s*'[^']+'/, "const VERSION = 'vP
 const tick = () => new Promise(r => setTimeout(r, 0))
 
 describe('service worker: precache list and VERSION bump', () => {
-  it('install precaches only routes the build serves (measured with next build + next start, 2026-09-26)', async () => {
+  it('install fetches the offline page and NO page list (N26: no offline promise beyond the answer queue)', async () => {
     const requested: string[] = []
     const w = makeWorld(online, { requested })
     await w.lifecycle('install')
-    // Written out by hand. /profile and /shop were deleted and answer 404; /menu /game /parent /auth answer 200.
-    expect(requested).toEqual(['/menu', '/game', '/parent', '/auth', '/offline.html', '/manifest.json'])
+    // Written out by hand. Until v238 this was ['/menu', '/game', '/parent', '/auth', '/offline.html', '/manifest.json'].
+    expect(requested).toEqual(['/offline.html'])
+    // …and it is the thing a failed navigation then shows, with nothing else primed.
+    const off = makeWorld(offline, { stores: w.stores })
+    expect(await off.get(req('/modules'))).toBe('fresh ' + ORIGIN + '/offline.html')
+  })
+
+  it('offline at the root: the offline page, never a cached /auth (no page-list fallback)', async () => {
+    const w = makeWorld(offline)
+    await w.prime(`milo-shell-${VERSION}`, '/auth', '<html>sign in</html>')
+    await w.prime(`milo-shell-${VERSION}`, '/offline.html', OFFLINE_HTML)
+    expect(await w.get(req('/'))).toBe(OFFLINE_HTML)
+  })
+
+  it('sw-register.js sends the worker no CACHE_URLS message, and still registers it', async () => {
+    const REG_SRC = readFileSync(resolve(process.cwd(), 'public/sw-register.js'), 'utf8')
+    const posted: unknown[] = []
+    const registered: string[] = []
+    const onLoad: (() => void)[] = []
+    const reg = { scope: '/', active: { postMessage: (m: unknown) => posted.push(m) } }
+    const window = {
+      addEventListener: (t: string, fn: () => void) => { if (t === 'load') onLoad.push(fn) },
+      setTimeout: (fn: () => void) => { fn(); return 0 },
+    }
+    const navigator = { serviceWorker: { register: async (u: string) => { registered.push(u); return reg } } }
+    const document = { querySelectorAll: (sel: string) =>
+      sel.startsWith('script') ? [{ src: ORIGIN + '/_next/static/chunks/app-AAAA.js' }] : [] }
+    const quiet = { log: () => {}, warn: () => {} }
+    new Function('window', 'navigator', 'document', 'location', 'console', REG_SRC)(
+      window, navigator, document, { hostname: 'radlic.com' }, quiet)
+    onLoad.forEach(fn => fn())
+    await tick(); await tick()
+    // Positive twin: the drive reached the registration, so an empty `posted` is not a harness that saw nothing.
+    expect(registered).toEqual(['/sw.js'])
+    expect(posted).toEqual([])
   })
 
   it('a clip re-rendered under the SAME url reaches the device after a VERSION bump', async () => {
