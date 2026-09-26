@@ -3,7 +3,7 @@ import { APP_NAME, COMPANY } from '@/app/site'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
-export const alt = `${APP_NAME} by ${COMPANY} — adaptive math from KG to grade 8`
+export const alt = `${APP_NAME} by ${COMPANY} — adaptive math for grades 3 to 8`
 
 /**
  * ⚠️ THIS REPLACES A 512×512 SQUARE, AND THE SHAPE WAS THE BUG.
@@ -36,7 +36,7 @@ export default function OpengraphImage() {
           Math lessons that adapt to your child.
         </div>
         <div style={{ fontSize: 30, color: '#7a6a55' }}>
-          KG to grade 8 · No timer, no red crosses
+          Grades 3 to 8 · No timer, no red crosses
         </div>
       </div>
     ),
