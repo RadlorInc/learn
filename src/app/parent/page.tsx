@@ -22,7 +22,7 @@ import {
   deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, correctLearner, removeMyselfFromLearner,
   getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
-  getRecentPoints, getLessonRows, getExerciseResults,
+  getRecentPoints, getExerciseResults,
 } from '@/data/repositories'
 import { flushQueue } from '@/infra/useOfflineSync'
 import { chapterKey } from '@/core/chapters'
@@ -196,12 +196,14 @@ function Dashboard() {
       // the dashboard shows at once and redraws when the account has answered.
       const ids = chosenModules(null).flatMap(m => m.lessons.map(l => l.id))
       for (const d of data) {
-        pullLessonProgress(d.learner.id, ids)
-          .then(ok => { if (ok) redraw(n => n + 1); return getWallet(d.learner.id) })
+        // The pull already reads the child's `lesson_progress` rows; the report reuses them rather than reading again (PERF-03).
+        const pulled = pullLessonProgress(d.learner.id, ids)
+        pulled
+          .then(rows => { if (rows) redraw(n => n + 1); return getWallet(d.learner.id) })
           .then(w => setWallets(prev => ({ ...prev, [d.learner.id]: w })))
         // A parent's helpers read each child's last 30 days (a teacher's come from the class results instead).
         if (myRole !== 'teacher') {
-          Promise.all([getRecentPoints(d.learner.id, 30), getLessonRows(d.learner.id)]).then(([points, rows]) =>
+          Promise.all([getRecentPoints(d.learner.id, 30), pulled]).then(([points, rows]) =>
             setExtra(p => ({ ...p, [d.learner.id]: { points, report: points && rows ? buildReport(points, rows, new Date()) : null } })))
         }
       }
