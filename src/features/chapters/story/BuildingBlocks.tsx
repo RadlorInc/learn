@@ -8,8 +8,8 @@
  *    answerable off the digit.** The same fault BlockYard shipped, on the same manipulative.
  * ② **The bundling arrived already done.** Three stacks and four loose were drawn for you. Bundling
  *    IS place value, and it was being handed over finished.
- * ③ Band-wide: a world picker, no rotate gate, no journey, and Milo as a 🦊 emoji fallback standing
- *    in a painted scene.
+ * ③ Band-wide: a world picker, no rotate gate, no journey, and a mascot as an emoji fallback
+ *    standing in a painted scene.
  *
  * ══ WHAT THE CHILD IS ACTUALLY LEARNING ══════════════════════════════════════════════
  * The curriculum's own words for this skill are *"Build a number from tens + ones (34 = 3 tens,
@@ -75,7 +75,9 @@ import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
-const MILO = '/assets/characters/milo_side.png'
+/** The one who carries each finished ten to its shelf — the yard's foreman bear, a real walk cycle
+ *  (cellAspect 0.578, near enough the old walker's 0.586 that the shelves did not have to move). */
+const WALKER = '/assets/objects/foreman_bear_side.png'
 
 // ─── Material ─────────────────────────────────────────────────────────────────────────
 /**
@@ -115,7 +117,7 @@ export const HUE_BAND: [number, number] = [140, 340]
  * ⚠️ **THESE ARE OPEN-GROUND SCENES, AND GETTING HERE TOOK TWO WRONG ANSWERS.**
  * ① Built indoors first — a "packing bench" — with scenes chosen on hue and quietness, which are
  *    PALETTE checks. Nobody measured where the painted SURFACE actually is. `craft_gems` is a glass
- *    display case topping out at 0.60, so at a flat bench line of 0.70 the blocks and Milo floated
+ *    display case topping out at 0.60, so at a flat bench line of 0.70 the blocks and the walker floated
  *    INSIDE the cabinet over the necklaces; the rest were counters and shelves — real surfaces, but
  *    furniture, a pony standing on a bakery worktop.
  * ② Moved outdoors to the FORESTS, which passed the walkable-ground gate — and everything still
@@ -215,7 +217,7 @@ export { GROUND, groundOf }
 /** THE TENS SHELF — on the LEFT, because that is where the tens digit is written. */
 export const RACK_X0 = 14, RACK_COL = 3.3
 export const rackSpot = (i: number) => ({ x: RACK_X0 + i * RACK_COL })
-export const MILO_X = 52
+export const WALKER_X = 52
 /** THE ONES SHELF — on the RIGHT. It can hold ten, and only for as long as it takes to trade them. */
 export const BAY_X0 = 62, BAY_COL = 3.2
 export const baySpot = (i: number) => ({
@@ -270,7 +272,7 @@ interface Room {
   waiting: number
   from: 'right' | 'left' | 'none'
   fusing: boolean
-  carry: 0 | 1 | 2           // Milo: idle · walking the rod to the shelf · walking back
+  carry: 0 | 1 | 2           // the walker: idle · walking the rod to the shelf · walking back
   carried: boolean
   key: string
 }
@@ -292,16 +294,16 @@ function TravellingRod({ w, h, m, x, ground, dist, ms, resetKey, z }: {
   )
 }
 
-function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
-  r: Room; m: Shades; cube: number; rodW: number; rodH: number; miloH: number; vw: number; vh: number
+function Scene({ r, m, cube, rodW, rodH, walkerH, vw, vh, onBay, onRod, hint }: {
+  r: Room; m: Shades; cube: number; rodW: number; rodH: number; walkerH: number; vw: number; vh: number
   onBay?: () => void; onRod?: (i: number) => void; hint?: boolean
 }) {
   const ground = groundOf(vh)
-  const miloW = Math.round(miloH * aspectOf(MILO))
+  const walkerW = Math.round(walkerH * aspectOf(WALKER))
   // He carries LEFTWARD, from the ones shelf to the tens shelf — the direction a ten travels when
   // it is made. In BlockYard he walks the other way, which is the same job in a mirrored room.
-  const carryDist = ((RACK_X0 - 1 - MILO_X) / 100) * vw
-  const carryJ = inFlowJourney(MILO, miloH, carryDist)
+  const carryDist = ((RACK_X0 - 1 - WALKER_X) / 100) * vw
+  const carryJ = inFlowJourney(WALKER, walkerH, carryDist)
   const leg = (fromX: number, toX: number) => {
     const dist = ((fromX - toX) / 100) * vw
     // A block has no gait, so `inFlowJourney` falls back to CARRY_SPEED — travel and cycle are
@@ -355,9 +357,9 @@ function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
           dist={j.dist} ms={j.ms} delayMs={i * 110} resetKey={`${r.key}-w${i}`} z={16 - i} />
       })}
 
-      {/* MILO — he carries every finished ten across to its shelf. The rod rides INSIDE his
+      {/* THE WALKER — he carries every finished ten across to its shelf. The rod rides INSIDE his
           travelling element, because two things that must move as one have to BE one element. */}
-      <div style={{ position: 'fixed', left: `${MILO_X}%`, top: `${ground * 100}%`,
+      <div style={{ position: 'fixed', left: `${WALKER_X}%`, top: `${ground * 100}%`,
         transform: 'translate(-50%,-100%)', zIndex: 30, pointerEvents: 'none' }}>
         <span style={{ display: 'block', position: 'relative',
           transform: `translateX(${r.carry === 1 ? Math.round(carryDist) : 0}px)`,
@@ -367,10 +369,10 @@ function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
               <Rod w={rodW} h={rodH} m={m} />
             </span>
           )}
-          <span style={{ display: 'block', position: 'relative', width: miloW, height: miloH }}>
-            <Shadow w={Math.round(miloW * 0.66)} h={Math.round(miloH * 0.1)} />
+          <span style={{ display: 'block', position: 'relative', width: walkerW, height: walkerH }}>
+            <Shadow w={Math.round(walkerW * 0.66)} h={Math.round(walkerH * 0.1)} />
             <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-              <SheetCell src={MILO} h={miloH} moving={r.carry !== 0} facesLeft={r.carry === 1}
+              <SheetCell src={WALKER} h={walkerH} moving={r.carry !== 0} facesLeft={r.carry === 1}
                 breathe cycleScale={carryJ.cycleScale} />
             </span>
           </span>
@@ -418,7 +420,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
 ({ slot, data, mode, onComplete }) => {
   const { n, kind, answer, digits: windows } = data
   const { w: vw, h: vh } = useViewport()
-  const { cube, rodW, rodH, miloH } = roomUnit(vw, vh)
+  const { cube, rodW, rodH, walkerH } = roomUnit(vw, vh)
   const m = useMemo(() => matOf(slot), [slot])
   const plan = useMemo(() => bundlePlan(n), [n])
   const isMake = kind === 'make'
@@ -444,7 +446,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [r.bay])
 
-  const carryMs = useMemo(() => inFlowJourney(MILO, miloH, ((RACK_X0 - 1 - MILO_X) / 100) * vw).ms, [miloH, vw])
+  const carryMs = useMemo(() => inFlowJourney(WALKER, walkerH, ((RACK_X0 - 1 - WALKER_X) / 100) * vw).ms, [walkerH, vw])
   const inMs = useMemo(() => inFlowJourney('', cube, ((ENTER_RIGHT - BAY_X0) / 100) * vw).ms + 9 * 110, [cube, vw])
 
   useEffect(() => {
@@ -463,7 +465,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n, kind])
 
-  /** TRADE UP — the ten slide together, become one rod, and Milo walks it across to the tens shelf. */
+  /** TRADE UP — the ten slide together, become one rod, and the walker carries it across to the tens shelf. */
   function trade() {
     if (r.bay < 10 || r.fusing) return
     setR(s => ({ ...s, fusing: true }))
@@ -555,7 +557,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
         side="right" lead={isMake && !ok ? n : undefined} />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
-      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh}
+      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh}
         hint={r.bay === 10} onBay={r.bay === 10 && !ok ? trade : undefined} />
 
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
@@ -667,13 +669,13 @@ const RETRY: Record<QKind, string> = {
 
 // ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
 /**
- * ⚠️ **THE SWAP IS THE WHOLE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** Milo makes 34, then
+ * ⚠️ **THE SWAP IS THE WHOLE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** The demo makes 34, then
  * makes 43 — the SAME two digits — and the tens shelf is visibly fuller the second time. That is the
  * one picture that says a digit's value comes from its place, and no amount of counting rods says it.
  */
 const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = ({ slot, data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
-  const { cube, rodW, rodH, miloH } = roomUnit(vw, vh)
+  const { cube, rodW, rodH, walkerH } = roomUnit(vw, vh)
   const m = useMemo(() => matOf(slot), [slot])
   const [r, setR] = useState<Room>(EMPTY)
   const [line, setLine] = useState('')
@@ -687,7 +689,7 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
     const soon = (ms: number, fn: () => void) => late.push(window.setTimeout(fn, ms))
     const [aT, aO, bT, bO] = [Math.floor(a / 10), a % 10, Math.floor(b / 10), b % 10]
     const lines = [
-      `The order says ${numberToWords(a)}. Milo builds it.`,
+      `The order says ${numberToWords(a)}. Let's build it.`,
       `${numberToWords(aT)} tens go on the LEFT.`,
       `${numberToWords(aO)} ones go on the RIGHT. That is ${numberToWords(a)}.`,
       `Now the order says ${numberToWords(b)} — the same two digits, the other way round.`,
@@ -714,10 +716,10 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
   const ground = groundOf(vh)
   return (
     <>
-      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} chapter="placeValue" />
+      <Banner text={line || 'Watch the order get filled…'} vh={vh} side="right" lead={order ?? undefined} chapter="placeValue" />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
-      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
+      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} />
     </>
   )
 }
@@ -761,7 +763,7 @@ export default function BuildingBlocks({ onFinish, onExit }: {
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.
-  if (needsRotate) return <RotateGate line="Turn your phone sideways to help Milo fill the orders!" />
+  if (needsRotate) return <RotateGate line="Turn your phone sideways to fill the orders!" />
 
   const active = phase === 'practice' ? slotIdx : phase === 'guided' ? GUIDED_SLOT : DEMO[Math.min(demoIdx, DEMO.length - 1)].slot
 
@@ -795,8 +797,8 @@ export default function BuildingBlocks({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
           <div style={{ maxWidth: '74%', background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: `clamp(14px, ${Math.round(vh * 0.034)}px, 20px)`, color: 'var(--ink)', textAlign: 'center' }}>
-            Milo stacks what he gathers. TENS go on the LEFT, ONES on the RIGHT — just the way a
-            number is written. Watch him fill two orders first!
+            Let&apos;s stack the blocks. TENS go on the LEFT, ONES on the RIGHT — just the way a
+            number is written. Watch two orders get filled first!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>

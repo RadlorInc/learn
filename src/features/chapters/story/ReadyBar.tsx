@@ -19,8 +19,8 @@
  *
  * ⚠️ ONE PLACEMENT, SHARED, because the alternative is twenty independent guesses at a band that is
  * already tight — this file's own history is a list of controls landing on other controls at
- * 640×320. Bottom centre: Milo owns bottom-LEFT in every chapter here (`left: 11%`, up to 260px
- * wide, so he reaches x≈118 on a 640 frame), the answer objects sit on their ground line well above,
+ * 640×320. Bottom centre: bottom-LEFT was the mascot's spot in every chapter here (`left: 11%`, up to 260px
+ * wide, reaching x≈118 on a 640 frame; the mascot was removed 2026-09-25 and the spot kept clear), the answer objects sit on their ground line well above,
  * and the shell's own chrome is top-left and top-right.
  *
  * ⚠️ IDENTICAL AT EVERY STATE. Same colour, same words, same size whatever is selected — a control

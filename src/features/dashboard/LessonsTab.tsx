@@ -12,10 +12,10 @@
  * date never narrows what the child sees, which is what Assign lessons used to do.
  */
 import { useState, type CSSProperties } from 'react'
-import { MODULES, GRADES, findLesson, searchModule } from '@/features/lessons/modules'
+import { ALL_MODULES as MODULES, GRADES, findLesson, searchModule } from '@/features/lessons/modules'
 import { assignmentStatus, localDay, showDay } from '@/features/lessons/progressReport'
 import { dbtn, dghost, dcard, dlink } from './Helpers'
-import { useT, useLang, en, type T } from './i18n'
+import { useT, useLang, en, gradeText, type T } from './i18n'
 
 export type SaveResult = 'ok' | 'not_ready' | 'error'
 
@@ -37,7 +37,7 @@ export function describe(ids: readonly string[] | null | undefined, name: string
   }
   const and = ` ${t('and')} `
   const parts = [whole && t(whole === 1 ? '{n} whole module' : '{n} whole modules', { n: whole }), singles && t(singles === 1 ? '{n} single topic' : '{n} single topics', { n: singles })].filter(Boolean)
-  return t('{name} sees {what}, from Grade {grades}.', { name, what: parts.join(and), grades: [...grades].sort((a, b) => a - b).join(and) })
+  return t('{name} sees {what}, from {grades}.', { name, what: parts.join(and), grades: [...grades].sort((a, b) => a - b).map(g => gradeText(g, t)).join(and) })
 }
 
 export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
@@ -82,13 +82,13 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
           <ul style={{ listStyle: 'none', margin: '12px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {items.slice(0, 5).map(({ m, n }) => (
               <li key={m.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '8px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--card-border)' }}>
-                <b style={{ color: 'var(--ink)' }}>{t('Grade {g}', { g: m.grade })} · {m.title}</b>
+                <b style={{ color: 'var(--ink)' }}>{gradeText(m.grade, t)} · {m.title}</b>
                 {n < m.lessons.length && <span style={muted}>{t('{n} of {total} topics', { n, total: m.lessons.length })}</span>}
               </li>
             ))}
             {items.slice(5).map(({ m, n }) => (
               <li key={m.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '8px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--card-border)' }}>
-                <b style={{ color: 'var(--ink)' }}>{t('Grade {g}', { g: m.grade })} · {m.title}</b>
+                <b style={{ color: 'var(--ink)' }}>{gradeText(m.grade, t)} · {m.title}</b>
                 {n < m.lessons.length && <span style={muted}>{t('{n} of {total} topics', { n, total: m.lessons.length })}</span>}
               </li>
             ))}
@@ -131,7 +131,7 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-end', marginTop: 12 }}>
               <label style={{ ...muted, display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 220px' }}>{t('Lesson')}
                 <select value={adding.id} onChange={e => setAdding({ ...adding, id: e.target.value })} style={field}>
-                  {ids.map(id => { const f = findLesson(id); return <option key={id} value={id}>{f ? `G${f.module.grade} · ${f.lesson.title}` : id}</option> })}
+                  {ids.map(id => { const f = findLesson(id); return <option key={id} value={id}>{f ? `${f.module.grade === 0 ? 'KG' : `G${f.module.grade}`} · ${f.lesson.title}` : id}</option> })}
                 </select></label>
               <label style={{ ...muted, display: 'flex', flexDirection: 'column', gap: 4 }}>{t('Due')}
                 <input type="date" value={adding.day} min={today} onChange={e => setAdding({ ...adding, day: e.target.value })} style={field} /></label>
@@ -180,7 +180,7 @@ function Chooser({ name, initial, onClose, onSave }: {
             const n = MODULES.filter(m => m.grade === g).flatMap(m => m.lessons).filter(l => chosen.has(l.id)).length
             return <button key={g} type="button" aria-pressed={g === grade} onClick={() => { setGrade(g); setOpen(null) }}
               style={{ padding: '6px 14px', minHeight: 40, borderRadius: 999, border: '2px solid', borderColor: g === grade ? 'var(--milo-orange)' : 'var(--card-border)', background: g === grade ? 'var(--milo-orange-soft)' : 'var(--paper-soft)', fontWeight: 800, fontSize: 14, cursor: 'pointer', color: 'var(--ink)' }}>
-              {t('Grade {g}', { g })}{n > 0 ? ` · ${t(n === 1 ? '1 topic chosen' : '{n} topics chosen', { n })}` : ''}</button>
+              {gradeText(g, t)}{n > 0 ? ` · ${t(n === 1 ? '1 topic chosen' : '{n} topics chosen', { n })}` : ''}</button>
           })}
         </div>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -193,7 +193,7 @@ function Chooser({ name, initial, onClose, onSave }: {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', minHeight: 44, border: '1.5px solid var(--card-border)', borderRadius: 12, background: '#fff', opacity: soon ? 0.55 : 1 }}>
                   <input id={`mod-${m.id}`} type="checkbox" disabled={soon} checked={!soon && on === ids.length}
                     ref={el => { if (el) el.indeterminate = on > 0 && on < ids.length }} onChange={e => toggle(ids, e.target.checked)} style={box} />
-                  <label htmlFor={`mod-${m.id}`} style={{ flex: 1, fontWeight: 800, color: 'var(--ink)', cursor: soon ? 'default' : 'pointer' }}>{q.trim() ? `${t('Grade {g}', { g: m.grade })} · ` : ''}{t('Module {n}', { n: m.n })} · {m.title}</label>
+                  <label htmlFor={`mod-${m.id}`} style={{ flex: 1, fontWeight: 800, color: 'var(--ink)', cursor: soon ? 'default' : 'pointer' }}>{q.trim() ? `${gradeText(m.grade, t)} · ` : ''}{t('Module {n}', { n: m.n })} · {m.title}</label>
                   <span style={muted}>{soon ? t('coming soon') : on && on < ids.length ? t('{n} of {total}', { n: on, total: ids.length }) : t('{n} topics', { n: ids.length })}</span>
                   {!soon && <button type="button" aria-expanded={isOpen} aria-label={t(isOpen ? 'Hide topics in {title}' : 'Show topics in {title}', { title: m.title })} onClick={() => setOpen(isOpen ? null : m.id)}
                     style={{ border: 0, background: 'none', minWidth: 36, minHeight: 36, cursor: 'pointer', fontSize: 16, color: 'var(--ink-soft)' }}>{isOpen ? '▴' : '▾'}</button>}

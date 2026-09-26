@@ -1,19 +1,17 @@
 'use client'
 /**
  * ForestWalk — a single chapter told as a LANDSCAPE side-scroll story.
- * Milo walks (side profile) through a parallax forest built from real PNG art
- * (tree.png, fireflies, ground objects); the world scrolls past him. He stops at
+ * The scene scrolls past as if we walk through a parallax forest built from real PNG art
+ * (tree.png, fireflies, ground objects), and stops at
  * "stations" to demonstrate counting, to talk, and to practice (SkillBeat:
  * adaptive + re-teach + voice). One chapter = one ForestWalk. See docs/story-mode-3-5.md.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { speakAfterCurrent, speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
-import MiloSprite from './MiloSprite'
 import { SkillBeat, type Beat } from './StoryWorld'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { hasChapterResume } from '@/infra/storage/chapterResume'
-import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate } from './RotateGate'
 import { type CountKind } from './art'
 import { FlyingCountDemo, FlyingCountPlay } from './world1'
@@ -37,25 +35,10 @@ const CSS = `
 @keyframes fw_tap { 0%{transform:scale(1)} 30%{transform:scale(1.65)} 65%{transform:scale(1.1)} 100%{transform:scale(1.25)} }
 @keyframes fw_check { 0%{transform:scale(0) rotate(-45deg);opacity:0} 60%{transform:scale(1.3) rotate(5deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
 @keyframes fw_drift { from{transform:translateX(0)} to{transform:translateX(-60px)} }
-@keyframes fw_boat { 0%,100%{transform:translateY(0) rotate(-1.4deg)} 50%{transform:translateY(-3%) rotate(1.4deg)} }
 `
 
-// Milo on screen. Underwater gets a scuba sprite (gently bobs); everywhere else he
-// walks. Falls back to the normal walk sprite if the asset is missing.
-function MiloAvatar({ biome, walking }: { biome: BiomeId; walking: boolean }) {
-  const [underwaterOk, setUnderwaterOk] = useState(true)
-  if (biome === 'underwater' && underwaterOk) {
-    return (
-      <img src="/assets/characters/milo_underwater.png" alt="Milo underwater" draggable={false} decoding="async" loading="lazy"
-        onError={() => setUnderwaterOk(false)}
-        style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom center', animation: 'fw_boat 3.2s ease-in-out infinite' }} />
-    )
-  }
-  return <MiloSprite play={walking} style={{ pointerEvents: 'none' }} />
-}
-
 // ─── Biome backgrounds ─────────────────────────────────────────
-// A painted scene scrolls behind Milo as he walks. Image biomes (forest, garden)
+// A painted scene scrolls past while we walk. Image biomes (forest, garden)
 // tile a real JPEG/PNG; the others render a gradient placeholder until painted art
 // is dropped into BIOMES[id].bgImage. All biome layers are stacked and cross-fade
 // by opacity, so walking from forest→pond→sky→garden dissolves smoothly.
@@ -135,11 +118,11 @@ function BiomeBackground({ biome, walking, ids = BIOME_ORDER }: { biome: BiomeId
 // ─── Beats ─────────────────────────────────────────────────────
 // `biome` sets the place (background + where creatures spawn). It carries forward
 // until the next beat overrides it; a `walk` with `toBiome` switches the background
-// DURING the walk, so Milo arrives somewhere new.
+// DURING the walk, so the walk arrives somewhere new.
 export type WalkBeat =
   | { kind: 'walk'; ms?: number; toBiome?: BiomeId }
   | { kind: 'say'; text: string; biome?: BiomeId }
-  | { kind: 'count'; to: number; obj: CountKind; biome?: BiomeId }   // Milo demonstrates counting 1→N aloud
+  | { kind: 'count'; to: number; obj: CountKind; biome?: BiomeId }   // counts 1→N aloud as a demonstration
   | { kind: 'guide'; n: number; obj: CountKind; biome?: BiomeId }    // child taps all N to count (guided, unscored)
   // the scored practice (SkillBeat). `any` because a Beat is generic over each chapter's own
   // question type and this union is shared by all of them.
@@ -158,9 +141,6 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
 }) {
   const router = useRouter()
   const needsRotate = useNeedsRotate()
-  const vp = useViewport()
-  const miloH = Math.min(Math.round((vp.h || 450) * 0.46), 320)
-  const miloW = Math.round(miloH * 0.82)
   // ?skip jumps straight to the catch/practice beat (dev shortcut to preview biome changes)
   const skipToPractice = typeof window !== 'undefined' && window.location.search.includes('skip')
   // This chapter has no Phase union — it is a LIST OF BEATS walked in order — so `useChapterPhase`'s
@@ -183,7 +163,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
   const walking = beat?.kind === 'walk' || forceWalk
   const band = BIOMES[biome].band
   // The place follows the beats: a beat's `biome` sets it; a `walk` with `toBiome`
-  // switches it as the walk starts, so the background cross-fades while Milo travels.
+  // switches it as the walk starts, so the background cross-fades while we travel.
   useEffect(() => {
     if (!beat) return
     if (beat.kind === 'walk') { if (beat.toBiome) setBiome(beat.toBiome) }
@@ -193,7 +173,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
     else if (beat.kind !== 'catch' && 'biome' in beat && beat.biome) setBiome(beat.biome)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])
-  // Milo walks a couple of steps, then resolves so the practice resumes.
+  // The scene walks on a couple of steps, then resolves so the practice resumes.
   const interlude = useCallback(() => new Promise<void>(resolve => {
     setForceWalk(true)
     window.setTimeout(() => { setForceWalk(false); resolve() }, 2400)
@@ -226,7 +206,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       return () => window.clearTimeout(id)
     }
     if (beat.kind === 'say') {
-      // Advance when Milo finishes the line — but NEVER depend on it. A hard cap
+      // Advance when the line finishes — but NEVER depend on it. A hard cap
       // guarantees the intro can't hang if the speech layer never fires onDone
       // (Chrome with no voice + a wedged clip/manifest fetch). Walk beats already
       // have this guarantee; say beats didn't, so the intro could freeze forever.
@@ -246,7 +226,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, background: 'linear-gradient(180deg,#bfe6f7,#d6efc0)', padding: 24, textAlign: 'center' }}>
         <div style={{ fontSize: 64, animation: 'fw_pop .6s ease both' }}>🔄</div>
         <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: 'var(--ink)' }}>Turn your phone sideways</div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--ink-soft)' }}>Milo&apos;s forest adventure plays in landscape! 🐴</div>
+        <div style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--ink-soft)' }}>This adventure plays in landscape!</div>
         <style>{CSS}</style>
       </div>
     )
@@ -261,11 +241,6 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
           foliage (a find-and-count hunt), so the forest stays bright and they
           blend in until the child finds and taps each one (then it pops + glows). */}
 
-      {/* Milo — 2D sprite walk cycle (faces right); turns to idle when he stops. */}
-      <div style={{ position: 'absolute', left: '4%', bottom: 24, width: miloW, height: miloH, zIndex: 12, pointerEvents: 'none' }}>
-        <MiloAvatar biome={biome} walking={walking} />
-      </div>
-
       {/* Top bar */}
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 10, zIndex: 20 }}>
         <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
@@ -277,7 +252,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
         <div style={{ width: 60 }} />
       </div>
 
-      {/* Milo speech bubble (say beats) — top banner; auto-advances, no Next button */}
+      {/* Speech bubble (say beats) — top banner; auto-advances, no Next button */}
       {beat?.kind === 'say' && (
         <div style={{ position: 'absolute', top: 52, left: '50%', transform: 'translateX(-50%)', maxWidth: '64%', zIndex: 20 }}>
           <div onClick={() => speak(beat.text)} style={{ animation: 'fw_pop .4s ease both',
@@ -287,7 +262,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
         </div>
       )}
 
-      {/* Count demo — Milo tells 1→N with objects flying around the scene (same
+      {/* Count demo — the voice tells 1→N with objects flying around the scene (same
           look as the practice, so explanation → practice is one continuous flow). */}
       {beat?.kind === 'count' && (
         <>

@@ -10,11 +10,11 @@ import { type Storytelling, STORYTELLINGS } from './biomes'
 // Counting — built per STORYTELLING (Nature Walk · Farm Day · Space Adventure). The
 // teaching is identical across all three; only the world changes (3 storytellings ×
 // 3 backgrounds × 3 objects), so a returning child never sees the same run twice:
-//   1. Milo counts up to 10 by himself (the storytelling's demoCount) — the explanation.
+//   1. The voice counts up to 10 on its own (the storytelling's demoCount) — the explanation.
 //   2. The child taps to count up to 10 (its demoGuide)               — guided practice.
 //   Then ONE scored adaptive "how many?" practice (makePracticeCountBeat). That single
 //   practice carries the whole pedagogy unbroken: right answers make it harder,
-//   struggling makes it easier, and 3 wrong in a row triggers Milo's re-explanation.
+//   struggling makes it easier, and 3 wrong in a row triggers a re-explanation.
 //   The biome cross-fades round-to-round through the storytelling's three places.
 // XP comes from this practice. `biomes` tells ForestWalk which backgrounds to stack.
 export function makeCountingChapter(story: Storytelling): Chapter {
@@ -26,7 +26,7 @@ export function makeCountingChapter(story: Storytelling): Chapter {
     biomes: story.biomes,
     beats: [
       { kind: 'say', text: story.intro, biome: first },
-      { kind: 'count', to: 10, obj: story.demoCount, biome: first },   // 1. Milo counts to 10
+      { kind: 'count', to: 10, obj: story.demoCount, biome: first },   // 1. counted aloud to 10
       { kind: 'guide', n: 10, obj: story.demoGuide, biome: first },    // 2. child taps to count to 10
       { kind: 'catch', beat: makePracticeCountBeat(story), biome: first },  // 3. scored adaptive practice
       { kind: 'say', text: story.outro, biome: last },

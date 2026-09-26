@@ -4,9 +4,9 @@
  *
  * The child HEARS a little story and watches the world's OWN creatures act it out, then taps the
  * answer. Three problem types, all carried by the same shuffling world creatures:
- *   ADD      — Milo has `a`, then `b` MORE join   → count them all      (answer a+b)
- *   TAKE-AWAY— Milo has `a`, then `b` LEAVE       → count what's left    (answer a-b)
- *   COMPARE  — Milo has `a`, a friend has `b`      → how many MORE?       (answer a-b, a>b)
+ *   ADD      — you have `a`, then `b` MORE join   → count them all      (answer a+b)
+ *   TAKE-AWAY— you have `a`, then `b` LEAVE       → count what's left    (answer a-b)
+ *   COMPARE  — you have `a`, a friend has `b`      → how many MORE?       (answer a-b, a>b)
  * ONE chapter, not three behind a picker. All three settings are in the same run and the SETTING
  * CHANGES EVERY ROUND, so consecutive questions differ in place as well as in number — a picker
  * makes a child choose before they know what they are choosing, and then gives them ten rounds of
@@ -70,10 +70,9 @@ interface SpWorld {
   ground: number
   items: Item[]
   friend: string           // the compare-friend's name
-  join: string             // add verb: "picks", "meets", "spots"
+  join: string             // add verb, said after "you": "meet", "spot"
   leave: string            // take-away phrase: "{b} get eaten", "{b} swim away", "{b} zoom away"
   dark?: boolean
-  milo: { src: string; emoji: string; accessory: string }
 }
 const SETTINGS: SpWorld[] = [
   { id: 'reef',
@@ -85,8 +84,7 @@ const SETTINGS: SpWorld[] = [
     ground: 57,
     items: [IT('fish', 'fish', 'fish'), IT('crab', 'crab', 'crabs'), IT('shark', 'shark', 'sharks', true),
       IT('turtle', 'turtle', 'turtles')],
-    friend: 'Finn', join: 'meets', leave: 'swim away',
-    milo: { src: '/assets/characters/milo_underwater.png', emoji: '🐢', accessory: '🫧' } },
+    friend: 'Finn', join: 'meet', leave: 'swim away' },
   /**
    * A WALKING cast needs a scene with real painted GROUND under it. The beach scenes this replaces
    * are a flat plane of water below the horizon, so ducks standing on them read as hovering however
@@ -114,8 +112,7 @@ const SETTINGS: SpWorld[] = [
     ground: 62,
     items: [IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits', true), IT('squirrel', 'squirrel', 'squirrels'),
       IT('lamb', 'lamb', 'lambs'), IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings')],
-    friend: 'Pat', join: 'spots', leave: 'wander off',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
+    friend: 'Pat', join: 'spot', leave: 'wander off' },
   /**
    * Replaces the moon base (its astronaut and alien were the only cast here that could not belong
    * anywhere a child has been), and then replaced the LILY POND that first stood in for it.
@@ -148,10 +145,9 @@ const SETTINGS: SpWorld[] = [
     // has painted grass under all four, so the walker is on the ground and the fliers are above it.
     items: [IT('dragonfly', 'dragonfly', 'dragonflies', false, true), IT('butterfly', 'butterfly', 'butterflies', false, true),
       IT('bee', 'bee', 'bees', false, true), IT('ladybug', 'ladybug', 'ladybugs')],
-    friend: 'Bo', join: 'meets', leave: 'flutter away',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
+    friend: 'Bo', join: 'meet', leave: 'flutter away' },
 ]
-const INTRO = "Milo has a story for you! Listen, watch it happen, then tap the number that answers it. Ready? First, let's hear one together!"
+const INTRO = "Here is a story for you! Listen, watch it happen, then tap the number that answers it. Ready? First, let's hear one together!"
 /** Every backdrop in the chapter, so one <Background> can crossfade between any two of them. */
 const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
@@ -225,7 +221,7 @@ function makeStoryRound(d: 1 | 2 | 3, round: number): SpRound {
   } else if (op === 'sub') {
     a = d === 1 ? rint(3, 9) : d === 2 ? rint(5, 13) : rint(6, 16)
     b = rint(1, a - 1); answer = a - b
-  } else { // compare — Milo has the bigger pile
+  } else { // compare — you have the bigger pile
     a = d === 3 ? rint(4, 12) : rint(3, 8)
     b = rint(1, a - 1); answer = a - b
   }
@@ -234,16 +230,16 @@ function makeStoryRound(d: 1 | 2 | 3, round: number): SpRound {
 
 function storyText(world: SpWorld, op: Op, a: number, b: number, it: Item) {
   if (op === 'add')
-    return { story: `Milo has ${qty(a, it)}. Then Milo ${world.join} ${b} more!`, question: `How many ${it.many} altogether?` }
+    return { story: `You have ${qty(a, it)}. Then you ${world.join} ${b} more!`, question: `How many ${it.many} altogether?` }
   if (op === 'sub')
-    return { story: `Milo has ${qty(a, it)}. Then ${b} ${world.leave}!`, question: `How many ${it.many} are left?` }
-  return { story: `Milo has ${qty(a, it)}. ${world.friend} has ${qty(b, it)}. How many MORE does Milo have?`, question: `How many more ${it.many} does Milo have?` }
+    return { story: `You have ${qty(a, it)}. Then ${b} ${world.leave}!`, question: `How many ${it.many} are left?` }
+  return { story: `You have ${qty(a, it)}. ${world.friend} has ${qty(b, it)}. How many MORE do you have?`, question: `How many more ${it.many} do you have?` }
 }
 const boxLabel = (op: Op) => op === 'add' ? 'ALTOGETHER' : op === 'sub' ? 'LEFT' : 'MORE'
 
 // Stagger between one mover and the next, so a group files in rather than swarming.
 const ARRIVE_GAP = 380
-// The tighter stagger for the group that is already Milo's. It walks the same distance as the
+// The tighter stagger for the group that is already yours. It walks the same distance as the
 // joiners, so the queue is what keeps the opening from outlasting the sum it is setting up: they
 // file in together rather than one behind the other across the whole width.
 const STEP_GAP = 180
@@ -296,24 +292,6 @@ function Background({ bg, dark }: { bg: Bg; dark?: boolean }) {
           <SceneBg src={b.img} priority={b === bg} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
-    </div>
-  )
-}
-
-function MiloHost({ left, milo }: { left: number; milo: SpWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(28vh, 240px)', height: 'min(28vh, 240px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'st_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 88, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 38 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
     </div>
   )
 }
@@ -523,12 +501,12 @@ function Stage({ world, item, op, a, b, s, short, boxBottomPx }: { world: SpWorl
         {op === 'compare' && (
           // SIDE BY SIDE ON A SHORT FRAME, stacked when there is height for it. Two stacked rows
           // bottom-anchored on the ground line simply do not fit at 640×320: the band between the
-          // prompt and the answer box is ~19% of the height, so Milo's row was pushed up behind the
+          // prompt and the answer box is ~19% of the height, so the first row was pushed up behind the
           // banner. Side by side needs only ONE row's height, which is the same call BigOrSmall
           // makes for its two bunches.
           <div style={{ display: 'flex', flexDirection: short ? 'row' : 'column',
             alignItems: short ? 'flex-end' : 'flex-start', gap: short ? 'clamp(10px,3vw,28px)' : '1.4vh' }}>
-            <Row item={item} size={itemSize} {...stepIn} shown={s.aShown} litFrom={b} litN={b + s.litExtra} highlightFrom={s.showBox ? b : Infinity} tag={friendTag('Milo', world.milo.emoji)} maxW={short ? 'min(40vw, 300px)' : undefined} />
+            <Row item={item} size={itemSize} {...stepIn} shown={s.aShown} litFrom={b} litN={b + s.litExtra} highlightFrom={s.showBox ? b : Infinity} tag={friendTag('You', '🙋')} maxW={short ? 'min(40vw, 300px)' : undefined} />
             <Row item={item} size={itemSize} {...stepIn} shown={s.bShown} tag={friendTag(world.friend, '🧒')} maxW={short ? 'min(40vw, 300px)' : undefined} />
           </div>
         )}
@@ -669,7 +647,7 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
           y 190–237 against a readout at 193–235 and covered it completely, and the gap between the
           readout and the chips is 14px against a 47px bar — there is no room in that column. The
           chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
-          them, which is empty in every chapter here (Milo owns bottom-LEFT). */}
+          them, which is empty in every chapter here. */}
       <ReadyBar show={pending !== null} onCommit={commit} align="right"
         bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
     </>
@@ -701,15 +679,15 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
     const holdsFor = (n: number) =>
       Array.from({ length: Math.max(0, Math.ceil(((Math.max(1, n) - 1) * STEP_GAP + L.ms) / 950) - 1) })
     if (op === 'add') {
-      lines.push(`Milo has ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
+      lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
       holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
-      lines.push(`Then Milo ${world.join} ${qty(b, item)} more.`); steps.push(() => set({ bShown: b, showOp: true }))
+      lines.push(`Then you ${world.join} ${qty(b, item)} more.`); steps.push(() => set({ bShown: b, showOp: true }))
       alsoArriving.forEach(() => { lines.push('Here comes another one!'); steps.push(() => {}) })
       lines.push('Let’s count them all!'); steps.push(() => set({ showBox: true, boxValue: 0 }))
       for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litA: v, boxValue: v })) }
       lines.push(`${numberToWords(answer)} ${item.many} altogether!`); steps.push(() => set({ boxDone: true }))
     } else if (op === 'sub') {
-      lines.push(`Milo has ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
+      lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
       holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
       lines.push(`Then ${qty(b, item)} ${world.leave}.`); steps.push(() => set({ leaving: true }))
       alsoArriving.forEach(() => { lines.push('There goes another one.'); steps.push(() => {}) })
@@ -717,13 +695,13 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
       for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litA: v, boxValue: v })) }
       lines.push(`${numberToWords(answer)} ${item.many} left!`); steps.push(() => set({ boxDone: true }))
     } else {
-      lines.push(`Milo has ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
+      lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
       holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
       lines.push(`${world.friend} has ${qty(b, item)}.`); steps.push(() => set({ bShown: b }))
       holdsFor(b).forEach(() => { lines.push('And here are theirs.'); steps.push(() => {}) })
-      lines.push('Milo has more! How many more?'); steps.push(() => set({ showBox: true, boxValue: 0 }))
+      lines.push('You have more! How many more?'); steps.push(() => set({ showBox: true, boxValue: 0 }))
       for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litExtra: v, boxValue: v })) }
-      lines.push(`Milo has ${numberToWords(answer)} more!`); steps.push(() => set({ boxDone: true }))
+      lines.push(`You have ${numberToWords(answer)} more!`); steps.push(() => set({ boxDone: true }))
     }
     const cancel = speakSteps(lines, {
       onStep: (i) => { steps[i]?.() },
@@ -736,7 +714,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
   return (
     <>
       <Stage world={world} item={item} op={op} a={a} b={b} s={s} short={short} />
-      {/* On a short/landscape demo the orchestrator already shows a "Watch Milo's story" banner up
+      {/* On a short/landscape demo the orchestrator already shows a "Watch the story" banner up
           top; the extra story pill would double up and collide with the objects — so hide it there. */}
       {!short && (
         <div style={{ position: 'fixed', top: 84, left: 0, right: 0, zIndex: 32, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
@@ -769,7 +747,6 @@ export function makeStoryBeat(): Beat<SpRound> {
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 const ST_CSS = `
-@keyframes st_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes st_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.15);opacity:1} 100%{transform:scale(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -792,7 +769,7 @@ export default function StoryTime({ onFinish, onExit }: {
   // The band is landscape-only: joiners come in from off-frame and leavers walk out, which a
   // portrait column has no room for. This early return must sit BELOW every hook — above one,
   // turning the phone changes the hook count and React tears the chapter into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo tells his stories in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="Story time plays in landscape! 📖" />
 
   // One of each kind, each in a DIFFERENT setting — so the first thing a child learns is that the
   // place changes but the rule does not, which is also what the scored rounds then do.
@@ -834,7 +811,7 @@ export default function StoryTime({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo's story  (${demoIdx + 1}/${DEMO.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch the story  (${demoIdx + 1}/${DEMO.length})`)}
         <StoryExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -849,9 +826,6 @@ export default function StoryTime({ onFinish, onExit }: {
         </div>
       )}
 
-      {/* Milo belongs to the round's setting — a walking pony on a seabed is the same
-          "doesn't belong" fault as an emoji in a painted scene. */}
-      <MiloHost left={10} milo={shown.w.milo} />
     </div>
   )
 }

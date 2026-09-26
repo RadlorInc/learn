@@ -1,10 +1,10 @@
 'use client'
 /** /lesson?id=g3m1-t1 plays one new-flow lesson (`&practice=1`: straight into its practice); /lesson?module=g3m2 shows that
  *  module's topic path (Module 1 without either), and `&summary=1` its summary once every topic the child has is done. */
-import { Suspense, useSyncExternalStore } from 'react'
+import { Suspense, useEffect, useSyncExternalStore } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { CATALOGUE, chooseFrom, moduleIdOf, useModule, ladderOf } from '@/features/lessons/catalogue'
+import { CATALOGUE, chooseFrom, moduleIdOf, useModule, ladderOf, storyOf } from '@/features/lessons/catalogue'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { LessonList } from '@/features/lessons/LessonList'
 import { ModuleSummary } from '@/features/lessons/ModuleSummary'
@@ -33,11 +33,18 @@ function Lesson() {
   const learner = mounted ? getActiveLearner() : null, learnerId = learner?.id ?? null
   // Which module this screen needs, from the light catalogue: the topic's own, else the topic path's — only the topics
   // the parent chose (all of them when no choice was made). Then only THAT module is loaded (PERF-01).
+  // A KG–2 story chapter (a dashboard link, or its module id) plays at /game — it has no lesson screens.
+  const story = storyOf(id) ?? storyOf(moduleId)
   const lessonModule = moduleIdOf(id)
   const chosen = chooseFrom(CATALOGUE, learner?.lesson_ids)
-  const pathModule = chosen.find(x => x.id === moduleId && x.lessons.length > 0) ?? chosen.find(x => x.lessons.length > 0)!
-  const whole = useModule(mounted ? lessonModule ?? pathModule.id : undefined)
-  if (!mounted || !whole) return null
+  // undefined when the parent chose only story chapters: then there is no topic path to show.
+  const pathModule = chosen.find(x => x.id === moduleId && x.lessons.length > 0) ?? chosen.find(x => x.lessons.length > 0)
+  const want = story ? undefined : lessonModule ?? pathModule?.id
+  const whole = useModule(mounted ? want : undefined)
+  if (!mounted) return null
+  if (story) return <GoTo href={`/game?c=${story}`} />
+  if (!want) return <GoTo href="/modules" />
+  if (!whole) return null
 
   const lesson = whole.lessons.find(l => l.id === id)
   if (!lesson) {
@@ -70,4 +77,10 @@ function Lesson() {
       onModuleComplete={() => router.push(`/lesson?module=${whole.id}&summary=1`)}
     />
   )
+}
+
+function GoTo({ href }: { href: string }) {
+  const router = useRouter()
+  useEffect(() => { router.replace(href) }, [router, href])
+  return null
 }

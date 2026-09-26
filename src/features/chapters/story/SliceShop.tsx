@@ -8,9 +8,9 @@
  * being supplied; and because the numerator was pinned at 1 the answer was literally the number of
  * parts, so **deleting the shading left every question still answerable**. On the craft doc's "is it
  * alive" check it scored **1 of 4**: nothing arrived on its own legs, a tap sent nobody anywhere,
- * Milo floated in a corner with no job, and only the backdrop rotated.
+ * a mascot floated in a corner with no job, and only the backdrop rotated.
  *
- * So: Milo holds out a piece and the child LAYS COPIES OF IT into the whole. Equality is not given,
+ * So: the child is handed a piece and LAYS COPIES OF IT into the whole. Equality is not given,
  * it is discovered — copies of one piece are equal by construction, and a piece that does not fit a
  * whole number of times is not a fraction of the whole at all.
  *
@@ -36,7 +36,7 @@ import { speak, speakAfterCurrent, speakPaced, stopSpeech, unlockSpeech } from '
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
 import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
-import { Arrive, SheetCell, inFlowJourney, hasSheet, aspectOf, CRITTER_CSS } from './critters'
+import { Arrive, SheetCell, inFlowJourney, aspectOf, CRITTER_CSS } from './critters'
 /** ⚠️ A CONTACT SHADOW IS NOT DECORATION — it is the one cue that says a thing is standing IN the
  *  picture rather than lying ON it, and this chapter shipped without one under anybody. The founder
  *  read the result exactly as it was: "characters aur background blend nahi ho rahe". It rides
@@ -45,7 +45,7 @@ import { Shadow } from './yard'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
 import {
-  ORDERS, DENS, MILO, CHROME_PAD, menuBtn,
+  ORDERS, DENS, CHROME_PAD, menuBtn,
   makeFrRound, orderOf, piecesFor, perShare, isSolved, friendAt, friendsShown,
   askTextFor, revealFor, missFor, denWord, numWord, layoutFor, wholeSize,
   type Den, type FrRound, type Order, type Shape,
@@ -110,7 +110,7 @@ const wedgeMid = (i: number, den: number, rr: number) => {
 function Whole({ shape, colors, art, pieceDen, laid, w, h, lit, topping }: {
   shape: Shape; colors: Order['colors']; art: string; pieceDen: Den; laid: number
   w: number; h: number
-  /** After the commit, ONE piece lights up — the one Milo takes. Never before. */
+  /** After the commit, ONE piece lights up — the one being shared. Never before. */
   lit?: boolean
   topping?: string
 }) {
@@ -349,10 +349,9 @@ function Bar({ L: l, children }: { L: L; children: React.ReactNode }) {
 }
 
 /**
- * The question lives in a bubble at Milo's mouth — he is the one with an order to fill, so he is the
- * one who should be asking. Laid out as a BAND rather than floated at his head: anchored freely it
- * runs across the board on a narrow frame, putting the two things a child must read at once on top
- * of each other.
+ * The question lives in a bubble laid out as a BAND under the chrome rather than floated: floated
+ * freely it runs across the board on a narrow frame, putting the two things a child must read at
+ * once on top of each other. It has no tail — nobody in the shop is speaking it.
  */
 /** ⚠️ `chapter` puts the TYPED DIRECTIONS in the bubble, for the same reason TickTock does: this
  *  chapter sets `prompt: () => ''` (the bubble is its only question region) and draws its own banner
@@ -368,50 +367,19 @@ function Bubble({ L: l, text, chapter }: { L: L; text: string; chapter?: Chapter
       fontSize: l.short ? 13 : 17, color: 'var(--ink)',
     }}>
       <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
-      {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
-      <span aria-hidden style={{
-        position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
-        borderLeft: '10px solid transparent', borderRight: '10px solid transparent',
-        borderTop: '11px solid var(--outline)',
-      }} />
     </div>
   )
 }
 
-/**
- * How far off the frame's bottom edge Milo stands.
- *
- * ⚠️ NOT A MARGIN — it is the room his CONTACT SHADOW needs. `Shadow` sits 35% of its own height
- * below the feet it belongs to, so at `bottom: 0` the one cue that puts him on the floor rather than
- * on top of the picture is drawn under the viewport and clipped away: present in the DOM, invisible
- * on screen, which is the worst kind of fixed.
- */
-const miloFloor = (miloH: number) => Math.round(miloH * 0.04)
+/** How far from its slot friend `i` starts and ends — in from off-frame right, out the same way. */
+const friendDist = (l: L, den: Den, i: number) => Math.round(l.friendsW - i * (l.friendsW / Math.max(den, 1)) + 80)
 
-/** Milo, and on a correct answer he WALKS OFF to deliver the order — the journey is the reward. */
-function Milo({ L: l, leaving, resetKey, vw }: { L: L; leaving: boolean; resetKey: string | number; vw: number }) {
-  const distPx = Math.round(vw - l.miloLeft + l.miloW * 0.4)
-  const j = useMemo(() => inFlowJourney(MILO, l.miloH, distPx), [l.miloH, distPx])
-  return (
-    <div style={{ position: 'fixed', left: l.miloLeft, bottom: miloFloor(l.miloH), width: l.miloW, height: l.miloH, zIndex: 26, pointerEvents: 'none' }}>
-      {/* ⚠️ `leave` must be conditional, not constant — with a constant `leave` and `ms={0}` Arrive
-          starts at its DONE phase, and done-while-leaving means "already gone", so Milo is
-          translated a whole screen right and simply never appears. Invisible, not misplaced. */}
-      <Arrive dist={distPx} ms={leaving ? j.ms : 0} leave={leaving} resetKey={`${resetKey}|${leaving}`}>
-        {moving => (
-          <span style={{ display: 'block', position: 'relative', width: l.miloW, height: l.miloH }}>
-            <Shadow w={Math.round(l.miloW * 0.72)} h={Math.round(l.miloH * 0.1)} />
-            <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-              <SheetCell src={MILO} h={l.miloH} moving={moving} cycleScale={j.cycleScale}
-                /* `milo_side.png` faces RIGHT, and right is the way he leaves — so never flipped. */
-                facesLeft={false} breathe={!leaving} />
-            </span>
-          </span>
-        )}
-      </Arrive>
-    </div>
-  )
-}
+/** How long the slowest friend takes to walk off with their share — a solved round ends when they
+ *  are all actually gone. */
+const friendsGoneMs = (l: L, den: Den) => Math.max(...Array.from({ length: den }, (_, i) => {
+  const f = friendAt(i)
+  return inFlowJourney(f.src, Math.round(l.friendH * f.scale), friendDist(l, den, i)).ms
+}))
 
 /** The pause before a friend sets off, so their arrival reads as caused by the piece just laid. */
 const ARRIVE_BEAT = 320
@@ -431,7 +399,7 @@ const ARRIVE_BEAT = 320
 function Friends({ L: l, count, den, order, share, leaving, resetKey }: {
   L: L; count: number; den: Den; order: Order
   /** They are holding their piece. Split from `leaving` because the LESSON wants them standing
-   *  there holding it while Milo talks about it — in a round the two happen together. */
+   *  there holding it while the lesson talks about it — in a round the two happen together. */
   share: boolean
   leaving: boolean
   resetKey: string | number
@@ -448,7 +416,7 @@ function Friends({ L: l, count, den, order, share, leaving, resetKey }: {
         const f = friendAt(i)
         const h = Math.round(l.friendH * f.scale)
         // in from off-frame right, and out the same way once they have their piece
-        const dist = Math.round(l.friendsW - i * slotW + 80)
+        const dist = friendDist(l, den, i)
         const j = inFlowJourney(f.src, h, dist)
         return (
           <div key={i} style={{ position: 'absolute', left: i * slotW, bottom: 0, width: slotW, height: l.friendH * 1.5 }}>
@@ -545,7 +513,7 @@ function Board({ L: l, order, on, n, pieceDen, laid, lit, vw }: {
   L: L; order: Order; on: 'shape' | 'group'; n: number; pieceDen: Den; laid: number; lit?: boolean; vw: number
 }) {
   const size = wholeSize(order.shape, l.wholePx, l.boardRoom)
-  // ⚠️ A PILE GETS THE SAME ROOM A WHOLE DOES — measured off Milo and the friends, not off the
+  // ⚠️ A PILE GETS THE SAME ROOM A WHOLE DOES — measured off the margin and the friends, not off the
   // viewport. Given `vw * 0.74` it reached into the friends' band and stood in front of them, which
   // is the "two independent percentages of the width" fault this repo keeps paying for.
   const w = on === 'group' ? Math.min(l.boardRoom, 640) : size.w
@@ -678,9 +646,8 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
       settled.current = true
       setDone(true); setMiss(null)
       speak(revealFor(data))
-      // He leaves on his own legs, and the round ends when he is actually gone.
-      const j = inFlowJourney(MILO, l.miloH, Math.round(vw - l.miloLeft + l.miloW * 0.4))
-      window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), j.ms + 700)
+      // The friends leave on their own legs with their shares, and the round ends when they are gone.
+      window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), friendsGoneMs(l, data.den) + 700)
     } else {
       erred.current = true
       const t = missFor(data, { den: pieceDen, laid })
@@ -715,7 +682,6 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
         <Undo onClick={undo} disabled={done || laid === 0} short={l.short} />
         <Commit short={l.short} text={data.on === 'group' ? 'Share ✓' : 'Fit ✓'} onClick={commit} disabled={done || laid === 0} />
       </Bar>
-      <Milo L={l} vw={vw} leaving={done} resetKey={`${data.slot}-${data.ask}-${data.on}`} />
     </>
   )
 }
@@ -762,7 +728,6 @@ const Reteach: React.FC<{ data: FrRound; onDone: () => void }> = ({ data, onDone
           person who should be handed a second framing to bridge. */}
       <Friends L={l} order={order} den={data.den} count={data.den} share={share} leaving={false}
         resetKey={`re${data.slot}`} />
-      <Milo L={l} vw={vw} leaving={false} resetKey={`re${data.slot}`} />
     </>
   )
 }
@@ -820,7 +785,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
   const tryN = useRef(0)
   const [tryOk, setTryOk] = useState(false)
   /** ⚠️ The piece appears when the child is ASKED for it, not when the last beat starts — gated on
-   *  the beat index it shows up while Milo is still sentences earlier, because `line` lags a new beat
+   *  the beat index it shows up while the narration is still sentences earlier, because `line` lags a new beat
    *  until its first narration step fires and the render does not. */
   const [askTry, setAskTry] = useState(false)
 
@@ -829,7 +794,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
       { // ① two friends, one pizza, and a cut that is not fair
         lines: [
           'Bunny and Duck both want some pizza. Just two friends, and one pizza.',
-          'Milo cut it into two pieces — but look. Bunny got a BIG piece and Duck got a little one.',
+          'We cut it into two pieces — but look. Bunny got a BIG piece and Duck got a little one.',
           'That is not fair, and it is not a half. A half means both pieces are the SAME.',
         ],
         steps: [
@@ -840,7 +805,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
       },
       { // ② equal pieces, one each
         lines: [
-          'So Milo cuts again. One piece for Bunny…',
+          'So we cut again. One piece for Bunny…',
           'and one for Duck, exactly the same size. Two friends, two equal pieces.',
           'They each get ONE HALF. Nobody got more than anybody else.',
         ],
@@ -853,7 +818,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
       { // ③ THE PAYLOAD — more friends sharing the same thing means a smaller piece each
         lines: [
           'Now watch. TWO more friends come along — that is four friends now.',
-          'Same pizza. But Milo has to cut it into four pieces so everyone gets one.',
+          'Same pizza. But now we cut it into four pieces so everyone gets one.',
           'Four friends, four equal pieces. Each one gets a QUARTER.',
           'More friends means a SMALLER piece each. That is why a quarter is smaller than a half.',
         ],
@@ -898,7 +863,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
      * ⚠️ IT USED TO SAY A CUT TAIL WAS AN ACCEPTABLE PRICE FOR THAT. It was not — the founder heard
      * it across every band on 2026-09-04. `speakPaced` keeps the whole property above (the visuals
      * are on their OWN timer and can never hang on a speech event) and drops the cut: a beat ends
-     * at the LATER of its dwell and Milo actually finishing, under a ceiling.
+     * at the LATER of its dwell and the voice actually finishing, under a ceiling.
      */
     const cancel = speakPaced(b.lines, {
       onStep: (i) => { b.steps[i]?.(); setLine(b.lines[i]) },
@@ -985,10 +950,10 @@ export function makeFrBeat(): Beat<FrRound> {
     // The treat's SHAPE is in here on purpose: a half of a round pizza and a half of a chocolate bar
     // are two representations the curriculum asks for by name, not two dressings of one question.
     sig: r => `${r.ask}:${r.on}:${r.den}:${r.n}:${orderOf(r.slot).shape}`,
-    // Empty on purpose: SkillBeat then renders no pill of its own, and Milo's bubble is the single
+    // Empty on purpose: SkillBeat then renders no pill of its own, and the chapter's bubble is the single
     // question region. Two pills saying the same thing land on top of each other at 640×320.
     prompt: () => '',
-    // The VOICE comes from the same renderer the bubble writes, so what Milo says and what the bubble
+    // The VOICE comes from the same renderer the bubble writes, so what is said and what the bubble
     // shows cannot drift.
     say: r => askTextFor(r),
     Play: ({ data, onSubmit }) => <FrPlay data={data} mode="practice" onComplete={onSubmit} />,
@@ -1058,7 +1023,7 @@ export default function SliceShop({ onFinish, onExit }: {
   // ⚠️ THIS EARLY RETURN SITS BELOW EVERY HOOK. Put one above a `useMemo` and turning the phone
   // changes the hook count, and React tears the chapter into the error boundary — which is exactly
   // what happened the first time this gate was wired into chapter 2.
-  if (needsRotate) return <RotateGate line="Milo needs a wide counter to cut things on! 🍕" />
+  if (needsRotate) return <RotateGate line="The shop needs a wide counter to cut things on! 🍕" />
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
@@ -1077,7 +1042,7 @@ export default function SliceShop({ onFinish, onExit }: {
           order table was rebuilt — the same fault CoinShop shipped when its intro pointed a child at
           a price board and a cloth that had both been deleted. The gate reads the table. */}
       {phase === 'intro' && Card(
-        <>Milo&apos;s shop is open, and friends keep coming in — and everything has to be shared out
+        <>The shop is open, and friends keep coming in — and everything has to be shared out
           FAIRLY. A pizza, a chocolate bar, a party cake. First, let us learn how to share equally.</>,
         'Show me ▶', () => { unlockSpeech(); setPhase('lesson') })}
 
@@ -1087,8 +1052,8 @@ export default function SliceShop({ onFinish, onExit }: {
       {/* The teaching and the pointing stop at once. A child not told that has simply had the game
           taken away — so it is said out loud, once, on its own screen. */}
       {phase === 'bridge' && Card(
-        <>Now the orders start coming in. Sometimes Milo hands you a piece and you find how many fit —
-          and sometimes he asks for a half or a third and you find the right piece. I will not point any
+        <>Now the orders start coming in. Sometimes you get a piece and you find how many fit —
+          and sometimes you are asked for a half or a third and you find the right piece. I will not point any
           more. You can do this!</>,
         'Open the shop ▶', () => setPhase('guided'))}
 
@@ -1104,14 +1069,6 @@ export default function SliceShop({ onFinish, onExit }: {
         </div>
       )}
 
-      {/* Milo stands here for every phase that does not own him itself (FrPlay and Reteach do, because
-          they need him to walk off). He must be on screen whenever the bubble is: the bubble has a
-          TAIL, and a tail pointing at an empty corner says the words belong to somebody who is not
-          there. The gate asserts he has a registered drawn cycle, since he is the only thing here
-          that moves. */}
-      {(phase === 'intro' || phase === 'lesson' || phase === 'bridge') && hasSheet(MILO) && (
-        <Milo L={l} vw={vw} leaving={false} resetKey={phase} />
-      )}
     </div>
   )
 }

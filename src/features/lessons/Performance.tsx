@@ -12,7 +12,8 @@ import { buildReport, assignmentStatus, localDay, showDay, masteredByModule, STU
 import { getLessonRows, getRecentPoints, getMasteredDates, type LessonRow } from '@/data/repositories/points'
 import { startedAhead } from './nudge'
 import { ladderOf } from './ladders'
-import { MODULES } from './modules'
+import { ALL_MODULES as MODULES } from './modules'
+import { gradeText } from '@/features/dashboard/i18n'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { useT, useLang } from '@/features/dashboard/i18n'
 
@@ -87,7 +88,7 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
             <h2 style={h2}>{t('Mastered topics')}</h2>
             {mastered.groups.map(g => (
               <div key={g.moduleId} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--ink-muted)' }}>{t('Grade {g}', { g: g.grade })} · {g.title}</h3>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: 'var(--ink-muted)' }}>{gradeText(g.grade, t)} · {g.title}</h3>
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {g.topics.map(x => (
                     <li key={x.id} style={{ display: 'flex', flexDirection: 'column', fontSize: 14, color: 'var(--ink)' }}>
@@ -131,7 +132,7 @@ export function Performance({ learners, lessonsHref }: { learners: PerformanceLe
                         <li key={s.lessonId} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{f?.lesson.title ?? s.lessonId}</div>
-                            <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{t('Grade {g}', { g: f?.module.grade ?? '' })} · {f?.module.title}</div>
+                            <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{f ? gradeText(f.module.grade, t) : ''} · {f?.module.title}</div>
                           </div>
                           <span style={{ fontSize: 12, fontWeight: 800, color: '#B42318', whiteSpace: 'nowrap' }}>{t('{pct}% first try · {n} problems', { pct: s.firstTryPct, n: s.problems })}</span>
                         </li>
