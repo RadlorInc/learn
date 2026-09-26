@@ -335,6 +335,64 @@ describe('the Stripe webhook', () => {
     expect(calls.filter(c => c.url.startsWith('https://api.stripe.com'))).toEqual([])
   })
 
+  it('MAP-02 — the event log keeps no customer PII, only the Stripe references and the amount', async () => {
+    // ⚠️ `billing_events` SURVIVES ACCOUNT DELETION (accountDeletion.ts SURVIVORS) on the promise
+    // that it "names nobody". Storing the whole Stripe event broke that: a checkout session carries
+    // the parent's email, name, address and phone in `customer_details`, and `account_id → NULL`
+    // does nothing to a copy of them inside `payload`. Expected shape written out by hand — not
+    // derived from the code under test.
+    const calls = stubNetwork()
+    const res = await deliver('checkout.session.completed', {
+      id: 'cs_1', object: 'checkout.session', subscription: 'sub_123', customer: 'cus_9',
+      client_reference_id: ACC, amount_total: 1298, currency: 'usd',
+      customer_email: 'parent@family.example',
+      customer_details: {
+        email: 'parent@family.example', name: 'Pat Parent', phone: '+15551234567',
+        address: { line1: '12 Elm Street', city: 'Springfield', postal_code: '12345', country: 'US' },
+      },
+      metadata: { account_id: ACC },
+    })
+    expect(res.status).toBe(200)
+
+    const [log] = post(calls, '/rest/v1/billing_events')
+    const body = JSON.parse(log.body)
+    for (const pii of ['parent@family.example', 'Pat Parent', '+15551234567', '12 Elm Street', 'Springfield', '12345']) {
+      expect(log.body, `the stored event still contains "${pii}"`).not.toContain(pii)
+    }
+    // …nor anything that joins the row back to the family once account_id is nulled.
+    expect(log.body, 'our own account id is stored inside the payload').not.toContain(ACC)
+    expect(body).toEqual({
+      stripe_event_id: 'evt_1',
+      type: 'checkout.session.completed',
+      payload: {
+        id: 'evt_1', type: 'checkout.session.completed', created: 1,
+        object_id: 'cs_1', subscription: 'sub_123', amount_total: 1298, currency: 'usd',
+      },
+    })
+    // Positive control: the entitlement write is unchanged by what we chose to log.
+    expect(JSON.parse(post(calls, '/rest/v1/subscriptions')[0].body)).toMatchObject({
+      account_id: ACC, stripe_subscription_id: 'sub_123', status: 'active', seats_paid: 2,
+    })
+    expect(JSON.parse(post(calls, 'rpc/materialize_seats')[0].body)).toEqual({ p_subscription_id: 'sub-row-1', p_seats: 2 })
+  })
+
+  it('MAP-02 — a subscription event logs the subscription id, not the customer or its metadata', async () => {
+    const calls = stubNetwork()
+    await deliver('customer.subscription.updated', {
+      ...SUB(), customer: { id: 'cus_9', email: 'parent@family.example', name: 'Pat Parent',
+        address: { line1: '12 Elm Street' } },
+    })
+    const [log] = post(calls, '/rest/v1/billing_events')
+    for (const leak of ['parent@family.example', 'Pat Parent', '12 Elm Street', ACC]) {
+      expect(log.body, `the stored event still contains "${leak}"`).not.toContain(leak)
+    }
+    expect(JSON.parse(log.body).payload).toEqual({
+      id: 'evt_1', type: 'customer.subscription.updated', created: 1,
+      object_id: 'sub_123', subscription: 'sub_123',
+    })
+    expect(post(calls, 'rpc/materialize_seats').length).toBe(1)
+  })
+
   it('a failed database write returns 5xx and does NOT close the event', async () => {
     // The redelivery is the recovery, and it only happens if we say the delivery failed.
     stubNetwork()
