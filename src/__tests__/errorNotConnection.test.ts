@@ -26,12 +26,14 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, replace() {} 
 vi.mock('@/data/auth', async orig => ({ ...await orig<object>(), getCurrentSession: async () => ({ user: { id: 'u' } }) }))
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
-const EXPIRED = 'Your sign-in has expired. Sign in again, then try this.'
+// Rafi's words (N9, 2026-09-26), written out here — not imported — so a reword needs two edits.
+const EXPIRED = 'Please sign in again'
+const CONSENT = 'This child needs a parent’s permission first'
 const GENERIC = 'Something went wrong. Please try again.'
 const failedFetch = new TypeError('Failed to fetch')
 
 const cases: [string, Outcome, string][] = [
-  ['consent refusal P0C01', { error: { code: 'P0C01', message: 'no granted parental consent for this child' } }, GENERIC],
+  ['consent refusal P0C01', { error: { code: 'P0C01', message: 'no granted parental consent for this child' } }, CONSENT],
   ['RLS denial 42501', { error: { code: '42501', message: 'new row violates row-level security policy' } }, GENERIC],
   ['expired sign-in PGRST301', { error: { code: 'PGRST301', message: 'JWT expired' } }, EXPIRED],
   ['expired sign-in, HTTP 401 only', { error: { status: 401, message: 'Unauthorized' } }, EXPIRED],
