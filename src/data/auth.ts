@@ -8,18 +8,12 @@
  */
 import { createClient } from '@/data/supabase/client'
 import { record } from '@/infra/AuthEventLogger'
-import type { AuthChangeEvent, EmailOtpType, Session, Subscription, User } from '@supabase/supabase-js'
+import type { AuthChangeEvent, EmailOtpType, Session, Subscription } from '@supabase/supabase-js'
 
 /** Current session (local storage read, no network). Null when signed out. */
 export async function getCurrentSession(): Promise<Session | null> {
   const { data: { session } } = await createClient().auth.getSession()
   return session
-}
-
-/** Current user, verified against the auth server. Null when signed out. */
-export async function getCurrentUser(): Promise<User | null> {
-  const { data: { user } } = await createClient().auth.getUser()
-  return user
 }
 
 /**

@@ -23,12 +23,3 @@
  * written tick stays and a child on a silent device sees exactly what they saw before.
  */
 export const PRAISE = ['Great job!', 'Nice work!', 'Well done!', 'You got it!', 'Lovely!'] as const
-
-/**
- * Whether this band hears a spoken line on a right answer.
- *
- * Takes the band as a plain string so `core` keeps its back to `features` (see the 2026-08-18
- * layering pass); the storybook engine has no band at all and simply does not ask.
- */
-export const praisesOnCorrect = (band: string): boolean =>
-  band === '3-5' || band === '6-8'
