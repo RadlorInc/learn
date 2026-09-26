@@ -778,6 +778,73 @@ begin
     if v_cnt <> 2 then raise exception 'RLS FAIL M7b: service_role call left % seats, expected 2', v_cnt; end if;
   end;
 
+  -- ── SEC-02 (20260926100000): a viewer's access can be revoked, and cannot be re-granted by replay ──
+  -- Each refusal is paired with the write that must succeed, driven as the real caller (`authenticated`).
+  declare
+    v_viewer uuid := gen_random_uuid();
+    v_vinv   uuid := gen_random_uuid();
+  begin
+    insert into auth.users (id, email, email_confirmed_at) values (v_viewer, 'viewer.rlstest@milo.invalid', now());
+    insert into public.learner_access (learner_id, parent_id, access_role) values (v_learner, v_viewer, 'viewer');
+    insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
+      values (v_vinv, v_learner, v_owner, 'viewer.rlstest@milo.invalid', 'accepted', now() + interval '6 days');
+
+    -- V1: a stranger (the attacker) cannot delete the viewer's row. V2: the viewer cannot delete the OWNER's row.
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    delete from public.learner_access where learner_id = v_learner and parent_id = v_viewer;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_viewer, 'email', 'viewer.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    delete from public.learner_access where learner_id = v_learner and parent_id = v_owner;
+    reset role;
+    select count(*) into v_cnt from public.learner_access where learner_id = v_learner and parent_id in (v_viewer, v_owner);
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 2 then raise exception 'RLS FAIL V1/V2: a stranger or the viewer deleted an access row that is not theirs (% of 2 left)', v_cnt; end if;
+
+    -- V3 (positive twin): the OWNER can remove the viewer (was 42P17 for everyone before SEC-02).
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_owner, 'email', 'owner.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    delete from public.learner_access where learner_id = v_learner and parent_id = v_viewer;
+    get diagnostics v_cnt = row_count;
+    reset role;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 1 then raise exception 'RLS FAIL V3: the owner could not remove a viewer (% rows)', v_cnt; end if;
+
+    -- V4: the removed viewer cannot set their accepted invite back to pending…
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_viewer, 'email', 'viewer.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    v_blocked := false;
+    begin
+      update public.learner_invites set status = 'pending' where id = v_vinv;
+    exception when insufficient_privilege then v_blocked := true;
+    end;
+    v_asserts := v_asserts + 1;
+    if not v_blocked then raise exception 'RLS FAIL V4: a removed viewer re-opened their accepted invite'; end if;
+    -- V5: …and so cannot self-grant again.
+    v_blocked := false;
+    begin
+      insert into public.learner_access (learner_id, parent_id, access_role) values (v_learner, v_viewer, 'viewer');
+    exception when insufficient_privilege or check_violation then v_blocked := true;
+    end;
+    v_asserts := v_asserts + 1;
+    if not v_blocked then raise exception 'RLS FAIL V5: a removed viewer self-granted access again'; end if;
+    reset role;
+
+    -- V6 (positive twin): a viewer CAN remove themselves. Re-added as the migration role first.
+    insert into public.learner_access (learner_id, parent_id, access_role) values (v_learner, v_viewer, 'viewer');
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_viewer, 'email', 'viewer.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    delete from public.learner_access where learner_id = v_learner and parent_id = v_viewer;
+    get diagnostics v_cnt = row_count;
+    reset role;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 1 then raise exception 'RLS FAIL V6: a viewer could not remove themselves (% rows)', v_cnt; end if;
+  end;
+
   -- ── CONSENT-ONCE (20260924100000): withdrawing a whole account, and nobody else's ─────────────
   -- Last, because C3 deletes the attacker's child that the assertions above use.
   select count(*) into v_cnt from public.learners where created_by = v_owner;

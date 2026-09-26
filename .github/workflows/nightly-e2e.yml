@@ -54,10 +54,11 @@ jobs:
   # writes a warning and a summary line on every run, and the sweep job shows as skipped.
   legacy-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.4 min over 12 runs; 10 min floor (ARC-07; GitHub default 360)
     outputs:
       run: ${{ steps.flag.outputs.run }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - id: flag
         run: |
           if grep -q 'export const LEGACY_CHAPTERS_HIDDEN = true' src/core/chapters.ts; then
@@ -80,8 +81,8 @@ jobs:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
           cache: npm
@@ -142,7 +143,7 @@ jobs:
       # which is the difference between a red nightly you can diagnose and one you re-run blindly.
       - name: Upload traces on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: playwright-trace-${{ github.run_id }}
           path: test-results/

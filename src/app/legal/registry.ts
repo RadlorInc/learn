@@ -46,14 +46,15 @@ export interface LegalPage {
 }
 
 const BETA = { decidedBy: 'Rafi (founder)', decided: '2026-09-24', effective: '25 September 2026' }
+// The Terms' last two decisions (§12 floor US$100, §14 a plain contact) were made on 26 September 2026.
+const TERMS_BETA = { decidedBy: 'Rafi (founder)', decided: '2026-09-26', effective: '26 September 2026' }
 
 export const LEGAL_PAGES: LegalPage[] = [
   { slug: 'privacy', title: 'Privacy Policy', source: '11-privacy-policy.md',
     after: '> One dependency survives', until: '### Where this policy must appear',
     published: true, signoff: null, beta: BETA, spanish: { source: 'es/11-privacy-policy.md' } },
-  // ⚠️ DARK UNTIL TWO FOUNDER DECISIONS: the liability floor (§11) and §14's phone / contact. Everything else is decided.
   { slug: 'terms', title: 'Terms of Service', source: '12-terms-of-service.md',
-    until: '### Notes for the attorney', published: false, signoff: null, beta: BETA, spanish: { source: 'es/12-terms-of-service.md' } },
+    until: '### Notes for the attorney', published: true, signoff: null, beta: TERMS_BETA, spanish: { source: 'es/12-terms-of-service.md' } },
   { slug: 'refunds', title: 'Refund and Cancellation Policy', source: '01-refund-and-cancellation-policy.md',
     until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/01-refund-and-cancellation-policy.md' }, needs: 'billing' },
   { slug: 'parent-rights', title: 'Your rights as a parent', source: '06-parent-rights-procedure.md',
