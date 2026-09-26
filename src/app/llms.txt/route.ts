@@ -16,13 +16,13 @@ import { LEGAL_PAGES } from '@/app/legal/registry'
 export const dynamic = 'force-static'
 
 const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
-  '/help': 'questions parents ask: lost progress, how lessons adapt, what is stored, child logins, game time',
+  '/help': 'questions parents ask: lost progress, how lessons adapt, what is stored, child logins',
 }
 
 export function GET() {
   const text = `# ${APP_NAME}
 
-> Adaptive math from KG to grade 8: a lesson, then practice that adapts to what the child gets wrong.
+> Adaptive math for grades 3 to 8: a lesson, then practice that adapts to what the child gets wrong.
 
 ${APP_NAME} is made by ${COMPANY} (${COMPANY_URL}) and lives at ${SITE_URL}.
 
@@ -35,9 +35,7 @@ answer is never marked with a red cross.
 
 A parent chooses what each child sees (whole modules or single topics, from any grade), can set
 due dates, and sees what the child finds hard. Children sign in with a username and password their
-parent or teacher sets. Teachers make classes, choose each class's modules and give class
-exercises. Children earn points by practicing and can spend them on game time, within a daily
-limit the adult sets.
+parent sets. Children earn points by practicing; games to spend them on are coming soon.
 
 ## Earlier names
 

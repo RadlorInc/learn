@@ -60,12 +60,12 @@ async function routes() {
   }
 }
 
-const HOME_TITLE = 'Radlic — math lessons that adapt to your child, KG to grade 8'
+const HOME_TITLE = 'Radlic — math lessons that adapt to your child, grades 3 to 8'
 const HOME_OG_DESC =
-  'Math from KG to grade 8: a lesson that explains one idea step by step, then practice that adapts to your child.'
+  'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.'
 const HELP_TITLE = 'Help · Radlic'
 const HELP_DESC =
-  'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.'
+  'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, points, and choosing where a child starts.'
 
 const url = (u: URL | string | undefined | null) => (u ? String(u).replace(/\/$/, '') : u)
 
