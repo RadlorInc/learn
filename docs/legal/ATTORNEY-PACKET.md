@@ -21,9 +21,11 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 - **Draft:** until Round 1, docs 06 and 12 said withdrawal **closes the whole account**, including other children, with a pro-rata refund. They now describe the build (Round 1, PR #195). The notice, both emails and the withdrawal screen already said "your account stays open".
 - **Decide:** (a) Does per-child withdrawal satisfy the revocation right, or must or should withdrawal close the account? (b) What happens to a subscription when consent for one child is withdrawn (see C4)?
 
-### A2. Consent records and account closure *(12 §4 placeholder, 04 §3 placeholder, 11 §9 "Consent records" period, 03 note 4, 02 note 4)*
+### A2. Consent records and account closure *(12 §4 placeholder, 04 §3 placeholder, 11 §9 "Consent records" period, 03 note 4, 02 note 4)* — ⚠️ **being changed, see "Changing" below**
 - **Today:** each consent is a row recording the method, the state (`pending` → `granted` → `withdrawn`/`declined`/`expired`), the version and content-hash of the notice, Privacy Policy and Terms shown, the language, the parent's email, and the timestamps. **Withdrawing or deleting a child keeps the record**; **closing the whole account deletes every consent record** (a database cascade from the parent's account).
 - **Draft:** the Terms say, truthfully, that closing the account deletes the record, and flag that this is the opposite of what consent record-keeping usually wants. The retention period for consent records is blank in the Privacy Policy.
+- **Changing (founder, 26 September 2026, N11 — Draft PR #269, not yet live):** closing the account will **keep** the record: a granted consent is marked withdrawn, the row stops naming the account, and it keeps the email address it was sent to (that is what makes it evidence). Answered records (granted/withdrawn/declined) are kept with no scheduled deletion; unanswered requests are deleted with the account. The Terms and Privacy Policy change in the same PR. Also (N5, PR #268): a consent can only be granted on a **confirmed** email address, and an account whose only consent was **declined** is no longer auto-deleted. The deletion log (`deletion_log`, PR #260) is kept as long as the consent records, with no purge job (N36).
+- **Please also advise:** does changing this retention sentence in the just-published beta Terms need notice to existing parents under Terms §16?
 - **Decide:** (a) Must an anonymised consent log survive account closure, and if so, what may it contain (for example: the consent id, method, versions and timestamps, with no email and no child)? (b) For how long must consent records be kept? We will build whatever you specify; nothing will be invented in the meantime.
 
 ### A3. Schools and teachers *(05 §placeholder "can a school consent")*
@@ -127,6 +129,11 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 - **E7. Email (CAN-SPAM)** *(09 notes, 09 §2.3 placeholder)*: **today every email the product sends is transactional**: sign-up and security mail, the two consent emails, and, from Round 1, the cancellation confirmation. There is no marketing email. Round 1 built a suppression list and one-click unsubscribe for the first commercial email (PR #197). Please confirm the classification, whether the "advertisement" label applies, and that the Newark mailbox address qualifies.
 - **E8. Public boundaries.** Each page shows only part of its document (engineering set the cut). The retention page's public part includes a paragraph opening "Known defect — deletion is …" that is now resolved. **You sign off the boundary, not just the text.**
 
+## F. Curriculum provenance *(new, 26 September 2026 — founder N32; review FND-14)*
+
+- **Today:** the lesson and module **titles and their order** were taken from school curriculum PDFs and, for Grade 5 · Module 1, from a photographed contents page of a published textbook (lesson and part names only). All explanations, questions, drawings and voice lines are our own, written for this product.
+- **Please advise:** (a) whether using a publisher's lesson titles and sequence (not its text) raises a copyright or trade-dress issue; (b) whether the titles should be reworded before any public page lists them (none does today); (c) anything we should record about where each title came from.
+
 ---
 
 ## Decided by the founder for the beta (24 September 2026) — attorney to review
@@ -152,8 +159,8 @@ effect from 25 September 2026. We will email parents before we make any material
 | 68 | Terms §14 | The copyright agent is **not registered** with the US Copyright Office for now; the note was removed and no safe-harbour claim is made. | D |
 | 52 | Privacy §10 | The security paragraph was checked against the Security Program on 24 Sep 2026. One claim was reworded to what is implemented: internal records are in a separate system with no children's data, and the in-product admin view shows only totals, never an individual child. | E |
 | 44 | Cookies | A promise: no storage the app does not need will be added without asking first, and it will be off unless switched on. | E |
-| **62** | Terms §11 | **Still open:** the liability floor. Terms stays dark until the founder decides it. | D |
-| **67** | Terms §14 | **Still open:** a phone number for copyright complaints, or §14 reworded as a plain contact. Terms stays dark until decided. | D |
+| **62** | Terms §12 | **Decided 26 September 2026:** the floor is **US$100** ("the greater of 12 months' fees or US$100"). Terms published as beta (PR #267). | D2 |
+| **67** | Terms §14 | **Decided 26 September 2026:** §14 is a plain contact — the postal address and support@radlor.com; no phone, no registered agent (PR #267). | D4 |
 
 Measured facts entered at the same time (not decisions): provider log windows (hosting 1 hour on Hobby, database 7
 days on Pro, from the dashboards), GitHub backup location and 30-day expiry, no Stripe key in production, the two
