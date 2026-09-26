@@ -10,7 +10,7 @@
  *
  * A Server Component — it is text and links.
  */
-import { SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -28,11 +28,33 @@ const P = {
 } as const
 
 
+const TITLE = 'Help'
+const DESCRIPTION =
+  'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.'
+
+/**
+ * ⚠️ `openGraph` and `twitter` ARE DECLARED HERE ON PURPOSE (SEO-05). Next merges metadata SHALLOWLY: a page that sets
+ * no `openGraph` inherits the root's whole object — so a shared /help link previewed as the home page, with
+ * `og:url` = the site root. Setting it here replaces the root's object wholesale, which is why `type`/`siteName`
+ * are repeated. The image is not named: `app/opengraph-image.tsx` still supplies it (measured in the built HTML).
+ * The og/twitter title is the rendered `<title>` — the root's `%s · Radlic` template does not reach these fields.
+ */
 export const metadata: Metadata = {
-  title: 'Help',
-  description:
-    'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.',
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/help' },
+  openGraph: {
+    type: 'website',
+    siteName: APP_NAME,
+    title: `${TITLE} · ${APP_NAME}`,
+    description: DESCRIPTION,
+    url: '/help',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${TITLE} · ${APP_NAME}`,
+    description: DESCRIPTION,
+  },
 }
 
 /**
