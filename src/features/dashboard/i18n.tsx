@@ -507,6 +507,12 @@ export const ES: Record<string, string> = {
   'Your child’s progress is saved securely to your account': 'El progreso de su hijo se guarda de forma segura en su cuenta',
   'Signing you in…': 'Iniciando sesión…',
   'This link has expired or was already used.': 'Este enlace ha caducado o ya se usó.',
+  'Choose your password': 'Elige tu contraseña',
+  'This email address was used to sign up more than once, so to keep the account safe, please choose its password now.':
+    'Esta dirección de correo se usó para registrarse más de una vez; para proteger la cuenta, elige su contraseña ahora.',
+  'Use at least 6 characters': 'Usa al menos 6 caracteres',
+  'Couldn’t save it — try again': 'No se pudo guardar — inténtalo de nuevo',
+  'Save and continue': 'Guardar y continuar',
   'This link is missing its token. Ask for a fresh invite.': 'A este enlace le falta su código. Pida una invitación nueva.',
   'This invite link has expired. Ask for a fresh one.': 'Este enlace de invitación venció. Pida uno nuevo.',
   'This invite link is not valid any more. Ask for a fresh one.': 'Este enlace de invitación ya no es válido. Pida uno nuevo.',

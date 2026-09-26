@@ -12,19 +12,19 @@
 | input | kind | holder | status |
 |---|---|---|---|
 | `PROD_PROJECT_REF` | repo **variable** | — | ✅ set → **`wrnjqjhrbnqxornmfisf`** (verified live 2026-09-09; the `qaymxunzlarwusogwyak` value here was the decommissioned Sydney project) |
-| `SUPABASE_ACCESS_TOKEN` | repo **secret** | your Supabase account | ❌ not set |
-| `PROD_DB_PASSWORD` | repo **secret** | Database → Settings (reset it; nobody has it) | ❌ not set |
-| `BACKUP_PASSPHRASE` | repo **secret** | generate it once, keep it in your password manager | ❌ not set |
+| `SUPABASE_ACCESS_TOKEN` | repo **secret** | your Supabase account | ✅ set 2026-09-23 (as measured 2026-09-26 with `gh secret list`, names only — re-run it rather than trust this cell) |
+| `PROD_DB_PASSWORD` | repo **secret** | Database → Settings (reset it; nobody has it) | ✅ set 2026-09-23 (as measured 2026-09-26 with `gh secret list`, names only — re-run it rather than trust this cell) |
+| `BACKUP_PASSPHRASE` | repo **secret** | generate it once, keep it in your password manager | ✅ set 2026-09-23 (as measured 2026-09-26 with `gh secret list`, names only — re-run it rather than trust this cell) |
 
 ⚠️ The token and the database password are **yours to type, not mine** — they go from the Supabase
 dashboard into `gh secret set` on your machine and never through a chat. The passphrase is the one
 thing without which every artifact is a random file; if it is lost, so is every backup.
 
-⚠️ **Setting `PROD_PROJECT_REF` also un-inerts `deploy.yml`'s `migrate-prod` job** the moment the
-two Supabase secrets exist. Today it stays skipped because its `needs: migrate-staging` is skipped
-(`STAGING_PROJECT_REF` is unset). **Before you ever set `STAGING_PROJECT_REF`, create the
-`production-db` GitHub environment WITH its required-reviewer rule** — the workflow's own comment
-says so — or the next push to `main` applies migrations to production with no human in the loop.
+⚠️ **These same secrets are what `deploy.yml`'s `migrate-prod` uses.** Since they were set it runs on
+every push that changes a migration, and the only thing between it and production is the
+`production-db` environment's required reviewer (it applied `20260926090000` on 2026-09-25). Never
+weaken that rule. (The paragraph that stood here said the job stayed skipped; that stopped being true
+when the secrets were set.)
 
 ## 1 · Make it real (founder, ~5 minutes)
 

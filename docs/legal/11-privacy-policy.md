@@ -67,7 +67,7 @@ We ask a child for no more information than is reasonably necessary to take part
 |---|---|
 | Name and email address | To create the account, to contact you about it, and to verify your identity when you make a request about your child's data |
 | Subscription and billing details | None during the beta: the Service is free, billing is switched off, and we collect no payment details. |
-| Your record of consent — the method, the date, your email address, and the version of each document you were shown — and, for each child you add, when you confirmed that you are that child's parent or legal guardian and which version of the notice that confirmation referred to | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is deleted with everything else |
+| Your record of consent — the method, the date, your email address, and the version of each document you were shown — and, for each child you add, when you confirmed that you are that child's parent or legal guardian and which version of the notice that confirmation referred to | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is kept, marked as withdrawn and no longer linked to your account; everything else is deleted |
 | Messages you send us | To answer you |
 
 ## 5. Your rights as a parent
@@ -130,7 +130,7 @@ We keep a child's information only as long as we need it to provide the service,
 | Product events | 90 days, then deleted automatically every night |
 | Crash records | 90 days, then deleted automatically |
 | Parent account | Until you close it |
-| Consent records | Until you close your account. If you withdraw consent, the record is kept, marked as withdrawn, so we can show when and how it ended |
+| Consent records | Kept after you withdraw consent or close your account, marked as withdrawn, so we can show when and how it ended. After you close your account it is no longer linked to it. We do not delete it automatically. A request you never answered is deleted with the account |
 | Our providers' request logs, which include IP address and browser type | Available to us for up to 7 days (database provider) and 1 hour (hosting provider) on our current plans, from their dashboards on 24 September 2026 |
 | Backups | Designed to expire after 30 days |
 

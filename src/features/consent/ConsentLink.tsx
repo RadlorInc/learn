@@ -19,7 +19,7 @@ import { makeT } from '@/features/dashboard/i18n'
 import { Md } from './Md'
 import { WithdrawAll } from './WithdrawAll'
 
-type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'already_consented' | 'declined' | 'withdrawn' | 'expired' | 'unknown' | 'kept' | 'error'
+type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'already_consented' | 'declined' | 'withdrawn' | 'expired' | 'unconfirmed' | 'unknown' | 'kept' | 'error'
 
 function fragment(): { t: string } {
   const h = new URLSearchParams(typeof window === 'undefined' ? '' : window.location.hash.slice(1))
@@ -102,6 +102,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
   }
   else if (status === 'declined') content = <div data-consent="declined">{say(PROPOSED.declinedHeading, PROPOSED.declinedBody)}</div>
   else if (status === 'withdrawn') content = <div data-consent="withdrawn">{say(PROPOSED.withdrawnHeading, scope === 'account' ? PROPOSED.withdrawnAllBody : PROPOSED.withdrawnBody)}</div>
+  else if (status === 'unconfirmed') content = <div data-consent="unconfirmed">{say(PROPOSED.unconfirmedHeading, PROPOSED.unconfirmedBody)}</div>
   else if (status === 'expired') content = <div data-consent="expired">{say(PROPOSED.expiredHeading, PROPOSED.expiredBody)}</div>
   else if (status === 'kept') content = <div data-consent="kept"><p style={S.p}>{t(PROPOSED.keptBody)}</p></div>
   else if (status === 'unknown') content = <div data-consent="unknown">{say(PROPOSED.invalidHeading)}</div>

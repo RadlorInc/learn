@@ -7,7 +7,7 @@ How the app is defended, how to keep it that way, and the manual steps that live
 | Layer | Where | Notes |
 |-------|-------|-------|
 | **RLS** | Postgres | The real access boundary. Every public table has RLS on + a policy scoped by `auth.uid()`/JWT email. Snapshot: [`supabase/schema/security_baseline.sql`](../supabase/schema/security_baseline.sql). |
-| **SECURITY DEFINER RPCs** | `sync_session`/`sync_diagnostic`/`sync_recheck` | Each self-guards on `learner_access` ownership + pins `search_path`; anon EXECUTE revoked. `sync_session` **derives** xp/coins server-side (clients can't inflate them). |
+| **SECURITY DEFINER RPCs** | many — e.g. `record_lesson_progress`, `save_practice_run`, `get_parent_dashboard`, the consent functions | Each self-guards on ownership (`learner_access` / `auth.uid()`), pins `search_path`, and has EXECUTE revoked from `anon`. Do not trust a count written here: `src/__tests__/securityDefinerDrift.test.ts` refuses an undeclared DEFINER / `search_path` change in any migration, and `rls_regression.sql` A8c asserts the API cannot reach the retention function. The live inventory is query 3 of *Schema drift check* below, run by Rafi. |
 | **Security headers** | [`next.config.ts`](../next.config.ts) | `X-Frame-Options`, `nosniff`, `Referrer-Policy`, **HSTS**, **Permissions-Policy**, **CSP** (see below). |
 | **Client guard** | `useAuthGuard` | UX-only gate; RLS is the boundary. |
 
@@ -15,12 +15,10 @@ How the app is defended, how to keep it that way, and the manual steps that live
 
 [`supabase/tests/rls_regression.sql`](../supabase/tests/rls_regression.sql) impersonates an attacker + an owner and asserts the attacker is **denied** (read, forge-invite → V1, self-grant, read sessions/stats) while the owner is allowed. Runs in a rolled-back transaction; a failed assertion exits non-zero.
 
-```bash
-# Point at a TEST/branch database, never prod:
-psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
-```
-
-CI runs this automatically **when the `SUPABASE_DB_URL` secret is set** (see `.github/workflows/ci.yml`). Recommended: create a [Supabase preview branch](https://supabase.com/docs/guides/platform/branching) or a throwaway test project and set its pooler connection string as the repo secret. Add a new assertion here whenever you add a table or policy.
+CI's `rls-tests` job (`.github/workflows/ci.yml`) runs it on **every push**: it starts a throwaway local
+Postgres, applies every migration from zero, runs the suite, and fails if the assertion count it prints
+(`RLS_ASSERTIONS=`) drops. It needs no secret and cannot skip. Locally, run it only against a local stack
+(`127.0.0.1`) — never against production. Add a new assertion whenever you add a table or policy.
 
 ## Schema drift check
 
@@ -28,8 +26,9 @@ The base schema lives in the Supabase dashboard, so it can change with no code d
 
 ⚠️ **The generator query used to say "see git history / the audit session" — i.e. it was lost, so the
 step was not runnable and the baseline went 6 weeks stale** (it predated `diagnostic_leads`,
-`auth_events` and `error_events`). Here it is, in full. Run all four parts against prod and update
-[`security_baseline.sql`](../supabase/schema/security_baseline.sql):
+`auth_events` and `error_events`). Here it is, in full. ⛔ **Rafi runs all four parts himself in the
+Supabase SQL editor** (CLAUDE.md: no agent queries production, not even a read-only SELECT); update
+[`security_baseline.sql`](../supabase/schema/security_baseline.sql) from his output:
 
 ```sql
 -- 1. RLS on + policy count per table (a table with rls=t and policies=0 is deny-all — intentional
@@ -69,18 +68,11 @@ A non-empty diff = the live security posture changed; review why.
 
 ## Content-Security-Policy — status & roadmap
 
-⚠️ **This section described a Report-Only split that no longer exists.** Corrected 2026-08-17 against the
-live header — the full policy has been **enforced** since 2026-08-16, `default-src 'self'` included.
-Measured on production:
-
-```
-default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net;
-style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:;
-media-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co
-https://cdn.jsdelivr.net https://storage.googleapis.com; worker-src 'self' blob:;
-frame-ancestors 'none'; base-uri 'self'; form-action 'self' https://accounts.google.com;
-object-src 'none'; upgrade-insecure-requests
-```
+The policy lives in [`next.config.ts`](../next.config.ts) and is enforced (not Report-Only). **It is not
+quoted here on purpose:** a copy in this file drifted wider than the live header for weeks (it still
+listed jsDelivr, `storage.googleapis.com` and `wasm-unsafe-eval` after the AR path that needed them was
+deleted on 2026-09-20). Read the source, or the live header with `curl -sI https://radlic.com`.
+`src/__tests__/cspHeader.test.ts` drives the real `headers()` and gates what must never be in it.
 
 **`script-src 'unsafe-inline'` is an accepted risk (V15), not an oversight**, and the reasoning is
 what matters if anyone revisits it:
@@ -88,10 +80,9 @@ what matters if anyone revisits it:
 - Removing it means a **per-request nonce**, which forces Next to render every page dynamically.
   Production currently serves `x-vercel-cache: PRERENDER` — so the cost is static rendering across
   the whole app, for every user, forever.
-- `require-trusted-types-for 'script'` is the nonce-free alternative and would very likely **break
-  the AR camera path**: MediaPipe pulls remote WASM/JS from jsDelivr (`FilesetResolver`), and that
-  path has never been driven with a real hand. This is the exact class that has already broken three
-  times here (fonts, MediaPipe, `media-src`) — invisible until one device does one thing.
+- `require-trusted-types-for 'script'` is the nonce-free alternative. The original objection — it
+  would likely break the AR camera path (MediaPipe from jsDelivr) — is gone with AR (deleted
+  2026-09-20), so this is worth re-evaluating; it has not been tried as of 2026-09-26.
 - The risk is low **only because the app has no injection sink at all**: zero
   `dangerouslySetInnerHTML`, zero `innerHTML`, zero `eval`, and React escapes by default.
 
@@ -112,7 +103,7 @@ and `learner_invites` all return **0 rows**, and `diagnostic_leads` / `error_eve
 
 | V | finding | severity | status |
 |---|---|---|---|
-| **V13** | `diagnostic_leads` anon `INSERT` grant bypasses `/api/lead`'s rate limit + validation | Medium | ⚠️ **OPEN — partially mitigated.** RLS now enforces a real email shape; the grant remains. See below. |
+| **V13** | `diagnostic_leads` anon `INSERT` grant bypasses `/api/lead`'s rate limit + validation | Medium | ✅ fixed — `20260823221818_leads_server_only.sql` revokes the anon `INSERT`. `/api/lead` itself was deleted with the placement check (2026-09-20). |
 | **V14** | `/api/lead` did `await fetch(...)` with no `res.ok` check — `fetch` does not throw on 4xx/5xx, so a 403 returned `{ok:true}` and the lead vanished with **no signal anywhere** | Medium | ✅ fixed — both server write paths report via `sinkError`; gated |
 | **V15** | CSP `script-src 'unsafe-inline'` | Low–Med | 📌 **accepted** — see the CSP section above; premise gated instead |
 | **V16** | `error_events` had no retention (holds `url`/`ua`/`stack`/`learner_id` — telemetry linked to a child) | Low | ✅ fixed — `pg_cron` job `prune-error-events`, daily 03:17, 90-day TTL |
@@ -131,16 +122,9 @@ All four were mutation-tested — each defect planted and watched fail.
 
 ## Manual steps (dashboard — not codeable)
 
-- [ ] **V13 — close the anon lead-insert bypass. Three steps, STRICTLY IN THIS ORDER:**
-      **(1)** set `SUPABASE_SERVICE_ROLE_KEY` in Vercel (Supabase → Settings → API → `service_role`);
-      **(2)** apply `20260816170000_leads_server_only.sql`, which revokes the anon `INSERT` grant;
-      **(3)** submit one real lead and confirm the row lands.
-      ⚠️ **Order matters:** `/api/lead` falls back to the anon key when the service-role key is
-      absent, so applying (2) first stops lead capture. Thanks to V14 that now shows up as a logged
-      `lead insert failed 403` instead of silence — but it still stops.
+- [x] ~~**V13 — close the anon lead-insert bypass.**~~ Done: `20260823221818_leads_server_only.sql`.
 - [ ] **Leaked-password protection** (V6): Auth → Password → enable HaveIBeenPwned check.
 - [ ] **Refresh-token lifetime**: Auth → shorten (mitigates the localStorage-token exposure, since the app stores the session in `localStorage`).
-- [ ] **Set `SUPABASE_DB_URL`** repo secret (test/branch DB) to activate the CI RLS job.
 - [ ] **Set `MONITORING_INGEST_URL`** (or wire Sentry) to activate error forwarding.
 
 ## `/api/stripe/webhook` — a public endpoint that is NOT rate-limited, deliberately
@@ -154,13 +138,14 @@ that is a decision rather than an omission:
   outbound call list is empty on a bad signature).
 - **A rate limit here drops real events.** Stripe delivers from a wide, changing IP range and gives
   up after ~3 days of retries; a limiter that sheds a burst of legitimate deliveries loses money
-  quietly. `/api/lead` is limited because an anonymous caller can write a row; here they cannot.
+  quietly. The other public POSTs (e.g. `/api/report-error`) are limited because an anonymous caller
+  can write a row; here they cannot.
 - **The unsigned case is not logged as a crash**, on purpose: an unsigned POST to a public URL is a
   scan, and routing it to `sinkError` would fill the crash sink exactly when somebody starts probing.
 
 ⚠️ Its service-role key writes `subscriptions`, `subscription_seats` and `billing_events` — all three
-deny-all to `anon`/`authenticated`. There is **no anon fallback** (unlike `/api/lead`, which has one
-for an unrelated reason): if it ever worked, it would mean the paywall's own tables were writable
+deny-all to `anon`/`authenticated`. There is **no anon fallback** (the deleted `/api/lead` had one, for
+an unrelated reason): if it ever worked, it would mean the paywall's own tables were writable
 from a browser.
 
 ## Known accepted items
@@ -170,11 +155,14 @@ from a browser.
 - ~~`touch_grades_updated_at()` retains anon/authenticated EXECUTE~~ ✅ **FIXED 2026-08-17** — revoked.
   It was the last function in `public` still callable from the API. "Low risk because it returns
   `trigger`" is a worse guarantee than "not callable", and it is the same class as V19.
-  **As of now: no function in `public` retains PUBLIC/anon EXECUTE, and all 12 DEFINER functions pin
-  `search_path`** — verified against `pg_proc.proacl`, and gated by assertion A8c.
+  **As measured 2026-08-17** no function in `public` retained PUBLIC/anon EXECUTE and the 12 DEFINER
+  functions of that day all pinned `search_path`. The count has grown several-fold since (the
+  2026-09-26 review counted 56 DEFINER functions from the migrations); do not quote a number — query 3
+  of *Schema drift check* (run by Rafi) is the live answer, `securityDefinerDrift.test.ts` gates
+  undeclared changes, and A8c gates the V19 function.
 - **CSP `script-src 'unsafe-inline'` (V15)** — cost of removing it is static rendering app-wide plus
-  a likely AR break; premise (zero DOM-XSS sinks) is gated instead. Re-open when UGC ships.
-- **The four `SECURITY DEFINER` advisor WARNs are intentional, not findings.** `sync_session`,
+  (before 2026-09-20) a likely AR break; premise (zero DOM-XSS sinks) is gated instead. Re-open when UGC ships.
+- **(As of 2026-08-17; these RPCs belong to the chapter/placement write path, and new-flow lessons write through `record_lesson_progress` / `save_practice_run` instead.)** **The four `SECURITY DEFINER` advisor WARNs are intentional, not findings.** `sync_session`,
   `sync_recheck`, `sync_diagnostic` and `can_self_grant_access` each verify ownership
   (`learner_access.parent_id = auth.uid()` / `created_by`) and each pins `SET search_path`, closing
   the classic hijack. Re-verified 2026-08-17 — do not "fix" these by revoking EXECUTE; the app calls them.

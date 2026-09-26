@@ -658,10 +658,23 @@ begin
   -- deliberately NOT the fixture here: they hold seats (B13), so they are entitled by source D and
   -- would make this assertion pass for the wrong reason — a fixture that agrees with a broken
   -- implementation proves nothing.
+  -- ⚠️ SEC-16 (20260926100700): the OWNER may no longer ask about the attacker's child at all — refused 42501.
+  -- So C8 is asked by the attacker, who owns v_alearner, and the owner's refusal is its own assertion.
+  v_blocked := false;
+  begin
+    perform public.is_chapter_entitled(v_alearner, v_paids[3]);
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL C8a (SEC-16): the owner got an entitlement answer about another account''s child'; end if;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
   v_asserts := v_asserts + 1;
   if public.is_chapter_entitled(v_alearner, v_paids[3]) then
     raise exception 'RLS FAIL C8: one account''s plan entitled another account''s child';
   end if;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_owner, 'email', 'owner.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
 
   reset role;
 

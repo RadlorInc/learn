@@ -30,6 +30,15 @@ export const SURVIVORS: readonly Survivor[] = [
        + 'The row is stripped of who it belonged to: billing_events.account_id is ON DELETE SET '
        + 'NULL, so after deletion it names nobody and cannot be joined back to a family.',
   },
+  // N11 (Rafi, 2026-09-26; MAP-13; attorney A2): kept on purpose. Terms and Privacy Policy changed in the same commit.
+  {
+    table: 'public.parental_consents',
+    what: 'your record of consent — the date, how it was given, your email address and the version of each '
+        + 'document you were shown — marked as ended',
+    why: 'the law requires us to be able to show that consent was given and when it ended, and closing the account '
+       + 'must not erase that. It is no longer linked to your account; '
+       + 'a request you never answered is deleted with the account.',
+  },
 ] as const
 
 /**

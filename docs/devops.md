@@ -18,9 +18,11 @@ Users ──HTTPS/HSTS──► Vercel Edge (CDN, WAF, TLS, security headers, im
                     (optional) read replica for /insights + parent dashboard
 ```
 
-⚠️ **PITR was listed in this diagram and is NOT in the stack — the org is on the FREE plan**
-(verified 2026-08-17 via the management API: `plan: "free"`). See *Plan reality* below before
-trusting any line of this document about backups or staging.
+⚠️ **PITR was listed in this diagram and is NOT in the stack.** On 2026-08-17 the org was on the FREE
+plan (management API: `plan: "free"`); it has since moved to **Supabase Pro** (the founder read it from the dashboard on
+2026-09-24, recorded in `docs/legal/LOOP-STATE.md`), and PITR — a paid add-on on Pro too — is not recorded as bought
+as of 2026-09-26. The plan is a dashboard fact this repo cannot re-measure: ask Rafi before relying on
+it. Much of *Plan reality* below describes the Free-plan era and is marked so.
 
 ⚠️ **THE DATABASE IS IN THE WRONG HEMISPHERE FOR THE MARKET, AND NOW IS THE CHEAPEST MOMENT TO
 DECIDE.** Measured on production: `x-vercel-id: bom1::iad1` — the request enters at a Mumbai edge and
@@ -44,10 +46,11 @@ Three environments, identical topology, isolated data:
 
 ## CI/CD
 
-- **`ci.yml`** (PRs + reused by deploy): tsc, unit tests, `next build`, `npm audit --audit-level=high`, RLS suite (when `SUPABASE_DB_URL` set).
-- **`deploy.yml`** (push to `main`): CI → apply migrations to **staging** + RLS suite → apply to **prod** behind a **required-reviewer** gate. Migrations are CLI-managed (`supabase db push` over `supabase/migrations/`), replacing the old hand-applied-via-MCP flow.
+- **`ci.yml`** (PRs + reused by deploy): tsc, unit tests, `next build`, `npm audit --audit-level=high`, and the RLS suite on a throwaway local Postgres built from every migration (every run; no secret needed).
+- **`deploy.yml`** (push to `main`): CI → `promote` (`main` → `release`, which Vercel builds) → staging migrations only if `STAGING_PROJECT_REF` is set (it was not, 2026-09-26) → `migrate-prod` behind the `production-db` required reviewer, only when the push changed a migration. The pipeline is the only way migrations reach production (CLAUDE.md); the old hand-applied-via-MCP flow is retired.
 - **`backup.yml`** (daily 02:30 UTC + manual): `supabase db dump` → **encrypted** → 30-day artifact.
-  Exists only because the free plan has no downloadable backup; **delete it the day PITR is on.**
+  Written for the free plan; **keep it** on Pro and even with PITR — it is the only off-site copy
+  restorable into a throwaway database (see the workflow's header comment, updated 2026-09-26).
   The encryption is load-bearing, not decoration — the dump holds learner names and every session a
   child has played, and a workflow artifact is readable by anyone with repo access. It self-checks
   that the artifact is not a readable tarball before uploading.
@@ -97,7 +100,12 @@ typo'd `E2E_ONLY=decimls` fails loudly instead of sweeping zero chapters.
 
 ### Plan reality — read this before the checklist below
 
-The org is on the **free plan**. Three consequences, from Supabase's own docs, and the first is the
+⚠️ **Written 2026-08-17 for the Free plan; the org has since moved to Pro (founder's dashboard read, 2026-09-24, `docs/legal/LOOP-STATE.md`).** On
+Pro the pause risk below is gone and Supabase keeps daily backups for 7 days (whole-project restore).
+PITR is still a paid add-on and is not recorded as bought (2026-09-26). The section is kept as the
+record of why `backup.yml` exists. The text as written then:
+
+The org was on the **free plan**. Three consequences, from Supabase's own docs, and the first is the
 single biggest availability risk this app has:
 
 - ⚠️⚠️ **"We may pause applications on the Free Plan that exhibit low activity in a 7-day period."**
@@ -114,8 +122,8 @@ single biggest availability risk this app has:
   not a box you can tick. Left in, marked, because it is the right thing to do the day you upgrade.
 
 ### Supabase
-- [ ] ⚠️ **Decide on Pro (~$25/mo) BEFORE launch** — it is what buys no-pause, downloadable backups
-      and PITR. On the free plan the app can be taken offline by its own quietness.
+- [x] ~~**Decide on Pro (~$25/mo) BEFORE launch**~~ — done (recorded 2026-09-24). PITR is a separate
+      paid add-on on Pro and is not recorded as bought.
 - [ ] Create a **staging project**. ⚠️ Supabase *branching* needs Pro; on free this means a second
       free project, and free orgs are capped at two active projects.
 - [ ] ~~Enable **PITR**~~ — **not available on the free plan.** Do this the day you upgrade

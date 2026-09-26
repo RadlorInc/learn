@@ -109,7 +109,7 @@ export const userFromBearer = async (req: Request): Promise<string | null> => (a
  * "send it again". An address that exists CONFIRMED answers `email_exists`.
  */
 export type SignupLink =
-  | { ok: true; userId: string; hashedToken: string; metadata: Record<string, unknown> }
+  | { ok: true; userId: string; hashedToken: string; metadata: Record<string, unknown>; repeat: boolean; signupCount: number }
   | { ok: false; reason: 'exists' | 'weak_password' | 'invalid'; message?: string }
 export async function generateSignupLink(email: string, password: string, data: Record<string, unknown>): Promise<SignupLink> {
   const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
@@ -121,12 +121,39 @@ export async function generateSignupLink(email: string, password: string, data: 
   })
   const b = await r.json().catch(() => null)
   if (r.ok && typeof b?.id === 'string' && typeof b?.hashed_token === 'string') {
-    return { ok: true, userId: b.id, hashedToken: b.hashed_token, metadata: b.user_metadata ?? {} }
+    // SEC-01: an account created by THIS call has `created_at` ≈ `confirmation_sent_at` (measured: the token is stamped
+    // ~0.1 s BEFORE the row); a repeat sign-up re-stamps `confirmation_sent_at` and keeps the old `created_at`. Both
+    // come from the auth server's clock, so there is no skew with ours. 1 s absorbs the stamping order.
+    const repeat = Date.parse(b.confirmation_sent_at) - Date.parse(b.created_at) > 1000
+    const n = Number(b.app_metadata?.signup_count)
+    return { ok: true, userId: b.id, hashedToken: b.hashed_token, metadata: b.user_metadata ?? {}, repeat, signupCount: Number.isInteger(n) && n > 0 ? n : 1 }
   }
   if (b?.error_code === 'email_exists' || b?.error_code === 'user_already_exists') return { ok: false, reason: 'exists' }
   if (b?.error_code === 'weak_password') return { ok: false, reason: 'weak_password', message: b?.msg }
   if (r.status === 400 || r.status === 422) return { ok: false, reason: 'invalid', message: b?.msg }
   throw new Error(`generate_link ${r.status}: ${b?.error_code ?? b?.msg ?? 'no body'}`)
+}
+
+/**
+ * SEC-01 (Rafi's N2): on a REPEAT sign-up for an unconfirmed address, nobody's password may survive — the first
+ * sign-up's password is kept by `generate_link` (measured), and the first sign-up may have been an attacker's. This
+ * replaces it with 32 random bytes nobody knows and counts the sign-up (`app_metadata`, which only the service role
+ * can write). `/auth/confirm` then asks whoever holds the inbox for a new password (count > 1); if they leave before
+ * setting one, "Forgot password" is the way in — there is no state in which a password chosen before the
+ * confirmation opens the account.
+ * ⚠️ Measured on a local stack (2026-09-26): this admin update CLEARS `confirmation_sent_at`, so the token issued just
+ * before it stops verifying (403 otp_expired). The caller issues a fresh link AFTER this call; `generate_link` keeps
+ * the password it finds, so the random one stays.
+ */
+export async function scrambleUnconfirmedPassword(userId: string, signupCount: number): Promise<void> {
+  const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
+  const r = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: 'PUT',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: randomBytes(32).toString('base64url'), app_metadata: { signup_count: signupCount } }),
+    cache: 'no-store',
+  })
+  if (!r.ok) throw new Error(`admin update ${r.status}`)
 }
 
 /**
@@ -139,7 +166,7 @@ export async function generateSignupLink(email: string, password: string, data: 
  * ponytail: one page of 1000. An address buried under 1000+ other accounts containing it reads as "never sent" and
  * falls back to today's behaviour (send); page through `x-total-count` if accounts ever get near that.
  */
-export async function lastSignupLinkAt(email: string): Promise<number | null> {
+export async function lastSignupLinkAt(email: string): Promise<{ at: number; metadata: Record<string, unknown> } | null> {
   const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
   const e = email.trim().toLowerCase()
   const r = await fetch(`${url}/auth/v1/admin/users?filter=${encodeURIComponent(e)}&per_page=1000`, {
@@ -149,10 +176,13 @@ export async function lastSignupLinkAt(email: string): Promise<number | null> {
   // Fail OPEN (send as today) — the cooldown must never stop a real sign-up — but say so, so "could not look" never
   // reads as "nothing was sent".
   if (!r.ok || !Array.isArray(b?.users)) { console.error('[auth/signup] cooldown lookup failed', r.status); return null }
-  const u = (b.users as { email?: string; email_confirmed_at?: string | null; confirmation_sent_at?: string | null }[])
+  const u = (b.users as { email?: string; email_confirmed_at?: string | null; confirmation_sent_at?: string | null; user_metadata?: Record<string, unknown> }[])
     .find(x => x.email === e)
-  const at = u && !u.email_confirmed_at && u.confirmation_sent_at ? Date.parse(u.confirmation_sent_at) : NaN
-  return Number.isFinite(at) ? at : null
+  if (!u || u.email_confirmed_at) return null
+  // N2: the FIRST sign-up's role and first name, re-sent with the repeat so `generate_link` does not replace them.
+  // `confirmation_sent_at` is null right after SEC-01's password reset (measured), which reads as "not recently sent".
+  const at = u.confirmation_sent_at ? Date.parse(u.confirmation_sent_at) : NaN
+  return { at: Number.isFinite(at) ? at : 0, metadata: u.user_metadata ?? {} }
 }
 
 // ── Resend ──
@@ -254,8 +284,8 @@ function withCommercialFooter(m: Rendered, unsubscribeUrl: string): Rendered {
 
 /**
  * Cancel one scheduled message and say what happened, as the string the queue records:
- * 'cancelled' · 'refused: …' (Resend said no — already cancelled, already sent, unknown id; retrying
- * cannot change that) · 'error: …' (Resend unreachable, rate-limited or 5xx; worth retrying).
+ * 'cancelled' · 'refused: …' (Resend said no — already cancelled, already sent, unknown id, or a key
+ * without the right permission, as on 24 Sep) · 'error: …' (Resend unreachable, rate-limited or 5xx; worth retrying).
  * Never throws: a cancel is always best-effort next to the thing that asked for it.
  */
 export async function cancelOutcome(id: string): Promise<string> {
@@ -277,8 +307,8 @@ export const cancelEmail = async (id: string): Promise<boolean> => (await cancel
  * Cancel every B3 the database has queued and record each outcome (20260923200000). The queue is
  * filled by a trigger in the same transaction that ends a consent — withdrawal, deleting the child,
  * closing the account — so the id cannot be lost to the cascade that deletes the consent row.
- * Idempotent: a settled row is never picked again, and a second cancel of the same message is
- * recorded as 'refused', not thrown.
+ * Idempotent: a 'cancelled' row is never picked again; a 'refused' or 'error' one is retried while
+ * its B3 is still ahead (20260926100300 — a bad API key once made every cancel 'refused').
  * Returns how many it tried, or null when the queue does not exist yet (client deployed before the
  * migration) — the caller decides whether it has a fallback.
  */
@@ -288,8 +318,13 @@ export async function drainB3Cancellations(): Promise<number | null> {
     if ((e as RpcError)?.code === 'PGRST202') return null
     throw e
   }
+  let notCancelled = 0
   for (const { provider_id } of due) {
-    await rpc('consent_b3_record', { p_provider_id: provider_id, p_result: await cancelOutcome(provider_id) })
+    const result = await cancelOutcome(provider_id)
+    if (result !== 'cancelled') notCancelled++
+    await rpc('consent_b3_record', { p_provider_id: provider_id, p_result: result })
   }
+  // FND-11: a refused or failed cancel is retried by the next drain, and is never silent.
+  if (notCancelled) console.error(`[consent] B3 cancel not done for ${notCancelled} of ${due.length}; retried next drain`)
   return due.length
 }
