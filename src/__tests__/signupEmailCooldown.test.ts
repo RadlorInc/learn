@@ -31,6 +31,13 @@ function fakeNetwork(input: unknown, init: RequestInit = {}): Response {
     user.token = `tok${++seq}`
     return json({ id: user.id, email, hashed_token: user.token, confirmation_sent_at: user.confirmation_sent_at, user_metadata: b.data })
   }
+  // SEC-01/N2's password reset on a repeat sign-up (measured: it clears confirmation_sent_at and the token).
+  const put = u.pathname.match(/^\/auth\/v1\/admin\/users\/(.+)$/)
+  if (put && init.method === 'PUT') {
+    const user = users.find(x => x.id === decodeURIComponent(put[1]))!
+    user.confirmation_sent_at = ''; user.token = ''
+    return json({ id: user.id })
+  }
   if (u.pathname === '/auth/v1/admin/users') {
     const f = u.searchParams.get('filter') ?? ''
     return json({ users: users.filter(x => x.email.includes(f)).map(({ token: _t, ...x }) => x), aud: 'authenticated' })
