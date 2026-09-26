@@ -64,6 +64,36 @@ migration PR.
 | — | [website#3](https://github.com/RadlorInc/website/pull/3) | SEO-02 radlor.com/radlic share image | — | radlor-site has no CI; `npm run check:og` after build |
 | — | [#265](https://github.com/RadlorInc/learn/pull/265) | the checker: break-check.sh no longer calls "setup threw" a pass | — | tooling only |
 
+
+### 2b. Round 3 — the NEEDS-RAFI decisions (26 September 2026)
+
+Rafi decided the NEEDS-RAFI items on 26 Sep (recorded in [NEEDS-RAFI.md](NEEDS-RAFI.md)). **Deploy freeze until Monday
+28 Sep except #267.** Every PR below is a Draft. Insert them into the table above at the marked point; the rules above
+still hold (migrations strictly in timestamp order, each applied and proved before the next migration PR merges).
+
+| # | PR | decision | migration | merge after | notes |
+|---|---|---|---|---|---|
+| 0a | [#272](https://github.com/RadlorInc/learn/pull/272) | N10, N25, N28, N32, N33 legal docs | — | **#267** (stacked) | docs + one gate; READINESS now says the beta is running; run `sql/readiness-family-count.sql` |
+| 0b | [#276](https://github.com/RadlorInc/learn/pull/276) | N20 CLAUDE.md trimmed | — | anything | the checks section moves verbatim to `docs/checks.md` |
+| 12a | [#268](https://github.com/RadlorInc/learn/pull/268) | **N2 (SEC-01, High) + N5** | **`20260926100800`** | #261 **and** #235 **and** #251 | stacked on #260, contains #251. Before: `fix-N5-before.sql` (md5 stop-check); proof: `fix-N5-proof.sql`. ⚠️ needs #235's per-attempt B3 key |
+| 12b | [#269](https://github.com/RadlorInc/learn/pull/269) | N11 keep the consent record | **`20260926100900`** | #268 (stacked) | ⚠️ **SECURITY DEFINER trigger on auth.users**; changes the published Terms/Privacy sentences (EN+ES) — decide on §16 notice first. `fix-N11-before/proof.sql` |
+| 12c | [#275](https://github.com/RadlorInc/learn/pull/275) | N8 activation view | **`20260926101000`** | #269's migration applied | ⚠️ new SECURITY DEFINER `admin_activation` (admin_assert first). `fix-N8-before/proof.sql` (B4 role check: stop on unknown roles) |
+| 15a | [#273](https://github.com/RadlorInc/learn/pull/273) | N18 last played, N19 one mastered rule | — | #255 (stacked) | open question: should chapter tiers follow the ladder too? |
+| 16a | [#270](https://github.com/RadlorInc/learn/pull/270) | N9 error wording | — | #266 (stacked) | |
+| 16b | [#271](https://github.com/RadlorInc/learn/pull/271) | N16 clear progress on sign-out | — | #239 (stacked; retarget after) | keeps copies of any child with unsent work; doc 08 row 20 reworded (EN+ES) |
+| 27a | [#278](https://github.com/RadlorInc/learn/pull/278) | N21 "grades 3 to 8", no game-time/roster claims | — | #257 (stacked) | |
+| 27b | [#274](https://github.com/RadlorInc/learn/pull/274) | N17 `/modules` everywhere, `/menu` + `/demo` gone (308s) | — | #257 (stacked); supersedes #257's `/demo` noindex | conflicts: drop its `sw.js` APP_PAGES hunk (#277 deletes the list); vs #233 keep the deletions and `/modules` |
+| 30a | [#277](https://github.com/RadlorInc/learn/pull/277) | N26 no offline page list; **sw v238** | — | #254 (stacked) | vs #274: #274 deletes `PWAInstallBanner.tsx` that #277 rewords — keep the deletion. Doc 08's three "work offline" lines are yours to reword |
+| — | [website#4](https://github.com/RadlorInc/website/pull/4) | N21 + N23 `/waitlist` → 308 `/radlic` | — | website#3 (independent) | after merge: `npm run check:site-claims` must exit 0 (it exits 1 on today's live site, by design) |
+
+**Migration order, all PRs together:** `100000` #240 → `100100` #241 → `100200` #243 → `100300` #246 → `100600` #260 →
+`100700` #261 → `100800` #268 → `100900` #269 → `101000` #275.
+
+**Open questions these PRs raise (yours):** §16 notice for #269's Terms change and how long to keep a consent record
+(ATTORNEY-PACKET A2) · chapter tiers vs the ladder (#273) · doc 08's offline wording (#277) · hide the Game time tab
+while `/play` says "coming soon" (#278) · radlor.com `/privacy` still describes the waitlist (website#4) · the install
+banner is gone with `/menu` — bring it back on `/modules`? (#274).
+
 ## 3. Live checks after merging (expected result for each)
 
 | after | check | expected |
@@ -85,6 +115,10 @@ migration PR.
 | #262 | sign in with email and with Google; open a lesson | works; browser console shows no CSP violation |
 | #252 | open a lesson on a phone | same screens; faster first paint |
 | #254 | DevTools → Application → Service Workers | v237 active; Cache Storage has no `/profile` or `/shop` |
+| #268 | sign up a test address twice (≥ 2 min apart), confirm from the newest email | "Choose your password" appears; only the new password signs in. Tick consent before confirming → "Please confirm your email address first", its B3 Cancelled in Resend |
+| #269 | close a test account that gave consent (`fix-N11-proof.sql` §4) | consent row kept: withdrawn, parent_id NULL; B3 Cancelled |
+| #275 | open `/admin/funnel` as admin | the Activation card shows cohorts; non-admin refused |
+| website#4 | `https://radlor.com/waitlist` | 308 → `/radlic`; `check:site-claims` exit 0 |
 | website#3 | share `https://radlor.com/radlic` in a messenger | the same card image as radlor.com's home |
 
 ## 4. Needs Rafi — one line each (details and evidence in [NEEDS-RAFI.md](NEEDS-RAFI.md))

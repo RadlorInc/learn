@@ -1,5 +1,14 @@
 # Needs Rafi — decisions and settings the review cannot make
 
+> ✅ **DECIDED 26 September 2026** (Rafi, in chat): all per the recommendation unless noted — N1 (#267); N2 + N5, and
+> keep accounts holding a DECLINED consent too (#268); N8 (#275); N9 with the two sentences (#270); N10, N33 in the
+> legal PR (#272); N11 (#269); N16 (#271); N17 incl. deleting `/demo` (#274); N18 and N19 — keep the NEW ladder rule
+> only (#273); N20 (#276); N21 "grades 3 to 8", drop game-time/roster claims on both sites (#278, website#4); N23 308
+> `/waitlist` → `/radlic` (website#4); N25 check legal text (#272: nothing to change); N26 keep the answer queue, remove
+> the offline page list, no offline promise beyond that (#277); N28 (#272); N32 (#272); N34 OK #237 and #252; N36
+> agreed (no purge job). **After the beta / at billing:** N13, N15, N22, N24. **Still with Rafi (settings/accounts):**
+> N3, N4, N6, N7, N12, N14, N27, N29, N30, N31, N35. **Deploy freeze until Monday except N1.** Merge order: ROUND2 §2b.
+
 Deep review, 26 September 2026. Each line: the finding(s), what is needed, **my recommendation**. Evidence is in the
 report named by the ID prefix (FND → FOUNDER-STRESS-TEST, SEC → SECURITY-AUDIT, OPS → DEVOPS, MAP → ARCHITECTURE,
 ARC → ARCHITECTURE-REVIEW, BUG → LATENT-BUGS, PERF → PERFORMANCE, SEO → SEO). Ordered by urgency.
