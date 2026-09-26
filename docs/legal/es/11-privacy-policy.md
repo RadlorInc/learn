@@ -71,7 +71,7 @@ No le pedimos a un niño más información de la razonablemente necesaria para p
 |---|---|
 | Nombre y dirección de correo electrónico | Para crear la cuenta, para comunicarnos con usted sobre ella y para verificar su identidad cuando haga una solicitud sobre los datos de su hijo |
 | Datos de la suscripción y de facturación | Ninguno durante la beta: el Servicio es gratuito, la facturación está desactivada y no recopilamos datos de pago. |
-| Su registro de consentimiento — el método, la fecha, su dirección de correo electrónico y la versión de cada documento que se le mostró — y, por cada niño que añada, cuándo confirmó que es su padre, madre o tutor legal y a qué versión del aviso se refería esa confirmación | Porque la ley nos exige poder demostrar que se dio el consentimiento, y demostrar exactamente qué se aceptó. Si usted cierra su cuenta, este registro se elimina junto con todo lo demás |
+| Su registro de consentimiento — el método, la fecha, su dirección de correo electrónico y la versión de cada documento que se le mostró — y, por cada niño que añada, cuándo confirmó que es su padre, madre o tutor legal y a qué versión del aviso se refería esa confirmación | Porque la ley nos exige poder demostrar que se dio el consentimiento, y demostrar exactamente qué se aceptó. Si usted cierra su cuenta, este registro se conserva, marcado como retirado y sin vínculo con su cuenta; todo lo demás se elimina |
 | Los mensajes que nos envía | Para responderle |
 
 ## 5. Sus derechos como padre o madre
@@ -134,7 +134,7 @@ Conservamos la información de un niño solo mientras la necesitamos para presta
 | Eventos del producto | 90 días; después se eliminan automáticamente cada noche |
 | Registros de fallos | 90 días; después se eliminan automáticamente |
 | Cuenta del padre o la madre | Hasta que usted la cierre |
-| Registros de consentimiento | Hasta que cierre su cuenta. Si retira su consentimiento, el registro se conserva, marcado como retirado, para poder mostrar cuándo y cómo terminó |
+| Registros de consentimiento | Se conservan después de que retire su consentimiento o cierre su cuenta, marcados como retirados, para poder mostrar cuándo y cómo terminó. Después de cerrar su cuenta ya no están vinculados a ella. No los eliminamos automáticamente. Una solicitud que nunca respondió se elimina con la cuenta |
 | Los registros de solicitudes de nuestros proveedores, que incluyen la dirección IP y el tipo de navegador | Disponibles para nosotros hasta 7 días (proveedor de base de datos) y 1 hora (proveedor de alojamiento) en nuestros planes actuales, según sus paneles el 24 de septiembre de 2026 |
 | Copias de seguridad | Diseñadas para caducar a los 30 días |
 
