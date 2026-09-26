@@ -16,6 +16,7 @@
  */
 import { recordError } from '@/infra/storage/lastError'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { safeUrl } from '@/infra/safeUrl'
 
 export function reportCrash(
   error: unknown,
@@ -42,7 +43,8 @@ export function reportCrash(
         source,
         digest: extra?.digest,
         componentStack: extra?.componentStack,
-        url: typeof window !== 'undefined' ? window.location.href : undefined,
+        // Path + allowlisted params only: fragments and queries carry consent/auth tokens (SEC-06).
+        url: typeof window !== 'undefined' ? safeUrl(window.location.href) : undefined,
         /**
          * WHO it happened to. Without this a log is a pile of stack traces that cannot be matched
          * to the parent who wrote in. Read synchronously — an async session lookup would race the
