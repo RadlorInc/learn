@@ -54,8 +54,11 @@ The chalkboard hangs its marks on words (`at: 'mix'`); a reworded line must keep
 
 ⚠️ **Since 2026-09-26 the clips are not in git.** They live in the public `lesson-audio` Storage bucket under
 content-hash names (`sha256(bytes)[0:16].mp3`); `scripts/audio/manifest.json` says which line is which object, and each
-lesson module carries a small index of its own lines (`src/features/lessons/voice-index/`). The player plays a clip only
-when the line's key **and** its check match that index. Never unzip clips into `public/audio/` — `.gitignore` refuses
+lesson module carries a small index of its own lines (`src/features/lessons/voice-index/`) — and so does each KG–2 story
+chapter (`src/features/chapters/voice-index/<chapter>.json`, handed to the player by `/game`; built from the `chapters`
+list of `scripts/.voice-corpus-chapters-josh.json`, rebuilt with `VOICE_CORPUS=1 npx vitest run
+src/__tests__/_voiceCorpusChapters.test.ts`). The player plays a clip only when the line's key **and** its check match
+that index. Never unzip clips into `public/audio/` — `.gitignore` refuses
 `public/audio/**/*.mp3`, and the app no longer reads them from there.
 
 1. `npx tsx scripts/lesson-voice-corpus.mts` rebuilds the corpus (`key`, `check`, render `text`, `style`); the key and
@@ -65,7 +68,8 @@ when the line's key **and** its check match that index. Never unzip clips into `
 3. **Merging a zip:** `unzip -n <zip> -d audio-src/` (the zip holds `nzFihrBIvB34imQBuxub/<key>.mp3`; `audio-src/` is the
    gitignored local clip folder — fill it on a fresh machine with `AUDIO_BASE_URL=<bucket base> node
    scripts/audio/fetch-src.mjs`), then `node scripts/audio/build-manifest.mjs`. It fails on a missing clip, an orphan,
-   a duplicate or a hash collision; commit `scripts/audio/manifest.json` and `src/features/lessons/voice-index/`.
+   a duplicate or a hash collision; commit `scripts/audio/manifest.json`, `src/features/lessons/voice-index/` and
+   `src/features/chapters/voice-index/`. (KG–2 chapter notebooks: `python3 scripts/kaggle-josh-chapters-notebook.py`.)
 4. **Upload before the app needs them.** Put ONLY the new mp3s on a side ref — a commit on an orphan branch holding
    `public/audio/nzFihrBIvB34imQBuxub/<key>.mp3`, tagged `audio-src-<date>` and pushed (a tag does not deploy; it is also
    the backup of those clips) — then run the `upload-audio` workflow **from the PR branch** with `source_ref` = that tag
