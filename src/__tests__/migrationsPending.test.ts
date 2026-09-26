@@ -44,6 +44,8 @@ const FAKE_GH = `#!/usr/bin/env bash
 [ "$1" = api ] || exit 64
 ep="\${2%%\\?*}"; f="$FAKE_GH/$(printf %s "$ep" | tr / _).json"; shift 2
 jqf=.; [ "\${1:-}" = --jq ] && jqf="$2"
+# A "once" file answers the FIRST call only (then is removed): an API that answered blind, then normally.
+o="\${f%.json}.once.json"; [ -f "$o" ] && { jq -r "$jqf" "$o"; rc=$?; rm -f "$o"; exit $rc; }
 [ -f "$f" ] || { echo '{"message":"Not Found","status":"404"}'; exit 1; }
 jq -r "$jqf" "$f"
 `
@@ -67,18 +69,20 @@ beforeAll(() => {
 })
 afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
-type Run = { id: number; head: string; conclusion: string | null; migrateProd?: string }
+type Run = { id: number; head: string; conclusion: string | null; migrateProd?: string; blind?: boolean }
 /** Deploy runs, newest first, as the GitHub API returns them. `migrateProd` = that run's job conclusion;
  *  absent = the run has no such job (e.g. cancelled while pending: zero jobs). */
-function step(before: string, head: string, runs: Run[] | 'api-down', runId = 999) {
+function step(before: string, head: string, runs: Run[] | 'api-down', runId = 999,
+  once: Record<string, unknown> = {}) {
   const gh = mkdtempSync(join(dir, 'gh-'))
+  for (const [ep, body] of Object.entries(once)) writeFileSync(join(gh, `${ep}.once.json`), JSON.stringify(body))
   if (runs !== 'api-down') {
     writeFileSync(join(gh, 'repos_o_r_actions_workflows_deploy.yml_runs.json'), JSON.stringify({
       workflow_runs: runs.map((r) => ({ id: r.id, head_sha: r.head, conclusion: r.conclusion, head_branch: 'main' })),
     }))
-    for (const r of runs) writeFileSync(join(gh, `repos_o_r_actions_runs_${r.id}_jobs.json`), JSON.stringify({
-      jobs: [{ name: 'ci / unit', conclusion: 'success' }, ...(r.migrateProd ? [{ name: 'migrate-prod', conclusion: r.migrateProd }] : [])],
-    }))
+    for (const r of runs) writeFileSync(join(gh, `repos_o_r_actions_runs_${r.id}_jobs.json`), JSON.stringify(r.blind
+      ? { total_count: 0, jobs: [] } // answered, but without the jobs every finished run has
+      : { jobs: [{ name: 'ci / unit', conclusion: 'success' }, ...(r.migrateProd ? [{ name: 'migrate-prod', conclusion: r.migrateProd }] : [])] }))
   }
   const ctx: Record<string, string> = {
     'github.event.before': before, 'github.sha': head, 'github.repository': 'o/r',
@@ -94,6 +98,7 @@ function step(before: string, head: string, runs: Run[] | 'api-down', runId = 99
   const env: Record<string, string> = {
     PATH: `${join(dir, 'bin')}:${process.env.PATH}`, HOME: dir, FAKE_GH: gh, GITHUB_OUTPUT: out,
     GITHUB_REPOSITORY: 'o/r', GITHUB_RUN_ID: String(runId), GITHUB_SHA: head,
+    MIGRATIONS_PENDING_RETRY_SECS: '0', // the script waits before asking again; not in a test
   }
   for (const [k, v] of Object.entries(STEP.env ?? {})) env[k] = sub(String(v))
   // GitHub's default `run` shell: bash --noprofile --norc -eo pipefail
@@ -153,5 +158,42 @@ describe('migrations-changed (the real step from deploy.yml)', () => {
     expect(r.code, r.log).toBe(0)
     expect(r.changed, r.log).toBe('true')
     expect(r.log).toMatch(/not an ancestor/)
+  })
+
+  // ⚠️ THE CI CASE, Deploy run 36235486482 (2026-09-26 10:20 UTC, the push of merge-train-1 #279): the step
+  // scanned for 61 s, every `gh` call exited 0, and it printed "no successful migrate-prod in the last 100
+  // Deploy runs" — while the three runs before it (#240, #241, #243) HAD a successful migrate-prod, and the
+  // same script with the same inputs found #243's a minute later from a laptop. The API answered, but not with
+  // the jobs. What exactly it answered was never logged, so this reproduces the one shape the evidence allows:
+  // a FINISHED Deploy run listed with NO jobs (impossible as a truth — every run has at least
+  // `migrations-changed`), i.e. "I cannot see" rendered as "there is nothing to see".
+  const JOBS = (id: number) => `repos_o_r_actions_runs_${id}_jobs`
+  const BLIND = { total_count: 0, jobs: [] }
+
+  it('THE CI CASE: jobs answered empty, then normally → it looks again and finds the last success (changed=false)', () => {
+    const runs: Run[] = [
+      { id: 3, head: sha.P1, conclusion: 'success', migrateProd: 'success' },
+      { id: 1, head: sha.BASE, conclusion: 'success', migrateProd: 'success' },
+    ]
+    const r = step(sha.P1, sha.P2, runs, 999, { [JOBS(3)]: BLIND, [JOBS(1)]: BLIND })
+    expect(r.code, r.log).toBe(0)
+    expect(r.log).not.toMatch(/no successful migrate-prod/) // the CI run's message: a blind answer read as a clean one
+    expect(r.changed, r.log).toBe('false')
+    expect(r.log).toMatch(new RegExp(`no migration file changed since ${sha.P1}`))
+  })
+
+  it('jobs stay empty on BOTH looks → changed=true (fails safe), and it says it could not see — not "no success"', () => {
+    const r = step(sha.P1, sha.P2, [{ id: 3, head: sha.P1, conclusion: 'success', migrateProd: 'success', blind: true }])
+    expect(r.code, r.log).toBe(0)
+    expect(r.changed, r.log).toBe('true')
+    expect(r.log).not.toMatch(/no successful migrate-prod/)
+    expect(r.log).toMatch(/could not see.*1 of 1 finished Deploy run.*no jobs/)
+  })
+
+  it('the run list answers with no finished run, then normally → it looks again (changed=false)', () => {
+    const runs: Run[] = [{ id: 3, head: sha.P1, conclusion: 'success', migrateProd: 'success' }]
+    const r = step(sha.P1, sha.P2, runs, 999, { 'repos_o_r_actions_workflows_deploy.yml_runs': { workflow_runs: [] } })
+    expect(r.code, r.log).toBe(0)
+    expect(r.changed, r.log).toBe('false')
   })
 })
