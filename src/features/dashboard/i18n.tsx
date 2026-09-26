@@ -453,7 +453,8 @@ export const ES: Record<string, string> = {
   'Only the adult who added this learner can set their login.': 'Solo el adulto que agregó a este estudiante puede crear su inicio de sesión.',
   'Child logins are not switched on yet on this server.': 'Los inicios de sesión para niños todavía no están activados en este servidor.',
   'Too many tries. Wait a minute and try again.': 'Demasiados intentos. Espere un minuto e inténtelo de nuevo.',
-  'Your sign-in has expired. Sign in again, then try this.': 'Su sesión expiró. Vuelva a iniciar sesión e inténtelo de nuevo.',
+  'Please sign in again': 'Vuelva a iniciar sesión',
+  'This child needs a parent’s permission first': 'Este niño necesita primero el permiso de uno de sus padres',
   'This password is too easy to guess. Choose a different one: longer, and not a common one like 123456.': 'Esta contraseña es demasiado fácil de adivinar. Elija otra: más larga y que no sea común, como 123456.',
   'Could not save. Check your connection and try again.': 'No se pudo guardar. Revise su conexión e inténtelo de nuevo.',
 
