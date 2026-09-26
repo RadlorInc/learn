@@ -92,6 +92,13 @@ if (broke.length) {
   process.exit(4)
 }
 
+/**
+ * ⚠️ KNOWN WRONG VERDICT, NOT YET FIXED (found 2026-09-26, N8 PR): a `beforeAll` that THROWS (e.g. loadSchema()
+ * failing because a migration's closing assertion rolled it back) leaves the file `failed` with every assertion
+ * `skipped` — not empty, so `broke` above misses it, and it lands HERE as "PASSED on the broken state" (exit 1).
+ * Nothing ran; the honest answer is 4. Probable fix: `broke` = failed file with no assertion `failed`; re-run
+ * `npm run break:live` after changing it. Until then, read exit 1 against the report's skipped count.
+ */
 if (!failed.length) {
   console.error(`✗ ${expected} PASSED on the broken state. The check does not bind — you have the mechanism wrong.`)
   console.error('  ⚠️ The finding is NOT "the check needs tightening": you are measuring something else.')

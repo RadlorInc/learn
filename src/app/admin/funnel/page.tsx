@@ -138,7 +138,7 @@ function Activation() {
             <th style={th}>Eligible</th><th style={th}>Added a child</th><th style={th}>Activated</th><th style={th}>Too new</th>
           </tr></thead>
           <tbody>
-            {rows.map((c: any) => (
+            {rows.map((c: { cohort_week: string; eligible: number; too_new: number; added: number | null; activated: number | null }) => (
               <tr key={c.cohort_week}>
                 <td style={td}>{c.cohort_week}</td>
                 <td style={{ ...td, textAlign: 'right' }}>{c.eligible}</td>
