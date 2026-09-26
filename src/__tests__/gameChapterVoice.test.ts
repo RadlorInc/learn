@@ -22,6 +22,7 @@ import { createRoot, type Root } from 'react-dom/client'
 const LINE = '4. The sunflower is 4 blocks tall.'
 const OBJECT = 'https://bucket.test/lesson-audio/1a11c30ab68a845d.mp3'
 let chapter = 'measurement'
+let endCard = false
 
 vi.mock('@/core/audioBase', () => ({ AUDIO_BASE: 'https://bucket.test/lesson-audio' }))
 vi.mock('next/navigation', () => ({
@@ -41,7 +42,11 @@ vi.mock('@/features/chapters/registry', async () => {
     useEffect(() => { speak(LINE) }, [speak])
     return null
   }
-  return { CHAPTER_COMPONENTS: new Proxy({}, { get: () => SaysOneLine }) }
+  // The end-card stand-in forwards childName exactly as ChapterPortal and CountingStoryChapter do.
+  const { default: ChapterDone } = await import('@/shared/ui/ChapterDone')
+  const EndsAtOnce = ({ childName }: { childName: string }) =>
+    createElement(ChapterDone, { open: true, childName, onPlayAgain: () => {}, onExit: () => {} })
+  return { CHAPTER_COMPONENTS: new Proxy({}, { get: () => (endCard ? EndsAtOnce : SaysOneLine) }) }
 })
 
 ;(globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true
@@ -63,8 +68,8 @@ beforeEach(() => {
 })
 afterEach(() => { act(() => root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
-async function play(id: string) {
-  chapter = id
+async function play(id: string, ends = false) {
+  chapter = id; endCard = ends
   const { default: GamePage } = await import('@/app/game/page')
   await act(async () => { root.render(createElement(GamePage)) })
 }
@@ -81,5 +86,14 @@ describe('/game plays a chapter line from the bucket through that chapter’s ow
     await play('time')
     await vi.waitFor(() => expect(utterances, 'the device voice said the line (the drive really reached speech)').toContain(LINE))
     expect(requests).toEqual([])
+  })
+
+  // The end card with no active learner (getActiveLearner → null above). /game passed childName 'friend', so ChapterDone
+  // said "All done, friend! Nice work." — no clip, device speech — and its recorded line "All done! Nice work." (key 441d0t,
+  // object 34e9a943972b32ef.mp3, looked up by hand 2026-09-27 in scripts/audio/manifest.json) could never be requested.
+  it('the end card with no learner is the recorded line, requested from the bucket', async () => {
+    await play('time', true)
+    await vi.waitFor(() => expect(requests, 'the end card asked for no clip').toEqual(['https://bucket.test/lesson-audio/34e9a943972b32ef.mp3']))
+    expect(utterances).toEqual([])
   })
 })

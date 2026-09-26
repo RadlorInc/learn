@@ -59,8 +59,13 @@ it('builds the KG–2 chapter corpus for Josh', async () => {
   // name (chapterOfFile), while PlayTime serves addition AND subtraction and BlockYard both to-100 chapters. A line
   // missing from a chapter's index is spoken there by the device voice with its clip sitting in the bucket; one listed
   // in a chapter that never says it costs a few bytes. So the shared lines and every static line go everywhere.
+  // ⚠️ And the count-aloud numbers "0"–"20": HomeTime, FollowTheLeader, MeasureIt, HopAlong and world1 say `String(n)` as
+  // the child taps, which the parser cannot see (neither a literal nor a template), and only the counting builders
+  // enumerate them — so Home Time and Number Order counted in the device voice (review, 2026-09-27). MeasureIt's lay has
+  // no cap: past 20 laid blocks there is no clip.
   const EVERYWHERE = new Set([...PRAISE, ...ENCOURAGEMENT.flat(), 'All done! Nice work.',
-    `${C.breakTitle(CHAPTER_TAKE).replace(' ⭐', '')} ${C.spotSaved}`, ...statics.map(l => l.text)].map(clipKey))
+    `${C.breakTitle(CHAPTER_TAKE).replace(' ⭐', '')} ${C.spotSaved}`, ...statics.map(l => l.text),
+    ...Array.from({ length: 21 }, (_, n) => String(n))].map(clipKey))
   for (const k of EVERYWHERE) if (!c.lines.has(k)) throw new Error(`EVERYWHERE line ${k} is not in the corpus`)
   const gradeOf = (id: string) => CHAPTERS.find(ch => ch.id === id)?.grade
   const rows = [...c.lines.entries()].map(([key, v], i) => {

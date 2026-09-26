@@ -201,9 +201,11 @@ export async function build35(c: Corpus) {
   add('subtraction', 'redirect', 'Not quite — count who is still here.')
   add('addition', 'reteach', 'Another one comes to play!', 'Now count them ALL.')
   add('subtraction', 'reteach', 'One goes home.', 'Now count who is LEFT.')
-  for (const n of range(1, 10)) {
-    add('addition', 'reteach', `That makes ${n}. Tap the ${n}!`, `${PLAY_WORDS[n]}.`)
-    for (const k of CAST) add('addition', 'reteach', `${PLAY_WORDS[n]} ${k.plural} are playing.`)
+  // PlayScene's re-teach says these for BOTH ops (PlayTime.tsx: "<A> <kind> are playing.", the count, "That makes <n>…"),
+  // so both chapters get them — filed under addition alone, subtraction said them in the device voice (review, 2026-09-27).
+  for (const ch of ['addition', 'subtraction'] as const) for (const n of range(1, 10)) {
+    add(ch, 'reteach', `That makes ${n}. Tap the ${n}!`, `${PLAY_WORDS[n]}.`)
+    for (const k of CAST) add(ch, 'reteach', `${PLAY_WORDS[n]} ${k.plural} are playing.`)
   }
 
   // ── measurement · Measuring ─────────────────────────────────────────────────
