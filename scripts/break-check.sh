@@ -52,7 +52,8 @@
 #   3  the break edited nothing → nothing was tested. Either the pattern drifted, OR the file is
 #      UNCOMMITTED and was stashed away by the parking step above — check that first
 #   4  the named file went red, but not on an assertion   → red for the wrong reason
-#   5  the run never reached the named file               → nothing was tested
+#      (incl. a beforeAll/fixture that threw so its tests were SKIPPED — was wrongly 1 until 2026-09-26)
+#   5  the run never reached the named file, or every test in it was skipped → nothing was tested
 #   6  e2e target: tree restored, verdict not attempted   → read the output yourself
 #
 # ⚠️ `npm run break -- <file> '<break>'` mangles quoting inside the break command; call
@@ -178,6 +179,7 @@ case "$TARGET" in
 esac
 
 echo "· running: npx vitest run $TARGET $*"
-npx vitest run "$TARGET" "$@" --reporter=default --reporter=json --outputFile="$REPORT"
+# The console copy is for the verdict: vitest's JSON drops a describe-level hook's error text.
+npx vitest run "$TARGET" "$@" --reporter=default --reporter=json --outputFile="$REPORT" 2>&1 | tee "$WORK/console.txt"
 echo
-node "$WORK/verdict.mjs" "$REPORT" "$TARGET"
+node "$WORK/verdict.mjs" "$REPORT" "$TARGET" "$WORK/console.txt"
