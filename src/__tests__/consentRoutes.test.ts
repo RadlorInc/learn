@@ -71,7 +71,9 @@ describe('grant', () => {
     const delay = b3.at!.getTime() - t0
     expect(delay, 'B3 must be due a day after the grant — its first word is "Yesterday"').toBeGreaterThanOrEqual(24 * 3600_000 - 5_000)
     expect(delay).toBeLessThan(24 * 3600_000 + 60_000)
-    expect(b3.key, 'B3 carries an idempotency key, or a double click schedules two').toBe('consent-c1-b3')
+    // One key PER ATTEMPT (BUG-03): B3's payload carries "now + a day", and Resend refuses a reused key with a
+    // different payload for 24 h. Duplicates from a double click are cancelled by the route — consentGrantRetry.test.ts.
+    expect(b3.key).toMatch(/^consent-c1-b3-[0-9a-f-]{36}$/)
 
     const { rpc } = await import('@/features/consent/server')
     const grantArgs = (rpc as unknown as { mock: { calls: [string, Record<string, unknown>][] } }).mock.calls.find(c => c[0] === 'consent_grant')![1]

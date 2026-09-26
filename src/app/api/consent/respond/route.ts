@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'node:crypto'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { secondNoticeDelayMs } from '@/features/consent/config'
@@ -73,13 +74,28 @@ export async function POST(req: Request) {
          */
         const when = new Date(Date.now() + secondNoticeDelayMs())
         const withdraw = `${SITE_URL}/consent/withdraw#t=${t}`
-        const b3 = await sendEmail('transactional', row.email, renderB3(lang, withdraw), `consent-${row.consent_id}-b3`, when)
-        const s = await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: b3, p_second_scheduled_for: when.toISOString() })
-        // Lost a race to expiry or a decline — or 'already_consented' (consent-once: the account already holds a
-        // current consent, so this request was closed): the email we just scheduled must never arrive. A repeat
-        // click is 'already_granted', and because B3 carries an idempotency key its id IS the real
-        // B3 — so that one is left alone.
-        if (s !== 'granted' && s !== 'already_granted') await cancelEmail(b3)
+        // ⚠️ ONE KEY PER ATTEMPT (BUG-03). `scheduled_at` is part of the payload and is "now + a day", so it differs on
+        // every click; Resend answers a reused key with a DIFFERENT payload with 409 for 24 hours — which locked a
+        // parent out of consenting for a day after one failed click. A fresh key never collides; the duplicate B3 a
+        // double click can now schedule is cancelled below, because only the winner's id is recorded.
+        const b3 = await sendEmail('transactional', row.email, renderB3(lang, withdraw), `consent-${row.consent_id}-b3-${randomUUID()}`, when)
+        let s: string
+        try {
+          s = await rpc<string>('consent_grant', { p_token_hash: hash, p_second_provider_id: b3, p_second_scheduled_for: when.toISOString() })
+        } catch (e) {
+          // The grant call failed — but a timeout can fail AFTER the database committed. Ask the database whether
+          // THIS B3 is the one on record; cancel it only if it is not, so a pending consent leaves no "Yesterday you
+          // gave permission" behind. If even that read fails we cannot tell, and leave it: cancelling a recorded B3
+          // would leave a grant standing with no second notice, silently breaking email-plus.
+          const [now] = await rpc<Found[]>('consent_lookup', { p_token_hash: hash }).catch(() => [undefined])
+          if (now && !(now.state === 'granted' && now.second_email_provider_id === b3)) await cancelEmail(b3)
+          throw e
+        }
+        // Anything but 'granted' means THIS B3 was not recorded: a race lost to expiry or a decline,
+        // 'already_consented' (consent-once: the account already holds a current consent, so this request was
+        // closed), or 'already_granted' (the other half of a double click won and recorded its own B3). The email
+        // we just scheduled must never arrive.
+        if (s !== 'granted') await cancelEmail(b3)
         return ok(s)
       }
       default:

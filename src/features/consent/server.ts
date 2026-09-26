@@ -134,9 +134,9 @@ export async function generateSignupLink(email: string, password: string, data: 
  *  it at a stand-in that records messages instead of delivering them. Unset in every real environment. */
 const RESEND = () => process.env.RESEND_API_URL || 'https://api.resend.com'
 /**
- * Send (or schedule) one message. The idempotency key makes a retried request — a double click, a
- * network retry — return the SAME message rather than a second one, which is also what lets a repeat
- * grant click be told apart from a fresh one without cancelling the real B3.
+ * Send (or schedule) one message. The idempotency key makes a retried request with the SAME payload return
+ * the SAME message rather than a second one. ⚠️ Resend answers a reused key with a DIFFERENT payload with 409
+ * for 24 hours — so a message whose payload changes per attempt (B3's `scheduled_at`) needs a key per attempt.
  *
  * ⚠️ EVERY SEND DECLARES ITS KIND (docs/legal/09 §1; "if unsure, treat it as commercial").
  *   transactional — consent, security, receipts: sent to anyone, never reads the suppression list.
