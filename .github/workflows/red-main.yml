@@ -39,6 +39,7 @@ jobs:
     if: >-
       ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # a few seconds; 10 min floor (ARC-07; GitHub default 360)
     env:
       GH_TOKEN: ${{ github.token }}
       # ⚠️ gh needs a repo context and this job has no checkout — without -R every command dies with
