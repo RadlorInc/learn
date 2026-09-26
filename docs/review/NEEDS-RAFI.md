@@ -17,6 +17,9 @@ ARC → ARCHITECTURE-REVIEW, BUG → LATENT-BUGS, PERF → PERFORMANCE, SEO → 
   confirm link opens for an address signed up more than once, ask for a new password before continuing (one extra
   screen, only in that case). Meanwhile check Resend's log for >1 sign-up email to one address before its first
   sign-in — that is the only trace; the database has none.
+  Also measured (#251): a second sign-up for an unconfirmed address REPLACES the first one's role and first name
+  (a teacher sign-up followed by a parent one comes back as parent) while the FIRST password is kept — the route's
+  comment "the role the account was FIRST created with wins" is false. Same fix as above.
 - **N3 · SEC-03 = OPS-09 (High).** Encrypted production dumps (children's data) are artifacts of a PUBLIC repo; the only
   protection is `BACKUP_PASSPHRASE` (AES-CBC, no MAC). **Recommend:** confirm today it is 32 random bytes; after the beta
   move backups to a private bucket or private repo, or buy Supabase PITR and retire `backup.yml`.
@@ -26,7 +29,7 @@ ARC → ARCHITECTURE-REVIEW, BUG → LATENT-BUGS, PERF → PERFORMANCE, SEO → 
   branch protection on `release` (require CI), and add a second org owner you trust (READINESS 3.15).
 - **N5 · BUG-09 (flow half).** Consent can be granted before the email address is confirmed. I am shipping the prune
   guard (the granted record is no longer deleted). **Recommend:** also require a confirmed address before the consent
-  page accepts a grant — a flow change, so yours.
+  page accepts a grant — a flow change, so yours. Also decide: should an account holding only a *declined* consent be kept too? #241 keeps granted and withdrawn only.
 - **N6 · MAP-09.** Child sign-in goes browser-direct to Supabase with a 6-character minimum; only Supabase's hosted
   limits apply. **Recommend:** read Auth → Rate Limits and password length in the dashboard and tell me the numbers;
   if sign-in attempts per IP are above ~30/5 min, lower them.
@@ -94,3 +97,15 @@ ARC → ARCHITECTURE-REVIEW, BUG → LATENT-BUGS, PERF → PERFORMANCE, SEO → 
   it to the attorney packet.
 - **N20 · ARC-14.** CLAUDE.md + handoff are ~133–161 KiB of auto-loaded context per session. **Recommend:** move the
   long incident tables to `docs/` with a one-line pointer each.
+
+## Added during Phase 2
+
+- **N33 · BUG-02 (#243).** The fix stores `lesson_progress.answered_at` — when a child's standing was produced. Same
+  kind of fact as the existing `updated_at`, and the export picks it up (`select *`). **Recommend:** list it in doc 02's
+  stored fields at the next notice change.
+- **N34 · behaviour trade-offs in two fix PRs.** #237 (MAP-04): on a device with only network voices, browser-spoken
+  lines go silent (recorded clips still play). #252 (PERF-01): a lesson module never opened online no longer opens
+  offline. **Recommend:** OK both.
+- **N35 · repo settings (from #263).** Set "allowed actions" to `actions/*` + `supabase/setup-cli`, and turn on
+  Dependabot for GitHub Actions so the pinned SHAs get update PRs.
+- **N36 · FND-15 (#260).** How long to keep `deletion_log`. **Recommend:** as long as the consent records; no purge job.
