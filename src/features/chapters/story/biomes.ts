@@ -1,5 +1,5 @@
 /**
- * Biomes — the places Milo travels through in the counting journey. Each place has
+ * Biomes — the places the counting journey travels through. Each place has
  * its own background, its own 3 creatures, and its own SPAWN BAND (where those
  * creatures sit on screen): fish low on the water, birds high in the sky, bugs in
  * the leaves. The math (how many to count) is the same everywhere — only the place
@@ -32,7 +32,7 @@ export interface Biome {
   id: BiomeId
   label: string
   emoji: string                 // shown on the "you reached…" banner
-  arrive: string                // Milo's line when he walks in
+  arrive: string                // the line spoken on arriving
   objects: CountKind[]          // the 3 creatures of this place
   band: Band
   bgImage?: string              // painted background (tiled+scrolled); absent → gradient placeholder
@@ -115,7 +115,7 @@ export const BIOMES: Record<BiomeId, Biome> = {
 
 // ── Storytellings (themed journeys) ──────────────────────────────
 // A session plays ONE storytelling and rotates through its three biomes. demoCount /
-// demoGuide are the creatures Milo counts in the opening demo + guided slide (both
+// demoGuide are the creatures counted aloud in the opening demo + guided slide (both
 // drawn from the FIRST biome, so the demo happens "here" before the walk); they're
 // kept OUT of that storytelling's practice pool so a session never repeats a creature.
 export interface Storytelling {
@@ -123,29 +123,29 @@ export interface Storytelling {
   label: string                 // chapter title for this run
   emoji: string
   biomes: BiomeId[]             // its 3 biomes, in walk order
-  demoCount: CountKind          // Milo counts these to 10 (the explanation)
+  demoCount: CountKind          // counted aloud to 10 (the explanation)
   demoGuide: CountKind          // child taps these to 10 (guided practice)
-  intro: string                 // Milo's opening line
-  outro: string                 // Milo's closing line
+  intro: string                 // the opening line
+  outro: string                 // the closing line
 }
 
 export const STORYTELLINGS: Storytelling[] = [
   {
-    id: 'nature', label: "Milo's Counting Journey", emoji: '🌳',
+    id: 'nature', label: 'Counting Journey', emoji: '🌳',
     biomes: ['forest', 'underwater', 'garden'],
     demoCount: 'firefly', demoGuide: 'butterfly',
     intro: "Let's learn to count in the forest!",
     outro: 'You counted everywhere! You are a counting star! 🌟',
   },
   {
-    id: 'farm', label: "Milo's Farm Day", emoji: '🐔',
+    id: 'farm', label: 'Farm Day', emoji: '🐔',
     biomes: ['barnyard', 'orchard', 'pond'],
     demoCount: 'chick', demoGuide: 'duckling',
-    intro: "Welcome to Milo's farm! Let's count the animals together!",
+    intro: "Welcome to the farm! Let's count the animals together!",
     outro: 'You counted the whole farm! Wonderful counting! 🌟',
   },
   {
-    id: 'space', label: "Milo's Space Adventure", emoji: '🚀',
+    id: 'space', label: 'Space Adventure', emoji: '🚀',
     biomes: ['launchpad', 'deepspace', 'moon'],
     demoCount: 'star', demoGuide: 'rocket',
     intro: "Blast off! Let's count our way through space!",
@@ -157,7 +157,7 @@ export const STORYTELLINGS: Storytelling[] = [
 // world each visit (and a "play again" advances to the next theme). Persisted in
 // localStorage; falls back to the first storytelling on the server / when storage
 // is unavailable.
-const STORY_KEY = 'milo.counting.storyIdx'
+const STORY_KEY = 'counting.storyIdx'
 
 export function storytellingById(id: string | null | undefined): Storytelling | undefined {
   return STORYTELLINGS.find(s => s.id === id)

@@ -39,8 +39,9 @@ Next.js 16 · React 19 · TypeScript · Supabase.
 - `src/features/consent/`, `src/app/consent/` — verifiable parental consent (email plus); read
   [docs/legal/](docs/legal/README.md) first.
 - `src/features/dashboard/`, `src/app/parent/` — the parent and teacher dashboard.
-- `src/features/chapters/` — the older story chapters, **hidden** (`LEGACY_CHAPTERS_HIDDEN`) and built
-  around the retired Milo character; see the manual before unhiding anything.
+- `src/features/chapters/` — the 23 story chapters: the **KG, Grade 1 and Grade 2** tabs of the child's home
+  (`chaptersForGrade` in `src/core/chapters.ts`), rewritten without a mascot on 2026-09-25. Their old surfaces
+  (age-band menu, demo, `/story`) stay off behind `LEGACY_CHAPTERS_HIDDEN`.
 
 ## Before you change a lesson
 

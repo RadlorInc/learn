@@ -96,7 +96,7 @@ export const ROD_SEGMENTS = 10
  */
 /**
  * ⚠️ **THE ONLY PLACE IN THE APP THAT DERIVES A ROD FROM A CUBE.** Every rod anywhere — standing on
- * a shelf, lying in a supply tray, carried by Milo — comes through here, so no caller can write its
+ * a shelf, lying in a supply tray, carried by the walker — comes through here, so no caller can write its
  * own multiplier. That is not tidiness: the first supply tray drew a "ten" at 2.4 units beside a
  * one-cube, and a gate that only checked the shelf could not see it. A relationship that may not
  * vary should not be expressible twice.
@@ -105,9 +105,9 @@ export const blockSet = (cube: number) => ({
   cube,
   rodW: Math.round(cube * 0.92),
   rodH: cube * ROD_SEGMENTS,                  // exactly ten. See ROD_SEGMENTS.
-  // Measured against a standing rod on screen: at 3.4 units Milo was a third of its height and read
-  // as a toy beside it. He has to look like someone who could pick one up.
-  miloH: Math.round(cube * 4.6),
+  // Measured against a standing rod on screen: at 3.4 units the walker was a third of its height and
+  // read as a toy beside it. He has to look like someone who could pick one up.
+  walkerH: Math.round(cube * 4.6),
 })
 
 export function unitFor(vw: number, vh: number, budgetPx: number, colPct: number) {
@@ -297,7 +297,7 @@ export const bannerBottom = (vh: number) => BANNER_TOP(vh) + (vh < 470 ? 78 : 62
  * ⚠️ **`lead` EXISTS BECAUSE A SHORT FRAME HAS NO SECOND PLACE TO PUT A QUESTION.**
  * The chapter's target first lived in its own card above the bench — which, on a 640×320 frame,
  * measured y 234–274 against controls starting at 250: sitting ON the tap targets. Every other
- * candidate slot is occupied (the chrome, the shelf itself, Milo), so the honest answer is that
+ * candidate slot is occupied (the chrome, the shelf itself, the walker), so the honest answer is that
  * there is only ONE question region on screen and the target belongs inside it. It reads better
  * too: "**28** · Make the number on the order" is one thing to look at, not two.
  */

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
+import { C } from '@/features/lessons/sessionCopy'
 
 /**
  * The card a 3–8 story chapter ends on.
@@ -17,8 +18,14 @@ import { useMiloSpeaker } from '@/infra/useMiloSpeaker'
  * ⚠️ PROPS, NOT A STORE. The old one read `celebration` out of zustand — which is why it could not
  * be rendered anywhere the store was not, and why it went when the store did.
  */
-export default function ChapterDone({ open, childName, onPlayAgain, onExit, exitLabel = 'Back to menu' }: {
+/**
+ * `take`: the sitting ended after this many questions with the run NOT finished (KG–2, 5 a take — StoryWorld's
+ * CHAPTER_TAKE). Then the card is the lessons' break screen, word for word: a celebration, the spot is saved, one way
+ * out — no Play again and no Keep going (founder, 2026-09-25).
+ */
+export default function ChapterDone({ open, take, childName, onPlayAgain, onExit, exitLabel = 'Back to modules' }: {
   open: boolean
+  take?: number
   childName?: string
   onPlayAgain: () => void
   onExit: () => void
@@ -31,8 +38,8 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
     if (!open) { spoken.current = false; return }
     if (spoken.current) return
     spoken.current = true
-    speak(childName ? `All done, ${childName}! Nice work.` : 'All done! Nice work.')
-  }, [open, childName, speak])
+    speak(take ? `${C.breakTitle(take).replace(' ⭐', '')} ${C.spotSaved}` : childName ? `All done, ${childName}! Nice work.` : 'All done! Nice work.')
+  }, [open, take, childName, speak])
 
   if (!open) return null
 
@@ -51,14 +58,14 @@ export default function ChapterDone({ open, childName, onPlayAgain, onExit, exit
         margin: 'auto', boxShadow: '0 8px 0 var(--outline)',
       }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--t-h1)', color: 'var(--ink)', margin: '0 0 4px' }}>
-          🎉 All done!
+          {take ? C.breakTitle(take) : '🎉 All done!'}
         </h2>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t-body-lg)', color: 'var(--ink-soft)', margin: '0 0 20px' }}>
-          Nice work — that one is finished.
+          {take ? C.spotSaved : 'Nice work — that one is finished.'}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <button onClick={onPlayAgain} style={btn('#0B4FA8', '#fff')}>▶ Play again</button>
-          <button onClick={onExit} style={btn('transparent', 'var(--ink-soft)')}>{exitLabel}</button>
+          {!take && <button onClick={onPlayAgain} style={btn('#0B4FA8', '#fff')}>▶ Play again</button>}
+          <button onClick={onExit} style={take ? btn('#0B4FA8', '#fff') : btn('transparent', 'var(--ink-soft)')}>{exitLabel}</button>
         </div>
       </div>
     </div>

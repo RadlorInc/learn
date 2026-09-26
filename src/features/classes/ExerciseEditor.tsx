@@ -8,7 +8,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { updateClass, getExerciseResults, type ClassRow, type ExerciseResult } from '@/data/repositories'
-import { GRADES, modulesOf, findModule } from '@/features/lessons/modules'
+import { LESSON_GRADES as GRADES, modulesOf, findModule } from '@/features/lessons/modules'
 import { exerciseItems, newExercise, isOpen, summarize, LEVELS, MAX_COUNT, type Exercise } from './exercise'
 
 const P = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', accent: 'var(--milo-orange)', soft: 'var(--milo-orange-soft)' } as const
@@ -120,7 +120,7 @@ function Results({ ex, students, results }: { ex: Exercise; students: { id: stri
 
 function NewExercise({ grade: startGrade, saving, onSave, onCancel }: { grade: number; saving: boolean; onSave: (ex: Exercise) => void; onCancel?: () => void }) {
   const [grade, setGrade] = useState(startGrade)
-  const ready = (g: number) => modulesOf(g).filter(m => m.lessons.length)
+  const ready = (g: number) => modulesOf(g).filter(m => m.lessons.length && !m.story)   // exercises need a question ladder: Grades 3–8
   const [module, setModule] = useState(() => ready(startGrade)[0]?.id ?? '')
   const [level, setLevel] = useState(1)
   const [count, setCount] = useState(10)

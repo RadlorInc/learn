@@ -59,7 +59,7 @@ Module 1 below keeps its approved script document and its own test.
   cannot pick topics yet. Both need a `chapters` row per lesson id (a migration).
 - Every child sees grade tabs 3–8 (no grade is assigned yet). Founder's call 2026-09-14: parents will see all modules and pick the topics — not built yet.
 - Objects are simple code-drawn shapes; Topic 1 of Module 1 has drawn art (Higgsfield).
-- The legacy chapters are hidden behind `LEGACY_CHAPTERS_HIDDEN` in `src/core/chapters.ts`.
+- The 23 older story chapters are the KG / Grade 1 / Grade 2 tabs of `/modules` (since 2026-09-25, no mascot); their old menu, demo and `/story` preview stay off behind `LEGACY_CHAPTERS_HIDDEN` in `src/core/chapters.ts`.
 
 ## The approved Grade 3 topic split (founder-approved 2026-09-13)
 

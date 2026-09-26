@@ -2,9 +2,9 @@
 /**
  * Chapter 4 — number ↔ QUANTITY (skill `matchingQuantities`), as HOME TIME.
  *
- * Milo is walking the little ones home and he asks for EXACTLY a number of them. Tap one and it
- * really walks across the still scene and stands with him; tap one that is already with him and it
- * walks back to the others. When the group looks right, tap Ready — and the whole point of the
+ * A grown-up of the round's own creature is walking the little ones home, and the child sends it
+ * EXACTLY a number of them. Tap one and it really walks across the still scene and stands with the
+ * grown-up; tap one that is already there and it walks back to the others. When the group looks right, tap Ready — and the whole point of the
  * chapter is that NOTHING tells the child when to stop. There are always spare little ones left
  * over. Counting out a set and STOPPING is the skill; a shelf that empties at exactly the right
  * moment does the stopping for you.
@@ -38,14 +38,14 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleGeom, huddleRows, waitSpot, clusterSpot, leadX, fitBands,
-  GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
+  GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X, LEAD_SCALE, STRIP_PX,
   clusterScale,
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey,
 } from './critters'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
-// Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
+// Just long enough to swallow a double-tap. It is deliberately NOT tied to the voice: measured
 // live, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken digit
 // (Chrome is in no hurry to fire `end`, and its watchdog ceiling is 6s). Gating taps on that locked
 // a child out for seconds per tap in a chapter where one round can want seven of them. Overlap is
@@ -53,16 +53,11 @@ import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 // fast run of taps simply speaks the newest count, which is the right number to hear anyway.
 const TAP_LOCK_MS = 260
 const COUNT_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven']
-const MARCH_MS = 2800          // Milo and the chosen group walking off, fully out of frame
+const MARCH_MS = 2800          // the leader and the chosen group walking off, fully out of frame
 const HOLD_MS = 1100           // how long the finished group stays on screen before they leave
 
-/** Milo leads in every habitat, but a walking pony on a seabed is the same "doesn't belong" fault
- *  as an emoji in a painted scene — under water he swims instead. (No sheet for the underwater
- *  pose, so Critter draws him still, which is correct: he is waiting, not walking.) */
-const MILO_LAND = '/assets/characters/milo_side.png'
-const MILO_REEF = '/assets/characters/milo_underwater.png'
 const JOURNEY = { from: '🐾', to: '🏡' }
-const INTRO = 'Milo is walking the little ones home — but only the number he asks for! Watch how he counts them out.'
+const INTRO = 'Time to walk the little ones home — but only the number we need! Watch how we count them out.'
 
 /** Fixed SLOTS rather than a row that re-packs — see clusterSpot. The band itself lives in
  *  ./critters so the invariant sweep measures the real numbers rather than a copy of them. */
@@ -70,11 +65,9 @@ const gatherSpot = (k: number, w: Habitat, mx: number, src: string): Spot =>
   clusterSpot(k, w, mx - 6, GATHER_COL, GATHER_LEFT, src)
 /**
  * Chapter 4's own bands, per habitat. Chapter 2 can put its leader straight onto the line because
- * the leader IS one of them — a mother butterfly belongs at a butterfly's height. Milo is a pony,
- * and dropping a pony onto a flier's band put him hovering over the hedge at the edge of the frame,
- * which is precisely the "he read as clutter" note that got him cut from chapter 2 in the first
- * place. So the leader gets a GROUND line of its own, and in the sky the gathered set comes DOWN
- * of its own, BELOW the group it is gathering.
+ * its leader stands among the group. Here the leader is the grown-up of the round's creature, drawn
+ * at LEAD_SCALE and standing NEARER the camera than the group it gathers, so it gets a line of its
+ * own — and in the sky the gathered set comes DOWN of its own, BELOW the group it is gathering.
  *
  * Depth stays consistent across all three: the waiting set is nearest the camera (lowest, biggest),
  * the gathered set is further back (higher, drawn at `clusterScale`), and the leader is nearest. An
@@ -87,25 +80,25 @@ const gatherSpot = (k: number, w: Habitat, mx: number, src: string): Spot =>
  */
 const BANDS: Record<Habitat['move'], { lead: number; cluster: number; wait: [number, number] }> = {
   land: { lead: 92, cluster: 72, wait: [82, 92] },   // open grass; unchanged from chapter 2
-  swim: { lead: 76, cluster: 46, wait: [64, 76] },   // he swims, so the near band is right for him
-  air:  { lead: 88, cluster: 54, wait: [64, 76] },   // Milo on the grass, the flock over it
+  swim: { lead: 76, cluster: 46, wait: [64, 76] },   // the grown-up swims on the near band
+  air:  { lead: 88, cluster: 54, wait: [64, 76] },   // the grown-up nearest, the flock over the grass
 }
 /** The habitat as THIS chapter uses it, before fitBands trims it to the room available. */
 const bandsFor = (w: Habitat): Habitat => {
   const b = BANDS[w.move]
   return { ...w, lineY: b.cluster, waitY0: b.wait[0], waitY1: b.wait[1] }
 }
-const miloSpot = (leadY: number, mx: number): Spot => ({ left: mx, top: leadY, scale: MILO_SCALE })
+const leadSpot = (leadY: number, mx: number): Spot => ({ left: mx, top: leadY, scale: LEAD_SCALE })
 /** How far they have to go to leave the picture COMPLETELY — measured from the LEFTMOST of them,
- *  or the tail of the group is still standing in frame when Milo is already gone. */
+ *  or the tail of the group is still standing in frame when the leader is already gone. */
 const marchDistance = () => 122 - GATHER_LEFT
 
-/** One question: how many Milo asks for, how many little ones are actually there (always more),
+/** One question: how many are asked for, how many little ones are actually there (always more),
  *  and which creature they are — the cast rotates every round. */
 interface HomeRound { scene: string; target: number; pool: number; castIdx: number }
 
 /**
- * The number Milo is asking for, on a painted marker above him. Same cream-and-ink idiom as the
+ * The number being asked for, on a painted marker above the leader. Same cream-and-ink idiom as the
  * counting chapter's tally and chapter 2's number tags, so a child moving between chapters reads
  * it the same way — and deliberately NOT a white UI pill, because this one sits inside the picture.
  * It stays up the whole round: a three-year-old should never have to remember the question.
@@ -142,25 +135,25 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const world = homeOf(kind)
   const { baby: baseSize, vw, vh } = useSizes(pool)
 
-  // Same order of operations as chapter 2, and it matters: Milo's place comes from the UNCAPPED
-  // size (an over-estimate, so he always fits), that fixes how much room the huddle has, and only
+  // Same order of operations as chapter 2, and it matters: the leader's place comes from the UNCAPPED
+  // size (an over-estimate, so it always fits), that fixes how much room the huddle has, and only
   // then is the sprite capped to its slot. Sizing on HEIGHT alone drew wide creatures (a ladybug
   // is 1.47× wider than tall, a shark 1.75×) far wider than their slot and they buried each other.
   const aspect = aspectOf(kind.src)
   const rawSize = baseSize * (kind.scale ?? 1)
-  const miloSrc = world.move === 'swim' ? MILO_REEF : MILO_LAND
-  const mx = leadX(MILO_X, rawSize, aspectOf(miloSrc), MILO_SCALE, vw)
+  // The leader is a grown-up of the same creature, so it always belongs in the habitat.
+  const mx = leadX(LEAD_X, rawSize, aspect, LEAD_SCALE, vw)
   const edgePct = (rawSize * aspect / 2) / Math.max(1, vw) * 100
   const spanPct = huddleGeom(pool, HUDDLE_RIGHT, edgePct).span
   const rows = huddleRows(spanPct, (rawSize * aspect) / Math.max(1, vw) * 100)
   const slotPx = spanPct * rows / 100 * vw
   const babySize = Math.round(Math.max(40, Math.min(rawSize, (slotPx / aspect) * 0.98)))
-  const band: Habitat = fitBands(bandsFor(world), vh, babySize, MILO_SCALE)
-  // The leader stands lower than the gathered set, so his own line needs the same floor: feet above
+  const band: Habitat = fitBands(bandsFor(world), vh, babySize, LEAD_SCALE)
+  // The leader stands lower than the gathered set, so its own line needs the same floor: feet above
   // the Ready button, and never above the band the group is standing on.
   const leadY = Math.max(band.lineY + 4, Math.min(BANDS[world.move].lead, (vh - STRIP_PX) / vh * 100))
 
-  // Which pool members are with Milo, and which gather slot each of them holds. Slot is claimed at
+  // Which pool members are with the leader, and which gather slot each of them holds. Slot is claimed at
   // JOIN time and freed when one walks back, so the next joiner fills the hole and the group stays
   // compact without anyone ever teleporting.
   const [slots, setSlots] = useState<Record<number, number>>({})
@@ -202,7 +195,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     slot === undefined ? waitSpot(i, pool, band, HUDDLE_RIGHT, edgePct, rows) : gatherSpot(slot, band, mx, kind.src),
   [pool, band, edgePct, rows, mx])
 
-  /** Send one little one over to Milo. Timed from ITS OWN journey, so its leg cycle and the ground
+  /** Send one little one over to the leader. Timed from ITS OWN journey, so its leg cycle and the ground
    *  it covers always agree — the one number that has to be shared or the feet skate. */
   const send = useCallback((i: number) => {
     // The slot is claimed from the REF, which updates synchronously: off state, two quick taps read
@@ -233,8 +226,8 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     })
   }, [after, spotOf, band, mx, vw, vh, babySize, kind.src])
 
-  /** Exactly right — Milo walks them home, and THAT is the reward for the round. The spares stay
-   *  behind, which is the point made one last time: only the number he asked for went. */
+  /** Exactly right — the leader walks them home, and THAT is the reward for the round. The spares
+   *  stay behind, which is the point made one last time: only the number asked for went. */
   const setOff = useCallback(() => {
     if (done.current) return; done.current = true
     setMarching(true)
@@ -247,14 +240,14 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const ran = useOnceGuard()
   useEffect(() => {
     if (mode !== 'demo') {
-      if (mode === 'guided') { setHint('take'); speakAfterCurrent(`Now you! Milo needs exactly ${target} ${target === 1 ? kind.little : kind.plural}.`) }
+      if (mode === 'guided') { setHint('take'); speakAfterCurrent(`Now you! Send exactly ${target} ${target === 1 ? kind.little : kind.plural} home.`) }
       return
     }
     if (ran.current) return; ran.current = true
     const lines = [
-      `Milo needs exactly ${target} ${target === 1 ? kind.little : kind.plural} to walk home.`,
+      `We need exactly ${target} ${target === 1 ? kind.little : kind.plural} to walk home.`,
       ...Array.from({ length: target }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
-      `That is ${target}. Milo has enough — so he STOPS, even though there are more.`,
+      `That is ${target}. We have enough — so we STOP, even though there are more.`,
       'Ready! Off we go.',
     ]
     const cancel = speakSteps(lines, {
@@ -273,7 +266,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   function tap(i: number) {
     // A tap waits for nothing except a double-tap guard. It does NOT wait for the previous little
     // one to arrive — a child who has already picked the next should not have to watch the first
-    // walk — and it does not wait for Milo's voice either; see TAP_LOCK_MS.
+    // walk — and it does not wait for the voice either; see TAP_LOCK_MS.
     if (mode === 'demo' || done.current || committed.current || tapLock.current) return
     tapLock.current = true
     after(TAP_LOCK_MS, () => { tapLock.current = false })
@@ -302,10 +295,10 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     if (!wrongLock.current) {
       wrongLock.current = true
       speak(have === 0
-        ? `Tap the ${kind.plural} to send them to Milo.`
+        ? `Tap the ${kind.plural} to send them home.`
         : have < target
-          ? `That is only ${have}. Milo needs ${target} — send some more!`
-          : `That is ${have} — too many! Milo needs ${target}. Tap one to send it back.`)
+          ? `That is only ${have}. We need ${target} — send some more!`
+          : `That is ${have} — too many! We need ${target}. Tap one to send it back.`)
       after(1800, () => { wrongLock.current = false })
     }
   }
@@ -317,47 +310,47 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const marchDx = marching ? marchDistance() : 0
   const cycleFor = (src: string, h: number) =>
     Math.max(1, (marchDistance() / 100 * vw) / (MARCH_MS / 1000) / groundSpeed(src, h))
-  const milo = miloSpot(leadY, mx)
+  const lead = leadSpot(leadY, mx)
 
   return (
     <>
-      <Critter src={miloSrc} at={{ ...milo, left: milo.left + marchDx }} size={babySize} move={world.move} z={26}
-        durMs={MARCH_MS} cycleScale={cycleFor(miloSrc, babySize * MILO_SCALE)} moving={marching}
-        // He watches them come in — they arrive from his left — and only turns to lead the way
-        // once everyone is gathered. A leader with his back to the thing the child is doing reads
-        // as scenery rather than as the person who asked.
+      <Critter src={kind.src} facesLeft={kind.facesLeft} at={{ ...lead, left: lead.left + marchDx }} size={babySize} move={world.move} z={26}
+        durMs={MARCH_MS} cycleScale={cycleFor(kind.src, babySize * LEAD_SCALE)} moving={marching}
+        // It watches them come in — they arrive from its left — and only turns to lead the way
+        // once everyone is gathered. A leader with its back to the thing the child is doing reads
+        // as scenery rather than as the one who asked.
         facingLeft={!marching} breathe={!marching}>
         {/* `lit` is tied to the SET-OFF, not to the running count. Lighting up the moment the
             count happens to match hands the answer over: a child learns to add one, glance at the
             sign, add one, glance — and never counts anything. It turns green as they leave, which
             is confirmation of an answer already given. */}
-        <AskSign n={target} size={babySize * MILO_SCALE} lit={marching} wrong={wrongSign} />
+        <AskSign n={target} size={babySize * LEAD_SCALE} lit={marching} wrong={wrongSign} />
       </Critter>
 
       {Array.from({ length: pool }, (_, i) => i).map(i => {
         const slot = slots[i]
-        const withMilo = slot !== undefined
+        const withLeader = slot !== undefined
         const base = spotOf(i, slot)
-        const at = { ...base, left: base.left + (withMilo ? marchDx : 0) }
+        const at = { ...base, left: base.left + (withLeader ? marchDx : 0) }
         const isTravelling = travelling[i] !== undefined
         return (
           <React.Fragment key={i}>
             {/* Draw order is depth, stated outright rather than derived from a coordinate: the
-                gathered group sits furthest back (24), Milo just in front of it (26), and the
+                gathered group sits furthest back (24), the leader just in front of it (26), and the
                 waiting huddle nearest — with its FRONT row above its back row. */}
             <Critter src={kind.src} facesLeft={kind.facesLeft} at={at} size={babySize} move={world.move}
-              z={withMilo ? 24 : 30 + (i % 2) * 2}
+              z={withLeader ? 24 : 30 + (i % 2) * 2}
               durMs={marching ? MARCH_MS : (travelling[i]?.ms ?? TRAVEL_MIN)}
               cycleScale={marching ? cycleFor(kind.src, babySize * clusterScale(kind.src)) : (travelling[i]?.cycleScale ?? 1)}
-              moving={isTravelling || (marching && withMilo)}
+              moving={isTravelling || (marching && withLeader)}
               facingLeft={!!returning[i]}
-              breathe={!withMilo && !isTravelling} hop={idleHop === i}
-              dim={withMilo && !marching} />
+              breathe={!withLeader && !isTravelling} hop={idleHop === i}
+              dim={withLeader && !marching} />
             {/* The hit area is a plain button over the creature — the sprite itself stays
                 pointer-transparent so a tap can never be swallowed by a flipped inner wrapper. */}
             {mode !== 'demo' && !marching && (
               <button onClick={() => tap(i)}
-                aria-label={withMilo ? `send ${kind.little} back` : `send ${kind.little} to Milo`}
+                aria-label={withLeader ? `send ${kind.little} back` : `send ${kind.little} home`}
                 style={{ position: 'fixed', left: `${at.left}%`, top: `${at.top}%`, transform: 'translate(-50%,-100%)',
                   zIndex: 40, width: Math.max(46, Math.round(babySize * at.scale * 1.05)), height: Math.max(46, Math.round(babySize * at.scale * 1.15)),
                   padding: 0, border: 'none', background: 'transparent', cursor: 'pointer',
@@ -435,8 +428,8 @@ export function makeHomeBeat(): Beat<HomeRound> {
     skillId: 'matchingQuantities', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound((d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.target}`,   // dedupe on the quantity asked for, not the rotating cast or scene
-    prompt: d => `Send Milo exactly ${d.target} ${d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural}.`,
-    say: d => `Milo needs exactly ${d.target} ${d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural}. Tap them one by one, then tap Ready.`,
+    prompt: d => `Send exactly ${d.target} ${d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural} home.`,
+    say: d => `Send exactly ${d.target} ${d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural} home. Tap them one by one, then tap Ready.`,
     Play: ({ data, onSubmit }) => <HomeScene data={data} mode="practice" onDone={onSubmit} />,
     Reteach: ({ data, onDone }) => <HomeScene data={data} mode="demo" onDone={() => onDone()} />,
   }
@@ -475,7 +468,7 @@ export default function HomeTime({ onFinish, onExit }: {
   // Landscape-first: they walk ACROSS the picture, which a portrait phone has no room for. This
   // early return has to sit BELOW every hook — above one, turning the phone changes the hook count
   // and React tears the chapter down into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo walks the little ones home in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="Walk the little ones home in landscape! 🏡" />
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
@@ -502,7 +495,7 @@ export default function HomeTime({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner('Watch Milo count them out')}
+      {phase === 'demo' && (<>{Banner('Watch how we count them out')}
         <HomeScene key="demo" data={DEMO_ROUND} mode="demo" onDone={() => setPhase('guided')} /></>)}
 
       {phase === 'guided' && (<>{Banner('Now you! Send exactly 2')}

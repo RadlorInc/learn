@@ -10,7 +10,7 @@
  *
  * The geometry half was rewritten with the chapter. It no longer asserts a code-drawn counter's
  * constants; it asserts the two things the market walk turns on — that a keeper strip lands back
- * inside its own painting, and that the coins and Milo are never camouflaged by the ground.
+ * inside its own painting, and that the coins and the buyer are never camouflaged by the ground.
  *
  * It drives the SAME exported functions the scene renders from rather than re-implementing them.
  * ⚠️ A gate that reads a chapter's DATA cannot see how the chapter INDEXES it — hence `stallAt`.
@@ -25,8 +25,8 @@ import {
 import { numberToWords } from '@/features/chapters/lessons/_kit'
 import {
   STALLS, stallAt, RUN_LENGTH, DEMO_SLOTS, GUIDED_SLOT, scoredSlot,
-  SCENE_W, SCENE_H, coverFit, fitFor, groundPxFor, miloHFor, miloHalfPct,
-  PURSE_MAX, CARD_BAND, cardMetrics, MILO_X, PAY_X, aOrAn,
+  SCENE_W, SCENE_H, coverFit, fitFor, groundPxFor, customerHFor, customerHalfPct,
+  PURSE_MAX, CARD_BAND, cardMetrics, CUSTOMER_X, PAY_X, aOrAn,
   SHOPPERS, shopperAt, SHOPPER_X, SHOPPER_LIFT, SHOPPER_SCALE,
 } from '@/features/chapters/story/market'
 import { bannerBottom } from '@/features/chapters/story/yard'
@@ -206,7 +206,7 @@ describe('the walk', () => {
 
   /**
    * ⚠️ **CONSECUTIVE-DIFFER, NOT ALL-DISTINCT, AND THAT IS DELIBERATE.** Seven of the ten generated
-   * stalls are usable (`hats` and `toys` carry a hard-edged blank third where Milo's post is;
+   * stalls are usable (`hats` and `toys` carry a hard-edged blank third where the buyer's post is;
    * `honey`'s ground line is 0.80 against a 0.772 cap), so thirteen slots cannot all be different
    * and the honest rule is the craft doc's own. An all-distinct gate is what once put a whole yard
    * on a pond.
@@ -239,7 +239,7 @@ describe('the walk', () => {
     expect(src()).not.toMatch(/keeper_/)
   })
 
-  it('nothing but Milo is placed out on the open ground', () => {
+  it('nothing but the buyer is placed out on the open ground', () => {
     // ⚠️ The founder's call: stop scattering elements across the empty grass. The goods and the
     // price are in the keeper's bubble, the coins are in the card. If a second `position: fixed`
     // world element comes back, it needs a better reason than the cloth had.
@@ -321,10 +321,14 @@ describe('the walk', () => {
     expect(Math.max(...SHOPPERS.map(k => k.scale))).toBeGreaterThan(Math.min(...SHOPPERS.map(k => k.scale)) * 1.5)
   })
 
-  it('Milo still has a REGISTERED drawn cycle', () => {
+  it('the buyer is the foreman bear, with a REGISTERED drawn cycle, and no mascot is drawn', () => {
     // Without one `SheetCell` silently falls back to a still, and a still that travels is a sticker
     // being dragged — invisible in a screenshot. He walks in and out of every round.
-    expect(hasSheet('/assets/characters/milo_side.png')).toBe(true)
+    // The path is written out HERE, not imported: the product has no mascot (2026-09-25), and the
+    // camouflage check below is calibrated to THIS sprite's colour, so a swap must go red here.
+    expect(src()).toContain("'/assets/objects/foreman_bear_side.png'")
+    expect(src()).not.toMatch(/characters\/milo|MiloSprite|🦊/)
+    expect(hasSheet('/assets/objects/foreman_bear_side.png')).toBe(true)
   })
 
   it('every coin sprite exists', () => {
@@ -355,7 +359,7 @@ describe('the picture is one geometry', () => {
       expect(f.oy, `${tag} oy`).toBeLessThanOrEqual(0.001)
       expect(SCENE_W * f.s + f.ox, `${tag} covers right`).toBeGreaterThanOrEqual(vw - 0.01)
       expect(SCENE_H * f.s + f.oy, `${tag} covers bottom`).toBeGreaterThanOrEqual(vh - 0.01)
-      // the painted grass and the line Milo stands on are the same line
+      // the painted grass and the line the buyer stands on are the same line
       expect(f.oy + st.ground * SCENE_H * f.s, `${tag} scene ground vs groundPx`)
         .toBeCloseTo(f.groundPx, 4)
       // and it is never SMALLER than plain cover — that would letterbox the picture
@@ -373,10 +377,10 @@ describe('the market fits on the screen it is drawn on', () => {
     }
   })
 
-  it('Milo never stands with his head in the banner, and is never a speck', () => {
+  it('the buyer never stands with his head in the banner, and is never a speck', () => {
     for (const st of STALLS) for (const [vw, vh] of SIZES) {
       const g = groundPxFor(st, vw, vh, CARD_BAND(vh))
-      const h = miloHFor(vh, g, bannerBottom(vh))
+      const h = customerHFor(vh, g, bannerBottom(vh))
       expect(h, `${st.key} ${vw}x${vh}`).toBeGreaterThanOrEqual(74)
       expect(h, `${st.key} ${vw}x${vh} vs room`).toBeLessThanOrEqual(Math.max(74, g - bannerBottom(vh) - 8) + 0.5)
     }
@@ -414,7 +418,7 @@ describe('the market fits on the screen it is drawn on', () => {
 
 describe('the ground is open, and nothing on it is camouflaged', () => {
   /**
-   * Measured at each stall's OWN ground line and across the open grass Milo actually stands on
+   * Measured at each stall's OWN ground line and across the open grass the buyer actually stands on
    * (x 56–95%) — ⚠️ the shared 0.66–0.78 band placeValue uses cuts through the COUNTER on these
    * scenes and reports 8–13 roughness for pictures that are in fact clean. The band was wrong, not
    * the art; that is this doc's oldest rule broken from the inside.
@@ -430,7 +434,7 @@ describe('the ground is open, and nothing on it is camouflaged', () => {
     // ⚠️ **THE WHOLE ROW IS THE WRONG QUESTION HERE.** placeValue's version of this sweeps x 4–97%,
     // which is right for a scene that is all field — and on these it walks straight through the
     // STALL, reporting roughness 3.7–7.5 for pictures whose ground is in fact glassy. The stall is
-    // meant to be there. What has to be open is the part Milo stands on, so every sample below is
+    // meant to be there. What has to be open is the part the buyer stands on, so every sample below is
     // taken over x 56–95%. Same correction, one axis along, as reading the ground line per scene.
     const X0 = 0.56, X1 = 0.95
     let rough = 0, walk = 1
@@ -477,8 +481,16 @@ describe('the ground is open, and nothing on it is camouflaged', () => {
   })
 
   /**
+   * ⚠️ **THE WALKER CHANGED 2026-09-25 AND THE REFERENCE DID NOT HAVE TO.** The product dropped its
+   * mascot; the buyer is now `foreman_bear_side.png`. Measured with one instrument on both sprites
+   * (opaque pixels, hue bin 15–30°, mean hue): the old walker 23.3° over 44% of him, the bear 23.6°
+   * over 43% (the rest of the bear is his blue overalls, ~195°, and his hat). Same dominant cluster,
+   * so 22° stays the reference. ⚠️ The 0.53 saturation reference was NOT re-derived for the bear (the
+   * method that produced it is not recorded here; this instrument gives him 0.53, the old walker 0.76).
+   * The history below is the OLD walker's and is kept for the reasoning.
+   *
    * ⚠️ **THE INSTRUMENT WAS WRONG BEFORE THE THRESHOLD WAS, AND THAT IS THE FINDING.** The previous
-   * version of this check modelled Milo as one hue — the saturation-weighted MEAN of his opaque
+   * version of this check modelled the old walker as one hue — the saturation-weighted MEAN of his opaque
    * pixels, 30°. He is trimodal: histogrammed, **52% of him is orange 15–30°, 17% is olive 45–60°
    * and 16% is teal 180–195°**. A mean over that returns a colour that is barely on him, which is
    * exactly the fault this repo already records for bimodal SCENES, arrived at from the sprite side.
@@ -491,17 +503,17 @@ describe('the ground is open, and nothing on it is camouflaged', () => {
    * **39.8 (pots) · 41.6 (fish) · 42.7 (fruit) · 43.8 (cheese) · 47.6 (bread) · 51.0 (flowers) ·
    * 55.4 (sweets)**. 35 sits clear of both and still fails every rejected scene. `pots` is the
    * closest survivor at 39.8 and is written down here rather than hidden; tighten this if a founder
-   * ever says Milo is hard to pick out on the pottery stall.
+   * ever says the buyer is hard to pick out on the pottery stall.
    */
-  it('Milo is never camouflaged by the ground he stands on', async () => {
-    const MILO_HUE = 22, MILO_SAT = 0.53, MIN_SEP = 35
+  it('the buyer is never camouflaged by the ground he stands on', async () => {
+    const BUYER_HUE = 22, BUYER_SAT = 0.53, MIN_SEP = 35
     for (const st of STALLS) {
       const { rgb } = await measure(st)
       const h = hue(...rgb), sa = sat(...rgb)
-      const hueOk = h == null ? true : sep(h, MILO_HUE) >= MIN_SEP
-      const satOk = Math.abs(sa - MILO_SAT) >= 0.22
+      const hueOk = h == null ? true : sep(h, BUYER_HUE) >= MIN_SEP
+      const satOk = Math.abs(sa - BUYER_SAT) >= 0.22
       expect(hueOk || satOk,
-        `${st.key}: ground hue ${h?.toFixed(0)}° sat ${sa.toFixed(2)} against Milo 22°/0.53 — separated by neither`,
+        `${st.key}: ground hue ${h?.toFixed(0)}° sat ${sa.toFixed(2)} against the buyer 22°/0.53 — separated by neither`,
       ).toBe(true)
     }
   })
@@ -529,7 +541,7 @@ describe('nothing says the answer before the commit', () => {
 
   it('the scene travels through Arrive, never a hand-rolled transition on a position', () => {
     // A `transition: left` beside `Arrive` is how a dozen creatures ended up sliding with their feet
-    // parked in HopAlong. Milo's three legs are three journeys.
+    // parked in HopAlong. The buyer's three legs are three journeys.
     // the quote is load-bearing: without it this pattern matches its own prose above
     expect(src()).not.toMatch(/transition:\s*['"`]\s*left/)
   })

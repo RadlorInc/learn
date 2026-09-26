@@ -1,6 +1,6 @@
 'use client'
 /**
- * The child's home: grade tabs (3–8) on top, that grade's modules on the left, the chosen module on the right with two ways in —
+ * The child's home: grade tabs (KG, 1, 2 — the story chapters — then 3–8) on top, that grade's modules on the left, the chosen module on the right with two ways in —
  * Learn (the topic path at /lesson) and Practice (mixed problems from every topic, at /practice).
  * Laid out like the founder's SampleUI template. A module that is not built yet says "Coming soon"; nothing is locked.
  */
@@ -14,10 +14,11 @@ import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSe
 import { showDay } from './progressReport'
 import { Thing, INK, TEAL, ON_TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
-import { chosenModules, mixedPractice } from './modules'
+import { chosenModules, mixedPractice, type Module } from './modules'
 import { C } from './sessionCopy'
 import { TEXT_SIZES, saveTextSize, useTextSize, type TextSize } from '@/infra/storage/textSize'
 import type { Obj } from './script'
+import { getChapter, chapterKey, gradeLabel } from '@/core/chapters'
 
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
@@ -32,7 +33,10 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
   const [fresh, setFresh] = useState<{ ids: string[] | null; due: Record<string, string> | null } | null>(null)
   const lessonIds = fresh ? fresh.ids : savedIds
   const due = fresh ? fresh.due : getActiveLearner()?.lesson_due ?? null
-  const mods = chosenModules(lessonIds)
+  const all = chosenModules(lessonIds)
+  // KG–2 story modules get their own layout (one Play card each); Grades 3–8 are the lesson modules.
+  const storyMods = all.filter(x => x.story), mods = all.filter(x => !x.story)
+  const STORY_TABS = [...new Set(storyMods.map(x => x.grade))]
   const GRADES = [...new Set(mods.map(x => x.grade))]
   const modulesOf = (g: number) => mods.filter(x => x.grade === g)
   const firstOf = (g: number) => { const ms = modulesOf(g); return (ms.find(x => x.lessons.length > 0) ?? ms[0]).id }
@@ -55,8 +59,11 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
       .then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
     return () => { live = false }
   }, [learnerId])
-  const [picked, setPicked] = useState(() => firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]))
-  const m = mods.find(x => x.id === picked) ?? mods[0]
+  const [picked, setPicked] = useState(() => GRADES.length ? firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]) : '')
+  // A story tab is open when the child asked for KG–2, or when the parent chose nothing from Grades 3–8.
+  const [storyTab, setStoryTab] = useState<number | null>(() => STORY_TABS.includes(startGrade) ? startGrade : GRADES.length ? null : STORY_TABS[0] ?? null)
+  const storyGrade = storyTab !== null && STORY_TABS.includes(storyTab) ? storyTab : GRADES.length ? null : STORY_TABS[0] ?? null
+  const m = mods.find(x => x.id === picked) ?? mods[0] ?? storyMods[0]
   const grade = m.grade, ready = m.lessons.length > 0
   // Read during render: every caller mounts this on the client only, after kv has hydrated.
   const doneIn = (lessons: typeof m.lessons) => lessons.filter(l => lessonDone(learnerId, l.id)).length
@@ -78,7 +85,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
         <div style={topBar}>
           {back && 'href' in back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>{back.label}</Link>
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
-          <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Grade {grade}</span>
+          <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>{gradeLabel(storyGrade ?? grade)}</span>
           <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
             {points !== null && <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
             <TextSizeMenu />
@@ -86,15 +93,20 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
         </div>
 
         <div role="tablist" aria-label="Grades" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: 'clamp(14px, 3vw, 24px) clamp(14px, 3vw, 24px) 0' }}>
+          {STORY_TABS.map(g => (
+            <button key={g} type="button" role="tab" aria-selected={g === storyGrade} onClick={() => setStoryTab(g)}
+              style={{ ...pill, background: g === storyGrade ? TEAL : '#fff', color: g === storyGrade ? ON_TEAL : INK }}>{gradeLabel(g)}</button>
+          ))}
           {GRADES.map(g => (
-            <button key={g} type="button" role="tab" aria-selected={g === grade} onClick={() => setPicked(firstOf(g))}
-              style={{ ...pill, background: g === grade ? TEAL : '#fff', color: g === grade ? ON_TEAL : INK }}>Grade {g}</button>
+            <button key={g} type="button" role="tab" aria-selected={storyGrade === null && g === grade} onClick={() => { setStoryTab(null); setPicked(firstOf(g)) }}
+              style={{ ...pill, background: storyGrade === null && g === grade ? TEAL : '#fff', color: storyGrade === null && g === grade ? ON_TEAL : INK }}>Grade {g}</button>
           ))}
           {exercises && exercises.count > 0 && (
             <button type="button" onClick={exercises.onOpen} style={{ ...pill, marginLeft: 'auto', background: '#fbdbba', color: INK }}>✏️ Exercises ({exercises.count})</button>
           )}
         </div>
 
+        {storyGrade !== null ? <StoryChapters key={storyGrade} modules={storyMods.filter(x => x.grade === storyGrade)} learnerId={learnerId} /> :
         <div className="mh-grid" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
           <nav aria-label="Modules" style={{ background: '#fff', border: `4px solid ${INK}`, borderRadius: 20, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             {modulesOf(grade).map(x => {
@@ -137,11 +149,52 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
             </div>
             </>}
           </section>
-        </div>
+        </div>}
         <p style={{ margin: 0, padding: '0 0 16px', textAlign: 'center', fontSize: 14, fontWeight: 700 }}>
           <Link href="/legal/privacy" style={{ color: INK }}>Privacy</Link>
         </p>
       </div>
+    </div>
+  )
+}
+
+/**
+ * A KG–2 tab, laid out like Grades 3–8 (founder, 2026-09-25): each story chapter is a module — the numbered list on the
+ * left, the chosen one on the right with one Play card. Play opens the chapter at /game; its Back returns to this tab.
+ */
+function StoryChapters({ modules, learnerId }: { modules: Module[]; learnerId: string | null }) {
+  const chapters = modules.map(x => getChapter(x.story!))
+  const [picked, setPicked] = useState(0)
+  const c = chapters[picked] ?? chapters[0]
+  const isDone = (id: string) => lessonDone(learnerId, chapterKey(id))
+  return (
+    <div className="mh-grid" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
+      <nav aria-label="Modules" style={{ background: '#fff', border: `4px solid ${INK}`, borderRadius: 20, padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {chapters.map((x, i) => {
+          const on = i === picked, all = isDone(x.id)
+          return (
+            <button key={x.id} type="button" aria-pressed={on} onClick={() => setPicked(i)}
+              style={{ ...row, background: on ? TEAL : '#fff', color: on ? ON_TEAL : INK }}>
+              <span style={{ ...num, background: all ? '#9cf0d8' : on ? '#fff' : '#fbdbba', color: INK }}>{all ? '✓' : modules[i].n}</span>
+              <span style={{ flex: 1 }}>{x.name}</span>
+            </button>
+          )
+        })}
+      </nav>
+
+      <section style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>Module {modules[picked]?.n ?? picked + 1}</p>
+        <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(28px, 4vw, 40px)', color: INK, lineHeight: 1.1 }}>{c.name}</h1>
+        <p style={bubble}>{c.hint}</p>
+        <div style={{ ...card, background: '#9cf0d8' }}>
+          <div style={{ flex: 1 }}>
+            <strong style={cardTitle}>Story</strong>
+            {isDone(c.id) ? 'Done! Play it again any time.' : 'Watch first, then it is your turn.'}
+          </div>
+          <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{c.emoji}</span>
+          <Link href={`/game?c=${c.id}`} style={primary}>{isDone(c.id) ? 'Play again' : 'Play'}</Link>
+        </div>
+      </section>
     </div>
   )
 }

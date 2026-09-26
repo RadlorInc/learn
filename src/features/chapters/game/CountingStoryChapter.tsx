@@ -2,7 +2,7 @@
 /**
  * CountingStoryChapter — "Chapter 1" as the landscape forest story mode.
  *
- * The whole experience is one continuous scene: the practice finishes, Milo stays
+ * The whole experience is one continuous scene: the practice finishes, the walker stays
  * standing in the forest, and the celebration appears OVER that same forest (no
  * cut to a blank screen). To do that we keep the forest portal mounted and render
  * the celebration inside it, awarding XP/coins/stars directly (which also sets the
@@ -19,9 +19,11 @@ import { COUNTING_WORLDS, storytellingById, type Storytelling } from '@/features
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
+import { ChapterTakeContext } from '@/features/chapters/story/take'
 
-export default function CountingStoryChapter(props: { onComplete: (correct: number, wrong: number) => void; childName: string }) {
+export default function CountingStoryChapter(props: { onComplete: (correct: number, wrong: number) => void; onExit?: () => void; childName: string }) {
   const router = useRouter()
+  const exit = props.onExit ?? (() => router.push('/menu'))
   const { finishAndSync } = useChapterSync('counting')   // it only ever completes 'counting' (line 38)
   const [body, setBody] = useState<HTMLElement | null>(null)
   const [runKey, setRunKey] = useState(0)        // bump to replay the chapter
@@ -31,6 +33,7 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
   const chapter = useMemo(() => (story ? makeCountingChapter(story) : null), [story])
   const doneRef = useRef(false)
   const [done, setDone] = useState(false)   // opens the end card; the ref stops a double-score
+  const [take, setTake] = useState<number | undefined>()   // a sitting stopped after 5 questions, run unfinished
   useEffect(() => { setBody(document.body) }, [])
 
   const finish = useCallback((correct: number, wrong: number, mastered?: boolean) => {
@@ -46,14 +49,16 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
   if (!body) return null
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#bfe6f7' }}>
-      {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={() => router.push('/menu')} />}
+      {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={exit} />}
       {story && chapter && (
         <>
-          <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={() => router.push('/menu')} />
+          <ChapterTakeContext.Provider value={setTake}>
+            <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={exit} />
+          </ChapterTakeContext.Provider>
           {/* Chapter 1 keeps its own wrapper, so it needs the directions card wired by hand. */}
           <DirectionsCard chapter="counting" />
           {/* Renders inside the same portal so it layers over the forest, not a blank screen. */}
-          <ChapterDone open={done} childName={props.childName} onExit={() => router.push('/menu')} onPlayAgain={restart} />
+          <ChapterDone open={done || !!take} take={done ? undefined : take} childName={props.childName} onExit={exit} onPlayAgain={restart} />
         </>
       )}
     </div>,

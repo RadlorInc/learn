@@ -6,10 +6,10 @@
  * ⚠️ WHAT THIS REPLACED, AND WHY, BECAUSE THE OLD VERSION LOOKED FINE: it showed an exact clock and
  * took the answer as one of four pills. Four labels is **winnable by elimination** — a child who
  * cannot read a clock at all gets a third of them right — and on the craft doc's own "is it alive"
- * check it scored **1 of 4**: nothing arrived on its own legs, a tap sent nobody anywhere, Milo
- * floated in the corner with no job, and only the backdrop rotated. So:
+ * check it scored **1 of 4**: nothing arrived on its own legs, a tap sent nobody anywhere, the old
+ * mascot floated in the corner with no job, and only the backdrop rotated. So:
  *
- *   · **SET rounds** — Milo says when he has to be somewhere; the child moves the hands there.
+ *   · **SET rounds** — the bubble says when it is time to be somewhere; the child moves the hands there.
  *     Setting cannot be eliminated into, and putting the long hand on the 6 for "half past" requires
  *     the one fact the pills never touched.
  *   · **READ rounds** — the clock is showing a time; the child says it, building the phrase a part at
@@ -40,7 +40,7 @@ import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
 import { Arrive, SheetCell, inFlowJourney, hasSheet, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import {
-  RING, DAY, TINT, MILO, MILO_ASPECT,
+  RING, DAY, TINT, WALKER,
   wordsFor, minutePhrase, spokenHourFor, minsFor, ringMinuteFor, numeralForMinute,
   hourAngle, minuteAngle, askKindFor, askTextFor, hintFor, skyFor, layoutFor, menuBtn, CHROME_PAD,
   pickMinute, kindOf, READINGS,
@@ -68,7 +68,7 @@ const dwellFor = (s: string) => Math.max(2400, Math.round(s.length * 72))
 
 // ─── the round ────────────────────────────────────────────────────────────────────────
 export interface TimeRound {
-  slot: number          // which of Milo's ten things this is
+  slot: number          // which of the day's ten things this is
   h: number; m: number  // what the clock says / must be made to say
   ask: Ask
   d: 1 | 2 | 3
@@ -280,15 +280,15 @@ function Bar({ L: l, children }: { L: L; children: React.ReactNode }) {
   )
 }
 
-// ─── Milo ─────────────────────────────────────────────────────────────────────────────
+// ─── the walker ───────────────────────────────────────────────────────────────────────
 /**
- * The question lives in a bubble at Milo's mouth — he is the one who has somewhere to be, so he is
- * the one who should be asking. It is laid out as a BAND rather than floated at his head: anchored
+ * The question lives in a bubble at the duck's mouth — it is the one who has somewhere to be, so it
+ * is the one who should be asking. It is laid out as a BAND rather than floated at its head: anchored
  * freely it ran straight across the clock on a 640-wide frame, which put the two things a child has
  * to read at once on top of each other.
  */
-/** ⚠️ `chapter` puts the TYPED DIRECTIONS in the bubble. This chapter sets `prompt: () => ''` — Milo's
- *  bubble is its only question surface — and it draws its own banner on the chrome row, so a floating
+/** ⚠️ `chapter` puts the TYPED DIRECTIONS in the bubble. This chapter sets `prompt: () => ''` — the
+ *  walker's bubble is its only question surface — and it draws its own banner on the chrome row, so a floating
  *  directions strip would be laid over that banner. In the bubble nothing can be covered. */
 function Bubble({ L: l, text, dark, chapter }: { L: L; text: string; dark: boolean; chapter?: ChapterType }) {
   return (
@@ -302,7 +302,7 @@ function Bubble({ L: l, text, dark, chapter }: { L: L; text: string; dark: boole
       fontSize: l.short ? 13 : 17, color: dark ? '#fff' : 'var(--ink)',
     }}>
       <span>{text}{chapter && <DirectionsInline chapter={chapter} block />}</span>
-      {/* the tail — what keeps the words visibly HIS rather than a banner pinned to the frame */}
+      {/* the tail — what keeps the words visibly the walker's rather than a banner pinned to the frame */}
       <span aria-hidden style={{
         position: 'absolute', bottom: -11, left: `${l.tailPct}%`, width: 0, height: 0,
         borderLeft: '10px solid transparent', borderRight: '10px solid transparent',
@@ -312,20 +312,20 @@ function Bubble({ L: l, text, dark, chapter }: { L: L; text: string; dark: boole
   )
 }
 
-/** Milo, and on a correct answer he WALKS OFF to do the thing — the journey is the reward. */
-function Milo({ L: l, leaving, resetKey, vw }: { L: L; leaving: boolean; resetKey: string | number; vw: number }) {
-  const distPx = Math.round(vw - l.miloLeft + l.miloW * 0.4)
-  const j = useMemo(() => inFlowJourney(MILO, l.miloH, distPx), [l.miloH, distPx])
+/** The duck, and on a correct answer it WALKS OFF to do the thing — the journey is the reward. */
+function Walker({ L: l, leaving, resetKey, vw }: { L: L; leaving: boolean; resetKey: string | number; vw: number }) {
+  const distPx = Math.round(vw - l.walkerLeft + l.walkerW * 0.4)
+  const j = useMemo(() => inFlowJourney(WALKER, l.walkerH, distPx), [l.walkerH, distPx])
   return (
-    <div style={{ position: 'fixed', left: l.miloLeft, bottom: 0, width: l.miloW, height: l.miloH, zIndex: 26, pointerEvents: 'none' }}>
+    <div style={{ position: 'fixed', left: l.walkerLeft, bottom: 0, width: l.walkerW, height: l.walkerH, zIndex: 26, pointerEvents: 'none' }}>
       {/* ⚠️ `leave` must be conditional, not constant. With a constant `leave` and `ms={0}`, Arrive
-          starts at its DONE phase, and done-while-leaving means "already gone" — so Milo was
+          starts at its DONE phase, and done-while-leaving means "already gone" — so the walker was
           translated a whole screen to the right before the chapter had begun, and simply never
-          appeared. He is invisible rather than misplaced, which is why no gate could see it. */}
+          appeared. It is invisible rather than misplaced, which is why no gate could see it. */}
       <Arrive dist={distPx} ms={leaving ? j.ms : 0} leave={leaving} resetKey={`${resetKey}|${leaving}`}>
         {moving => (
-          <SheetCell src={MILO} h={l.miloH} moving={moving} cycleScale={j.cycleScale}
-            /* `milo_side.png` faces RIGHT, and right is the way he leaves — so never flipped here. */
+          <SheetCell src={WALKER} h={l.walkerH} moving={moving} cycleScale={j.cycleScale}
+            /* `duck_side.png` faces RIGHT, and right is the way it leaves — so never flipped here. */
             facesLeft={false} breathe={!leaving} />
         )}
       </Arrive>
@@ -383,8 +383,8 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
       settled.current = true
       setDone(true); setHint(null)
       speak(`Yes — ${wordsFor(h, m)}. Time to ${scene.what}!`)
-      // He leaves on his own legs, and the round ends when he is actually gone.
-      const j = inFlowJourney(MILO, l.miloH, Math.round(vw - l.miloLeft + l.miloW * 0.4))
+      // It leaves on its own legs, and the round ends when it is actually gone.
+      const j = inFlowJourney(WALKER, l.walkerH, Math.round(vw - l.walkerLeft + l.walkerW * 0.4))
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), j.ms + 500)
     } else {
       erred.current = true
@@ -440,7 +440,7 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
           </>
         )}
       </Bar>
-      <Milo L={l} vw={vw} leaving={done} resetKey={`${data.slot}-${data.ask}`} />
+      <Walker L={l} vw={vw} leaving={done} resetKey={`${data.slot}-${data.ask}`} />
     </>
   )
 }
@@ -490,7 +490,7 @@ const Reteach: React.FC<{ data: TimeRound; onDone: () => void }> = ({ data, onDo
       <div style={{ position: 'fixed', left: 0, right: 0, top: l.clockTop, height: l.clockBand, zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
         <StoryClock px={l.clockPx} view={view} />
       </div>
-      <Milo L={l} vw={vw} leaving={false} resetKey={`re${data.slot}`} />
+      <Walker L={l} vw={vw} leaving={false} resetKey={`re${data.slot}`} />
     </>
   )
 }
@@ -529,7 +529,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
   const [tryOk, setTryOk] = useState(false)
   /**
    * ⚠️ The dial appears when the child is ASKED for it, not when the last beat starts. Gated on the
-   * beat index it showed up while Milo was still three sentences earlier explaining the ring — a
+   * beat index it showed up while the voice was still three sentences earlier explaining the ring — a
    * control offered before the instruction to use it, because `line` lags a new beat until its first
    * narration step fires and the render does not.
    */
@@ -620,7 +620,7 @@ const Lesson: React.FC<{ canSkip: boolean; onDone: () => void }> = ({ canSkip, o
      * ⚠️ IT USED TO SAY THAT A SLOW VOICE HAVING ITS TAIL CUT WAS AN ACCEPTABLE PRICE. It was not —
      * the founder heard it, across every band, on 2026-09-04. `speakPaced` keeps the property that
      * matters (the visuals are on their OWN timer and can never hang on a missing speech event) and
-     * removes the cut: a beat ends at the LATER of its dwell and Milo actually finishing, with a
+     * removes the cut: a beat ends at the LATER of its dwell and the voice actually finishing, with a
      * ceiling so a device that never reports the end still rolls on.
      */
     const cancel = speakPaced(b.lines, {
@@ -690,7 +690,7 @@ export function makeTimeBeat(): Beat<TimeRound> {
     // ⚠️ THE CLOSED SET. Mastery must not end the run before the child has been asked all four
     // readings — measured, a third of strong runs were finishing having never met a "to" time.
     coverage: { of: r => kindOf(r.m), all: READINGS },
-    // ⚠️ THIS CHAPTER SAYS ITS OWN MISS LINES. `hintFor` names which hand is wrong, written in Milo's
+    // ⚠️ THIS CHAPTER SAYS ITS OWN MISS LINES. `hintFor` names which hand is wrong, written in the walker's
     // bubble AND spoken, and the round retries in place — so SkillBeat's centred pill would land on
     // the clock face while saying "Let's look together", covering the one thing being read. And
     // because a round is only reported once it has been SOLVED, that pill plus the generic
@@ -698,10 +698,10 @@ export function makeTimeBeat(): Beat<TimeRound> {
     ownsFeedback: true,
     // Dedupe on the MATH and the DIRECTION — the same clock read and then set is two questions.
     sig: r => `${r.ask}:${r.h}:${r.m}`,
-    // Empty on purpose: SkillBeat then renders no pill of its own, and Milo's bubble is the single
+    // Empty on purpose: SkillBeat then renders no pill of its own, and the walker's bubble is the single
     // question region. Two pills saying the same thing land on top of each other at 640×320.
     prompt: () => '',
-    // The VOICE still comes from here, off the same renderer the bubble writes, so what Milo says and
+    // The VOICE still comes from here, off the same renderer the bubble writes, so what the voice says and
     // what the bubble shows cannot drift.
     say: r => askTextFor(r),
     Play: ({ data, onSubmit }) => <TimePlay data={data} mode="practice" onComplete={onSubmit} />,
@@ -772,8 +772,8 @@ export default function TickTock({ onFinish, onExit }: {
             padding: l.short ? '10px 16px' : '16px 22px', fontFamily: 'var(--font-display)', fontWeight: 700,
             fontSize: l.short ? 14 : 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)',
           }}>
-            Milo has a whole day ahead — breakfast, the bus, the park, dinner, bed. He needs you to tell him
-            the time. First, let us learn how a clock works.
+            A whole day is ahead — breakfast, the bus, the park, dinner, bed. You will tell the time!
+            First, let us learn how a clock works.
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('lesson') }} style={{
             padding: l.short ? '11px 28px' : '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer',
@@ -795,8 +795,8 @@ export default function TickTock({ onFinish, onExit }: {
             padding: l.short ? '10px 16px' : '16px 22px', fontFamily: 'var(--font-display)', fontWeight: 700,
             fontSize: l.short ? 14 : 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)',
           }}>
-            Now Milo&apos;s day begins. Sometimes he will ask you what the clock says — and sometimes he will
-            tell you a time and you move the hands. I will not point any more. You can do this!
+            Now the day begins. Sometimes you will read what the clock says — and sometimes you will
+            hear a time and move the hands. I will not point any more. You can do this!
           </div>
           <button onClick={() => setPhase('guided')} style={{
             padding: l.short ? '11px 28px' : '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer',
@@ -806,7 +806,7 @@ export default function TickTock({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'guided' && (<>{Banner(gIdx === 0 ? 'Read the clock with Milo' : 'Now move the hands')}
+      {phase === 'guided' && (<>{Banner(gIdx === 0 ? 'Read the clock together' : 'Now move the hands')}
         <TimePlay key={`g${gIdx}`} data={GUIDED[gIdx]} mode="guided"
           onComplete={() => { if (gIdx + 1 < GUIDED.length) setGIdx(gIdx + 1); else setPhase('practice') }} /></>)}
 
@@ -819,14 +819,14 @@ export default function TickTock({ onFinish, onExit }: {
       )}
 
       {/*
-        Milo stands here for every phase that does not own him itself (TimePlay and Reteach do,
-        because they need him to walk off). He must be on screen whenever the bubble is: the bubble
+        The walker stands here for every phase that does not own it itself (TimePlay and Reteach do,
+        because they need it to walk off). It must be on screen whenever the bubble is: the bubble
         has a TAIL, and a tail pointing at an empty corner is worse than no tail — it says the words
-        belong to somebody who is not there. He was missing through the whole lesson.
-        The gate asserts he has a registered drawn cycle, since he is the only thing here that moves.
+        belong to somebody who is not there. It was once missing through the whole lesson.
+        The gate asserts it has a registered drawn cycle, since it is the only thing here that moves.
       */}
-      {(phase === 'intro' || phase === 'lesson' || phase === 'bridge') && hasSheet(MILO) && (
-        <Milo L={l} vw={vw} leaving={false} resetKey={phase} />
+      {(phase === 'intro' || phase === 'lesson' || phase === 'bridge') && hasSheet(WALKER) && (
+        <Walker L={l} vw={vw} leaving={false} resetKey={phase} />
       )}
     </div>
   )

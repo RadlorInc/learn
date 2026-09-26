@@ -48,7 +48,7 @@ import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 import ReadyBar from './ReadyBar'
 
-// Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
+// Just long enough to swallow a double-tap. It is deliberately NOT tied to the voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
 // digit, and the watchdog that eventually clears it has a 6s ceiling. Gating taps on that made a
 // child wait seconds between little ones — the exact sluggishness this chapter was already
@@ -437,7 +437,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
    *
    * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so Ready happens ONCE PER PLACE IN THE LINE rather than once
    * per round — the child chooses who is next, sends them, then chooses again. That keeps the
-   * per-step feedback the chapter teaches with (a wrong pick wiggles and Milo says which to look
+   * per-step feedback the chapter teaches with (a wrong pick wiggles and the voice says which to look
    * for) instead of holding a whole ordering back to be graded at the end, which would be a
    * different chapter.
    */
@@ -456,7 +456,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   function tap(v: number) {
     // A tap waits for nothing but a double-tap guard. It does NOT wait for the previous little one
     // to reach the line — a child who has already found 2 should not be made to watch 1 walk first —
-    // and it does not wait for Milo's voice either; see TAP_LOCK_MS.
+    // and it does not wait for the voice either; see TAP_LOCK_MS.
     if (mode === 'demo' || done.current || tapLock.current) return
     if (joinedRef.current.includes(v)) return
     if (v === sorted[joinedRef.current.length]) {
@@ -553,7 +553,7 @@ function MapStrip({ done, total, journey }: { done: number; total: number; journ
       {Array.from({ length: total }).map((_, i) => (
         <span key={i} style={{ position: 'relative', width: 10, height: 10, borderRadius: '50%',
           background: i < done ? 'var(--milo-orange)' : 'rgba(61,37,22,.2)', transition: 'background .4s' }}>
-          {i === done - 1 && <span style={{ position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', fontSize: 15 }}>🐴</span>}
+          {i === done - 1 && <span style={{ position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', fontSize: 15 }}>🐾</span>}
         </span>
       ))}
       <span style={{ fontSize: 17, filter: done >= total ? 'none' : 'grayscale(.55) opacity(.75)' }}>{journey.to}</span>
@@ -624,7 +624,7 @@ export default function FollowTheLeader({ onFinish, onExit }: {
   // Landscape-first: the family walks ACROSS the picture, which a portrait phone has no room for.
   // This early return has to sit BELOW every hook — placed above `allScenes` it changed the hook
   // count the moment the phone was turned, and React tore the chapter down into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo&apos;s little ones line up in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="The little ones line up in landscape! 🐾" />
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>

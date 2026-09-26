@@ -9,10 +9,12 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { useAuthGuard } from '@/data/supabase/useAuthGuard'
 import { track } from '@/infra/analytics'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
-import { isChapterVisible, type ChapterType } from '@/core/chapters'
+import { isChapterVisible, getChapter, type ChapterType } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
 import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
+import { setSceneVoice } from '@/infra/voiceClipPlayer'
+import { JOSH } from '@/infra/storage/voicePref'
 
 export default function GamePage() {
   // useSearchParams needs a Suspense boundary on a static page (next docs: use-search-params).
@@ -62,6 +64,10 @@ function Game() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // A KG–2 chapter speaks in Josh, like every lesson (founder, 2026-09-25): its clips are rendered in Josh
+  // (scripts/.voice-corpus-chapters-josh.json), and a line with no clip yet is browser speech, as before.
+  useEffect(() => { setSceneVoice(JOSH); return () => setSceneVoice(null) }, [])
+
   useEffect(() => {
     if (currentChapter) {
       setPlayingChapter(currentChapter)
@@ -104,7 +110,9 @@ function Game() {
 
   if (!ready && !playingChapter) return null
 
-  const props = { onComplete: handleComplete, childName: childName || 'friend' }
+  // Back goes to the chapter's own grade tab (KG, 1 or 2) on the child's home, not to the top of it.
+  const onExit = () => router.push(`/modules?grade=${playingChapter ? getChapter(playingChapter)?.grade ?? 0 : 0}`)
+  const props = { onComplete: handleComplete, onExit, childName: childName || 'friend' }
 
   // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
   // same way the camera guard refuses the render rather than disabling a control.

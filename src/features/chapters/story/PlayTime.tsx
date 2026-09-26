@@ -7,7 +7,7 @@
  * copies of the arrive/leave code drifting apart — the 6–8 band already shares one component across
  * add and subtract (BlockYard) for exactly this reason.
  *
- *   +  `a` are playing with Milo. `b` MORE walk in from off-frame, one after another, each
+ *   +  `a` are playing. `b` MORE walk in from off-frame, one after another, each
  *      travelling the whole way with its drawn cycle running. How many are playing now?
  *   −  `a` are playing. `b` of them walk off and leave the picture completely. How many are left?
  *
@@ -20,8 +20,8 @@
  * the sum describes rather than being told the total changed.
  *
  * THE ANSWER STAYS STILL. The three number markers are painted, exact and motionless — never
- * animate the thing the child has to read. The tap still causes a journey: get it right and Milo
- * leads the whole group off to play.
+ * animate the thing the child has to read. The tap still causes a journey: get it right and the
+ * host leads the whole group off to play.
  *
  * COUNTABILITY IS THE LAYOUT CONSTRAINT HERE, and it is why this chapter does NOT reuse chapter 4's
  * gather cluster. That cluster packs neighbours 5.4% of the screen apart — a deliberate overlapping
@@ -42,7 +42,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleRows, leadX, fitBands,
-  LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
+  LEAD_X, LEAD_SCALE, STRIP_PX,
   groundSpeed, journeyOf, TRAVEL_MIN, type Journey, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
 import { rint, shuffle } from '@/core/rand'
@@ -53,26 +53,28 @@ import ReadyBar, { PICKED_RING } from './ReadyBar'
 export type Op = '+' | '-'
 
 // Same reasoning as chapter 4: long enough to swallow a double-tap, and deliberately NOT tied to
-// Milo's voice. `speechSynthesis.speaking` measured true for over 3.2s after one spoken digit, and
+// the voice. `speechSynthesis.speaking` measured true for over 3.2s after one spoken digit, and
 // gating on it locks a child out of the screen for seconds at a time.
 const TAP_LOCK_MS = 260
 const COUNT_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 const JOIN_GAP_MS = 480        // stagger between arrivals, so they read as a queue not a swarm
 const OPENING_MS = 950         // let the starting group be SEEN before anything changes
-const MARCH_MS = 3200          // Milo and the group heading off once the answer is given
+const MARCH_MS = 3200          // the host and the group heading off once the answer is given
 const HOLD_MS = 900            // beat on the finished group before they leave
 const EXIT_X = -16             // far enough left that the widest sprite is fully out of frame
 const OFF_RIGHT = 124          // where the leftmost of them must reach to clear the right edge
 
-const MILO_LAND = '/assets/characters/milo_side.png'
-const MILO_REEF = '/assets/characters/milo_underwater.png'
+// The HOST the little ones gather round and follow off at the end. Deliberately a creature that is
+// never in CAST, so it can never be mistaken for one of the set being counted. The lamb has a walk
+// sheet; the octopus has none and marches as a still picture, exactly as the old reef host did.
+const HOST_LAND = '/assets/objects/lamb_side.png'
+const HOST_REEF = '/assets/objects/octopus.png'
 const JOURNEY = { from: '🐾', to: '🎈' }
 
 /**
- * This chapter's bands, per habitat — same reasoning as chapter 4: Milo is a pony, and dropping a
- * pony onto a flier's band leaves him hovering over the hedge at the edge of frame, which is
- * exactly the "he read as clutter" note that got him cut from chapter 2. The leader gets a GROUND
- * line of its own. Chapter 2's HABITATS are deliberately untouched — it is shipped and swept across
+ * This chapter's bands, per habitat — same reasoning as chapter 4: the land host walks, and dropping
+ * a walker onto a flier's band leaves it hovering over the hedge at the edge of frame, which reads
+ * as clutter. The leader gets a GROUND line of its own. Chapter 2's HABITATS are deliberately untouched — it is shipped and swept across
  * 330 geometry combinations, and perturbing its numbers to suit a new chapter risks that.
  */
 export const BANDS: Record<Habitat['move'], { lead: number; play: [number, number] }> = {
@@ -94,7 +96,7 @@ const bandsFor = (w: Habitat): Habitat => {
  * the destination, so it may use the width — and changing the shared helper would perturb two
  * shipped chapters that are swept by an invariant test.
  */
-export const PLAY_RIGHT = 74    // the roomy-screen limit; pulled back further when Milo needs it
+export const PLAY_RIGHT = 74    // the roomy-screen limit; pulled back further when the host needs it
 export function playGeom(n: number, edgePct: number, rightPct = PLAY_RIGHT) {
   const left = Math.max(13, edgePct + 1)
   const right = Math.max(left + 1, rightPct)
@@ -159,8 +161,8 @@ function NumberMarker({ n, h, state, onTap, nudge, pending }: {
  * screen it exists to protect falls apart. Here the test calls this, so it measures what actually
  * renders.
  *
- * Order matters and is the same as chapters 2 and 4: Milo's place comes from the UNCAPPED size (an
- * over-estimate, so he always fits), that fixes how much room the set has, and only then is the
+ * Order matters and is the same as chapters 2 and 4: the host's place comes from the UNCAPPED size (an
+ * over-estimate, so it always fits), that fixes how much room the set has, and only then is the
  * sprite capped to its slot. Sizing on HEIGHT alone draws wide creatures (a ladybug is 1.47× wider
  * than tall, a shark 1.75×) far wider than their slot and they bury each other — which in a chapter
  * about counting them is fatal, not cosmetic.
@@ -179,16 +181,16 @@ export function playLayout(vw: number, vh: number, n: number, castIdx: number) {
   const baseSize = Math.round(Math.max(short ? 48 : 58, Math.min((vw * 0.9) / n, vh * (short ? 0.26 : 0.22), 230)))
   const aspect = aspectOf(kind.src)
   const rawSize = baseSize * (kind.scale ?? 1)
-  const miloSrc = world.move === 'swim' ? MILO_REEF : MILO_LAND
-  const mx = leadX(MILO_X, rawSize, aspectOf(miloSrc), MILO_SCALE, vw)
+  const hostSrc = world.move === 'swim' ? HOST_REEF : HOST_LAND
+  const mx = leadX(LEAD_X, rawSize, aspectOf(hostSrc), LEAD_SCALE, vw)
   const edgePct = (rawSize * aspect / 2) / Math.max(1, vw) * 100
-  // The set's right limit is MEASURED off Milo, not guessed. At a flat 74% the three widest reef
-  // creatures (fish 1.37, turtle 1.53, shark 1.75 : 1) ran their last member into him on a 640-wide
+  // The set's right limit is MEASURED off the host, not guessed. At a flat 74% the three widest reef
+  // creatures (fish 1.37, turtle 1.53, shark 1.75 : 1) ran their last member into it on a 640-wide
   // screen — the same class of fault as chapter 2's cut-off leader, and the same fix: derive the
   // limit from the sprite's own width and give back only what it actually needs. Estimated from
   // the UNCAPPED size so the limit can only ever be too generous to the gap, never too tight.
-  const miloHalfPct = (rawSize * MILO_SCALE * aspectOf(miloSrc) / 2) / Math.max(1, vw) * 100
-  const rightPct = Math.min(PLAY_RIGHT, mx - miloHalfPct - edgePct - 1)
+  const hostHalfPct = (rawSize * LEAD_SCALE * aspectOf(hostSrc) / 2) / Math.max(1, vw) * 100
+  const rightPct = Math.min(PLAY_RIGHT, mx - hostHalfPct - edgePct - 1)
   const spanPct = playGeom(n, edgePct, rightPct).span
   // Two rows, never three — see MAX_ROWS in BigOrSmall: a third row is only room if the rows
   // are far enough apart to read as rows, and in these shallow bands they are not.
@@ -197,9 +199,9 @@ export function playLayout(vw: number, vh: number, n: number, castIdx: number) {
   // Capped horizontally by its slot AND vertically by the room two separated rows need.
   const size = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows),
     n > 1 ? (slotPx / aspect) * 0.98 : rawSize)))
-  const band: Habitat = spreadBand(fitBands(bandsFor(world), vh, size, MILO_SCALE), vh, size, rows)
+  const band: Habitat = spreadBand(fitBands(bandsFor(world), vh, size, LEAD_SCALE), vh, size, rows)
   const leadY = Math.max(band.lineY + 4, Math.min(BANDS[world.move].lead, (vh - STRIP_PX) / vh * 100))
-  return { kind, world, aspect, miloSrc, mx, edgePct, rows, size, band, leadY, rightPct }
+  return { kind, world, aspect, hostSrc, mx, edgePct, rows, size, band, leadY, rightPct }
 }
 
 /** The height of a number marker, and therefore the top of the strip the feet must stay out of. */
@@ -225,7 +227,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
   const pool = add ? a + b : a               // how many are on screen at the moment of counting
   const { w: vw, h: vh } = useViewport()
   // The one layout chain, shared with the invariant sweep — see playLayout.
-  const { kind, world, edgePct, rows, size: babySize, band, leadY, mx, miloSrc, rightPct } =
+  const { kind, world, edgePct, rows, size: babySize, band, leadY, mx, hostSrc, rightPct } =
     playLayout(vw, vh, pool, data.castIdx)
 
   /** Is this one currently standing in the play area? Addition opens with the movers still off
@@ -279,7 +281,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
     return () => window.clearInterval(id)
   }, [here, marching])
 
-  /** Right answer — Milo leads them off to play, and THAT is the round's reward. */
+  /** Right answer — the host leads them off to play, and THAT is the round's reward. */
   const setOff = useCallback(() => {
     if (done.current) return; done.current = true
     setAsking(false)
@@ -290,7 +292,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
   // ── The question plays itself: the arrival or the departure IS the sum ──────────────
   // In the demo, words and movement come from ONE narration so they can never drift apart (and
   // speakSteps still paces the steps when audio is blocked). In the scored round the same timeline
-  // runs with NO voice, because Milo counting aloud would be Milo handing over the answer.
+  // runs with NO voice, because counting aloud would be handing over the answer.
   const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
@@ -317,7 +319,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
       ? Array.from({ length: pool }, (_, i) => i)
       : Array.from({ length: pool }, (_, i) => i).filter(i => i >= b)
     const lines = [
-      `${COUNT_WORDS[a]} ${kind.plural} are playing with Milo.`,
+      `${COUNT_WORDS[a]} ${kind.plural} are playing.`,
       ...movers.map(() => (add ? 'Another one comes to play!' : 'One goes home.')),
       add ? 'Now count them ALL.' : 'Now count who is LEFT.',
       ...Array.from({ length: answer }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
@@ -361,7 +363,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
     tapLock.current = true
     after(TAP_LOCK_MS, () => { tapLock.current = false })
     if (v === answer) { setPicked(v); after(HOLD_MS, setOff); return }
-    // Warm, and never a dead end: the marker shakes, Milo says what to do, and the child tries
+    // Warm, and never a dead end: the marker shakes, the voice says what to do, and the child tries
     // again. The slip is recorded once so the round still grades honestly.
     erred.current = true
     setWrongPick(v)
@@ -375,24 +377,24 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
 
   // Everyone leaves on ONE shared offset, so the group keeps its shape and reads as a procession
   // rather than a scatter. Distance is measured from the LEFTMOST of them, or the tail is still in
-  // frame when Milo has gone. The exit covers far more ground per second than a stroll, so each
+  // frame when the host has gone. The exit covers far more ground per second than a stroll, so each
   // cycle is sped up by exactly that ratio — the only way the feet stay locked to the ground.
   const marchDist = OFF_RIGHT - playGeom(pool, edgePct, rightPct).left
   const marchDx = marching ? marchDist : 0
   const cycleFor = (src: string, h: number) =>
     Math.max(1, (marchDist / 100 * vw) / (MARCH_MS / 1000) / groundSpeed(src, h))
-  const milo: Spot = { left: mx, top: leadY, scale: MILO_SCALE }
+  const host: Spot = { left: mx, top: leadY, scale: LEAD_SCALE }
   const markerH = markerHeight(vh)
 
   return (
     <>
-      {/* Milo's feet are at or below the lowest creature in every habitat, so he is nearest the
+      {/* The host's feet are at or below the lowest creature in every habitat, so it is nearest the
           camera and draws IN FRONT of the set. Depth is stated outright, never derived. */}
-      <Critter src={miloSrc} at={{ ...milo, left: milo.left + marchDx }} size={babySize} move={world.move} z={34}
-        durMs={MARCH_MS} cycleScale={cycleFor(miloSrc, babySize * MILO_SCALE)} moving={marching}
-        // He faces the little ones while they come and go — they arrive from and leave to his left
-        // — and only turns to lead once the answer is in. A leader with his back to the thing the
-        // child is doing reads as scenery rather than as the person who asked.
+      <Critter src={hostSrc} at={{ ...host, left: host.left + marchDx }} size={babySize} move={world.move} z={34}
+        durMs={MARCH_MS} cycleScale={cycleFor(hostSrc, babySize * LEAD_SCALE)} moving={marching}
+        // It faces the little ones while they come and go — they arrive from and leave to its left
+        // — and only turns to lead once the answer is in. A leader with its back to the thing the
+        // child is doing reads as scenery rather than as part of the story.
         facingLeft={!marching} breathe={!marching} />
 
       {here.map((present, i) => {
@@ -561,7 +563,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
   // Landscape-first: they walk ACROSS the picture, which a portrait phone has no room for. This
   // early return has to sit BELOW every hook — above one, turning the phone changes the hook count
   // and React tears the chapter down into the error boundary.
-  if (needsRotate) return <RotateGate line={add ? 'Milo plays with his friends in landscape! 🐴' : 'Milo waves his friends off in landscape! 🐴'} />
+  if (needsRotate) return <RotateGate line={add ? 'The friends play in landscape! 🐾' : 'The friends wave goodbye in landscape! 🐾'} />
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
@@ -582,15 +584,15 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <div style={{ maxWidth: '74%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
             {add
-              ? 'Milo is playing with his little friends — and MORE keep coming over! Watch how he counts them all.'
-              : 'Milo is playing with his little friends — and some have to go home. Watch how he counts who is left.'}
+              ? 'Some little friends are playing — and MORE keep coming over! Watch how we count them all.'
+              : 'Some little friends are playing — and some have to go home. Watch how we count who is left.'}
           </div>
           <button onClick={() => setPhase('demo')}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let&apos;s go! ▶</button>
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(add ? 'Watch Milo count them all' : 'Watch Milo count who is left')}
+      {phase === 'demo' && (<>{Banner(add ? 'Watch and count them all' : 'Watch and count who is left')}
         <PlayScene key="demo" data={DEMO_ROUND} mode="demo" onDone={() => setPhase('guided')} /></>)}
 
       {phase === 'guided' && (<>{Banner('Now you! Tap how many')}

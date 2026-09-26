@@ -2,12 +2,12 @@
 /**
  * Chapter 5 — comparing quantities (skill `numberComparison`), as BIGGER OR SMALLER.
  *
- * Two bunches of little ones are waiting on the meadow, the reef or the sky. Milo asks which bunch
- * has MORE (or FEWER, or at the top tier which has the MOST of three). Tap that bunch and it really
- * walks off with him, drawn cycles running the whole way; the other bunch stays behind, which makes
- * the point one last time — he took the bigger one.
+ * Two bunches of little ones are waiting on the meadow, the reef or the sky. The question is which
+ * bunch has MORE (or FEWER, or at the top tier which has the MOST of three). Tap that bunch and it
+ * really walks off with the host, drawn cycles running the whole way; the other bunch stays behind,
+ * which makes the point one last time — the host took the bigger one.
  *
- * WHY THIS AND NOT MILO'S KITCHEN, WHICH IT REPLACES: there the child compared bowls, trays and jars
+ * WHY THIS AND NOT THE OLD KITCHEN CHAPTER, WHICH IT REPLACES: there the child compared bowls, trays and jars
  * of fruit — inanimate vessels holding static sprites, with a CSS-gradient bowl drawn beside painted
  * art when the PNG was missing. Nothing was alive before a tap, a tap caused no journey, and the
  * countable things were dead props. Creatures fix all of it at once: already painted in the app's
@@ -39,7 +39,7 @@ import { useNeedsRotate, RotateGate } from './RotateGate'
 import {
   type Habitat, type Spot, HABITATS, CAST, kindAt, homeOf, aspectOf,
   Background, Critter, CRITTER_CSS, huddleRows, leadX, fitBands,
-  LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, STRIP_PX,
+  LEAD_X, LEAD_SCALE, STRIP_PX,
   groundSpeed, TRAVEL_MIN, seeded, maxSizeForRows, spreadBand, BAND_JITTER,
 } from './critters'
 import { rint } from '@/core/rand'
@@ -48,15 +48,18 @@ import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 import ReadyBar from './ReadyBar'
 
 // Same reasoning as chapters 4 and 9: long enough to swallow a double-tap, and deliberately NOT
-// tied to Milo's voice, which stays "speaking" for over 3.2s after a single word.
+// tied to the voice, which stays "speaking" for over 3.2s after a single word.
 const TAP_LOCK_MS = 260
 const MARCH_MS = 3200
 const HOLD_MS = 900
 const OFF_RIGHT = 124
 const OPENING_MS = 700          // let both bunches be seen before the markers go live
 
-const MILO_LAND = '/assets/characters/milo_side.png'
-const MILO_REEF = '/assets/characters/milo_underwater.png'
+// The HOST who takes the chosen bunch away. Deliberately a creature that is never in CAST, so it can
+// never be counted as part of a bunch. The lamb has a walk sheet; the octopus has none and marches
+// as a still picture, exactly as the old reef host did.
+const HOST_LAND = '/assets/objects/lamb_side.png'
+const HOST_REEF = '/assets/objects/octopus.png'
 const JOURNEY = { from: '🐾', to: '⚖️' }
 
 /**
@@ -176,13 +179,13 @@ export function compareLayout(vw: number, vh: number, counts: number[], castIdx:
   const baseSize = Math.round(Math.max(short ? 48 : 58, Math.min((vw * 0.9) / N, vh * (short ? 0.26 : 0.22), 230)))
   const aspect = aspectOf(kind.src)
   const rawSize = baseSize * (kind.scale ?? 1)
-  const miloSrc = world.move === 'swim' ? MILO_REEF : MILO_LAND
-  const mx = leadX(MILO_X, rawSize, aspectOf(miloSrc), MILO_SCALE, vw)
+  const hostSrc = world.move === 'swim' ? HOST_REEF : HOST_LAND
+  const mx = leadX(LEAD_X, rawSize, aspectOf(hostSrc), LEAD_SCALE, vw)
   const edgePct = (rawSize * aspect / 2) / Math.max(1, vw) * 100
-  // The bunches' right limit is measured off Milo, never guessed — a flat limit ran the widest reef
-  // creatures straight into him on a narrow screen.
-  const miloHalfPct = (rawSize * MILO_SCALE * aspectOf(miloSrc) / 2) / Math.max(1, vw) * 100
-  const rightPct = Math.min(PLAY_RIGHT, mx - miloHalfPct - edgePct - 1)
+  // The bunches' right limit is measured off the host, never guessed — a flat limit ran the widest
+  // reef creatures straight into it on a narrow screen.
+  const hostHalfPct = (rawSize * LEAD_SCALE * aspectOf(hostSrc) / 2) / Math.max(1, vw) * 100
+  const rightPct = Math.min(PLAY_RIGHT, mx - hostHalfPct - edgePct - 1)
   const { geom, rows, gapK } = resolveGeom(counts, edgePct, rightPct, (rawSize * aspect) / Math.max(1, vw) * 100)
   // Cap the sprite against the SAME-ROW slot it has to fit inside, not the raw step.
   const slotPx = geom.step * rows / 100 * vw
@@ -190,9 +193,9 @@ export function compareLayout(vw: number, vh: number, counts: number[], castIdx:
   // that fits across but not down leaves the two rows on the same line, burying each other.
   const size = Math.round(Math.max(40, Math.min(rawSize, maxSizeForRows(vh, rows),
     N > counts.length ? (slotPx / aspect) * 0.98 : rawSize)))
-  const band: Habitat = spreadBand(fitBands(bandsFor(world), vh, size, MILO_SCALE), vh, size, rows)
+  const band: Habitat = spreadBand(fitBands(bandsFor(world), vh, size, LEAD_SCALE), vh, size, rows)
   const leadY = Math.max(band.lineY + 4, Math.min(BANDS[world.move].lead, (vh - STRIP_PX) / vh * 100))
-  return { kind, world, aspect, miloSrc, mx, edgePct, rows, gapK, size, band, leadY, rightPct }
+  return { kind, world, aspect, hostSrc, mx, edgePct, rows, gapK, size, band, leadY, rightPct }
 }
 
 /** One question. `counts` is what each bunch holds; `numerals` (tier 3) replaces counting with a
@@ -231,7 +234,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
   const { counts, numerals, want } = data
   const kind = kindAt(data.castIdx)
   const { w: vw, h: vh } = useViewport()
-  const { world, edgePct, rows, gapK, size: babySize, band, leadY, mx, miloSrc, rightPct } =
+  const { world, edgePct, rows, gapK, size: babySize, band, leadY, mx, hostSrc, rightPct } =
     compareLayout(vw, vh, counts, data.castIdx)
 
   const [live, setLive] = useState(false)          // bunches are tappable
@@ -284,7 +287,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
          `${numerals[want]} is ${data.mode === 'more' ? 'bigger' : 'smaller'}. Tap that one!`]
       : [`Let's count this bunch. ${counts[0]}.`,
          `And this bunch. ${counts[1]}.`,
-         `${counts[want]} is ${data.mode === 'more' ? 'more' : 'fewer'} — that is the one Milo takes.`]
+         `${counts[want]} is ${data.mode === 'more' ? 'more' : 'fewer'} — that is the one we pick.`]
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         if (i < lines.length - 1) return
@@ -313,7 +316,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     tapLock.current = true
     after(TAP_LOCK_MS, () => { tapLock.current = false })
     if (gi === want) { setPicked(gi); after(HOLD_MS, setOff); return }
-    // Warm, and never a dead end: the bunch wobbles, Milo says what to do, and the child tries
+    // Warm, and never a dead end: the bunch wobbles, the voice says what to do, and the child tries
     // again. The slip is recorded once so the round still grades honestly.
     erred.current = true
     setWrongPick(gi)
@@ -326,20 +329,20 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
   }
 
   // The winning bunch leaves on ONE shared offset so it keeps its shape and reads as a procession.
-  // Distance is measured from the LEFTMOST of them, or the tail is still in frame when Milo is gone.
+  // Distance is measured from the LEFTMOST of them, or the tail is still in frame when the host is gone.
   const geom = groupGeom(counts, edgePct, rightPct, gapK)
   const marchDist = OFF_RIGHT - geom.bounds[picked ?? 0].left
   const marchDx = marching ? marchDist : 0
   const cycleFor = (src: string, h: number) =>
     Math.max(1, (marchDist / 100 * vw) / (MARCH_MS / 1000) / groundSpeed(src, h))
-  const milo: Spot = { left: mx, top: leadY, scale: MILO_SCALE }
+  const host: Spot = { left: mx, top: leadY, scale: LEAD_SCALE }
 
   return (
     <>
-      {/* Milo's feet are at or below the lowest creature in every habitat, so he is nearest the
+      {/* The host's feet are at or below the lowest creature in every habitat, so it is nearest the
           camera and draws IN FRONT of the bunches. Depth is stated outright, never derived. */}
-      <Critter src={miloSrc} at={{ ...milo, left: milo.left + marchDx }} size={babySize} move={world.move} z={34}
-        durMs={MARCH_MS} cycleScale={cycleFor(miloSrc, babySize * MILO_SCALE)} moving={marching}
+      <Critter src={hostSrc} at={{ ...host, left: host.left + marchDx }} size={babySize} move={world.move} z={34}
+        durMs={MARCH_MS} cycleScale={cycleFor(hostSrc, babySize * LEAD_SCALE)} moving={marching}
         facingLeft={!marching} breathe={!marching} />
 
       {counts.map((n, gi) => {
@@ -535,7 +538,7 @@ export default function BigOrSmall({ onFinish, onExit }: {
   // Landscape-first: the bunches stand side by side across the picture, which a portrait phone has
   // no room for. This early return has to sit BELOW every hook — above one, turning the phone
   // changes the hook count and React tears the chapter down into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo weighs up the bunches in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="Compare the bunches in landscape! ⚖️" />
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
@@ -555,14 +558,14 @@ export default function BigOrSmall({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
           <div style={{ maxWidth: '74%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 19, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            Two bunches of little ones are waiting — and Milo can only take one! Watch how he works out which bunch has more.
+            Two bunches of little ones are waiting — and only one can come along! Watch how we work out which bunch has more.
           </div>
           <button onClick={() => setPhase('demo')}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>Let&apos;s go! ▶</button>
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner('Watch Milo count each bunch')}
+      {phase === 'demo' && (<>{Banner('Watch and count each bunch')}
         <CompareScene key="demo" data={DEMO_ROUND} mode="demo" onDone={() => setPhase('guided')} /></>)}
 
       {phase === 'guided' && (<>{Banner('Now you! Tap the bunch with MORE')}

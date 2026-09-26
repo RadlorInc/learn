@@ -63,7 +63,7 @@ for (const p of PATTERNS) for (const line of grep(p)) {
   rows.push({ file, ln, token, cat: category(file, token) })
 }
 // Mascot image FILES (a name in a path is not a line of text).
-for (const f of execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n'))
+for (const f of execFileSync('git', ['ls-files'], { encoding: 'utf8', maxBuffer: 64 << 20 }).split('\n'))
   if (/(^|\/)milo[^/]*\.(png|webp|svg|jpg|riv)$/i.test(f)) rows.push({ file: f, ln: '-', token: '(image file)', cat: 'mascot' })
 
 rows.sort((a, b) => a.file.localeCompare(b.file) || (+a.ln || 0) - (+b.ln || 0))

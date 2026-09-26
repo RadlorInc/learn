@@ -16,7 +16,7 @@ function Practice() {
   // NOT window.location: on an in-app navigation it is read before the URL changes, which sent every Practice tap
   // straight back to /modules. useSearchParams is the router's own value.
   const id = useSearchParams().get('module')
-  const picked = chosenModules(getActiveLearner()?.lesson_ids).find(m => m.id === id && m.lessons.length > 0)
+  const picked = chosenModules(getActiveLearner()?.lesson_ids).find(m => m.id === id && m.lessons.length > 0 && !m.story)
   useEffect(() => { if (!picked) router.replace('/modules') }, [picked, router])
 
   if (!picked) return null

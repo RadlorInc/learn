@@ -1,5 +1,5 @@
 /**
- * The market Milo walks — the six stalls, and the geometry that pins code-drawn things onto
+ * The market the customer walks — the six stalls, and the geometry that pins code-drawn things onto
  * painted ones.
  *
  * ⚠️ **THE STALLHOLDERS DO NOT ANIMATE, AND THAT IS A DECISION, NOT AN OVERSIGHT.** Each `keeper_*`
@@ -8,7 +8,7 @@
  * because it is about the ART and not about the code:
  *
  *   **A character generated INSIDE its scene can only ever wiggle in place; a character generated
- *   on flat chroma can walk.** The parade cycles (rabbit, duck, Milo) were generated on a flat
+ *   on flat chroma can walk.** The parade cycles (rabbit, duck and the rest) were generated on a flat
  *   field, so keying gives a TRANSPARENT sprite that crosses the screen, leaves, and turns up on
  *   another backdrop. These keepers were generated as whole pictures — stall, goods and keeper in
  *   one frame — so there is nothing to key: the strip is an OPAQUE crop that only makes sense laid
@@ -17,8 +17,8 @@
  *   in it. Splitting a video into frames is the same pipeline either way; what the animation can BE
  *   is decided upstream, by whether the character was drawn on its own.
  *
- * So the scenes are stills, the stallholders are part of the painting, and **Milo is the only thing
- * that moves** — he walks in, up to the counter, and out. That is honest but thin, and the fix when
+ * So the scenes are stills, the stallholders are part of the painting, and **the customer is the only
+ * thing that moves** — walking in, up to the counter, and out. That is honest but thin, and the fix when
  * it is wanted is a real drawn creature shopping in the market: this band has eighteen registered
  * cycles and the chapter uses none of them.
  *
@@ -31,11 +31,11 @@
  * ⚠️ **FOUR OF THE TEN GENERATED STALLS ARE NOT HERE, FOR FOUR DIFFERENT REASONS.**
  *   • `sweets` (the raccoon) — **founder's call.** Dropped outright.
  *   • `hats` and `toys` — measured **31%** and **26%** of the frame is flat `#fdfdfd`, a hard-edged
- *     blank half where the sky should be. Milo's post is in exactly that half. A one-off gradient
+ *     blank half where the sky should be. The customer's post is in exactly that half. A one-off gradient
  *     repair was written, run, and **looked worse than the hole** (horizontal banding, because a
  *     row-median fill of a painted scene is a smear); it was thrown away rather than shipped.
  *   • `honey` — its ground line is **0.80**, and at 720px the controls cap the usable line at 0.772.
- *     Milo would stand on the counter edge, which is the floating fault this band has already paid
+ *     The customer would stand on the counter edge, which is the floating fault this band has already paid
  *     for twice.
  * All four stay on disk with their strips (~373 Higgsfield credits remain, so regenerating is a
  * live option — the "credits expired" line an earlier handoff carried was wrong).
@@ -54,7 +54,7 @@ export function coverFit(vw: number, vh: number) {
  * ⚠️ **THE PICTURE IS PLACED SO ITS OWN GROUND LINE IS THE GROUND LINE.** Straight `cover` is right
  * on a roomy frame and wrong on a short one, and the difference was visible immediately: at 640×320
  * the controls cap the usable ground at **214px** while the fruit stall's painted grass lands at
- * **256**, so Milo stood forty pixels of air above the lawn — the floating fault, arrived at from a
+ * **256**, so the customer stood forty pixels of air above the lawn — the floating fault, arrived at from a
  * direction this band had not seen before. The world was already yielding to the tap targets, which
  * is the right rule; what was missing is that **the backdrop has to yield with it.**
  *
@@ -82,16 +82,16 @@ export interface Stall {
    * 0.66–0.78 cuts through the COUNTER on these paintings and reports 8–13 for pictures whose
    * ground is glassy. And the line inside that band is chosen by LOOKING, because a roughness scan
    * cannot tell you where the horizon is — every row of an open field is smooth, so it certified the
-   * sweets stall at 0.60 and Milo stood in mid-air a stall's height above the grass. Milo is a
-   * customer at the front of the stall, so his feet sit at or just under the stall's base.
+   * sweets stall at 0.60 and the customer stood in mid-air a stall's height above the grass. The
+   * customer stands at the front of the stall, so their feet sit at or just under the stall's base.
    *
    * ⚠️ The 0.65–0.80 table the art pass recorded is NOT these numbers. It was measured off the
-   * pictures rather than off a figure standing in them, and driving it put Milo 50px above the
+   * pictures rather than off a figure standing in them, and driving it put the customer 50px above the
    * ground — caught on screen, not by any check. 0.77 is also the practical ceiling: at 720px the
    * controls cap the usable line at 0.772.
    */
   ground: number
-  /** What this stall sells. The scene already shows it; this is the one Milo carries away. */
+  /** What this stall sells. The scene already shows it; this is the one the customer carries away. */
   good: string
   /** ...and what to call it, in a sentence a six-year-old hears. ⚠️ Spoken with `an` where it needs
    *  one — "Fox has a apple" was on screen before anyone thought to look at the article. */
@@ -144,17 +144,17 @@ export const scoredSlot = (round: number) => GUIDED_SLOT + 1 + round
 // ─── Where things stand ───────────────────────────────────────────────────────────────
 /**
  * The stall owns the left of every one of these paintings and the grass is open on the right, so
- * Milo comes from off-frame RIGHT and everything he does runs right-to-left. That is not a
- * coincidence to be relied on quietly: it is why his facing is stated per leg below and why the
- * gate asserts the cloth ends clear of him.
+ * the customer comes from off-frame RIGHT and everything they do runs right-to-left. That is not a
+ * coincidence to be relied on quietly: it is why their facing is stated per leg below and why the
+ * gate asserts the cloth ends clear of them.
  */
 export const OFF_X = 114        // off-frame right
 
 /**
  * THE SHOPPERS. ⚠️ **THE ONE THING IN THIS CHAPTER THAT IS PROPERLY ANIMATED, AND IT COST NOTHING.**
  * The band has eighteen registered drawn cycles and the chapter was using none of them — which is
- * exactly the weakness BlockYard's own header admits to (*"a block has no legs, nothing walks but
- * Milo"*), rebuilt here by accident. These are real cutouts on transparency, so unlike the painted
+ * exactly the weakness BlockYard's own header admits to (a block has no legs, so almost nothing
+ * there walks), rebuilt here by accident. These are real cutouts on transparency, so unlike the painted
  * stallholders they can walk in, stand, and leave.
  *
  * ⚠️ **WHICH WAY EACH PNG NATIVELY FACES IS PER SPRITE, AND BOTH OF MY INSTRUMENTS GOT IT WRONG.**
@@ -182,12 +182,12 @@ export const SHOPPERS: { src: string; scale: number; facesLeft: boolean }[] = [
 export const shopperAt = (slot: number) => SHOPPERS[slot % SHOPPERS.length]
 /** Where a shopper stops to browse — clear of the widest stall, which reaches ~65%. */
 export const SHOPPER_X = 67
-/** How far BEHIND Milo they stand, as a share of the height. Further back is higher AND smaller;
+/** How far BEHIND the customer they stand, as a share of the height. Further back is higher AND smaller;
  *  the two cues have to agree or a child reading depth off size gets the opposite answer. */
 export const SHOPPER_LIFT = 0.035
-export const SHOPPER_SCALE = 0.62      // of Milo's height, before the per-creature scale
-export const MILO_X = 80        // his post, out on the grass where a customer would wait
-export const PAY_X = 62         // where he hands the coins over
+export const SHOPPER_SCALE = 0.62      // of the customer's height, before the per-creature scale
+export const CUSTOMER_X = 80        // the customer's post, out on the grass
+export const PAY_X = 62         // where the coins are handed over
 /**
  * The price board, standing at the stall's foot. ⚠️ 20, not 34: coins are called up from off-frame
  * left and travel along the ground to the cloth, so at 34 the board stood **in the flight path** and
@@ -229,8 +229,8 @@ export function cardMetrics(vw: number, band: number) {
   return { w, px, tray, width }
 }
 
-export const MILO_ASPECT = 0.586          // milo_side's measured cellAspect
-export const MILO_SHARE = 0.40            // his height, as a share of a roomy viewport
+export const CUSTOMER_ASPECT = 0.586          // the customer sprite's measured cellAspect
+export const CUSTOMER_SHARE = 0.40            // the customer's height, as a share of a roomy viewport
 
 /**
  * The ground line in VIEWPORT pixels — the scene's own line, never reaching into the controls,
@@ -241,7 +241,7 @@ export const groundPxFor = (st: Stall, vw: number, vh: number, padBand: number) 
   fitFor(st, vw, vh, padBand).groundPx
 
 /** ⚠️ Derived from the room between the banner and the ground, not from a share of the height: on a
- *  640×320 frame a flat 0.40 puts his head inside the banner. Buy height from the chrome. */
-export const miloHFor = (vh: number, groundPx: number, bannerPx: number) =>
-  Math.max(74, Math.round(Math.min(MILO_SHARE * vh, groundPx - bannerPx - 8)))
-export const miloHalfPct = (miloH: number, vw: number) => ((miloH * MILO_ASPECT) / 2 / vw) * 100
+ *  640×320 frame a flat 0.40 puts the customer's head inside the banner. Buy height from the chrome. */
+export const customerHFor = (vh: number, groundPx: number, bannerPx: number) =>
+  Math.max(74, Math.round(Math.min(CUSTOMER_SHARE * vh, groundPx - bannerPx - 8)))
+export const customerHalfPct = (h: number, vw: number) => ((h * CUSTOMER_ASPECT) / 2 / vw) * 100

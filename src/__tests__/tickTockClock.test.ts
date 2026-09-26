@@ -13,7 +13,7 @@ import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  RING, DAY, TINT, MILO, MILO_ASPECT,
+  RING, DAY, TINT, WALKER, WALKER_ASPECT,
   wordsFor, phraseFor, minutePhrase, spokenHourFor, minsFor,
   ringMinuteFor, numeralForMinute, hourAngle, minuteAngle,
   askKindFor, askTextFor, hintFor, daySlot, skyFor, layoutFor, chromeTop, menuBtn, CHROME_PAD,
@@ -148,7 +148,7 @@ describe('reading and setting', () => {
   })
 
   it('⚠️ never puts the answer inside a READ question', () => {
-    // "Milo is waiting to catch the bus at quarter past nine. What time is it?" would be answerable
+    // "It is time to catch the bus at quarter past nine. What time is it?" would be answerable
     // without ever looking at the clock — the whole chapter, given away by its own wording.
     for (let r = 0; r < DAY.length; r++) {
       const round = makeTimeRound(3, r)
@@ -397,8 +397,8 @@ describe('the four readings, and covering them', () => {
   })
 })
 
-// ─── Milo's day ───────────────────────────────────────────────────────────────────────
-describe("Milo's day", () => {
+// ─── the day ─────────────────────────────────────────────────────────────────────────────
+describe('the day', () => {
   it('covers the ten scored rounds', () => {
     expect(DAY.length).toBe(10)
   })
@@ -483,18 +483,18 @@ describe("Milo's day", () => {
   })
 })
 
-// ─── Milo himself ─────────────────────────────────────────────────────────────────────
-describe('Milo', () => {
-  it('⚠️ has a REGISTERED drawn cycle — he is the only thing here that moves', () => {
+// ─── the walker ────────────────────────────────────────────────────────────────────────
+describe('the walker', () => {
+  it('⚠️ has a REGISTERED drawn cycle — it is the only thing here that moves', () => {
     // Without one, SheetCell silently falls back to a still, and a still that travels is a sticker
     // being dragged across the picture. Invisible in a screenshot.
-    expect(SHEETS[MILO], `no sheet registered for ${MILO}`).toBeTruthy()
-    expect(SHEETS[MILO].frames).toBeGreaterThan(1)
-    expect(SHEETS[MILO].fps).toBeGreaterThan(0)
+    expect(SHEETS[WALKER], `no sheet registered for ${WALKER}`).toBeTruthy()
+    expect(SHEETS[WALKER].frames).toBeGreaterThan(1)
+    expect(SHEETS[WALKER].fps).toBeGreaterThan(0)
   })
 
-  it('takes his width from that sheet rather than a hand-copied number', () => {
-    expect(MILO_ASPECT).toBe(SHEETS[MILO].cellAspect)
+  it('takes its width from that sheet rather than a hand-copied number', () => {
+    expect(WALKER_ASPECT).toBe(SHEETS[WALKER].cellAspect)
   })
 })
 
@@ -515,7 +515,7 @@ describe('the layout', () => {
       const bubbleBottom = l.bubbleTop + l.bubbleH
       const at = `${vw}x${vh}`
 
-      expect(clockL, `${at}: clock over Milo`).toBeGreaterThanOrEqual(l.miloRight)
+      expect(clockL, `${at}: clock over the walker`).toBeGreaterThanOrEqual(l.walkerRight)
       expect(clockBottom, `${at}: clock over the bar`).toBeLessThanOrEqual(barTop)
       expect(l.clockTop, `${at}: clock over the bubble`).toBeGreaterThanOrEqual(bubbleBottom)
       expect(l.bubbleTop, `${at}: bubble in the chrome`).toBeGreaterThanOrEqual(l.top)
@@ -525,10 +525,10 @@ describe('the layout', () => {
     }
   })
 
-  it('⚠️ measures the control bar off MILO rather than picking a second percentage', () => {
+  it('⚠️ measures the control bar off the WALKER rather than picking a second percentage', () => {
     for (const [vw, vh] of SIZES) {
       const l = layoutFor(vw, vh)
-      expect(l.barLeft, `${vw}x${vh}`).toBeGreaterThan(l.miloRight)
+      expect(l.barLeft, `${vw}x${vh}`).toBeGreaterThan(l.walkerRight)
     }
   })
 
@@ -569,7 +569,7 @@ describe('the layout', () => {
     }
   })
 
-  it('points the tail at Milo, which is what makes the words his', () => {
+  it('points the tail at the walker, which is what makes the words its own', () => {
     for (const [vw, vh] of SIZES) {
       const l = layoutFor(vw, vh)
       expect(l.tailPct).toBeGreaterThan(0)
@@ -585,7 +585,7 @@ describe('the layout', () => {
 
   it('⚠️ budgets the top strip for the button that actually sits in it', () => {
     // Measured on screen at 640×320: the Menu button ran 12→53 while the band below it started at 38,
-    // so Milo's bubble opened 13px inside the button. The band is derived from the button's own
+    // so the bubble opened 13px inside the button. The band is derived from the button's own
     // metrics now, and this is the check that keeps the two from drifting apart again.
     for (const short of [true, false]) {
       const b = menuBtn(short)

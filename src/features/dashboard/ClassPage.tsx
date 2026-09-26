@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useState, type CSSProperties } from 'react'
 import { deleteClass, type ClassRow } from '@/data/repositories'
-import { MODULES, hasModule } from '@/features/lessons/modules'
+import { ALL_MODULES as MODULES, hasModule, gradeName } from '@/features/lessons/modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { Performance } from '@/features/lessons/Performance'
 import { AddStudents, ModulePicker, Rename } from '@/features/classes/Classes'
@@ -78,7 +78,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
         </div>
         {!choosing && chosen.length > 0 && (
           <ul style={{ listStyle: 'none', margin: '12px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {chosen.map(m => <li key={m.id} style={{ padding: '8px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--card-border)', fontWeight: 800, color: 'var(--ink)' }}>Grade {m.grade} · {m.title}</li>)}
+            {chosen.map(m => <li key={m.id} style={{ padding: '8px 12px', borderRadius: 10, background: '#fff', border: '1px solid var(--card-border)', fontWeight: 800, color: 'var(--ink)' }}>{gradeName(m.grade)} · {m.title}</li>)}
           </ul>
         )}
         {choosing && <ModulePicker cls={cls} onDone={() => { setChoosing(false); onChanged() }} />}
