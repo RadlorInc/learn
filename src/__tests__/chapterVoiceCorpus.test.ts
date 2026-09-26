@@ -10,7 +10,8 @@
  *      the builders stopped enumerating, has none;
  *   3. no row says "Milo";
  *   4. each row is internally honest: key = clipKey(spoken), text = speakable(spoken), style 'A',
- *      grade = the chapter's grade.
+ *      grade = the chapter's grade, check = clipCheck(spoken), `chapters` in play order and naming its `chapter`;
+ *   5. the lines ANY chapter can say are listed for all 23 (`chapters` is what each chapter's clip index is built from).
  * When it fails, rebuild:  VOICE_CORPUS=1 npx vitest run src/__tests__/_voiceCorpusChapters.test.ts
  *
  * ⚠️ POSITIVE CONTROL: the parser must find ≥ 80 static literals and ≥ 100 templates, and must find
@@ -19,14 +20,14 @@
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { clipKey } from '@/core/voiceClips'
+import { clipKey, clipCheck } from '@/core/voiceClips'
 import { CHAPTERS } from '@/core/chapters'
 import { PRAISE } from '@/core/praise'
 import { ENCOURAGEMENT } from '@/shared/hooks/useAdaptive'
 import { speakable } from '@/features/lessons/content/voice/styles'
 import { spokenLiterals, chapterSourceFiles } from './_spokenLiterals'
 
-interface Row { key: string; text: string; style: string; chapter: string; grade: number; spoken: string }
+interface Row { key: string; text: string; style: string; chapter: string; grade: number; spoken: string; check: string; chapters: string[] }
 const rows: Row[] = JSON.parse(readFileSync('scripts/.voice-corpus-chapters-josh.json', 'utf8'))
 const keys = new Set(rows.map(r => r.key))
 const found = spokenLiterals(chapterSourceFiles())
@@ -84,11 +85,25 @@ describe('the KG–2 Josh corpus is current with the chapter source', () => {
 
   it('every row is honest about itself', () => {
     const grade = new Map(CHAPTERS.map(c => [c.id as string, c.grade]))
+    const play = CHAPTERS.map(c => c.id as string)
     const bad = rows.filter(r => r.key !== clipKey(r.spoken) || r.text !== speakable(r.spoken) || r.style !== 'A'
-      || grade.get(r.chapter) !== r.grade).map(r => r.spoken)
+      || grade.get(r.chapter) !== r.grade || r.check !== clipCheck(r.spoken) || !r.chapters.includes(r.chapter)
+      || r.chapters.join() !== play.filter(c => r.chapters.includes(c)).join()).map(r => r.spoken)
     expect(bad).toEqual([])
     expect(new Set(rows.map(r => r.key)).size, 'a key appears twice').toBe(rows.length)
     expect(rows.map(r => r.grade), 'rows are sorted by grade').toEqual([...rows.map(r => r.grade)].sort((a, b) => a - b))
+  })
+
+  // A builder files a line under the chapter it swept; shared plumbing and a file serving two chapters make that wrong,
+  // and a chapter whose index lacks a line says it in the device voice. Measured 2026-09-27 before the fix: "Great job!"
+  // was filed under 2 chapters, the end card under 1, and BlockYard's subtract-only line below under additionTo100 alone.
+  it('the lines any chapter can say are in every chapter (23), and a shared file’s lines reach both its chapters', () => {
+    const chaptersOf = (t: string) => rows.find(r => r.spoken === t)?.chapters ?? []
+    for (const t of [...PRAISE, ...ENCOURAGEMENT.flat(), 'All done! Nice work.', 'Great work, 5 questions done! Your spot is saved.'])
+      expect(chaptersOf(t).length, t).toBe(23)
+    for (const l of statics) expect(chaptersOf(l.text.replace(/\s+/g, ' ').trim()).length, `${where(l)} ${l.text}`).toBe(23)
+    expect(chaptersOf('Not enough ones left. Tap a rod to fetch it and break it open.')).toContain('subtractionTo100')
+    expect(chaptersOf('Not quite — count who is still here.')).toContain('subtraction')
   })
 
   // With the tests above, a chapter line reworded or added without a clip goes red here instead of

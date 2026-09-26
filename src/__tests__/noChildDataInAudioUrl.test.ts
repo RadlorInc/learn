@@ -13,6 +13,10 @@
  *   B. the real screen — ChapterDone → useMiloSpeaker → the player — for a child called Carlos Tyler: nothing is
  *      requested, the device says the line; then, in the same world, a real lesson line IS requested (twin);
  *   C. every audio URL the player produced in A and B is `<base>/<16 hex>.mp3` — no voice, learner, grade or query.
+ *   D. the same for a KG–2 CHAPTER, where ChapterDone actually lives: /game sets JOSH with the playing chapter's index
+ *      (features/chapters/voice-index). 'All done, Joseph Ritchey! Nice work.' has the key hsjnug, which is a REAL clip in
+ *      measurement's index ('4. The sunflower is 4 blocks tall.' — both hash to hsjnug, checked 2026-09-27; the precondition
+ *      below re-checks it). The named line asks for nothing and the device says it; the real line IS requested.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { clipKey } from '@/core/voiceClips'
@@ -103,6 +107,36 @@ describe('no child data in any audio request', () => {
     function Say() { const { speak } = useMiloSpeaker(); React.useEffect(() => { speak(REAL) }, [speak]); return null }
     await React.act(async () => { root.render(React.createElement(Say)) })
     await vi.waitFor(() => expect(requests, 'twin: the same player, same index, a real line — it IS requested').toEqual([OBJECT]))
+    await React.act(async () => { root.unmount() }); host.remove()
+  })
+
+  it('D. ChapterDone in a KG–2 chapter, for a child called Joseph Ritchey, requests nothing; the chapter line with that key does', async () => {
+    const NAMED_KG = 'All done, Joseph Ritchey! Nice work.'
+    const REAL_KG = '4. The sunflower is 4 blocks tall.'                                   // measurement's, by hand
+    const OBJECT_KG = 'https://bucket.test/lesson-audio/1a11c30ab68a845d.mp3'               // its object, by hand
+    expect(clipKey(NAMED_KG), 'precondition: the named line collides').toBe('hsjnug')
+    expect(clipKey(REAL_KG)).toBe('hsjnug')
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    const React = await import('react')
+    const { createRoot } = await import('react-dom/client')
+    const { VOICE_INDEX: CHAPTER_INDEX } = await import('@/features/chapters/voice-index')
+    const p = await import('@/infra/voiceClipPlayer')
+    const { useMiloSpeaker } = await import('@/infra/useMiloSpeaker')
+    const { default: ChapterDone } = await import('@/shared/ui/ChapterDone')
+    p.setSceneVoice(JOSH, CHAPTER_INDEX.measurement)   // what /game does while measurement plays
+
+    const host = document.createElement('div'); document.body.appendChild(host)
+    const root = createRoot(host)
+    await React.act(async () => {
+      root.render(React.createElement(ChapterDone, { open: true, childName: 'Joseph Ritchey', onPlayAgain: () => {}, onExit: () => {} }))
+    })
+    await tick(300)   // the browser path waits 100 ms after cancel() before it speaks
+    expect(requests, 'ChapterDone made an audio request for a named line').toEqual([])
+    expect(utterances, 'the device voice said the line (the drive really reached speech)').toContain(NAMED_KG)
+
+    function Say() { const { speak } = useMiloSpeaker(); React.useEffect(() => { speak(REAL_KG) }, [speak]); return null }
+    await React.act(async () => { root.render(React.createElement(Say)) })
+    await vi.waitFor(() => expect(requests, 'twin: the same player, same chapter index, the real line — it IS requested').toEqual([OBJECT_KG]))
     await React.act(async () => { root.unmount() }); host.remove()
   })
 

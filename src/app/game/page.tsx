@@ -1,7 +1,7 @@
 'use client'
 export const dynamic = 'force-static'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useRef, useState, Suspense } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, Suspense } from 'react'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { setLastPlayed } from '@/infra/storage/lastPlayed'
 import MiloPointer from '@/shared/ui/MiloPointer'
@@ -15,6 +15,7 @@ import { useChapterGate } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { JOSH } from '@/infra/storage/voicePref'
+import { VOICE_INDEX as CHAPTER_VOICE_INDEX } from '@/features/chapters/voice-index'
 
 export default function GamePage() {
   // useSearchParams needs a Suspense boundary on a static page (next docs: use-search-params).
@@ -64,9 +65,18 @@ function Game() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // A KG–2 chapter speaks in Josh, like every lesson (founder, 2026-09-25): its clips are rendered in Josh
-  // (scripts/.voice-corpus-chapters-josh.json), and a line with no clip yet is browser speech, as before.
-  useEffect(() => { setSceneVoice(JOSH); return () => setSceneVoice(null) }, [])
+  // A KG–2 chapter speaks in Josh, like every lesson (founder, 2026-09-25). Its clips are in the lesson-audio bucket and
+  // listed in ITS OWN index (features/chapters/voice-index/<chapter>.json, one chunk each, fetched on the first line), the
+  // way LessonPlayer hands the player its module's. ⚠️ Without the index the player has no clip to find and every line is
+  // browser speech — gameChapterVoice.test.ts drives this wire. A line with no clip is browser speech, as before.
+  // ⚠️ A LAYOUT effect: React runs a child's effects before its parent's, so with useEffect a chapter that speaks from its
+  // own mount effect in the same commit spoke BEFORE the voice was set — device speech (measured in that test). Every
+  // layout effect of a commit runs before any passive one.
+  useLayoutEffect(() => {
+    if (!playingChapter) return
+    setSceneVoice(JOSH, CHAPTER_VOICE_INDEX[playingChapter])
+    return () => setSceneVoice(null)
+  }, [playingChapter])
 
   useEffect(() => {
     if (currentChapter) {
