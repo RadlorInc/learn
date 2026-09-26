@@ -62,12 +62,10 @@ begin
   where p.polrelid = 'storage.objects'::regclass
     and (p.polroles = '{0}'::oid[]
          or p.polroles && array(select oid from pg_roles where rolname in ('anon', 'authenticated')))
-    and (
-      coalesce(pg_get_expr(p.polqual, p.polrelid), '') || ' ' || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), '')
-        ~ 'lesson-audio'
-      or coalesce(pg_get_expr(p.polqual, p.polrelid), '') || ' ' || coalesce(pg_get_expr(p.polwithcheck, p.polrelid), '')
-        !~ 'bucket_id\s*=\s*''[^'']+''::text'
-    );
+    -- EACH expression on its own: joined, a USING pinned to another bucket hid a WITH CHECK keyed only on the owner
+    -- (review 2026-09-26). A null WITH CHECK on a FOR ALL policy reuses USING, so skipping nulls loses nothing.
+    and exists (select 1 from unnest(array[pg_get_expr(p.polqual, p.polrelid), pg_get_expr(p.polwithcheck, p.polrelid)]) e
+                where e is not null and (e ~ 'lesson-audio' or e !~ 'bucket_id\s*=\s*''[^'']+''::text'));
   if risky is not null then
     raise exception 'lesson-audio: storage.objects policies could let anon/authenticated reach this bucket: % — rolled back', risky;
   end if;
@@ -83,7 +81,10 @@ declare
   n int;
 begin
   perform set_config('storage.allow_delete_query', 'true', true);
-  insert into storage.objects (bucket_id, name) values ('lesson-audio', 'migration-probe.mp3');
+  -- Owned by the probing user and inside that user's folder, so a policy keyed on owner / owner_id / the first path
+  -- segment (the dashboard's usual templates) matches here exactly as it would for a real signed-in child.
+  insert into storage.objects (bucket_id, name, owner, owner_id)
+  values ('lesson-audio', '00000000-0000-0000-0000-00000000a0d1/migration-probe.mp3', '00000000-0000-0000-0000-00000000a0d1', '00000000-0000-0000-0000-00000000a0d1');
   foreach r in array array['anon', 'authenticated'] loop
     perform set_config('request.jwt.claims',
       json_build_object('role', r, 'sub', '00000000-0000-0000-0000-00000000a0d1')::text, true);
@@ -91,7 +92,8 @@ begin
     select count(*) into n from storage.objects where bucket_id = 'lesson-audio';
     if n <> 0 then reset role; raise exception 'lesson-audio: % can LIST it (% rows) — rolled back', r, n; end if;
     begin
-      insert into storage.objects (bucket_id, name) values ('lesson-audio', 'migration-probe-upload.mp3');
+      insert into storage.objects (bucket_id, name, owner, owner_id)
+      values ('lesson-audio', '00000000-0000-0000-0000-00000000a0d1/migration-probe-upload.mp3', '00000000-0000-0000-0000-00000000a0d1', '00000000-0000-0000-0000-00000000a0d1');
       reset role; raise exception 'lesson-audio: % can UPLOAD to it — rolled back', r;
     exception when insufficient_privilege then null;
     end;
@@ -104,6 +106,6 @@ begin
     reset role;
   end loop;
   perform set_config('request.jwt.claims', null, true);
-  delete from storage.objects where bucket_id = 'lesson-audio' and name = 'migration-probe.mp3';
+  delete from storage.objects where bucket_id = 'lesson-audio' and name = '00000000-0000-0000-0000-00000000a0d1/migration-probe.mp3';
   perform set_config('storage.allow_delete_query', 'false', true);
 end $$;

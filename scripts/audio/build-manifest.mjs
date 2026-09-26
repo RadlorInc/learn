@@ -43,6 +43,7 @@ for (const f of corpora) {
 }
 
 const files = new Set(readdirSync(SRC).filter(f => f.endsWith('.mp3')).map(f => f.slice(0, -4)))
+if (files.size === 0) stop(2, `CANNOT LOOK: ${SRC} holds no .mp3 files (an empty or unfilled folder — fill it with fetch-src.mjs). Nothing was checked.`)
 for (const k of lines.keys()) if (!files.has(k)) errors.push(`MISSING clip for ${k}`)
 for (const k of files) if (!lines.has(k)) errors.push(`ORPHAN clip ${k}.mp3 — no corpus names it`)
 

@@ -12,7 +12,8 @@ name: Upload audio
 # holds them (default: the tag made when they left the tree). upload.py refuses unless every source file's SHA-256 is
 # the manifest's, so a wrong ref cannot upload the wrong audio.
 #
-# Moving to Cloudflare R2 later: same script, different endpoint/region/keys, then change NEXT_PUBLIC_AUDIO_BASE_URL.
+# Moving to Cloudflare R2 later: same workflow with s3_endpoint / region / public_base set and R2 keys in the two secrets,
+# then change NEXT_PUBLIC_AUDIO_BASE_URL (src/core/audioBase.ts). docs/legal/AUDIO-ROUND2.md §6 has the whole list.
 
 on:
   workflow_dispatch:
@@ -30,6 +31,14 @@ on:
         description: 'Storage S3 region — copy it from Supabase → Storage → S3 configuration'
         type: string
         default: us-east-1
+      s3_endpoint:
+        description: 'Only for a move off Supabase (e.g. Cloudflare R2): the S3 endpoint. Empty = this project''s Supabase Storage'
+        type: string
+        default: ''
+      public_base:
+        description: 'Only for a move off Supabase: the public base URL objects are read from (= NEXT_PUBLIC_AUDIO_BASE_URL). Empty = Supabase'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -74,7 +83,7 @@ jobs:
 
       - name: Upload (or count, in dry-run)
         env:
-          S3_ENDPOINT: https://${{ vars.PROD_PROJECT_REF }}.storage.supabase.co/storage/v1/s3
+          S3_ENDPOINT: ${{ inputs.s3_endpoint != '' && inputs.s3_endpoint || format('https://{0}.storage.supabase.co/storage/v1/s3', vars.PROD_PROJECT_REF) }}
           S3_REGION: ${{ inputs.region }}
           S3_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
           S3_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
@@ -89,13 +98,14 @@ jobs:
         if: ${{ inputs.mode == 'upload' }}
         env:
           REF: ${{ vars.PROD_PROJECT_REF }}
+          PUBLIC_BASE: ${{ inputs.public_base }}
         run: |
           set -euo pipefail
           # What the app needs from the bucket, as a browser on radlic.com asks for it: 200 + the immutable header, the
           # right type, CORS for the prefetch fetch(), and a real 206 for the <audio> element's Range request. A name
           # that does not exist is the control — if it also answered 200, every check above would prove nothing.
           name=$(python3 -c "import json;m=json.load(open('scripts/audio/manifest.json'));print(next(iter(m['keys'].values()))['name'])")
-          url="https://${REF}.supabase.co/storage/v1/object/public/lesson-audio"
+          url="${PUBLIC_BASE:-https://${REF}.supabase.co/storage/v1/object/public/lesson-audio}"
           h=$(curl -s -o /dev/null -D - -H 'Origin: https://radlic.com' "${url}/${name}" | tr -d '\r')
           r=$(curl -s -o /dev/null -D - -H 'Range: bytes=0-99' "${url}/${name}" | tr -d '\r')
           miss=$(curl -s -o /dev/null -w '%{http_code}' "${url}/0000000000000000.mp3")

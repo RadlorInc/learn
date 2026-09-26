@@ -916,8 +916,10 @@ begin
                  and file_size_limit = 262144 and allowed_mime_types = array['audio/mpeg']) then
     raise exception 'RLS FAIL S0: lesson-audio is missing, not public, or not 256 KB / audio/mpeg only';
   end if;
-  insert into storage.objects (bucket_id, name) values ('lesson-audio', 'rlstest0000000000.mp3');
-  select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = 'rlstest0000000000.mp3';
+  -- Owned by the attacker and in the attacker's folder, so an owner- or folder-keyed policy matches as it would live.
+  insert into storage.objects (bucket_id, name, owner, owner_id)
+  values ('lesson-audio', v_attacker::text || '/rlstest0000000000.mp3', v_attacker, v_attacker::text);
+  select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = v_attacker::text || '/rlstest0000000000.mp3';
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL S1+: the control object is not there, so the refusals below would prove nothing'; end if;
 
@@ -933,7 +935,8 @@ begin
 
     -- S2 upload
     begin
-      insert into storage.objects (bucket_id, name) values ('lesson-audio', 'rlstest-upload.mp3');
+      insert into storage.objects (bucket_id, name, owner, owner_id)
+      values ('lesson-audio', v_attacker::text || '/rlstest-upload.mp3', v_attacker, v_attacker::text);
       reset role;
       raise exception 'RLS FAIL S2: % uploaded into lesson-audio', v_role;
     exception when insufficient_privilege then
@@ -962,7 +965,7 @@ begin
   end loop;
 
   -- S5: after all of that, the control object is still there, unchanged
-  select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = 'rlstest0000000000.mp3';
+  select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = v_attacker::text || '/rlstest0000000000.mp3';
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL S5: the control object was changed or removed by a client role'; end if;
 

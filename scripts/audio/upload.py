@@ -31,6 +31,9 @@ import argparse, hashlib, json, os, sys
 from concurrent.futures import ThreadPoolExecutor
 
 CACHE_CONTROL = 'public, max-age=31536000, immutable'
+# What anon-probe.mjs aims its DELETE door at, so a probe never touches a real clip. Not in the manifest (counted as the one
+# expected extra object); put back by every upload run.
+CANARY = 'anon-probe-canary.mp3'
 
 
 def stop(code, msg):
@@ -83,9 +86,9 @@ def main():
     if wrong:
         stop(1, f'DEFECT: {len(wrong)} object(s) in the bucket do not match the manifest (size or ETag). Not overwritten.')
     todo = [n for n in objects if n not in have]
-    extra = len([n for n in have if n not in objects])
+    extra = len([n for n in have if n not in objects and n != CANARY])
     print(f'bucket: {len(have)} objects; {len(objects) - len(todo)} of the manifest present and matching; '
-          f'{len(todo)} missing; {extra} not in this manifest')
+          f'{len(todo)} missing; {extra} not in this manifest; canary {"present" if CANARY in have else "absent"}')
 
     # 2. a source for every missing object, and it is the audio the manifest names
     if todo:
@@ -104,6 +107,12 @@ def main():
     if a.dry_run:
         print('dry run: nothing uploaded')
         return
+    if CANARY not in have:
+        try:
+            s3.put_object(Bucket=bucket, Key=CANARY, Body=b'\x00', ContentType='audio/mpeg', CacheControl='no-store')
+            print('canary: put back for anon-probe.mjs')
+        except Exception as e:  # noqa: BLE001
+            stop(1, f'DEFECT: could not put the anon-probe canary back ({type(e).__name__}).')
 
     # 3. upload the missing ones
     def put(n):
@@ -126,11 +135,15 @@ def main():
         body = s3.get_object(Bucket=bucket, Key=n)['Body'].read()
         return len(body) == objects[n]['bytes'] and hashlib.sha256(body).hexdigest() == objects[n]['sha256']
 
-    with ThreadPoolExecutor(a.workers) as ex:
-        unreadable = sum(1 for ok in ex.map(readback_ok, todo) if not ok)
+    try:
+        with ThreadPoolExecutor(a.workers) as ex:
+            unreadable = sum(1 for ok in ex.map(readback_ok, todo) if not ok)
+        after = listing()
+    except Exception as e:  # noqa: BLE001 — the upload happened; what failed is our look at it
+        stop(2, f'CANNOT LOOK: {len(todo)} uploaded, but reading them back failed ({type(e).__name__}). '
+                f'Re-run in dry-run mode: it audits every object without uploading.')
     if unreadable:
         stop(1, f'DEFECT: {unreadable} uploaded object(s) did not read back byte-identical.')
-    after = listing()
     absent = [n for n, o in objects.items() if after.get(n) != (o['bytes'], o['md5'])]
     if absent:
         stop(1, f'DEFECT: {len(absent)} manifest object(s) not in the bucket, or not matching, after the run.')
