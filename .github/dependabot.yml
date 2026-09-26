@@ -39,13 +39,37 @@ updates:
       # That is not hypothetical. PR #42 (react-dom moved, react left behind) was red on `npm ci`
       # from 2026-08-25 until it was closed, and PR #85 was the SAME failure mirrored (react moved,
       # react-dom left behind) three weeks later. Grouping them is what stops a third round.
-      # ⚠️ Deliberately narrow: `react` and `react-dom` ONLY. `@types/react*` float on `^19` and are
-      # already caught by dev-tooling below, so adding them here would just move noise around.
+      # ⚠️ Deliberately narrow: `react` and `react-dom` ONLY — and ALL update types, majors included:
+      # a React major is exactly the bump that splits the pair. (Its type pair has its own group below.)
       react:
         patterns:
           - "react"
           - "react-dom"
-      # Batch low-risk dev/tooling bumps into one PR to cut noise.
+      # ⚠️ THE TYPE PAIR IS PEER-LOCKED TOO, SO IT GETS THE SAME TREATMENT (2026-09-26). `@types/react-dom@19.3.0`
+      # declares peer `@types/react ^19.3.0`; split, `npm ci --dry-run` exits 1 with the #42/#85 text
+      # ("Conflicting peer dependency"), measured. ALL update types, and it MUST stay ABOVE dev-tooling:
+      # a dependency joins the FIRST group it matches, and dev-tooling's `@types/*` would otherwise take
+      # these two and split their majors.
+      react-types:
+        patterns:
+          - "@types/react"
+          - "@types/react-dom"
+      # Batch low-risk dev/tooling bumps into one PR — MINOR AND PATCH ONLY (2026-09-26, founder's call).
+      # A major of any of these now arrives as its OWN PR ("All major updates will continue to be raised
+      # as individual pull requests" — GitHub, optimizing-pr-creation Example 3), because one major in
+      # the group made the whole group unmergeable (#47, #133, #229 — each closed for its majors).
+      # ⚠️ What the separate majors will look like, measured 2026-09-26 with `npm ci --dry-run`:
+      #   · vitest 5 declares peerOptional `@types/node ^22 || >=24` — ALONE it does not resolve
+      #     (ERESOLVE) while @types/node is ^20. Take the @types/node major first.
+      #   · typescript 7 and eslint 10 install only by overriding peer ranges (typescript-eslint caps
+      #     TS <6.1; eslint-plugin-{import,jsx-a11y,react} cap eslint ^9). TS 7 is expected red: the
+      #     `childWords` gate uses the JS compiler API TS 7 does not ship (#229).
+      # ⚠️ CLOSING A MAJOR PR IGNORES NOTHING — the next release re-raises it after the cooldown. Only an
+      # `ignore:` entry with `update-types: ["version-update:semver-major"]` silences a major; none exists.
+      # ⚠️ `applies-to` is deliberately absent everywhere: groups then govern VERSION updates only, so
+      # SECURITY updates stay ungrouped (options reference: "When undefined, defaults to version
+      # updates"). The repo-level "Grouped security updates" switch (Settings → Advanced Security)
+      # can group them anyway and is NOT readable via the REST API — it must be OFF for that to hold.
       dev-tooling:
         patterns:
           - "@types/*"
@@ -55,6 +79,9 @@ updates:
           - "jsdom"
           - "tailwindcss"
           - "@tailwindcss/*"
+        update-types:
+          - "minor"
+          - "patch"
     # ⚠️ `security` WAS LISTED HERE AND HAS BEEN REMOVED — it was a lie about what these PRs are.
     # `labels:` applies to security update PRs as well as version ones ("Setting this option will
     # also affect pull requests for security updates to the manifest files of this package
