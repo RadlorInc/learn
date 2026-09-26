@@ -1,8 +1,8 @@
 /**
- * The progression engine — promote, demote, hint, mastery.
+ * The progression engine — promote, demote, hint. (Mastery: `chapterMastery`, features/lessons/adaptive.ts.)
  * ─────────────────────────────────────────────────────────────
  * Every chapter in every band runs on these rules. They decide the tier a child
- * sits at, when the hint scaffold appears, and when a run ends early on mastery.
+ * sits at and when the hint scaffold appears.
  *
  * This file is PURE: no React, no store, no I/O. It used to live inside the
  * `useAdaptive` hook, where `calcDifficulty` was a private function and the hint
@@ -20,11 +20,8 @@
 
 export type Difficulty = 1 | 2 | 3
 
-// Demonstrated mastery: a child sitting at the hardest tier with this many
-// correct in a row has clearly got it — the session can end early (with full
-// stars) instead of grinding the repetitive tail. Reaching tier 3 already takes
-// a strong streak, so this is "top tier AND a clean run on top of that".
-export const MASTERY_STREAK = 6
+// Mastery is NOT decided here any more (N19, 2026-09-26): one rule for chapters and topics, `chapterMastery` in
+// `features/lessons/adaptive.ts`. The old count rule (top tier + 6 correct in a row) is deleted.
 
 /** The counters a run carries. Presentation (praise strings) is NOT in here. */
 export interface Progress {
@@ -93,11 +90,6 @@ export function step(p: Progress, isCorrect: boolean): Progress {
     isOnFire:   streak >= 3,
     shouldHint: wrongStreak >= 2 || (difficulty === 1 && total >= 2 && correct / total < 0.5),
   }
-}
-
-/** Top tier plus a clean run on top of it → the chapter may end early. */
-export function isMastered(p: Pick<Progress, 'difficulty' | 'streak'>): boolean {
-  return p.difficulty === 3 && p.streak >= MASTERY_STREAK
 }
 
 // ─── Difficulty-aware number generators ───────────────────────

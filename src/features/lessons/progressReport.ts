@@ -12,6 +12,14 @@ export type Day = string
 export const localDay = (d: Date): Day =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
+/**
+ * "Last played" on the parent's child card (N18, founder 2026-09-26): the newest `lesson_progress.updated_at` of the
+ * child — the time the account last received a lesson or practice write. null = the account holds no row for them.
+ * (It used to read `learner_stats.last_played_at`, which only the deleted chapter sync wrote.)
+ */
+export const lastPlayedAt = (rows: readonly { lesson_id: string; updated_at?: string | null }[]): string | null =>
+  rows.reduce<string | null>((m, r) => r.updated_at && (!m || Date.parse(r.updated_at) > Date.parse(m)) ? r.updated_at : m, null)
+
 export interface Assignment { ids: string[] | null; due: Record<string, string> }
 
 /**

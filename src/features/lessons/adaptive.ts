@@ -74,6 +74,23 @@ export function step(s: Standing, levels: number, o: Outcome): Standing {
   return level === top ? { level, streak: 0, mastered: true } : { level: level + 1, streak: 0, mastered: s.mastered }
 }
 
+/**
+ * ONE MASTERY RULE (N19, founder 2026-09-26: "keep the new ladder rule only, retire the legacy count rule"). A story
+ * chapter is marked mastered by `step` above, exactly as a topic is: right on the first try twice in a row at the TOP
+ * level. A chapter's three tiers are its ladder (CHAPTER_TIERS levels); `tier` is the tier the question was asked at.
+ * A chapter answer is one attempt, so its outcome is read from the misses just before it: right with none = 'first',
+ * right after a miss = 'second', a second miss in a row = 'worked' (a lone miss waits for the next answer, as a
+ * topic's problem does). Only `streak` and `mastered` come back: the chapter's TIER still moves by its own
+ * promote/demote rules (`core/progression.ts`), which this does not change.
+ */
+export const CHAPTER_TIERS = 3
+export function chapterMastery(m: { streak: number; mastered: boolean }, tier: number, correct: boolean, missesBefore: number): { streak: number; mastered: boolean } {
+  const o: Outcome | null = correct ? (missesBefore > 0 ? 'second' : 'first') : missesBefore > 0 ? 'worked' : null
+  if (!o) return m
+  const n = step({ level: tier - 1, ...m }, CHAPTER_TIERS, o)
+  return { streak: n.streak, mastered: n.mastered }
+}
+
 /** Where a topic's practice starts: its saved standing, or — first time — one level up if Screen 8 went right first try. */
 export const startLevel = (saved: Standing | null, turnFirstTry: boolean, levels: number): Standing =>
   saved ? { ...saved, level: Math.min(saved.level, levels - 1), streak: 0 } : { ...FRESH, level: turnFirstTry && levels > 1 ? 1 : 0 }
