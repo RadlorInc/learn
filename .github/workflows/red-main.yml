@@ -101,6 +101,20 @@ jobs:
 
           Failed job(s): $FAILED
           $RUN_URL"
+              elif echo "$FAILED" | grep -qi "migrate-"; then
+                # ⚠️ OPS-03. promote does NOT wait for the database: it runs on a green CI, and the
+                # migration runs after it behind the production-db approval. So when a migrate job
+                # fails (or its approval is rejected), the NEW APP IS ALREADY LIVE on the OLD schema.
+                # The "not in production" text below was the opposite of true here (issue #78).
+                TITLE="🔴 app is live, database NOT migrated"
+                BODY="\`$RUN_SHA\` — $RUN_TITLE
+
+          **The app from this commit is already live** (promote runs on a green CI, before the migration). **The production database was NOT migrated**, so live code is running against the old schema.
+
+          That is only safe if the app tolerates both shapes — expand/contract, see CLAUDE.md, \"THE SCHEMA AND THE CODE THAT USES IT MUST NEVER BE APART\". Check the log of the failed job, then re-run it (it needs the production-db approval again) or revert the app.
+
+          Failed job(s): $FAILED
+          $RUN_URL"
               else
                 TITLE="🔴 main is red"
                 BODY="\`$RUN_SHA\` — $RUN_TITLE

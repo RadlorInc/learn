@@ -1,0 +1,80 @@
+name: Encrypted production dump
+description: >-
+  Dump production's schema + data, encrypt it, and upload it as a workflow artifact. Used by BOTH
+  backup.yml (nightly) and deploy.yml's migrate-prod (right before `supabase db push`), so there is
+  one copy of the backup logic. `supabase db dump` is pg_dump: read-only against production.
+  The caller must have checked out the repo and run supabase/setup-cli first.
+
+# Secrets come in as inputs because a composite action cannot read `secrets.*` itself. The caller
+# passes exactly the secrets it already had; nothing new is exposed by this file.
+inputs:
+  project-ref:
+    description: the production project ref (the caller asserts it first where it matters)
+    required: true
+  access-token:
+    description: secrets.SUPABASE_ACCESS_TOKEN
+    required: true
+  db-password:
+    description: secrets.PROD_DB_PASSWORD
+    required: true
+  passphrase:
+    description: secrets.BACKUP_PASSPHRASE
+    required: true
+  artifact-name:
+    description: name of the uploaded artifact
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Dump schema + data
+      shell: bash
+      env:
+        SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
+        SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
+        PROJECT_REF: ${{ inputs.project-ref }}
+      run: |
+        set -euo pipefail
+        supabase link --project-ref "$PROJECT_REF"
+        # Schema and data separately: a schema-only restore is what you want when recovering from
+        # a bad migration, and it is useless if it is welded to 40 MB of rows.
+        supabase db dump -f schema.sql
+        # --use-copy is what Supabase's own restore procedure uses: COPY rather than a wall of
+        # INSERTs, which restores faster and survives quoting edge cases in learner names.
+        supabase db dump -f data.sql --use-copy --data-only
+        # Fail loudly on an empty dump rather than uploading a 0-byte "backup" that looks fine in
+        # the artifact list and is worthless on the day it is needed.
+        test -s schema.sql || { echo "::error::schema.sql is empty"; exit 1; }
+        test -s data.sql   || { echo "::error::data.sql is empty";   exit 1; }
+        tar czf milo-backup.tar.gz schema.sql data.sql
+        rm -f schema.sql data.sql
+
+    - name: Encrypt
+      shell: bash
+      env:
+        BACKUP_PASSPHRASE: ${{ inputs.passphrase }}
+      run: |
+        set -euo pipefail
+        # An empty passphrase would still "encrypt" — refuse it rather than upload a dump anyone can open.
+        if [ -z "$BACKUP_PASSPHRASE" ]; then
+          rm -f milo-backup.tar.gz
+          echo "::error::BACKUP_PASSPHRASE is empty — refusing to produce a backup"; exit 1
+        fi
+        openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:BACKUP_PASSPHRASE \
+          -in milo-backup.tar.gz -out milo-backup.tar.gz.enc
+        rm -f milo-backup.tar.gz # never let the plaintext reach the upload step
+        test -s milo-backup.tar.gz.enc
+        # Prove the artifact is actually encrypted before it leaves the runner. Cheap, and it is
+        # the one failure that would be silent: a passphrase misconfiguration that produced a
+        # readable dump would look identical in the artifact list.
+        if tar tzf milo-backup.tar.gz.enc >/dev/null 2>&1; then
+          echo "::error::artifact is readable as a tarball — it is NOT encrypted"; exit 1
+        fi
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: milo-backup.tar.gz.enc
+        retention-days: 30
+        if-no-files-found: error
