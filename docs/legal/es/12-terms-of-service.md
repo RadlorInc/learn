@@ -109,7 +109,7 @@ Algunos estados no permiten la exclusión de ciertas garantías, por lo que part
 
 EN LA MÁXIMA MEDIDA PERMITIDA POR LA LEY, RADLOR Y SUS DIRECTIVOS, CONSEJEROS, EMPLEADOS Y AGENTES NO SERÁN RESPONSABLES DE NINGÚN DAÑO INDIRECTO, INCIDENTAL, ESPECIAL, CONSECUENTE O PUNITIVO, NI DE NINGUNA PÉRDIDA DE BENEFICIOS, DATOS O CLIENTELA, QUE SURJA DEL SERVICIO O ESTÉ RELACIONADA CON ÉL.
 
-NUESTRA RESPONSABILIDAD TOTAL POR CUALQUIER RECLAMACIÓN RELACIONADA CON EL SERVICIO NO SUPERARÁ LA MAYOR DE LAS SIGUIENTES CANTIDADES: (A) EL IMPORTE QUE USTED NOS PAGÓ EN LOS DOCE MESES ANTERIORES AL HECHO QUE DIO LUGAR A LA RECLAMACIÓN, O (B) [PLACEHOLDER — a floor amount].
+NUESTRA RESPONSABILIDAD TOTAL POR CUALQUIER RECLAMACIÓN RELACIONADA CON EL SERVICIO NO SUPERARÁ LA MAYOR DE LAS SIGUIENTES CANTIDADES: (A) EL IMPORTE QUE USTED NOS PAGÓ EN LOS DOCE MESES ANTERIORES AL HECHO QUE DIO LUGAR A LA RECLAMACIÓN, O (B) 100 USD.
 
 NADA DE LO DISPUESTO EN ESTOS TÉRMINOS EXCLUYE LA RESPONSABILIDAD QUE NO PUEDA EXCLUIRSE LEGALMENTE, INCLUIDA LA RESPONSABILIDAD POR FRAUDE O POR MUERTE O LESIONES PERSONALES CAUSADAS POR NEGLIGENCIA. Algunos estados no permiten ciertas limitaciones, por lo que partes de esta sección podrían no aplicarse a usted.
 
@@ -119,9 +119,9 @@ Usted se compromete a indemnizarnos frente a reclamaciones, pérdidas y costos l
 
 ## 14. Reclamaciones por derechos de autor
 
-Si usted cree que algún material del Servicio infringe sus derechos de autor, comuníquese con nuestro agente designado:
+Si usted cree que algún material del Servicio infringe sus derechos de autor, comuníquese con nosotros:
 
-**Agente de derechos de autor, Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · teléfono [PLACEHOLDER — phone number]
+**Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com
 
 ## 15. Controversias y ley aplicable
 

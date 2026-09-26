@@ -38,8 +38,10 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
 
   // The private beta (founder, 2026-09-24): exactly these five are published. Terms waits on two founder decisions
   // (§11's liability floor, §14's contact); refunds waits on billing. Written out by hand, never read from the registry.
-  const BETA = ['privacy', 'parent-rights', 'subprocessors', 'cookies', 'retention']
-  const DARK = ['terms', 'refunds']
+  // terms joined the beta pages on 2026-09-26 (founder: §12 floor US$100, §14 a plain contact).
+  const BETA = ['privacy', 'terms', 'parent-rights', 'subprocessors', 'cookies', 'retention']
+  const DARK = ['refunds']
+  const EFFECTIVE: Record<string, string> = { terms: '26 September 2026' }   // the rest: 25 September 2026
   it('exactly the beta pages are published, and nothing else', () => {
     expect(LEGAL_PAGES.filter(p => p.published).map(p => p.slug).sort()).toEqual([...BETA].sort())
     expect([...PUBLISHED_LEGAL_ROUTES].sort()).toEqual(BETA.map(s => `/legal/${s}`).sort())
@@ -54,13 +56,13 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
     expect(text).toContain(pageBySlug(slug)!.title)
     // Markdown the renderer could not parse shows up as bare asterisks — a parent reads "**Or email us" (found 2026-09-24).
     expect(text.match(/.{0,40}[*`].{0,40}/g), `/legal/${slug} shows unparsed markdown (a bare * or \`)`).toBeNull()
-    const line = pub(slug).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim()).sort((a, b) => b.length - a.length)[0]
+    const line = pub(slug).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim().replace(/^[-+]\s+/, '')).sort((a, b) => b.length - a.length)[0]
     expect(line.length).toBeGreaterThan(80)
     const tight = (x: string) => x.replace(/\s+([,.;:)])/g, '$1')   // a bold word ends in a tag, which leaves "word ,"
     expect(tight(text), `/legal/${slug} is published and does not render its document`).toContain(tight(flat(line)).slice(0, 60))
     // The founder's three requirements for the beta label, written out.
     expect(text).toContain('Beta version.')
-    expect(text).toContain('In effect from 25 September 2026.')
+    expect(text).toContain(`In effect from ${EFFECTIVE[slug] ?? '25 September 2026'}.`)
     expect(text).toContain('We will email parents before we make any material change to it.')
     expect(text).not.toContain('DRAFT — NOT IN FORCE')
     expect(text).not.toContain(REG_MARKER)
@@ -76,7 +78,7 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
     // Control: the right page rendered at all.
     expect(text).toContain(pageBySlug(slug)!.title)
     // A real sentence of the document — the longest line, so it cannot be page furniture — is absent.
-    const line = pub(slug).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim()).sort((a, b) => b.length - a.length)[0]
+    const line = pub(slug).split('\n').map(l => l.replace(/[*#>|`_]/g, '').trim().replace(/^[-+]\s+/, '')).sort((a, b) => b.length - a.length)[0]
     expect(line.length).toBeGreaterThan(80)
     expect(text, `/legal/${slug} is dark and renders its document`).not.toContain(flat(line).slice(0, 60))
     expect(text).toContain('DRAFT — NOT IN FORCE')
