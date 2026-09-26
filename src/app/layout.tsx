@@ -1,57 +1,45 @@
 import type { Metadata, Viewport } from 'next'
-import { Fredoka, Nunito, IBM_Plex_Sans, IBM_Plex_Mono, Gaegu } from 'next/font/google'
+import { preload } from 'react-dom'
 import { MiloErrorBoundary } from '@/shared/ui/ErrorBoundary'
 import StorageGate from '@/shared/ui/StorageGate'
 import { APP_NAME, SITE_URL } from './site'
 
 import { OfflineBanner } from '@/infra/useOfflineSync'
 import AuthEventLogger from '@/infra/AuthEventLogger'
+import './fonts.css'
 import './globals.css'
 import { ToastProvider } from '@/shared/ui/Toast'
 
 /**
- * ⚠️ THE FONTS ARE SELF-HOSTED, AND THAT IS THREE FIXES IN ONE. They used to be three CSS
- * `@import`s to `fonts.googleapis.com` in `globals.css`, which meant:
- *   1. **the CSP could never be enforced** — `font-src 'self' data:` does not allow gstatic, so
- *      turning the report-only policy on would have rendered the entire product in fallback
- *      system fonts. This is what unblocks that.
- *   2. CSS `@import` is the slowest way to load a font — a render-blocking request chain on the
- *      critical path, paid by a child on a slow phone.
- *   3. every child's browser made a request to Google, which is a third-party data flow a COPPA
- *      data-map has to account for. Now there are none.
- * Found by the all-chapters gate, which caught an intermittent `fonts.gstatic.com` 404.
+ * ⚠️ THE FONTS ARE SELF-HOSTED FROM THE REPO — `public/fonts/` + `./fonts.css` — AND NOTHING FETCHES THEM FROM GOOGLE,
+ * NOT EVEN THE BUILD. Two steps got here:
+ *   1. (2026-08) three CSS `@import`s to `fonts.googleapis.com` → `next/font/google`: the CSP's `font-src 'self'` could
+ *      then be enforced, no render-blocking @import chain, and no child's browser talks to Google.
+ *   2. (2026-09-26) `next/font/google` → files in the repo: it downloaded every face from Google AT BUILD TIME, and
+ *      that download failed intermittently (`Can't resolve '@vercel/turbopack-next/internal/font/google/font'` —
+ *      2 of ~15 local builds and one CI run on 26 Sep). A failed production build keeps the old deploy serving with
+ *      nothing red. `fonts.css` is that build's own output with only the url()s rewritten, so nothing looks different.
  *
- * ⚠️ THE WEIGHTS MUST MATCH WHAT THE CSS ACTUALLY ASKS FOR. These are not a guess: they are the
- * exact sets the three `@import` URLs requested. Dropping one renders that weight as a synthesised
- * bold, which is the kind of thing nobody sees until a founder does.
+ * ⚠️ WHY NOT `next/font/local`: Google splits each family into unicode-range slices (Gaegu ~90 per weight, many of
+ * them carrying chalkboard symbols like ← ▶ △) and `next/font/local` cannot give each file its own range, so a
+ * one-file-per-weight version would change which glyphs render. Plain CSS keeps every slice.
  *
- * `display: 'swap'` keeps text visible while the font loads — the same behaviour the `&display=swap`
- * in the old URLs bought, and the right call for a reading app.
+ * ⚠️ PRELOADS: the same seven latin files `next/font/google` preloaded (Fredoka, Nunito, IBM Plex Sans, IBM Plex Mono
+ * ×4). Gaegu is deliberately NOT preloaded — it is the chalkboard face, and preloading its slices cost 671 KB on every
+ * page (measured 2026-08-19); it loads on demand where a chalkboard renders.
+ *
+ * ⚠️ THE WEIGHTS MUST MATCH WHAT THE CSS ASKS FOR: Fredoka 500–700, Nunito 600–900, Plex Sans/Mono 400–700,
+ * Gaegu 400/700. A missing weight renders as a synthesised bold, which nobody sees until a founder does.
  */
-const fredoka = Fredoka({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--f-fredoka', display: 'swap' })
-const nunito = Nunito({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--f-nunito', display: 'swap' })
-const plexSans = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--f-plex-sans', display: 'swap' })
-const plexMono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--f-plex-mono', display: 'swap' })
-/**
- * ⚠️ `preload: false` IS LOAD-BEARING AND IT IS THE WHOLE FONT BUDGET.
- *
- * `next/font/google` defaults to `preload: true`, which emits a `<link rel="preload">` for EVERY
- * unicode-range subset of the family — on every page. Gaegu is a Korean face, so that is ~45 ranges
- * × 2 weights = **90 preload links**. Measured on production 2026-08-19: the landing page preloaded
- * **90 Gaegu files, 671 KB — 82% of all font bytes and ~40% of the entire first visit — while
- * rendering ZERO elements in it.** The other four families are 1–4 files and 29–39 KB each.
- *
- * Gaegu is the chalkboard face (`--font-chalk`), used only inside teen-band chapters. It still
- * loads there, on demand, per unicode-range, and `display: 'swap'` means the board renders in the
- * fallback for a beat rather than blocking. Do not turn preload back on to fix a flash of fallback
- * text on the chalkboard — that trade costs every child on every page 671 KB.
- *
- * The other four stay preloaded deliberately: Fredoka is the landing page's LCP text, and none of
- * them is big enough to be worth the risk of a late swap.
- */
-const gaegu = Gaegu({ subsets: ['latin'], weight: ['400', '700'], variable: '--f-gaegu', display: 'swap', preload: false })
-
-const FONT_VARS = [fredoka, nunito, plexSans, plexMono, gaegu].map(f => f.variable).join(' ')
+const FONT_PRELOADS = [
+  '5d52bd6c4cb3f315', // Fredoka latin (variable, 500–700)
+  '07454f8ad8aaac57', // Nunito latin (variable, 600–900)
+  '03fc1b4a8d284b5e', // IBM Plex Sans latin (variable, 400–700)
+  '99e609270109b47d', // IBM Plex Mono latin 400
+  'effe91970fc4db64', // IBM Plex Mono latin 500
+  '23b7a97ae3b5c134', // IBM Plex Mono latin 600
+  'a7e15459c1805da0', // IBM Plex Mono latin 700
+]
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -126,9 +114,10 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  for (const f of FONT_PRELOADS) preload(`/fonts/${f}.woff2`, { as: 'font', type: 'font/woff2', crossOrigin: '' })
   return (
     // suppressHydrationWarning: /text-size.js sets `data-text` on <html> before React hydrates (Review 1 Q5).
-    <html lang="en" className={FONT_VARS} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* eslint-disable-next-line @next/next/no-sync-scripts -- deliberate: the chosen text size must apply before
             the first paint, or the page jumps. Static, not inline, like /sw-register.js. */}
