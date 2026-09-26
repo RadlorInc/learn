@@ -5,7 +5,8 @@
  * barrel (`@/data/repositories`) to keep call sites stable; the internal
  * `_shared` helpers (db, classifySyncError) are intentionally NOT re-exported.
  */
-export type { SyncOutcome } from '@/data/repositories/_shared'
+export type { SyncOutcome, ErrorKind } from '@/data/repositories/_shared'
+export { classifyUserError } from '@/data/repositories/_shared'
 export * from '@/data/repositories/profile'
 export * from '@/data/repositories/learners'
 export * from '@/data/repositories/grades'

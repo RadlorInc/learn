@@ -5,7 +5,7 @@
  * the barrel (index.ts) does not re-export `db` or `classifySyncError`.
  */
 import { createClient } from '@/data/supabase/client'
-import { CONSENT_SQLSTATE } from '@/infra/consentError'
+import { CONSENT_SQLSTATE, isConsentRefusal } from '@/infra/consentError'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function db(): any {
@@ -55,4 +55,26 @@ export function classifySyncError(error: { code?: string; message?: string }): S
   const msg = (error?.message ?? '').toLowerCase()
   if (msg.includes('foreign key') || msg.includes('row-level security')) return 'drop'
   return 'retry'
+}
+
+/**
+ * What a failure means to the PERSON on the screen (BUG-10) — distinct from `classifySyncError`, which decides what a
+ * queue does. "Check your connection" is only honest for 'network'; the others are known NOT to be the Wi-Fi:
+ *  - 'consent' — P0C01, the child has no granted consent (the consent gate refused the write)
+ *  - 'denied'  — 42501 / RLS: this account may not do this
+ *  - 'expired' — the sign-in token is no longer accepted (PGRST301/PGRST303, HTTP 401, "JWT expired")
+ *  - 'network' — the request never got an answer (fetch threw)
+ *  - 'other'   — none of the above is known; callers keep their old wording for it.
+ */
+export type ErrorKind = 'network' | 'expired' | 'consent' | 'denied' | 'other'
+
+export function classifyUserError(error: unknown): ErrorKind {
+  if (isConsentRefusal(error)) return 'consent'
+  const e = (typeof error === 'object' && error !== null ? error : {}) as { code?: unknown; message?: unknown; status?: unknown; name?: unknown }
+  const code = String(e.code ?? ''), msg = String(e.message ?? '')
+  if (code === '42501' || /row-level security/i.test(msg)) return 'denied'
+  if (code === 'PGRST301' || code === 'PGRST303' || e.status === 401 || /jwt expired/i.test(msg)) return 'expired'
+  // supabase-js reports a fetch that threw either by rethrowing it or as `{ message: 'TypeError: Failed to fetch', code: '' }`.
+  if (e.name === 'AuthRetryableFetchError' || /failed to fetch|networkerror|load failed|network request failed/i.test(msg)) return 'network'
+  return 'other'
 }
