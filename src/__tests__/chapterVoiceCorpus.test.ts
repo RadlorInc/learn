@@ -40,7 +40,7 @@ const where = (l: { file: string; line: number }) => `${l.file.replace(/^.*\/src
  * source fails below, so this list cannot outlive what it excuses.
  */
 const UNREACHABLE: Record<string, string> = {
-  'ChapterDone.tsx ^All done, (.*?)! Nice work\\.$': "the child's own name — runtime data; 'All done! Nice work.' is the recorded fallback",
+  'ChapterDone.tsx ^All done, (.*?)! Nice work\\.$': "the child's own name — runtime data, device speech by design; with no learner /game passes '' and the recorded 'All done! Nice work.' plays (gameChapterVoice.test.ts)",
   'SeesawPark.tsx ^Yes! (.*?) equals (.*?)!$': 'said only on the guided round, which is three and seven',
   'ShapeStudio.tsx ^Yes! (.*?) sides!$': 'said only on the guided round, which is a name round (the square)',
 }
@@ -104,6 +104,25 @@ describe('the KG–2 Josh corpus is current with the chapter source', () => {
     for (const l of statics) expect(chaptersOf(l.text.replace(/\s+/g, ' ').trim()).length, `${where(l)} ${l.text}`).toBe(23)
     expect(chaptersOf('Not enough ones left. Tap a rod to fetch it and break it open.')).toContain('subtractionTo100')
     expect(chaptersOf('Not quite — count who is still here.')).toContain('subtraction')
+  })
+
+  // Lines a chapter builds at RUNTIME, which the parser above cannot see (`speak(String(n))` is neither a literal nor a
+  // template) or which a builder filed under one chapter of a file that serves two. Read from the GENERATED index each
+  // chapter plays from, with key AND check as the player matches them. Expectations written by hand (review, 2026-09-27):
+  //   HomeTime says the count each tap reaches (pool ≤ 10); FollowTheLeader each right tap's number (1–10); MeasureIt the
+  //   count laid and, on undo, one less (to 0; no cap, clips exist to 20); PlayScene's re-teach (PlayTime.tsx) the same
+  //   lines for + and −, where 10 − 3 with squirrels says "Ten squirrels are playing." … "That makes 7. Tap the 7!".
+  it('each chapter’s index lists the lines it builds at runtime: count-aloud numbers, and PlayTime’s re-teach under subtraction', () => {
+    const index = (ch: string) => JSON.parse(readFileSync(`src/features/chapters/voice-index/${ch}.json`, 'utf8')) as Record<string, [string, string]>
+    const nums = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => String(a + i))
+    const want: [string, string[]][] = [
+      ['matchingQuantities', nums(1, 10)],
+      ['numberOrdering', nums(1, 10)],
+      ['measurement', nums(0, 20)],
+      ['subtraction', ['Ten squirrels are playing.', 'Seven squirrels are playing.', 'Seven.', 'That makes 7. Tap the 7!']],
+    ]
+    const missing = want.flatMap(([ch, lines]) => { const ix = index(ch); return lines.filter(t => ix[clipKey(t)]?.[1] !== clipCheck(t)).map(t => `${ch}: ${t}`) })
+    expect(missing, 'said at runtime in this chapter, not in its index — the device voice says it with the clip in the bucket').toEqual([])
   })
 
   // With the tests above, a chapter line reworded or added without a clip goes red here instead of

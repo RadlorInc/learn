@@ -122,7 +122,9 @@ function Game() {
 
   // Back goes to the chapter's own grade tab (KG, 1 or 2) on the child's home, not to the top of it.
   const onExit = () => router.push(`/modules?grade=${playingChapter ? getChapter(playingChapter)?.grade ?? 0 : 0}`)
-  const props = { onComplete: handleComplete, onExit, childName: childName || 'friend' }
+  // No learner → '' (not "friend"): ChapterDone then says its unnamed line, "All done! Nice work.", which is recorded and
+  // plays in Josh. "All done, friend!" had no clip, so the end card was device speech for everyone (gameChapterVoice.test.ts).
+  const props = { onComplete: handleComplete, onExit, childName }
 
   // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
   // same way the camera guard refuses the render rather than disabling a control.

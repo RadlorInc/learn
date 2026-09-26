@@ -38,12 +38,19 @@ Three PRs, stacked, each a Draft. They merge **in this order and never out of it
 4. **When PR C merges** (deleting Josh's old same-origin files). Recommendation: **≥ 48 h after PR B is live.** Until
    then a tab or installed app still running the previous bundle keeps its voice; after it, such a tab hears the device
    voice until it reloads.
-5. **KG–2 wrong-answer lines (privacy, not blocking).** Some KG–2 feedback lines are built from the option a child
-   tapped ("That makes seventeen. I asked for twenty-one.") and are recorded. The request names only a content hash, but
+5. **KG–2 wrong-answer lines (privacy). Not blocking PR B, but it BLOCKS the §5.1 sentence: decide this first, then
+   publish the §5.1 variant that matches.** Some KG–2 feedback lines are built from the option a child
+   tapped ("That makes seventeen. I asked for twenty-one." — 1,595 such lines in Money; "That one is <what was
+   tapped>…" another 464 across Numbers to 100, Colors and Patterns; counted 2026-09-27) and are recorded. The request names only a content hash, but
    anyone holding the public manifest could map a request in Supabase's logs to "this device chose 17". No identity is
    in it; today the same is true of Vercel's logs. Options: accept (recommended — bounded, no identity, same as today),
    or prefetch each question's whole feedback set so the request no longer depends on the choice (+egress), or speak
    those lines with the device voice.
+   ⚠️ **The rebuilt #233 does the first (accept): these lines are in the chapter clip indexes and are requested.** That is
+   the recommendation, not your decision — say which you want. (Added 2026-09-27 after a review: §5.1 had said the
+   request never names "an answer", which accept makes false. Under accept, a plain "Not quite…" or a counted-aloud
+   number also reflects how a question went, so the honest sentence is variant (a) below; only "device voice for every
+   feedback line" keeps "never … an answer" true.)
 6. **Supabase plan.** §4 — Pro covers even 10,000 families; the Free plan would not pass ~550.
 
 ## 2. What you do, in order
@@ -133,9 +140,15 @@ PR B makes these published sentences false. Proposed replacements (English; Span
 
 1. **`docs/legal/07-subprocessors.md:30`** — now: *"…every audio clip a child hears is a static file served from our own
    domain, and where a clip is missing the fallback is the browser's own on-device speech."*
-   → **"…every audio clip a child hears is a pre-recorded file, the same for every child, served from the file storage
-   of our database provider (Supabase, listed above). The request for a clip names only the recording — never the
-   child, the account or an answer — and where a clip is missing the fallback is the browser's own on-device speech."**
+   → **depends on §1 item 5 — use the variant that matches your decision:**
+   - **(a) accept (what the rebuilt #233 does):** **"…every audio clip a child hears is a pre-recorded file, the same for
+     every child, served from the file storage of our database provider (Supabase, listed above). The request for a clip
+     names only the recording — never the child or the account. Some recordings are feedback on an answer (for example
+     "Not quite"), so which clips a device asks for can reflect how a question went, but not who answered. Where a clip
+     is missing the fallback is the browser's own on-device speech."**
+   - **(c) device voice for every feedback line (needs a code change first — not built):** the sentence as first
+     proposed, *"…The request for a clip names only the recording — never the child, the account or an answer — …"*.
+     ⚠️ Not with (b) prefetch alone unless it covers every line a question can say, right and wrong.
 2. **`07-subprocessors.md:19`** (Supabase row, "What it does") — add: *"…file storage, **including serving the
    pre-recorded lesson audio**."* No change to the data column: no child data is stored there.
 3. **`docs/legal/08-cookie-and-tracking-notice.md:21`** — now one row for `milo-shell, milo-static, milo-assets` kept
