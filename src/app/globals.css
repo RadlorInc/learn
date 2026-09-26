@@ -7,11 +7,10 @@
    ================================================================= */
 
 /* ── Fonts ─────────────────────────────────────────────────────────
-   ⚠️ LOADED BY `next/font/google` IN `app/layout.tsx`, NOT BY @import. They are self-hosted at
-   build time, so the app makes ZERO runtime requests to Google — which is what lets the CSP be
-   enforced (`font-src 'self'`), removes a render-blocking third-party chain from the critical
-   path, and keeps a child's IP out of a third party's logs. The families arrive here as the
-   CSS variables below; do not add an @import back. */
+   ⚠️ LOADED BY `app/fonts.css` (files in `public/fonts/`), NOT BY @import from Google. The app
+   makes ZERO requests to Google, at runtime or at build time — which is what lets the CSP be
+   enforced (`font-src 'self'`), keeps a child's IP out of a third party's logs, and stops a
+   Google hiccup from failing a build. The families arrive here as the CSS variables below; do not add an @import back. */
 
 /* Chalk write-on: a word appears letter-by-letter (--n = its letter count). */
 @keyframes mb-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }

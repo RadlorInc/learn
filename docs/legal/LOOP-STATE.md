@@ -876,3 +876,43 @@ clean; `npm run build` OK, 48 routes.
 | TRIAL-6 | - | tsc clean; vitest EXIT 0, 168 files / 3992; build OK | - | 26 Sep |
 
 **CI (read once, 26 Sep, not polled):** every fix PR green on `verify` + `rls-tests` except: #239 (fixed — five screen-test mocks lacked `sessionUserId`; then a Google-Fonts build fetch failure, re-run), #243 (`rls-tests` image-pull rate limit, re-run → green), and the stacked PRs (#245, #255, #258, #260, #263, #266) whose CI runs only once they are retargeted to `main`. Merge order, live checks and SQL: `docs/review/ROUND2.md`.
+## Merge session (26 September 2026) — ROUND2 §2 + §2b merged by the agent on the founder's one-session permission
+
+The founder allowed, **for this session only**: the agent marks PRs Ready and merges them in ROUND2 order; a Backup
+run (green, artifact present) before starting and before every migration; the committed before-/proof-SQL files run
+on production **read-only** (wrapped in `begin transaction read only … rollback`, counts / PASS-FAIL / definitions
+only). After this session the old rules return: Draft PRs only, no direct production queries. Deploy freeze lifted
+by the founder for this session. #237, #252, #269 + #275 approved by the founder to merge; #233 skipped.
+
+### Backups
+| when (UTC) | run | artifact |
+|---|---|---|
+| 07:12 | [36226080484](https://github.com/RadlorInc/learn/actions/runs/36226080484) green | `milo-db-backup-36226080484`, 55,634 bytes |
+| 09:2x (#240 migrate-prod, pre-migrate) | [36230365138](https://github.com/RadlorInc/learn/actions/runs/36230365138) green | `milo-db-backup-premigrate-36230365138`, 55,666 bytes |
+| 08:31 (before #240) | [36229958525](https://github.com/RadlorInc/learn/actions/runs/36229958525) green | `milo-db-backup-36229958525`, 55,682 bytes |
+
+### Production queries run (read-only)
+| when (UTC) | file (from branch) | result |
+|---|---|---|
+| 08:34 | `fix-SEC-02-before.sql` B2 policies (#240 branch) | 3 policies; `learner_access: delete` reads `learners` directly (the defect, as expected) |
+| 08:34 | `fix-SEC-02-before.sql` B2 triggers | 0 user triggers on `learner_invites` (no `trg_learner_invites_status_forward` — the defect, as expected) |
+| 08:34 | `fix-SEC-02-before.sql` B3 | viewer_rows 0 · accepted_unexpired_invites 0 |
+| 08:34 | `fix-SEC-02-before.sql` B1 (EXPLAIN as authenticated) | **not run**: `42501 permission denied to set role "authenticated"` — the MCP connection cannot impersonate; B1 unmeasured |
+| 09:26 | `fix-SEC-02-proof.sql` P2 | PASS — delete/select policies exactly as expected (`is_learner_creator`) |
+| 09:26 | `fix-SEC-02-proof.sql` P3 | PASS — definer true, `search_path=public`, anon_exec false, authenticated_exec true |
+| 09:26 | `fix-SEC-02-proof.sql` P4 | PASS — `trg_learner_invites_status_forward`, enabled `O` |
+| 09:26 | `fix-SEC-02-proof.sql` P5 | PASS — `20260926100000` recorded |
+| 09:26 | `fix-SEC-02-proof.sql` P1 (EXPLAIN as authenticated) | **NOT RUN** — MCP connection refused `SET ROLE authenticated` (42501) |
+| 09:3x | #240 P1 | founder: accepted as **covered by CI RLS suite** (P2–P5 PASS) |
+| 09:4x | Backup before #241 | [36232768446](https://github.com/RadlorInc/learn/actions/runs/36232768446) green, `milo-db-backup-36232768446`, 56,290 bytes |
+| 09:4x | `fix-BUG-09-before.sql` 1 | at_risk_now 0 · at_risk_later 0 · positive_control 2 |
+| 09:4x | `fix-BUG-09-before.sql` 2 | has_consent_guard false · definer true · search_path=public · api_callable false · owner postgres |
+| 09:4x | `fix-BUG-09-before.sql` 3 | `prune-unconfirmed-users` `37 3 * * *` active |
+| 09:5x | #241 pre-migrate backup | `milo-db-backup-premigrate-36233865265`, 56,274 bytes |
+| 09:57 | `fix-BUG-09-proof.sql` 1 | PASS — has_consent_guard true · definer true · search_path=public · api_callable false · owner postgres |
+| 09:57 | `fix-BUG-09-proof.sql` 2 | PASS — cron job unchanged |
+| 09:57 | `fix-BUG-09-proof.sql` 3b | PASS — granted_or_withdrawn_now 2 (= before) · 3a (cron run status) DEFERRED to after 03:37 UTC |
+| 10:0x | Backup before #243 | [36234266223](https://github.com/RadlorInc/learn/actions/runs/36234266223) green, 56,290 bytes |
+| 10:0x | `fix-BUG-02-before.sql` 1 | 8 args ending `p_event uuid` · definer · search_path=public · acl postgres/authenticated/service_role |
+| 10:0x | `fix-BUG-02-before.sql` 2 | 0 rows (no `answered_at`) |
+| 10:0x | `fix-BUG-02-before.sql` 3 | pairs_with_extra 0 · extra_level_ups 0 |
