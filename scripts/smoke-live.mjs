@@ -18,7 +18,7 @@
 import { chromium } from '@playwright/test'
 
 const BASE = (process.env.SMOKE_BASE ?? 'https://radlic.com').replace(/\/$/, '')
-const SW = process.env.SMOKE_SW ?? 'v238'
+const SW = process.env.SMOKE_SW ?? 'v239'
 const ONLY = process.env.SMOKE_ONLY
 const LANDING = 'https://radlor.com/radlic'
 const cb = () => `cb=${Date.now()}`

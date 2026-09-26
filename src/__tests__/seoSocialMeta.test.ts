@@ -15,14 +15,8 @@
  *
  * Expected strings are written out by hand, on purpose (CLAUDE.md: a check must not import the value it asserts).
  */
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { Metadata } from 'next'
-
-// The root layout calls next/font/google at module scope, which cannot run under vitest. Fonts are not metadata.
-vi.mock('next/font/google', () => {
-  const font = () => ({ variable: '', className: '', style: {} })
-  return { Fredoka: font, Nunito: font, IBM_Plex_Sans: font, IBM_Plex_Mono: font, Gaegu: font }
-})
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Resolved = any
