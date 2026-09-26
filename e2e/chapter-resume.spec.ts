@@ -113,7 +113,7 @@ test('comes back to the round it was on, with the score intact', async ({ page }
   expect((rec!.correct as number) + (rec!.wrong as number), 'the stored score lost an answer').toBe(2)
 
   // Leave, as the student did, and come back.
-  await page.goto('/menu')
+  await page.goto('/modules')
   await page.waitForTimeout(600)
   await enterPractice(page)
 
@@ -133,7 +133,7 @@ test('with no learner it stores nothing and restarts, exactly as before', async 
   expect(await clearOneRound(page, 1), 'could not finish round 1').toBe(true)
   await page.waitForTimeout(800)
   expect(await stored(page), 'a logged-out visitor had a run stored against them').toBeNull()
-  await page.goto('/menu')
+  await page.goto('/modules')
   await enterPractice(page)
   expect(await roundShown(page), 'a chapter with no learner resumed from somewhere').toBe(1)
 })
