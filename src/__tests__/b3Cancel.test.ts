@@ -161,7 +161,7 @@ describe('every path that ends a granted consent cancels its B3', () => {
     await q(`insert into public.lesson_progress (learner_id, lesson_id, done) values ('${sibling}', 'g3m1-t1', true)`)
   })
 
-  it('"Close your account" — the consent row is GONE, and its B3 is still cancelled', async () => {
+  it('"Close your account" — the consent row is KEPT as withdrawn with no account (N11), and its B3 is still cancelled', async () => {
     const kid = await child(P2, 're_close')
     const count = `select count(*)::int n from public.parental_consents where id = '${kid.consent}'`
     expect((await q<{ n: number }>(count))[0].n, 'control: the consent row exists before').toBe(1)
@@ -169,11 +169,12 @@ describe('every path that ends a granted consent cancels its B3', () => {
     const now = Math.floor(Date.now() / 1000)
     await asUser(P2, `select public.delete_my_account('closer@x.test')`,
       { email: 'closer@x.test', iat: now, amr: [{ method: 'password', timestamp: now - 30 }] })
-    expect((await q<{ n: number }>(count))[0].n, 'the cascade should have deleted the consent row — the id\'s only other home').toBe(0)
+    expect(await q(`select state, parent_id from public.parental_consents where id = '${kid.consent}'`),
+      'N11 (20260926100900): the record survives, withdrawn, naming no account').toEqual([{ state: 'withdrawn', parent_id: null }])
 
     await drain()
     expect(resendCalls).toContain('re_close')
-    expect(await queued('re_close')).toEqual({ cancel_result: 'cancelled', queued_because: 'deleted' })
+    expect(await queued('re_close')).toEqual({ cancel_result: 'cancelled', queued_because: 'withdrawn' })
   })
 
   it('expiry is not a path: a granted consent cannot become expired, and the nightly sweep leaves it alone', async () => {
