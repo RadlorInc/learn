@@ -68,8 +68,9 @@ on:
 jobs:
   dump:
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 1.5 min over 30 runs (ARC-07; GitHub default 360)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       # ⚠️⚠️ THIS STEP USED TO WARN AND SKIP, AND THE JOB WENT GREEN HAVING WRITTEN ZERO BYTES.
       # 30 nightly runs, 30 green ticks, `Dump schema + data: skipped` on every one — found
@@ -106,50 +107,17 @@ jobs:
           fi
           echo "all four configured — proceeding to dump"
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         with:
           version: 2.117.0   # pinned: `latest` asks the GitHub API and a rate limit failed a deploy (2026-09-17)
 
-      - name: Dump schema + data
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
-        run: |
-          set -euo pipefail
-          supabase link --project-ref "${{ vars.PROD_PROJECT_REF }}"
-          # Schema and data separately: a schema-only restore is what you want when recovering from
-          # a bad migration, and it is useless if it is welded to 40 MB of rows.
-          supabase db dump -f schema.sql
-          # --use-copy is what Supabase's own restore procedure uses: COPY rather than a wall of
-          # INSERTs, which restores faster and survives quoting edge cases in learner names.
-          supabase db dump -f data.sql --use-copy --data-only
-          # Fail loudly on an empty dump rather than uploading a 0-byte "backup" that looks fine in
-          # the artifact list and is worthless on the day it is needed.
-          test -s schema.sql || { echo "::error::schema.sql is empty"; exit 1; }
-          test -s data.sql   || { echo "::error::data.sql is empty";   exit 1; }
-          tar czf milo-backup.tar.gz schema.sql data.sql
-          rm -f schema.sql data.sql
-
-      - name: Encrypt
-        env:
-          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
-        run: |
-          set -euo pipefail
-          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:BACKUP_PASSPHRASE \
-            -in milo-backup.tar.gz -out milo-backup.tar.gz.enc
-          rm -f milo-backup.tar.gz # never let the plaintext reach the upload step
-          test -s milo-backup.tar.gz.enc
-          # Prove the artifact is actually encrypted before it leaves the runner. Cheap, and it is
-          # the one failure that would be silent: a passphrase misconfiguration that produced a
-          # readable dump would look identical in the artifact list.
-          if tar tzf milo-backup.tar.gz.enc >/dev/null 2>&1; then
-            echo "::error::artifact is readable as a tarball — it is NOT encrypted"; exit 1
-          fi
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
+      # The dump + encrypt + upload live in ONE place, shared with deploy.yml's migrate-prod (which
+      # takes the same backup right before `supabase db push`, OPS-08).
+      - name: Dump, encrypt, upload
+        uses: ./.github/actions/prod-backup
         with:
-          name: milo-db-backup-${{ github.run_id }}
-          path: milo-backup.tar.gz.enc
-          retention-days: 30
-          if-no-files-found: error
+          project-ref: ${{ vars.PROD_PROJECT_REF }}
+          access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          db-password: ${{ secrets.PROD_DB_PASSWORD }}
+          passphrase: ${{ secrets.BACKUP_PASSPHRASE }}
+          artifact-name: milo-db-backup-${{ github.run_id }}

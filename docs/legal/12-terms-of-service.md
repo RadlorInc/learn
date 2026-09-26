@@ -1,6 +1,6 @@
 # Terms of Service
 
-> **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
+> **STATUS: BETA — published 26 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > Structure: **the parent is the account holder and the only party to this contract. The child is not.** That single decision fixes the age contradiction that ordinary consumer terms fall into when the actual user is a child.
 
 > **Beta (decided 24 September 2026): the Service is free during the beta and billing is switched off.** The paid-plan text was taken out; it comes back, with the Refund and Cancellation Policy, before billing goes live.
@@ -11,9 +11,9 @@
 
 **Product:** Radlic
 
-**Effective date:** 25 September 2026
+**Effective date:** 26 September 2026
 
-**Last updated:** 25 September 2026
+**Last updated:** 26 September 2026
 
 ---
 
@@ -114,7 +114,7 @@ Some states do not allow the exclusion of certain warranties, so parts of this s
 
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, RADLOR AND ITS OFFICERS, DIRECTORS, EMPLOYEES AND AGENTS WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF PROFITS, DATA OR GOODWILL, ARISING OUT OF OR RELATING TO THE SERVICE.
 
-OUR TOTAL LIABILITY FOR ANY CLAIM RELATING TO THE SERVICE WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID US IN THE TWELVE MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM, OR (B) [PLACEHOLDER — a floor amount].
+OUR TOTAL LIABILITY FOR ANY CLAIM RELATING TO THE SERVICE WILL NOT EXCEED THE GREATER OF (A) THE AMOUNT YOU PAID US IN THE TWELVE MONTHS BEFORE THE EVENT GIVING RISE TO THE CLAIM, OR (B) US$100.
 
 NOTHING IN THESE TERMS EXCLUDES LIABILITY THAT CANNOT LAWFULLY BE EXCLUDED, INCLUDING FOR FRAUD OR FOR DEATH OR PERSONAL INJURY CAUSED BY NEGLIGENCE. Some states do not allow certain limitations, so parts of this section may not apply to you.
 
@@ -124,9 +124,9 @@ You agree to indemnify us against claims, losses and reasonable legal costs aris
 
 ## 14. Copyright complaints
 
-If you believe material on the Service infringes your copyright, contact our designated agent:
+If you believe material on the Service infringes your copyright, contact us:
 
-**Copyright Agent, Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · phone [PLACEHOLDER — phone number]
+**Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com
 
 ## 15. Disputes and governing law
 

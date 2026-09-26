@@ -6,14 +6,14 @@ Round 1, item R11 (24 September 2026). **This table is re-measured on every test
 placeholder and the test goes red until this table says so. The Spanish drafts (`docs/legal/es/`) mirror the
 English counts and are held by `legalSpanish.test.ts`, not here.
 
-**Total: 24**
+**Total: 22**
 
 | category | count | meaning |
 |---|---|---|
 | built | 0 | blocked on something engineering has now built and proven — resolve under rule 6 (none left) |
 | repo | 0 | a fact measurable from the repository — resolve with evidence (none left) |
-| rafi | 14 | a founder decision or a fact only the founder has |
-| attorney | 4 | a legal judgement — see `ATTORNEY-PACKET.md` |
+| rafi | 13 | a founder decision or a fact only the founder has |
+| attorney | 3 | a legal judgement — see `ATTORNEY-PACKET.md` |
 | provider | 1 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — ROUND-2.md §4 |
 | date | 4 | set on the day of publication or adoption |
 | marker | 1 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker |
@@ -28,6 +28,8 @@ English counts and are held by `legalSpanish.test.ts`, not here.
 | 09 §7 no suppression list | R6, PR #197 | suppression tests, 7 breaks |
 | 02 §rights "does not yet delete" | R11 (this PR) | deletion built and proven: `consentDeletion.test.ts`, `withdrawExportE2e.test.ts` (R7), production D5 |
 | 03 A1 "in-app path" | R11 | R4's path, `Account → Plan & billing` |
+| 12 §12 liability floor (#62) | founder, 26 Sep 2026 (beta; attorney to review, packet D2) | US$100 — `legalSwitch.test.ts` publishes `terms` |
+| 12 §14 phone (#67) | founder, 26 Sep 2026 (beta; attorney to review, packet D4) | §14 is a plain contact: address + support@radlor.com, no designated agent, no phone |
 | 03 receipt "in-app path" | R11 | same |
 | 03 withdrawal screen "control's name must match" | R11 (repo) | since D1 the paragraph names no control; the buttons are held to `copy.ts` both ways by `consentCopy.test.ts` |
 | 05 §"decide before the migration: clear test data or keep the exemption" | R11 (repo) | decided and applied in D6, `20260923170000`; D6 proof on production |
@@ -118,5 +120,3 @@ Published on the founder's decisions, without an attorney; every attorney row de
 | 30 | 05-information-security-program.md | 63 | `[PLACEHOLDER — name the test environment here once it exists, and record how the check is made.]` | rafi | Rafi | Name the staging/test environment once created (R14 prepared it; ROUND-2 §4). |
 | 31 | 05-information-security-program.md | 71 | `[PLACEHOLDER — attorney: can a school consent on a parent's behalf here, and under what conditions? Until that is answered, the teacher path and the consent gate cannot both be live.]` | attorney | Attorney | School consent (packet A3). |
 | 45 | 09-email-compliance.md | 20 | `[PLACEHOLDER — confirm with the attorney whether this applies to our sends, given the recipient relationship.]` | attorney | Attorney | Whether the "advertisement" label applies (packet E7). |
-| 62 | 12-terms-of-service.md | 117 | `[PLACEHOLDER — a floor amount]` | attorney | Attorney | Liability floor (packet D2). |
-| 67 | 12-terms-of-service.md | 129 | `[PLACEHOLDER — phone number]` | rafi | Rafi | The DMCA agent's phone number (the agent itself was filled on 24 Sep 2026: Radlor Inc.). |

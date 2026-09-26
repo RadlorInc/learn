@@ -17,6 +17,14 @@ export default defineConfig({
      * The sweep is a whole-corpus property check, not a unit test — give it room rather than
      * shrinking DRAWS, which is the coverage the sweep exists for.
      */
+    /**
+     * ⚠️ AND IT CANNOT STOP A SYNCHRONOUS LOOP (ARC-07, measured 2026-09-26 on vitest 4.1.11): the
+     * timeout is a timer on the worker's event loop, which the loop is blocking, and vitest 4 has
+     * no option that kills a busy fork (teardownTimeout/hookTimeout are timers too). A `for(;;)`
+     * with a 1 s timeout was still running at 60 s, and killing the run left the fork orphaned
+     * (ppid 1, spinning). In CI the job's `timeout-minutes` is the bound; locally, after killing a
+     * hung run: `pkill -f "$PWD/node_modules/vitest/dist/workers"`.
+     */
     testTimeout: 20_000,
   },
 })
