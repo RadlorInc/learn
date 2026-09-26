@@ -23,7 +23,7 @@ import { createRoot } from 'react-dom/client'
 const rpc = vi.fn()
 vi.mock('@/data/repositories/_shared', async () => {
   const actual = await vi.importActual<typeof import('@/data/repositories/_shared')>('@/data/repositories/_shared')
-  return { ...actual, db: () => ({ rpc }) }
+  return { ...actual, db: () => ({ rpc, auth: { getSession: async () => ({ data: { session: { user: { id: 'parent' } } } }) } }) }
 })
 
 const learner = { id: 'L-drive', display_name: 'Probe', avatar_index: 0, age_group: '3-5' }

@@ -5,6 +5,7 @@
  * the barrel (index.ts) does not re-export `db` or `classifySyncError`.
  */
 import { createClient } from '@/data/supabase/client'
+import { CONSENT_SQLSTATE } from '@/infra/consentError'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function db(): any {
@@ -33,12 +34,17 @@ export type SyncOutcome = 'ok' | 'retry' | 'drop'
 
 // SQLSTATE codes that a retry can never fix — the payload is fundamentally
 // rejected (missing FK target, RLS denial, bad data), not a transient hiccup.
+// ⚠️ 42501 is only permanent for the account the item BELONGS to: a queue must never send another account's item
+// (or send with no session), or this drops it (BUG-01). lessonSync.ts sends only the signed-in owner's items.
 const NON_RETRYABLE_CODES = new Set([
   '23503', // foreign_key_violation     — learner_id not in learners
   '42501', // insufficient_privilege    — RLS: not owned by this account
   '23502', // not_null_violation
   '23514', // check_violation
   '22P02', // invalid_text_representation — malformed uuid
+  // No granted parental consent for this child (the consent gate). Kept as 'retry' it stalled every later upload on the
+  // device behind it (BUG-04); dropped, as analytics.ts drops it, the device keeps its own copy of the progress.
+  CONSENT_SQLSTATE,
 ])
 
 export function classifySyncError(error: { code?: string; message?: string }): SyncOutcome {
