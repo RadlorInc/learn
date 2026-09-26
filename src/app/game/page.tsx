@@ -71,7 +71,7 @@ function Game() {
       return
     }
 
-    router.replace('/menu')
+    router.replace('/modules')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChapter])
 
@@ -108,10 +108,10 @@ function Game() {
 
   // ⚠️ BEFORE the chapter is rendered, not beside it: a locked chapter must not mount at all, the
   // same way the camera guard refuses the render rather than disabling a control.
-  if (playingChapter && !isChapterVisible(playingChapter)) return <NewLessonsSoon back="/menu" />
+  if (playingChapter && !isChapterVisible(playingChapter)) return <NewLessonsSoon back="/modules" />
 
   if (playingChapter && gate === 'locked') {
-    return <LockedChapterCard chapterId={playingChapter} onBack={() => router.replace('/menu')} />
+    return <LockedChapterCard chapterId={playingChapter} onBack={() => router.replace('/modules')} />
   }
 
   if (authed === 'checking') return (

@@ -177,7 +177,7 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
     const callers = ['src/app/game/page.tsx']
     const all = [
       'src/app/game/page.tsx', 'src/app/parent/page.tsx',
-      'src/app/demo/page.tsx', 'src/app/menu/page.tsx',
+      'src/app/modules/page.tsx',
     ]
     const uses = all.filter(f => /useChapterGate|entitledChapters|isChapterEntitled/.test(decomment(read(f))))
     expect(uses.sort(), 'a route started gating that should not, or one stopped').toEqual(callers.sort())

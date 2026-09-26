@@ -198,7 +198,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
     setForceWalk(true)
     window.setTimeout(() => { setForceWalk(false); resolve() }, 2400)
   }), [])
-  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }, [router, onExit])
+  const exit = useCallback(() => { stopSpeech(); (onExit ?? (() => router.push('/modules')))() }, [router, onExit])
   const advance = useCallback(() => setIdx(i => i + 1), [])
   // Walking past the last beat ends the chapter. When embedded in the game we report
   // the practice result (XP/coins come from the catch rounds); standalone we exit.

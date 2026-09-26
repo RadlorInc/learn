@@ -17,8 +17,7 @@ export type GateVerdict = 'checking' | 'allowed' | 'locked'
  * that structural instead of a promise is for there to BE no later evaluation: the caller resolves
  * once per chapter id and this function is a pure reading of that one answer.
  *
- * @param learnerId  null = nobody is signed in. Source A (the demo) lives here: a pre-signup
- *                   visitor has no learner and no rows, and `/demo` limits its own two chapters.
+ * @param learnerId  null = nobody is signed in. a pre-signup visitor has no learner and no rows.
  * @param entitled   the database's answer, or **null for "we could not find out"**.
  *
  * ⚠️ NULL IS ALLOWED, NOT LOCKED. See docs/billing-stage-3.md §2: this is a UX gate over a database

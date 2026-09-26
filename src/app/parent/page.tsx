@@ -24,20 +24,10 @@ import {
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
   getRecentPoints, getExerciseResults,
 } from '@/data/repositories'
-import { flushQueue } from '@/infra/useOfflineSync'
-import { chapterKey } from '@/core/chapters'
-import { markLessonDone } from '@/infra/storage/lessonProgress'
-import { loadStanding as loadChapterStanding, saveStanding } from '@/infra/storage/lessonStanding'
-import { syncLesson } from '@/infra/storage/lessonSync'
-import { FRESH } from '@/features/lessons/adaptive'
-import { setActivePlan, advancePlan } from '@/infra/storage/activePlan'
-import { adoptDemoRun } from '@/infra/storage/demoRun'
-import { track } from '@/infra/analytics'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
-import type { AgeGroup } from '@/core/chapters'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules, MODULES, GRADES, findLesson } from '@/features/lessons/modules'
@@ -293,7 +283,7 @@ function Dashboard() {
    */
   function launchGame(d: LearnerData) {
     setActiveLearner(d.learner)
-    router.push('/menu')
+    router.push('/modules')
   }
 
   const tea = role === 'teacher'
@@ -906,32 +896,6 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
     setLoading(true)
     const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion: attest.noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
-    /**
-     * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
-     * find nothing here — no stars, and a plan whose first step is the chapter their child just
-     * finished. That is worse than never having played: we showed them the product and took it away
-     * at the moment they committed.
-     *
-     * ⚠️ THE DIAGNOSTIC USED TO OUTRANK THE DEMO FOR THE PLAN; it was deleted 2026-09-20, so the
-     * demo always claims it (`true`) and its sessions are adopted as before.
-     */
-    const adopted = adoptDemoRun(
-      learner.id, learner.age_group as AgeGroup, true,
-      {
-        record: (chapter, mastered) => {
-          const key = chapterKey(chapter)
-          markLessonDone(learner.id, key)
-          if (mastered) saveStanding(learner.id, key, { ...(loadChapterStanding(learner.id, key) ?? FRESH), mastered: true })
-          syncLesson(learner.id, key)
-        },
-        plan: chapters => { setActivePlan(learner.id, learner.age_group ?? '3-5', chapters, 'gradeStart') },
-        advance: chapter => { advancePlan(learner.id, chapter) },
-      },
-    )
-    if (adopted) {
-      void flushQueue()
-      track('demo_adopted', { chapters: adopted.adopted, planSet: adopted.planSet, band: learner.age_group })
-    }
     onAdded()
   }
 

@@ -75,7 +75,13 @@ const nextConfig: NextConfig = {
 
   // The old domain (adaptivelearn.radlor.com) → radlic.com, once SITE_URL has moved. See `oldDomainRedirects`.
   async redirects() {
-    return oldDomainRedirects()
+    return [
+      ...oldDomainRedirects(),
+      // N17 (2026-09-26): ONE child home. `/menu` and `/demo` are deleted; old bookmarks, installed apps and cached
+      // links still land somewhere. Gated by oneChildHome.test.ts.
+      { source: '/menu', destination: '/modules', permanent: true },
+      { source: '/demo', destination: '/', permanent: true },
+    ]
   },
   async headers() {
     return [

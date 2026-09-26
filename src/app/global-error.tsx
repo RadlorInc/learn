@@ -33,7 +33,7 @@ export default function GlobalError({
           title="Oops! Something needs a moment"
           body="Something went wrong while starting up. Nothing is lost — your stars and progress are saved."
           primary={{ label: 'Try again', onClick: retry }}
-          secondary={{ label: 'Go back home', href: '/menu' }}
+          secondary={{ label: 'Go back home', href: '/modules' }}
           digest={error?.digest}
           style={CRASH_UI.page}
         />

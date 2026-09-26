@@ -146,7 +146,7 @@ export function useChapterShell(
   const finished = useRef(false)
   const exit = useCallback(() => {
     stopSpeech(); onLeave?.()
-    ;(onExit ?? (() => router.push('/menu')))()
+    ;(onExit ?? (() => router.push('/modules')))()
   }, [router, onExit, onLeave])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
     if (finished.current) return
@@ -410,7 +410,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
 
   const advance = useCallback(() => {
     if (scene.kind === 'skill' && scene.friend) setFriends(f => [...f, scene.friend!])
-    if (idx >= world.scenes.length - 1) { stopSpeech(); (onExit ?? (() => router.push('/menu')))(); return }
+    if (idx >= world.scenes.length - 1) { stopSpeech(); (onExit ?? (() => router.push('/modules')))(); return }
     setWalking(true)
   }, [scene, idx, world.scenes.length, onExit, router])
 
@@ -423,7 +423,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
 
       {/* Header: exit + progress dots + party */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 540, paddingTop: 6 }}>
-        <button onClick={() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }}
+        <button onClick={() => { stopSpeech(); (onExit ?? (() => router.push('/modules')))() }}
           style={{ padding: '7px 14px', borderRadius: 50, flexShrink: 0, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
             color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: '0 3px 0 rgba(242,107,44,.25)' }}>← Menu</button>
         <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'center', flexWrap: 'wrap' }}>

@@ -46,14 +46,14 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
   if (!body) return null
   return createPortal(
     <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#bfe6f7' }}>
-      {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={() => router.push('/menu')} />}
+      {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={() => router.push('/modules')} />}
       {story && chapter && (
         <>
-          <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={() => router.push('/menu')} />
+          <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={() => router.push('/modules')} />
           {/* Chapter 1 keeps its own wrapper, so it needs the directions card wired by hand. */}
           <DirectionsCard chapter="counting" />
           {/* Renders inside the same portal so it layers over the forest, not a blank screen. */}
-          <ChapterDone open={done} childName={props.childName} onExit={() => router.push('/menu')} onPlayAgain={restart} />
+          <ChapterDone open={done} childName={props.childName} onExit={() => router.push('/modules')} onPlayAgain={restart} />
         </>
       )}
     </div>,

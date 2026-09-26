@@ -33,13 +33,10 @@ describe('legacy chapters are hidden', () => {
   // this only stops the gate being deleted from one route silently.
   it.each([
     ['src/app/game/page.tsx', /!isChapterVisible\(playingChapter\)\) return <NewLessonsSoon/],
-    ['src/features/chapters/GuardedChapter.tsx', /!isChapterVisible\(id\)\) return <NewLessonsSoon/],
     ['src/app/story/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
-    ['src/app/demo/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <NewLessonsSoon/],
-    ['src/app/menu/page.tsx', /LEGACY_CHAPTERS_HIDDEN\) return <ModuleHome/],
     // "Start learning" used to fork on the check; the check was deleted 2026-09-20, so the only
     // thing to pin is that it goes to the lesson list and nowhere else.
-    ['src/app/parent/page.tsx', /function launchGame\(d: LearnerData\) \{[\s\S]*?router\.push\('\/menu'\)/],
+    ['src/app/parent/page.tsx', /function launchGame\(d: LearnerData\) \{[\s\S]*?router\.push\('\/modules'\)/],
   ])('%s refuses a hidden chapter', (file, gate) => {
     expect(readFileSync(file, 'utf8')).toMatch(gate)
   })

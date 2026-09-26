@@ -54,7 +54,7 @@ Then, **after** the deploy has landed:
    cached shell *including its old HTTP headers* — this bit us on 2026-08-16, where a shipped CSP
    and self-hosted fonts both appeared not to have deployed.
 3. **Smoke production — a handful of requests, not a sweep.** Routes `/`, `/auth`, `/diagnostic`,
-   `/menu`, `/parent`, `/legal/privacy` → all 200; then open ONE story chapter
+   `/modules`, `/parent`, `/legal/privacy` → all 200; then open ONE story chapter
    (`/story?ch=order`) and ONE game chapter and look at them. Also check the headers that only
    exist in production, because a 200 says nothing about them:
    ```bash

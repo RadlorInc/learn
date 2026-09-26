@@ -31,7 +31,7 @@ import { kv } from '@/infra/storage/kv'
  *  crawler and a link preview all land on — so its words must be in the HTML. It reads no local
  *  state: the only client work it does is `ResumeSignedIn`, which reads the SUPABASE session
  *  (localStorage key `milo-auth`), never kv and never the profile store. Matched exactly, so
- *  `/menu` and `/game` are untouched.
+ *  `/modules` and `/game` are untouched.
  *
  *  ponytail: three static branches; move the app routes into an `(app)/` group if this list grows
  *  past a handful. */

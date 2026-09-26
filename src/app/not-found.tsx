@@ -32,7 +32,7 @@ export default function NotFound() {
       <p style={{ fontSize: 16, color: '#3d6fb8', maxWidth: 340, margin: 0, lineHeight: 1.5 }}>
         It might have moved, or the link might be old. Nothing is lost — let&apos;s get you back.
       </p>
-      <Link href="/menu" style={{
+      <Link href="/modules" style={{
         marginTop: 6, minHeight: 52, minWidth: 160,
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
         background: 'var(--accent-fill)',

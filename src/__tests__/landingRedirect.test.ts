@@ -90,9 +90,12 @@ describe('every other route is untouched', () => {
     expect(leaves).toEqual(['ResumeSignedIn.tsx'])
   })
 
-  it('no next.config rule applies to radlic.com (the only redirects are for the pre-rename host)', async () => {
+  it("no next.config rule applies to radlic.com's / (only the pre-rename host, and the two retired routes)", async () => {
     const { default: config } = await import('../../next.config')
     const rules = (await config.redirects?.()) ?? []
-    for (const r of rules) expect(r.has, `${r.source} has no host condition, so it applies to radlic.com`).toEqual([{ type: 'host', value: 'adaptivelearn.radlor.com' }])
+    const bare = rules.filter(r => !r.has)
+    // N17 (2026-09-26): /menu and /demo were deleted and redirect on every host. Nothing else may.
+    expect(bare.map(r => r.source).sort(), 'a redirect with no host condition applies to radlic.com').toEqual(['/demo', '/menu'])
+    for (const r of rules.filter(r => r.has)) expect(r.has).toEqual([{ type: 'host', value: 'adaptivelearn.radlor.com' }])
   })
 })
