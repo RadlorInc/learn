@@ -12,7 +12,9 @@ Environment (names only, never printed): S3_ENDPOINT, S3_REGION, S3_ACCESS_KEY_I
 
 In order, stopping at the first thing that is wrong:
   1. lists the bucket. An object already there must have the manifest's size AND ETag (the MD5 of its bytes for a
-     single-part PUT — measured on Supabase Storage 2026-09-26: 16,984 of 16,984 matched). Names are content hashes,
+     single-part PUT — measured 2026-09-26 on the LOCAL Supabase stack, not production: ETag == MD5 for every genuine
+     object, and the one tampered object was the only mismatch). If production's ETag were ever not the MD5, every
+     object reads as a mismatch and the run stops with a DEFECT — it never overwrites. Names are content hashes,
      so a mismatch is never overwritten: the run fails and says how many. This audits the bucket with no audio at all.
   2. for the objects the bucket LACKS, and only those: the source file must exist and its SHA-256 must be the
      manifest's — a wrong source ref cannot upload the wrong audio. So a later render of 50 new clips needs only those

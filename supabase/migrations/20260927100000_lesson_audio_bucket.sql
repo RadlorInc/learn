@@ -72,3 +72,38 @@ begin
     raise exception 'lesson-audio: storage.objects policies could let anon/authenticated reach this bucket: % — rolled back', risky;
   end if;
 end $$;
+
+-- ── and BEHAVIOURALLY: the regex above is a proxy (a policy like `bucket_id = 'avatars' OR auth.role() =
+-- 'authenticated'` pins a literal and still opens every bucket). So act as each client role, WITH its JWT claims set
+-- (auth.role() reads them — without them a role-keyed policy looks shut when it is open), and try every door on a
+-- control object. Everything below is undone before the migration ends; the bucket is left empty.
+do $$
+declare
+  r text;
+  n int;
+begin
+  perform set_config('storage.allow_delete_query', 'true', true);
+  insert into storage.objects (bucket_id, name) values ('lesson-audio', 'migration-probe.mp3');
+  foreach r in array array['anon', 'authenticated'] loop
+    perform set_config('request.jwt.claims',
+      json_build_object('role', r, 'sub', '00000000-0000-0000-0000-00000000a0d1')::text, true);
+    execute format('set local role %I', r);
+    select count(*) into n from storage.objects where bucket_id = 'lesson-audio';
+    if n <> 0 then reset role; raise exception 'lesson-audio: % can LIST it (% rows) — rolled back', r, n; end if;
+    begin
+      insert into storage.objects (bucket_id, name) values ('lesson-audio', 'migration-probe-upload.mp3');
+      reset role; raise exception 'lesson-audio: % can UPLOAD to it — rolled back', r;
+    exception when insufficient_privilege then null;
+    end;
+    update storage.objects set metadata = '{}'::jsonb;          -- bare, as an attacker writes it
+    get diagnostics n = row_count;
+    if n <> 0 then reset role; raise exception 'lesson-audio: % can OVERWRITE % object(s) — rolled back', r, n; end if;
+    delete from storage.objects;
+    get diagnostics n = row_count;
+    if n <> 0 then reset role; raise exception 'lesson-audio: % can DELETE % object(s) — rolled back', r, n; end if;
+    reset role;
+  end loop;
+  perform set_config('request.jwt.claims', null, true);
+  delete from storage.objects where bucket_id = 'lesson-audio' and name = 'migration-probe.mp3';
+  perform set_config('storage.allow_delete_query', 'false', true);
+end $$;
