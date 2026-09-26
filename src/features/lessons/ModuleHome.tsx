@@ -14,10 +14,9 @@ import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSe
 import { showDay } from './progressReport'
 import { Thing, INK, TEAL, ON_TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
-import { chosenModules, mixedPractice } from './modules'
+import { CATALOGUE, chooseFrom, loadModule } from './catalogue'
 import { C } from './sessionCopy'
 import { TEXT_SIZES, saveTextSize, useTextSize, type TextSize } from '@/infra/storage/textSize'
-import type { Obj } from './script'
 
 const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
@@ -32,7 +31,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
   const [fresh, setFresh] = useState<{ ids: string[] | null; due: Record<string, string> | null } | null>(null)
   const lessonIds = fresh ? fresh.ids : savedIds
   const due = fresh ? fresh.due : getActiveLearner()?.lesson_due ?? null
-  const mods = chosenModules(lessonIds)
+  const mods = chooseFrom(CATALOGUE, lessonIds)
   const GRADES = [...new Set(mods.map(x => x.grade))]
   const modulesOf = (g: number) => mods.filter(x => x.grade === g)
   const firstOf = (g: number) => { const ms = modulesOf(g); return (ms.find(x => x.lessons.length > 0) ?? ms[0]).id }
@@ -50,7 +49,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
       setFresh({ ids: me.lesson_ids ?? null, due: me.lesson_due ?? null })
     }).catch(() => { /* offline: the saved copy stands */ })
     // The wallet after the pull, so points earned by uploads it just sent are counted.
-    pullLessonProgress(learnerId, chosenModules(null).flatMap(x => x.lessons.map(l => l.id)))
+    pullLessonProgress(learnerId, CATALOGUE.flatMap(x => x.lessons.map(l => l.id)))
       .then(ok => { if (live && ok) redraw(n => n + 1); return getWallet(learnerId) })
       .then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
     return () => { live = false }
@@ -61,7 +60,11 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
   // Read during render: every caller mounts this on the client only, after kv has hydrated.
   const doneIn = (lessons: typeof m.lessons) => lessons.filter(l => lessonDone(learnerId, l.id)).length
   const done = doneIn(m.lessons)
-  const firstObj = (m.lessons[0]?.screens[0].pictures.find(p => 'obj' in p) as { obj: Obj } | undefined)?.obj ?? 'cookie'
+  const firstObj = m.lessons[0]?.obj ?? 'cookie'
+  // Learn and Practice open ONE module's lessons, loaded on demand (PERF-01): fetch the picked one now, so the tap does
+  // not wait for it. ⚠️ Only that one: a module whose chunk was never fetched online does not open offline (chunks are
+  // cached as they are fetched, public/sw.js). Warming all of them would re-download the ~800 KB this split saves.
+  useEffect(() => { void loadModule(m.id).catch(() => {}) }, [m.id])
 
   return (
     <div className="mh-page" style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 26px', display: 'flex', justifyContent: 'center' }}>
@@ -130,7 +133,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
             <div style={{ ...card, background: '#fbdbba' }}>
               <div style={{ flex: 1 }}>
                 <strong style={cardTitle}>2. Practice</strong>
-                {mixedPractice(m).length} mixed problems
+                {m.lessons.length} mixed problems
               </div>
               <span aria-hidden style={{ display: 'flex', gap: 3, '--lp-u': '18px' } as CSSProperties}><Thing obj="cookie" /><Thing obj="chair" /><Thing obj="apple" /></span>
               <Link href={`/practice?module=${m.id}`} style={{ ...primary, background: '#fff', color: INK }}>Practice</Link>

@@ -16,9 +16,8 @@ import {
   START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
-import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
-import { ladderOf, ladderAnswers } from './ladders'
-import { findLesson } from './modules'
+import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, ladderAnswers, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
+import { ladderOf, loadedLesson } from './catalogue'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { lessonDone } from '@/infra/storage/lessonProgress'
@@ -204,7 +203,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   const problem = s.mode === 'practice' && run ? run.current.problem : currentProblem(lesson, s)
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
-  const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? findLesson(run.current.from)?.lesson ?? null : null
+  const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? loadedLesson(run.current.from) ?? null : null
   const bigIdea = from?.bigIdea ?? lesson.bigIdea
   // The answer box's shape is the lesson's, never the problem's (see AnswerInput). A ladder's answers are sampled.
   const sampled = useMemo(() => (ladder ? ladderAnswers(ladder) : []), [ladder])

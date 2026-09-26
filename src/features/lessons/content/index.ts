@@ -1,6 +1,7 @@
 /** Module id → its lessons. Add a module's file here once it is written (see docs/new-flow/AUTHORING.md). */
-// ponytail: every grade is imported eagerly — one ~1.2 MB (≈275 KB gzipped) chunk on the child's screens, measured
-// 2026-09-14. Split per grade with dynamic import() if first-load time on slow phones shows up.
+// Every module, eagerly: for the dashboard and the tests (through ../modules). The child's screens load ONE module
+// through ../catalogue's loadModule (PERF-01) — never import this file from /lesson, /practice or /modules. A new
+// module also needs its line in catalogue.ts's LOADERS and a re-run of scripts/lesson-catalogue.mts.
 import type { Lesson } from '../script'
 import { G8M4 } from './g8m4'
 import { G8M2 } from './g8m2'

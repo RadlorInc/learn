@@ -2,9 +2,11 @@
  * Every grade's modules, in teaching order (docs/new-flow/curriculum.md). A module with no lessons is not built
  * yet; it is shown as "coming soon", never as a lock.
  */
-import type { Lesson, Problem } from './script'
+import type { Lesson } from './script'
 import { GRADE3_MODULE1, MODULE_1_TITLE } from './grade3Module1'
 import { CONTENT } from './content'
+import { LADDERS } from './ladders'
+import { chooseFrom, remember } from './catalogue'
 
 export interface Module { id: string; grade: number; n: number; title: string; lessons: Lesson[] }
 
@@ -32,17 +34,16 @@ export const MODULES: Module[] = GRADES.flatMap(grade => TITLES[grade].map((titl
   return { id, grade, n: i + 1, title, lessons: id === 'g3m1' ? GRADE3_MODULE1 : CONTENT[id] ?? [] }
 }))
 
+// The child's screens read ./catalogue's lookups; anything that imports this whole file (the dashboard, the tests) fills them.
+for (const m of MODULES) remember(m, LADDERS)
+
 export const modulesOf = (grade: number) => MODULES.filter(m => m.grade === grade)
 
 /**
  * What a child sees when their parent chose topics: each module keeps only the chosen lessons, and a module with none
  * disappears. `null`/`undefined`/empty = no choice made = every topic.
  */
-export function chosenModules(lessonIds: readonly string[] | null | undefined): Module[] {
-  if (!lessonIds || lessonIds.length === 0) return MODULES
-  const pick = new Set(lessonIds)
-  return MODULES.map(m => ({ ...m, lessons: m.lessons.filter(l => pick.has(l.id)) })).filter(m => m.lessons.length > 0)
-}
+export const chosenModules = (lessonIds: readonly string[] | null | undefined): Module[] => chooseFrom(MODULES, lessonIds)
 /** True when every lesson of `m` is in the child's list. A child with no choice (null) has every module. */
 export function hasModule(lessonIds: readonly string[] | null | undefined, m: Module): boolean {
   if (!lessonIds || lessonIds.length === 0) return true
@@ -63,14 +64,4 @@ export const findLesson = (id: string | null) => {
   return null
 }
 
-/**
- * A module's mixed practice: one problem from every topic — its last practice problem, the story one — interleaved
- * (first half and second half alternate) so the child has to work out which idea each problem needs, instead of
- * repeating the one before it.
- * ponytail: one problem per topic, fixed order. Add more per topic, or pick the child's weakest topics, when there is data.
- */
-export function mixedPractice(m: Module): { problem: Problem; lesson: Lesson }[] {
-  const items = m.lessons.map(lesson => ({ problem: lesson.practice[lesson.practice.length - 1].problem, lesson }))
-  const half = Math.ceil(items.length / 2)
-  return items.flatMap((_, i) => i < half ? [items[i], items[i + half]].filter(Boolean) : [])
-}
+export { mixedPractice } from './catalogue'
