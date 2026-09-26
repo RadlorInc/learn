@@ -65,7 +65,7 @@ updates:
       #     TS <6.1; eslint-plugin-{import,jsx-a11y,react} cap eslint ^9). TS 7 is expected red: the
       #     `childWords` gate uses the JS compiler API TS 7 does not ship (#229).
       # ⚠️ CLOSING A MAJOR PR IGNORES NOTHING — the next release re-raises it after the cooldown. Only an
-      # `ignore:` entry with `update-types: ["version-update:semver-major"]` silences a major; none exists.
+      # `ignore:` entry with `update-types: ["version-update:semver-major"]` silences a major (see `ignore:` below).
       # ⚠️ `applies-to` is deliberately absent everywhere: groups then govern VERSION updates only, so
       # SECURITY updates stay ungrouped (options reference: "When undefined, defaults to version
       # updates"). The repo-level "Grouped security updates" switch (Settings → Advanced Security)
@@ -90,6 +90,17 @@ updates:
     # filter that matches everything, i.e. not a filter.
     # ⚠️ Nothing applies a `security` label automatically, so no such label exists in this repo by
     # design. A security PR is identified by its Dependabot ALERT, not by a label.
+    # ⚠️ TWO MAJORS ARE PARKED UNTIL THEY ARE PLANNED (2026-09-26). Closing the PR ignores nothing (see above), so
+    # these entries are what stops #293/#294 reopening on the next release. Minor/patch still flow, and so does a
+    # security fix in the CURRENT major. Delete an entry when that migration is planned.
+    #   · typescript 7 (#294): no JS compiler API — `childWords.test.ts` fails tsc (TS2339/TS2694); same cause as #229.
+    #   · eslint 10 (#293): `npm run lint` crashes inside eslint-config-next's eslint-plugin-react (peer caps eslint ^9),
+    #     and 4 test files lose `js-yaml`, which only arrived transitively through eslint 9.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
     labels:
       - dependencies
 
