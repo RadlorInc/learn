@@ -53,7 +53,7 @@ import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dash
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
 import { helpGoals } from '@/features/dashboard/helpGoals'
 import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
-import { LangContext, loadLang, saveLang, makeT, useT, type Lang } from '@/features/dashboard/i18n'
+import { LangContext, makeT, useT, useSavedLang, LangSwitch, type Lang } from '@/features/dashboard/i18n'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 const AVATAR_SRCS = ['/assets/objects/fox.png','/assets/objects/bunny.png','/assets/objects/bear.png','/assets/objects/cat.png']
@@ -120,7 +120,7 @@ function Dashboard() {
   const [autoDone, setAutoDone] = useState(false)   // the one automatic pop-up of this visit has been shown and closed
   // English or Spanish, chosen in Account → Language. PARENTS ONLY (founder, 2026-09-22): a teacher's dashboard stays English.
   // Per device, like the helpers' prefs — a parent on a new device picks it again.
-  const [chosenLang, setChosenLang] = useState<Lang>('en')
+  const savedLang = useSavedLang()
 
   // `quiet`: refresh the data without the full-screen splash, so an open panel (a class's new passwords) stays on screen.
   async function loadAll(quiet?: boolean) {
@@ -133,7 +133,6 @@ function Dashboard() {
       if (!user) { router.replace('/auth'); return }
       setParentName(user.user_metadata?.full_name?.split(' ')[0] ?? 'there')
       setUid(user.id)
-      setChosenLang(loadLang())
       // This device's helper choices, read once per visit; the visit BEFORE this one is what "since your last visit" means.
       setPrefsState(prev => {
         if (prev) return prev
@@ -278,7 +277,7 @@ function Dashboard() {
   }
 
   const tea = role === 'teacher'
-  const lang: Lang = tea ? 'en' : chosenLang
+  const lang: Lang = tea ? 'en' : savedLang
   const t = makeT(lang)
   useEffect(() => { document.documentElement.lang = lang; return () => { document.documentElement.lang = 'en' } }, [lang])
   const today = localDay(new Date(now))
@@ -508,12 +507,7 @@ function Dashboard() {
         {!tea && <section style={dcard} data-tour="language-card">
           <h2 style={h2}>{t('Language')} · Idioma</h2>
           <p style={{ margin:'4px 0 12px', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('The language of this dashboard. Lessons stay in English. Saved on this device.')}</p>
-          <div role="group" aria-label={t('Language')} style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            {([['en', 'English'], ['es', 'Español']] as const).map(([l, label]) => (
-              <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => { saveLang(l); setChosenLang(l) }}
-                style={{ padding:'8px 18px', minHeight:44, borderRadius:999, border:'2px solid', borderColor: lang === l ? P.accent : P.edge, background: lang === l ? 'var(--milo-orange-soft)' : P.card, fontWeight:800, fontSize:15, fontFamily:'inherit', cursor:'pointer', color:P.ink }}>{label}</button>
-            ))}
-          </div>
+          <LangSwitch lang={lang} />
         </section>}
         <section style={dcard} data-tour="reminders-card">
           <h2 style={h2}>{t('Reminders')}</h2>
@@ -594,10 +588,7 @@ function Dashboard() {
     </>
   } else {
     page = <>
-      <div style={{ marginBottom:18 }}>
-        <h1 style={h1}>{greeting}, {parentName}</h1>
-        <p style={{ margin:'4px 0 0', color:P.ink2 }}>{t('Tap a child to see their progress, choose their lessons, or set game time.')}</p>
-      </div>
+      <ParentHomeHead greeting={greeting} name={parentName} lang={lang} />
       {notices}
       {learners.length === 0 ? <EmptyDashboard onAdd={() => setShowAddModal(true)} /> : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
@@ -707,6 +698,22 @@ function Dashboard() {
 }
 
 const h2 = { margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' } as const
+
+/** The top of a parent's Home: the greeting, and English · Español in the top right corner (founder, 2026-09-22) —
+ *  on the screen a parent lands on, not only in Account. Exported so /ui-preview renders the real one. */
+export function ParentHomeHead({ greeting, name, lang }: { greeting: string; name: string; lang: Lang }) {
+  const t = makeT(lang)
+  return (
+    <div style={{ marginBottom:18 }}>
+      {/* The switch shares a row with the heading only — the line under it keeps the full width on a phone. */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
+        <h1 style={{ margin:0, minWidth:0, fontSize:28, fontWeight:900, color:P.ink, fontFamily:'var(--font-display)' }}>{greeting}, {name}</h1>
+        <LangSwitch lang={lang} />
+      </div>
+      <p style={{ margin:'4px 0 0', color:P.ink2 }}>{t('Tap a child to see their progress, choose their lessons, or set game time.')}</p>
+    </div>
+  )
+}
 
 /**
  * The dashboard with nobody in it yet. Lifted out of `ParentDashboard`'s JSX so `/ui-preview` can

@@ -9,7 +9,7 @@ import { loginEmail } from '@/core/childLogin'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
-import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
+import { makeT, useSavedLang, LangSwitch } from '@/features/dashboard/i18n'
 
 type Mode = 'login' | 'signup'
 
@@ -215,13 +215,7 @@ export default function AuthPage() {
         {/* The form half */}
         <div>
           {/* English or Spanish (founder, 2026-09-22). The same device setting as the parent dashboard's Account → Language. */}
-          <div role="group" aria-label="Language · Idioma" style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 14 }}>
-            {([['en', 'English'], ['es', 'Español']] as const).map(([l, label]) => (
-              <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => { saveLang(l); reset() }}
-                style={{ padding: '6px 16px', minHeight: 44, borderRadius: 999, border: '2px solid', borderColor: lang === l ? C.accent : C.edge,
-                  background: lang === l ? 'var(--milo-orange-soft)' : C.card, color: C.ink, fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>{label}</button>
-            ))}
-          </div>
+          <LangSwitch lang={lang} onPick={reset} style={{ justifyContent: 'center', marginBottom: 14 }} />
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <Image

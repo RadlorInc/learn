@@ -21,6 +21,7 @@ const FILES = [
   'src/features/dashboard/Helpers.tsx', 'src/features/dashboard/DashNav.tsx', 'src/features/dashboard/reminders.ts',
   'src/features/dashboard/helpGoals.ts', 'src/features/lessons/Performance.tsx', 'src/shared/ui/ChildLoginSheet.tsx',
   'src/shared/ui/DataRights.tsx', 'src/app/auth/page.tsx', 'src/app/auth/set-password/page.tsx', 'src/app/auth/callback/page.tsx',
+  'src/shared/ui/ParentPinGate.tsx',
 ]
 
 /** Every string literal passed to t(…), including each arm of a `t(x ? 'a' : 'b')`. */
@@ -30,6 +31,8 @@ function wrapped(): string[] {
     const src = readFileSync(f, 'utf8')
     for (const call of src.matchAll(/\bt\(([^()]*?)(?:,\s*\{|\))/g))
       for (const lit of call[1].matchAll(/'((?:[^'\\]|\\.)*)'/g)) out.add(lit[1])
+    // ParentPinGate keeps a message as `{ k: '…' }` and translates it when shown
+    for (const m of src.matchAll(/\bk: '((?:[^'\\]|\\.)*)'/g)) out.add(m[1])
   }
   const says = readFileSync('src/shared/ui/ChildLoginSheet.tsx', 'utf8').match(/const SAYS[^]*?\n\}/)![0]
   for (const m of says.matchAll(/^\s+\w+:\s+'([^']+)',$/gm)) out.add(m[1])

@@ -33,7 +33,7 @@ async function heading(): Promise<string> {
   return `${text} | ${body}`
 }
 
-beforeEach(() => { role = null; pin = 'set' })
+beforeEach(() => { role = null; pin = 'set'; localStorage.removeItem('al-lang') })
 
 describe('PIN gate wording', () => {
   it('a teacher is asked for a TEACHER PIN — entering and setting one', async () => {
@@ -50,5 +50,22 @@ describe('PIN gate wording', () => {
     expect(await heading()).toMatch(/^Enter your parent PIN \|/)
     pin = 'none'
     expect(await heading()).toContain('so a child on this device cannot get in')
+  })
+
+  // Spanish (2026-09-22): the device's saved choice is used without asking again — for a PARENT only.
+  it('a parent on a Spanish device is asked in Spanish, and a teacher on the same device in English', async () => {
+    localStorage.setItem('al-lang', 'es')
+    role = 'parent'
+    const parent = await heading()
+    expect(parent).toMatch(/^Escriba su PIN de padre o madre \|/)
+    expect(parent).toContain('Español')
+    role = 'teacher'
+    const teacher = await heading()
+    expect(teacher).toMatch(/^Enter your teacher PIN \|/)
+    expect(teacher).not.toContain('Español')
+    // The heading is teacher-only wording and never translated, so it cannot show the gate; the shared buttons can.
+    expect(teacher).toContain('Open dashboard')
+    expect(teacher).toContain('Sign out')
+    expect(teacher).not.toContain('Abrir el panel')
   })
 })

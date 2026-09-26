@@ -10,7 +10,7 @@
  *
  * ponytail: saved per DEVICE (founder's call — a parent on a new device picks it again). Move to `profiles` if asked.
  */
-import { createContext, useContext, useSyncExternalStore } from 'react'
+import { createContext, useContext, useSyncExternalStore, type CSSProperties } from 'react'
 
 export type Lang = 'en' | 'es'
 export type T = (s: string, v?: Record<string, string | number>) => string
@@ -30,6 +30,21 @@ export function useSavedLang(): Lang {
   return useSyncExternalStore(
     on => { window.addEventListener(KEY, on); window.addEventListener('storage', on); return () => { window.removeEventListener(KEY, on); window.removeEventListener('storage', on) } },
     loadLang, () => 'en')
+}
+
+/** English · Español — the one switch, on the sign-in page, the PIN, the parent's Home and Account. It saves to this
+ *  device, and every page reading `useSavedLang` follows it: pick once, and nothing asks again. `onPick` for anything
+ *  extra a page must do on a switch (e.g. clear a message already on screen). */
+export function LangSwitch({ lang, onPick, style }: { lang: Lang; onPick?: () => void; style?: CSSProperties }) {
+  return (
+    <div role="group" aria-label="Language · Idioma" style={{ display: 'flex', gap: 6, flexShrink: 0, ...style }}>
+      {([['en', 'English'], ['es', 'Español']] as const).map(([l, label]) => (
+        <button key={l} type="button" lang={l} aria-pressed={lang === l} onClick={() => { saveLang(l); onPick?.() }}
+          style={{ padding: '6px 14px', minHeight: 44, borderRadius: 999, border: '2px solid', borderColor: lang === l ? 'var(--milo-orange)' : 'var(--card-border)',
+            background: lang === l ? 'var(--milo-orange-soft)' : 'var(--paper-soft)', color: 'var(--ink)', fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>{label}</button>
+      ))}
+    </div>
+  )
 }
 
 // A key may carry a context after `|` when one English word needs two Spanish ones ('Done' the button, 'Done|lessons'
@@ -459,4 +474,29 @@ export const ES: Record<string, string> = {
   '{n} or more characters': '{n} caracteres o más',
   'Both passwords match': 'Las dos contraseñas coinciden',
   'Set password and continue': 'Crear contraseña y continuar',
+
+  // ── The parent PIN (shared/ui/ParentPinGate.tsx) ──
+  'Set a parent PIN': 'Cree un PIN de padre o madre',
+  'Enter your parent PIN': 'Escriba su PIN de padre o madre',
+  'Could not open the dashboard': 'No se pudo abrir el panel',
+  'Choose 4 digits. We ask for it every time this dashboard opens, so a child on this device cannot get in.': 'Elija 4 dígitos. Se lo pediremos cada vez que se abra este panel, para que un niño en este dispositivo no pueda entrar.',
+  'This keeps the dashboard for grown-ups only.': 'Así el panel queda solo para los adultos.',
+  'New PIN': 'PIN nuevo',
+  'Type it again|pin': 'Escríbalo otra vez',
+  'Enter 4 digits.': 'Escriba 4 dígitos.',
+  'The two PINs do not match.': 'Los dos PIN no coinciden.',
+  'Too many wrong tries. Try again after {time}.': 'Demasiados intentos fallidos. Inténtelo de nuevo después del {time}.',
+  'Wrong PIN. {n} {tries} left before it locks.': 'PIN incorrecto. Le quedan {n} {tries} antes de que se bloquee.',
+  'try': 'intento',
+  'tries': 'intentos',
+  'Could not check the PIN. Check your connection and try again.': 'No se pudo comprobar el PIN. Revise su conexión e inténtelo de nuevo.',
+  'Someone asked to reset your PIN. Entering your PIN cancelled that.': 'Alguien pidió restablecer su PIN. Al escribir su PIN, se canceló.',
+  'Reset your PIN? For safety it is removed 24 hours from now, and entering your PIN before then cancels the reset. After that you can set a new one.': '¿Restablecer su PIN? Por seguridad se quitará dentro de 24 horas, y si escribe su PIN antes, se cancela. Después podrá crear uno nuevo.',
+  'A PIN reset was requested. Your PIN will be removed {time}. Entering your PIN cancels it.': 'Se pidió restablecer el PIN. Su PIN se quitará el {time}. Si escribe su PIN, se cancela.',
+  'Your PIN will be removed {time}. Then you can set a new one.': 'Su PIN se quitará el {time}. Después podrá crear uno nuevo.',
+  'Could not request a reset. Try again.': 'No se pudo pedir el restablecimiento. Inténtelo de nuevo.',
+  'Checking…': 'Comprobando…',
+  'Save PIN': 'Guardar PIN',
+  'Open dashboard': 'Abrir el panel',
+  'Forgot PIN?': '¿Olvidó su PIN?',
 }

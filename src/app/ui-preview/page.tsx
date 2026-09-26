@@ -18,12 +18,12 @@
  * 401 is still the thing worth doing — see the PR.
  */
 import { notFound } from 'next/navigation'
-import { LangContext, useLang, makeT } from '@/features/dashboard/i18n'
+import { LangContext, useLang, makeT, useSavedLang } from '@/features/dashboard/i18n'
 import { childReminders } from '@/features/dashboard/reminders'
 import { localDay } from '@/features/lessons/progressReport'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
-import { RolePicker, EmptyDashboard, AddLearnerModal } from '@/app/parent/page'
+import { RolePicker, EmptyDashboard, AddLearnerModal, ParentHomeHead } from '@/app/parent/page'
 import { useState } from 'react'
 import { ChildLoginsList } from '@/shared/ui/ChildLoginSheet'
 import { ParentPinGate } from '@/shared/ui/ParentPinGate'
@@ -42,9 +42,10 @@ const DEMO_CLASSES: ClassRow[] = [
   { id: 'c2', name: 'Room 12 (Grade 3)', grade: 3, lesson_ids: null, exercises: [] },
 ]
 
-/** `&lang=es`: the parent dashboard's parts in Spanish (features/dashboard/i18n). */
+/** `&lang=es`: the parent dashboard's parts in Spanish (features/dashboard/i18n); without it, this device's saved choice. */
 function WithLang() {
-  return <LangContext.Provider value={useSearchParams().get('lang') === 'es' ? 'es' : 'en'}><Surfaces /></LangContext.Provider>
+  const q = useSearchParams().get('lang'), saved = useSavedLang()
+  return <LangContext.Provider value={q === 'es' || q === 'en' ? q : saved}><Surfaces /></LangContext.Provider>
 }
 
 function Surfaces() {
@@ -135,6 +136,7 @@ function DashPreview({ p }: { p: string }) {
     <div className="home-app" style={{ alignSelf: 'stretch', margin: -16 }}>
       <DashNav items={nav} reminders={reminders.length} onBell={() => setBell(true)} onSignOut={() => {}} />
       <div style={{ minWidth: 0 }}><main className="adult-shell" data-t="dash">
+        {p === 'home' && <ParentHomeHead greeting={t('Good morning')} name="Sarah" lang={lang} />}
         {p === 'home' && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <UpNext top={reminders[0]} rest={2} allClear="" onAct={() => {}} onSnooze={() => {}} onHide={() => {}} onOpenAll={() => setBell(true)} />
           <div className="card-grid">
