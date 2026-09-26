@@ -23,11 +23,11 @@ const BLURB: Record<(typeof PUBLIC_ROUTES)[number], string> = {
 export function GET() {
   const text = `# ${APP_NAME}
 
-> Adaptive math for grades 3 to 8: a lesson, then practice that adapts to what the child gets wrong.
+> Adaptive math for grades K to 8: a lesson, then practice that adapts to what the child gets wrong.
 
 ${APP_NAME} is made by ${COMPANY} (${COMPANY_URL}) and lives at ${SITE_URL}.
 
-Content covers grades 3 to 8: 36 modules and 282 topics. Each lesson explains one idea step by
+Content covers grades K to 8: 36 modules and 282 topics. Each lesson explains one idea step by
 step, the way a teacher would at a board, then gives practice. Practice adapts: two right answers
 in a row bring a different, harder kind of question (a picture, bare numbers, a missing number, a
 word problem, spotting a mistake), a miss brings worked steps and an easier kind, and topics a

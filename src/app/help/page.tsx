@@ -75,7 +75,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'How does Radlic decide what to teach?',
     a: <>You choose. On your dashboard you pick what your child sees: whole modules or single topics,
-       from any grade from 3 to 8, or simply every topic. Each lesson explains one idea step by step,
+       from any grade from K to 8, or simply every topic. Each lesson explains one idea step by step,
        then practice adjusts to your child: two right in a row brings a different, harder kind of
        question; needing help brings an easier one; and topics they found hard come back later for
        review. Your child never sees a level, a timer or a red cross.</>,

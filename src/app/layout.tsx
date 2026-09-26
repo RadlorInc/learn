@@ -82,27 +82,27 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${APP_NAME} — math lessons that adapt to your child, grades 3 to 8`,
+    default: `${APP_NAME} — math lessons that adapt to your child, grades K to 8`,
     template: `%s · ${APP_NAME}`,
   },
   description:
-    'Math for grades 3 to 8: each lesson explains one idea step by step, then practice adapts to what your child gets right and wrong. You choose the lessons. No timer, no red crosses.',
+    'Math for grades K to 8: each lesson explains one idea step by step, then practice adapts to what your child gets right and wrong. You choose the lessons. No timer, no red crosses.',
   applicationName: APP_NAME,
   openGraph: {
     type: 'website',
     siteName: APP_NAME,
-    title: `${APP_NAME} — math lessons that adapt to your child, grades 3 to 8`,
+    title: `${APP_NAME} — math lessons that adapt to your child, grades K to 8`,
     description:
-      'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
+      'Math for grades K to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
     url: '/',
     // ⚠️ No `images` here on purpose — `app/opengraph-image.tsx` supplies the 1200×630 card.
     // Naming one back would override the file-based route and reinstate the square.
   },
   twitter: {
     card: 'summary',
-    title: `${APP_NAME} — math lessons that adapt to your child, grades 3 to 8`,
+    title: `${APP_NAME} — math lessons that adapt to your child, grades K to 8`,
     description:
-      'Math for grades 3 to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
+      'Math for grades K to 8: a lesson that explains one idea step by step, then practice that adapts to your child.',
   },
   manifest: '/manifest.json',
   /* ⚠️ `default`, NOT `black-translucent` (changed 2026-09-19). Translucent lays every page UNDER the iPhone's status
