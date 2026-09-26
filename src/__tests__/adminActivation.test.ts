@@ -129,7 +129,9 @@ describe('admin_activation — values worked out by hand', () => {
 describe('admin_activation — who may call it', () => {
   it('a signed-in NON-admin is refused with 42501; the admin (positive control) is served', async () => {
     await db.exec(`select set_config('test.uid', '${P(1)}', false)`)
-    await expect(run(1)).rejects.toThrow(/not an administrator/)
+    // Outcome captured, then asserted: a `rejects` matcher fails with a plain Error when the promise resolves,
+    // which break-verdict (rightly) cannot tell from a crash. This way a broken guard fails as an AssertionError.
+    expect(String(await run(1).then(() => 'SERVED', e => e))).toMatch(/not an administrator/)
     await db.exec(`select set_config('test.uid', '${ADMIN}', false)`)
     expect(totals(await run(1)).eligible).toBe(7)
   })
@@ -138,7 +140,7 @@ describe('admin_activation — who may call it', () => {
     await db.exec(`set role authenticated`)
     try { expect(totals(await run(1)).eligible).toBe(7) } finally { await db.exec(`reset role`) }
     await db.exec(`set role anon`)
-    try { await expect(run(1)).rejects.toThrow(/permission denied/) } finally { await db.exec(`reset role`) }
+    try { expect(String(await run(1).then(() => 'SERVED', e => e))).toMatch(/permission denied/) } finally { await db.exec(`reset role`) }
   })
 })
 
