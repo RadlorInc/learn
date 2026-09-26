@@ -1,8 +1,8 @@
 'use client'
 /**
- * Which new-flow lessons a learner has finished. Per-device kv, same shape as [[lessonSeen]].
- * ponytail: device-local only — not synced to Supabase yet (a session row needs a `chapters` row for
- * each lesson id, i.e. a migration). Add that when lessons need to follow a child across devices.
+ * Which new-flow lessons a learner has finished. Per-device kv, same shape as [[lessonSeen]] — the fast
+ * copy the screens read synchronously. It IS synced to the account: [[lessonSync]] queues each change for
+ * `lesson_progress` (sent when online) and pulls the account's rows back into it.
  */
 import { kv } from '@/infra/storage/kv'
 
