@@ -88,13 +88,21 @@ export function unlockVoiceClips(): void {
  * construction, because a short list is a clean miss and a miss falls back to browser speech.
  */
 const _manifests = new Map<string, Promise<Set<string>>>()
+// ⚠️ A FAILED load is not remembered as final (BUG-05, 2026-09-26). It used to be memoised like a success, so one blip
+// (offline, the service worker's 503, a CDN hiccup) left every line in that voice "not in the manifest" — browser speech
+// or silence — until a full reload. A failure now answers empty for this call and is retried by a later call, no sooner
+// than MANIFEST_RETRY_MS after it, so an offline device does not ask on every line. A success stays cached as before.
+const MANIFEST_RETRY_MS = 10_000
+const _failedAt = new Map<string, number>()
 function loadManifest(voice: string): Promise<Set<string>> {
   let p = _manifests.get(voice)
-  if (!p) {
+  const failed = _failedAt.get(voice)
+  if (!p || (failed !== undefined && Date.now() - failed >= MANIFEST_RETRY_MS)) {
+    _failedAt.delete(voice)
     p = fetch(`/audio/${voice}/manifest.json`, { cache: 'no-cache' })
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => { if (!r.ok) throw new Error(`manifest ${r.status}`); return r.json() })
       .then((keys: string[]) => new Set(keys))
-      .catch(() => new Set<string>())      // no manifest → every line falls back
+      .catch(() => { _failedAt.set(voice, Date.now()); return new Set<string>() })  // no manifest → this line falls back
     _manifests.set(voice, p)
   }
   return p
@@ -102,7 +110,7 @@ function loadManifest(voice: string): Promise<Set<string>> {
 
 // A voice change (or a new render arriving) re-reads the manifests.
 if (typeof window !== 'undefined') {
-  window.addEventListener('milo-voice-change', () => { _manifests.clear() })
+  window.addEventListener('milo-voice-change', () => { _manifests.clear(); _failedAt.clear() })
 }
 
 // ⚠️ There is no fragment stitching any more (removed 2026-09-24). It asked for /audio/<voice>/frag/fragments.json and
