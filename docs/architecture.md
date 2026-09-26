@@ -1,69 +1,23 @@
 # Architecture — Radlic (repo: milo-story-mode)
 
-_Clean-architecture layering introduced 2026-07-03. Behavior-preserving refactor; `tsc` + `npm test` (15/15) + `next build` all green._
+⚠️ **This file used to hold a folder tree and a layering rule written 2026-07-03.** By September both
+were wrong — it listed `skillGraph.ts`, `diagnosticEngine.ts`, `features/daily`, `features/insights`,
+`infra/ar` and a Zustand `state/` folder, all deleted, and it stated rules the code no longer follows.
+A reader obeys a confident description of a deleted system, so the body was removed on 2026-09-26.
 
-## The dependency rule
+**The current map is [`docs/review/ARCHITECTURE.md`](review/ARCHITECTURE.md)** (system map, data flows
+end to end, every place child data is read or written, database inventory — measured 2026-09-26, and
+dated there). Re-measure rather than trust it once the code has moved on.
 
-Dependencies point **inward**. Inner layers know nothing about outer ones.
+## What is still true, and what checks it
 
-```
-app  →  features  →  data  →  core
-                 ↘  infra  ↙
-        shared (leaf: UI kit + generic hooks)
-```
-
-- **`core` is pure** — no React, no Supabase, no browser APIs. Unit-testable in isolation.
-- **`data` is the only layer that talks to Supabase.** Nothing above it imports the Supabase client.
-- **`app` (routes) is thin** — composition + presentation. No data access, no business logic inline.
-
-## Folder structure
-
-```
-src/
-  app/                      Next.js routes — thin; render + delegate to features/data
-  core/                     PURE domain (no React / Supabase / browser)
-    chapters.ts  skillGraph.ts  diagnosticEngine.ts  diagnosticItems.ts
-    adaptive.ts  scoring.ts  questionVariety.ts  leveling.ts
-    ageGroups.ts  grammar.ts
-  data/                     Data-access layer — sole owner of Supabase
-    auth.ts                 auth adapter (the only caller of supabase.auth.*)
-    supabase/               client, server, types, session/sync/guard hooks
-    repositories/           one module per domain (was: queries.ts, 797 lines)
-      profile · learners · grades · progress · sessions · diagnostics · invites
-      _shared.ts            db() + sync-error classification (internal)
-      index.ts              barrel — import from '@/data/repositories'
-  features/                 vertical slices (own hooks + pure logic + local UI)
-    chapters/               chapter content: game / story / lessons / teen
-    daily/                  daily-challenge + streak service
-    insights/               metrics.ts (pure) + useInsights.ts (orchestration)
-  infra/                    cross-cutting: analytics, speech, offline-sync, ar/
-    storage/                localStorage-backed helpers (kv, activePlan, checkup, …)
-  shared/                   reusable, feature-agnostic
-    ui/                     the design-system component kit
-    hooks/                  useViewport, useChapterPhase, useLearnerChapters
-  state/                    global Zustand store (persists the player profile)
-```
-
-## What changed (and why)
-
-| Before | After | Why |
-|--------|-------|-----|
-| `src/lib/` — 24 files, 4 concerns mixed flat | `core` / `data` / `infra` / `shared` / `state` | Separation of concerns; enforce the dependency rule |
-| `supabase/queries.ts` — 797-line god-module, 7 domains | `data/repositories/*` split by domain + barrel | Modularity; each domain is independently changeable |
-| 6 pages import `createClient()` + run raw `.from()/.rpc()` | `data/auth.ts` adapter + repository reads | Seal the UI→infra boundary; UI never touches Supabase |
-| `insights/page.tsx` — 293 lines mixing fetch + aggregate + render | `features/insights/{metrics,useInsights}` + 122-line page | Reference feature-slice; pure logic is now unit-testable |
-| Leveling math inside the Zustand store | `core/leveling.ts` (store re-exports) | Pure domain out of the state container |
-| `components/{ui,game,story,lessons,teen}` | `shared/ui` + `features/chapters/*` | Shared kit vs. feature content, organized by bounded context |
-
-## Conventions going forward
-
-- **New DB access** → add a function to the matching `data/repositories/*` module (never call `createClient` in a page/component). Auth → `data/auth.ts`.
-- **New pure logic** (scoring, graph, math) → `core/*`, no imports from `data`/`infra`/React.
-- **New page** → keep it thin; put orchestration in a `features/<x>/use<X>.ts` hook and pure logic in `features/<x>/*.ts` (see `insights` as the template).
-- **Import from the barrel** `@/data/repositories`, not individual repo files, at call sites.
-
-## Deliberate stops (senior judgment, not oversights)
-
-- **The Zustand store was not split into multi-file slices.** It persists a single `profile` slice through a custom per-learner storage key + `partialize`/`merge` that guards live user progress. A multi-file slice split there is high-risk for marginal gain; only the *pure* leveling math was extracted. Revisit only with store tests in place.
-- **`data/repositories` still calls `toast` on write errors.** This is pre-existing UI-in-data coupling, preserved to keep user-facing error behavior identical. A future pass could return typed errors and let the UI decide.
-- **The remaining large pages** (`parent/page.tsx`, `menu/page.tsx`) keep inline orchestration. Sealing the Supabase boundary already removed their infra coupling; extracting full `useParentDashboard`/`useMenu` hooks is the next incremental step, deferred to avoid behavior risk on heavily-stateful live pages without test coverage.
+- **`src/core/` is pure.** It imports only `@/core` and never `react`. `src/__tests__/layering.test.ts`
+  gates exactly those two things and nothing about any other folder.
+- **The layer names** — `app/` (routes), `features/` (vertical slices: `lessons`, `dashboard`,
+  `consent`, `classes`, `billing`, `admin`, `chapters`), `data/` (Supabase client, auth adapter,
+  `repositories/*`), `infra/` (storage, sync, speech, error sink), `shared/` (UI kit, hooks) — are
+  folder names, not an enforced dependency rule. As measured 2026-09-26 the import graph has upward
+  imports, and supabase-js is called outside `data/` as well as by raw `fetch` in every API route
+  (`docs/review/ARCHITECTURE.md` §2.1). Do not cite "only `data/` talks to Supabase" as a guarantee.
+- **The access boundary is RLS**, not the folder layout: see [`docs/security.md`](security.md) and
+  `supabase/tests/rls_regression.sql` (run by `ci / rls-tests` on every push).

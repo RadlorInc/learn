@@ -805,3 +805,74 @@ terminology, unit tests, formula sheets) are later loops.
 - The seven PRs first conflicted in three places (`sessionCopy.ts`, `childWords.test.ts`, `PracticeLayout.tsx`). They
   were fixed at the source, not left for a merge: Q1's components moved to `AnswerFeedback.tsx`, and each item's lines
   sit at their own anchor.
+
+## Deep review (started 26 September 2026) — find and fix in one loop
+
+Brief: the founder's "deep review" prompt (26 Sep 2026). Phase 1 = read-only reports R0–R8 in `docs/review/`;
+Phase 2 = one Draft PR per safe fix (rule 10), everything else in `docs/review/NEEDS-RAFI.md`. Base: `main` =
+`06cee602` (worktree `../w-review`, branch `deep-review`; radlor-site read-only at `../w-review-site`, `b672ba5`).
+No production access of any kind; production facts are asked for as SQL in `docs/review/sql/`. No deploy freeze is
+recorded anywhere in the repo (searched `LOOP-STATE`, `READINESS`, `CLAUDE.md`, 26 Sep).
+
+**Baseline on `06cee602` (measured 26 Sep, local, Node 26):** vitest 141 files / 3,810 passed / 11 skipped; `tsc`
+clean; `npm run build` OK, 48 routes.
+
+### Phase 1 — reports
+
+| report | file | state |
+|---|---|---|
+| R0 architecture map | `docs/review/ARCHITECTURE.md` | done (26 Sep) |
+| R1 founder stress test | `docs/review/FOUNDER-STRESS-TEST.md` | done (26 Sep) |
+| R2 architecture review | `docs/review/ARCHITECTURE-REVIEW.md` | done (26 Sep) |
+| R3 latent bugs | `docs/review/LATENT-BUGS.md` | done (26 Sep) |
+| R4 performance | `docs/review/PERFORMANCE.md` | done (26 Sep) |
+| R5 security | `docs/review/SECURITY-AUDIT.md` | done (26 Sep) |
+| R6 devops | `docs/review/DEVOPS.md` | done (26 Sep) |
+| R7 SEO | `docs/review/SEO.md` | done (26 Sep) |
+| R8 summary | `docs/review/SUMMARY.md` + `NEEDS-RAFI.md` | done (26 Sep): 127 findings — 1 Critical (legal, FND-01), 27 High, 40 Medium, 59 Low |
+
+### Phase 2 — fixes (one row per Draft PR)
+
+| finding | PR | test red before → green after · planted break | migration | notes |
+|---|---|---|---|---|
+| BUG-03 | #235 | consentGrantRetry.test.ts red 2/7 on main -> 7/7; 4 breaks exit 0 | no-migration | double-fault gaps noted |
+| OPS-02 | #236 | migrationsPending.test.ts red 5/7 on main -> 7/7; 2 breaks exit 0 | no-migration | needs a real Actions run for API shape |
+| MAP-04 | #237 | speechLocalVoiceOnly.test.ts red 5/6 on main -> 6/6; break exit 0 | no-migration | AUDIBLE on network-voice-only devices: Rafi OK before merge |
+| BUG-07 | #238 | roleReadError.test.ts red 7/13 -> 13/13; 2 breaks exit 0 | no-migration | callback page can sit on "Signing you in" if both reads fail |
+| BUG-01+BUG-04 | #239 | lessonSyncOwner.test.ts red 4/7 on main -> 7/7 (+1 pre-fix item case); 4 breaks exit 0 | no-migration | pre-fix queued items claimed by first signed-in flush |
+| SEC-02 | #240 | learnerAccessRevoke.test.ts red 3/6 -> 6/6; rls_regression 87 assertions; 3 breaks red | MIGRATION 20260926100000 (+1 DEFINER fn is_learner_creator, authenticated only) | pglite only; CI rls-tests is first real Postgres |
+| BUG-09 | #241 | pruneKeepsGrantedConsent.test.ts red 2/5 -> 5/5; break exit 0 | MIGRATION 20260926100100 (prune fn body +1 line; DEFINER/search_path/grants unchanged) | declined-only accounts still pruned (N5 question) |
+| SEC-06 | #242 | crashUrlNoTokens.test.ts red 3/3 -> green; 3 breaks red | no-migration (cleanup UPDATE proposed for Rafi only if count>0) | jsdom only |
+| TRIAL-1 | - | 148 files / 3861 passed, tsc clean, 0 conflicts | - | 26 Sep |
+| BUG-05 | #244 | voiceManifestRetry.test.ts red 2/4 -> 4/4; 2 breaks exit 0 | no-migration | 10 s backoff is a judgement |
+| BUG-02 | #243 | staleDeviceProgress.test.ts + lessonSync 6 new; 3 breaks exit 0 | MIGRATION 20260926100200 (drop+recreate record_lesson_progress w/ p_answered_at; DEFINER kept; new column answered_at) | new timestamp column on child progress: Rafi to note for notice/export |
+| ARC-07+OPS-18 | #245 | workflowTimeouts.test.ts red 7/8 -> 8/8; break exit 0 | no-migration | vitest cannot bound a sync loop (ARC-07 half not fixable by config); migrate-prod 10 min vs OPS-08 dump step: check at trial merge |
+| OPS-04+OPS-07+FND-11 | #246 | opsDigest 5/8 red, b3Cancel red -> green; 4 breaks exit 0 | MIGRATION 20260926100300 (new DEFINER ops_digest service_role only; B3 queue fns where-clause changes) | Rafi: set CRON_SECRET + OPS_DIGEST_TO; OPS-21 left (health) by reasoning |
+| OPS-03+OPS-08 | #247 | deploySafety.test.ts red 3/7 -> 7/7; 4 breaks red | no-migration (workflow: pre-migrate dump, composite action) | adds a dump artifact per migration (N3); needs real Actions run |
+| OPS-10+SEC-14+ARC-15+OPS-12 | #248 | runbookNoProdWrites.test.ts red on main -> green; break exit 0 | no-migration (docs + comments) | partial ARC-15 (teen docs, some comments left) |
+| MAP-02 | #249 | billingStripe 2 new red -> green; break exit 0 | no-migration | before-SQL for Rafi (expect 0 rows, test mode) |
+| TRIAL-2 | - | 154 files / 3904 passed, tsc clean; 1 trivial conflict 245 vs 236 (deploy.yml) -> 245 stacked on 236 | - | 26 Sep |
+| ARC-16+MAP-14+PERF-11 | #250 | speechKeepAlive.test.ts red -> green; break exit 0; build OK | no-migration | legacy-only exports left (N15) |
+| SEC-04 | #251 | signupEmailCooldown.test.ts red 4/8 -> 8/8; 3 breaks exit 0 | no-migration | visible edge: re-signup within 2 min to change role/name keeps first email; admin list reads 1 page of 1000 users |
+| PERF-01 | #252 | lessonCatalogueSplit.test.ts red 3 routes -> 8/8; break exit 0; LCP lesson 11.6->7.3 s, modules 9.0->5.0 s; first-load 1046->256 KB | no-migration | OFFLINE: unvisited module won't open offline — Rafi OK (N26) |
+| SEO-02 | website#3 | check:og exit 1 on break (only /radlic) -> exit 0; build + check:site-claims green | no-migration | radlor-site has no CI; og:url/site_name gaps noted |
+| MAP-07+BUG-06 | #253 | analyticsFlush.test.ts red 2/4 -> 4/4; 2 breaks exit 0 | no-migration | stubbed PostgREST only |
+| OPS-19+PERF-12 | #254 | swTakeover precache test red on main -> green; 3 breaks exit 0 | no-migration; sw v237 | BUG-11/PERF-07 NOT applied: clips re-rendered under same URL (f5a7694f3) -> needs content-hashed clip URLs (later) |
+| PERF-03 | #255 | parentDashboardReads.test.ts red -> green; break exit 0; requests parent 10 kids 49->39 | no-migration | teacher 72 unchanged (needs one-RPC, later) |
+| SEC-07 (expand) | #256 | rosterRollbackDelete.test.ts red 2/4 -> 4/4; break exit 0 | no-migration | contract (drop policy + legacy fallback) = Rafi 3.9 |
+| SEO-04+SEO-05 | #257 | seoSocialMeta.test.ts red 5/8 -> 8/8; 4 breaks exit 0 | no-migration | test uses Next internal resolve-metadata (fails loudly on upgrade) |
+| BUG-08 | #259 | kvFallbackMerge.test.ts red 3/6 -> 6/6; 4 breaks exit 0 | no-migration | undated: IDB value wins on conflict; KV_PREFIXES second list (gated) |
+| TRIAL-3 | - | 161 files / 3939 passed after fixing #250 fixture (MAP-04 interaction); #255 stacked on #239 | - | 26 Sep |
+| FND-15 | #260 | deletionAuditTrail 12/12 red -> green; 2 breaks; BUG-09 overwrite caught + fixed, closing assertion watched raising | MIGRATION 20260926100600 (new deletion_log deny-all; redefines 8 DEFINER fns; delete_child_data(uuid,text)) | log retention: Rafi; break-check reports beforeAll throw as PASSED (checker defect) |
+| SEC-17 | #258 | errorBodiesNoDetail.test.ts red 5/6 -> 6/6; 2 breaks exit 0 | no-migration | - |
+| SEC-16 | #261 | entitlementAccessGuard 2/9 red -> 9/9; rls_regression C8a; 2 breaks exit 0 | MIGRATION 20260926100700 (is_chapter_entitled guard; DEFINER kept) | SEC-08 follow-up note on top of #243 (not fixed) |
+| OPS-13+SEC-10+OPS-17 | #263 | actionsPinned.test.ts red 3/5 -> 5/5; 2 breaks exit 0 | no-migration | Rafi: allowed_actions setting + Dependabot for actions |
+| TRIAL-4 | - | tsc clean; 166 files / 3977 passed; build OK; only new route /help/opengraph-image (#257) | - | fixed: #250 fixture (MAP-04), #259 floor (ARC-16), #258 stub (SEC-04) + stacked on #246; #260 stacked on #241 (BUG-09 guard overwrite) |
+| SEC-11 (app half) | #262 | cspHeader 4 new red -> green; break exit 0 (3 red) | no-migration | live check: sign-in after deploy |
+| PERF-05 | #264 | authLogoWeight red -> green; 2 breaks exit 0; /auth LCP 5984->5520 ms | no-migration | returning devices keep old PNG until next sw bump |
+| TRIAL-5 | - | vitest EXIT 0 (checked by exit code this time); 166 files / 3977 | - | previous trials read only the Tests line: blind to unhandled errors |
+| BUG-10 | #266 | errorNotConnection.test.ts red 7/9 -> 9/9; break exit 0 (5 red) | no-migration | P0C01/42501 wording = N9 |
+| NEW-01 break-check | #265 | break:live 8/8 (3 new cases red before) | no-migration | beforeEach expect() gap noted |
+| TRIAL-6 | - | tsc clean; vitest EXIT 0, 168 files / 3992; build OK | - | 26 Sep |
+
+**CI (read once, 26 Sep, not polled):** every fix PR green on `verify` + `rls-tests` except: #239 (fixed — five screen-test mocks lacked `sessionUserId`; then a Google-Fonts build fetch failure, re-run), #243 (`rls-tests` image-pull rate limit, re-run → green), and the stacked PRs (#245, #255, #258, #260, #263, #266) whose CI runs only once they are retargeted to `main`. Merge order, live checks and SQL: `docs/review/ROUND2.md`.
