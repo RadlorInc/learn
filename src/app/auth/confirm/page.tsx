@@ -50,8 +50,12 @@ function Confirm() {
         return
       }
       const chosen = data.user.user_metadata?.role
-      if ((chosen === 'parent' || chosen === 'teacher') && !(await getMyRole())) await setMyRole(chosen)
-      router.replace(consent ? `/consent/respond#t=${consent}` : homeForRole(await getMyRole()))
+      try {
+        if ((chosen === 'parent' || chosen === 'teacher') && !(await getMyRole())) await setMyRole(chosen)
+        router.replace(consent ? `/consent/respond#t=${consent}` : homeForRole(await getMyRole()))
+      } catch {
+        setFailed('network')   // the role could not be read: never treat that as "no role yet" (BUG-07)
+      }
     })()
   }, [th, router, attempt])
 

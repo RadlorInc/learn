@@ -10,25 +10,36 @@ import type { UserRole } from '@/data/supabase/types'
 /**
  * The signed-in user's role, or null if they haven't picked Teacher/Parent yet
  * (a fresh signup — the app shows the one-time role picker on that signal).
+ *
+ * ⚠️ THROWS when the role could not be READ (network, expired session, RLS). "Could not look" and
+ * "looked, no role" must never be the same value: null is what shows the one-time RolePicker, and a
+ * pick there writes over the real role (BUG-07). Callers already route a throw to their error UI.
  */
 export async function getMyRole(): Promise<UserRole | null> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError && authError.name !== 'AuthSessionMissingError') throw authError
   if (!user) return null
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
+  // PGRST116 = no profile row at all: a successful look that found nothing, i.e. no role yet.
+  if (error && error.code !== 'PGRST116') throw error
   return (data as { role: UserRole | null } | null)?.role ?? null
 }
 
-/** Persist the user's Teacher/Parent choice on their own profile row (RLS: own row only). */
+/**
+ * Persist the user's Teacher/Parent choice on their own profile row (RLS: own row only).
+ * Only ever FIRST sets a role (`role is null`): the picker is one-time, so a picker shown on a stale or
+ * wrong read can never overwrite a real role (BUG-07). Not a security boundary — the policy still allows it.
+ */
 export async function setMyRole(role: UserRole): Promise<boolean> {
   const supabase = db()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return false
-  const { error } = await supabase.from('profiles').update({ role }).eq('id', user.id)
+  const { error } = await supabase.from('profiles').update({ role }).eq('id', user.id).is('role', null)
   return !error
 }
 
