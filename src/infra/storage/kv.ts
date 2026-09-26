@@ -123,6 +123,12 @@ export const kv = {
     idbWrite('put', key, value).catch(() => {})
   },
 
+  /** Every key held, from whichever store is in use. */
+  keys(): string[] {
+    if (useFallback) return safeLS(() => Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!), [])
+    return [...mem.keys()]
+  },
+
   remove(key: string): void {
     if (useFallback) { safeLS(() => localStorage.removeItem(key), undefined); return }
     mem.delete(key)

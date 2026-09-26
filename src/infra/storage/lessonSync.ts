@@ -124,3 +124,20 @@ export async function pullLessonProgress(learnerId: string, lessonIds: readonly 
   if (items.length) { write([...read(), ...items]); await flushLessonSync() }
   return true
 }
+
+/**
+ * Sign-out (N16 / ARC-02): removes the children's progress copies — done, standing, practice run — from this device, so
+ * a shared or school computer does not keep every child the dashboard ever showed. The account holds them and the next
+ * sign-in pulls them back.
+ * ⚠️ A learner with ANY item still in the queue keeps its copies: an upload re-reads the device's copy when it sends
+ * (`send` above), so clearing them would upload an empty topic, or nothing. The queue itself is never touched here.
+ * Signed-out keys (`…-device-…`, doc 08) are not a learner's and are left alone.
+ */
+export function clearSyncedProgress(): void {
+  const waiting = new Set(read().map(x => x.learnerId))
+  const mirror = /^milo-newflow-(?:done|standing|run)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-/i
+  for (const k of kv.keys()) {
+    const m = mirror.exec(k)
+    if (m && !waiting.has(m[1])) kv.remove(k)
+  }
+}
