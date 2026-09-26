@@ -40,6 +40,7 @@ jobs:
     needs: ci
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.7 min over 26 runs; 10 min floor (ARC-07; GitHub default 360)
     permissions:
       contents: write
     steps:
@@ -59,6 +60,7 @@ jobs:
     # (green), so the pipeline never shows a false failure before the dashboard setup is done.
     if: ${{ vars.STAGING_PROJECT_REF != '' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # never run yet; same shape as migrate-prod (ARC-07; GitHub default 360)
     environment: staging
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -99,8 +101,17 @@ jobs:
   # EVERY push to main — and because `concurrency` above queues runs without cancelling, the next
   # push's `promote` would sit behind that waiting approval, so no deploy could land until someone
   # approved or rejected a migration run that had nothing to apply.
+  #
+  # ⚠️ "THIS PUSH" IS THE WRONG QUESTION (OPS-02): a migration whose migrate-prod was rejected, failed
+  # or cancelled while pending would never be retried by a later app-only push. The script diffs from
+  # the last commit a migrate-prod SUCCEEDED on, and answers `true` whenever it cannot tell.
+  # Read-only: it only lists this workflow's runs and jobs (`actions: read`).
   migrations-changed:
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.6 min over 26 runs; 10 min floor (ARC-07; GitHub default 360)
+    permissions:
+      contents: read
+      actions: read
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
     steps:
@@ -108,12 +119,9 @@ jobs:
         with:
           fetch-depth: 0
       - id: diff
-        run: |
-          if git diff --quiet "${{ github.event.before }}" "${{ github.sha }}" -- supabase/migrations; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"; echo "no migration files changed in this push"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"; git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" -- supabase/migrations
-          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/migrations-pending.sh "${{ github.sha }}"
 
   migrate-prod:
     # ⚠️⚠️ STAGING-FIRST IS SUSPENDED WHILE NO STAGING PROJECT EXISTS — AND ONLY THEN (2026-09-23,
@@ -129,6 +137,7 @@ jobs:
     needs: [ci, migrate-staging, migrations-changed]
     if: ${{ !cancelled() && needs.ci.result == 'success' && needs.migrations-changed.outputs.changed == 'true' && vars.PROD_PROJECT_REF != '' && (needs.migrate-staging.result == 'success' || (needs.migrate-staging.result == 'skipped' && vars.STAGING_PROJECT_REF == '')) }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10 # p95 0.6 min over 5 runs. approval wait is not run time (separate 30-day gate limit, GitHub limits doc) (ARC-07; GitHub default 360)
     # A required-reviewer protection rule on this GitHub Environment means a human approves every
     # production schema change.
     environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
