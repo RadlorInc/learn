@@ -44,7 +44,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
       - name: Promote main to release (this is what Vercel builds)
@@ -63,8 +63,8 @@ jobs:
     timeout-minutes: 10 # never run yet; same shape as migrate-prod (ARC-07; GitHub default 360)
     environment: staging
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         with:
           version: 2.117.0   # pinned: `latest` asks the GitHub API and a rate limit failed a deploy (2026-09-17)
       # The mirror of the prod guard, and the worse direction: a STAGING ref pointing at production
@@ -115,7 +115,7 @@ jobs:
     outputs:
       changed: ${{ steps.diff.outputs.changed }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           fetch-depth: 0
       - id: diff
@@ -142,8 +142,8 @@ jobs:
     # production schema change.
     environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
     steps:
-      - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         with:
           version: 2.117.0   # pinned: `latest` asks the GitHub API and a rate limit failed a deploy (2026-09-17)
       # ⚠️ THE REF IS ASSERTED IN THE REPO, NOT TRUSTED FROM THE DASHBOARD. `PROD_PROJECT_REF` sat
