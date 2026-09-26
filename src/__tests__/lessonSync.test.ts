@@ -9,12 +9,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const rpc = vi.fn()
 let rows: unknown = []
 // A database without `lesson_progress.run` (migration 20260925100000 not applied) refuses a select naming it, 42703.
-const db = vi.hoisted(() => ({ noRunColumn: false, selects: [] as string[] }))
+const db = vi.hoisted(() => ({ noRunColumn: false, noAnsweredAt: false, selects: [] as string[] }))
 vi.mock('@/data/repositories/_shared', async (orig) => {
   const actual = await orig<typeof import('@/data/repositories/_shared')>()
   return { ...actual, db: () => ({ rpc, from: () => ({ select: (cols: string) => ({ eq: async () => {
     db.selects.push(cols)
     if (db.noRunColumn && /\brun\b/.test(cols)) return { error: { code: '42703', message: 'column lesson_progress.run does not exist' } }
+    if (db.noAnsweredAt && /\banswered_at\b/.test(cols)) return { error: { code: '42703', message: 'column lesson_progress.answered_at does not exist' } }
     return rows === null ? { error: { code: 'x' } } : { data: rows }
   } }) }) }) }
 })
@@ -27,7 +28,7 @@ const { loadStanding, saveStanding } = await import('@/infra/storage/lessonStand
 const PGRST202 = { code: 'PGRST202', message: 'Could not find the function public.record_lesson_progress in the schema cache' }
 const calls = () => rpc.mock.calls.map(c => c[1] as Record<string, unknown>)
 
-beforeEach(() => { rpc.mockReset(); localStorage.clear(); rows = []; db.noRunColumn = false; db.selects.length = 0 })
+beforeEach(() => { rpc.mockReset(); localStorage.clear(); rows = []; db.noRunColumn = false; db.noAnsweredAt = false; db.selects.length = 0 })
 
 describe('uploads', () => {
   it('keep waiting while the database lacks the function, then go up with the device\'s state and the SAME event id', async () => {
@@ -36,8 +37,9 @@ describe('uploads', () => {
     syncLesson('L', 'g3m2-t1', 'first')
     await flushLessonSync()
     await flushLessonSync()
-    expect(rpc).toHaveBeenCalledTimes(2)
-    const [a, b] = calls()
+    // Each flush asks twice: with p_answered_at, then (PGRST202) in the older shape without it.
+    expect(rpc).toHaveBeenCalledTimes(4)
+    const [a, , b] = calls()
     expect(a.p_event).toBeTruthy()
     expect(b.p_event).toBe(a.p_event)
 
@@ -122,12 +124,12 @@ describe('where the child is in practice (short sessions)', () => {
     expect(loadRun('L', 'g3m2-t1')).toEqual(RUN)
     expect(db.selects.at(-1)).toMatch(/\brun\b/)
 
-    localStorage.clear(); db.selects.length = 0; db.noRunColumn = true
+    localStorage.clear(); db.selects.length = 0; db.noRunColumn = true; db.noAnsweredAt = true
     rows = [{ lesson_id: 'g3m2-t1', done: false, level: 2, streak: 1, mastered: false }]
     expect(await pullLessonProgress('L', ['g3m2-t1'])).toBe(true)
     expect(loadStanding('L', 'g3m2-t1')).toEqual({ level: 2, streak: 1, mastered: false })
-    expect(db.selects).toHaveLength(2)                       // asked with run, refused, asked again without
-    expect(db.selects[1]).not.toMatch(/\brun\b/)
+    expect(db.selects).toHaveLength(3)                       // with run + answered_at, with run, then without either
+    expect(db.selects[2]).not.toMatch(/\brun\b/)
   })
 
   it('a malformed run from the account is never used', async () => {
@@ -135,5 +137,63 @@ describe('where the child is in practice (short sessions)', () => {
     rows = [{ lesson_id: 'g3m2-t1', done: false, level: 0, streak: 0, mastered: false, run: { asked: 'x' } }]
     await pullLessonProgress('L', ['g3m2-t1'])
     expect(loadRun('L', 'g3m2-t1')).toBeNull()
+  })
+})
+
+/**
+ * BUG-02: the account keeps the NEWEST answered standing (migration 20260926100200), so every upload must say WHEN the
+ * standing it carries was produced — and a device must never make the account's copy look newer than it is.
+ */
+describe('answer time (BUG-02)', () => {
+  const at = (i: number) => calls()[i].p_answered_at
+
+  it('an upload carries the time the standing was saved on this device', async () => {
+    rpc.mockResolvedValue({ error: null })
+    saveStanding('L', 'g3m2-t1', { level: 2, streak: 0, mastered: false }, 1_000)
+    syncLesson('L', 'g3m2-t1', 'first')
+    await flushLessonSync()
+    expect(at(0)).toBe('1970-01-01T00:00:01.000Z')
+  })
+
+  it('an answer saved without a time is stamped with now', async () => {
+    rpc.mockResolvedValue({ error: null })
+    const before = Date.now()
+    saveStanding('L', 'g3m2-t1', { level: 1, streak: 0, mastered: false })
+    syncLesson('L', 'g3m2-t1', 'first')
+    await flushLessonSync()
+    expect(Date.parse(at(0) as string)).toBeGreaterThanOrEqual(before)
+  })
+
+  it('a topic never practised on this device is sent as the OLDEST possible time, so it cannot overwrite the account', async () => {
+    rpc.mockResolvedValue({ error: null })
+    markLessonDone('L', 'g3m2-t1')
+    syncLesson('L', 'g3m2-t1')
+    await flushLessonSync()
+    expect(calls()[0]).toMatchObject({ p_level: 0, p_answered_at: '1970-01-01T00:00:00.000Z' })
+  })
+
+  it('a pulled standing keeps the ACCOUNT\'s answer time, not the time of the pull', async () => {
+    rpc.mockResolvedValue({ error: null })
+    rows = [{ lesson_id: 'g3m2-t1', done: false, level: 3, streak: 0, mastered: false, answered_at: '2026-09-20T10:00:00+00:00' }]
+    await pullLessonProgress('L', ['g3m2-t1'])
+    syncLesson('L', 'g3m2-t1')
+    await flushLessonSync()
+    expect(calls()[0]).toMatchObject({ p_level: 3, p_answered_at: '2026-09-20T10:00:00.000Z' })
+  })
+
+  it('a database before the migration: the same call is repeated without p_answered_at, and nothing waits', async () => {
+    rpc.mockImplementation(async (_fn: string, args: Record<string, unknown>) => ({ error: 'p_answered_at' in args ? PGRST202 : null }))
+    saveStanding('L', 'g3m2-t1', { level: 1, streak: 0, mastered: false })
+    syncLesson('L', 'g3m2-t1', 'first')
+    await flushLessonSync()
+    expect(calls().map(c => 'p_answered_at' in c)).toEqual([true, false])
+    expect(calls()[1]).toMatchObject({ p_level: 1, p_outcome: 'first', p_event: calls()[0].p_event })
+    expect(pendingLessonUploads()).toBe(0)
+  })
+
+  it('a signed-out device stores no time with its standing (doc 08 describes that key\'s contents)', async () => {
+    saveStanding(null, 'g3m2-t1', { level: 1, streak: 0, mastered: false })
+    const { kv } = await import('@/infra/storage/kv')
+    expect(JSON.parse(kv.get('milo-newflow-standing-device-g3m2-t1') ?? 'null')).toEqual({ level: 1, streak: 0, mastered: false })
   })
 })

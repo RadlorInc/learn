@@ -6,7 +6,7 @@
  */
 import { db, classifySyncError, type SyncOutcome } from '@/data/repositories/_shared'
 
-export interface LessonRow { lesson_id: string; done: boolean; level: number; streak: number; mastered: boolean; run?: unknown }
+export interface LessonRow { lesson_id: string; done: boolean; level: number; streak: number; mastered: boolean; run?: unknown; answered_at?: string | null }
 export interface Wallet {
   balance: number; points_per_minute: number; enabled: boolean; minutes_per_day: number; time_zone: string
   minutes_used_today: number; playing_until: string | null
@@ -30,9 +30,11 @@ const missing = (e: { code?: string; message?: string }) => e.code === 'PGRST202
 const awaitingChapterIds = (e: { code?: string; message?: string }, args: Record<string, unknown>) =>
   e.code === '23514' && typeof args.p_lesson === 'string' && args.p_lesson.startsWith('c:')
 
-async function send(fn: string, args: Record<string, unknown>): Promise<SyncOutcome> {
+async function send(fn: string, args: Record<string, unknown>, older?: Record<string, unknown>): Promise<SyncOutcome> {
   try {
     const { error } = await db().rpc(fn, args)
+    // `older`: the same call in the shape a database without the newest migration takes (PostgREST matches by names).
+    if (error && older && missing(error)) return send(fn, older)
     // Not applied yet: keep it queued, so nothing earned before the migration is lost.
     return !error ? 'ok'
       : missing(error) || awaitingChapterIds(error, args) ? 'retry'
@@ -40,11 +42,18 @@ async function send(fn: string, args: Record<string, unknown>): Promise<SyncOutc
   } catch { return 'retry' }
 }
 
-export const recordLessonProgress = (learnerId: string, lessonId: string, s: Omit<LessonRow, 'lesson_id'>, outcome?: string, event?: string) =>
-  send('record_lesson_progress', {
+/**
+ * `s.at`: when the standing was produced (ms; 0/absent = unknown). The database keeps the newest answered standing, so a
+ * stale device cannot roll the account back (BUG-02, migration 20260926100200). Before that migration the function has
+ * no p_answered_at and answers PGRST202 — the call is repeated without it.
+ */
+export function recordLessonProgress(learnerId: string, lessonId: string, s: Omit<LessonRow, 'lesson_id'> & { at?: number }, outcome?: string, event?: string) {
+  const args = {
     p_learner: learnerId, p_lesson: lessonId, p_done: s.done, p_level: s.level, p_streak: s.streak, p_mastered: s.mastered,
     p_outcome: outcome ?? null, p_event: event ?? null,
-  })
+  }
+  return send('record_lesson_progress', { ...args, p_answered_at: new Date(s.at ?? 0).toISOString() }, args)
+}
 
 export const recordModulePractice = (learnerId: string, moduleId: string, event: string) =>
   send('record_module_practice', { p_learner: learnerId, p_module: moduleId, p_event: event })
@@ -66,8 +75,10 @@ const COLS = 'lesson_id, done, level, streak, mastered'
 export async function getLessonRows(learnerId: string): Promise<LessonRow[] | null> {
   try {
     const read = (cols: string) => db().from('lesson_progress').select(cols).eq('learner_id', learnerId)
-    let { data, error } = await read(`${COLS}, run`)
-    if (error?.code === '42703') ({ data, error } = await read(COLS))   // the column is not there yet (code deployed first)
+    let { data, error } = await read(`${COLS}, run, answered_at`)
+    // A column is not there yet (code deployed first): `answered_at` (20260926100200), then `run` (20260925100000).
+    if (error?.code === '42703') ({ data, error } = await read(`${COLS}, run`))
+    if (error?.code === '42703') ({ data, error } = await read(COLS))
     return error ? null : (data as unknown as LessonRow[])
   } catch { return null }
 }
