@@ -316,10 +316,9 @@ now backed by a label that exists; if this ever breaks again, prefer deleting th
 
 ### Known gaps this left behind, recorded rather than fixed
 
-- **CI runs Node 20** (`ci.yml`, `node-version: 20`) while `@supabase/supabase-js@2.112.3` and its
-  five sub-packages declare `engines.node: ">=22.0.0"`. npm treats `engines` as advisory with no
-  `.npmrc` `engine-strict`, and CI on Node 20 built and tested it cleanly — **measured on merge
-  commit `dfd15a1f`, not assumed**. But a runtime dependency now asks for a newer Node than CI runs.
+- ~~**CI runs Node 20**~~ ✅ **fixed 2026-09-26**: CI, nightly-e2e and weekly-layout run **Node 24**, the Vercel
+  project's `nodeVersion` (24.x, read from the project settings). jsdom 30 needs Node ≥ 22.22 and failed every
+  vitest worker on Node 20 (`webidl.util.markAsUncloneable is not a function`).
 - **GitHub annotates every run**: *"Node.js 20 is deprecated … `actions/checkout@v4`,
   `actions/setup-node@v4`, `supabase/setup-cli@v1` are being forced to run on Node.js 24."* The four
   major action bumps (#28 #37 #38 #43) were closed as planned work rather than triage; **this
