@@ -56,7 +56,7 @@ network TTS voice), SEC-06 (crash reports store URL tokens), OPS-02 (a rejected 
 
 | ID | area | severity | evidence | effort | title | when | status |
 |---|---|---|---|---|---|---|---|
-| FND-01 | legal/COPPA | Critical | Measured | S | Sign-up asks agreement to a Terms page that is live as "DRAFT — NOT IN FORCE"; founder's own G1 says no-go | fix now | Needs Rafi — N1 |
+| FND-01 | legal/COPPA | Critical | Measured | S | Sign-up asks agreement to a Terms page that is live as "DRAFT — NOT IN FORCE"; founder's own G1 says no-go | fix now | Decided by Rafi 26 Sep (floor US$100, §14 plain contact) → Fixed (#267) |
 | BUG-01 | progress sync / offline | High | Reproduced | M | Queued answers/points dropped when flushed by another account or no session (42501 → drop) | fix now | Fixed (#239) |
 | BUG-02 | progress sync / DB | High | Reproduced | M | Stale device rolls back level/mastered on the account; level_up re-minted | fix now | Fixed (#243) |
 | BUG-03 | consent | High | Reproduced | S | Consent grant failing after B3 scheduled: orphan "you gave permission" email + 24 h Resend-409 lockout | fix now | Fixed (#235) |

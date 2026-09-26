@@ -6,7 +6,7 @@ ARC → ARCHITECTURE-REVIEW, BUG → LATENT-BUGS, PERF → PERFORMANCE, SEO → 
 
 ## Now — while beta families are signing up
 
-- **N1 · FND-01 (Critical, legal).** Every sign-up screen says "By continuing you agree to our Terms", and
+- ✅ **DECIDED 26 Sep 2026 → #267 (floor US$100; §14 plain contact; beta, attorney to review).** **N1 · FND-01 (Critical, legal).** Every sign-up screen says "By continuing you agree to our Terms", and
   `/legal/terms` is live as "DRAFT — NOT IN FORCE" (`ConsentLine.tsx:35`, `registry.ts:56`; your checklist G1 calls
   this a no-go). **Recommend:** decide §11 (liability floor) and §14 (contact) today and publish the Terms. Until then,
   change the line to "…you agree to our Privacy Policy" (a one-line copy PR I can open on your word).

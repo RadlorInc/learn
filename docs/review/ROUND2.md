@@ -28,6 +28,7 @@ migration PR.
 
 | # | PR | finding | migration | notes |
 |---|---|---|---|---|
+| 0 | [#267](https://github.com/RadlorInc/learn/pull/267) | **FND-01** Terms published as beta (US$100 floor; §14 plain contact) | — | independent of everything else; merge first. Live: `/legal/terms` shows no DRAFT box |
 | 1 | [#234](https://github.com/RadlorInc/learn/pull/234) | the review docs | — | docs only; later PRs' SQL paths live beside these |
 | 2 | [#236](https://github.com/RadlorInc/learn/pull/236) | OPS-02 migrate-prod retried | — | the first push after it may ask you for one no-op approval |
 | 3 | [#245](https://github.com/RadlorInc/learn/pull/245) | ARC-07/OPS-18 CI job timeouts | — | stacked on #236 |
@@ -88,7 +89,7 @@ migration PR.
 
 ## 4. Needs Rafi — one line each (details and evidence in [NEEDS-RAFI.md](NEEDS-RAFI.md))
 
-1. **N1 FND-01** — publish the Terms (decide §11/§14) or change the sign-up line. *Rec: decide today.*
+1. **N1 FND-01** — ✅ decided 26 Sep (§12 floor US$100; §14 plain contact) → #267.
 2. **N2 SEC-01** — add a "set your password" step when an address was signed up more than once; check Resend's log. *Rec: yes.*
 3. **N3 SEC-03** — confirm `BACKUP_PASSPHRASE` is 32 random bytes; move backups off public artifacts after the beta. *Rec: confirm today.*
 4. **N4 OPS-01/FND-03** — move the prod DB secrets into the `production-db` environment; protect `release`; add a second owner. *Rec: this week.*
