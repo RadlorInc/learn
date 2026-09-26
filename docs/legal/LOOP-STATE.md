@@ -916,3 +916,13 @@ by the founder for this session. #237, #252, #269 + #275 approved by the founder
 | 10:0x | `fix-BUG-02-before.sql` 1 | 8 args ending `p_event uuid` · definer · search_path=public · acl postgres/authenticated/service_role |
 | 10:0x | `fix-BUG-02-before.sql` 2 | 0 rows (no `answered_at`) |
 | 10:0x | `fix-BUG-02-before.sql` 3 | pairs_with_extra 0 · extra_level_ups 0 |
+
+## Audio storage
+
+Brief: the founder's "Audio storage" loop (26 Sep 2026). Every voice clip moves from git/Vercel to one public Supabase
+Storage bucket; #233 (KG–2) is rebuilt without audio in git. Base: `main` = `4b7326ce5`, worktree `../w-audio`,
+branch `audio-storage` (local only). No production access; nothing pushed until the one PR.
+
+| step | status | proof |
+|---|---|---|
+| A0 measure | ✅ done 26 Sep, reported, waiting for the founder before A1/A2 | `main`: 3 voice folders in `public/audio/`, all in git — Josh `nzFihrBIvB34imQBuxub` 6,638 clips / 137 MB (grades 3–8, = lesson corpus exactly, 0 missing either way), Stevie `IvUJ…` 3,526 / 75 MB, Teddy `XjGY…` 3,846 / 85 MB. #233 adds 10,347 Josh clips (KG 1,224 / 16.0 MB, G1 4,170 / 52.7 MB, G2 4,953 / 63.5 MB; 0 key overlap with lessons). Format measured with `afinfo` on a sample: mono MP3, 22,050 Hz, ~32 kbps, Josh mean 3.8 s. No other locale has audio. Stevie/Teddy lesson corpora are empty and their static corpora have 0 keys in their manifests: no live screen found that plays them |

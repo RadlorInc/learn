@@ -49,6 +49,7 @@ declare
   v_asserts  int := 0;
   v_consent  uuid;                        -- the attacker's granted ACCOUNT consent (see below)
   v_owner_consent uuid;                   -- the owner's granted ACCOUNT consent: covers all three of their children
+  v_role     text;                        -- S1–S5: each client role in turn
 begin
   -- ── Setup (as the migration role; RLS bypassed here) ──────────────────────
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
@@ -905,6 +906,65 @@ begin
   if not exists (select 1 from public.parental_consents where id = v_owner_consent and state = 'granted') then
     raise exception 'RLS FAIL C3c: another parent''s withdrawal ended the owner''s consent';
   end if;
+
+  -- ── S0–S5: the lesson-audio bucket is read-by-URL only (20260927100000). A public bucket serves
+  -- /object/public/<name> WITHOUT RLS; every other door (list, upload, overwrite, delete) is storage.objects
+  -- under RLS, and must be shut for anon AND authenticated. Each refusal has its positive twin: the object
+  -- provably exists, so "a client sees 0 rows" means refused, not empty.
+  v_asserts := v_asserts + 1;
+  if not exists (select 1 from storage.buckets where id = 'lesson-audio' and public
+                 and file_size_limit = 262144 and allowed_mime_types = array['audio/mpeg']) then
+    raise exception 'RLS FAIL S0: lesson-audio is missing, not public, or not 256 KB / audio/mpeg only';
+  end if;
+  insert into storage.objects (bucket_id, name) values ('lesson-audio', 'rlstest0000000000.mp3');
+  select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = 'rlstest0000000000.mp3';
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL S1+: the control object is not there, so the refusals below would prove nothing'; end if;
+
+  foreach v_role in array array['anon', 'authenticated'] loop
+    execute format('set local role %I', v_role);
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', v_role)::text, true);
+
+    -- S1 list: a client sees no object of this bucket (fetch by exact URL is the only read path)
+    select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio';
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 0 then reset role; raise exception 'RLS FAIL S1: % can list lesson-audio (% rows)', v_role, v_cnt; end if;
+
+    -- S2 upload
+    begin
+      insert into storage.objects (bucket_id, name) values ('lesson-audio', 'rlstest-upload.mp3');
+      reset role;
+      raise exception 'RLS FAIL S2: % uploaded into lesson-audio', v_role;
+    exception when insufficient_privilege then
+      v_asserts := v_asserts + 1;
+    end;
+
+    -- S3 overwrite and S4 delete: both touch 0 rows.
+    -- ⚠️ BARE STATEMENTS, NO WHERE, ON PURPOSE. A WHERE that reads a column also needs a SELECT policy, so
+    -- `update … where bucket_id = …` touches 0 rows even when an anon UPDATE policy exists — this suite passed on
+    -- exactly that planted hole until the probe was made bare (2026-09-26). An attacker's statement is bare too.
+    update storage.objects set metadata = '{"rlstest":"hijack"}'::jsonb;
+    get diagnostics v_cnt = row_count;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 0 then reset role; raise exception 'RLS FAIL S3: % overwrote % lesson-audio object(s)', v_role, v_cnt; end if;
+    -- ⚠️ storage.protect_delete() refuses EVERY direct DELETE unless `storage.allow_delete_query` is 'true' — and
+    -- the Storage API sets exactly that before its own DELETE, so on the API path RLS alone decides. The probe
+    -- does what the API does. (A first version counted the trigger's refusal as a pass and stayed green with an
+    -- authenticated DELETE-anything policy planted — the trigger was masking the policy, 2026-09-26.)
+    perform set_config('storage.allow_delete_query', 'true', true);
+    delete from storage.objects;
+    get diagnostics v_cnt = row_count;
+    perform set_config('storage.allow_delete_query', 'false', true);
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 0 then reset role; raise exception 'RLS FAIL S4: % deleted % lesson-audio object(s)', v_role, v_cnt; end if;
+    reset role;
+  end loop;
+
+  -- S5: after all of that, the control object is still there, unchanged
+  select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = 'rlstest0000000000.mp3';
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL S5: the control object was changed or removed by a client role'; end if;
 
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
   raise notice 'RLS REGRESSION SUITE: ALL ASSERTIONS PASSED';

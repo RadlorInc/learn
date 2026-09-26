@@ -76,3 +76,9 @@ scripts/.voice-fragments.json
 # committing it would let `supabase db push` apply a backdated migration to PRODUCTION.
 supabase/migrations/00000000000000_baseline.sql
 supabase/.temp/
+supabase/.branches/
+
+# Recorded clips live in the lesson-audio bucket, not in git (2026-09-26). audio-src/ is the local copy scripts/audio/*
+# read; public/audio/*.mp3 is where clips USED to live, ignored so a manual unzip cannot put them back into git or Vercel.
+audio-src/
+public/audio/**/*.mp3
