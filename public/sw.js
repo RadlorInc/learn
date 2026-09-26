@@ -1,20 +1,20 @@
-const VERSION      = 'v237'
+const VERSION      = 'v238'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
 
-// NOTE: '/' is intentionally NOT pre-cached. The root is a redirect (→ /auth or
-// /parent); a service worker cannot return a cached redirected response to a
-// navigation (the browser fails it with ERR_FAILED). The root is handled by a
-// dedicated passthrough in the fetch handler below.
-// Only routes the build serves (/profile and /shop were deleted and answered 404). Gated by swTakeover.test.ts.
-const APP_PAGES = ['/menu', '/game', '/parent', '/auth', '/offline.html', '/manifest.json']
+// ⚠️ NO PAGE LIST (N26, 2026-09-26). Until v238 this precached a hand-kept APP_PAGES list for offline use; it went
+// stale twice (/profile and /shop answered 404, /modules and /lesson were never in it) and nothing promised it. The
+// founder's call: keep the offline ANSWER queue (IndexedDB, useOfflineSync — not this file), make no offline promise
+// beyond it. So install fetches ONE file: the page shown when a navigation fails with no network. A page the child
+// already opened online is still served from the cache when the network fails (the network-first branch below) —
+// best effort, not a promise. Gated by swTakeover.test.ts.
+const OFFLINE_PAGE = '/offline.html'
 
-// ─── Install — pre-cache all app pages ───────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(SHELL_CACHE)
-      .then(cache => Promise.allSettled(APP_PAGES.map(url => cache.add(url).catch(() => {}))))
+      .then(cache => cache.add(OFFLINE_PAGE).catch(() => {}))
       .then(() => self.skipWaiting())
   )
 })
@@ -60,15 +60,10 @@ self.addEventListener('fetch', event => {
 
   // Root navigations redirect (→ /auth or /parent). A SW must NOT serve a
   // redirected response to a navigation, so pass the request straight through
-  // and let the browser follow the redirect itself.
+  // and let the browser follow the redirect itself. Offline: the offline page (no precached /auth — no page list).
   if (request.mode === 'navigate' && url.pathname === '/') {
     event.respondWith(
-      fetch(request, { redirect: 'manual' }).catch(async () => {
-        const cache = await caches.open(SHELL_CACHE)
-        return (await cache.match('/auth')) ||
-               (await caches.match('/offline.html')) ||
-               new Response('Offline', { status: 503 })
-      })
+      fetch(request, { redirect: 'manual' }).catch(offlinePage)
     )
     return
   }
@@ -152,13 +147,17 @@ self.addEventListener('fetch', event => {
         const cached = await cache.match(request)
         if (cached && !cached.redirected) return cached
         if (request.mode === 'navigate') {
-          return caches.match('/offline.html').then(r => r || new Response('Offline', { status: 503 }))
+          return offlinePage()
         }
         return new Response('Offline', { status: 503 })
       }
     })
   )
 })
+
+async function offlinePage() {
+  return (await caches.match(OFFLINE_PAGE)) || new Response('Offline', { status: 503 })
+}
 
 /** Network first, falling back to the cached copy — for a small file whose CONTENT changes
  *  and whose staleness is silent (see the /audio/ branch). */

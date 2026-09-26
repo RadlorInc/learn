@@ -109,8 +109,8 @@ export default function PWAInstallBanner() {
           </div>
           <div style={{ fontSize: 13, opacity: 0.9, lineHeight: 1.4 }}>
             {platform === 'ios'
-              ? 'Play offline & hear the lessons without tapping first'
-              : 'Install for the best experience — works offline too!'}
+              ? 'Hear the lessons without tapping first'
+              : 'Install for the best experience'}
           </div>
         </div>
       </div>

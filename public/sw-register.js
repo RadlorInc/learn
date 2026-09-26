@@ -53,21 +53,7 @@
         .then(function (reg) {
           console.log('[Radlic SW] Registered:', reg.scope);
 
-          // After page loads, tell SW to cache all loaded JS chunks
-          // This ensures offline works after one online session
-          window.setTimeout(function () {
-            var scripts = Array.from(document.querySelectorAll('script[src]'))
-              .map(function (s) { return s.src; })
-              .filter(function (s) { return s.includes('/_next/static/'); });
-            var links = Array.from(document.querySelectorAll('link[rel=stylesheet][href]'))
-              .map(function (l) { return l.href; })
-              .filter(function (h) { return h.includes('/_next/static/'); });
-            var urls = scripts.concat(links);
-            if (urls.length > 0 && reg.active) {
-              reg.active.postMessage({ type: 'CACHE_URLS', urls: urls });
-              console.log('[Radlic SW] Requested caching of', urls.length, 'chunks');
-            }
-          }, 2000);
+          // No CACHE_URLS message: the worker never handled one (N26, 2026-09-26). Chunks are cached as they load.
         })
         .catch(function (err) { console.warn('[Radlic SW] Failed:', err); });
     });

@@ -57,8 +57,8 @@ function plainText(node: React.ReactNode): string {
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'The app looks wrong, or older than it should',
-    a: <>Fully close the app and open it again — not just a refresh. Radlic keeps a copy on the device
-       so it works offline, and occasionally that copy is a version behind. Reopening replaces it.</>,
+    a: <>Fully close the app and open it again — not just a refresh. Radlic keeps parts of itself on the
+       device so it loads faster, and occasionally that copy is a version behind. Reopening replaces it.</>,
   },
   {
     q: 'My child\u2019s progress has disappeared',
