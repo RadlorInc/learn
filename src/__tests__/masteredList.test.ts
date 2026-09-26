@@ -15,6 +15,7 @@ const db = {
   dates: {} as Record<string, string>,
 }
 vi.mock('@/data/repositories/points', () => ({
+  sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
   getRecentPoints: async () => [],
   getLessonRows: async () => db.rows,
   getMasteredDates: async () => db.dates,

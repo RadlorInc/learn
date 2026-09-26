@@ -24,6 +24,7 @@ vi.mock('@/infra/useMiloSpeaker', () => ({ speak: () => {}, speakSteps: () => ()
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 const ledger: { lesson_id: string | null; reason: string; points: number; created_at: string }[] = []
 vi.mock('@/data/repositories/points', () => ({
+  sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
   getRecentPoints: async () => ledger,
 }))
