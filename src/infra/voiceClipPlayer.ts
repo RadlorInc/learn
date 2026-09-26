@@ -21,8 +21,8 @@ import { AUDIO_BASE } from '@/core/audioBase'
 /** One module's clips: clip key → [object name (16 hex), clipCheck of the line]. Built by scripts/audio/build-manifest.mjs. */
 export type ClipIndex = Record<string, [string, string]>
 
-// The voice a SCREEN speaks in, and where that screen's clips are listed — set while a lesson is mounted (LessonPlayer
-// passes its module's index loader, so infra never imports lesson content).
+// The voice a SCREEN speaks in, and where that screen's clips are listed — set while a lesson or a KG–2 chapter is mounted
+// (LessonPlayer passes its module's index loader, /game the playing chapter's, so infra never imports content).
 let _sceneVoice: string | null = null
 let _indexLoad: (() => Promise<ClipIndex>) | null = null
 export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>): void {
@@ -33,7 +33,7 @@ export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>
 /**
  * The voice a line plays in, or null for the device voice. ⚠️ ONLY JOSH (founder, 2026-09-26): Stevie and Teddy are
  * deleted, and so are the two things that used to reach them — the per-device pick (default Stevie) and the 3–5 band's
- * voice (Teddy). Anything but JOSH, and any line spoken outside a lesson, is the device voice, as it was before
+ * voice (Teddy). Anything but JOSH, and any line spoken outside a lesson or a KG–2 chapter, is the device voice, as before
  * (their static lines had 0 clips). One guard, so no path can ask for a deleted voice's files.
  */
 function voiceNow(): string | null {
