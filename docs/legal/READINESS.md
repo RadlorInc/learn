@@ -1,14 +1,23 @@
 # Launch readiness — the one checklist
 
-**Updated 24 September 2026, at the end of Round 1.** "Launch" means **the first real family**, and separately
+**Updated 26 September 2026 (founder's N28), after the deep review; before that 24 September, at the end of Round 1.** "Launch" means **the first real family**, and separately
 **the first payment**. Every line says where its proof lives. **Prefer re-measuring to trusting this file:**
 `npx vitest run src/__tests__/legalSwitch.test.ts` prints every legal page's refusals,
 `placeholderAudit.test.ts` holds `PLACEHOLDERS.md` to the documents, and `LOOP-STATE.md` has each proof. A line
 here is true on the day it was written and on no other day.
 
-**Today: not launchable, by design.** Every `/legal/*` page is dark, and every account on production is a
-team/intern test account (the founder's statement; the database cannot tell). **No real family is invited until
-every box marked 👪 is ticked.** Boxes marked 💳 must be ticked **before any payment**.
+**Today (26 September 2026): a private beta with real families is running** — US families the founder knows,
+invited from **25 September 2026** — on the founder's decisions standing in for attorney sign-off (ATTORNEY-PACKET,
+*"Decided by the founder for the beta"*; nothing has been reviewed by the attorney yet). Published: Privacy Policy,
+Parent rights, Subprocessors, Cookies, Retention (#208, 24 Sep); the Terms as a beta version (#267, merging
+26 Sep). Dark: the Refund policy (billing is off; the beta is free).
+
+**This file does not hold the number of families.** It changes daily; run
+`docs/review/sql/readiness-family-count.sql` (read-only, Rafi) and prefer that to any number written here.
+
+⚠️ The 👪 boxes below were written as the bar for the first real family, and **the beta started before all of them
+were ticked**. An open 👪 box is now a risk being carried with real children's data, not a gate. Boxes marked 💳
+must still be ticked **before any payment**.
 
 ---
 
@@ -20,12 +29,15 @@ every box marked 👪 is ticked.** Boxes marked 💳 must be ticked **before any
 - [x] **Crash records cascade with the child**: 0 orphans (D4/D6)
 - [x] **Nightly encrypted backup** running unattended; restore proven (32 tables / 968 rows) (#40–#42)
 - [x] **No third-party tracking in a child's session**: one origin; CSP `connect-src` limited (23 Sep audit)
-- [x] **Legal surface**: 7 pages routed, dark, `noindex`, linked from every collection point; the publish switch refuses each page for placeholders / draft / sign-off / Spanish (`legalSwitch`, `legalSurface`)
+- [x] **Legal surface**: 7 pages routed and linked from every collection point; the publish switch refuses a page for placeholders / draft / sign-off / Spanish (`legalSwitch`, `legalSurface`). Five published for the beta (#208), Terms published as beta (#267), Refund dark
 - [x] **Teacher roster paused** until school consent exists (live since D4)
 - [x] **Secret scanning + push protection on**; **org 2FA required** (measured 24 Sep)
 - [x] **Round 1, proven in code (not yet merged)**: see section 2. Every PR has tests that went red on a planted break, plus green CI.
 
 ## 2. Built, waiting for a Round-2 step (ROUND-2.md §1–§2)
+
+⚠️ **Every PR in this table MERGED on 23 September 2026** (measured on GitHub, 26 Sep). What each still lacks is
+its Round-2 *proof step* on production; a box is ticked only when that proof is recorded in LOOP-STATE.
 
 | | item | PR | Round-2 step |
 |---|---|---|---|
