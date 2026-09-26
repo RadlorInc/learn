@@ -9,7 +9,7 @@ check below reads names, settings and rows, never secrets.**
 
 | # | Question | How to check | If NO |
 |---|---|---|---|
-| G1 | **Are the Terms of Service public?** Signup says "By continuing you agree to our Terms", so a dark Terms page is a no-go. | Open `https://radlic.com/legal/terms` after deploy: no red "DRAFT — NOT IN FORCE" box. | Decide the two open points (§1 below); a small PR fills them and flips the switch. |
+| G1 | **Are the Terms of Service public?** Signup says "By continuing you agree to our Terms", so a dark Terms page is a no-go. | Open `https://radlic.com/legal/terms` after deploy: no red "DRAFT — NOT IN FORCE" box. | **Decided 26 Sep 2026** (§1): the PR that fills them and flips the switch is `legal/terms-beta`. |
 | G2 | **Is the Privacy Policy public, with the beta label?** | `https://radlic.com/legal/privacy`: the "Beta version. In effect from 25 September 2026…" box, then the policy. | Do not invite anyone. |
 | G3 | **Is `notice-v6` in the production database?** (The rename's migration, needed before any parent can give consent.) | Supabase → SQL editor: `select version, seq, reconsent_required from public.consent_notice_versions order by seq;` → a `notice-v6 \| 6 \| false` row. | Approve the `production-db` run for `20260924120000_notice_v6_radlic.sql` (docs/RENAME-MANUAL.md §B), then re-check. **No consent works without it.** |
 | G4 | **Does consent work end to end on production?** | With a test parent email you control: sign up → tick the notice → the "please confirm" email arrives from **Radlic** → press "I give permission" → add a child → the child can open a lesson. | Stop; send the console / error query (§4) to engineering. |
@@ -18,7 +18,11 @@ check below reads names, settings and rows, never secrets.**
 
 All six YES → invite the families.
 
-## 1. The two decisions still open (they keep the Terms dark)
+## 1. The two decisions that kept the Terms dark — decided 26 September 2026 (beta; attorney to review)
+
+**Decided:** §12's floor is **US$100**; §14 is a plain contact (address + support@radlor.com, no designated agent, no
+phone). The Terms are published as the beta version, effective 26 September 2026. What follows is the question as it
+was put.
 
 1. **§11 — the liability floor.** "The greater of (A) what you paid us in 12 months, or (B) **$___**." In the beta (A) is
    zero, so (B) is the cap. Options given: US$100 (recommended) or US$50.
