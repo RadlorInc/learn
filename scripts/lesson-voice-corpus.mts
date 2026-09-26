@@ -21,20 +21,23 @@
  */
 import { writeFileSync, mkdirSync } from 'node:fs'
 import { MODULES } from '../src/features/lessons/modules.ts'
-import { clipKey, normalizeSpoken } from '../src/core/voiceClips.ts'
+import { clipKey, clipCheck, normalizeSpoken } from '../src/core/voiceClips.ts'
 import { SAY, START, hintsFor, wonFor } from '../src/features/lessons/script.ts'
 import { lessonVoice } from '../src/infra/storage/voicePref.ts'
 import { renderOf, type VoiceStyle } from '../src/features/lessons/content/voice/styles.ts'
 
 const outDir = process.argv[2] ?? 'scripts/.voice-lessons'
 
-/** Which recorded voice reads a lesson: lessonVoice, the function the player uses, so the two cannot disagree. */
-const NAME: Record<string, string> = { XjGYkUkzth8BPs29fmcV: 'teddy', IvUJKFyjVb5hItY9dJAT: 'stevie', nzFihrBIvB34imQBuxub: 'josh' }
-const VOICE = (id: string) => NAME[lessonVoice(id)]
+/** Which recorded voice reads a lesson: lessonVoice, the function the player uses, so the two cannot disagree. Josh is
+ *  the ONLY recorded voice (founder, 2026-09-26: Stevie and Teddy deleted); a lesson with no voice gets no corpus rows
+ *  and speaks in the device voice. */
+const NAME: Record<string, string> = { nzFihrBIvB34imQBuxub: 'josh' }
+const VOICE = (id: string) => { const v = lessonVoice(id); return v ? NAME[v] : undefined }
 
 type Kind = 'beat' | 'bigIdea' | 'screen1' | 'turn' | 'hint' | 'twin' | 'won' | 'feedback'
-// `text` is what the voice model reads (renderOf: tags, pauses, symbols spelt out); `key` is the line as the lesson says it.
-type Row = { key: string; text: string; style: VoiceStyle; voice: string; grade: number; kind: Kind; where: string }
+// `text` is what the voice model reads (renderOf: tags, pauses, symbols spelt out); `key` is the line as the lesson says it,
+// and `check` is clipCheck of that same line (the player plays a clip only when key AND check match — voiceClips.ts).
+type Row = { key: string; check: string; text: string; style: VoiceStyle; voice: string; grade: number; kind: Kind; where: string }
 const ORDER: Kind[] = ['beat', 'bigIdea', 'screen1', 'turn', 'hint', 'twin', 'won', 'feedback']
 
 // By voice + key: identical text is ONE clip PER VOICE. ⚠️ Keyed by text alone (until 2026-09-17), a line said in both a
@@ -70,13 +73,13 @@ for (const m of MODULES) {
   }
 }
 
-function add(r: Omit<Row, 'key' | 'style'>) {
+function add(r: Omit<Row, 'key' | 'check' | 'style' | 'voice'> & { voice: string | undefined }) {
   const text = normalizeSpoken(r.text)
-  if (!text) return
-  const key = clipKey(text), { style, say } = renderOf(text)
+  if (!text || !r.voice) return
+  const key = clipKey(text), check = clipCheck(text), { style, say } = renderOf(text)
   const had = rows.get(`${r.voice}:${key}`)
   if (had) { if (!had.where.includes(r.where)) had.where += ` + ${r.where}` ; return }
-  rows.set(`${r.voice}:${key}`, { ...r, text: say, style, key })
+  rows.set(`${r.voice}:${key}`, { ...r, voice: r.voice, text: say, style, key, check })
 }
 
 const all = [...rows.values()]
@@ -91,14 +94,14 @@ for (const voice of Object.values(NAME)) {
 }
 writeFileSync(`${outDir}/lines-all.jsonl`, all.map(r => JSON.stringify(r)).join('\n') + '\n')
 
-// The corpora the Kaggle notebook renders (scripts/chatterbox-kaggle.ipynb → scripts/chatterbox-render.py), in the
+// The corpora the Kaggle notebook renders (scripts/kaggle-josh-notebook.py → scripts/chatterbox-render.py), in the
 // renderer's own shape. Written to scripts/, NOT outDir: the notebook git-clones the repo and reads them from there,
 // so they must be committed and pushed before a run can see them. Beats first, then the big ideas, so an
 // interrupted run has rendered the teaching screens before the practice-miss line.
 for (const voice of Object.values(NAME)) {
   const mine = all.filter(r => r.voice === voice).sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
   writeFileSync(`scripts/.voice-corpus-lessons-${voice}.json`,
-    JSON.stringify(mine.map(r => ({ key: r.key, text: r.text, style: r.style, chars: r.text.length, kind: r.kind, sources: [r.where] })), null, 2) + '\n')
+    JSON.stringify(mine.map(r => ({ key: r.key, check: r.check, text: r.text, style: r.style, chars: r.text.length, kind: r.kind, sources: [r.where] })), null, 2) + '\n')
 }
 
 const chars = all.reduce((n, r) => n + r.text.length, 0)

@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import { oldDomainRedirects } from './src/app/site'
+import { audioBaseFrom, audioOriginFrom } from './src/core/audioBase'
 
 /**
  * The CSP `connect-src` origins for Supabase, derived at BUILD time from `NEXT_PUBLIC_SUPABASE_URL`
@@ -17,6 +18,19 @@ function supabaseConnectSrc(): string {
     console.warn('⚠️ CSP: NEXT_PUBLIC_SUPABASE_URL is missing or not a URL — connect-src falls back to https://*.supabase.co wss://*.supabase.co')
     return 'https://*.supabase.co wss://*.supabase.co'
   }
+}
+
+/**
+ * The origin the recorded lesson audio is fetched from — derived by the SAME function the player uses
+ * (src/core/audioBase.ts), so the CSP allows exactly the host the player asks and a move (to R2, say) changes one value.
+ * Missing → no origin: the player asks for no clip and the CSP names none.
+ */
+// Read at the same moment as supabaseConnectSrc (when headers() runs), so the two can never name different projects.
+const audioOrigin = () => audioOriginFrom(audioBaseFrom(process.env.NEXT_PUBLIC_AUDIO_BASE_URL, process.env.NEXT_PUBLIC_SUPABASE_URL))
+/** connect-src: Supabase plus the audio origin when it is somewhere else (the prefetch is a fetch()). No duplicates. */
+function connectSrc(): string {
+  const supa = supabaseConnectSrc(), audio = audioOrigin()
+  return audio && !supa.split(' ').includes(audio) ? `${supa} ${audio}` : supa
 }
 
 const nextConfig: NextConfig = {
@@ -160,12 +174,14 @@ const nextConfig: NextConfig = {
                *  it blocked the `data:` WAV that `unlockVoiceClips()` plays inside the intro tap —
                *  the mobile-autoplay unlock. Blocked, the element is never unlocked, so every
                *  ElevenLabs clip in bands 12–18 falls back to browser speech, which most Chrome
-               *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing;
-               *  the clips themselves are 'self' (/audio/<voice>/*.mp3). */
-              "media-src 'self' data:",
+               *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing.
+               *  ⚠️ AND THE CLIPS THEMSELVES ARE ON THE AUDIO ORIGIN since 2026-09-26 (the lesson-audio bucket): leave it
+               *  out and every <audio> load is blocked, every line falls to device speech, and nothing reports it —
+               *  the same silent class as above. cspHeader.test.ts asserts the origin is here. */
+              `media-src 'self' data:${audioOrigin() ? ` ${audioOrigin()}` : ''}`,
               // Supabase (REST + realtime) — the ONE project this build talks to, not every project on
               // supabase.co (SEC-11: a wildcard would let injected script post data to anyone's project).
-              `connect-src 'self' ${supabaseConnectSrc()}`,
+              `connect-src 'self' ${connectSrc()}`,
               "worker-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'self'",

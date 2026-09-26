@@ -13,7 +13,7 @@
  * Expected values are written out by hand (CLAUDE.md: a check must not derive its expectation from the thing it tests).
  */
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 
 type Entry = { name: string; sha256: string; md5: string; bytes: number }
 const M = JSON.parse(readFileSync('scripts/audio/manifest.json', 'utf8')) as { voice: string; clips: number; objects: number; bytes: number; keys: Record<string, Entry> }
@@ -64,5 +64,28 @@ describe('audio manifest', () => {
     const bad = Object.entries(M.keys).filter(([, e]) =>
       !(Number.isInteger(e.bytes) && e.bytes > 0 && e.bytes <= 262144) || !/^[0-9a-f]{32}$/.test(e.md5))
     expect(bad.map(([k]) => k)).toEqual([])
+  })
+
+  it("every module's runtime index agrees with the manifest and the corpus, and index.ts loads exactly those files", () => {
+    // src/features/lessons/voice-index is GENERATED (build-manifest.mjs); this catches a hand edit or a stale copy in CI,
+    // where build-manifest --check cannot run (no audio there).
+    const dir = 'src/features/lessons/voice-index'
+    const files = readdirSync(dir).filter(f => f.endsWith('.json')).sort()
+    const lessonRows = JSON.parse(readFileSync('scripts/.voice-corpus-lessons-josh.json', 'utf8')) as { key: string; check: string }[]
+    const check = new Map(lessonRows.map(r => [r.key, r.check]))
+    const wrong: string[] = []
+    let entries = 0
+    for (const f of files) {
+      for (const [k, [name, chk]] of Object.entries(JSON.parse(readFileSync(`${dir}/${f}`, 'utf8')) as Record<string, [string, string]>)) {
+        entries++
+        if (M.keys[k]?.name !== `${name}.mp3`) wrong.push(`${f} ${k}: object ${name}`)
+        if (check.get(k) !== chk) wrong.push(`${f} ${k}: check ${chk}`)
+      }
+    }
+    expect(files.length, 'positive control: one index per lesson module').toBe(36)
+    expect(entries).toBeGreaterThan(6000)
+    expect(wrong.slice(0, 5)).toEqual([])
+    const loaders = [...readFileSync(`${dir}/index.ts`, 'utf8').matchAll(/import\('\.\/([a-z0-9]+)\.json'\)/g)].map(m => `${m[1]}.json`).sort()
+    expect(loaders).toEqual(files)
   })
 })

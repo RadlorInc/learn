@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import Link from 'next/link'
 import { speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
 import { setSceneVoice, prefetchClips, setClipRate } from '@/infra/voiceClipPlayer'
+import { VOICE_INDEX } from './voice-index'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { lessonVoice } from '@/infra/storage/voicePref'
 import {
@@ -74,8 +75,10 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const audio = true
   const [asked, setAsked] = useState(false)   // Hint tapped on a practice problem
   // Her lines play from recorded clips in this grade's voice (lines without a clip still fall back to browser speech).
+  // The module's own clip index goes with it — a few KB, loaded as its own chunk (voice-index/, built by
+  // scripts/audio/build-manifest.mjs), instead of one index of every clip.
   useEffect(() => {
-    setSceneVoice(lessonVoice(lesson.id))
+    setSceneVoice(lessonVoice(lesson.id), VOICE_INDEX[lesson.id.split('-')[0]])
     setClipRate(LESSON_RATE)
     // Download her lines now, so one sentence runs into the next instead of waiting on a download between them.
     prefetchClips([...lesson.screens.flatMap(sc => sc.beats?.map(b => b.say) ?? []), SAY.turn(lesson), lesson.bigIdea])

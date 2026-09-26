@@ -11,27 +11,33 @@
  * That matters because the browser-speech path carries hard-won blocked-audio and
  * timed-sweep handling we do not want to duplicate or regress.
  */
-import { clipKey } from '@/core/voiceClips'
-import { getVoicePref, BAND_VOICE } from '@/infra/storage/voicePref'
-import { getActiveLearner } from '@/data/supabase/useLearnerSession'
+import { clipKey, clipCheck } from '@/core/voiceClips'
+import { JOSH } from '@/infra/storage/voicePref'
+import { AUDIO_BASE } from '@/core/audioBase'
 
 // (Clip-only mode — a missing clip stays silent — was removed 2026-09-24 with the fragment stitcher it depended on;
 // its one caller, the teen GameShell, was deleted 2026-09-20. A line with no clip is spoken by the browser.)
 
-// The voice a SCREEN speaks in, whatever the learner's band or the device pick — a new-flow lesson reads in its grade's
-// voice (lessonVoice), because that is the voice its clips were rendered in. Set while a lesson is mounted.
-// It wins over a stored 'device' pick too (see voiceNow).
+/** One module's clips: clip key → [object name (16 hex), clipCheck of the line]. Built by scripts/audio/build-manifest.mjs. */
+export type ClipIndex = Record<string, [string, string]>
+
+// The voice a SCREEN speaks in, and where that screen's clips are listed — set while a lesson is mounted (LessonPlayer
+// passes its module's index loader, so infra never imports lesson content).
 let _sceneVoice: string | null = null
-export function setSceneVoice(v: string | null): void { _sceneVoice = v }
+let _indexLoad: (() => Promise<ClipIndex>) | null = null
+export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>): void {
+  _sceneVoice = v
+  _indexLoad = v ? index ?? null : null
+}
 
 /**
- * The voice a line plays in, or null for browser speech. A lesson's scene voice wins even over a stored 'device' pick:
- * the picker that set it was deleted (2026-09-17), so the pick could never be undone and the lesson spoke in browser
- * TTS for ever. Elsewhere, the learner's band may own a voice (3–5 → Teddy); otherwise the device pick stands.
+ * The voice a line plays in, or null for the device voice. ⚠️ ONLY JOSH (founder, 2026-09-26): Stevie and Teddy are
+ * deleted, and so are the two things that used to reach them — the per-device pick (default Stevie) and the 3–5 band's
+ * voice (Teddy). Anything but JOSH, and any line spoken outside a lesson, is the device voice, as it was before
+ * (their static lines had 0 clips). One guard, so no path can ask for a deleted voice's files.
  */
 function voiceNow(): string | null {
-  const pref = getVoicePref()
-  return _sceneVoice ?? (pref === 'device' ? null : BAND_VOICE[getActiveLearner()?.age_group ?? ''] ?? pref)
+  return _sceneVoice === JOSH ? JOSH : null
 }
 
 let _active: HTMLAudioElement | null = null
@@ -75,42 +81,40 @@ export function unlockVoiceClips(): void {
 }
 
 /**
- * The clip keys a voice has, ONE promise per voice.
+ * A module's clip index, ONE promise per module loader.
  *
- * ⚠️ PER VOICE, NOT ONE SHARED SET (2026-09-24). A single `_keys` was filled by whichever manifest answered LAST, so a
- * slow manifest for the voice a page used before a lesson (the band's voice on the child's home) could land after the
- * lesson's own and replace it: every lesson line then looked missing, the player asked for stitching fragments that do
- * not exist (the 404s on /frag/fragments.json in production), and fell back to browser speech. A map cannot mix them up.
+ * ⚠️ WHERE IT COMES FROM (2026-09-26). The clips used to be listed in one /audio/<voice>/manifest.json per voice (70 KB,
+ * 34 KB gzip). They now live in the lesson-audio bucket under content-hash names, so a line needs its object NAME, and one
+ * index of every name was 109–167 KB gzip — a slower first lesson. So each module carries its own (≈5 KB gzip), a hashed
+ * JS chunk loaded with the module: cached immutably like the rest of /_next/static, and it cannot go stale, because a new
+ * render means a new build means a new chunk (the stale-manifest class of 2026-09-04 cannot recur).
  *
- * ⚠️ `no-cache` = REVALIDATE, not "do not cache" — the request still goes out with the ETag and an unchanged manifest
- * comes back 304. `/audio/` was once served with max-age=2592000, so a device that loaded the app before a render kept
- * the previous key list for up to a month and never asked for the new clips (17–18 mute in Chrome) — silent by
- * construction, because a short list is a clean miss and a miss falls back to browser speech.
+ * ⚠️ A FAILED load is not remembered as final (BUG-05, 2026-09-26): it answers empty for this call and is retried by a
+ * later call, no sooner than INDEX_RETRY_MS after it, so an offline device does not ask on every line.
  */
-const _manifests = new Map<string, Promise<Set<string>>>()
-// ⚠️ A FAILED load is not remembered as final (BUG-05, 2026-09-26). It used to be memoised like a success, so one blip
-// (offline, the service worker's 503, a CDN hiccup) left every line in that voice "not in the manifest" — browser speech
-// or silence — until a full reload. A failure now answers empty for this call and is retried by a later call, no sooner
-// than MANIFEST_RETRY_MS after it, so an offline device does not ask on every line. A success stays cached as before.
-const MANIFEST_RETRY_MS = 10_000
-const _failedAt = new Map<string, number>()
-function loadManifest(voice: string): Promise<Set<string>> {
-  let p = _manifests.get(voice)
-  const failed = _failedAt.get(voice)
-  if (!p || (failed !== undefined && Date.now() - failed >= MANIFEST_RETRY_MS)) {
-    _failedAt.delete(voice)
-    p = fetch(`/audio/${voice}/manifest.json`, { cache: 'no-cache' })
-      .then((r) => { if (!r.ok) throw new Error(`manifest ${r.status}`); return r.json() })
-      .then((keys: string[]) => new Set(keys))
-      .catch(() => { _failedAt.set(voice, Date.now()); return new Set<string>() })  // no manifest → this line falls back
-    _manifests.set(voice, p)
+const _indexes = new Map<() => Promise<ClipIndex>, Promise<ClipIndex>>()
+const INDEX_RETRY_MS = 10_000
+const _failedAt = new Map<() => Promise<ClipIndex>, number>()
+function loadIndex(load: () => Promise<ClipIndex>): Promise<ClipIndex> {
+  let p = _indexes.get(load)
+  const failed = _failedAt.get(load)
+  if (!p || (failed !== undefined && Date.now() - failed >= INDEX_RETRY_MS)) {
+    _failedAt.delete(load)
+    p = load().catch(() => { _failedAt.set(load, Date.now()); return {} as ClipIndex })   // no index → this line falls back
+    _indexes.set(load, p)
   }
   return p
 }
 
-// A voice change (or a new render arriving) re-reads the manifests.
-if (typeof window !== 'undefined') {
-  window.addEventListener('milo-voice-change', () => { _manifests.clear(); _failedAt.clear() })
+/**
+ * The URL of a line's clip, or null: `<AUDIO_BASE>/<object name>.mp3` and NOTHING else — no voice, learner, grade, locale
+ * or query string (the name is a hash of the audio bytes). A clip is used only when the line's key AND its independent
+ * check both match the index; key alone is 32 bits and runtime-built lines collide with real clips (voiceClips.ts), so a
+ * line carrying a child's name can never reach a request.
+ */
+function clipUrl(index: ClipIndex, text: string): string | null {
+  const e = index[clipKey(text)]
+  return AUDIO_BASE && e && e[1] === clipCheck(text) ? `${AUDIO_BASE}/${e[0]}.mp3` : null
 }
 
 // ⚠️ There is no fragment stitching any more (removed 2026-09-24). It asked for /audio/<voice>/frag/fragments.json and
@@ -123,12 +127,12 @@ if (typeof window !== 'undefined') {
  * connection). The service worker keeps them (cache-first), so the <audio> element's own request is a cache hit.
  */
 export function prefetchClips(texts: string[]): void {
-  const voice = voiceNow()
-  if (!voice || typeof fetch === 'undefined') return
-  void loadManifest(voice).then(keys => {
+  const load = _indexLoad
+  if (!voiceNow() || !load || typeof fetch === 'undefined') return
+  void loadIndex(load).then(index => {
     for (const t of texts) {
-      const key = clipKey(t)
-      if (keys.has(key)) void fetch(`/audio/${voice}/${key}.mp3`).catch(() => {})
+      const url = clipUrl(index, t)
+      if (url) void fetch(url).catch(() => {})
     }
   })
 }
@@ -174,8 +178,8 @@ export function speakLine(text: string, opts: Opts): () => void {
     stopClip()
   }
 
-  const voice = voiceNow()
-  if (!voice) { settled = 'tts'; fallback(); return cancel }
+  const load = _indexLoad
+  if (!voiceNow() || !load) { settled = 'tts'; fallback(); return cancel }
 
   const end = () => {
     if (sweep) { clearInterval(sweep); sweep = null }
@@ -192,13 +196,13 @@ export function speakLine(text: string, opts: Opts): () => void {
     fallback()
   }
 
-  void loadManifest(voice).then((keys) => {
+  void loadIndex(load).then((index) => {
     if (cancelled) return
-    const key = clipKey(text)
-    if (!keys.has(key)) { miss(); return }
+    const url = clipUrl(index, text)
+    if (!url) { miss(); return }
 
     const audio = audioEl()
-    audio.src = `/audio/${voice}/${key}.mp3`
+    audio.src = url
     _active = audio
 
     audio.onended = () => {

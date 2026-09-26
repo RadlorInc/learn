@@ -1,9 +1,10 @@
-# Lesson voice — expressive, in Stevie
+# Lesson voice — expressive, in Josh
 
 Founder, 2026-09-19: the recorded voice was right, but it **read** every line flat, like somebody reading a page. Two
 causes: the lines were written like a textbook, and every clip went through Chatterbox Turbo with no expression.
-Samples of four fixes were heard (`/voice-samples.html`); on 2026-09-22 the founder replaced them with the rules below. **Every lesson moves to Stevie**; a lesson switches when its clips are merged
-(`LESSON_VOICE` in `src/infra/storage/voicePref.ts`; g5m1-t1/t2 moved to Josh on 2026-09-22).
+Samples of four fixes were heard (a `/voice-samples.html` page, deleted 2026-09-26 with the Stevie and Teddy voices); on
+2026-09-22 the founder replaced them with the rules below. **Every lesson is in Josh** (`JOSH_MODULES` in
+`src/infra/storage/voicePref.ts`); Josh is the only recorded voice since 2026-09-26.
 
 ⚠️ **Status (2026-09-22): a pilot.** Only `g5m1-t1` and `g5m1-t2` are written this way, and the 0.5/0.5 and 0.7/0.3
 settings come from the document, not from listening. Listen to both topics in the app before writing the next one.
@@ -51,18 +52,26 @@ The chalkboard hangs its marks on words (`at: 'mix'`); a reworded line must keep
 
 ## Rendering
 
-`npx tsx scripts/lesson-voice-corpus.mts` rebuilds both corpora with each row's `style` and render `text`; the key is
-still the line as the lesson says it. Rows already on disk are skipped. For a Kaggle run, pack the missing rows with
-`scripts/chatterbox-render.py` and the reference wav (the 2026-09-19 pilot zip is the template: a notebook that finds
-its corpus under `/kaggle/input`, one process, one zip out).
+⚠️ **Since 2026-09-26 the clips are not in git.** They live in the public `lesson-audio` Storage bucket under
+content-hash names (`sha256(bytes)[0:16].mp3`); `scripts/audio/manifest.json` says which line is which object, and each
+lesson module carries a small index of its own lines (`src/features/lessons/voice-index/`). The player plays a clip only
+when the line's key **and** its check match that index. Never unzip clips into `public/audio/` — `.gitignore` refuses
+`public/audio/**/*.mp3`, and the app no longer reads them from there.
 
-**Merging a zip:** `unzip <clips>.zip -d public/audio/`, then rebuild that voice's manifest from the files on disk:
-
-```bash
-node -e "const fs=require('fs'),d='public/audio/IvUJKFyjVb5hItY9dJAT';fs.writeFileSync(d+'/manifest.json',JSON.stringify(fs.readdirSync(d).filter(f=>f.endsWith('.mp3')).map(f=>f.slice(0,-4)).sort()))"
-```
-
-then lower the queued count in `src/__tests__/lessonVoiceClips.test.ts`.
+1. `npx tsx scripts/lesson-voice-corpus.mts` rebuilds the corpus (`key`, `check`, render `text`, `style`); the key and
+   check are the line as the lesson says it. A row is **rendered** when its key is in `scripts/audio/manifest.json`.
+2. `python3 scripts/kaggle-josh-notebook.py <grade|module> <branch>` writes a notebook for the rows NOT in the manifest
+   (push the corpus and manifest to `<branch>` first — the notebook clones it). It stops at cell 1 if nothing is queued.
+3. **Merging a zip:** `unzip -n <zip> -d audio-src/` (the zip holds `nzFihrBIvB34imQBuxub/<key>.mp3`; `audio-src/` is the
+   gitignored local clip folder — fill it on a fresh machine with `AUDIO_BASE_URL=<bucket base> node
+   scripts/audio/fetch-src.mjs`), then `node scripts/audio/build-manifest.mjs`. It fails on a missing clip, an orphan,
+   a duplicate or a hash collision; commit `scripts/audio/manifest.json` and `src/features/lessons/voice-index/`.
+4. **Upload before the app needs them.** Put ONLY the new mp3s on a side ref — a commit on an orphan branch holding
+   `public/audio/nzFihrBIvB34imQBuxub/<key>.mp3`, tagged `audio-src-<date>` and pushed (a tag does not deploy; it is also
+   the backup of those clips) — then run the `upload-audio` workflow with `source_ref` = that tag: dry-run first, then
+   upload (docs/legal/AUDIO-ROUND2.md has the key create → run → revoke steps). The uploader checks every object already
+   in the bucket against the manifest and needs source files only for the missing ones. Merge the PR that ships the new
+   index only after the upload run ends "all N manifest objects present".
 
 ⚠️ **The chalkboard is timed by an estimate**, not the clip: each beat starts when its clip starts, but a mark inside
 the beat goes up at (word position ÷ words) × `beatMs(line)`. Expressive pauses move the real word later than the

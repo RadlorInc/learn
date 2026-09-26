@@ -11,12 +11,14 @@ import { describe, it, expect } from 'vitest'
 import config from '../../next.config'
 
 /** Drive the real `headers()` at a given NODE_ENV and pull out the policy the browser would get. */
-async function header(key: string, env: string, supabaseUrl?: string): Promise<string> {
+async function header(key: string, env: string, supabaseUrl?: string, audioBase?: string): Promise<string> {
   // NODE_ENV is readonly in the Next type defs; the config reads it at call time, so it has to move.
   const env_ = process.env as Record<string, string | undefined>
-  const was = env_.NODE_ENV, wasUrl = env_.NEXT_PUBLIC_SUPABASE_URL
+  const was = env_.NODE_ENV, wasUrl = env_.NEXT_PUBLIC_SUPABASE_URL, wasAudio = env_.NEXT_PUBLIC_AUDIO_BASE_URL
   env_.NODE_ENV = env
   if (supabaseUrl !== undefined) env_.NEXT_PUBLIC_SUPABASE_URL = supabaseUrl
+  if (audioBase !== undefined) env_.NEXT_PUBLIC_AUDIO_BASE_URL = audioBase
+  else delete env_.NEXT_PUBLIC_AUDIO_BASE_URL
   try {
     const rules = await config.headers!()
     const h = rules.flatMap((r) => r.headers).find((x) => x.key === key)
@@ -25,9 +27,11 @@ async function header(key: string, env: string, supabaseUrl?: string): Promise<s
     env_.NODE_ENV = was
     if (wasUrl === undefined) delete env_.NEXT_PUBLIC_SUPABASE_URL
     else env_.NEXT_PUBLIC_SUPABASE_URL = wasUrl
+    if (wasAudio === undefined) delete env_.NEXT_PUBLIC_AUDIO_BASE_URL
+    else env_.NEXT_PUBLIC_AUDIO_BASE_URL = wasAudio
   }
 }
-const csp = (env: string, supabaseUrl?: string) => header('Content-Security-Policy', env, supabaseUrl)
+const csp = (env: string, supabaseUrl?: string, audioBase?: string) => header('Content-Security-Policy', env, supabaseUrl, audioBase)
 
 const scriptSrc = (policy: string) => policy.split('; ').find((d) => d.startsWith('script-src '))!
 
@@ -86,6 +90,28 @@ describe('Content-Security-Policy', () => {
   it('a local stack URL keeps its port and maps http to ws', async () => {
     expect(connectSrc(await csp('development', 'http://127.0.0.1:54321/'))).toBe(
       "connect-src 'self' http://127.0.0.1:54321 ws://127.0.0.1:54321")
+  })
+
+  /**
+   * ⚠️ THE RECORDED CLIPS ARE ON THE AUDIO ORIGIN (2026-09-26), and a CSP that does not name it blocks every <audio> load:
+   * every line falls to device speech and NOTHING reports it (the same silent class as the 2026-08 media-src incident).
+   * The origin comes from the same config value the player reads (src/core/audioBase.ts); written out by hand here.
+   */
+  const mediaSrc = (p: string) => p.split('; ').find((d) => d.startsWith('media-src '))!
+  it("media-src names the audio bucket's origin (the Supabase project by default), and connect-src does not repeat it", async () => {
+    const p = await csp('production', PROJECT)
+    expect(mediaSrc(p)).toBe("media-src 'self' data: https://abcdefghijklmnopqrst.supabase.co")
+    expect(connectSrc(p).split(' ').filter(x => x === 'https://abcdefghijklmnopqrst.supabase.co')).toHaveLength(1)
+  })
+
+  it('moving the audio (NEXT_PUBLIC_AUDIO_BASE_URL, e.g. to R2) moves media-src AND connect-src with it — one value', async () => {
+    const p = await csp('production', PROJECT, 'https://audio.example.org/lesson-audio')
+    expect(mediaSrc(p)).toBe("media-src 'self' data: https://audio.example.org")
+    expect(connectSrc(p)).toBe("connect-src 'self' https://abcdefghijklmnopqrst.supabase.co wss://abcdefghijklmnopqrst.supabase.co https://audio.example.org")
+  })
+
+  it('no audio base at all → media-src allows nothing extra (and the player asks for no clip)', async () => {
+    expect(mediaSrc(await csp('production', ''))).toBe("media-src 'self' data:")
   })
 
   it('a build with no Supabase URL falls back to the wildcard rather than breaking sign-in', async () => {

@@ -13,10 +13,10 @@
  * imported from the code under test, which would only prove the code equals itself.
  */
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest'
-import { readFileSync, readdirSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { PGlite } from '@electric-sql/pglite'
-import { applyFile, loadSchema } from './_schema'
+import { applyFrom, loadSchema } from './_schema'
 
 let db: PGlite
 const resend: { to: string[]; subject: string; html: string; text: string; headers?: Record<string, string>; scheduled_at?: string }[] = []
@@ -70,9 +70,7 @@ const MIGRATION = '20260923190000_email_suppressions.sql'
 async function loadAsSupabase(): Promise<PGlite> {
   const { db } = await loadSchema({ before: MIGRATION })
   await db.exec('alter default privileges in schema public grant all on tables to anon, authenticated, service_role')
-  for (const f of readdirSync(resolve(__dirname, '../../supabase/migrations')).filter(f => f.endsWith('.sql') && f >= MIGRATION).sort()) {
-    await applyFile(db, f)
-  }
+  await applyFrom(db, MIGRATION)
   return db
 }
 
