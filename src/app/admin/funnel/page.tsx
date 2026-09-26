@@ -11,9 +11,14 @@ export default function Funnel() {
 
   return (
     <div style={S.page}>
+      <Activation />
       <InvariantWarning violations={violations} />
       <div style={S.card}>
         <h2 style={S.h2}>Funnel</h2>
+        <p style={{ ...S.sub, color: '#8a1c1c' }}>
+          ⚠️ This funnel and the retention table below count <code>chapter_open</code>, <code>sessions</code> and
+          <code> session_start</code>, which the live lessons do not write. For the lessons, read Activation above.
+        </p>
         <Def>
           <strong>Every step is measured on the ACCOUNT</strong>, so all four share one denominator —
           mixing accounts and learners inside a funnel invents a drop-off out of a unit change.
@@ -102,3 +107,50 @@ export default function Funnel() {
 
 const th: React.CSSProperties = { textAlign: 'right', color: '#3d6fb8', fontSize: 11, fontWeight: 600, padding: '4px 10px', borderBottom: '1px solid #d3e9f9' }
 const td: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid #f3f9ff' }
+
+/**
+ * Activation from the lessons (N8). Definitions are PRE-REGISTERED in
+ * supabase/migrations/20260926101000_admin_activation.sql — change them there, not here.
+ */
+function Activation() {
+  const { data, err, rid, violations } = useMetrics('activation')
+  if (err) return <LoadError err={err} rid={rid} />
+  if (!data) return <div style={S.card}><p style={S.sub}>Loading activation…</p></div>
+  const rows = data.cohorts ?? []
+  const cell = (v: number | null, of: number) => v === null
+    ? <span style={{ color: '#bfddf6' }} title="suppressed: cohort below the small-cell threshold">—</span>
+    : <>{v} <span style={{ color: '#3d6fb8', fontSize: 11 }}>({of ? Math.round((v / of) * 100) : 0}%)</span></>
+  return (
+    <>
+      <InvariantWarning violations={violations} />
+      <div style={S.card}>
+        <h2 style={S.h2}>Activation — first 7 days, lessons</h2>
+        <Def>
+          Per <strong>parent account</strong>, by signup week (ISO, US Eastern). <strong>Eligible</strong> = at least 7 days
+          old (younger accounts are listed as &ldquo;too new&rdquo;, not counted). <strong>Added a child</strong> = a child
+          created within 7 days of signup. <strong>Activated</strong> = a child did lesson work within 7 days of signup
+          (<code>lesson_progress</code> / <code>point_events</code>, no new events). It measures STARTING, not learning.
+          A cohort below {data.min_cohort} eligible accounts shows —; above it, 0 is a real 0.
+        </Def>
+        <table style={{ borderSpacing: 0, fontSize: 13 }}>
+          <thead><tr>
+            <th style={{ ...th, textAlign: 'left' }}>Cohort week</th>
+            <th style={th}>Eligible</th><th style={th}>Added a child</th><th style={th}>Activated</th><th style={th}>Too new</th>
+          </tr></thead>
+          <tbody>
+            {rows.map((c: any) => (
+              <tr key={c.cohort_week}>
+                <td style={td}>{c.cohort_week}</td>
+                <td style={{ ...td, textAlign: 'right' }}>{c.eligible}</td>
+                <td style={{ ...td, textAlign: 'right' }}>{cell(c.added, Number(c.eligible))}</td>
+                <td style={{ ...td, textAlign: 'right' }}>{cell(c.activated, Number(c.eligible))}</td>
+                <td style={{ ...td, textAlign: 'right' }}>{c.too_new}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 && <p style={S.sub}>No parent accounts created in the last 12 weeks.</p>}
+      </div>
+    </>
+  )
+}
