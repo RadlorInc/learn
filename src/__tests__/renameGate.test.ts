@@ -55,8 +55,6 @@ const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] =
     why: 'the earlier names, the switch, and the hidden chapters — history a reader of the repo needs' },
   { file: 'CLAUDE.md', line: /^called Milo, then AdaptiveLearn at adaptivelearn\.radlor\.com, which becomes a 308 to radlic\.com|^\*\*There is no mascot\*\*: no named character, no "Milo says…"/, kinds: ['name', 'domain'],
     why: 'the rename, told to future sessions' },
-  { file: 'CLAUDE.md', line: /^\| ⚠️⚠️ \*\*a gate grepping `menu\/page\.tsx` for `'Milo picked this to close the gap'`/, kinds: ['name'],
-    why: 'a historical record in the defect table (rule 3: records of what was stay)' },
 ]
 
 const files = execFileSync('git', ['ls-files'], { encoding: 'utf8' }).split('\n').filter(inScope)
