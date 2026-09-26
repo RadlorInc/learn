@@ -14,7 +14,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, applyFile, applyFrom, CONSENT_ONCE } from './_schema'
+import { loadSchema, applyFile, applyFrom } from './_schema'
 
 const D6 = '20260923170000_consent_zero_exemptions.sql'
 const OWNER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -113,7 +113,9 @@ describe('D6 — every child cleared, and the exemption gone', () => {
  * asserted as it now stands. Runs after the describe above (vitest runs suites in order on the one database).
  */
 describe('after consent-once: D6 holds, and the gate is the account gate', () => {
-  beforeAll(async () => { await applyFrom(db, CONSENT_ONCE) }, 120_000)
+  // Every migration AFTER D6, as the comment above says — not from consent-once, which skipped the three between
+  // them (the B3 queue among them) and broke the day a later migration came to depend on that queue (20260926100300).
+  beforeAll(async () => { await applyFrom(db, '20260923180000_profile_on_confirmed.sql') }, 120_000)
 
   it('the migration applies on D6\'s result: the one post-D6 child is carried over with its consent\'s attestation', async () => {
     // 'Fresh' — made by the last D6 test above, under a per-child consent, as the app did then.

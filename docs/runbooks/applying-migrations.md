@@ -1,5 +1,14 @@
 # Runbook — applying a migration to production
 
+⛔ **HOW A MIGRATION REACHES PRODUCTION TODAY (2026-09-26): only through `deploy.yml` → `migrate-prod`,
+behind the `production-db` environment's required reviewer (Rafi).** Merge the migration to `main`;
+the job starts on that push, waits for his approval, refuses unless `scripts/assert-prod-ref.sh` passes,
+and applies it. Nobody applies a migration by hand, and no agent reads or writes production through
+`psql`, the Supabase MCP or the CLI (CLAUDE.md's ⛔ rules; `runbookNoProdWrites.test.ts` holds every
+runbook to it). Every SQL query below that reads production is for **Rafi to run in the Supabase SQL
+editor** — write it into `docs/legal/sql/<topic>.sql` for him. The history below explains WHY each check
+exists; the checks still apply, the hands that run them changed.
+
 ## ⚠️ THE RULE THAT COST US A SECURITY REGRESSION
 
 **Before applying any migration file older than the current production schema, diff the objects it
@@ -100,7 +109,7 @@ proportionate and one that rewrites rows in those three tables is not.
 The billing migrations pass this test on purpose: the only data they mutate is the `chapters`
 catalog and `diagnostic_plans.active`. Neither is a child's work.
 
-## The sequence for applying a migration by hand
+## The sequence, as it was done by hand before `migrate-prod` (history — the checks still apply)
 
 1. **Capture the rollback FIRST, commit it — and make sure CI RUNS it.** ⚠️ A rollback nobody has
    run is a document, not a rollback: it is the one artefact that is only ever used on the worst
@@ -144,29 +153,21 @@ catalog and `diagnostic_plans.active`. Neither is a child's work.
   deployment. A variable check needs a fresh production deploy, and "the deploy succeeded" is not
   evidence — read the effect.
 
-## Applying through the pipeline instead
+## Applying through the pipeline
 
-Prefer it — hand-applying is the root cause of the 58-file ledger drift, and `supabase db push`
-applies migrations under their own filename versions, so the rename dance disappears. It is not
-enabled: see [docs/migrate-prod-proposal.md](../migrate-prod-proposal.md) for the three conditions
-(B12 first · a required reviewer, verified by watching a job PAUSE rather than by reading a settings
-page · and the pipeline running the stale-migration diff and the B12 rule itself, or it is faster
-and worse).
-
-## How to apply
-
-Prefer the pipeline (`deploy.yml` → `migrate-prod`, behind the required-reviewer gate) once it is
-enabled. Applying by hand through the Supabase MCP `apply_migration` works, but note:
-
-⚠️ **It records the migration under a GENERATED version, not your filename's version.** That is how
-this repo accumulated 58 mismatched versions. After applying by hand, rename the repo file to the
-version the ledger recorded — repo-side, so no production write is needed. See
-[docs/schema-baseline-debt.md](../schema-baseline-debt.md).
+Enabled (it applied `20260926090000` on 2026-09-25, per the handoff). The pipeline applies migrations
+under their own filename versions, so the old rename dance after a hand-apply is gone. Two limits to
+know, both recorded by the 2026-09-26 review (`docs/review/DEVOPS.md`, OPS-02/OPS-08):
+- `migrate-prod` runs only when **that push** changed a migration file. A rejected or cancelled run is
+  not retried by a later push without one — re-run the original run from the Actions tab.
+- It takes no backup first. If the migration rewrites rows, ask Rafi to run `backup.yml` by hand and
+  wait for it to go green before approving.
 
 ## After applying
 
-1. Verify the intended change by **querying the catalog**, not by trusting the success flag.
+1. Verify the intended change from the **catalog**, not the success flag: write the query, Rafi runs it.
 2. Watch `ci / rls-tests` on the next run. It replays every migration from zero against a throwaway
-   Postgres and runs 17 cross-tenant assertions; it is the thing that catches a reversion.
+   Postgres and runs every assertion in `rls_regression.sql` (the job log prints the count as
+   `RLS_ASSERTIONS=`); it is the thing that catches a reversion.
 3. If the change touched a policy, grant or function ACL, regenerate
    `supabase/schema/security_baseline.sql` and review the diff.

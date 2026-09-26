@@ -85,6 +85,14 @@
 --                                                  opaque unsubscribe token, suppressed_at). Every privilege
 --                                                  revoked from public/anon/authenticated; service_role holds
 --                                                  SELECT/INSERT/UPDATE explicitly. NOT YET APPLIED TO PRODUCTION.
+--   deletion_log               rls=t  policies=0   2026-09-26 (20260926100600, FND-15): INTENTIONAL deny-all, the
+--                                                  error_events precedent. Who deleted which child's data / which
+--                                                  account, and when: path, actor, opaque ids, per-table counts only
+--                                                  (a CHECK keeps row_counts numeric). Written ONLY inside the DEFINER
+--                                                  deletion functions and the retention jobs. Every privilege revoked
+--                                                  from public/anon/authenticated/service_role, then SELECT granted to
+--                                                  service_role only. No FK: it outlives what it records.
+--                                                  NOT YET APPLIED TO PRODUCTION.
 --   consent_notice_versions    rls=t  policies=1   2026-09-24 (20260924100000, consent-once): SELECT for
 --                                                  authenticated (using true — notice versions are not personal
 --                                                  data). All privileges revoked from public/anon/authenticated,

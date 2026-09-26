@@ -1,9 +1,9 @@
 /**
  * A fixed-window rate limit for the app's PUBLIC, unauthenticated POST endpoints.
  *
- * Why it exists: `/api/lead` writes a row to the database and `/api/report-error` writes to the log
- * and (once MONITORING_INGEST_URL is set) forwards to a paid sink. Both are reachable by anyone with
- * the URL, and neither had any limit at all.
+ * Why it exists: `/api/report-error` writes to the log and (once MONITORING_INGEST_URL is set) forwards
+ * to a paid sink, and the other public routes (sign-up, child login, consent, unsubscribe) send email or
+ * write rows. Anyone with the URL can reach them. (It was written for `/api/lead`, deleted 2026-09-20.)
  *
  * ponytail: in-memory and PER SERVERLESS INSTANCE, so a distributed flood still gets through in
  * proportion to how many instances Vercel spins up, and a cold start forgets everything. That is a

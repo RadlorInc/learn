@@ -243,6 +243,12 @@ export const PROPOSED = {
   withdrawnAllBody: { en: 'We have stopped collecting information about every child on your account and deleted what we held about them. Your account stays open.', es: 'Hemos dejado de recopilar información sobre todos los niños de su cuenta y hemos eliminado lo que teníamos sobre ellos. Su cuenta sigue abierta.' },
   expiredHeading: { en: 'This link has expired', es: 'Este enlace ha caducado' },
   expiredBody: { en: 'Ask again from your parent dashboard.', es: 'Vuelva a solicitarlo desde su panel de padres.' },
+  // N5: a grant is refused until the address is confirmed; the request stays open.
+  unconfirmedHeading: { en: 'Please confirm your email address first', es: 'Primero confirme su dirección de correo' },
+  unconfirmedBody: {
+    en: 'Nothing was saved. Open the newest email we sent you and press its button. If that link has expired, sign up again with the same email address and we will send a new one.',
+    es: 'No se guardó nada. Abra el correo más reciente que le enviamos y pulse su botón. Si ese enlace ha caducado, regístrese de nuevo con la misma dirección de correo y le enviaremos uno nuevo.',
+  },
   usedHeading: { en: 'This link has already been used', es: 'Este enlace ya se ha usado' },
   invalidHeading: { en: 'This link is not valid', es: 'Este enlace no es válido' },
   keptBody: { en: 'Nothing has changed.', es: 'No ha cambiado nada.' },

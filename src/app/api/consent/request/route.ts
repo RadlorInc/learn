@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   } catch (e) {
     if (e instanceof ConfigMissing) {
       console.error('[consent/request] not configured: missing', e.message)
-      return NextResponse.json({ error: 'not_configured', missing: e.message }, { status: 503 })
+      return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
     // console, not reportCrash: see server.ts. The pending row without a send record simply expires.
     console.error('[consent/request] failed', e)
