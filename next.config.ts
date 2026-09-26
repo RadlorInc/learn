@@ -1,6 +1,24 @@
 import type { NextConfig } from 'next'
 import { oldDomainRedirects } from './src/app/site'
 
+/**
+ * The CSP `connect-src` origins for Supabase, derived at BUILD time from `NEXT_PUBLIC_SUPABASE_URL`
+ * (Vercel bakes `headers()` into the build). Production's value is a `*.supabase.co` project URL
+ * (measured on radlic.com's live bundle, 2026-09-26), so this pins REST and realtime to that host.
+ * Missing or unparsable → the old wildcard, said loudly in the build log rather than silently.
+ */
+function supabaseConnectSrc(): string {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL
+  try {
+    const { origin, protocol } = new URL(raw ?? '')
+    if (protocol !== 'https:' && protocol !== 'http:') throw new Error(protocol)
+    return `${origin} ${origin.replace(/^http/, 'ws')}`
+  } catch {
+    console.warn('⚠️ CSP: NEXT_PUBLIC_SUPABASE_URL is missing or not a URL — connect-src falls back to https://*.supabase.co wss://*.supabase.co')
+    return 'https://*.supabase.co wss://*.supabase.co'
+  }
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
@@ -74,11 +92,10 @@ const nextConfig: NextConfig = {
           // games under /play/* — those are deleted and nothing calls getUserMedia now, so the app
           // was advertising a capability it cannot use. (the app's voice is speechSynthesis, which is
           // output-only and needs no Permissions-Policy grant.)
-          // ⚠️ `camera=(self)` is granted for ONE feature: the 9–11 Factor Lab, which is answered by
-          // holding fingers up to a webcam (story/FactorLab.tsx). Hand landmarks are computed
-          // ON-DEVICE and no frame ever leaves the browser. It was deliberately revoked in the July
-          // audit when the /play AR track was deleted — if this chapter ever goes, revoke it again.
-          { key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(), interest-cohort=()' },
+          // ⚠️ `camera=(self)` stayed for the 9–11 Factor Lab (webcam finger counting). That chapter
+          // went with the AR band on 2026-09-20 and nothing calls getUserMedia any more, so it is
+          // revoked again (SEC-11). Put it back in the same commit as code that opens a camera.
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
           /**
            *  CSP — ONE ENFORCED POLICY (2026-08-16). It used to be two headers: a small enforced
            *  subset plus a Report-Only full policy. Browsers AND multiple CSP headers together, so
@@ -140,8 +157,9 @@ const nextConfig: NextConfig = {
                *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing;
                *  the clips themselves are 'self' (/audio/<voice>/*.mp3). */
               "media-src 'self' data:",
-              // Supabase (REST + realtime).
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+              // Supabase (REST + realtime) — the ONE project this build talks to, not every project on
+              // supabase.co (SEC-11: a wildcard would let injected script post data to anyone's project).
+              `connect-src 'self' ${supabaseConnectSrc()}`,
               "worker-src 'self'",
               "frame-ancestors 'none'",
               "base-uri 'self'",
