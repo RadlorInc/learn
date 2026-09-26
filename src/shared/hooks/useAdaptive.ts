@@ -31,10 +31,10 @@ import {
   type Progress,
   initialProgress,
   step,
-  isMastered,
 } from '@/core/progression'
+import { chapterMastery } from '@/features/lessons/adaptive'
 
-// Deliberately NOT re-exported: `Difficulty` and `MASTERY_STREAK` are domain and
+// Deliberately NOT re-exported: `Difficulty` is domain and
 // belong to `@/core/progression`. A convenience re-export here would put the
 // domain behind a React hook, which is the barrel that `state/store.ts` was
 // carrying and `src/__tests__/layering.test.ts` now forbids.
@@ -56,7 +56,7 @@ export interface AdaptiveState {
   sessionWrong:   number
   shouldHint:     boolean     // true when child is struggling
   isOnFire:       boolean     // 3+ correct in a row
-  mastered:       boolean     // top tier + MASTERY_STREAK in a row → can finish early
+  mastered:       boolean     // the ONE mastery rule (chapterMastery) → can finish early
   praise:         string
   encouragement:  string
   record:         (correct: boolean) => RecordResult
@@ -90,7 +90,7 @@ function pick<T>(arr: T[]): T {
 
 // ─── Hook ────────────────────────────────────────────────────
 
-type AdaptiveSnapshot = Progress & { praise: string; encouragement: string }
+type AdaptiveSnapshot = Progress & { praise: string; encouragement: string; mastery: { streak: number; mastered: boolean } }
 
 export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty = 1): AdaptiveState {
   // All mutable counters live in ONE snapshot object that is mirrored in a ref.
@@ -108,6 +108,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
     ...initialProgress(initialDifficulty),
     praise:        pick(PRAISE[Math.min(initialDifficulty - 1, 2)]),
     encouragement: pick(ENCOURAGEMENT[Math.min(initialDifficulty - 1, 2)]),
+    mastery:       { streak: 0, mastered: false },
   }))
   const ref = useRef(snapshot)
 
@@ -120,6 +121,8 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
       ...p,
       praise:        isCorrect ? (p.isOnFire ? pick(ON_FIRE) : pick(PRAISE[lvl])) : s.praise,
       encouragement: isCorrect ? s.encouragement : pick(ENCOURAGEMENT[lvl]),
+      // The tier the question was ASKED at, and the misses just before this answer (N19).
+      mastery:       chapterMastery(s.mastery, s.difficulty, isCorrect, s.wrongStreak),
     }
     ref.current = next   // synchronous — the next tap this tick reads the new values
     setSnapshot(next)    // re-render with the new values
@@ -142,7 +145,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
       const learnerId = getActiveLearner()?.id ?? null
       if (learnerId) {
         const key = chapterKey(chapter)
-        const mastered = isMastered(p)
+        const mastered = next.mastery.mastered
         saveStanding(learnerId, key, { level: p.difficulty, streak: p.streak, mastered })
         syncLesson(learnerId, key, s.wrongStreak > 0 ? 'second' : 'first')
       }
@@ -153,7 +156,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
       streak:     p.streak,
       correct:    p.correct,
       wrong:      p.wrong,
-      mastered:   isMastered(p),
+      mastered:   next.mastery.mastered,
     }
   }, [chapter])
 
@@ -169,7 +172,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
     sessionWrong:   snapshot.wrong,
     shouldHint:     snapshot.shouldHint,
     isOnFire:       snapshot.isOnFire,
-    mastered:       isMastered(snapshot),
+    mastered:       snapshot.mastery.mastered,
     praise:         snapshot.praise,
     encouragement:  snapshot.encouragement,
     record,

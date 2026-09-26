@@ -14,23 +14,24 @@
  */
 import { describe, it, expect } from 'vitest'
 import {
-  MASTERY_STREAK,
   initialProgress,
   nextDifficulty,
   step,
-  isMastered,
   type Difficulty,
 } from '@/core/progression'
+import { chapterMastery } from '@/features/lessons/adaptive'
 
-/** Apply a run of answers, returning the difficulty each question was ANSWERED at. */
+/** Apply a run of answers, returning the difficulty each question was ANSWERED at (and mastery, fed as the hook does). */
 function play(answers: readonly boolean[], start: Difficulty = 1) {
   let p = initialProgress(start)
+  let m = { streak: 0, mastered: false }
   const answeredAt: Difficulty[] = []
   for (const a of answers) {
     answeredAt.push(p.difficulty)
+    m = chapterMastery(m, p.difficulty, a, p.wrongStreak)
     p = step(p, a)
   }
-  return { p, answeredAt }
+  return { p, answeredAt, mastered: m.mastered }
 }
 
 describe('progression — promote', () => {
@@ -82,25 +83,11 @@ describe('progression — hint', () => {
   })
 })
 
-describe('progression — mastery', () => {
-  it('requires the TOP tier and a streak of MASTERY_STREAK', () => {
-    expect(isMastered({ difficulty: 3, streak: MASTERY_STREAK })).toBe(true)
-    expect(isMastered({ difficulty: 3, streak: MASTERY_STREAK - 1 })).toBe(false)
-    expect(isMastered({ difficulty: 2, streak: 99 })).toBe(false)
-  })
-
-  it('a single wrong answer resets the streak, so mastery is a CLEAN run at the top', () => {
-    const { p } = play([...Array(5).fill(true), false, true])
-    expect(p.streak).toBe(1)
-    expect(isMastered(p)).toBe(false)
-  })
-})
-
 describe('progression — the round budget chapter-craft is built on', () => {
   it('a perfect run masters on the 6th question: 3 asked at L1, ONE at L2, TWO at L3', () => {
-    const { p, answeredAt } = play(Array(6).fill(true))
+    const { mastered, answeredAt } = play(Array(6).fill(true))
 
-    expect(isMastered(p)).toBe(true)
+    expect(mastered).toBe(true)
     expect(answeredAt).toEqual([1, 1, 1, 2, 3, 3])
 
     const asked = (d: Difficulty) => answeredAt.filter(x => x === d).length
@@ -109,7 +96,7 @@ describe('progression — the round budget chapter-craft is built on', () => {
 
   it('mastery cannot arrive before the 6th question, however well the child does', () => {
     for (let n = 1; n < 6; n++) {
-      expect(isMastered(play(Array(n).fill(true)).p)).toBe(false)
+      expect(play(Array(n).fill(true)).mastered).toBe(false)
     }
   })
 })

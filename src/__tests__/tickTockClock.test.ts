@@ -10,6 +10,7 @@
  *   · a READ round's question never contains its own answer.
  */
 import { describe, it, expect } from 'vitest'
+import { chapterMastery } from '@/features/lessons/adaptive'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
@@ -235,11 +236,13 @@ describe('the round', () => {
 // ─── the closed set, and covering it ──────────────────────────────────────────────────
 /**
  * The shared engine's real rules, replicated here ONLY to simulate a run
- * (`core/progression.ts`: promote on 3 correct in a row at ≥80%, master at the top tier on a streak of 6).
+ * (`core/progression.ts`: promote on 3 correct in a row at ≥80%). Mastery is NOT replicated: it is the real
+ * `chapterMastery` (the one rule, N19).
  * Everything the chapter itself decides — which minute, which reading — comes from the real functions.
  */
 function simulate(answers: (round: number) => boolean, coverageOn = true) {
   let d: 1 | 2 | 3 = 1, streak = 0, wrongStreak = 0, correct = 0, total = 0
+  let mastery = { streak: 0, mastered: false }
   const asked: string[] = []
   const log: { round: number; d: number; m: number; kind: string }[] = []
   for (let r = 0; r < 10; r++) {
@@ -248,12 +251,13 @@ function simulate(answers: (round: number) => boolean, coverageOn = true) {
     if (!asked.includes(kind)) asked.push(kind)
     log.push({ round: r + 1, d, m, kind })
     const ok = answers(r); total++
+    mastery = chapterMastery(mastery, d, ok, wrongStreak)
     if (ok) { correct++; streak++; wrongStreak = 0 } else { streak = 0; wrongStreak++ }
     const acc = correct / total
     if (streak >= 3 && acc >= 0.8 && d < 3) d = (d + 1) as 1 | 2 | 3
     else if ((wrongStreak >= 2 || (total >= 4 && acc < 0.4)) && d > 1) d = (d - 1) as 1 | 2 | 3
     const covered = !coverageOn || READINGS.every(k => asked.includes(k))
-    if (d === 3 && streak >= 6 && covered) return { log, endedAt: r + 1, by: 'mastery', asked }
+    if (mastery.mastered && covered) return { log, endedAt: r + 1, by: 'mastery', asked }
   }
   return { log, endedAt: 10, by: 'rounds', asked }
 }

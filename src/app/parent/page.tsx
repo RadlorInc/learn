@@ -43,7 +43,7 @@ import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules, MODULES, GRADES, findLesson } from '@/features/lessons/modules'
 import { ModuleChecklist, NewClass, bandOf } from '@/features/classes/Classes'
 import { summarize } from '@/features/classes/exercise'
-import { buildReport, localDay, type Report, type PointRow } from '@/features/lessons/progressReport'
+import { buildReport, lastPlayedAt, localDay, type Report, type PointRow } from '@/features/lessons/progressReport'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { DashNav } from '@/features/dashboard/DashNav'
@@ -122,6 +122,7 @@ function Dashboard() {
   const [makingClass, setMakingClass] = useState(false)
   // The helpers.
   const [extra, setExtra] = useState<Record<string, ChildExtra>>({})
+  const [lastAt, setLastAt] = useState<Record<string, string | null>>({})   // learnerId → newest lesson_progress.updated_at
   const [classResults, setClassResults] = useState<Record<string, Awaited<ReturnType<typeof getExerciseResults>>>>({})
   const [prefs, setPrefsState] = useState<Prefs | null>(null)
   const [bell, setBell] = useState(false)
@@ -199,7 +200,7 @@ function Dashboard() {
         // The pull already reads the child's `lesson_progress` rows; the report reuses them rather than reading again (PERF-03).
         const pulled = pullLessonProgress(d.learner.id, ids)
         pulled
-          .then(rows => { if (rows) redraw(n => n + 1); return getWallet(d.learner.id) })
+          .then(rows => { if (rows) { redraw(n => n + 1); setLastAt(p => ({ ...p, [d.learner.id]: lastPlayedAt(rows) })) } return getWallet(d.learner.id) })
           .then(w => setWallets(prev => ({ ...prev, [d.learner.id]: w })))
         // A parent's helpers read each child's last 30 days (a teacher's come from the class results instead).
         if (myRole !== 'teacher') {
@@ -649,7 +650,7 @@ function Dashboard() {
               const done = lessons.filter(l => lessonDone(d.learner.id, l.id)).length
               const next = lessons.find(l => !lessonDone(d.learner.id, l.id))
               return <ChildCard key={d.learner.id} id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]}
-                lastPlayed={d.stats?.last_played_at ? new Date(d.stats.last_played_at).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
+                lastPlayed={lastAt[d.learner.id] ? new Date(lastAt[d.learner.id]!).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
                 next={next?.title ?? null} done={done} total={lessons.length} onStart={() => launchGame(d)} />
             })}
             <button type="button" data-tour="add-child" onClick={() => setShowAddModal(true)}

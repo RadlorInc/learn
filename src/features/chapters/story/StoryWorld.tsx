@@ -65,7 +65,7 @@ export interface Beat<T> {
   /**
    * A CLOSED SET this chapter must cover before the mastery early-exit is allowed to end the run.
    *
-   * ⚠️ WHY THIS EXISTS. Mastery fires at the top tier on a streak of 6, and promotion takes 3 correct
+   * ⚠️ WHY THIS EXISTS. Mastery fires on two first-try rights at the top tier (`chapterMastery`), and promotion takes 3 correct
    * per tier — so a child who answers well is asked roughly three questions at L1, ONE at L2 and TWO
    * at L3, and then the chapter ends. For a chapter whose hardest idea only unlocks at L3 that means
    * the idea is asked twice at best and, measured on TickTock, missed entirely about a third of the
@@ -261,7 +261,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }
-      // Demonstrated mastery (top tier + a long correct streak) → finish early
+      // Demonstrated mastery (the one rule: two first-try rights at the top tier) → finish early
       // with full stars, skipping the repetitive tail.
       // ⚠️ UNLESS the beat declares a closed set that has not been covered yet: finishing early on a
       // streak is a reward for being good at the questions ASKED, and it must not be a way to leave
