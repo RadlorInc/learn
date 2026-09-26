@@ -68,10 +68,13 @@ when the line's key **and** its check match that index. Never unzip clips into `
    a duplicate or a hash collision; commit `scripts/audio/manifest.json` and `src/features/lessons/voice-index/`.
 4. **Upload before the app needs them.** Put ONLY the new mp3s on a side ref — a commit on an orphan branch holding
    `public/audio/nzFihrBIvB34imQBuxub/<key>.mp3`, tagged `audio-src-<date>` and pushed (a tag does not deploy; it is also
-   the backup of those clips) — then run the `upload-audio` workflow with `source_ref` = that tag: dry-run first, then
-   upload (docs/legal/AUDIO-ROUND2.md has the key create → run → revoke steps). The uploader checks every object already
-   in the bucket against the manifest and needs source files only for the missing ones. Merge the PR that ships the new
-   index only after the upload run ends "all N manifest objects present".
+   the backup of those clips) — then run the `upload-audio` workflow **from the PR branch** with `source_ref` = that tag
+   (`gh workflow run upload-audio.yml --ref <pr-branch> -f mode=dry-run -f source_ref=<tag>`, then `-f mode=upload`).
+   ⚠️ NOT from `main`: the workflow uploads what the manifest OF THE BRANCH IT RUNS ON names, so a run from `main` finds
+   nothing missing and goes green having uploaded nothing. The dry run must report exactly as many *missing* as there
+   are new clips. docs/legal/AUDIO-ROUND2.md has the key create → run → revoke steps. The uploader checks every object
+   already in the bucket against the manifest and needs source files only for the missing ones. Merge the PR only
+   after the upload run ends "all N manifest objects present", N = that branch's manifest object count.
 
 ⚠️ **The chalkboard is timed by an estimate**, not the clip: each beat starts when its clip starts, but a mark inside
 the beat goes up at (word position ÷ words) × `beatMs(line)`. Expressive pauses move the real word later than the

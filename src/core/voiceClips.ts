@@ -26,7 +26,7 @@ export function clipKey(text: string): string {
  * The index stores this check next to each clip, and the player plays a clip only when BOTH match — so a line must
  * collide in 85 bits at once, for every runtime-built line, with no call site that has to remember anything.
  * Computed by scripts/lesson-voice-corpus.mts on the SAME string clipKey hashes (the line as written, before
- * renderOf rewrites it for the voice). voiceIndex.test.ts fails if the two ever disagree.
+ * renderOf rewrites it for the voice). src/__tests__/lessonVoiceClips.test.ts ("check differs") fails if the two ever disagree.
  */
 export function clipCheck(text: string): string {
   const s = normalizeSpoken(text)

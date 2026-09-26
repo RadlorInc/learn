@@ -68,8 +68,10 @@ describe('no child data in any audio request', () => {
     p.setSceneVoice(JOSH, VOICE_INDEX.g8m2)
 
     const real = vi.fn()
-    p.speakLine(REAL, { fallback: real }); await tick()
-    expect([requests, real.mock.calls.length], 'twin: the real line is requested and plays').toEqual([[OBJECT], 0])
+    p.speakLine(REAL, { fallback: real })
+    // wait for the event asserted, not a clock: the first import of the real index is cold (review, 2026-09-26)
+    await vi.waitFor(() => expect(requests, 'twin: the real line is requested and plays').toEqual([OBJECT]))
+    expect(real).not.toHaveBeenCalled()
 
     requests = []
     const named = vi.fn()
@@ -100,8 +102,7 @@ describe('no child data in any audio request', () => {
 
     function Say() { const { speak } = useMiloSpeaker(); React.useEffect(() => { speak(REAL) }, [speak]); return null }
     await React.act(async () => { root.render(React.createElement(Say)) })
-    await tick(80)
-    expect(requests, 'twin: the same player, same index, a real line — it IS requested').toEqual([OBJECT])
+    await vi.waitFor(() => expect(requests, 'twin: the same player, same index, a real line — it IS requested').toEqual([OBJECT]))
     await React.act(async () => { root.unmount() }); host.remove()
   })
 
@@ -110,8 +111,8 @@ describe('no child data in any audio request', () => {
     const p = await import('@/infra/voiceClipPlayer')
     p.setSceneVoice(JOSH, VOICE_INDEX.g8m2)
     const lines = MODULES.find(m => m.id === 'g8m2')!.lessons.slice(0, 2).flatMap(spoken)
-    p.prefetchClips(lines); await tick(80)
-    expect(requests.length, 'positive control: it really prefetched').toBeGreaterThan(10)
+    p.prefetchClips(lines)
+    await vi.waitFor(() => expect(requests.length, 'positive control: it really prefetched').toBeGreaterThan(10))
     expect(requests.filter(u => !/^https:\/\/bucket\.test\/lesson-audio\/[0-9a-f]{16}\.mp3$/.test(u))).toEqual([])
   })
 })

@@ -10,9 +10,21 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { STORAGE_ONLY_MIGRATIONS } from './_schema'
 
 const DIR = 'supabase/migrations'
-const sql = (f: string) => readFileSync(`${DIR}/${f}`, 'utf8').replace(/--[^\n]*/g, '')   // comments may mention anything
+// The CODE of a migration: comments and string literals removed (a message may say anything), dollar-quoted DO bodies kept.
+const code = (f: string) => readFileSync(`${DIR}/${f}`, 'utf8').replace(/'(?:[^']|'')*'|--[^\n]*/g, ' ')
 const TOUCHES_STORAGE = /\bstorage\.(buckets|objects|prefixes|s3_)/i
-const TOUCHES_ELSE = /\bpublic\.|\bauth\.|create\s+(or\s+replace\s+)?(table|function|view|policy|trigger|type|schema)\b|\balter\s+(table|function|type|role)\b|\bdrop\s+(table|function|policy|type)\b|\bgrant\s|\brevoke\s/i
+// Anything that is not a read of the catalog or a write to storage.*: every DDL verb, and any DML whose target is not
+// storage.* (`on conflict … do update set` is the INSERT's own clause, not a second target). Review, 2026-09-26: the
+// first version knew six DDL forms and let `alter policy`, `drop trigger`, `truncate`, `comment on` … hide in here.
+const TOUCHES_ELSE = new RegExp([
+  String.raw`\b(create|alter|drop|truncate|grant|revoke|comment\s+on|security\s+label|reindex|cluster|vacuum|refresh|copy|lock|notify|import\s+foreign)\b`,
+  String.raw`\binsert\s+into\s+(?!storage\.)`,
+  String.raw`(?<!\bdo\s)\bupdate\s+(?!storage\.)(?!set\b)`,
+  String.raw`\bdelete\s+from\s+(?!storage\.)`,
+  String.raw`\bmerge\s+into\s+(?!storage\.)`,
+  String.raw`\b(public|auth|cron|extensions)\.`,
+].join('|'), 'i')
+const sql = code
 
 describe('the schema fixture skips only Storage-bucket migrations', () => {
   it('positive control: the list is not empty and the listed file really exists and really touches storage', () => {
