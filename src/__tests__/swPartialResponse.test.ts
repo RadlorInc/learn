@@ -15,7 +15,7 @@ const SRC = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8')
 
 type Req = { url: string; method: string; mode: string; destination: string; headers: Headers }
 const req = (path: string, headers: Record<string, string> = {}): Req =>
-  ({ url: ORIGIN + path, method: 'GET', mode: 'no-cors', destination: 'audio', headers: new Headers(headers) })
+  ({ url: path.startsWith('http') ? path : ORIGIN + path, method: 'GET', mode: 'no-cors', destination: 'audio', headers: new Headers(headers) })
 
 function world(network: (r: Req) => Response) {
   const stored = new Map<string, Response>()
@@ -49,7 +49,8 @@ const onUnhandled = (e: unknown) => { unhandled.push(e) }
 process.on('unhandledRejection', onUnhandled)
 afterEach(() => { unhandled.length = 0 })
 
-const CLIP = '/audio/nzFihrBIvB34imQBuxub/hxmia9.mp3'
+// A clip from the audio bucket (2026-09-26) — the only clips the app plays; same-origin /audio/ is gone.
+const CLIP = 'https://proj.supabase.co/storage/v1/object/public/lesson-audio/0123456789abcdef.mp3'
 const partial = () => new Response('part', { status: 206, headers: { 'content-range': 'bytes 0-3/100' } })
 const whole = () => new Response('whole clip', { status: 200 })
 
@@ -67,7 +68,7 @@ describe('sw.js: only whole responses are cached', () => {
     let calls = 0
     const w = world(() => { calls++; return whole() })
     await w.get(req(CLIP))
-    expect([...w.stored.keys()]).toEqual([ORIGIN + CLIP])
+    expect([...w.stored.keys()]).toEqual([CLIP])
     const again = await w.get(req(CLIP, { range: 'bytes=0-' }))
     expect([await again.text(), calls]).toEqual(['whole clip', 1])
   })
@@ -79,6 +80,6 @@ describe('sw.js: only whole responses are cached', () => {
   })
 
   it('the shell version moved on, so every device drops caches written by the old worker', () => {
-    expect(SRC.match(/const VERSION\s*=\s*'([^']+)'/)![1]).toBe('v240')
+    expect(SRC.match(/const VERSION\s*=\s*'([^']+)'/)![1]).toBe('v241')
   })
 })

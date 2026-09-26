@@ -142,14 +142,15 @@ describe('service worker: a deploy takes over, offline still works', () => {
  * Two review findings, one of them turned down by measurement (docs/review/PERFORMANCE.md PERF-07/PERF-12,
  * LATENT-BUGS.md BUG-11, DEVOPS.md OPS-19).
  *
- * ⚠️ WHY THE BUMP STILL DROPS THE CLIP CACHE. A clip's URL is a hash of the line's TEXT (`clipKey`), not of the
- * audio. The audio has been rewritten under the same URL: f5a7694f3 (2026-09-19, sw v209) trimmed 56 Stevie clips
- * in place, and the VERSION bump was what got the trimmed audio onto devices, because `/audio/*.mp3` is cache-first
- * and never revalidates. Keeping that cache across bumps would pin the old audio on a device for ever. The test
- * below runs two worker VERSIONS against one Cache Storage and asserts the re-rendered clip arrives.
+ * ⚠️ WHY THE BUMP STILL DROPS THE VERSIONED ASSET CACHE. /assets/ art is rewritten in place under its existing name (the
+ * 83 MB → 58 MB recompression rewrote 86 files) and is cache-first, so the VERSION bump is what gets the new bytes onto
+ * devices. (Recorded clips used to be the other example — their URL hashed the line's TEXT — until 2026-09-26: they now
+ * come from the audio bucket under content-hash names and live in an unversioned cache a bump keeps, by design;
+ * swAudioCache.test.ts asserts that half.) The test below runs two worker VERSIONS against one Cache Storage and
+ * asserts the rewritten art arrives.
  */
-const CLIP = '/audio/nzFihrBIvB34imQBuxub/3z57ji.mp3'
-const clipReq = () => req(CLIP, 'no-cors', 'audio')
+const ART = '/assets/backgrounds/garden.png'
+const artReq = () => req(ART, 'no-cors', 'image')
 const PREV_SRC = SRC.replace(/const VERSION\s*=\s*'[^']+'/, "const VERSION = 'vPREV'")
 const tick = () => new Promise(r => setTimeout(r, 0))
 
@@ -195,18 +196,18 @@ describe('service worker: precache list and VERSION bump', () => {
     expect(posted).toEqual([])
   })
 
-  it('a clip re-rendered under the SAME url reaches the device after a VERSION bump', async () => {
+  it('art rewritten under the SAME url reaches the device after a VERSION bump', async () => {
     const stores = new Map<string, Map<string, Response>>()
-    const prev = makeWorld(url => Promise.resolve(new Response(url.endsWith(CLIP) ? 'old audio' : 'x')), { src: PREV_SRC, stores })
-    expect(await prev.get(clipReq())).toBe('old audio')
+    const prev = makeWorld(url => Promise.resolve(new Response(url.endsWith(ART) ? 'old art' : 'x')), { src: PREV_SRC, stores })
+    expect(await prev.get(artReq())).toBe('old art')
     await tick()
     // Positive control: the previous worker really kept it, and serves it with no network.
     const prevOffline = makeWorld(offline, { src: PREV_SRC, stores })
-    expect(await prevOffline.get(clipReq())).toBe('old audio')
+    expect(await prevOffline.get(artReq())).toBe('old art')
 
-    const next = makeWorld(url => Promise.resolve(new Response(url.endsWith(CLIP) ? 'new audio' : 'x')), { stores })
+    const next = makeWorld(url => Promise.resolve(new Response(url.endsWith(ART) ? 'new art' : 'x')), { stores })
     await next.lifecycle('activate')
-    expect(await next.get(clipReq())).toBe('new audio')
+    expect(await next.get(artReq())).toBe('new art')
   })
 
   it('activate removes the previous VERSION\'s page cache; pages stay network-first', async () => {

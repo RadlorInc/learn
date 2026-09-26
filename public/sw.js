@@ -1,4 +1,4 @@
-const VERSION      = 'v240'
+const VERSION      = 'v241'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -30,8 +30,8 @@ self.addEventListener('install', event => {
 })
 
 // ─── Activate ─────────────────────────────────────────────────
-// ⚠️ This also drops the versioned milo-assets-* cache (art, and the OLD same-origin /audio/ clips) ON PURPOSE: /assets/
-// art is rewritten in place and those clip URLs hashed the line's TEXT, not the audio, so the bump is what refreshes them.
+// ⚠️ This also drops the versioned milo-assets-* cache (art) ON PURPOSE: /assets/ art is rewritten in place under the
+// same name, so the bump is what refreshes it.
 // The bucket's clips (AUDIO_CACHE) are the exception the old comment asked for — "keep them across bumps only once their
 // URLs change with their bytes": a bucket object's name IS the hash of its bytes. Gated by swTakeover / swAudioCache.
 self.addEventListener('activate', event => {
@@ -112,29 +112,6 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  /**
-   * Voice clips. ⚠️ THE TWO HALVES NEED OPPOSITE STRATEGIES AND THAT IS THE WHOLE BUG.
-   * An mp3 is content-addressed — its filename IS a hash of the line — so it can be cached for
-   * ever and never goes stale. `manifest.json` is the opposite: it is rewritten by every render,
-   * and it GATES every lookup. With no branch here it fell to the stale-while-revalidate case
-   * below, so a device that had once loaded the app kept serving the OLD key list — the new
-   * clips sat on the CDN and were never asked for, every line fell back to browser speech, and
-   * on a Chrome with no installed voice that is SILENCE. Found 2026-09-04: 17–18 played in
-   * Safari (no service worker) and was mute in Chrome (service worker, cached 433-key manifest),
-   * on the same account, same deploy. Nothing was broken but this branch's absence.
-   */
-  // ⚠️ SAME-ORIGIN /audio/ IS ONLY FOR A TAB STILL RUNNING THE PREVIOUS BUNDLE (2026-09-26): the app now plays clips from
-  // the audio bucket (the branch above). Josh's old folder stays deployed for one release so such a tab keeps its voice;
-  // the PR that deletes the folder deletes this branch with it.
-  if (url.pathname.startsWith('/audio/')) {
-    event.respondWith(
-      url.pathname.endsWith('.json')
-        ? networkFirst(request, ASSETS_CACHE)
-        : cacheFirst(request, ASSETS_CACHE)
-    )
-    return
-  }
-
   // Images and fonts — cache first
   if (
     url.pathname.startsWith('/assets/') ||
@@ -179,7 +156,7 @@ async function offlinePage() {
 }
 
 /** Network first, falling back to the cached copy — for a small file whose CONTENT changes
- *  and whose staleness is silent (see the /audio/ branch). */
+ *  and whose staleness is silent. */
 /**
  * Keep a response only if it is the WHOLE thing, and never let a refusal escape.
  *

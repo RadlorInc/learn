@@ -27,7 +27,7 @@ type Kind = keyof typeof GREPS
 const TEXT = /\.(tsx?|jsx?|mjs|css|html|json|txt|md|webmanifest)$/
 const inScope = (f: string) => TEXT.test(f) && (
   (f.startsWith('src/') && !f.startsWith('src/features/chapters/') && !f.startsWith('src/__tests__/'))
-  || (f.startsWith('public/') && !f.startsWith('public/audio/') && !f.startsWith('public/assets/'))
+  || (f.startsWith('public/') && !f.startsWith('public/assets/'))
   || (f.startsWith('docs/legal/') && !HISTORICAL.some(r => r.test(f)))
   || ['README.md', 'CLAUDE.md', 'AGENTS.md', 'next.config.ts', 'vercel.json'].includes(f)
 )

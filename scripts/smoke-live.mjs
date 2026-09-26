@@ -19,7 +19,7 @@ import { chromium } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
 const BASE = (process.env.SMOKE_BASE ?? 'https://radlic.com').replace(/\/$/, '')
-const SW = process.env.SMOKE_SW ?? 'v240'
+const SW = process.env.SMOKE_SW ?? 'v241'
 const ONLY = process.env.SMOKE_ONLY
 const LANDING = 'https://radlor.com/radlic'
 const cb = () => `cb=${Date.now()}`
