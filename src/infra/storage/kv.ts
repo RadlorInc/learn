@@ -22,6 +22,48 @@ const MIGRATED_FLAG = 'milo-kv-migrated'
 // Gameplay keys to lift out of localStorage on first run so existing players
 // (especially anything queued offline) don't lose local state.
 const MIGRATE_PREFIXES = ['milo-profile', 'milo-last-played', 'milo_offline_queue']
+// Every key the app keeps in kv (src/infra/storage/*.ts, src/infra/analytics.ts). A boot where IndexedDB hangs writes
+// these to localStorage instead; the next boot where IndexedDB works folds them back in (`mergeFallback`). Other
+// localStorage keys (`milo-auth`, `al-text-size`, `milo-pwa-dismissed`, …) are NOT kv and must never be pulled in.
+// ⚠️ A new kv key missing here goes back to being lost after a hung boot — kvFallbackMerge.test.ts checks the list.
+const KV_PREFIXES = [
+  'milo-newflow-done-', 'milo-newflow-standing-', 'milo-newflow-run-', 'milo-lesson-', 'milo-nudge-', 'milo-chres-',
+  'milo-last-played-', 'milo-demo-run', 'milo-voice', 'milo-hand-input', 'milo-speech-rate', 'milo_recent_errors',
+  'milo_lead_email', 'milo_events_queue',
+]
+// Queues are merged by item identity; a queued item is never dropped for being on the "wrong" side.
+const QUEUE_IDS: Record<string, string> = { 'milo-lesson-sync-queue': 'id', milo_events_queue: 'client_id' }
+
+/** Folds what a localStorage-fallback boot wrote back into IndexedDB, then clears it from localStorage so it is
+ *  merged once. Nothing is dated, so for a plain value IndexedDB's copy wins and only a key IndexedDB lacks is added;
+ *  a queue is the union of both, by item identity. */
+function mergeFallback(): void {
+  const keys: string[] = []
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i)
+    if (k && KV_PREFIXES.some(p => k.startsWith(p))) keys.push(k)
+  }
+  for (const k of keys) {
+    const v = localStorage.getItem(k)
+    if (v == null) continue
+    const idField = QUEUE_IDS[k]
+    let next: string | null = null
+    if (!mem.has(k)) next = v
+    else if (idField) {
+      try {
+        const a = JSON.parse(mem.get(k)!) as Record<string, unknown>[]
+        const b = JSON.parse(v) as Record<string, unknown>[]
+        const seen = new Set(a.map(x => x[idField]))
+        const extra = b.filter(x => !seen.has(x[idField]))
+        if (extra.length) next = JSON.stringify([...a, ...extra])
+      } catch { /* an unreadable side: keep IndexedDB's */ }
+    }
+    // Cleared only once IndexedDB holds it: a failed write leaves it to be merged on the next boot.
+    const clear = () => safeLS(() => localStorage.removeItem(k), undefined)
+    if (next == null) clear()
+    else { mem.set(k, next); idbWrite('put', k, next).then(clear, () => {}) }
+  }
+}
 
 let mem = new Map<string, string>()
 let useFallback = false
@@ -92,6 +134,7 @@ async function hydrate(): Promise<void> {
       }
       safeLS(() => localStorage.setItem(MIGRATED_FLAG, '1'), undefined)
     }
+    safeLS(mergeFallback, undefined)
   } catch {
     useFallback = true
   } finally {
@@ -121,6 +164,12 @@ export const kv = {
     if (useFallback) { safeLS(() => localStorage.setItem(key, value), undefined); return }
     mem.set(key, value)
     idbWrite('put', key, value).catch(() => {})
+  },
+
+  /** Every key held, from whichever store is in use. */
+  keys(): string[] {
+    if (useFallback) return safeLS(() => Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!), [])
+    return [...mem.keys()]
   },
 
   remove(key: string): void {

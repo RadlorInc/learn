@@ -10,7 +10,7 @@
  *
  * A Server Component — it is text and links.
  */
-import { SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
@@ -28,11 +28,33 @@ const P = {
 } as const
 
 
+const TITLE = 'Help'
+const DESCRIPTION =
+  'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, points, and choosing where a child starts.'
+
+/**
+ * ⚠️ `openGraph` and `twitter` ARE DECLARED HERE ON PURPOSE (SEO-05). Next merges metadata SHALLOWLY: a page that sets
+ * no `openGraph` inherits the root's whole object — so a shared /help link previewed as the home page, with
+ * `og:url` = the site root. Setting it here replaces the root's object wholesale, which is why `type`/`siteName`
+ * are repeated. The image is not named: `app/opengraph-image.tsx` still supplies it (measured in the built HTML).
+ * The og/twitter title is the rendered `<title>` — the root's `%s · Radlic` template does not reach these fields.
+ */
 export const metadata: Metadata = {
-  title: 'Help',
-  description:
-    'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.',
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: '/help' },
+  openGraph: {
+    type: 'website',
+    siteName: APP_NAME,
+    title: `${TITLE} · ${APP_NAME}`,
+    description: DESCRIPTION,
+    url: '/help',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${TITLE} · ${APP_NAME}`,
+    description: DESCRIPTION,
+  },
 }
 
 /**
@@ -57,8 +79,8 @@ function plainText(node: React.ReactNode): string {
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'The app looks wrong, or older than it should',
-    a: <>Fully close the app and open it again — not just a refresh. Radlic keeps a copy on the device
-       so it works offline, and occasionally that copy is a version behind. Reopening replaces it.</>,
+    a: <>Fully close the app and open it again — not just a refresh. Radlic keeps parts of itself on the
+       device so it loads faster, and occasionally that copy is a version behind. Reopening replaces it.</>,
   },
   {
     q: 'My child\u2019s progress has disappeared',
@@ -90,18 +112,17 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: 'How does my child sign in on their own?',
     a: <>Give them a username and password from the Login &amp; data tab on their page in your dashboard. They
        sign in with it on any device and go straight to their lessons. If they forget it, set a new one
-       there. Teachers do the same from a class&apos;s Students tab.</>,
+       there.</>,
   },
   {
-    q: 'What is game time?',
-    a: <>Your child earns points by practicing and can spend them on minutes of a building game. It starts
-       on, at up to 20 minutes a day. You can turn it off or change the daily limit on the Game time tab
-       on their page.</>,
+    q: 'What are points for?',
+    a: <>Your child earns points by practicing. Games to spend them on are coming soon; until then the
+       points are saved and none are taken away.</>,
   },
   {
     q: 'What do you store about my child, and can I see it?',
     a: <>Their name, the lessons you chose for them, which lessons they finished and how their practice
-       went, their points and game-time settings, and their login username if you set one. You can
+       went, their points and game settings, and their login username if you set one. You can
        download a copy of all of it, or delete it permanently, from the Login &amp; data tab on their page in
        your{' '}<Link href="/parent" style={{ color: '#0B4FA8', fontWeight: 700 }}>dashboard</Link>.
        Details are in the{' '}

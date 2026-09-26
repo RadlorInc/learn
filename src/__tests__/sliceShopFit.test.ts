@@ -93,7 +93,7 @@ describe('the ladder', () => {
 
   /**
    * ⚠️ THE ROUND BUDGET, WHICH IS WHY `pickDen` IS NOT A UNIFORM DRAW. Promotion takes 3 correct in
-   * a row and mastery ends the run on a streak of 6, so a strong child gets roughly three rounds at
+   * a row and mastery ends the run on two first-try rights at L3, so a strong child gets roughly three rounds at
    * L1, ONE at L2 and TWO at L3. A uniform draw loses thirds — the only denominator L1 never shows.
    */
   it('a scarce round is spent on a denominator the child has NOT met', () => {

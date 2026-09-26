@@ -70,7 +70,12 @@ export async function recordPracticeRun(learnerId: string, lessonId: string, run
   } catch { return 'retry' }
 }
 
-const COLS = 'lesson_id, done, level, streak, mastered'
+/** The signed-in account's id, or null with no session. A local read (no network) unless the token needs refreshing. */
+export async function sessionUserId(): Promise<string | null> {
+  try { const { data } = await db().auth.getSession(); return data.session?.user?.id ?? null } catch { return null }
+}
+
+const COLS = 'lesson_id, done, level, streak, mastered, updated_at'   // updated_at: the dashboard's "last played" (N18)
 /** null = could not read (offline, or not migrated yet). Reads `run` too, and without it on a database that lacks the column. */
 export async function getLessonRows(learnerId: string): Promise<LessonRow[] | null> {
   try {

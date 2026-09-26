@@ -6,8 +6,14 @@ import { PENDING_TTL_DAYS } from '@/features/consent/config'
 import { renderConfirm, renderSignup } from '@/features/consent/email'
 import { firstNameOf } from '@/features/consent/firstName'
 import {
-  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, generateSignupLink, hashToken, newToken, rpc, sendEmail, type RpcError,
+  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, generateSignupLink, hashToken, lastSignupLinkAt, newToken, rpc, sendEmail,
+  type RpcError,
 } from '@/features/consent/server'
+
+/** 2 minutes: twice Supabase's own default resend throttle (60 s), which stopped applying when this route took the
+ *  email over. Short enough that a parent whose first email really failed can retry soon; long enough to cap one
+ *  address at 30 emails an hour instead of whatever an attacker's IPs allow. */
+const SIGNUP_EMAIL_COOLDOWN_MS = 2 * 60_000
 
 /**
  * EMAIL-AND-PASSWORD SIGN-UP, WITH ONE EMAIL (founder, 2026-09-25: "they will receive only one mail").
@@ -38,6 +44,11 @@ export async function POST(req: Request) {
 
   try {
     requireConfig()
+    // SEC-04: at most ONE sign-up email per address per SIGNUP_EMAIL_COOLDOWN_MS, across every serverless instance
+    // (the per-IP limit above is per instance). Inside the window: the same `{ ok: true }` as a send, nothing issued —
+    // so the link already in the inbox keeps working (a re-issue would kill it) and nothing about the account leaks.
+    const last = await lastSignupLinkAt(email)
+    if (last !== null && Date.now() - last < SIGNUP_EMAIL_COOLDOWN_MS) return NextResponse.json({ ok: true })
     const link = await generateSignupLink(email, password, { first_name: firstName, role })
     if (!link.ok) {
       // V10 REVERSED (founder, 2026-09-22): an existing account is said plainly, as the old signUp path did.
@@ -45,6 +56,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: link.reason, message: link.message }, { status: 400 })
     }
     // The role the account was FIRST created with wins: re-sending must not turn a teacher's sign-up into a consent.
+    // ⚠️ MEASURED FALSE on a local stack (2026-09-26, SEC-04): a second generate_link REPLACES user_metadata with the
+    // new `data` (teacher → parent came back role 'parent'), while the FIRST password is kept. Recorded, not changed here:
+    // it belongs with SEC-01 (Rafi's N2).
     const asParent = (link.metadata.role ?? role) === 'parent'
     const confirm = `${SITE_URL}/auth/confirm?th=${encodeURIComponent(link.hashedToken)}`
     const key = `signup-${link.userId}-${link.hashedToken.slice(0, 16)}`
@@ -76,7 +90,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
     // console, not reportCrash: see features/consent/server.ts. An account created without its email is re-sent by
-    // signing up again (generate_link issues a new token for an unconfirmed address).
+    // signing up again once the SEC-04 cooldown has passed (generate_link issues a new token for an unconfirmed address).
     console.error('[auth/signup] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }

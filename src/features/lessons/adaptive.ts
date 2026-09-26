@@ -14,7 +14,7 @@
  * The topic counts as done once mastered, or after DONE_AFTER answers across all its sessions.
  * Lesson practice, module practice and the review problem all move the same per-topic Standing with `step`.
  */
-import type { Problem } from './script'
+import type { Answer, Problem } from './script'
 
 export type Rng = () => number
 
@@ -72,6 +72,23 @@ export function step(s: Standing, levels: number, o: Outcome): Standing {
   if (o === 'second') return { level, streak: 0, mastered: s.mastered }
   if (s.streak + 1 < 2) return { level, streak: s.streak + 1, mastered: s.mastered }
   return level === top ? { level, streak: 0, mastered: true } : { level: level + 1, streak: 0, mastered: s.mastered }
+}
+
+/**
+ * ONE MASTERY RULE (N19, founder 2026-09-26: "keep the new ladder rule only, retire the legacy count rule"). A story
+ * chapter is marked mastered by `step` above, exactly as a topic is: right on the first try twice in a row at the TOP
+ * level. A chapter's three tiers are its ladder (CHAPTER_TIERS levels); `tier` is the tier the question was asked at.
+ * A chapter answer is one attempt, so its outcome is read from the misses just before it: right with none = 'first',
+ * right after a miss = 'second', a second miss in a row = 'worked' (a lone miss waits for the next answer, as a
+ * topic's problem does). Only `streak` and `mastered` come back: the chapter's TIER still moves by its own
+ * promote/demote rules (`core/progression.ts`), which this does not change.
+ */
+export const CHAPTER_TIERS = 3
+export function chapterMastery(m: { streak: number; mastered: boolean }, tier: number, correct: boolean, missesBefore: number): { streak: number; mastered: boolean } {
+  const o: Outcome | null = correct ? (missesBefore > 0 ? 'second' : 'first') : missesBefore > 0 ? 'worked' : null
+  if (!o) return m
+  const n = step({ level: tier - 1, ...m }, CHAPTER_TIERS, o)
+  return { streak: n.streak, mastered: n.mastered }
 }
 
 /** Where a topic's practice starts: its saved standing, or — first time — one level up if Screen 8 went right first try. */
@@ -175,3 +192,7 @@ export function nextModuleTopic(ids: readonly string[], standingOf: (id: string)
   const tie = new Map(pool.map(id => [id, r()]))
   return pool.sort((a, b) => score(a) - score(b) || tie.get(a)! - tie.get(b)!)[0]
 }
+
+/** A few answers from every level, so the answer box can take its shape from the whole ladder (a "−" key, a whole-number box). */
+export const ladderAnswers = (ladder: readonly Level[]): Answer[] =>
+  ladder.flatMap((lv, i) => Array.from({ length: 20 }, (_, s) => lv.make(rng(i * 1000 + s)).answer!))

@@ -22,28 +22,18 @@ import {
   deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, correctLearner, removeMyselfFromLearner,
   getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
-  getRecentPoints, getLessonRows, getExerciseResults,
+  getRecentPoints, getExerciseResults,
 } from '@/data/repositories'
-import { flushQueue } from '@/infra/useOfflineSync'
-import { chapterKey } from '@/core/chapters'
-import { markLessonDone } from '@/infra/storage/lessonProgress'
-import { loadStanding as loadChapterStanding, saveStanding } from '@/infra/storage/lessonStanding'
-import { syncLesson } from '@/infra/storage/lessonSync'
-import { FRESH } from '@/features/lessons/adaptive'
-import { setActivePlan, advancePlan } from '@/infra/storage/activePlan'
-import { adoptDemoRun } from '@/infra/storage/demoRun'
-import { track } from '@/infra/analytics'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
-import type { AgeGroup } from '@/core/chapters'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules, MODULES, GRADES, findLesson } from '@/features/lessons/modules'
 import { ModuleChecklist, NewClass, bandOf } from '@/features/classes/Classes'
 import { summarize } from '@/features/classes/exercise'
-import { buildReport, localDay, type Report, type PointRow } from '@/features/lessons/progressReport'
+import { buildReport, lastPlayedAt, localDay, type Report, type PointRow } from '@/features/lessons/progressReport'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { DashNav } from '@/features/dashboard/DashNav'
@@ -122,6 +112,7 @@ function Dashboard() {
   const [makingClass, setMakingClass] = useState(false)
   // The helpers.
   const [extra, setExtra] = useState<Record<string, ChildExtra>>({})
+  const [lastAt, setLastAt] = useState<Record<string, string | null>>({})   // learnerId → newest lesson_progress.updated_at
   const [classResults, setClassResults] = useState<Record<string, Awaited<ReturnType<typeof getExerciseResults>>>>({})
   const [prefs, setPrefsState] = useState<Prefs | null>(null)
   const [bell, setBell] = useState(false)
@@ -196,12 +187,14 @@ function Dashboard() {
       // the dashboard shows at once and redraws when the account has answered.
       const ids = chosenModules(null).flatMap(m => m.lessons.map(l => l.id))
       for (const d of data) {
-        pullLessonProgress(d.learner.id, ids)
-          .then(ok => { if (ok) redraw(n => n + 1); return getWallet(d.learner.id) })
+        // The pull already reads the child's `lesson_progress` rows; the report reuses them rather than reading again (PERF-03).
+        const pulled = pullLessonProgress(d.learner.id, ids)
+        pulled
+          .then(rows => { if (rows) { redraw(n => n + 1); setLastAt(p => ({ ...p, [d.learner.id]: lastPlayedAt(rows) })) } return getWallet(d.learner.id) })
           .then(w => setWallets(prev => ({ ...prev, [d.learner.id]: w })))
         // A parent's helpers read each child's last 30 days (a teacher's come from the class results instead).
         if (myRole !== 'teacher') {
-          Promise.all([getRecentPoints(d.learner.id, 30), getLessonRows(d.learner.id)]).then(([points, rows]) =>
+          Promise.all([getRecentPoints(d.learner.id, 30), pulled]).then(([points, rows]) =>
             setExtra(p => ({ ...p, [d.learner.id]: { points, report: points && rows ? buildReport(points, rows, new Date()) : null } })))
         }
       }
@@ -290,7 +283,7 @@ function Dashboard() {
    */
   function launchGame(d: LearnerData) {
     setActiveLearner(d.learner)
-    router.push('/menu')
+    router.push('/modules')
   }
 
   const tea = role === 'teacher'
@@ -647,7 +640,7 @@ function Dashboard() {
               const done = lessons.filter(l => lessonDone(d.learner.id, l.id)).length
               const next = lessons.find(l => !lessonDone(d.learner.id, l.id))
               return <ChildCard key={d.learner.id} id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]}
-                lastPlayed={d.stats?.last_played_at ? new Date(d.stats.last_played_at).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
+                lastPlayed={lastAt[d.learner.id] ? new Date(lastAt[d.learner.id]!).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
                 next={next?.title ?? null} done={done} total={lessons.length} onStart={() => launchGame(d)} />
             })}
             <button type="button" data-tour="add-child" onClick={() => setShowAddModal(true)}
@@ -903,32 +896,6 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
     setLoading(true)
     const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion: attest.noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
-    /**
-     * ⚠️ AND THE SAME LOOP FOR THE DEMO. A parent who played two chapters before signing up must not
-     * find nothing here — no stars, and a plan whose first step is the chapter their child just
-     * finished. That is worse than never having played: we showed them the product and took it away
-     * at the moment they committed.
-     *
-     * ⚠️ THE DIAGNOSTIC USED TO OUTRANK THE DEMO FOR THE PLAN; it was deleted 2026-09-20, so the
-     * demo always claims it (`true`) and its sessions are adopted as before.
-     */
-    const adopted = adoptDemoRun(
-      learner.id, learner.age_group as AgeGroup, true,
-      {
-        record: (chapter, mastered) => {
-          const key = chapterKey(chapter)
-          markLessonDone(learner.id, key)
-          if (mastered) saveStanding(learner.id, key, { ...(loadChapterStanding(learner.id, key) ?? FRESH), mastered: true })
-          syncLesson(learner.id, key)
-        },
-        plan: chapters => { setActivePlan(learner.id, learner.age_group ?? '3-5', chapters, 'gradeStart') },
-        advance: chapter => { advancePlan(learner.id, chapter) },
-      },
-    )
-    if (adopted) {
-      void flushQueue()
-      track('demo_adopted', { chapters: adopted.adopted, planSet: adopted.planSet, band: learner.age_group })
-    }
     onAdded()
   }
 

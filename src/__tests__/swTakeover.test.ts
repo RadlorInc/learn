@@ -28,15 +28,25 @@ const req = (path: string, mode = 'navigate', destination = mode === 'navigate' 
   ({ url: ORIGIN + path, method: 'GET', mode, destination })
 const key = (r: Req | string) => (typeof r === 'string' ? new URL(r, ORIGIN).href : r.url)
 
-function makeWorld(network: (url: string) => Promise<Response>) {
-  const stores = new Map<string, Map<string, Response>>()
+function makeWorld(
+  network: (url: string) => Promise<Response>,
+  opts: { src?: string; stores?: Map<string, Map<string, Response>>; requested?: string[] } = {},
+) {
+  // `stores` can be shared by two worlds: that is two worker VERSIONS on one device, one Cache Storage.
+  const stores = opts.stores ?? new Map<string, Map<string, Response>>()
   const open = async (name: string) => {
     if (!stores.has(name)) stores.set(name, new Map())
     const m = stores.get(name)!
     return {
       match: async (r: Req | string) => m.get(key(r))?.clone(),
       put: async (r: Req | string, res: Response) => { m.set(key(r), res) },
-      add: async (r: string) => { const res = await network(key(r)); m.set(key(r), res) },
+      // Like the real Cache.add: a non-OK answer REJECTS and nothing is stored.
+      add: async (r: string) => {
+        opts.requested?.push(new URL(key(r)).pathname)
+        const res = await network(key(r))
+        if (!res.ok) throw new TypeError('Request failed')
+        m.set(key(r), res)
+      },
     }
   }
   const caches = {
@@ -55,7 +65,14 @@ function makeWorld(network: (url: string) => Promise<Response>) {
     clients: { claim: async () => {}, matchAll: async () => [] },
   }
   const fetch = (r: Req | string) => network(key(r))
-  new Function('self', 'caches', 'fetch', SRC)(self, caches, fetch)
+  new Function('self', 'caches', 'fetch', opts.src ?? SRC)(self, caches, fetch)
+
+  /** Dispatch install / activate and wait for everything passed to waitUntil. */
+  const lifecycle = async (type: 'install' | 'activate') => {
+    const waits: Promise<unknown>[] = []
+    for (const fn of listeners[type] ?? []) fn({ waitUntil: (p: Promise<unknown>) => waits.push(p) })
+    await Promise.all(waits)
+  }
 
   const prime = async (cacheName: string, path: string, body: string) =>
     (await open(cacheName)).put(ORIGIN + path, new Response(body, { status: 200 }))
@@ -66,7 +83,7 @@ function makeWorld(network: (url: string) => Promise<Response>) {
     for (const fn of listeners.fetch) fn({ request: r, respondWith: (p: Promise<Response>) => { responded = p } })
     return responded ? (await responded).text() : null
   }
-  return { prime, get, open }
+  return { prime, get, open, lifecycle, stores }
 }
 
 const online = (url: string) => {
@@ -118,5 +135,90 @@ describe('service worker: a deploy takes over, offline still works', () => {
   it('/api is never intercepted', async () => {
     const w = makeWorld(online)
     expect(await w.get(req('/api/health', 'cors'))).toBeNull()
+  })
+})
+
+/**
+ * Two review findings, one of them turned down by measurement (docs/review/PERFORMANCE.md PERF-07/PERF-12,
+ * LATENT-BUGS.md BUG-11, DEVOPS.md OPS-19).
+ *
+ * ⚠️ WHY THE BUMP STILL DROPS THE CLIP CACHE. A clip's URL is a hash of the line's TEXT (`clipKey`), not of the
+ * audio. The audio has been rewritten under the same URL: f5a7694f3 (2026-09-19, sw v209) trimmed 56 Stevie clips
+ * in place, and the VERSION bump was what got the trimmed audio onto devices, because `/audio/*.mp3` is cache-first
+ * and never revalidates. Keeping that cache across bumps would pin the old audio on a device for ever. The test
+ * below runs two worker VERSIONS against one Cache Storage and asserts the re-rendered clip arrives.
+ */
+const CLIP = '/audio/nzFihrBIvB34imQBuxub/3z57ji.mp3'
+const clipReq = () => req(CLIP, 'no-cors', 'audio')
+const PREV_SRC = SRC.replace(/const VERSION\s*=\s*'[^']+'/, "const VERSION = 'vPREV'")
+const tick = () => new Promise(r => setTimeout(r, 0))
+
+describe('service worker: precache list and VERSION bump', () => {
+  it('install fetches the offline page and NO page list (N26: no offline promise beyond the answer queue)', async () => {
+    const requested: string[] = []
+    const w = makeWorld(online, { requested })
+    await w.lifecycle('install')
+    // Written out by hand. Until v238 this was ['/menu', '/game', '/parent', '/auth', '/offline.html', '/manifest.json'].
+    expect(requested).toEqual(['/offline.html'])
+    // …and it is the thing a failed navigation then shows, with nothing else primed.
+    const off = makeWorld(offline, { stores: w.stores })
+    expect(await off.get(req('/modules'))).toBe('fresh ' + ORIGIN + '/offline.html')
+  })
+
+  it('offline at the root: the offline page, never a cached /auth (no page-list fallback)', async () => {
+    const w = makeWorld(offline)
+    await w.prime(`milo-shell-${VERSION}`, '/auth', '<html>sign in</html>')
+    await w.prime(`milo-shell-${VERSION}`, '/offline.html', OFFLINE_HTML)
+    expect(await w.get(req('/'))).toBe(OFFLINE_HTML)
+  })
+
+  it('sw-register.js sends the worker no CACHE_URLS message, and still registers it', async () => {
+    const REG_SRC = readFileSync(resolve(process.cwd(), 'public/sw-register.js'), 'utf8')
+    const posted: unknown[] = []
+    const registered: string[] = []
+    const onLoad: (() => void)[] = []
+    const reg = { scope: '/', active: { postMessage: (m: unknown) => posted.push(m) } }
+    const window = {
+      addEventListener: (t: string, fn: () => void) => { if (t === 'load') onLoad.push(fn) },
+      setTimeout: (fn: () => void) => { fn(); return 0 },
+    }
+    const navigator = { serviceWorker: { register: async (u: string) => { registered.push(u); return reg } } }
+    const document = { querySelectorAll: (sel: string) =>
+      sel.startsWith('script') ? [{ src: ORIGIN + '/_next/static/chunks/app-AAAA.js' }] : [] }
+    const quiet = { log: () => {}, warn: () => {} }
+    new Function('window', 'navigator', 'document', 'location', 'console', REG_SRC)(
+      window, navigator, document, { hostname: 'radlic.com' }, quiet)
+    onLoad.forEach(fn => fn())
+    await tick(); await tick()
+    // Positive twin: the drive reached the registration, so an empty `posted` is not a harness that saw nothing.
+    expect(registered).toEqual(['/sw.js'])
+    expect(posted).toEqual([])
+  })
+
+  it('a clip re-rendered under the SAME url reaches the device after a VERSION bump', async () => {
+    const stores = new Map<string, Map<string, Response>>()
+    const prev = makeWorld(url => Promise.resolve(new Response(url.endsWith(CLIP) ? 'old audio' : 'x')), { src: PREV_SRC, stores })
+    expect(await prev.get(clipReq())).toBe('old audio')
+    await tick()
+    // Positive control: the previous worker really kept it, and serves it with no network.
+    const prevOffline = makeWorld(offline, { src: PREV_SRC, stores })
+    expect(await prevOffline.get(clipReq())).toBe('old audio')
+
+    const next = makeWorld(url => Promise.resolve(new Response(url.endsWith(CLIP) ? 'new audio' : 'x')), { stores })
+    await next.lifecycle('activate')
+    expect(await next.get(clipReq())).toBe('new audio')
+  })
+
+  it('activate removes the previous VERSION\'s page cache; pages stay network-first', async () => {
+    const stores = new Map<string, Map<string, Response>>()
+    const prev = makeWorld(online, { src: PREV_SRC, stores })
+    await prev.prime('milo-shell-vPREV', '/parent', OLD_HTML)
+    const next = makeWorld(offline, { stores })
+    await next.lifecycle('activate')
+    expect([...stores.keys()].filter(k => k.endsWith('vPREV'))).toEqual([])
+    expect(await next.get(req('/parent'))).not.toBe(OLD_HTML)
+    const nextOnline = makeWorld(online, { stores })
+    await nextOnline.prime(`milo-shell-${VERSION}`, '/parent', OLD_HTML)
+    expect(await nextOnline.get(req('/parent'))).toBe(NEW_HTML)
   })
 })

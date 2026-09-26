@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signUpOneEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
-import { getMyRole, homeForRole, enterAsChild } from '@/data/repositories'
+import { getMyRole, homeForRole, enterAsChild, classifyUserError } from '@/data/repositories'
+import { errorWording } from '@/shared/ui/errorWording'
 import { loginEmail } from '@/core/childLogin'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
@@ -141,10 +142,10 @@ export default function AuthPage() {
           return
         }
       }
-    } catch {
+    } catch (e) {
       // A genuine network failure (offline / Supabase unreachable) throws rather than
-      // returning { error } — without this the spinner would hang forever.
-      setError(t('Couldn’t connect — check your connection and try again'))
+      // returning { error } — without this the spinner would hang forever. Only a network failure says so (BUG-10).
+      setError(t(errorWording(classifyUserError(e), 'Couldn’t connect — check your connection and try again')))
     } finally {
       setLoading(false)
     }
@@ -156,8 +157,8 @@ export default function AuthPage() {
       const { error } = await signInWithGoogleOAuth(`${window.location.origin}/auth/callback`)
       if (error) { setError(error.message); setLoading(false) }
       // On success the browser navigates to Google — leave loading true.
-    } catch {
-      setError(t('Couldn’t connect — check your connection and try again'))
+    } catch (e) {
+      setError(t(errorWording(classifyUserError(e), 'Couldn’t connect — check your connection and try again')))
       setLoading(false)
     }
   }
@@ -196,7 +197,7 @@ export default function AuthPage() {
             display: 'inline-block', background: 'var(--milo-orange-soft)', color: C.ink,
             borderRadius: 999, padding: '6px 14px', fontSize: 12, fontWeight: 800,
             letterSpacing: 0.3, textTransform: 'uppercase',
-          }}>{t('Adaptive math · KG to grade 8')}</span>
+          }}>{t('Adaptive math · grades 3 to 8')}</span>
           <h2 style={{
             fontSize: 38, lineHeight: 1.15, fontWeight: 900, color: C.ink,
             margin: '18px 0 14px', fontFamily: 'var(--font-display)', maxWidth: 520,
@@ -233,7 +234,7 @@ export default function AuthPage() {
                 style={{ height: 56, width: 'auto', maxWidth: '100%' }} />
             </h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>
-              {t('Adaptive math from KG to grade 8')}
+              {t('Adaptive math for grades 3 to 8')}
             </p>
           </div>
 

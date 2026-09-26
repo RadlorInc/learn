@@ -1,0 +1,1429 @@
+[
+ {
+  "id": "g3m1",
+  "grade": 3,
+  "n": 1,
+  "title": "Multiplication and Division with 2, 3, 4, 5 and 10",
+  "lessons": [
+   {
+    "id": "g3m1-t1",
+    "title": "Plates of cookies",
+    "obj": "cookie"
+   },
+   {
+    "id": "g3m1-t2",
+    "title": "Rows of chairs",
+    "obj": "chair"
+   },
+   {
+    "id": "g3m1-t3",
+    "title": "Turn the tray",
+    "obj": "muffin"
+   },
+   {
+    "id": "g3m1-t4",
+    "title": "Counting by 2s, 5s and 10s",
+    "obj": "sock"
+   },
+   {
+    "id": "g3m1-t5",
+    "title": "Counting by 3s and 4s",
+    "obj": "wheel"
+   },
+   {
+    "id": "g3m1-t6",
+    "title": "Share the apples fairly",
+    "obj": "apple"
+   },
+   {
+    "id": "g3m1-t7",
+    "title": "How many bags can we fill?",
+    "obj": "apple"
+   },
+   {
+    "id": "g3m1-t8",
+    "title": "The missing number",
+    "obj": "chair"
+   }
+  ]
+ },
+ {
+  "id": "g3m2",
+  "grade": 3,
+  "n": 2,
+  "title": "Place value through metric measurement",
+  "lessons": [
+   {
+    "id": "g3m2-t1",
+    "title": "Read the clock to 5 minutes"
+   },
+   {
+    "id": "g3m2-t2",
+    "title": "Read the clock to 1 minute"
+   },
+   {
+    "id": "g3m2-t3",
+    "title": "How long did it take?"
+   },
+   {
+    "id": "g3m2-t4",
+    "title": "Heavy or light (grams, kilograms)"
+   },
+   {
+    "id": "g3m2-t5",
+    "title": "How much water? (liters, milliliters)"
+   },
+   {
+    "id": "g3m2-t6",
+    "title": "Round to the nearest 10"
+   },
+   {
+    "id": "g3m2-t7",
+    "title": "Round to the nearest 100"
+   },
+   {
+    "id": "g3m2-t8",
+    "title": "Add big numbers (trade 10 ones for a ten)"
+   },
+   {
+    "id": "g3m2-t9",
+    "title": "Take away big numbers (break a ten)"
+   }
+  ]
+ },
+ {
+  "id": "g3m3",
+  "grade": 3,
+  "n": 3,
+  "title": "Multiplication and division with 0, 1, 6, 7, 8, 9",
+  "lessons": [
+   {
+    "id": "g3m3-t1",
+    "title": "Empty plates (×0)",
+    "obj": "cookie"
+   },
+   {
+    "id": "g3m3-t2",
+    "title": "One on each plate (×1)",
+    "obj": "cookie"
+   },
+   {
+    "id": "g3m3-t3",
+    "title": "6s: five groups and one more"
+   },
+   {
+    "id": "g3m3-t4",
+    "title": "7s"
+   },
+   {
+    "id": "g3m3-t5",
+    "title": "8s: double the 4s"
+   },
+   {
+    "id": "g3m3-t6",
+    "title": "9s: ten groups minus one"
+   },
+   {
+    "id": "g3m3-t7",
+    "title": "Break the big fact apart"
+   },
+   {
+    "id": "g3m3-t8",
+    "title": "Multiply by tens (3 × 40)",
+    "obj": "straw"
+   },
+   {
+    "id": "g3m3-t9",
+    "title": "Two-step stories"
+   }
+  ]
+ },
+ {
+  "id": "g3m4",
+  "grade": 3,
+  "n": 4,
+  "title": "Multiplication and area",
+  "lessons": [
+   {
+    "id": "g3m4-t1",
+    "title": "Cover the floor with tiles"
+   },
+   {
+    "id": "g3m4-t2",
+    "title": "Count the rows instead"
+   },
+   {
+    "id": "g3m4-t3",
+    "title": "Break the rug into two pieces"
+   },
+   {
+    "id": "g3m4-t4",
+    "title": "An L-shaped room"
+   }
+  ]
+ },
+ {
+  "id": "g3m5",
+  "grade": 3,
+  "n": 5,
+  "title": "Fractions as numbers",
+  "lessons": [
+   {
+    "id": "g3m5-t1",
+    "title": "Cut the sandwich fairly"
+   },
+   {
+    "id": "g3m5-t2",
+    "title": "One piece: 1/4"
+   },
+   {
+    "id": "g3m5-t3",
+    "title": "Three pieces: 3/4"
+   },
+   {
+    "id": "g3m5-t4",
+    "title": "Fractions on a number line"
+   },
+   {
+    "id": "g3m5-t5",
+    "title": "Same amount, different pieces"
+   },
+   {
+    "id": "g3m5-t6",
+    "title": "A whole pizza: 4/4 = 1"
+   },
+   {
+    "id": "g3m5-t7",
+    "title": "Which is bigger? Same pieces cut"
+   },
+   {
+    "id": "g3m5-t8",
+    "title": "Which is bigger? Same pieces taken"
+   }
+  ]
+ },
+ {
+  "id": "g3m6",
+  "grade": 3,
+  "n": 6,
+  "title": "Shapes, measuring and graphs",
+  "lessons": [
+   {
+    "id": "g3m6-t1",
+    "title": "Picture graph, each picture = 2"
+   },
+   {
+    "id": "g3m6-t2",
+    "title": "Bar graph"
+   },
+   {
+    "id": "g3m6-t3",
+    "title": "Measure to the half inch"
+   },
+   {
+    "id": "g3m6-t4",
+    "title": "Line plot of our measurements"
+   },
+   {
+    "id": "g3m6-t5",
+    "title": "Four-sided shapes"
+   },
+   {
+    "id": "g3m6-t6",
+    "title": "Walk around the fence"
+   },
+   {
+    "id": "g3m6-t7",
+    "title": "Same fence, different garden"
+   }
+  ]
+ },
+ {
+  "id": "g4m1",
+  "grade": 4,
+  "n": 1,
+  "title": "Place value for addition and subtraction",
+  "lessons": [
+   {
+    "id": "g4m1-t1",
+    "title": "Read big numbers (to a million)"
+   },
+   {
+    "id": "g4m1-t2",
+    "title": "Each place is 10 times the next"
+   },
+   {
+    "id": "g4m1-t3",
+    "title": "Compare big numbers"
+   },
+   {
+    "id": "g4m1-t4",
+    "title": "Round big numbers"
+   },
+   {
+    "id": "g4m1-t5",
+    "title": "Add big numbers"
+   },
+   {
+    "id": "g4m1-t6",
+    "title": "Subtract big numbers (across zeros)"
+   },
+   {
+    "id": "g4m1-t7",
+    "title": "Is my answer about right?"
+   },
+   {
+    "id": "g4m1-t8",
+    "title": "Two-step add and subtract stories"
+   }
+  ]
+ },
+ {
+  "id": "g4m2",
+  "grade": 4,
+  "n": 2,
+  "title": "Place value for multiplication and division",
+  "lessons": [
+   {
+    "id": "g4m2-t1",
+    "title": "Times as many"
+   },
+   {
+    "id": "g4m2-t2",
+    "title": "Factor pairs"
+   },
+   {
+    "id": "g4m2-t3",
+    "title": "Prime or composite?"
+   },
+   {
+    "id": "g4m2-t4",
+    "title": "Multiples"
+   },
+   {
+    "id": "g4m2-t5",
+    "title": "Multiply by 10, 100, 1,000"
+   },
+   {
+    "id": "g4m2-t6",
+    "title": "Multiply tens by ones (4 × 30)"
+   },
+   {
+    "id": "g4m2-t7",
+    "title": "Divide tens (80 ÷ 4)"
+   },
+   {
+    "id": "g4m2-t8",
+    "title": "Division with a remainder"
+   }
+  ]
+ },
+ {
+  "id": "g4m3",
+  "grade": 4,
+  "n": 3,
+  "title": "Multiplication and division of multi-digit numbers",
+  "lessons": [
+   {
+    "id": "g4m3-t1",
+    "title": "Break a number apart to multiply (16 × 3)"
+   },
+   {
+    "id": "g4m3-t2",
+    "title": "Multiply a big number by one digit"
+   },
+   {
+    "id": "g4m3-t3",
+    "title": "The standard way to multiply"
+   },
+   {
+    "id": "g4m3-t4",
+    "title": "Two-digit times two-digit"
+   },
+   {
+    "id": "g4m3-t5",
+    "title": "Break a number apart to divide"
+   },
+   {
+    "id": "g4m3-t6",
+    "title": "Divide a big number by one digit"
+   },
+   {
+    "id": "g4m3-t7",
+    "title": "What to do with the remainder"
+   },
+   {
+    "id": "g4m3-t8",
+    "title": "Multi-step stories"
+   }
+  ]
+ },
+ {
+  "id": "g4m4",
+  "grade": 4,
+  "n": 4,
+  "title": "Foundations for fraction operations",
+  "lessons": [
+   {
+    "id": "g4m4-t1",
+    "title": "Same amount, smaller pieces"
+   },
+   {
+    "id": "g4m4-t2",
+    "title": "Compare with one half"
+   },
+   {
+    "id": "g4m4-t3",
+    "title": "Compare by making pieces match"
+   },
+   {
+    "id": "g4m4-t4",
+    "title": "Break a fraction apart"
+   },
+   {
+    "id": "g4m4-t5",
+    "title": "Add fractions with the same bottom number"
+   },
+   {
+    "id": "g4m4-t6",
+    "title": "Take away fractions with the same bottom number"
+   },
+   {
+    "id": "g4m4-t7",
+    "title": "Mixed numbers and fractions"
+   },
+   {
+    "id": "g4m4-t8",
+    "title": "Add mixed numbers"
+   },
+   {
+    "id": "g4m4-t9",
+    "title": "A whole number times a fraction"
+   }
+  ]
+ },
+ {
+  "id": "g4m5",
+  "grade": 4,
+  "n": 5,
+  "title": "Angle measurements and plane figures",
+  "lessons": [
+   {
+    "id": "g4m5-t1",
+    "title": "Points, lines and rays"
+   },
+   {
+    "id": "g4m5-t2",
+    "title": "Right, acute or obtuse?"
+   },
+   {
+    "id": "g4m5-t3",
+    "title": "Measure an angle in degrees"
+   },
+   {
+    "id": "g4m5-t4",
+    "title": "Angles add up"
+   },
+   {
+    "id": "g4m5-t5",
+    "title": "Parallel and perpendicular lines"
+   },
+   {
+    "id": "g4m5-t6",
+    "title": "Sort triangles"
+   },
+   {
+    "id": "g4m5-t7",
+    "title": "Sort four-sided shapes"
+   },
+   {
+    "id": "g4m5-t8",
+    "title": "Lines of symmetry"
+   }
+  ]
+ },
+ {
+  "id": "g4m6",
+  "grade": 4,
+  "n": 6,
+  "title": "Place value for decimal fractions",
+  "lessons": [
+   {
+    "id": "g4m6-t1",
+    "title": "Tenths as decimals"
+   },
+   {
+    "id": "g4m6-t2",
+    "title": "Hundredths as decimals"
+   },
+   {
+    "id": "g4m6-t3",
+    "title": "0.5 is the same as 0.50"
+   },
+   {
+    "id": "g4m6-t4",
+    "title": "Decimals on a number line"
+   },
+   {
+    "id": "g4m6-t5",
+    "title": "Compare decimals"
+   },
+   {
+    "id": "g4m6-t6",
+    "title": "Add tenths and hundredths"
+   },
+   {
+    "id": "g4m6-t7",
+    "title": "Money as decimals"
+   }
+  ]
+ },
+ {
+  "id": "g5m1",
+  "grade": 5,
+  "n": 1,
+  "title": "Place value concepts for multiplication and division with whole numbers",
+  "lessons": [
+   {
+    "id": "g5m1-t1",
+    "title": "Relate place value neighbors"
+   },
+   {
+    "id": "g5m1-t2",
+    "title": "Multiply and divide by 10, 100, 1,000"
+   },
+   {
+    "id": "g5m1-t3",
+    "title": "Exponents and powers of 10"
+   },
+   {
+    "id": "g5m1-t4",
+    "title": "Estimate products and quotients"
+   },
+   {
+    "id": "g5m1-t5",
+    "title": "Convert metric units"
+   },
+   {
+    "id": "g5m1-t6",
+    "title": "Metric word problems"
+   },
+   {
+    "id": "g5m1-t7",
+    "title": "Multiply with methods you know"
+   },
+   {
+    "id": "g5m1-t8",
+    "title": "Multiply by breaking a number apart"
+   },
+   {
+    "id": "g5m1-t9",
+    "title": "Standard way: 2 or 3 digits × 2 digits"
+   },
+   {
+    "id": "g5m1-t10",
+    "title": "Standard way: 3 or 4 digits × 3 digits"
+   },
+   {
+    "id": "g5m1-t11",
+    "title": "Multiply two big numbers"
+   },
+   {
+    "id": "g5m1-t12",
+    "title": "Divide by multiples of 10"
+   },
+   {
+    "id": "g5m1-t13",
+    "title": "2-digit ÷ 2-digit, one-digit answer"
+   },
+   {
+    "id": "g5m1-t14",
+    "title": "3-digit ÷ 2-digit, one-digit answer"
+   },
+   {
+    "id": "g5m1-t15",
+    "title": "3-digit ÷ 2-digit, two-digit answer"
+   },
+   {
+    "id": "g5m1-t16",
+    "title": "4-digit ÷ 2-digit"
+   },
+   {
+    "id": "g5m1-t17",
+    "title": "Write, read and compare expressions"
+   },
+   {
+    "id": "g5m1-t18",
+    "title": "Make a story for an expression"
+   },
+   {
+    "id": "g5m1-t19",
+    "title": "Multi-step stories with × and ÷"
+   },
+   {
+    "id": "g5m1-t20",
+    "title": "Multi-step stories with all four operations"
+   }
+  ]
+ },
+ {
+  "id": "g5m2",
+  "grade": 5,
+  "n": 2,
+  "title": "Addition and subtraction with fractions",
+  "lessons": [
+   {
+    "id": "g5m2-t1",
+    "title": "Different-size pieces"
+   },
+   {
+    "id": "g5m2-t2",
+    "title": "Make the pieces match"
+   },
+   {
+    "id": "g5m2-t3",
+    "title": "Take away different-size pieces"
+   },
+   {
+    "id": "g5m2-t4",
+    "title": "Add mixed numbers"
+   },
+   {
+    "id": "g5m2-t5",
+    "title": "Take away mixed numbers (break a whole)"
+   },
+   {
+    "id": "g5m2-t6",
+    "title": "Is it more or less than 1?"
+   },
+   {
+    "id": "g5m2-t7",
+    "title": "Fraction stories"
+   },
+   {
+    "id": "g5m2-t8",
+    "title": "Line plot with fractions"
+   }
+  ]
+ },
+ {
+  "id": "g5m3",
+  "grade": 5,
+  "n": 3,
+  "title": "Multiplication and division with fractions",
+  "lessons": [
+   {
+    "id": "g5m3-t1",
+    "title": "A fraction is a division"
+   },
+   {
+    "id": "g5m3-t2",
+    "title": "A fraction of a whole number"
+   },
+   {
+    "id": "g5m3-t3",
+    "title": "A fraction of a fraction"
+   },
+   {
+    "id": "g5m3-t4",
+    "title": "Area with fraction sides"
+   },
+   {
+    "id": "g5m3-t5",
+    "title": "Times less than 1 makes it smaller"
+   },
+   {
+    "id": "g5m3-t6",
+    "title": "How many small pieces fit?"
+   },
+   {
+    "id": "g5m3-t7",
+    "title": "Share a small piece"
+   },
+   {
+    "id": "g5m3-t8",
+    "title": "Fraction times-and-share stories"
+   }
+  ]
+ },
+ {
+  "id": "g5m4",
+  "grade": 5,
+  "n": 4,
+  "title": "Place value for decimal operations",
+  "lessons": [
+   {
+    "id": "g5m4-t1",
+    "title": "Thousandths"
+   },
+   {
+    "id": "g5m4-t2",
+    "title": "Compare decimals to thousandths"
+   },
+   {
+    "id": "g5m4-t3",
+    "title": "Round decimals"
+   },
+   {
+    "id": "g5m4-t4",
+    "title": "Add decimals (line up the point)"
+   },
+   {
+    "id": "g5m4-t5",
+    "title": "Take away decimals"
+   },
+   {
+    "id": "g5m4-t6",
+    "title": "Multiply a decimal by a whole number"
+   },
+   {
+    "id": "g5m4-t7",
+    "title": "Multiply and divide by 10, 100, 1,000"
+   },
+   {
+    "id": "g5m4-t8",
+    "title": "Divide a decimal by a whole number"
+   },
+   {
+    "id": "g5m4-t9",
+    "title": "Change metric units"
+   }
+  ]
+ },
+ {
+  "id": "g5m5",
+  "grade": 5,
+  "n": 5,
+  "title": "Addition and multiplication with area and volume",
+  "lessons": [
+   {
+    "id": "g5m5-t1",
+    "title": "Volume is counting cubes"
+   },
+   {
+    "id": "g5m5-t2",
+    "title": "One layer times how many layers"
+   },
+   {
+    "id": "g5m5-t3",
+    "title": "Length × width × height"
+   },
+   {
+    "id": "g5m5-t4",
+    "title": "Two boxes joined together"
+   },
+   {
+    "id": "g5m5-t5",
+    "title": "Tiles with fraction sides"
+   },
+   {
+    "id": "g5m5-t6",
+    "title": "Sort four-sided shapes into families"
+   },
+   {
+    "id": "g5m5-t7",
+    "title": "Cubic units"
+   }
+  ]
+ },
+ {
+  "id": "g5m6",
+  "grade": 5,
+  "n": 6,
+  "title": "Foundations to geometry in the coordinate plane",
+  "lessons": [
+   {
+    "id": "g5m6-t1",
+    "title": "Points on a grid"
+   },
+   {
+    "id": "g5m6-t2",
+    "title": "Plot a point"
+   },
+   {
+    "id": "g5m6-t3",
+    "title": "Two number patterns"
+   },
+   {
+    "id": "g5m6-t4",
+    "title": "Graph the pattern pairs"
+   },
+   {
+    "id": "g5m6-t5",
+    "title": "Distance along a grid line"
+   },
+   {
+    "id": "g5m6-t6",
+    "title": "Maps on a grid"
+   }
+  ]
+ },
+ {
+  "id": "g6m1",
+  "grade": 6,
+  "n": 1,
+  "title": "Ratios, rates and proportions",
+  "lessons": [
+   {
+    "id": "g6m1-t1",
+    "title": "What a ratio is"
+   },
+   {
+    "id": "g6m1-t2",
+    "title": "Equivalent ratios"
+   },
+   {
+    "id": "g6m1-t3",
+    "title": "Unit rate"
+   },
+   {
+    "id": "g6m1-t4",
+    "title": "Use a unit rate"
+   },
+   {
+    "id": "g6m1-t5",
+    "title": "Ratio tables"
+   },
+   {
+    "id": "g6m1-t6",
+    "title": "Part-part-whole ratios"
+   },
+   {
+    "id": "g6m1-t7",
+    "title": "Change units with a rate"
+   },
+   {
+    "id": "g6m1-t8",
+    "title": "Speed"
+   }
+  ]
+ },
+ {
+  "id": "g6m2",
+  "grade": 6,
+  "n": 2,
+  "title": "Operations with fractions and mixed numbers",
+  "lessons": [
+   {
+    "id": "g6m2-t1",
+    "title": "How many fractions fit in a fraction?"
+   },
+   {
+    "id": "g6m2-t2",
+    "title": "Flip and multiply"
+   },
+   {
+    "id": "g6m2-t3",
+    "title": "Multiply mixed numbers"
+   },
+   {
+    "id": "g6m2-t4",
+    "title": "Divide mixed numbers"
+   },
+   {
+    "id": "g6m2-t5",
+    "title": "Fraction division stories"
+   },
+   {
+    "id": "g6m2-t6",
+    "title": "Greatest common factor"
+   },
+   {
+    "id": "g6m2-t7",
+    "title": "Least common multiple"
+   }
+  ]
+ },
+ {
+  "id": "g6m3",
+  "grade": 6,
+  "n": 3,
+  "title": "Operations with decimals",
+  "lessons": [
+   {
+    "id": "g6m3-t1",
+    "title": "Add and take away decimals"
+   },
+   {
+    "id": "g6m3-t2",
+    "title": "Multiply decimals"
+   },
+   {
+    "id": "g6m3-t3",
+    "title": "Divide a decimal by a whole number"
+   },
+   {
+    "id": "g6m3-t4",
+    "title": "Divide by a decimal"
+   },
+   {
+    "id": "g6m3-t5",
+    "title": "Long division with big numbers"
+   },
+   {
+    "id": "g6m3-t6",
+    "title": "Money stories"
+   }
+  ]
+ },
+ {
+  "id": "g6m4",
+  "grade": 6,
+  "n": 4,
+  "title": "Percentages",
+  "lessons": [
+   {
+    "id": "g6m4-t1",
+    "title": "Percent means out of 100"
+   },
+   {
+    "id": "g6m4-t2",
+    "title": "Fraction, decimal, percent"
+   },
+   {
+    "id": "g6m4-t3",
+    "title": "Percent of a number"
+   },
+   {
+    "id": "g6m4-t4",
+    "title": "Find the whole from a part"
+   },
+   {
+    "id": "g6m4-t5",
+    "title": "Discounts"
+   },
+   {
+    "id": "g6m4-t6",
+    "title": "Sales tax"
+   },
+   {
+    "id": "g6m4-t7",
+    "title": "Simple interest"
+   }
+  ]
+ },
+ {
+  "id": "g6m5",
+  "grade": 6,
+  "n": 5,
+  "title": "Algebraic expressions and one-step equations",
+  "lessons": [
+   {
+    "id": "g6m5-t1",
+    "title": "A letter stands for a number"
+   },
+   {
+    "id": "g6m5-t2",
+    "title": "Write an expression from words"
+   },
+   {
+    "id": "g6m5-t3",
+    "title": "Work out an expression"
+   },
+   {
+    "id": "g6m5-t4",
+    "title": "Exponents"
+   },
+   {
+    "id": "g6m5-t5",
+    "title": "Order of operations"
+   },
+   {
+    "id": "g6m5-t6",
+    "title": "Equivalent expressions"
+   },
+   {
+    "id": "g6m5-t7",
+    "title": "Solve x + a = b"
+   },
+   {
+    "id": "g6m5-t8",
+    "title": "Solve ax = b"
+   },
+   {
+    "id": "g6m5-t9",
+    "title": "Inequalities on a number line"
+   }
+  ]
+ },
+ {
+  "id": "g6m6",
+  "grade": 6,
+  "n": 6,
+  "title": "Area, surface area, volume, shapes and angles",
+  "lessons": [
+   {
+    "id": "g6m6-t1",
+    "title": "Area of a parallelogram"
+   },
+   {
+    "id": "g6m6-t2",
+    "title": "Area of a triangle"
+   },
+   {
+    "id": "g6m6-t3",
+    "title": "Area of a shape made of pieces"
+   },
+   {
+    "id": "g6m6-t4",
+    "title": "Nets and surface area"
+   },
+   {
+    "id": "g6m6-t5",
+    "title": "Volume with fraction edges"
+   },
+   {
+    "id": "g6m6-t6",
+    "title": "Angles on a straight line"
+   }
+  ]
+ },
+ {
+  "id": "g6m7",
+  "grade": 6,
+  "n": 7,
+  "title": "Data analysis and probability",
+  "lessons": [
+   {
+    "id": "g6m7-t1",
+    "title": "Mean: share it out fairly"
+   },
+   {
+    "id": "g6m7-t2",
+    "title": "Median: the middle"
+   },
+   {
+    "id": "g6m7-t3",
+    "title": "Mode: the most common"
+   },
+   {
+    "id": "g6m7-t4",
+    "title": "Range: the spread"
+   },
+   {
+    "id": "g6m7-t5",
+    "title": "Which middle fits best?"
+   },
+   {
+    "id": "g6m7-t6",
+    "title": "Dot plots and histograms"
+   },
+   {
+    "id": "g6m7-t7",
+    "title": "Probability as a fraction"
+   },
+   {
+    "id": "g6m7-t8",
+    "title": "Likely or unlikely"
+   }
+  ]
+ },
+ {
+  "id": "g7m1",
+  "grade": 7,
+  "n": 1,
+  "title": "Proportional relationships and percent applications",
+  "lessons": [
+   {
+    "id": "g7m1-t1",
+    "title": "Proportional or not?"
+   },
+   {
+    "id": "g7m1-t2",
+    "title": "The constant of proportionality"
+   },
+   {
+    "id": "g7m1-t3",
+    "title": "Proportional graphs"
+   },
+   {
+    "id": "g7m1-t4",
+    "title": "Unit rates with fractions"
+   },
+   {
+    "id": "g7m1-t5",
+    "title": "Solve a proportion"
+   },
+   {
+    "id": "g7m1-t6",
+    "title": "Percent increase and decrease"
+   },
+   {
+    "id": "g7m1-t7",
+    "title": "Markup, tax and tip"
+   },
+   {
+    "id": "g7m1-t8",
+    "title": "Percent error"
+   }
+  ]
+ },
+ {
+  "id": "g7m2",
+  "grade": 7,
+  "n": 2,
+  "title": "Operations with rational numbers",
+  "lessons": [
+   {
+    "id": "g7m2-t1",
+    "title": "Opposites"
+   },
+   {
+    "id": "g7m2-t2",
+    "title": "Absolute value"
+   },
+   {
+    "id": "g7m2-t3",
+    "title": "Add positive and negative numbers"
+   },
+   {
+    "id": "g7m2-t4",
+    "title": "Subtract by adding the opposite"
+   },
+   {
+    "id": "g7m2-t5",
+    "title": "Multiply signed numbers"
+   },
+   {
+    "id": "g7m2-t6",
+    "title": "Divide signed numbers"
+   },
+   {
+    "id": "g7m2-t7",
+    "title": "Negative fractions and decimals"
+   },
+   {
+    "id": "g7m2-t8",
+    "title": "Signed number stories"
+   }
+  ]
+ },
+ {
+  "id": "g7m3",
+  "grade": 7,
+  "n": 3,
+  "title": "Equivalent expressions, equations and inequalities",
+  "lessons": [
+   {
+    "id": "g7m3-t1",
+    "title": "Combine like terms"
+   },
+   {
+    "id": "g7m3-t2",
+    "title": "Expand parentheses"
+   },
+   {
+    "id": "g7m3-t3",
+    "title": "Factor out a common number"
+   },
+   {
+    "id": "g7m3-t4",
+    "title": "Two-step equations"
+   },
+   {
+    "id": "g7m3-t5",
+    "title": "Equations with parentheses"
+   },
+   {
+    "id": "g7m3-t6",
+    "title": "Two-step inequalities"
+   },
+   {
+    "id": "g7m3-t7",
+    "title": "Flip the sign"
+   },
+   {
+    "id": "g7m3-t8",
+    "title": "Equation stories"
+   }
+  ]
+ },
+ {
+  "id": "g7m4",
+  "grade": 7,
+  "n": 4,
+  "title": "Geometry",
+  "lessons": [
+   {
+    "id": "g7m4-t1",
+    "title": "Scale drawings"
+   },
+   {
+    "id": "g7m4-t2",
+    "title": "Circumference"
+   },
+   {
+    "id": "g7m4-t3",
+    "title": "Area of a circle"
+   },
+   {
+    "id": "g7m4-t4",
+    "title": "Complementary and supplementary angles"
+   },
+   {
+    "id": "g7m4-t5",
+    "title": "Vertical angles"
+   },
+   {
+    "id": "g7m4-t6",
+    "title": "Can these sides make a triangle?"
+   },
+   {
+    "id": "g7m4-t7",
+    "title": "Surface area of prisms"
+   },
+   {
+    "id": "g7m4-t8",
+    "title": "Volume of prisms"
+   }
+  ]
+ },
+ {
+  "id": "g7m5",
+  "grade": 7,
+  "n": 5,
+  "title": "Statistics and probability",
+  "lessons": [
+   {
+    "id": "g7m5-t1",
+    "title": "A fair sample"
+   },
+   {
+    "id": "g7m5-t2",
+    "title": "Predict from a sample"
+   },
+   {
+    "id": "g7m5-t3",
+    "title": "Compare two groups"
+   },
+   {
+    "id": "g7m5-t4",
+    "title": "Probability of an event"
+   },
+   {
+    "id": "g7m5-t5",
+    "title": "Expected and actual results"
+   },
+   {
+    "id": "g7m5-t6",
+    "title": "Two things happening"
+   }
+  ]
+ },
+ {
+  "id": "g8m1",
+  "grade": 8,
+  "n": 1,
+  "title": "Integer exponents, scientific notation and roots",
+  "lessons": [
+   {
+    "id": "g8m1-t1",
+    "title": "Multiply powers: add the exponents"
+   },
+   {
+    "id": "g8m1-t2",
+    "title": "Divide powers: subtract the exponents"
+   },
+   {
+    "id": "g8m1-t3",
+    "title": "A power of a power"
+   },
+   {
+    "id": "g8m1-t4",
+    "title": "Zero and negative exponents"
+   },
+   {
+    "id": "g8m1-t5",
+    "title": "Scientific notation for big numbers"
+   },
+   {
+    "id": "g8m1-t6",
+    "title": "Scientific notation for small numbers"
+   },
+   {
+    "id": "g8m1-t7",
+    "title": "Multiply in scientific notation"
+   },
+   {
+    "id": "g8m1-t8",
+    "title": "Square roots and cube roots"
+   },
+   {
+    "id": "g8m1-t9",
+    "title": "Estimate a square root"
+   }
+  ]
+ },
+ {
+  "id": "g8m2",
+  "grade": 8,
+  "n": 2,
+  "title": "Linear relationships, slope and systems",
+  "lessons": [
+   {
+    "id": "g8m2-t1",
+    "title": "Slope: rise over run"
+   },
+   {
+    "id": "g8m2-t2",
+    "title": "Slope from two points"
+   },
+   {
+    "id": "g8m2-t3",
+    "title": "y = mx + b"
+   },
+   {
+    "id": "g8m2-t4",
+    "title": "Graph a line from its equation"
+   },
+   {
+    "id": "g8m2-t5",
+    "title": "Variables on both sides"
+   },
+   {
+    "id": "g8m2-t6",
+    "title": "One, none or many solutions"
+   },
+   {
+    "id": "g8m2-t7",
+    "title": "Where two lines cross"
+   },
+   {
+    "id": "g8m2-t8",
+    "title": "Solve a system by substitution"
+   },
+   {
+    "id": "g8m2-t9",
+    "title": "System stories"
+   }
+  ]
+ },
+ {
+  "id": "g8m3",
+  "grade": 8,
+  "n": 3,
+  "title": "Functions",
+  "lessons": [
+   {
+    "id": "g8m3-t1",
+    "title": "One input, one output"
+   },
+   {
+    "id": "g8m3-t2",
+    "title": "Evaluate a function"
+   },
+   {
+    "id": "g8m3-t3",
+    "title": "Linear or not?"
+   },
+   {
+    "id": "g8m3-t4",
+    "title": "Compare two functions"
+   },
+   {
+    "id": "g8m3-t5",
+    "title": "Build a model from a story"
+   },
+   {
+    "id": "g8m3-t6",
+    "title": "Read a graph's story"
+   }
+  ]
+ },
+ {
+  "id": "g8m4",
+  "grade": 8,
+  "n": 4,
+  "title": "Congruence, similarity and the Pythagorean theorem",
+  "lessons": [
+   {
+    "id": "g8m4-t1",
+    "title": "Slides (translations)"
+   },
+   {
+    "id": "g8m4-t2",
+    "title": "Flips (reflections)"
+   },
+   {
+    "id": "g8m4-t3",
+    "title": "Turns (rotations)"
+   },
+   {
+    "id": "g8m4-t4",
+    "title": "Stretches (dilations)"
+   },
+   {
+    "id": "g8m4-t5",
+    "title": "Similar triangles"
+   },
+   {
+    "id": "g8m4-t6",
+    "title": "Angles in a triangle"
+   },
+   {
+    "id": "g8m4-t7",
+    "title": "The Pythagorean theorem"
+   },
+   {
+    "id": "g8m4-t8",
+    "title": "Find a missing leg"
+   },
+   {
+    "id": "g8m4-t9",
+    "title": "Distance between two points"
+   }
+  ]
+ },
+ {
+  "id": "g8m5",
+  "grade": 8,
+  "n": 5,
+  "title": "Volume of cylinders, cones and spheres",
+  "lessons": [
+   {
+    "id": "g8m5-t1",
+    "title": "Volume of a cylinder"
+   },
+   {
+    "id": "g8m5-t2",
+    "title": "Volume of a cone"
+   },
+   {
+    "id": "g8m5-t3",
+    "title": "Volume of a sphere"
+   },
+   {
+    "id": "g8m5-t4",
+    "title": "Volume stories"
+   }
+  ]
+ },
+ {
+  "id": "g8m6",
+  "grade": 8,
+  "n": 6,
+  "title": "Bivariate data and scatter plots",
+  "lessons": [
+   {
+    "id": "g8m6-t1",
+    "title": "Scatter plot patterns"
+   },
+   {
+    "id": "g8m6-t2",
+    "title": "A line of best fit"
+   },
+   {
+    "id": "g8m6-t3",
+    "title": "Predict with the line"
+   },
+   {
+    "id": "g8m6-t4",
+    "title": "Two-way tables"
+   },
+   {
+    "id": "g8m6-t5",
+    "title": "Relative frequency"
+   }
+  ]
+ }
+]

@@ -6,7 +6,7 @@
 import { describe, it, expect, vi } from 'vitest'
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, replace() {} }), usePathname: () => '/parent', useSearchParams: () => new URLSearchParams() }))
 
-async function mount(owner: boolean, onCorrect: (n: string, band: string | null, avatar: number) => Promise<'ok' | 'error'>) {
+async function mount(owner: boolean, onCorrect: (n: string, band: string | null, avatar: number) => Promise<'ok' | 'other'>) {
   const React = await import('react')
   const { act } = React
   const { createRoot } = await import('react-dom/client')

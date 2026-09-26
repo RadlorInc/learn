@@ -2,7 +2,7 @@
 
 /** Learner CRUD + access-role management. */
 import { toast } from '@/shared/ui/Toast'
-import { db, cancelQueuedSecondNotices } from '@/data/repositories/_shared'
+import { db, cancelQueuedSecondNotices, classifyUserError, type ErrorKind } from '@/data/repositories/_shared'
 import type { Learner } from '@/data/supabase/types'
 import type { AgeGroup } from '@/core/chapters'
 
@@ -139,19 +139,12 @@ export async function setLearnerAssignments(learnerId: string, lessonIds: string
  * child's consent is granted (trg_enforce_learner_consent refuses the UPDATE otherwise);
  * RLS refuses by returning no rows, which is reported as an error rather than a silent success.
  */
-export async function correctLearner(learnerId: string, fields: { display_name?: string; age_group?: string; avatar_index?: number }): Promise<'ok' | 'error'> {
-  const { data, error } = await db().from('learners').update(fields as never).eq('id', learnerId).select('id')
-  if (error) { console.error('[correctLearner]', error.code, error.message); return 'error' }
-  return data && data.length > 0 ? 'ok' : 'error'
-}
-
-export async function deleteLearner(learnerId: string) {
-  const supabase = db()
-  const { error } = await supabase
-    .from('learners')
-    .delete()
-    .eq('id', learnerId)
-  if (error) console.error('[deleteLearner]', error.message)
+export async function correctLearner(learnerId: string, fields: { display_name?: string; age_group?: string; avatar_index?: number }): Promise<'ok' | ErrorKind> {
+  try {
+    const { data, error } = await db().from('learners').update(fields as never).eq('id', learnerId).select('id')
+    if (error) { console.error('[correctLearner]', error.code, error.message); return classifyUserError(error) }
+    return data && data.length > 0 ? 'ok' : 'denied'   // RLS refuses an UPDATE by matching no rows
+  } catch (e) { return classifyUserError(e) }
 }
 
 /** Get the current user's access role for a learner */

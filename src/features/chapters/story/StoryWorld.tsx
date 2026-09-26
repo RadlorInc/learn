@@ -65,7 +65,7 @@ export interface Beat<T> {
   /**
    * A CLOSED SET this chapter must cover before the mastery early-exit is allowed to end the run.
    *
-   * ⚠️ WHY THIS EXISTS. Mastery fires at the top tier on a streak of 6, and promotion takes 3 correct
+   * ⚠️ WHY THIS EXISTS. Mastery fires on two first-try rights at the top tier (`chapterMastery`), and promotion takes 3 correct
    * per tier — so a child who answers well is asked roughly three questions at L1, ONE at L2 and TWO
    * at L3, and then the chapter ends. For a chapter whose hardest idea only unlocks at L3 that means
    * the idea is asked twice at best and, measured on TickTock, missed entirely about a third of the
@@ -146,7 +146,7 @@ export function useChapterShell(
   const finished = useRef(false)
   const exit = useCallback(() => {
     stopSpeech(); onLeave?.()
-    ;(onExit ?? (() => router.push('/menu')))()
+    ;(onExit ?? (() => router.push('/modules')))()
   }, [router, onExit, onLeave])
   const finishChapter = useCallback((c: number, w: number, mastered?: boolean) => {
     if (finished.current) return
@@ -261,7 +261,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     window.setTimeout(() => {
       setFeedback(null)
       if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }
-      // Demonstrated mastery (top tier + a long correct streak) → finish early
+      // Demonstrated mastery (the one rule: two first-try rights at the top tier) → finish early
       // with full stars, skipping the repetitive tail.
       // ⚠️ UNLESS the beat declares a closed set that has not been covered yet: finishing early on a
       // streak is a reward for being good at the questions ASKED, and it must not be a way to leave
@@ -410,7 +410,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
 
   const advance = useCallback(() => {
     if (scene.kind === 'skill' && scene.friend) setFriends(f => [...f, scene.friend!])
-    if (idx >= world.scenes.length - 1) { stopSpeech(); (onExit ?? (() => router.push('/menu')))(); return }
+    if (idx >= world.scenes.length - 1) { stopSpeech(); (onExit ?? (() => router.push('/modules')))(); return }
     setWalking(true)
   }, [scene, idx, world.scenes.length, onExit, router])
 
@@ -423,7 +423,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
 
       {/* Header: exit + progress dots + party */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', maxWidth: 540, paddingTop: 6 }}>
-        <button onClick={() => { stopSpeech(); (onExit ?? (() => router.push('/menu')))() }}
+        <button onClick={() => { stopSpeech(); (onExit ?? (() => router.push('/modules')))() }}
           style={{ padding: '7px 14px', borderRadius: 50, flexShrink: 0, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
             color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer', boxShadow: '0 3px 0 rgba(242,107,44,.25)' }}>← Menu</button>
         <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'center', flexWrap: 'wrap' }}>

@@ -27,11 +27,8 @@ export type ChapterProps = {
   onComplete: (correct: number, wrong: number, mastered?: boolean) => void
   childName: string
   /**
-   * ⚠️ WHERE "BACK" GOES. Defaults to `/menu`, which is right for a signed-in child and wrong for
-   * every visitor who has not signed in yet: `/menu` bounces them to `/auth`, so abandoning a demo
-   * chapter lands a parent on a login wall at the exact moment we were trying to earn the right to
-   * ask for a login. And abandoning is the MAIN exit — most people who open a chapter look, poke
-   * and leave; finishing is the rarer path.
+   * ⚠️ WHERE "BACK" GOES. Defaults to `/modules`, the child's home (`/menu` was retired 2026-09-26,
+   * N17). A caller that knows better — e.g. the chapter's own grade tab — passes its own.
    *
    * ⚠️ A DESTINATION, NOT A CONDITION. The portal must not learn about sessions, demos or auth —
    * the caller knows where its own back button belongs and passes it. A parameter, not knowledge.
@@ -51,9 +48,9 @@ type Finish = (correct: number, wrong: number, mastered?: boolean) => void
  * still in the type, still looking wired. A callback that looks connected and is not is exactly the
  * shape of the original fault, sitting there for the next caller to trust.
  *
- * `/demo` is that next caller: a logged-out visitor has no learner, so `finishAndSync` returns at
- * `if (!learner) return` and the demo would never learn the chapter finished. So the prop is real
- * now — called AFTER the sync, so a throw in a caller's handler cannot cost a child their score.
+ * `/game` is its caller (the logged-out `/demo` that first needed it was deleted 2026-09-26, N17).
+ * The prop is real — called AFTER the sync, so a throw in a caller's handler cannot cost a child
+ * their score.
  *
  * ⚠️ HELD IN A REF so `finish` keeps its identity. Callers pass an inline arrow; threading it
  * through the dep array would give every chapter a new `onFinish` on every render.
@@ -105,7 +102,7 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
   return function StoryChapter(props: ChapterProps) {
     const { router, body, runKey, finish, replay, done } = usePortalRun(skill, false, props.onComplete)
     if (!body) return null
-    const exit = () => props.onExit ? props.onExit() : router.push('/menu')
+    const exit = () => props.onExit ? props.onExit() : router.push('/modules')
     return createPortal(
       <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
         <Inner key={runKey} onFinish={finish} onExit={exit} />

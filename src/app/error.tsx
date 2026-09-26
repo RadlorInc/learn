@@ -33,7 +33,7 @@ export default function SegmentError({
        *  does not cost the child their stars. */
       body="Nothing is lost — your stars and progress are saved. Let's try that again."
       primary={{ label: 'Try again', onClick: retry }}
-      secondary={{ label: 'Go back home', href: '/menu' }}
+      secondary={{ label: 'Go back home', href: '/modules' }}
       digest={error?.digest}
       style={CRASH_UI.page}
     />

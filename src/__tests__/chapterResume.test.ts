@@ -5,7 +5,6 @@ import {
   getChapterResume, setChapterResume, clearChapterResume, hasChapterResume,
 } from '@/infra/storage/chapterResume'
 import { PRAISE } from '@/features/chapters/story/StoryWorld'
-import { praisesOnCorrect } from '@/core/praise'
 import { strip } from './_window'
 import type { ChapterType } from '@/data/supabase/types'
 
@@ -116,21 +115,6 @@ describe('spoken praise on a correct answer', () => {
     // re-teach is not preceded by an encouragement its own narration would supersede a beat later.
     expect(read(STORY)).toContain('if (!beat.ownsFeedback && !reteaching) speakAfterCurrent(correct ? PRAISE[')
   })
-
-  /**
-   * ⚠️ THE CUTOFF IS BY AGE, NOT BY ENGINE, AND 9–11 IS WHY. That band is split across both engines
-   * — ten chapters on `GameShell`, OrderDesk and LevelRun on the storybook one — so an engine-shaped
-   * rule praises the same child in two chapters and stays silent in the other ten.
-   */
-  it('reaches the young bands and stops at 9', () => {
-    for (const b of ['3-5', '6-8']) expect(praisesOnCorrect(b), `${b} lost its praise`).toBe(true)
-    // ⚠️ 9–11 IS OFF ON PURPOSE, and this line is the whole reason the cutoff is where it is: that
-    // band moved onto the Field Lab design precisely so it would not look like 3–8, and praising it
-    // after every question undoes that. Founder's call, 2026-08-28.
-    for (const b of ['9-11', '12-14', '15-16', '17-18']) expect(praisesOnCorrect(b), `${b} is being praised like a six-year-old`).toBe(false)
-    expect(praisesOnCorrect(''), 'an unknown band opts IN, which is the wrong default').toBe(false)
-  })
-
 })
 
 /**

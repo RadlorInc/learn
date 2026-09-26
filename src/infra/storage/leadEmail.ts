@@ -9,9 +9,6 @@ import { kv } from '@/infra/storage/kv'
 
 const KEY = 'milo_lead_email'
 
-export function setLeadEmail(email: string): void {
-  try { kv.set(KEY, email) } catch { /* private mode — non-fatal */ }
-}
 export function getLeadEmail(): string | null {
   try { return kv.get(KEY) || null } catch { return null }
 }

@@ -58,6 +58,31 @@ const fail = async (what: string, detail: string) => {
   return NextResponse.json({ error: what }, { status: 500 })
 }
 
+/**
+ * ⚠️ WHAT THE EVENT LOG KEEPS — AN ALLOW-LIST, NEVER THE EVENT. `billing_events` survives account
+ * deletion (`core/accountDeletion.ts` SURVIVORS) on the promise that it then "names nobody". The
+ * raw event breaks that: a checkout session carries the parent's email, name, phone and address in
+ * `customer_details`, plus our own account id in `client_reference_id`/`metadata`, and
+ * `account_id → NULL` does nothing to a copy inside `payload` (MAP-02). Nothing in the app reads
+ * `payload` back; this keeps Stripe's references (to find the event/subscription in Stripe) and
+ * the amount the SURVIVORS line promises. Adding a field here is a privacy decision — never a
+ * customer, email, name, address, phone, metadata or client_reference_id.
+ */
+function logPayload(event: Stripe.Event) {
+  const o = event.data.object as {
+    id?: string; subscription?: string | { id: string } | null; amount_total?: number | null; currency?: string | null
+  }
+  const sub = typeof o.subscription === 'string' ? o.subscription : (o.subscription?.id ?? null)
+  return {
+    id: event.id,
+    type: event.type,
+    created: event.created,
+    object_id: o.id ?? null,
+    subscription: sub ?? (event.type.startsWith('customer.subscription.') ? (o.id ?? null) : null),
+    ...(typeof o.amount_total === 'number' ? { amount_total: o.amount_total, currency: o.currency ?? null } : {}),
+  }
+}
+
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
   const stripe = stripeClient()
@@ -86,7 +111,7 @@ export async function POST(req: Request) {
   const ins = await db('billing_events?on_conflict=stripe_event_id', {
     method: 'POST',
     prefer: 'resolution=ignore-duplicates,return=representation',
-    body: JSON.stringify({ stripe_event_id: event.id, type: event.type, payload: event }),
+    body: JSON.stringify({ stripe_event_id: event.id, type: event.type, payload: logPayload(event) }),
   }).catch(() => null)
   if (!ins || !ins.ok) return fail('event log insert', ins ? await ins.text() : 'network')
 

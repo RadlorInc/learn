@@ -17,8 +17,10 @@ export default function AuthCallbackPage() {
 
     // Land on the role's home (teacher → grades, parent → dashboard). A brand-new signup has no role
     // yet → homeForRole(null) sends them to /parent, where the one-time Teacher/Parent picker shows.
+    // A role that could not be read throws (BUG-07): stay here rather than route it as "no role";
+    // the 5s fallback below reads it once more.
     async function goHome() {
-      router.replace(homeForRole(await getMyRole()))
+      try { router.replace(homeForRole(await getMyRole())) } catch { /* stay */ }
     }
 
     async function handleCallback() {

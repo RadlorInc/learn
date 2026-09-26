@@ -19,6 +19,3 @@ export const AGE_GROUP_OPTIONS: AgeGroupOption[] = [
   { value: '15-16', label: 'Ages 15–16', hint: 'Algebra I & Geometry' },
   { value: '17-18', label: 'Ages 17–18', hint: 'Algebra II, Pre-Calc, Stats & Calculus (coming soon)' },
 ]
-
-export const AGE_GROUP_LABELS: Record<AgeGroup, string> =
-  Object.fromEntries(AGE_GROUP_OPTIONS.map(o => [o.value, o.label])) as Record<AgeGroup, string>

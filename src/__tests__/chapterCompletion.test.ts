@@ -8,10 +8,10 @@
  * loosened — if a second factory is ever added they must go back to 2.) The pointer was moved into `finishAndSync` — correct, and
  * it left the PROP behind, still typed, still looking wired, for the next caller to trust.
  *
- * `/demo` is that caller and cannot use `finishAndSync` (a logged-out visitor has no learner, so it
- * returns early), so the prop is real now. These are SOURCE checks and say so: they prove the wiring
- * is written, not that a chapter calls it. The thing that proves THAT is `e2e/demo-route.spec.ts`,
- * which plays a real chapter to its end — nothing cheaper can see this.
+ * `/demo` was that caller, so the prop is real now; `/game` is the one left. These are SOURCE checks
+ * and say so: they prove the wiring is written, not that a chapter calls it. ⚠️ The e2e that proved
+ * THAT (`e2e/demo-route.spec.ts`, a real chapter played to its end) went with `/demo` on 2026-09-26
+ * (N17) — nothing drives `/game`'s handler end to end now.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -67,13 +67,11 @@ describe('waking the handler must not change /game', () => {
 })
 
 /**
- * Where "back" goes. `/menu` is right for a signed-in child and wrong for anyone who has not signed
- * in: it bounces them to `/auth`. Abandoning is the MAIN exit from a demo chapter — most visitors
- * look, poke and leave — so a login wall there lands at the exact moment we were trying to earn the
- * right to ask for a login.
+ * Where "back" goes: a caller-supplied exit, else the child's home, `/modules` (`/menu` was retired
+ * 2026-09-26, N17).
  */
 describe('the exit destination is a parameter, not knowledge', () => {
-  it('EVERY factory honours a caller-supplied exit, and every one still defaults to /menu', () => {
+  it('EVERY factory honours a caller-supplied exit, and every one still defaults to /modules', () => {
     /**
      * ⚠️ COUNT THE FACTORIES, NOT THE OCCURRENCES. The first draft asserted `props.onExit` appears
      * twice; it appears FOUR times (each exit names it in a condition and a call), so the gate went
@@ -85,7 +83,7 @@ describe('the exit destination is a parameter, not knowledge', () => {
       .toBe((strip(portal).match(/^export function make\w+Chapter/gm) ?? []).length)
     for (const e of exits) {
       expect(e, `a factory ignores the caller's exit, stranding a logged-out visitor: ${e}`).toMatch(/props\.onExit/)
-      expect(e, `a factory lost its /menu default, which a signed-in child needs: ${e}`).toMatch(/router\.push\('\/menu'\)/)
+      expect(e, `a factory lost its /modules default, which a signed-in child needs: ${e}`).toMatch(/router\.push\('\/modules'\)/)
     }
   })
 

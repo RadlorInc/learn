@@ -20,7 +20,7 @@ const SAYS: Record<ChildLoginError, string> = {
   not_owner:       'Only the adult who added this learner can set their login.',
   not_configured:  'Child logins are not switched on yet on this server.',
   rate_limited:    'Too many tries. Wait a minute and try again.',
-  unauthenticated: 'Your sign-in has expired. Sign in again, then try this.',
+  unauthenticated: 'Please sign in again',   // Rafi's N9 wording for an expired session
   failed:          'Could not save. Check your connection and try again.',
 }
 

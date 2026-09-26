@@ -14,6 +14,7 @@ import { kv } from '@/infra/storage/kv'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { createClient } from '@/data/supabase/client'
 import { isConsentRefusal } from '@/infra/consentError'
+import { classifySyncError } from '@/data/repositories/_shared'
 import { recordError } from '@/infra/storage/lastError'
 
 const QUEUE_KEY = 'milo_events_queue'
@@ -51,9 +52,15 @@ export async function flushEvents(): Promise<number> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supabase = createClient() as any
     // upsert with ignoreDuplicates so retries can't double-insert (client_id is unique)
-    const { error } = await supabase
+    const upsert = (rows: LearnerEvent[]) => supabase
       .from('learner_events')
-      .upsert(q, { onConflict: 'client_id', ignoreDuplicates: true })
+      .upsert(rows, { onConflict: 'client_id', ignoreDuplicates: true }) as Promise<{ error: unknown }>
+
+    /** client_ids that are finished with — sent, or refused for good. Only these leave the queue. */
+    const settled = new Set<string>()
+    let sent = 0
+    let refused = 0
+    const { error } = await upsert(q)
 
     /**
      * ⚠️ A CONSENT REFUSAL IS NOT A NETWORK BLIP, AND TREATING THEM ALIKE IS THE DEFECT THIS BRANCH
@@ -61,7 +68,7 @@ export async function flushEvents(): Promise<number> {
      * queue so the events arrive later. A refusal can NEVER be accepted — there is no granted
      * consent for this child — so the same "keep and retry" would spin for ever while nothing was
      * stored and nothing surfaced anywhere. Three differences, all deliberate:
-     *   · the queue is DROPPED, not kept, so the retry loop stops;
+     *   · the refused events are DROPPED, not kept, so the retry loop stops;
      *   · a breadcrumb is written LOCALLY, which is what the support diagnostic block reads;
      *   · `_consentBlocked` is set, so a screen can say so rather than showing a working app.
      *
@@ -71,14 +78,35 @@ export async function flushEvents(): Promise<number> {
      */
     if (isConsentRefusal(error)) {
       _consentBlocked = true
-      kv.remove(QUEUE_KEY)
+      q.forEach(e => settled.add(e.client_id))
       recordError(`${q.length} event(s) dropped: no granted parental consent for this child`, 'analytics.consent')
       console.error('[analytics] consent refused — events dropped, not retried.', error)
-      return 0
+    } else if (!error) {
+      q.forEach(e => settled.add(e.client_id)); sent = q.length
+    } else {
+      const outcome = classifySyncError(error as { code?: string; message?: string })
+      if (outcome === 'retry') return 0          // transient — keep queued; try again later
+      if (outcome === 'ok') { q.forEach(e => settled.add(e.client_id)); sent = q.length }
+      else {
+        // 'drop': SOME row can never be accepted, and one bad row fails the whole batch. Find it
+        // one row at a time, so the refused row goes and the rest are sent rather than held behind it.
+        for (const e of q) {
+          const r = await upsert([e])
+          if (!r.error) { settled.add(e.client_id); sent++; continue }
+          if (isConsentRefusal(r.error)) { _consentBlocked = true; settled.add(e.client_id); refused++; continue }
+          const o = classifySyncError(r.error as { code?: string; message?: string })
+          if (o === 'retry') break                // the network went: keep this and the rest
+          settled.add(e.client_id)
+          if (o === 'ok') sent++; else refused++
+        }
+        if (refused) recordError(`${refused} event(s) dropped: refused by the database`, 'analytics.refused')
+      }
     }
-    if (error) return 0          // transient — keep queued; try again later
-    kv.remove(QUEUE_KEY)
-    return q.length
+    // Re-read: `track()` may have queued events while the upsert was in flight. Remove only what
+    // was settled here — removing the whole key erased those unsent (MAP-07 / BUG-06).
+    const rest = readQueue().filter(e => !settled.has(e.client_id))
+    if (rest.length) writeQueue(rest); else kv.remove(QUEUE_KEY)
+    return sent
   } catch {
     return 0                     // transient — keep queued
   } finally {

@@ -79,6 +79,6 @@ describe('sw.js: only whole responses are cached', () => {
   })
 
   it('the shell version moved on, so every device drops caches written by the old worker', () => {
-    expect(SRC.match(/const VERSION\s*=\s*'([^']+)'/)![1]).toBe('v235')
+    expect(SRC.match(/const VERSION\s*=\s*'([^']+)'/)![1]).toBe('v238')
   })
 })

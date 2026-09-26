@@ -17,7 +17,7 @@
 # The origin repo lost a day to exactly that: its "red for the wrong reason" case had no live break,
 # and that is precisely where a real bug lived. Re-run this after any vitest upgrade.
 #
-# It takes a few minutes: five vitest runs plus five stash cycles.
+# It takes a few minutes: eight vitest runs, each in a throwaway worktree.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -37,14 +37,18 @@ echo "· tree fingerprint before: $BEFORE"
 echo "· $(git status --short | wc -l | tr -d ' ') dirty path(s) to protect"
 echo
 
+# run <want> <what> <break> [spec] [text the verdict must print]
 run() {
-  local want="$1" what="$2" brk="$3"
+  local want="$1" what="$2" brk="$3" spec="${4:-$SPEC}" says="${5:-}"
   printf '── want exit %s — %s\n' "$want" "$what"
-  scripts/break-check.sh "$SPEC" "$brk" > /tmp/break-live.out 2>&1
+  scripts/break-check.sh "$spec" "$brk" > /tmp/break-live.out 2>&1
   local got=$?
   local now; now="$(fingerprint)"
   local ok=1
-  [ "$got" = "$want" ] || { echo "   ✗ exit $got, wanted $want"; sed -n '/^✗\|^✓/p' /tmp/break-live.out | head -3 | sed 's/^/     /'; ok=0; }
+  [ "$got" = "$want" ] || { echo "   ✗ exit $got, wanted $want"; sed -nE '/^(✗|✓)/p' /tmp/break-live.out | head -3 | sed 's/^/     /'; ok=0; }
+  # The verdict's own lines (after the vitest run), so a string only vitest printed cannot satisfy it.
+  [ -z "$says" ] || sed -nE '/^(✗|✓)/,$p' /tmp/break-live.out | grep -qF "$says" \
+    || { echo "   ✗ the verdict never named: $says"; ok=0; }
   [ "$now" = "$BEFORE" ] || { echo "   ✗ THE TREE DID NOT COME BACK ($now)"; ok=0; }
   [ -z "$(git stash list | grep break-check)" ] || { echo "   ✗ a break-check stash survived"; ok=0; }
   if [ "$ok" = 1 ]; then echo "   ✓ exit $got, tree restored, no stash left"; PASS=$((PASS+1)); else FAIL=$((FAIL+1)); fi
@@ -76,6 +80,27 @@ run 4 "red for the wrong reason (the file under test stops parsing)" \
 #     pretend to. A broken config writes no report at all, which is the only shape that is really 5.
 run 5 "the run never reached the spec (no report is written at all)" \
   "printf 'this is not typescript(((\n' >> vitest.config.ts"
+
+# 4 — red because a FIXTURE threw, not a test. A migration's closing assertion raising inside the
+#     file's top-level beforeAll: vitest SKIPS every test and fails the file. Until 2026-09-26 this
+#     came back as 1, "PASSED on the broken state" — a check that never looked, certified as one
+#     that looked and saw nothing. Found while fixing FND-15.
+run 4 "red because the fixture threw (top-level beforeAll, every test skipped)" \
+  "printf '\ndo \$\$ begin raise exception %s; end \$\$;\n' \"'PLANTED_TOPLEVEL_SETUP'\" >> supabase/migrations/20260921053233_lesson_feedback.sql" \
+  src/__tests__/lessonFeedback.test.ts PLANTED_TOPLEVEL_SETUP
+
+# 4 — the same, one describe down: the first describe runs and PASSES, the second's beforeAll throws
+#     and its tests are skipped. ⚠️ vitest's JSON carries NO message for a suite-level hook error
+#     (measured on 4.1.11: `message: ""`), so the name has to come from the console output — which
+#     is why this case asserts the verdict printed it.
+run 4 "red because one describe's fixture threw (others passed)" \
+  "printf '\ndo \$\$ begin raise exception %s; end \$\$;\n' \"'PLANTED_SUITE_SETUP'\" >> supabase/migrations/20260924100000_consent_once.sql" \
+  src/__tests__/consentZeroExemptions.test.ts PLANTED_SUITE_SETUP
+
+# 5 — every test skipped and nothing red: the skip path (CLAUDE.md's first row). Green here would be
+#     "passed" about a file in which no assertion ran.
+run 5 "every test in the file skipped (nothing looked)" \
+  "perl -0pi -e 's/^describe\(/describe.skip(/mg' $SPEC"
 
 echo
 echo "── $PASS passed, $FAIL failed"

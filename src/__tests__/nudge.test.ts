@@ -23,6 +23,7 @@ vi.mock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => wh
 vi.mock('@/infra/useMiloSpeaker', () => ({ speak: () => {}, speakSteps: () => () => {}, stopSpeech: () => {} }))
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/data/repositories/points', () => ({
+  sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
 }))
 
