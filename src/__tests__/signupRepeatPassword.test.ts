@@ -128,6 +128,14 @@ describe('SEC-01 / N2 — repeat sign-up of an unconfirmed address', () => {
     expect(users[0].app_metadata.signup_count).toBe(4)
   })
 
+  it('two sign-ups under a second apart (cooldown lookup still sees the first) — the first password is gone', async () => {
+    await signUp(ADDR, 'attacker-pw-1', 'parent', 'Mallory')
+    users[0].confirmation_sent_at = new Date(T0 - 10 * 60_000).toISOString()   // as if sent long ago: no cooldown
+    vi.setSystemTime(T0 + 300)                                                // but the account is 0.3 s old
+    await signUp(ADDR, 'owner-pw-2', 'parent', 'Alice')
+    expect([users[0].password === 'attacker-pw-1', users[0].app_metadata.signup_count, newestLinkVerifies(ADDR)]).toEqual([false, 2, true])
+  })
+
   it('the FIRST sign-up’s role and first name are kept (teacher first, parent second → still teacher, confirm-only email)', async () => {
     await signUp(ADDR, 'pw-teacher', 'teacher', 'Tess')
     vi.setSystemTime(T0 + 10 * 60_000)

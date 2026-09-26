@@ -53,9 +53,11 @@ export async function POST(req: Request) {
     const data = prior?.metadata.role ? prior.metadata : { first_name: firstName, role }
     let link = await generateSignupLink(email, password, data)
     // SEC-01 (N2): a repeat sign-up leaves NO chosen password on the account, then issues the link the email carries
-    // (the reset kills the token issued before it). Detected from generate_link's own answer, not the lookup above,
-    // which fails open.
-    if (link.ok && link.repeat) {
+    // (the reset kills the token issued before it). A repeat is known two ways: the lookup above found the unconfirmed
+    // account, or — when that lookup failed open — generate_link's own timestamps say the account is older than this
+    // token. ⚠️ Either alone has a gap: the lookup can fail, and the timestamps cannot tell apart two sign-ups under a
+    // second apart (found driving this against a local stack; the unit fake had them minutes apart).
+    if (link.ok && (prior !== null || link.repeat)) {
       await scrambleUnconfirmedPassword(link.userId, link.signupCount + 1)
       link = await generateSignupLink(email, password, data)
     }
