@@ -125,4 +125,5 @@ Module 1 below keeps its approved script document and its own test.
 
 ## What to say to start the next session
 
-> Read docs/new-flow/README.md. Write the Module 2 scripts for review, exactly like Module 1.
+> Read docs/new-flow/README.md and AUTHORING.md. Every Grade 3–8 module is built and live (2026-09-14). To change a
+> topic, edit its `content/<module>.ts`, update that module's answer key, and run `lessonsAllModules.test.ts`.
