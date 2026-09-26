@@ -12,7 +12,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 
-const PAGES = { overview: 'admin_overview', learning: 'admin_learning', funnel: 'admin_funnel' } as const
+const PAGES = { overview: 'admin_overview', learning: 'admin_learning', funnel: 'admin_funnel', activation: 'admin_activation' } as const
 
 export async function GET(req: NextRequest) {
   const page = req.nextUrl.searchParams.get('page') ?? 'overview'
