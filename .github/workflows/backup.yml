@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10 # p95 1.5 min over 30 runs (ARC-07; GitHub default 360)
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # ⚠️⚠️ THIS STEP USED TO WARN AND SKIP, AND THE JOB WENT GREEN HAVING WRITTEN ZERO BYTES.
       # 30 nightly runs, 30 green ticks, `Dump schema + data: skipped` on every one — found
@@ -109,7 +109,7 @@ jobs:
           fi
           echo "all four configured — proceeding to dump"
 
-      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
         with:
           version: 2.117.0   # pinned: `latest` asks the GitHub API and a rate limit failed a deploy (2026-09-17)
 
