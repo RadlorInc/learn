@@ -6,7 +6,7 @@ import { PENDING_TTL_DAYS } from '@/features/consent/config'
 import { renderConfirm, renderSignup } from '@/features/consent/email'
 import { firstNameOf } from '@/features/consent/firstName'
 import {
-  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, generateSignupLink, hashToken, lastSignupLinkAt, newToken, rpc, sendEmail,
+  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, generateSignupLink, hashToken, lastSignupLinkAt, newToken, rpc, scrambleUnconfirmedPassword, sendEmail,
   type RpcError,
 } from '@/features/consent/server'
 
@@ -47,9 +47,20 @@ export async function POST(req: Request) {
     // SEC-04: at most ONE sign-up email per address per SIGNUP_EMAIL_COOLDOWN_MS, across every serverless instance
     // (the per-IP limit above is per instance). Inside the window: the same `{ ok: true }` as a send, nothing issued —
     // so the link already in the inbox keeps working (a re-issue would kill it) and nothing about the account leaks.
-    const last = await lastSignupLinkAt(email)
-    if (last !== null && Date.now() - last < SIGNUP_EMAIL_COOLDOWN_MS) return NextResponse.json({ ok: true })
-    const link = await generateSignupLink(email, password, { first_name: firstName, role })
+    const prior = await lastSignupLinkAt(email)
+    if (prior !== null && Date.now() - prior.at < SIGNUP_EMAIL_COOLDOWN_MS) return NextResponse.json({ ok: true })
+    // N2: the role and first name the account was FIRST created with win (a second `generate_link` would replace them).
+    const data = prior?.metadata.role ? prior.metadata : { first_name: firstName, role }
+    let link = await generateSignupLink(email, password, data)
+    // SEC-01 (N2): a repeat sign-up leaves NO chosen password on the account, then issues the link the email carries
+    // (the reset kills the token issued before it). A repeat is known two ways: the lookup above found the unconfirmed
+    // account, or — when that lookup failed open — generate_link's own timestamps say the account is older than this
+    // token. ⚠️ Either alone has a gap: the lookup can fail, and the timestamps cannot tell apart two sign-ups under a
+    // second apart (found driving this against a local stack; the unit fake had them minutes apart).
+    if (link.ok && (prior !== null || link.repeat)) {
+      await scrambleUnconfirmedPassword(link.userId, link.signupCount + 1)
+      link = await generateSignupLink(email, password, data)
+    }
     if (!link.ok) {
       // V10 REVERSED (founder, 2026-09-22): an existing account is said plainly, as the old signUp path did.
       if (link.reason === 'exists') return NextResponse.json({ error: 'exists' }, { status: 409 })
@@ -58,9 +69,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: link.reason }, { status: 400 })
     }
     // The role the account was FIRST created with wins: re-sending must not turn a teacher's sign-up into a consent.
-    // ⚠️ MEASURED FALSE on a local stack (2026-09-26, SEC-04): a second generate_link REPLACES user_metadata with the
-    // new `data` (teacher → parent came back role 'parent'), while the FIRST password is kept. Recorded, not changed here:
-    // it belongs with SEC-01 (Rafi's N2).
+    // A second generate_link REPLACES user_metadata with its `data` (measured 2026-09-26), so `data` above re-sends the
+    // first sign-up's; if that lookup failed, the metadata is this request's, as before N2.
     const asParent = (link.metadata.role ?? role) === 'parent'
     const confirm = `${SITE_URL}/auth/confirm?th=${encodeURIComponent(link.hashedToken)}`
     const key = `signup-${link.userId}-${link.hashedToken.slice(0, 16)}`
