@@ -37,8 +37,7 @@ export function useChapterSync(_chapter?: ChapterType) {
     phase:    'lesson' | 'practice' = 'practice',
     mastered = false,
   ) => {
-    // No learner = the logged-out demo. It has nowhere to record to, and `/demo` counts its own
-    // completions — the same early return this function has always had.
+    // No learner = nobody to record to — the same early return this function has always had.
     const learner = getActiveLearner()
     if (!learner) return
 

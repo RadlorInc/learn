@@ -1,5 +1,5 @@
 /**
- * SEO-04 / SEO-05 (docs/review/SEO.md): what a crawler and a link-preview scraper are told about `/`, `/help`, `/demo`.
+ * SEO-04 / SEO-05 (docs/review/SEO.md): what a crawler and a link-preview scraper are told about `/` and `/help`. (`/demo`'s noindex half went with the route, 2026-09-26, N17.)
  *
  * ⚠️ THE ASSERTIONS ARE ON THE RESOLVED METADATA, NOT ON ANY ONE FILE'S EXPORT. Each route's metadata is run through
  * Next's OWN `accumulateMetadata` — the function the build uses to merge segments into the `<head>` — with the real
@@ -52,11 +52,9 @@ async function routes() {
   const { metadata: root } = await import('@/app/layout')
   const { metadata: home } = await import('@/app/page')
   const { metadata: help } = await import('@/app/help/page')
-  const { metadata: demoLayout } = await import('@/app/demo/layout')
   return {
     '/': await resolve('/', [root, home]),
     '/help': await resolve('/help', [root, null, help]),
-    '/demo': await resolve('/demo', [root, demoLayout, null]),
   }
 }
 
@@ -68,20 +66,6 @@ const HELP_DESC =
   'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, game time, and choosing where a child starts.'
 
 const url = (u: URL | string | undefined | null) => (u ? String(u).replace(/\/$/, '') : u)
-
-describe('SEO-04: /demo is kept out of the index', () => {
-  it('/demo resolves to index: false', async () => {
-    const r = await routes()
-    expect(r['/demo'].robots?.basic ?? '').toMatch(/\bnoindex\b/)
-  })
-
-  // Positive control: the two public pages must stay indexable — a robots rule that leaked to the root would pass
-  // the /demo assertion and de-index the site.
-  it.each(['/', '/help'] as const)('%s is NOT noindex', async route => {
-    const r = await routes()
-    expect(r[route].robots?.basic ?? '').not.toMatch(/noindex/)
-  })
-})
 
 describe('SEO-05: /help previews as /help, and cards are large', () => {
   it("/help's og:url is its own canonical and its og/twitter title is its own <title>", async () => {
@@ -95,7 +79,7 @@ describe('SEO-05: /help previews as /help, and cards are large', () => {
     expect(h.twitter?.description).toBe(HELP_DESC)
   })
 
-  it.each(['/', '/help', '/demo'] as const)('%s has twitter:card summary_large_image', async route => {
+  it.each(['/', '/help'] as const)('%s has twitter:card summary_large_image', async route => {
     expect((await routes())[route].twitter?.card).toBe('summary_large_image')
   })
 

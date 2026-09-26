@@ -99,7 +99,7 @@ export default function StoryPage() {
   return <>{renderChapter()}{taste && <TasteBanner />}</>
 
   function renderChapter() {
-    if (LEGACY_CHAPTERS_HIDDEN) return <NewLessonsSoon back="/menu" />
+    if (LEGACY_CHAPTERS_HIDDEN) return <NewLessonsSoon back="/modules" />
     const skill = PREVIEW[ch]
     // The card the portal draws in the real game, so this preview shows what a child sees.
     if (skill) { const View = VIEWS[skill]; return <><View world={orderWorld} /><DirectionsCard chapter={skill as ChapterType} /></> }

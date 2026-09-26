@@ -93,7 +93,7 @@ export const LANDING_URL = 'https://radlor.com/radlic'
 /** Signed-in surfaces, kept out of results. `/api/` is here because an endpoint in an index is
  *  noise for everyone. */
 export const PRIVATE_ROUTES = [
-  '/api/', '/parent', '/admin', '/play', '/shop', '/menu', '/game', '/story',
+  '/api/', '/parent', '/admin', '/play', '/shop', '/game', '/story',
   '/auth', '/practice', '/lesson', '/modules',
   '/consent',   // token-bearing pages reached from a consent email; also noindex in their layout
 ] as const

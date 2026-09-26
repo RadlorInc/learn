@@ -43,7 +43,7 @@ export function LockedChapterCard({ chapterId, onBack }: { chapterId: string; on
             borderRadius: 50, padding: '12px 26px', cursor: 'pointer',
           }}>← Pick something else</button>
         ) : (
-          <Link href="/menu" style={{
+          <Link href="/modules" style={{
             display: 'inline-block', background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', fontWeight: 800,
             fontSize: 15, borderRadius: 50, padding: '12px 26px', textDecoration: 'none',
           }}>← Pick something else</Link>

@@ -7,7 +7,7 @@ const ASSETS_CACHE = `milo-assets-${VERSION}`
 // /parent); a service worker cannot return a cached redirected response to a
 // navigation (the browser fails it with ERR_FAILED). The root is handled by a
 // dedicated passthrough in the fetch handler below.
-const APP_PAGES = ['/menu', '/game', '/parent', '/auth', '/profile', '/shop', '/offline.html', '/manifest.json']
+const APP_PAGES = ['/game', '/parent', '/auth', '/profile', '/shop', '/offline.html', '/manifest.json']
 
 // ─── Install — pre-cache all app pages ───────────────────────
 self.addEventListener('install', event => {
