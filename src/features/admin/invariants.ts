@@ -172,9 +172,26 @@ export function checkFunnel(d: any): Violation[] {
   return out
 }
 
+/* ─────────────────────────── activation (lessons) ─────────────────────────── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function checkPage(page: 'overview' | 'learning' | 'funnel', d: any): Violation[] {
-  return page === 'overview' ? checkOverview(d) : page === 'learning' ? checkLearning(d) : checkFunnel(d)
+export function checkActivation(d: any): Violation[] {
+  const out: Violation[] = []
+  if (!d) return out
+  for (const c of (d.cohorts ?? [])) {
+    const eligible = Number(c.eligible), added = num(c.added), activated = num(c.activated)
+    // Nested by construction: lesson work needs a child, a child needs the account.
+    if (added !== null) push(out, added <= eligible, 'A1',
+      `cohort ${c.cohort_week}: ${added} accounts added a child, more than the ${eligible} eligible`)
+    if (activated !== null && added !== null) push(out, activated <= added, 'A2',
+      `cohort ${c.cohort_week}: ${activated} activated exceeds the ${added} that added a child — activation requires a child`)
+  }
+  return out
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function checkPage(page: 'overview' | 'learning' | 'funnel' | 'activation', d: any): Violation[] {
+  return page === 'overview' ? checkOverview(d) : page === 'learning' ? checkLearning(d)
+    : page === 'activation' ? checkActivation(d) : checkFunnel(d)
 }
 
 /**

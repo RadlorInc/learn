@@ -30,7 +30,7 @@ export function Def({ children }: { children: React.ReactNode }) {
   return <p style={S.sub}>{children}</p>
 }
 
-export function useMetrics(page: 'overview' | 'learning' | 'funnel') {
+export function useMetrics(page: 'overview' | 'learning' | 'funnel' | 'activation') {
   // ⚠️ `err` MUST BE RENDERABLE, and the page must never sit on "Loading…" for ever. Before this,
   // any failure that was not a 404 left `data` undefined and the page showed "Loading…" with no end
   // — indistinguishable from a slow network, which is how a real failure gets mistaken for latency.

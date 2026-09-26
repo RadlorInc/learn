@@ -190,8 +190,11 @@ describe('grant', () => {
     expect((await svc(call(teacher, `su-t-${n}`))).err ?? 'ALLOWED').toMatch(/cannot request parental consent/)
     for (const role of ['authenticated', 'anon'] as const)
       expect((await as(role, id, call(id, `su-x-${n}`))).err ?? 'ALLOWED', `${role} could call it`).toMatch(/permission denied for function consent_request_at_signup/)
-    // Email-plus binds it like B1's: no grant without B3 (the positive twin grants with one).
     await svc(`select public.consent_record_request_sent('${c}', 're_b0')`)
+    // N5 (20260926100800): not while the address is unconfirmed — the request stays pending.
+    expect((await grant(hash)).rows![0].s).toBe('unconfirmed')
+    await db.exec(`update auth.users set email_confirmed_at = now() where id = '${id}'`)
+    // Email-plus binds it like B1's: no grant without B3 (the positive twin grants with one).
     expect((await grant(hash, null)).err ?? 'ALLOWED').toContain('parental_consents_email_plus_second_notice')
     expect((await grant(hash)).rows![0].s).toBe('granted')
   })

@@ -16,7 +16,11 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: (u: string) => nav.replaced.push(u), push: () => {} }),
   useSearchParams: () => new URLSearchParams('th=hash123'),
 }))
-vi.mock('@/data/auth', () => ({ verifyEmailToken: async () => verify.result }))
+const pw = vi.hoisted(() => ({ set: [] as string[] }))
+vi.mock('@/data/auth', () => ({
+  verifyEmailToken: async () => verify.result,
+  setPassword: async (p: string) => { pw.set.push(p); return { error: null } },
+}))
 vi.mock('@/data/repositories', () => ({
   getMyRole: async () => role.current,
   setMyRole: async (r: string) => { role.set.push(r); role.current = r; return true },
@@ -36,7 +40,7 @@ async function open(hash: string) {
   return text
 }
 
-beforeEach(() => { nav.replaced = []; role.set = []; role.current = null })
+beforeEach(() => { nav.replaced = []; role.set = []; role.current = null; pw.set = [] })
 
 describe('/auth/confirm', () => {
   it('confirmed: sets the role chosen at sign-up, then a parent goes to the consent page', async () => {
@@ -63,5 +67,31 @@ describe('/auth/confirm', () => {
     const text = await open('#t=' + 'c'.repeat(43))
     expect(nav.replaced, 'moved on without confirming the address').toEqual([])
     expect(text).toContain('Try again')
+  })
+
+  it('SEC-01/N2: an address signed up more than once is asked for a password BEFORE moving on, then continues', async () => {
+    verify.result = { data: { user: { user_metadata: { role: 'parent' }, app_metadata: { signup_count: 2 } } }, error: null }
+    window.location.hash = '#t=' + 'd'.repeat(43)
+    const { default: Page } = await import('@/app/auth/confirm/page')
+    const el = document.createElement('div'); document.body.appendChild(el)
+    const root = createRoot(el)
+    await act(async () => { root.render(createElement(Page)) })
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+    expect(nav.replaced, 'moved on without asking for a password').toEqual([])
+    expect(el.textContent).toContain('Choose your password')
+
+    const input = el.querySelector('input[type=password]') as HTMLInputElement
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!
+    await act(async () => { setValue.call(input, 'Owner-final-333!'); input.dispatchEvent(new Event('input', { bubbles: true })) })
+    await act(async () => { (el.querySelector('form') as HTMLFormElement).requestSubmit() })
+    await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+    expect([pw.set, nav.replaced]).toEqual([['Owner-final-333!'], [`/consent/respond#t=${'d'.repeat(43)}`]])
+    act(() => root.unmount()); el.remove()
+  })
+
+  it('POSITIVE CONTROL: a single sign-up (count 1) is not asked for a password', async () => {
+    verify.result = { data: { user: { user_metadata: { role: 'parent' }, app_metadata: { signup_count: 1 } } }, error: null }
+    const text = await open('#t=' + 'e'.repeat(43))
+    expect([text.includes('Choose your password'), pw.set, nav.replaced]).toEqual([false, [], [`/consent/respond#t=${'e'.repeat(43)}`]])
   })
 })

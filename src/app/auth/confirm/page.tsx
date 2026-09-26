@@ -13,13 +13,17 @@
  * ⚠️ A USED OR EXPIRED CONFIRMATION LINK IS NOT A DEAD END FOR A PARENT. A second click finds the token spent; the
  * consent token in the fragment is still good, so the parent still reaches the consent page — the address was confirmed
  * by the click that came first, and the consent request carries its own seven-day window.
+ * ⚠️ AN ADDRESS SIGNED UP MORE THAN ONCE GETS A NEW PASSWORD HERE (SEC-01, Rafi's N2). The server route replaced the
+ * password with a random one when the second sign-up came in (`app_metadata.signup_count` > 1), because the first
+ * sign-up may have been somebody else's. Whoever clicked THIS link holds the inbox, so they choose it now; leaving
+ * without choosing is safe — nobody knows the random one, and "Forgot password" works.
  * ⚠️ BUT A FAILURE TO REACH THE AUTH SERVER IS NOT "ALREADY USED". It must not move on to the consent page: the address
  * would stay unconfirmed, and a parent who then gave consent could not sign in. Found by driving the page in a browser
  * (the local CSP blocked the call), which a script calling the API directly could never have shown.
  */
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { verifyEmailToken } from '@/data/auth'
+import { setPassword, verifyEmailToken } from '@/data/auth'
 import { getMyRole, homeForRole, setMyRole } from '@/data/repositories'
 import { makeT, useSavedLang } from '@/features/dashboard/i18n'
 
@@ -34,6 +38,10 @@ function Confirm() {
   const ran = useRef(-1)
   const [failed, setFailed] = useState<'link' | 'network' | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [next, setNext] = useState<string | null>(null)   // set = ask for a new password, then go here
+  const [pw, setPw] = useState('')
+  const [pwError, setPwError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (ran.current === attempt) return
@@ -52,16 +60,39 @@ function Confirm() {
       const chosen = data.user.user_metadata?.role
       try {
         if ((chosen === 'parent' || chosen === 'teacher') && !(await getMyRole())) await setMyRole(chosen)
-        router.replace(consent ? `/consent/respond#t=${consent}` : homeForRole(await getMyRole()))
+        const to = consent ? `/consent/respond#t=${consent}` : homeForRole(await getMyRole())
+        if (Number(data.user.app_metadata?.signup_count) > 1) { setNext(to); return }
+        router.replace(to)
       } catch {
         setFailed('network')   // the role could not be read: never treat that as "no role yet" (BUG-07)
       }
     })()
   }, [th, router, attempt])
 
+  async function savePassword() {
+    if (pw.length < 6) { setPwError(t('Use at least 6 characters')); return }
+    setSaving(true); setPwError(null)
+    const { error } = await setPassword(pw).catch(() => ({ error: { message: '' } }))
+    if (error) { setPwError(t('Couldn’t save it — try again')); setSaving(false); return }
+    router.replace(next!)
+  }
+
   return (
     <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 24, background: 'var(--paper)' }}>
-      {failed === 'network'
+      {next
+        ? <form data-confirm="new-password" onSubmit={e => { e.preventDefault(); void savePassword() }}
+            style={{ maxWidth: 420, width: '100%', display: 'flex', flexDirection: 'column', gap: 12, color: 'var(--ink)' }}>
+            <p style={{ fontWeight: 800, fontSize: 20, margin: 0 }}>{t('Choose your password')}</p>
+            <p style={{ margin: 0, color: 'var(--ink-soft)' }}>{t('This email address was used to sign up more than once, so to keep the account safe, please choose its password now.')}</p>
+            <input type="password" autoComplete="new-password" aria-label={t('New password')} value={pw} disabled={saving}
+              onChange={e => { setPw(e.target.value); setPwError(null) }}
+              style={{ padding: '12px 14px', fontSize: 16, minHeight: 44, border: '2px solid var(--card-border)', borderRadius: 12 }} />
+            {pwError && <p role="alert" style={{ margin: 0, color: '#93000A', fontWeight: 700 }}>{pwError}</p>}
+            <button type="submit" disabled={saving}
+              style={{ minHeight: 44, padding: '10px 20px', borderRadius: 50, border: 'none', fontWeight: 800, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', cursor: 'pointer' }}>
+              {t('Save and continue')}</button>
+          </form>
+        : failed === 'network'
         ? <div style={{ maxWidth: 420, textAlign: 'center', color: 'var(--ink)' }}>
             <p style={{ fontWeight: 700 }}>{t('Couldn’t connect — check your connection and try again')}</p>
             <button type="button" onClick={() => { setFailed(null); setAttempt(a => a + 1) }}

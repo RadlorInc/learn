@@ -7,10 +7,12 @@
  * after the confirmation link expired). `parental_consents.parent_id → auth.users` is ON DELETE CASCADE, so
  * `prune_unconfirmed_users()` deleting that account deleted the granted record with it.
  *
- * The property checked: after one run of the job, an unconfirmed account older than 3 days that holds a granted or
- * withdrawn consent still exists and its record is unchanged; an unconfirmed account older than 3 days with NO
- * consent, or only a pending / declined / expired request, is still deleted; a young unconfirmed account is kept.
- * NOT checked: whether a grant on an unconfirmed address should be allowed at all (a flow decision, not this fix).
+ * The property checked: after one run of the job, an unconfirmed account older than 3 days that holds a granted,
+ * withdrawn or (N5, Rafi 2026-09-26) DECLINED consent still exists and its record is unchanged; an unconfirmed account
+ * older than 3 days with NO consent, or only a pending / expired request, is still deleted; a young unconfirmed
+ * account is kept.
+ * Since N5 (20260926100800) a grant needs a CONFIRMED address, so the granted and withdrawn fixtures are granted while
+ * confirmed and then made unconfirmed — the state a pre-N5 grant left behind, which is what the guard still protects.
  *
  * Real Postgres (pglite), baseline + every migration in order (`_schema.ts`). The granted consent is made the way
  * the app makes it — `consent_request_at_signup` then `consent_grant`, as service_role — not by inserting a row.
@@ -57,11 +59,13 @@ beforeAll(async () => {
     ('${DECLINED}',  'declined@x.test',  '{"role":"parent"}', null),
     ('${YOUNG}',     'young@x.test',     '{"role":"parent"}', null)`)
 
+  await db.exec(`update auth.users set email_confirmed_at = now() where id in ('${GRANTED}', '${WITHDRAWN}')`)
   await requestAt(GRANTED, 'tok01')
   expect(await grant('tok01')).toBe('granted')
 
   await requestAt(WITHDRAWN, 'tok02')
   expect(await grant('tok02')).toBe('granted')
+  await db.exec(`update auth.users set email_confirmed_at = null where id in ('${GRANTED}', '${WITHDRAWN}')`)
   await db.exec(`update public.parental_consents set state = 'withdrawn', withdrawn_at = now() where parent_id = '${WITHDRAWN}'`)
 
   await requestAt(PENDING, 'tok04')
@@ -97,11 +101,14 @@ describe('BUG-09 — prune_unconfirmed_users() never destroys a granted consent 
       .toEqual({ account: true, consents: ['withdrawn'] })
   })
 
-  it('POSITIVE CONTROL: no consent, or only a pending / expired / declined request → still pruned', async () => {
-    expect({
-      none: await exists(NONE), pending: await exists(PENDING),
-      expired: await exists(EXPIRED), declined: await exists(DECLINED),
-    }).toEqual({ none: false, pending: false, expired: false, declined: false })
+  it('N5: an unconfirmed account holding a DECLINED consent survives, with its record (evidence)', async () => {
+    expect({ account: await exists(DECLINED), consents: await states(DECLINED) })
+      .toEqual({ account: true, consents: ['declined'] })
+  })
+
+  it('POSITIVE CONTROL: no consent, or only a pending / expired request → still pruned', async () => {
+    expect({ none: await exists(NONE), pending: await exists(PENDING), expired: await exists(EXPIRED) })
+      .toEqual({ none: false, pending: false, expired: false })
   })
 
   it('POSITIVE CONTROL: a young unconfirmed account is not pruned', async () => {
