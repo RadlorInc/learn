@@ -14,7 +14,8 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentSession } from '@/data/auth'
-import { getMyRole, signOut, getPinStatus, verifyPin, setPin, requestPinReset } from '@/data/repositories'
+import { getMyRole, signOut, getPinStatus, verifyPin, setPin, requestPinReset, type ErrorKind } from '@/data/repositories'
+import { errorWording } from '@/shared/ui/errorWording'
 
 type Stage = 'loading' | 'open' | 'enter' | 'create' | 'error'
 const time = (iso?: string | null) => iso ? new Date(iso).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''
@@ -28,6 +29,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
   const [msg, setMsg] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [failKind, setFailKind] = useState<ErrorKind>('other')
   // Same PIN for both adult roles; only the words follow the role — a teacher is not a "parent" (2026-09-18).
   const [teacher, setTeacher] = useState(false)
 
@@ -39,7 +41,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
     setTeacher(role === 'teacher')
     const s = await getPinStatus()
     if (s.state === 'unavailable') setStage('open')
-    else if (s.state === 'error') setStage('error')
+    else if (s.state === 'error') { setFailKind(s.kind); setStage('error') }
     else if (s.state === 'none') setStage('create')
     else {
       setStage('enter')
@@ -66,7 +68,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
     if (r.error === 'locked') setMsg(`Too many wrong tries. Try again after ${time(r.locked_until)}.`)
     else if (r.error === 'wrong') setMsg(`Wrong PIN. ${r.tries_left} ${r.tries_left === 1 ? 'try' : 'tries'} left before it locks.`)
     else if (r.error === 'no_pin') await load()
-    else setMsg('Could not check the PIN. Check your connection and try again.')
+    else setMsg(errorWording(r.kind ?? 'other', 'Could not check the PIN. Check your connection and try again.'))
   }
 
   async function forgot() {
@@ -89,7 +91,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
         </h1>
         <p style={{ margin: 0, fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.45 }}>
           {stage === 'create' ? `Choose 4 digits. We ask for it every time this dashboard opens, so a ${teacher ? 'student' : 'child'} on this device cannot get in.`
-            : stage === 'error' ? 'Check your connection and try again.'
+            : stage === 'error' ? errorWording(failKind, 'Check your connection and try again.')
             : 'This keeps the dashboard for grown-ups only.'}
         </p>
 

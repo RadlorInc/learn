@@ -7,7 +7,8 @@
 import Link from 'next/link'
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Performance } from '@/features/lessons/Performance'
-import type { Wallet } from '@/data/repositories'
+import type { Wallet, ErrorKind } from '@/data/repositories'
+import { errorWording } from '@/shared/ui/errorWording'
 import { LessonsTab, type SaveResult } from './LessonsTab'
 import { dbtn, dghost, dcard } from './Helpers'
 import { useT } from './i18n'
@@ -36,7 +37,7 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
   onLaunch: () => void; onSaveLessons: (ids: string[] | null, due: Record<string, string>) => Promise<SaveResult>
   onSaveGame: (enabled: boolean, minutes: number) => Promise<void>; onLogin: () => void
   /** The parent's right to correct: the name, the avatar, and/or the grade band (null = leave it). */
-  onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | 'error'>
+  onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | ErrorKind>
   /** Download + delete, rendered by the page (it owns the delete flow and the export bundle). */
   dataRights: ReactNode
 }) {
@@ -87,7 +88,7 @@ const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'va
 /** Correct a child's name, avatar or grade band — the parent right the documents promise (docs/legal/06, 11).
  *  ⚠️ The grade is offered as the two bands the database stores, not as grades 3–8: a "Grade 4 → 5" choice
  *  would change nothing stored and still say "Saved." */
-function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarIndex: number; onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | 'error'> }) {
+function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarIndex: number; onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | ErrorKind> }) {
   const t = useT()
   const [value, setValue] = useState(name)
   const [avatar, setAvatar] = useState<number | null>(null)   // none picked = keep the current one
@@ -101,7 +102,7 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
     setBusy(true)
     const r = await onCorrect(trimmed, band || null, avatar ?? avatarIndex)
     setBusy(false)
-    setMsg(r === 'ok' ? t('Saved.') : t('Could not save. Check your connection and try again.'))
+    setMsg(r === 'ok' ? t('Saved.') : t(errorWording(r, 'Could not save. Check your connection and try again.')))
   }
   return <>
     <h2 style={h2}>{t('Update {name}’s details', { name })}</h2>
