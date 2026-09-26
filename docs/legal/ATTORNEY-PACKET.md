@@ -99,11 +99,15 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 ## D. Terms of Service
 
 ### D1. Arbitration and class-action waiver *(12 §15 placeholder, note 6)* — a business decision. If adopted, please draft it with the opt-out and formatting courts require. Also confirm **Delaware** governing law for a nationwide consumer product.
-### D2. Liability floor *(12 §12 placeholder, note 7)* — the cap is "the greater of 12 months' fees or [floor]". Set the floor and confirm the carve-outs.
+### D2. Liability floor *(12 §12, note 7)* — the cap is "the greater of 12 months' fees or [floor]".
+- **Today (decided by the founder for the beta on 26 September 2026, attorney to review):** the floor is **US$100**. During the free beta (A) is zero, so US$100 is the cap. The Terms were published as the beta version that day.
+- **Decide:** is US$100 an adequate floor for a children's service, and are the carve-outs right?
 ### D3. Who owns the content, and AI *(12 §6 placeholder)*
 - **Today:** most lesson content (explanations, questions, voice clips) is AI-generated. The repository's own records say much of it has **not been read by a human**: the Grade 6–8 lesson text is unread, the voice clips are unheard, and some practice ladders are checked only by an automated "blind solver". *(As recorded in the project handoff, 23 September 2026.)*
 - **Decide:** (a) What to claim instead of blanket copyright (we expect selection, arrangement, the Terms as a contract, and acceptable use). (b) The AI disclaimer (§8) for content aimed at children, where "a wrong answer taught confidently" is the realistic failure. (c) The §8 placeholder "describe the actual review process": we will describe only what is actually done. Tell us what minimum is required.
-### D4. DMCA agent *(12 §14 placeholder, note 5)* — the service hosts little or no user-posted material. Is registration with the Copyright Office warranted? If so, the founder supplies the agent's details.
+### D4. DMCA agent *(12 §14, note 5)* — the service hosts little or no user-posted material.
+- **Today (decided by the founder for the beta on 26 September 2026, attorney to review):** §14 is a plain contact — Radlor Inc.'s address and support@radlor.com. It names no "designated agent" and gives no phone, because no agent is registered with the Copyright Office.
+- **Decide:** is registration warranted? Without it, the DMCA §512(c) safe harbour is not available; if you advise registering, §14 goes back to naming the agent.
 ### D5. Model training *(11 note 2, 12 note 3)* — Radlor commits that children's work is never used to train models. **Today:** no child input reaches any AI or text-to-speech provider at runtime, and every clip is a static file (measured). Confirm the wording and that vendor terms must be re-checked whenever a vendor is added.
 ### D6. Which document controls
 - **Draft:** doc 01 says the Terms control over the Refund Policy, and the Terms' "entire agreement" clause names Terms + Privacy + Refund. Nothing says how the **Parent Rights page**, the **in-app notice**, the **consent emails**, or the **Spanish versions** rank against these.
