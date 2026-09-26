@@ -129,6 +129,32 @@ export async function generateSignupLink(email: string, password: string, data: 
   throw new Error(`generate_link ${r.status}: ${b?.error_code ?? b?.msg ?? 'no body'}`)
 }
 
+/**
+ * SEC-04: when Supabase last issued a sign-up link for this address, if the address is still UNCONFIRMED; else null.
+ * Read BEFORE `generate_link`, because that call is the thing to avoid: measured on a local stack (2026-09-26) it
+ * sets `confirmation_sent_at` to now AND rotates the token, so the link in the email already sent stops working (403).
+ * Its own response therefore cannot say when the last email went — it always says "now".
+ * `filter` is a case-sensitive SUBSTRING match (measured: `x<addr>` matches too; stored emails are lowercase), so
+ * the exact address is picked out of the page.
+ * ponytail: one page of 1000. An address buried under 1000+ other accounts containing it reads as "never sent" and
+ * falls back to today's behaviour (send); page through `x-total-count` if accounts ever get near that.
+ */
+export async function lastSignupLinkAt(email: string): Promise<number | null> {
+  const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
+  const e = email.trim().toLowerCase()
+  const r = await fetch(`${url}/auth/v1/admin/users?filter=${encodeURIComponent(e)}&per_page=1000`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: 'no-store',
+  })
+  const b = await r.json().catch(() => null)
+  // Fail OPEN (send as today) — the cooldown must never stop a real sign-up — but say so, so "could not look" never
+  // reads as "nothing was sent".
+  if (!r.ok || !Array.isArray(b?.users)) { console.error('[auth/signup] cooldown lookup failed', r.status); return null }
+  const u = (b.users as { email?: string; email_confirmed_at?: string | null; confirmation_sent_at?: string | null }[])
+    .find(x => x.email === e)
+  const at = u && !u.email_confirmed_at && u.confirmation_sent_at ? Date.parse(u.confirmation_sent_at) : NaN
+  return Number.isFinite(at) ? at : null
+}
+
 // ── Resend ──
 /** Resend's API unless overridden. The override exists for ONE reason: the local end-to-end run points
  *  it at a stand-in that records messages instead of delivering them. Unset in every real environment. */
