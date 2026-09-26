@@ -20,7 +20,7 @@ import { join } from 'node:path'
 import {
   makeRound, answerFor, bundlePlan, slotAt, scoredSlot, GUIDED_SLOT, DEMO_SLOTS, matOf,
   MATERIALS, GROUND, groundOf, rodBudget, roomUnit, rackSpot, baySpot, queueOf,
-  RACK_X0, RACK_COL, BAY_X0, BAY_COL, MILO_X, QUEUE_PER_ROW, CHUTE_MAX, chuteShown,
+  RACK_X0, RACK_COL, BAY_X0, BAY_COL, WALKER_X, QUEUE_PER_ROW, CHUTE_MAX, chuteShown,
   POOL, trayUnit, HUE_BAND, type QKind,
 } from '@/features/chapters/story/BuildingBlocks'
 import { ROD_SEGMENTS, PAD_BAND, MAT_SAT, MAT_VAL, bannerBottom } from '@/features/chapters/story/yard'
@@ -226,8 +226,8 @@ describe('every place a block can stand is on the screen, and reads as its own s
     // ⚠️ NOT DECORATION. A number is written tens-then-ones, and reading it off the shelves left to
     // right IS the skill this chapter teaches. Flipping these silently un-teaches it.
     expect(RACK_X0).toBeLessThan(BAY_X0)
-    expect(rackSpot(8).x).toBeLessThan(MILO_X)
-    expect(baySpot(0).x).toBeGreaterThan(MILO_X)
+    expect(rackSpot(8).x).toBeLessThan(WALKER_X)
+    expect(baySpot(0).x).toBeGreaterThan(WALKER_X)
   })
 
   it('every spot sits inside the frame', () => {
@@ -245,9 +245,9 @@ describe('every place a block can stand is on the screen, and reads as its own s
     }
   })
 
-  it('the two shelves and Milo do not sit on each other', () => {
-    expect(MILO_X).toBeGreaterThan(rackSpot(8).x + 4)
-    expect(BAY_X0).toBeGreaterThan(MILO_X + 4)
+  it('the two shelves and the walker do not sit on each other', () => {
+    expect(WALKER_X).toBeGreaterThan(rackSpot(8).x + 4)
+    expect(BAY_X0).toBeGreaterThan(WALKER_X + 4)
   })
 
   it('the waiting ones read as somewhere ELSE, not as more of the shelf', () => {
@@ -282,10 +282,15 @@ describe('every place a block can stand is on the screen, and reads as its own s
     expect(groundOf(900)).toBe(GROUND)          // a roomy frame keeps the designed ground line
   })
 
-  it('Milo still has a registered drawn cycle', () => {
-    // ⚠️ A block has no legs, so Milo is the only living thing in the room. Without a sheet
+  it('the walker is the foreman bear, with a registered drawn cycle, and no mascot is drawn', () => {
+    // ⚠️ A block has no legs, so the walker is the only living thing in the room. Without a sheet
     // `SheetCell` silently falls back to a still, and a still that travels is a dragged sticker.
-    expect(hasSheet('/assets/characters/milo_side.png')).toBe(true)
+    // The path is written out HERE, not imported: the product has no mascot (2026-09-25), and a
+    // chapter drifting back to `characters/milo_*` must go red.
+    const src = readFileSync(SRC, 'utf8')
+    expect(src).toContain("'/assets/objects/foreman_bear_side.png'")
+    expect(src).not.toMatch(/characters\/milo|MiloSprite|🦊/)
+    expect(hasSheet('/assets/objects/foreman_bear_side.png')).toBe(true)
   })
 })
 
@@ -314,7 +319,7 @@ describe('the run is one straight sequence, and the room changes across it', () 
     }
   })
 
-  it('no flat-VECTOR backdrop is cast under a painted Milo', () => {
+  it('no flat-VECTOR backdrop is cast under a painted walker', () => {
     const VECTOR = /^(pond|lake|pond_top|sky|fishing_bg|River)\b/
     for (let i = 0; i < SLOTS; i++) expect(slotAt(i).scene, `slot ${i}`).not.toMatch(VECTOR)
   })
@@ -331,7 +336,7 @@ describe('the run is one straight sequence, and the room changes across it', () 
     // ⚠️ **THE CHECK THAT WAS MISSING, TWICE.** The walkable-ground test below only asks whether a
     // pixel is blue, so it passes water and sky and fails nothing else — and the craft doc already
     // records that it cannot tell canopy from grass. Pointed at forest backdrops it passed all four,
-    // and on screen the blocks and Milo stood in a wall of shrubbery with no ground under them.
+    // and on screen the blocks and the walker stood in a wall of shrubbery with no ground under them.
     //
     // Open ground is SMOOTH. Mean neighbour-to-neighbour brightness change along a row separates it
     // from foliage instantly: `garden_meadow` measures 1.9, the forests 15–21. Colour cannot make
@@ -361,7 +366,7 @@ describe('the run is one straight sequence, and the room changes across it', () 
     // ⚠️ THE CORRECTION THAT COST THIS CHAPTER A PASS. It was first built on indoor scenes picked for
     // hue and quietness — both PALETTE checks — with a flat "bench" line at 0.70 and no measurement
     // of where the painted surface actually is. `craft_gems` is a glass display case topping out at
-    // 0.60, so the blocks and Milo floated inside the cabinet over the necklaces.
+    // 0.60, so the blocks and the walker floated inside the cabinet over the necklaces.
     // **Calling the surface a bench does not exempt it from having to exist in the picture.**
     const sharp = (await import('sharp')).default
     for (let i = 0; i < SLOTS; i++) {

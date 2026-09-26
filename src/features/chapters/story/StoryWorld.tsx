@@ -2,8 +2,8 @@
 /**
  * StoryWorld — the 3–5 "story mode" engine.
  *
- * A world is an ordered list of scenes. Milo walks the path with a goal; between
- * scenes a short walk transition plays; friends collected accumulate in his party.
+ * A world is an ordered list of scenes, walked as a path with a goal; between
+ * scenes a short walk transition plays; friends collected accumulate in the party.
  * See docs/story-mode-3-5.md.
  *
  * The pedagogy is NOT in the story — it's in <SkillBeat>, which every skill scene
@@ -11,7 +11,7 @@
  * re-explanation + warm wrong-answers), so they're present in every scene by
  * construction, no matter how the story changes.
  */
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import React, { useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { speak, speakAfterCurrent, stopSpeech } from '@/infra/useMiloSpeaker'
 import { useAdaptive } from '@/shared/hooks/useAdaptive'
@@ -26,18 +26,17 @@ import { makeDistinct } from '@/core/questionVariety'
 import { type ChapterType } from '@/core/chapters'
 import { CSS as KIT_CSS } from '../lessons/_kit'
 import { Backdrop, type BackdropKind } from './art'
-import MiloSprite from './MiloSprite'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
+import { CHAPTER_TAKE, ChapterTakeContext } from './take'
 
 const STORY_CSS = `
-@keyframes s_walk { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)} }
 @keyframes s_bobIn { 0%{transform:translateY(18px) scale(.8);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
 @keyframes s_pathMove { from{background-position-x:0} to{background-position-x:-120px} }
 @keyframes s_twinkle { 0%,100%{opacity:.55;transform:scale(.9)} 50%{opacity:1;transform:scale(1.12)} }
 `
 
-/** Wrong-in-a-row before Milo re-explains. It was an optional field with a default of 2, and
+/** Wrong-in-a-row before the round is re-explained. It was an optional field with a default of 2, and
  *  all 34 chapters passed 3 — so it was never a knob, only a number written 34 times. */
 export const RETEACH_AFTER = 3
 
@@ -45,7 +44,7 @@ export const RETEACH_AFTER = 3
  *  live in `core/praise` because `GameShell` needs the same two and must not import this file. */
 export { PRAISE } from '@/core/praise'
 
-// ─── A skill round: data + how to play it + how Milo re-teaches it ──
+// ─── A skill round: data + how to play it + how it is re-taught ──
 export interface Beat<T> {
   skillId: ChapterType
   rounds: number
@@ -54,7 +53,7 @@ export interface Beat<T> {
   walkBeforeRound?: (round: number) => boolean   // play a walk interlude right BEFORE
                                          // these rounds (e.g. when the scene/biome
                                          // changes), so a change always reads as
-                                         // "Milo travelled there". Overrides walkEvery.
+                                         // "we travelled there". Overrides walkEvery.
   make: (d: Difficulty, round?: number, asked?: readonly string[]) => T
                                          // `round` lets one practice vary by round (e.g. rotate the
                                          // biome) while staying ONE adaptive sequence. `asked` is the
@@ -107,7 +106,7 @@ export interface Beat<T> {
                                          // dressing changed. Defaults to a full-object
                                          // JSON sig, which over-counts cosmetic variety.
   prompt: (data: T) => string            // shown on screen
-  say?: (data: T) => string              // spoken by Milo (defaults to prompt). Use
+  say?: (data: T) => string              // spoken aloud (defaults to prompt). Use
                                          // a different `say` when the answer must be
                                          // HEARD not read (e.g. number-recognition doors).
   Play: React.FC<{ data: T; onSubmit: (correct: boolean) => void }>
@@ -165,9 +164,10 @@ export function useChapterShell(
 
 // ─── SkillBeat: the unbreakable pedagogy core ──────────────────
 // Runs `rounds` adaptive rounds. Warm wrong-answers (no red X). On a RETEACH_AFTER-wrong streak
-// (THREE, not two), Milo re-explains the round they just missed in-story, and the run then moves ON
+// (THREE, not two), the round they just missed is re-explained in-story, and the run then moves ON
 // to the next round — it is NOT a retry of the same question. The engine has already eased the tier
 // by then: it demotes on the SECOND miss, so the round being re-explained was built one tier down.
+
 export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Beat<any>; onComplete: (correct: number, wrong: number, mastered?: boolean) => void; onInterlude?: () => Promise<void>; onRound?: (data: any, round: number) => void }) { // eslint-disable-line @typescript-eslint/no-explicit-any
   // ⚠️ THE BAND RESUMES AT THE TIER THE CHILD LEFT OFF ON — founder's call, 2026-08-20, replacing
   // the earlier "3–11 NEVER resumes" rule. The fault that rule was written for (a nine-year-old
@@ -191,6 +191,8 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   // counted — before this, `onComplete` never fired and the whole run was discarded. Null for a
   // logged-out preview, for a finished chapter, and for a run older than the store's TTL.
   const [resume] = useState(() => getChapterResume(learnerId, beat.skillId))
+  const onTakeEnd = useContext(ChapterTakeContext)
+  const [takeStart] = useState(resume?.round ?? 0)   // where this sitting began; the take ends CHAPTER_TAKE answers later
   const ada = useAdaptive(beat.skillId, startDiff)
   const adaRef = useLatestRef(ada)
   const [roundIdx, setRoundIdx] = useState(resume?.round ?? 0)
@@ -221,7 +223,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     onRound?.(data, roundIdx)
     // ⚠️ `speakAfterCurrent`, NOT `speak`. The round advances on a 1300ms timer after the verdict
     // line is spoken (below), and most verdicts are longer than that — so a plain `speak` here cut
-    // Milo off mid-praise on EVERY round of every storybook chapter, in all four bands that run on
+    // the voice off mid-praise on EVERY round of every storybook chapter, in all four bands that run on
     // this beat. The visuals still advance on their own timer; only the words wait their turn.
     speakAfterCurrent((beat.say ?? beat.prompt)(data))
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -273,7 +275,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (res.mastered && covered) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong, true); return }
       const next = roundIdx + 1
       if (next >= beat.rounds) { clearChapterResume(learnerId, beat.skillId); onComplete(tally.current.correct, tally.current.wrong); return }
-      // Storyline interlude: Milo walks a few steps before certain rounds (a scene/
+      // The take is over: the resume point written above already says `next`, so the next sitting starts there.
+      if (onTakeEnd && next - takeStart >= CHAPTER_TAKE) { onTakeEnd(next - takeStart); return }
+      // Storyline interlude: the scene walks on a few steps before certain rounds (a scene/
       // biome change), or every `walkEvery` rounds. The adaptive streak/tally carry
       // across it untouched.
       const wantWalk = beat.walkBeforeRound ? beat.walkBeforeRound(next) : !!(beat.walkEvery && next % beat.walkEvery === 0)
@@ -284,7 +288,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       }
       setPhase('play'); setRoundIdx(next)
     }, 1300)
-  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId])
+  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId, onTakeEnd, takeStart])
 
   const finishReteach = useCallback(() => {
     setWrongRun(0)
@@ -298,9 +302,10 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
         round: next, correct: tally.current.correct, wrong: tally.current.wrong,
         seen: [...seen.current], asked: asked.current,
       })
+      if (onTakeEnd && next - takeStart >= CHAPTER_TAKE) { onTakeEnd(next - takeStart); return }
       setPhase('play'); setRoundIdx(next)
     }
-  }, [roundIdx, beat, onComplete, learnerId])
+  }, [roundIdx, beat, onComplete, learnerId, onTakeEnd, takeStart])
 
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
@@ -319,7 +324,7 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
           </div>
         </>
       )}
-      {/* The task is shown AND spoken. Tapping replays Milo's voice — a tap is a
+      {/* The task is shown AND spoken. Tapping replays the voice — a tap is a
           user gesture, so it reliably plays even if autoplay was blocked.
           ⚠️ THE SPEAKER IS THE WHOLE POINT OF THE ICON. This has always been a button with an
           `aria-label` of "Hear it again" and nothing visible to say so, so it read as a label and
@@ -374,9 +379,7 @@ function WalkTransition({ onDone }: { onDone: () => void }) {
   return (
     <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
       backgroundImage: 'repeating-linear-gradient(90deg, var(--garden-green-soft) 0 60px, var(--sky-blue-soft) 60px 120px)',
-      backgroundSize: '120px 100%', animation: 's_pathMove .5s linear infinite', borderRadius: 22 }}>
-      <div style={{ width: '85%', maxWidth: 320, height: '92%' }}><MiloSprite play /></div>
-    </div>
+      backgroundSize: '120px 100%', animation: 's_pathMove .5s linear infinite', borderRadius: 22 }} />
   )
 }
 
@@ -417,7 +420,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
   const arrive = useCallback(() => { setWalking(false); setIdx(i => i + 1) }, [])
 
   return (
-    <div className="milo-lesson" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center',
+    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center',
       background: scene.bg, padding: '10px 14px 22px', gap: 10 }}>
       <style>{KIT_CSS}{STORY_CSS}</style>
 
@@ -435,12 +438,9 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
         <Party friends={friends} />
       </div>
 
-      {/* Milo + speech bubble */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, width: '100%', maxWidth: 540 }}>
-        <img src="/assets/characters/milo_idle.png" alt="Milo" decoding="async" loading="lazy"
-          style={{ width: 64, height: 64, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 4px 8px rgba(61,37,22,.2))', animation: 's_walk 3s ease-in-out infinite' }}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <div style={{ background: '#fff', border: '3px solid var(--outline)', borderRadius: '18px 18px 18px 4px', padding: '10px 14px', flex: 1,
+      {/* Speech bubble */}
+      <div style={{ width: '100%', maxWidth: 540 }}>
+        <div style={{ background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: '10px 14px',
           fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', lineHeight: 1.4, boxShadow: '0 4px 0 rgba(61,37,22,.07)' }}>{scene.bubble}</div>
       </div>
 
@@ -465,9 +465,7 @@ export default function StoryWorld({ world, onExit }: { world: World; onExit?: (
 function IntroOrPayoff({ onNext, kind }: { onNext: () => void; kind: 'intro' | 'payoff' }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22, position: 'relative' }}>
-      {kind === 'payoff'
-        ? <div style={{ fontSize: 90, animation: 'k_miloJump .8s ease-in-out infinite' }}>🎉</div>
-        : <div style={{ width: 220, height: 220 }}><MiloSprite play={false} /></div>}
+      {kind === 'payoff' && <div style={{ fontSize: 90, animation: 'k_jump .8s ease-in-out infinite' }}>🎉</div>}
       <button onClick={onNext} style={{ padding: '16px 40px', borderRadius: 50, border: 'none', cursor: 'pointer',
         background: 'linear-gradient(135deg,var(--milo-orange) 0%,var(--milo-orange-deep) 100%)', color: '#fff',
         fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 18px rgba(242,107,44,.4)' }}>

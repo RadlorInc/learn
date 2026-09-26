@@ -84,7 +84,7 @@ Everything below that needs you is in order. The build record is `docs/legal/LOO
 
 ## F. Questions and warnings (the build continued past each)
 
-1. **BLOCKED — the 23 hidden legacy story chapters are built around Milo.** His sprites
+1. ✅ **DECIDED 2026-09-25 (founder): rewritten without a mascot and shown as the KG / Grade 1 / Grade 2 tabs** — his pictures removed, his lines reworded so no character is named; `renameGate.test.ts` now scans `src/features/chapters/` like the rest of the app. The original note: **BLOCKED — the 23 hidden legacy story chapters are built around Milo.** His sprites
    (`public/assets/characters/milo_*.png`), his spoken lines (the voice corpora) and their stories. They are hidden
    (`LEGACY_CHAPTERS_HIDDEN`, unreachable on every route) so no one sees him today, and I did not rewrite them.
    **Decide:** delete them, or rewrite them without a mascot before they are ever shown. Until then

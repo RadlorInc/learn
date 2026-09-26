@@ -25,7 +25,9 @@ export default function ModulesPage() {
 }
 
 function Modules() {
-  const grade = Number(useSearchParams().get('grade')) || 3
+  // `grade=0` is KG, so `|| 3` would send KG to Grade 3; only a missing or unreadable value means the default.
+  const asked = Number(useSearchParams().get('grade') ?? 3)
+  const grade = Number.isInteger(asked) && asked >= 0 && asked <= 8 ? asked : 3
   const router = useRouter()
   // A child signed in as themselves has no dashboard to switch back to — they get Sign out instead.
   const [child, setChild] = useState(knownChild)

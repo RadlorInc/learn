@@ -67,7 +67,6 @@ interface MultWorld {
   group: string            // what one group is called: "tray", "bed", "pod"
   groupPlural: string
   dark?: boolean
-  milo: { src: string; emoji: string; accessory: string }
 }
 const SETTINGS: MultWorld[] = [
   { id: 'farm', ground: 64, group: 'pen', groupPlural: 'pens',
@@ -77,8 +76,7 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#cfe8f2 0%, #d8ebcc 55%, #b6d6a0 100%)', img: '/assets/backgrounds/farm_pond.png' },
     ],
     items: [IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings'), IT('lamb', 'lamb', 'lambs'),
-      IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits')],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🐔' } },
+      IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits')] },
   { id: 'garden', ground: 64, group: 'patch', groupPlural: 'patches',
     bgs: [
       { grad: 'linear-gradient(#cfe6f7 0%, #dcecdb 60%, #c6e0b6 100%)', img: '/assets/backgrounds/garden.png' },
@@ -86,8 +84,7 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#cfe8f5 0%, #dcecda 60%, #c4dfb4 100%)', img: '/assets/backgrounds/garden_fence.png' },
     ],
     items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('ant', 'ant', 'ants'),
-      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
+      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')] },
   { id: 'woods', ground: 62, group: 'nest', groupPlural: 'nests',
     bgs: [
       { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/forest_1.jpeg' },
@@ -95,10 +92,9 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_4.jpeg' },
     ],
     items: [IT('bird', 'bird', 'birds'), IT('squirrel', 'squirrel', 'squirrels'), IT('eagle', 'eagle', 'eagles'),
-      IT('firefly', 'firefly', 'fireflies')],
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' } },
+      IT('firefly', 'firefly', 'fireflies')] },
 ]
-const INTRO = 'Milo makes things in EQUAL groups. Count the groups and how many are in each, then tap how many there are in all. First, watch Milo count!'
+const INTRO = 'Let’s make EQUAL groups! Count the groups and how many are in each, then tap how many there are in all. First, watch how we count!'
 /** Every backdrop in the chapter, so one <Background> can crossfade between any two of them. */
 const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
@@ -166,24 +162,6 @@ function Background({ bg, dark }: { bg: Bg; dark?: boolean }) {
           <SceneBg src={b.img} priority={b === bg} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
-    </div>
-  )
-}
-
-function MiloHost({ left, milo }: { left: number; milo: MultWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'md_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
     </div>
   )
 }
@@ -499,7 +477,7 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
           y 190–237 against a readout at 193–235 and covered it completely, and the gap between the
           readout and the chips is 14px against a 47px bar — there is no room in that column. The
           chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
-          them, which is empty in every chapter here (Milo owns bottom-LEFT). */}
+          them, which is empty in every chapter here. */}
       <ReadyBar show={pending !== null} onCommit={commit} align="right"
         bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
     </>
@@ -561,7 +539,6 @@ export function makeMultBeat(): Beat<MultRound> {
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 const MD_CSS = `
-@keyframes md_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes md_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.12);opacity:1} 100%{transform:scale(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -583,7 +560,7 @@ export default function MarketDay({ onFinish, onExit }: {
 
   // The band is landscape-only. This early return must sit BELOW every hook — above one, turning
   // the phone changes the hook count and React tears the chapter into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo lays out his trays in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="Equal groups play in landscape! 🧺" />
 
   // One of each view, each in a DIFFERENT setting — so the first thing a child learns is that the
   // place changes but the rule does not, which is also what the scored rounds then do.
@@ -621,7 +598,7 @@ export default function MarketDay({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo skip-count  (${demoIdx + 1}/${DEMO.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch us skip-count  (${demoIdx + 1}/${DEMO.length})`)}
         <MultExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -636,8 +613,6 @@ export default function MarketDay({ onFinish, onExit }: {
         </div>
       )}
 
-      {/* Milo belongs to the round's setting — chef in the bakery, painter at the craft table. */}
-      <MiloHost left={10} milo={shown.w.milo} />
     </div>
   )
 }

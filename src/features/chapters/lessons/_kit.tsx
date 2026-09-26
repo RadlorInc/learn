@@ -40,8 +40,7 @@ export const CSS = `
   @keyframes k_pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.14)} }
   @keyframes k_flipIn { 0%{transform:rotateY(90deg) scale(0.5);opacity:0} 100%{transform:rotateY(0) scale(1);opacity:1} }
   @keyframes k_sparkleOut { 0%{transform:scale(0) rotate(0deg);opacity:1} 100%{transform:scale(2.5) rotate(180deg);opacity:0} }
-  @keyframes k_miloIdle { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-6px) rotate(2deg)} }
-  @keyframes k_miloJump { 0%,100%{transform:translateY(0) rotate(-3deg) scale(1)} 40%{transform:translateY(-24px) rotate(5deg) scale(1.15)} }
+  @keyframes k_jump { 0%,100%{transform:translateY(0) rotate(-3deg) scale(1)} 40%{transform:translateY(-24px) rotate(5deg) scale(1.15)} }
   @keyframes k_confetti { from{transform:translateY(-10px) rotate(0deg);opacity:1} to{transform:translateY(140px) rotate(540deg);opacity:0} }
   @keyframes k_countBadge { 0%{transform:scale(0) rotate(-20deg);opacity:0} 60%{transform:scale(1.4) rotate(5deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
   @keyframes k_sectionIn { 0%{transform:scale(0.4) rotate(-8deg);opacity:0} 60%{transform:scale(1.1) rotate(3deg);opacity:1} 100%{transform:scale(1) rotate(0deg);opacity:1} }
@@ -104,32 +103,30 @@ export function AdvancePopup({onRetry,onNext,cheer}:{onRetry:()=>void,onNext:()=
   )
 }
 
-/** Bottom-of-screen hint shown while Milo is still talking (before the popup). */
+/** Bottom-of-screen hint shown while the voice is still talking (before the popup). */
 export function ListeningHint({show}:{show:boolean}) {
   return (
     <div style={{height:54,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      {show && <span style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:15,color:'var(--ink-muted)'}}>🎧 Listen to Milo…</span>}
+      {show && <span style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:15,color:'var(--ink-muted)'}}>🎧 Listen…</span>}
     </div>
   )
 }
 
-// ─── A lesson step: a render fn + the bubble/mood shown alongside it ──
+// ─── A lesson step: a render fn + the bubble shown alongside it ──
 export type LessonStep = {
   bubble: string
-  mood?: 'happy' | 'thinking' | 'celebrate'
   /** Call `onDone` when the step's animation/interaction is finished to unlock Next. */
   render: (onDone: () => void) => React.ReactNode
 }
 
-// ─── Shell: back + progress dots + Milo bubble + Next ────────
-function Shell({step,total,miloMood,bubble,children,nextReady,onBack,onSkip,onChart}:{
-  step:number,total:number,miloMood:'happy'|'thinking'|'celebrate',bubble:string,
+// ─── Shell: back + progress dots + speech bubble + Next ────────
+function Shell({step,total,bubble,children,nextReady,onBack,onSkip,onChart}:{
+  step:number,total:number,bubble:string,
   children:React.ReactNode,nextReady:boolean,onBack:()=>void,onSkip:()=>void,
   onChart?:()=>void,
 }) {
-  const src = miloMood==='thinking' ? '/assets/characters/milo-thinking.png' : '/assets/characters/milo-happy.png'
   return (
-    <div className="milo-lesson" style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',
+    <div style={{minHeight:'100dvh',display:'flex',flexDirection:'column',alignItems:'center',
       background:'var(--bg-page)',padding:'10px 14px 24px',gap:10}}>
       <style>{CSS}</style>
       <div style={{display:'flex',alignItems:'center',gap:10,width:'100%',maxWidth:520,paddingTop:6}}>
@@ -152,12 +149,8 @@ function Shell({step,total,miloMood,bubble,children,nextReady,onBack,onSkip,onCh
           color:'#fff',fontFamily:'var(--font-display)',fontWeight:800,fontSize:13,cursor:'pointer',boxShadow:'0 3px 0 var(--garden-green-deep)'}}>Skip ▶</button>
       </div>
 
-      <div style={{display:'flex',alignItems:'flex-end',gap:10,width:'100%',maxWidth:520}}>
-        <img src={src} alt="Milo" loading="lazy" decoding="async" style={{width:66,height:66,objectFit:'contain',flexShrink:0,
-          filter:'drop-shadow(0 4px 8px rgba(61,37,22,.2))',
-          animation:miloMood==='celebrate'?'k_miloJump 0.7s ease-in-out infinite':'k_miloIdle 3s ease-in-out infinite'}}
-          onError={e=>{(e.target as HTMLImageElement).style.display='none'}}/>
-        <div style={{background:'#fff',border:'3px solid var(--outline)',borderRadius:'18px 18px 18px 4px',padding:'10px 14px',flex:1,
+      <div style={{width:'100%',maxWidth:520}}>
+        <div style={{background:'#fff',border:'3px solid var(--outline)',borderRadius:18,padding:'10px 14px',
           fontFamily:'var(--font-display)',fontWeight:700,fontSize:15,color:'var(--ink)',lineHeight:1.4,boxShadow:'0 4px 0 rgba(61,37,22,.07)'}}>{bubble}</div>
       </div>
 
@@ -168,7 +161,7 @@ function Shell({step,total,miloMood,bubble,children,nextReady,onBack,onSkip,onCh
       </div>
 
       {/* Advancing is handled by the AdvancePopup that appears when the slide
-          finishes; while Milo is still talking we just show a gentle hint. */}
+          finishes; while the voice is still talking we just show a gentle hint. */}
       <ListeningHint show={!nextReady}/>
     </div>
   )
@@ -196,7 +189,7 @@ export function LessonScaffold({childName,onLessonComplete,steps,finalSpeech,cha
     if(step>=steps.length-1){
       speak(finalSpeech)
       // Leaving the lesson unmounts the speaker, so a flat 3200ms cut a longer closing line off.
-      // `afterSpeech` waits for Milo, under its own ceiling.
+      // `afterSpeech` waits for the voice, under its own ceiling.
       afterSpeech(onLessonComplete, 9000)
       return
     }
@@ -209,7 +202,7 @@ export function LessonScaffold({childName,onLessonComplete,steps,finalSpeech,cha
 
   return (
     <>
-      <Shell step={step} total={steps.length} miloMood={cur.mood??'happy'} bubble={cur.bubble}
+      <Shell step={step} total={steps.length} bubble={cur.bubble}
         nextReady={nextReady} onBack={()=>setConfirmBack(true)}
         onSkip={()=>{stopSpeech();onLessonComplete()}}
         onChart={chart ? ()=>setShowChart(true) : undefined}>

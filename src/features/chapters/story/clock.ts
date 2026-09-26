@@ -13,7 +13,7 @@
  *
  * ⚠️ AND THE SECOND HARD BIT IS "TO": at quarter to eight the words say EIGHT and the hour hand is
  * still sitting on SEVEN. `wordsFor` and `setFor` disagree about the hour on purpose — `setFor` is
- * what the child must put on the face, `wordsFor` is what Milo says. The lesson teaches this
+ * what the child must put on the face, `wordsFor` is what the voice says. The lesson teaches this
  * (beat 4) and the gate pins the two together.
  */
 import { SHEETS } from './canvas/sheets'
@@ -33,7 +33,7 @@ const MIN_WORDS: Record<number, string> = {
 export const spokenHourFor = (h: number, m: number) => (m <= 30 ? h : (h % 12) + 1)
 
 /**
- * The ONE renderer for a time in words — so a read round's built answer and Milo's spoken ask can
+ * The ONE renderer for a time in words — so a read round's built answer and the spoken ask can
  * never be two implementations that disagree about a word. `wordsFor` is this function with the
  * spoken hour already worked out; a read round supplies the hour the CHILD chose instead, which is
  * exactly how a wrong "quarter to 7" gets caught.
@@ -46,7 +46,7 @@ export function phraseFor(m: number, spokenHour: number): string {
 }
 
 /**
- * What Milo SAYS, and what is written after a commit. Never shown while the child is setting the
+ * What the voice SAYS, and what is written after a commit. Never shown while the child is setting the
  * hands — a readout that confirms the answer before commit is the teen month-dial fault.
  */
 export const wordsFor = (h: number, m: number) => phraseFor(m, spokenHourFor(h, m))
@@ -160,7 +160,7 @@ export function pickMinute(d: 1 | 2 | 3, asked: readonly Reading[] = [], rnd = M
   return vals[Math.floor(rnd() * vals.length)]
 }
 
-// ─── Milo's day ───────────────────────────────────────────────────────────────────────
+// ─── the day ─────────────────────────────────────────────────────────────────────────────
 /**
  * Ten scenarios, morning to night. The SCENARIO fixes the hour and the TIER picks the minutes, so
  * the story and the difficulty are independent — a park at three o'clock on L1 and at twenty-five
@@ -174,7 +174,7 @@ export function pickMinute(d: 1 | 2 | 3, asked: readonly Reading[] = [], rnd = M
 export type Light = 'dawn' | 'day' | 'evening' | 'night'
 export interface Slot {
   hour: number
-  what: string          // what Milo has to do — the reason to read the clock
+  what: string          // what has to be done — the reason to read the clock
   scene: string         // backdrop file
   light: Light
   emoji: string
@@ -228,7 +228,7 @@ export function skyFor(slot: number): { body: 'sun' | 'moon'; leftPct: number; t
 export const daySlot = (round: number) => DAY[Math.min(round, DAY.length - 1)]
 
 /**
- * What Milo asks — ONE renderer, because SkillBeat speaks it and the bubble writes it, and those two
+ * What the bubble asks — ONE renderer, because SkillBeat speaks it and the bubble writes it, and those two
  * drifting apart is how a chapter ends up narrating one thing while the screen says another.
  *
  * A set round names the time and asks for the hands; a read round names only the errand, so the clock
@@ -237,8 +237,8 @@ export const daySlot = (round: number) => DAY[Math.min(round, DAY.length - 1)]
 export function askTextFor(r: { slot: number; h: number; m: number; ask: Ask }): string {
   const what = DAY[Math.min(r.slot, DAY.length - 1)].what
   return r.ask === 'set'
-    ? `Milo has to ${what} at ${wordsFor(r.h, r.m)}. Move the hands!`
-    : `Milo is waiting to ${what}. What time is it now?`
+    ? `Time to ${what} at ${wordsFor(r.h, r.m)}. Move the hands!`
+    : `It is time to ${what}. What time is it now?`
 }
 
 /**
@@ -264,15 +264,15 @@ export function hintFor(r: { ask: Ask; m: number }, got: { h: number; m: number 
 }
 
 // ─── layout ───────────────────────────────────────────────────────────────────────────
-/** Milo's walking sprite. He is the only thing in this chapter that travels. */
-export const MILO = '/assets/characters/milo_side.png'
+/** The duck whose day it is — the walking sprite, and the only thing in this chapter that travels. */
+export const WALKER = '/assets/objects/duck_side.png'
 /**
  * DERIVED from the registered sheet rather than typed here. A hand-copied aspect is a second source
  * of truth that goes wrong silently the day the strip is re-cut — the sprite just draws stretched,
  * which nothing checks. The fallback only ever fires if the sheet is missing, and the gate asserts
  * it is not.
  */
-export const MILO_ASPECT = SHEETS[MILO]?.cellAspect ?? 0.586
+export const WALKER_ASPECT = SHEETS[WALKER]?.cellAspect ?? 0.758
 /**
  * The top strip moved to [chrome.ts](./chrome.ts) when SliceShop became a second consumer — a
  * chapter must not carry its own copy of how tall the chrome is. Re-exported here so every existing
@@ -286,40 +286,40 @@ import { chromeTop } from './chrome'
  * layout fault in this repo has been a hand-tuned percentage that happened to hold at one size.
  * The gate drives THIS function, so it cannot check a second copy of the numbers.
  *
- * ⚠️ THE CONTROL BAR IS MEASURED OFF MILO, NOT GUESSED. He stands bottom-left and the bar starts to
- * the right of him; two independent percentages of the width is exactly how StoryTime once put its
+ * ⚠️ THE CONTROL BAR IS MEASURED OFF THE WALKER, NOT GUESSED. It stands bottom-left and the bar
+ * starts to the right of it; two independent percentages of the width is exactly how StoryTime once put its
  * answer box 29px inside its own button row.
  *
  * ⚠️ AND THE CLOCK YIELDS TO THE BAR, NOT THE OTHER WAY ROUND. The bar holds the tap targets, so it
  * keeps its height and the world takes what is left.
  *
- * ⚠️ THE BUBBLE IS A BAND, NOT A FLOATING PANEL. Anchored freely at Milo's mouth it ran straight over
+ * ⚠️ THE BUBBLE IS A BAND, NOT A FLOATING PANEL. Anchored freely at the walker's mouth it ran straight over
  * the clock on a 640-wide frame — the two things a child has to read at once, on top of each other.
  * Stacked (chrome · bubble · clock · bar) an overlap is not expressible, and the tail keeps the words
- * visibly HIS, which is the whole reason the question moved to his mouth in the first place.
+ * visibly the walker's, which is the whole reason the question moved to its mouth in the first place.
  */
 export function layoutFor(vw: number, vh: number) {
   const short = vh < 470
   const top = chromeTop(short)
 
-  const miloH = Math.round(Math.min(short ? vh * 0.30 : vh * 0.26, 200))
-  const miloW = Math.round(miloH * MILO_ASPECT)
-  const miloLeft = Math.round(vw * 0.05)
-  const miloRight = miloLeft + miloW
+  const walkerH = Math.round(Math.min(short ? vh * 0.30 : vh * 0.26, 200))
+  const walkerW = Math.round(walkerH * WALKER_ASPECT)
+  const walkerLeft = Math.round(vw * 0.05)
+  const walkerRight = walkerLeft + walkerW
 
   const barH = short ? 60 : 78            // two dials + the commit button, at a real tap size
   const barBottom = short ? 6 : 14
-  const barLeft = miloRight + (short ? 8 : 18)
+  const barLeft = walkerRight + (short ? 8 : 18)
   const barW = Math.max(232, vw - barLeft - (short ? 10 : 22))
 
   const bubbleTop = top + (short ? 2 : 6)
   const bubbleH = short ? 46 : 60
-  const bubbleLeft = miloLeft
-  // On a roomy frame the full width reads as a BANNER pinned to the top rather than as something Milo
-  // said; capped, it stays a speech bubble. A short frame needs every pixel, so it is not capped there.
+  const bubbleLeft = walkerLeft
+  // On a roomy frame the full width reads as a BANNER pinned to the top rather than as something the
+  // walker said; capped, it stays a speech bubble. A short frame needs every pixel, so it is not capped there.
   const bubbleW = Math.max(200, Math.min(vw - bubbleLeft - (short ? 12 : 26), short ? Infinity : 840))
-  /** Where the tail points — Milo's mouth, as a share of the bubble's own width. */
-  const tailPct = Math.min(40, Math.round((miloW * 0.55 / bubbleW) * 100))
+  /** Where the tail points — the walker's mouth, as a share of the bubble's own width. */
+  const tailPct = Math.min(40, Math.round((walkerW * 0.55 / bubbleW) * 100))
 
   const clockTop = bubbleTop + bubbleH + (short ? 4 : 10)
   const clockBand = vh - clockTop - barH - barBottom - (short ? 6 : 16)
@@ -327,11 +327,11 @@ export function layoutFor(vw: number, vh: number) {
   const clockPx = Math.max(120, Math.round(Math.min(clockBand, vw * 0.40, 340)))
 
   return {
-    short, top, miloH, miloW, miloLeft, miloRight,
+    short, top, walkerH, walkerW, walkerLeft, walkerRight,
     barH, barBottom, barLeft, barW,
     bubbleTop, bubbleH, bubbleLeft, bubbleW, tailPct,
     clockTop, clockBand, clockPx,
-    /** Where the clock's centre sits — in the room left of the bar and right of Milo. */
+    /** Where the clock's centre sits — in the room left of the bar and right of the walker. */
     clockCentrePct: Math.round(((barLeft + barW / 2) / vw) * 100),
   }
 }

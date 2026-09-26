@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
 import {
-  ORDERS, DENS, MILO, MILO_ASPECT,
+  ORDERS, DENS, FRIENDS,
   askFor, onFor, densFor, pickDen, groupNFor, piecesFor, perShare, isSolved,
   makeFrRound, orderOf, friendsShown, FRIEND_NAMES, askTextFor, revealFor, missFor, denWord, denPlural, numWord,
   layoutFor, wholeSize, chromeTop,
@@ -195,7 +195,7 @@ describe('nothing leaks the answer', () => {
     }
   })
 
-  it('every line Milo says opens as a sentence', () => {
+  it('every line the shop says opens as a sentence', () => {
     // Both the ask and the reveal open with a number WORD, and `numWord` is lower case for
     // mid-sentence use — caught on screen reading "four friends want some orange".
     for (const d of TIERS) for (const round of ROUNDS) {
@@ -296,7 +296,7 @@ describe('the day at the shop', () => {
   /**
    * ⚠️ A BACKDROP MAY NOT BE BRIGHTER THAN WHAT STANDS ON IT.
    *
-   * Milo and the six friends measure value 0.70–0.92; every backdrop the band ships measures
+   * The six friends measure value 0.70–0.92; every backdrop the band ships measures
    * 0.70–0.86. `grocery_sweets.jpeg` came in at **0.892**, and **0.927** across the middle band
    * where the board and the friends actually sit — so the characters read as cut-outs on a blank
    * page. That is what the founder saw as "blend nahi ho raha", and it is measurable, unlike the
@@ -385,45 +385,43 @@ describe('layout', () => {
   /**
    * ⚠️ THE CAST GROWS WITH THE FRAME — no flat pixel cap.
    *
-   * The first cut wrote `min(vh * 0.26, 200)`, so above 770px tall Milo stopped growing and every
-   * friend stopped with him at 0.62 of him: a 1600×950 window drew a 200px shopkeeper and a 124px
-   * rabbit in a shop sized for the window, and the founder read it exactly as it was — "characters
+   * The first cut wrote `min(vh * 0.26, 200)`, so above 770px tall the cast stopped growing: a
+   * 1600×950 window drew a 124px rabbit in a shop sized for the window, and the founder read it exactly as it was — "characters
    * chhote chhote hai". A share is not enough on its own either; the number that must hold is the
    * one on SCREEN, so this asserts the rendered height, at the sizes a laptop actually reports.
    */
-  it('Milo and his friends scale with the frame instead of hitting a pixel cap', () => {
+  it('the friends scale with the frame instead of hitting a pixel cap', () => {
     for (const [vw, vh] of SIZES) {
       const l = layoutFor(vw, vh)
-      // he clears his own bubble, which is the only thing above him
-      expect(l.miloH).toBeLessThanOrEqual(vh - (l.bubbleTop + l.bubbleH))
-      // and he is a real share of the height, not a constant — a roomy frame draws a big Milo
-      expect(l.miloH / vh).toBeGreaterThan(l.short ? 0.24 : 0.34)
+      // they clear the bubble, which is the only thing above them
+      expect(l.friendH).toBeLessThanOrEqual(vh - (l.bubbleTop + l.bubbleH))
+      // and they are a real share of the height, not a constant — a roomy frame draws big friends
+      expect(l.friendH / vh).toBeGreaterThan(l.short ? 0.15 : 0.21)
       expect(l.friendH).toBeGreaterThan(l.short ? 30 : 100)
     }
-    // the fault itself: doubling the height must roughly double him, which a cap forbids
+    // the fault itself: doubling the height must roughly double them, which a cap forbids
     const small = layoutFor(1280, 500)
     const big = layoutFor(1280, 1000)
-    expect(big.miloH).toBeGreaterThan(small.miloH * 1.8)
     expect(big.friendH).toBeGreaterThan(small.friendH * 1.8)
   })
 
-  /** ⚠️ MEASURED OFF MILO, NOT GUESSED. Two independent percentages of the width is how StoryTime
-   *  once put its answer box 29px inside its own button row. */
-  it('the bar starts to the right of Milo and stays on screen', () => {
+  /** ⚠️ MEASURED OFF ONE SHARED MARGIN, NOT GUESSED. Two independent percentages of the width is how
+   *  StoryTime once put its answer box 29px inside its own button row. */
+  it('the bar starts at the shared left margin and stays on screen', () => {
     for (const [vw, vh] of SIZES) {
       const l = layoutFor(vw, vh)
-      expect(l.barLeft).toBeGreaterThanOrEqual(l.miloRight)
+      expect(l.sideL).toBeGreaterThan(0)
+      expect(l.barLeft).toBeGreaterThanOrEqual(l.sideL)
       expect(l.barLeft + l.barW).toBeLessThanOrEqual(vw)
       expect(l.barW).toBeGreaterThan(0)
     }
   })
 
-  it('the bubble fits its frame and its tail points at Milo', () => {
+  it('the bubble fits its frame', () => {
     for (const [vw, vh] of SIZES) {
       const l = layoutFor(vw, vh)
+      expect(l.bubbleLeft).toBeGreaterThanOrEqual(l.sideL)
       expect(l.bubbleLeft + l.bubbleW).toBeLessThanOrEqual(vw)
-      expect(l.tailPct).toBeGreaterThan(0)
-      expect(l.tailPct).toBeLessThanOrEqual(40)
     }
   })
 
@@ -433,7 +431,7 @@ describe('layout', () => {
     for (const [vw, vh] of SIZES) {
       const l = layoutFor(vw, vh)
       expect(l.boardCentre + l.boardRoom / 2).toBeLessThanOrEqual(l.friendsLeft)
-      expect(l.boardCentre - l.boardRoom / 2).toBeGreaterThanOrEqual(l.miloRight)
+      expect(l.boardCentre - l.boardRoom / 2).toBeGreaterThanOrEqual(l.sideL)
       expect(l.friendsLeft + l.friendsW).toBeLessThanOrEqual(vw)
       // and each friend gets a real slot, not a sliver, even at the widest denominator
       expect(l.friendsW / 4).toBeGreaterThan(40)
@@ -455,10 +453,10 @@ describe('layout', () => {
     }
   })
 
-  /** He is the only thing in the chapter that travels, so the aliveness check rests entirely on him. */
-  it('Milo has a registered drawn cycle, and his aspect is derived from it', () => {
-    expect(SHEETS[MILO]).toBeTruthy()
-    expect(MILO_ASPECT).toBe(SHEETS[MILO].cellAspect)
+  /** The friends are the only things in the chapter that travel, so the aliveness check rests on them. */
+  it('every friend has a registered drawn cycle', () => {
+    expect(FRIENDS.length).toBeGreaterThan(0)
+    for (const f of FRIENDS) expect(SHEETS[f.src], f.src).toBeTruthy()
   })
 })
 
@@ -478,14 +476,12 @@ describe('the source keeps the rules it claims', () => {
   /**
    * ⚠️ A CONTACT SHADOW IS THE CUE THAT PUTS SOMEBODY IN THE PICTURE RATHER THAN ON IT, and this
    * chapter shipped its first cut without one under anybody — which is precisely what the founder
-   * saw ("characters aur background blend nahi ho rahe"). Two of them: Milo and each friend. Both
-   * must sit INSIDE the travelling element or the shadow outruns the feet, so the match is anchored
+   * saw ("characters aur background blend nahi ho rahe"). One, under each friend — the only figures
+   * left standing in the shop since the mascot was removed. It must sit INSIDE the travelling element or the shadow outruns the feet, so the match is anchored
    * on the render, not on the import.
    */
   it('everybody standing in the shop casts a contact shadow', () => {
-    expect(src.match(/<Shadow\s/g) ?? []).toHaveLength(2)
-    // and Milo stands off the frame edge, or his own shadow is drawn under the viewport and clipped
-    expect(src).toMatch(/bottom:\s*miloFloor\(l\.miloH\)/)
+    expect(src.match(/<Shadow\s/g) ?? []).toHaveLength(1)
   })
 
   it('the chapter owns its own miss feedback', () => {
@@ -499,9 +495,15 @@ describe('the source keeps the rules it claims', () => {
    * it pointed the very first instruction a six-year-old reads at the wrong place.
    */
   it('the intro only names treats this chapter actually sells', () => {
-    const intro = src.slice(src.indexOf("Milo&apos;s shop is open"), src.indexOf("First, let us learn"))
+    const from = src.indexOf('The shop is open'), to = src.indexOf('First, let us learn')
+    // ⚠️ POSITIVE CONTROL: a missing anchor makes `slice` return '' and every loop below vacuous.
+    expect(from).toBeGreaterThan(-1)
+    expect(to).toBeGreaterThan(from)
+    const intro = src.slice(from, to)
     const sold = new Set(ORDERS.map(o => o.treat))
-    for (const named of intro.match(/a ([a-z]+(?: [a-z]+)?)(?=[,.])/g) ?? []) {
+    const names = intro.match(/a ([a-z]+(?: [a-z]+)?)(?=[,.])/g) ?? []
+    expect(names.length).toBeGreaterThan(0)
+    for (const named of names) {
       expect({ named, sold: sold.has(named.slice(2)) }).toMatchObject({ sold: true })
     }
   })
@@ -589,7 +591,7 @@ describe('the source keeps the rules it claims', () => {
     expect(src).not.toMatch(/import\s*\{[^}]*\bspeakSteps\b[^}]*\}\s*from/)
     // ⚠️ THE PROPERTY IS "THE VISUALS HAVE THEIR OWN CLOCK", NOT "THERE IS A setTimeout". The loop
     // is `speakPaced` since 2026-09-04, which keeps `dwellFor` as the FLOOR for every beat and only
-    // ever ADDS wait while Milo is still talking — so a device that stops delivering speech events
+    // ever ADDS wait while the voice is still talking — so a device that stops delivering speech events
     // still cannot freeze the teaching, and a slow clip is no longer cut off by the next line.
     expect(src).toMatch(/speakPaced\(/)
     expect(src).toMatch(/minMs:\s*dwellFor/)

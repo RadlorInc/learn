@@ -84,7 +84,7 @@ export function GotIt({ onSkip, style }: { onSkip: () => void; style?: React.CSS
 // ─── THE PLAN ───────────────────────────────────────────────────────────────────────────
 /**
  * The 12–14 band's read-along opener: the chapter states its problem and its rule on one short board
- * before anything is worked, and Milo reads it while each word lights up.
+ * before anything is worked, and the voice reads it while each word lights up.
  *
  * ⚠️ SELF-PACED, AND DELIBERATELY NOT `speakWithHighlight`. That helper resolves a pre-rendered clip
  * first and paces the highlight off the clip's real duration — but the 3–11 band has **zero** recorded
@@ -121,8 +121,8 @@ export function ThePlan({ problem, points, onDone, onSkip }: {
         i++
         if (i < words.length) run()
         // ⚠️ The highlight walks at ~42ms a character and the plan is spoken as ONE utterance, so
-        // the words run out well before Milo does — and whatever comes next (the walkthrough's own
-        // narration) then cut the plan off mid-sentence. Wait for him, under a ceiling.
+        // the words run out well before the voice does — and whatever comes next (the walkthrough's own
+        // narration) then cut the plan off mid-sentence. Wait for it, under a ceiling.
         else waiting = afterSpeech(() => { waiting = null; if (alive) window.setTimeout(() => alive && doneRef.current(), 1200) }, 12000)
       }, Math.max(190, Math.min(520, 70 + w.length * 42)))
       timers.push(t)

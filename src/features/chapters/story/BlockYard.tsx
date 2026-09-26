@@ -12,7 +12,7 @@
  *    has no step for a carry, while 39–50% of the rounds it generated needed one.
  * ② PASS 1 fixed the question and was a brown slab with things popping into slots — the four things
  *    that make this band's chapters work (something arrives on its own legs · the tap sends someone
- *    somewhere · Milo has a job · the scene changes) were ALL FOUR ABSENT.
+ *    somewhere · the walker has a job · the scene changes) were ALL FOUR ABSENT.
  * ③ PASS 2 replaced the blocks with CREATURES and scored 4/4 on that check, and was still rejected:
  *    **aliveness and blend are two different axes.** Five faults — one drawn height for every
  *    creature, no true contact shadow, a rigid 5×2 grid, 28 things in four clusters, and `cart.png`
@@ -22,15 +22,15 @@
  *
  * ══ THIS PASS — THE BLOCKS ARE BACK, WITH EVERYTHING PASS 3 LEARNED ══════════════════
  * Founder's call: the block version, animated properly. So the mechanic, the honest question, the
- * palette discipline, the contact shadows, the two-cluster layout and Milo's job all stay; the
+ * palette discipline, the contact shadows, the two-cluster layout and the walker's job all stay; the
  * countable things are base-ten blocks again.
  *
  *   A ONE   a wooden unit cube, TRAVELLING in from off-frame — never popping into existence.
  *   A TEN   a ROD: one thing, drawn with ten visible segments so it is honestly ten without being
  *           ten things you re-count.
- *   ADD     cubes are delivered. At ten, tap → they slide together, become ONE rod, and Milo walks
- *           it up to the row. The waiting ones come in behind it.
- *   SUB     an order goes out and cubes travel off. When they run short, tap a rod — Milo fetches it
+ *   ADD     cubes are delivered. At ten, tap → they slide together, become ONE rod, and the walker
+ *           carries it up to the row. The waiting ones come in behind it.
+ *   SUB     an order goes out and cubes travel off. When they run short, tap a rod — the walker fetches it
  *           and it breaks back into ten cubes that spread onto the ground.
  *
  * ⚠️ **TEN CUBES BECOMING ONE ROD IS THE LESSON.** It is a better picture of unitising than the pens
@@ -46,7 +46,7 @@
  * ten, L3 always.
  *
  * ⚠️ **THE HONEST COST OF GOING BACK TO BLOCKS, STATED RATHER THAN HIDDEN: a block has no legs.**
- * "Something arrives on its own legs" is now carried by MILO alone — he is the only living thing in
+ * "Something arrives on its own legs" is now carried by THE WALKER alone — the foreman bear is the only living thing in
  * the yard. The blocks travel, which is correct for an object with no gait (`CARRY_SPEED` exists for
  * exactly this and the engine already handles it), but nothing here walks except him. That was the
  * thing the creatures bought, and it is what this pass trades away.
@@ -88,14 +88,16 @@ export type { Material }
 // modulo, so a setting can never wrap back onto the one the chapter opened with.
 //
 // ⚠️ THE SCENES ARE MEASURED, NOT PICKED BY EYE. Pass 2 opened subtraction on `farm_pond.png`, and
-// the yard spans x 4–97% — so the blocks, Milo and the whole rod row stood on OPEN WATER: measured,
+// the yard spans x 4–97% — so the blocks, the walker and the whole rod row stood on OPEN WATER: measured,
 // only 27–35% of the band the yard occupies is walkable there. Every scene below clears 92% at
 // 0.66 · 0.70 · 0.74 of the height across x 4–97%, which the gate asserts. That leaves NINE honest
 // scenes for thirteen slots, so a scene recurs late in the run — the requirement is that consecutive
 // rounds differ, not that all thirteen are unique.
 interface Slot { scene: string; mat: number }
 const BG = (n: string) => `/assets/backgrounds/${n}`
-const MILO = '/assets/characters/milo_side.png'
+/** The one who walks rods up the yard and fetches them back — the yard's foreman bear, a real walk
+ *  cycle (cellAspect 0.578, near enough the old walker's 0.586 that the yard did not have to move). */
+const WALKER = '/assets/objects/foreman_bear_side.png'
 
 // A DIFFERENT SET OF BLOCKS EVERY ROUND — clay · slate · teal · plum · rose · indigo. Round 10 must
 // not look like round 1, and until now only the backdrop changed. See MATERIALS for why the hue is
@@ -204,14 +206,14 @@ export function loadPlan(op: Op, a: number, b: number) {
 
 // ─── The yard's geometry ──────────────────────────────────────────────────────────────
 /**
- * TWO CLUSTERS AND MILO BETWEEN THEM: the loose cubes (with any waiting behind them) on the left,
+ * TWO CLUSTERS AND THE WALKER BETWEEN THEM: the loose cubes (with any waiting behind them) on the left,
  * the standing rods on the right. Pass 2 had four and read as clutter.
  *
  * ⚠️ **EVERY PIECE OF THE YARD IS `position: fixed`, NOT `absolute`, AND THIS IS LOAD-BEARING.**
  * The layout is shares of the VIEWPORT — the ground line is `top: 74%` of the screen — so an
  * `absolute` element resolves against the nearest positioned ancestor instead, and in the scored
  * rounds that ancestor is `SkillBeat`'s own `position: relative` wrapper, which is content-sized.
- * Measured at 1280×720: the whole yard, Milo, the rod row and the answer pad rendered squashed into
+ * Measured at 1280×720: the whole yard, the walker, the rod row and the answer pad rendered squashed into
  * a strip across the top of the frame. **Pass 2 shipped this and nobody saw it**, because the demo
  * and the guided round render OUTSIDE `SkillBeat` and look perfectly correct — the fault only
  * appears once the first scored round loads. `Critter` is `fixed` for exactly this reason.
@@ -224,7 +226,7 @@ export const GROUND = 0.74          // the yard floor, as a share of the height 
  */
 export const groundOf = (vh: number) => Math.min(GROUND, (vh - PAD_BAND(vh) - 14) / vh)
 
-/** THE LOOSE ONES — a run of cubes on the ground, left of Milo. */
+/** THE LOOSE ONES — a run of cubes on the ground, left of the walker. */
 export const ONES_X0 = 24, ONES_COL = 3.2
 /**
  * ⚠️ A ROW OF IDENTICAL CUBES IS FINE, AND THAT IS NOT A CONTRADICTION OF THE STICKER RULE.
@@ -265,7 +267,7 @@ export const queueOf = (j: number) => {
 
 /** THE ROD ROW — the tens, standing on the same ground line. Nine is the most an answer under 100
  *  can need, and one row holds them because a rod is narrow. */
-export const MILO_X = 60
+export const WALKER_X = 60
 export const RODS_X0 = 68, RODS_COL = 3.3
 export const rodSpot = (i: number) => ({ x: RODS_X0 + i * RODS_COL })
 /** `ROD_SEGMENTS` and the rod-is-exactly-ten-cubes rule now live in [yard.tsx](./yard.tsx). */
@@ -320,7 +322,7 @@ export const yardUnit = (vw: number, vh: number) => unitFor(vw, vh, rodBudget(vh
 // ─── The scene ────────────────────────────────────────────────────────────────────────
 type Step = 'settle' | 'incoming' | 'stuck' | 'bundling' | 'answer'
 /** Where the loose cubes are travelling IN from — the lane, the pile that was waiting, or a rod
- *  Milo has just carried back and broken open. */
+ *  the walker has just carried back and broken open. */
 type From = 'lane' | 'queue' | 'rods'
 interface Yard {
   rods: number             // the tens
@@ -330,7 +332,7 @@ interface Yard {
   leaving: number          // sent out, travelling off-frame
   from: From
   step: Step
-  carry: 0 | 1 | 2         // Milo: idle · walking up the yard · walking back
+  carry: 0 | 1 | 2         // the walker: idle · walking up the yard · walking back
   carried: boolean         // is a rod in his hands
   fusing: boolean          // the ten are sliding together into one
   key: string              // changes when a fresh delivery must travel in
@@ -340,14 +342,14 @@ const initYard = (p: ReturnType<typeof loadPlan>): Yard => ({
   from: 'lane', step: 'settle', carry: 0, carried: false, fusing: false, key: 'a',
 })
 
-function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
-  y: Yard; m: Shades; ch: number; rodW: number; rodH: number; miloH: number; vw: number; vh: number
+function Scene({ y, m, ch, rodW, rodH, walkerH, vw, vh, onRun, onRod, hint }: {
+  y: Yard; m: Shades; ch: number; rodW: number; rodH: number; walkerH: number; vw: number; vh: number
   onRun?: () => void; onRod?: () => void; hint?: boolean
 }) {
   const ground = groundOf(vh)
-  const miloW = Math.round(miloH * aspectOf(MILO))
-  const carryDist = ((RODS_X0 + 1 - MILO_X) / 100) * vw
-  const carryJ = inFlowJourney(MILO, miloH, carryDist)
+  const walkerW = Math.round(walkerH * aspectOf(WALKER))
+  const carryDist = ((RODS_X0 + 1 - WALKER_X) / 100) * vw
+  const carryJ = inFlowJourney(WALKER, walkerH, carryDist)
   // A block has no gait, so `inFlowJourney` falls back to CARRY_SPEED — travel and cycle are
   // separate concerns, and an object simply has no legs to run while it moves.
   const leg = (fromX: number, toX: number) => {
@@ -405,10 +407,10 @@ function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
           resetKey={`${y.key}-x${i}`} z={19 - i} />
       })}
 
-      {/* MILO — he has a real job: he walks a finished rod up the yard, and fetches one back. The
+      {/* THE WALKER — he has a real job: he walks a finished rod up the yard, and fetches one back. The
           rod rides INSIDE his travelling element, because two things that must move as one have to
           BE one element — a sibling is one duration change away from sliding out ahead of his feet. */}
-      <div style={{ position: 'fixed', left: `${MILO_X}%`, top: `${ground * 100}%`,
+      <div style={{ position: 'fixed', left: `${WALKER_X}%`, top: `${ground * 100}%`,
         transform: 'translate(-50%,-100%)', zIndex: 30, pointerEvents: 'none' }}>
         <span style={{ display: 'block', position: 'relative',
           transform: `translateX(${y.carry === 1 ? Math.round(carryDist) : 0}px)`,
@@ -418,10 +420,10 @@ function Scene({ y, m, ch, rodW, rodH, miloH, vw, vh, onRun, onRod, hint }: {
               <Rod w={rodW} h={rodH} m={m} />
             </span>
           )}
-          <span style={{ display: 'block', position: 'relative', width: miloW, height: miloH }}>
-            <Shadow w={Math.round(miloW * 0.66)} h={Math.round(miloH * 0.1)} />
+          <span style={{ display: 'block', position: 'relative', width: walkerW, height: walkerH }}>
+            <Shadow w={Math.round(walkerW * 0.66)} h={Math.round(walkerH * 0.1)} />
             <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-              <SheetCell src={MILO} h={miloH} moving={y.carry !== 0} facesLeft={y.carry !== 1}
+              <SheetCell src={WALKER} h={walkerH} moving={y.carry !== 0} facesLeft={y.carry !== 1}
                 breathe cycleScale={carryJ.cycleScale} />
             </span>
           </span>
@@ -449,7 +451,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
 ({ slot, op, data, mode, onComplete }) => {
   const { a, b, answer } = data
   const { w: vw, h: vh } = useViewport()
-  const { cube, rodW, rodH, miloH } = yardUnit(vw, vh)
+  const { cube, rodW, rodH, walkerH } = yardUnit(vw, vh)
   const plan = useMemo(() => loadPlan(op, a, b), [op, a, b])
   const m = useMemo(() => matOf(slot), [slot])
 
@@ -466,10 +468,10 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
    *  timer while the previous round's verdict and praise may still be running, and `speak` cut them. */
   const sayNext = useCallback((s: string) => { setNote(s); speakAfterCurrent(s) }, [])
 
-  // How long a delivery takes to travel in, and how long Milo takes to walk the yard, so the
+  // How long a delivery takes to travel in, and how long the walker takes to walk the yard, so the
   // question opens when things have actually ARRIVED rather than after a guessed delay.
   const inMs = useMemo(() => inFlowJourney('', cube, ((spotOf(9).x - ENTER_X) / 100) * vw).ms + 9 * 110 + 380, [cube, vw])
-  const carryMs = useMemo(() => inFlowJourney(MILO, miloH, ((RODS_X0 + 1 - MILO_X) / 100) * vw).ms, [miloH, vw])
+  const carryMs = useMemo(() => inFlowJourney(WALKER, walkerH, ((RODS_X0 + 1 - WALKER_X) / 100) * vw).ms, [walkerH, vw])
 
   useEffect(() => {
     setY(initYard(plan))
@@ -489,7 +491,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', ones: s.ones - canTake, leaving: canTake }))
         after(1400, () => {
           setY(s => ({ ...s, leaving: 0 }))
-          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Not enough ones left. Tap a rod — Milo will fetch it and break it open.') }
+          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Not enough ones left. Tap a rod to fetch it and break it open.') }
           else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); sayNext('All sent. How many are left?') }
         })
       }
@@ -497,7 +499,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [a, b, op])
 
-  /** MAKE A TEN — the ten slide together, become one rod, and Milo walks it up to the row. */
+  /** MAKE A TEN — the ten slide together, become one rod, and the walker carries it up to the row. */
   function tradeUp() {
     if (y.step !== 'stuck' || op !== '+' || y.fusing) return
     if (y.ones < 10) { say('Not ten yet — count them.'); return }   // a refusal is feedback, and it teaches
@@ -509,7 +511,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
       say('Ten ones make ONE rod. Now — how many altogether?') })
   }
 
-  /** BREAK A TEN — Milo fetches a rod back and it opens into ten ones on the ground. */
+  /** BREAK A TEN — the walker fetches a rod back and it opens into ten ones on the ground. */
   function tradeDown() {
     if (y.step !== 'stuck' || op !== '-' || y.carry) return
     const p = plan as ReturnType<typeof loadPlan> & { takeCarts: number; short: number }
@@ -538,7 +540,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
   return (
     <>
       <Banner text={note || idle} vh={vh} ok={ok} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
-      <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} hint={y.step === 'stuck'}
+      <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} hint={y.step === 'stuck'}
         onRun={y.step === 'stuck' && op === '+' ? tradeUp : undefined}
         onRod={y.step === 'stuck' && op === '-' ? tradeDown : undefined} />
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
@@ -551,20 +553,20 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
 }
 
 // ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
-/** Milo does one himself, on the SAME yard the round uses — no modal teaching card. The example
+/** The demo does one first, on the SAME yard the round uses — no modal teaching card. The example
  *  ALWAYS regroups: the old demo's four examples all avoided the carry, so the case the chapter
  *  exists for was never shown. Everything spoken is also written; Chrome often has no voice. */
 const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => void }> = ({ slot, op, data, onDone }) => {
   const { a, b, answer } = data
   const { w: vw, h: vh } = useViewport()
-  const { cube, rodW, rodH, miloH } = yardUnit(vw, vh)
+  const { cube, rodW, rodH, walkerH } = yardUnit(vw, vh)
   const plan = useMemo(() => loadPlan(op, a, b), [op, a, b])
   const m = useMemo(() => matOf(slot), [slot])
   const [y, setY] = useState<Yard>(() => initYard(plan))
   const [line, setLine] = useState('')
   const [shown, setShown] = useState(false)
   const doneRef = useLatestRef(onDone)
-  const carryMs = useMemo(() => inFlowJourney(MILO, miloH, ((RODS_X0 + 1 - MILO_X) / 100) * vw).ms, [miloH, vw])
+  const carryMs = useMemo(() => inFlowJourney(WALKER, walkerH, ((RODS_X0 + 1 - WALKER_X) / 100) * vw).ms, [walkerH, vw])
 
   useEffect(() => {
     const set = (p: Partial<Yard>) => setY(s => ({ ...s, ...p }))
@@ -574,10 +576,10 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
     if (op === '+') {
       const p = plan as ReturnType<typeof loadPlan> & { addCarts: number; fits: number; spill: number }
       lines = [
-        `Milo has these blocks in the yard.`,
+        `We have these blocks in the yard.`,
         `More arrive — the rods join the row, the ones go on the ground.`,
         `That is ten ones on the ground, and some still waiting.`,
-        `Ten ones make ONE rod. Milo walks it up to the row.`,
+        `Ten ones make ONE rod. It goes up to the row.`,
         `Now the waiting ones come in. Count the rods, then the ones.`,
       ]
       steps = [
@@ -596,10 +598,10 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
       const p = plan as ReturnType<typeof loadPlan> & { takeCarts: number; takeOnes: number; short: number }
       const canTake = Math.min(plan.start.onPlatform, p.takeOnes)
       lines = [
-        `Milo has these blocks, and an order to send out.`,
-        `The ones go first — and he runs out of them.`,
-        `So he fetches a rod back and breaks it open into ten ones.`,
-        `Now he can finish the ones, and send the rods.`,
+        `We have these blocks, and an order to send out.`,
+        `The ones go first — and we run out of them.`,
+        `So we fetch a rod back and break it open into ten ones.`,
+        `Now we can finish the ones, and send the rods.`,
         `Count the rods, then the ones.`,
       ]
       steps = [
@@ -625,8 +627,8 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
 
   return (
     <>
-      <Banner text={line || 'Watch Milo trade the blocks…'} vh={vh} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
-      <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
+      <Banner text={line || 'Watch how we trade the blocks…'} vh={vh} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
+      <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} />
       {shown && (
         <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
           <div style={{ background: 'var(--paper)', border: '4px solid var(--milo-orange)', borderRadius: 18, padding: '8px 22px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(cube * 1.5), color: 'var(--ink)', animation: 'by_pop .4s ease' }}>
@@ -683,7 +685,7 @@ export default function BlockYard({ op, onFinish, onExit }: {
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.
-  if (needsRotate) return <RotateGate line="Turn your phone sideways to help Milo trade the blocks!" />
+  if (needsRotate) return <RotateGate line="Turn your phone sideways to trade the blocks!" />
 
   const active = phase === 'practice' ? slotIdx : phase === 'guided' ? GUIDED_SLOT : DEMO[Math.min(demoIdx, DEMO.length - 1)].slot
 
@@ -718,8 +720,8 @@ export default function BlockYard({ op, onFinish, onExit }: {
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
           <div style={{ maxWidth: '74%', background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: `clamp(14px, ${Math.round(vh * 0.034)}px, 20px)`, color: 'var(--ink)', textAlign: 'center' }}>
             {op === '+'
-              ? 'Milo works the block yard. TEN ones make ONE rod — when ten are on the ground, he trades them up. Watch him first!'
-              : 'Milo works the block yard. An order goes out — and when the ones run short, he fetches a rod and breaks it open. Watch him first!'}
+              ? 'Welcome to the block yard! TEN ones make ONE rod — when ten are on the ground, we trade them up. Watch first!'
+              : 'Welcome to the block yard! An order goes out — and when the ones run short, we fetch a rod and break it open. Watch first!'}
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>
