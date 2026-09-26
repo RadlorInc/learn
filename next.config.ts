@@ -204,6 +204,11 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
       },
       {
+        // Self-hosted fonts (app/fonts.css). Each file is named by its content hash, so it can never change in place.
+        source: '/fonts/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
         // Same argument, for the pre-rendered ElevenLabs voice clips (16 MB) and the PWA icons.
         source: '/audio/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
