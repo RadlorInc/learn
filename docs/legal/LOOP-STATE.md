@@ -967,8 +967,8 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 | 01:29 | control (added): role, `rolbypassrls`, `count(*) from storage.migrations` | `supabase_read_only_user` · **true** · **73** — the zeros above are real zeros, not a role that cannot see |
 | 03:09 | `audio-bucket-proof.sql` P1–P4 (after `migrate-prod`) | PASS — `lesson-audio` · public **true** · **262144** · `{audio/mpeg}` · storage.objects policies **0** · `20260927100000` recorded **1** · badly named **0** (0 objects: cannot fail yet) |
 | 03:09 | `audio-bucket-proof.sql` P5–P6 + control, before the upload | **0 \| null** (the "before" half, as written) · without immutable 0 (vacuous) · buckets **1** (only `lesson-audio` — the S3 keys reach nothing else) |
-
 | 09:48 | `audio-bucket-proof.sql` P1–P6 + control, re-run at the founder's request | unchanged: PASS P1–P4 · P5 **0 \| null** · P6 0 · buckets **1** · all storage objects **0** · read-only `on` |
+
 ### Backups
 | when (UTC) | run | artifact |
 |---|---|---|
