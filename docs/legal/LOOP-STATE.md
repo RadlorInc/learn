@@ -984,6 +984,7 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 |---|---|---|
 | [#299](https://github.com/RadlorInc/learn/pull/299) merge train: #289 → #292 → #290 → #291 | `f7e20f5ba` | CI 4/4 on latest main; local `npm ci`/tsc/vitest/build/audit 0; **177 files / 4,027 passed / 1 skipped = main's count** (vitest 4.1.11 → 5.0.1); lockfile: every one of 544 entries has a version from main's or one of the four PRs' locks (10 jsdom-30 transitive deps pinned back to #291's resolutions); production READY (GitHub deployment record — see below), `smoke:live` exit 0 |
 | [#300](https://github.com/RadlorInc/learn/pull/300) audio part A | `78dee7be1` | CI 4/4 on latest main (`rls-tests` applied the migration and ran S0–S5, "ALL ASSERTIONS PASSED"); local tsc/vitest (180 / 4,044)/build 0; smoke exit 0; migration approved by the founder, applied 03:08 |
+| [#301](https://github.com/RadlorInc/learn/pull/301) audio part B + the §5 legal wording (founder, 27 Sep: §5.1 variant (a); §5.2–5.4 as proposed; Spanish same, unreviewed; notice-v6 kept) | `b0ac61ca5` | `main` merged in (kept B's stricter `schemaFixtureStorage`); local tsc/vitest (184 / 4,063 = B's count)/build 0; built pages checked (new sentences in, old out); CI 4/4 after a close/reopen (a base change is no `pull_request` event); rollback target handed to the founder first (`78dee7be1`, `adaptivelearn-p3x6u58cj-radlor1.vercel.app`); production READY on `b0ac61ca5` at ~11:35 UTC; `smoke:live` exit 0, 16/16 (SW v240, CSP media-src = the Supabase project, a real clip 200/immutable, 206, made-up name 400); live `/legal/subprocessors` and `/legal/cookies` carry the new wording. **C (#302) may merge from ~11:35 UTC 29 Sep.** |
 
 ### After the upload (founder ran `upload-audio`, revoked the S3 key and both secrets)
 - **Public GET** (curl, from this Mac): `31c72a780c71b280.mp3` → **200**, `audio/mpeg`, `public, max-age=31536000, immutable`,
@@ -998,7 +999,6 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 ### Pushed as Drafts (not merged)
 | PR | head | state |
 |---|---|---|
-| [#301](https://github.com/RadlorInc/learn/pull/301) B — the app plays Josh from the bucket | `26f56b306` | Draft until the founder approves AUDIO-ROUND2 §5; needs `main` merged in (vitest 5 / jsdom 30) and CI on `main` before it can merge |
 | [#302](https://github.com/RadlorInc/learn/pull/302) C — delete the old `/audio` folder | `02d015ebc` | merge ≥ 48 h after B |
 | [#303](https://github.com/RadlorInc/learn/pull/303) #233 rebuilt + the KG–2 prefetch | `4a2838c13` | after C. Prefetch built and proven (the founder's identical-requests test, 23 chapters' lines measured by rendering, 66 planted breaks); full suite 195 / 4,175 |
 
