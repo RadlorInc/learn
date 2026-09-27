@@ -30,7 +30,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, speakPaced, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { ShapeSVG, SHAPES, SHAPE_ORDER, type ShapeName } from '../lessons/ShapesLesson'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -158,6 +158,8 @@ function makeShapeRound(d: 1 | 2 | 3, round: number): ShapeRound {
 }
 const roundForStep = (seq: number, options: ShapeName[]): ShapeRound =>
   ({ seq, options, answerIdx: options.indexOf(partOf(SEQUENCE[seq]).name) })
+/** The guided round: the roof, against a circle and a heart. */
+export const guidedRound = () => roundForStep(GUIDED_STEP, shuffle([partOf(SEQUENCE[GUIDED_STEP]).name, 'circle', 'heart']))
 
 // ─── Backdrop (cross-fades when the build changes) ───────────────────────────────────
 function Background({ buildIdx }: { buildIdx: number }) {
@@ -307,9 +309,33 @@ const sayFor = (d: ShapeRound) => {
   return `The ${p.label} needs a ${SHAPES[p.name].label}. Find the ${SHAPES[p.name].label}!`
 }
 
+const wrongLine = (tapped: ShapeName) => `That's a ${SHAPES[tapped].label}. It doesn't fit. Look at the hole!`
+const nowYouLine = (part: string, shape: string) => `Now you! The ${part} needs a ${shape}. Tap it!`
+
 // ─── Play (guided + scored) ──────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
-const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete: (correct: boolean) => void }> = ({ data, mode, fit, onComplete }) => {
+/**
+ * Every line a shape round can say once it has loaded: each wrong piece's line, the guided round's ask and praise, and —
+ * on the last house part — the walk to the beach, which the orchestrator says while this round is still the open one.
+ * ⚠️ "Great job" is written out here AND at its `speak`: chapterDirections.test.ts pins that call's literal text, so it
+ * cannot go through a helper until that gate asserts the value instead. The guided walk in questionLines35b.test.ts
+ * goes red if the two ever differ.
+ */
+function shapeLines(d: ShapeRound, mode: Mode): string[] {
+  const part = partFor(d), label = SHAPES[part.name].label
+  return [
+    ...d.options.filter((_, i) => i !== d.answerIdx).map(wrongLine),
+    ...(mode === 'guided' ? [nowYouLine(part.label, label), `Great job! The ${label} fits!`] : []),
+    ...(mode === 'practice' && d.seq === FIRST_SCORED + BUILD_CHANGE_ROUND - 1 ? [BUILDS[1].opening] : []),
+  ]
+}
+/** The re-teach, in order. */
+function explainLines(d: ShapeRound): string[] {
+  const part = partFor(d), label = SHAPES[part.name].label
+  return [`Look — the ${part.label} is missing. It needs a ${label}.`, `This one is a ${label}. Watch it fit!`]
+}
+
+export const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete: (correct: boolean) => void }> = ({ data, mode, fit, onComplete }) => {
   const { options, answerIdx } = data
   const part = partFor(data)
   const label = SHAPES[part.name].label
@@ -318,9 +344,10 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
   const [pending, setPending] = useState<number | null>(null)
   const pendingEl = useRef<HTMLElement | null>(null)
+  useQuestion(() => shapeLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
-    if (mode === 'guided') speakAfterCurrent(`Now you! The ${part.label} needs a ${label}. Tap it!`)
+    if (mode === 'guided') speakAfterCurrent(nowYouLine(part.label, label))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -345,7 +372,7 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
     if (i !== answerIdx) {
       erred.current = true
       setWrongIdx(i)
-      speak(`That's a ${SHAPES[options[i]].label}. It doesn't fit. Look at the hole!`)
+      speak(wrongLine(options[i]))
       window.setTimeout(() => setWrongIdx(w => (w === i ? null : w)), 600)
       return
     }
@@ -374,17 +401,12 @@ const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onComplete:
  */
 const ShapesExplain: React.FC<{ data: ShapeRound; fit: Fit; onDone: () => void }> = ({ data, fit, onDone }) => {
   const { options, answerIdx } = data
-  const part = partFor(data)
-  const label = SHAPES[part.name].label
   const [taken, setTaken] = useState<number | null>(null)
   const pile = useRef<HTMLDivElement | null>(null)
   const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const cancel = speakSteps([
-      `Look — the ${part.label} is missing. It needs a ${label}.`,
-      `This one is a ${label}. Watch it fit!`,
-    ], {
+    const cancel = speakSteps(explainLines(data), {
       onStep: i => {
         if (i !== 1) return
         const el = pile.current?.querySelectorAll('button')[answerIdx]
@@ -461,6 +483,8 @@ export function makeShapeBeat(fit: Fit): Beat<ShapeRound> {
     say: sayFor,
     Play: ({ data, onSubmit }) => <ShapesPlay data={data} mode="practice" fit={fit} onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ShapesExplain data={data} fit={fit} onDone={onDone} />,
+    feedbackLines: d => shapeLines(d, 'practice'),
+    reteachLines: explainLines,
   }
 }
 
@@ -543,7 +567,7 @@ export default function ShapeTown({ onFinish, onExit }: {
   // Memoized because they SHUFFLE: rebuilt on every render, the option order — and so `answerIdx` —
   // would change under the surface that is already showing them.
   const demoData = useMemo(() => roundForStep(DEMO_STEP, shuffle([partOf(SEQUENCE[DEMO_STEP]).name, 'circle', 'star'])), [])
-  const guidedData = useMemo(() => roundForStep(GUIDED_STEP, shuffle([partOf(SEQUENCE[GUIDED_STEP]).name, 'circle', 'heart'])), [])
+  const guidedData = useMemo(() => guidedRound(), [])
 
   // Landscape-first, like the rest of the 3–5 set. Sits BELOW every hook — an early return above one
   // makes turning the phone change the hook count, which tore chapter 2 into the error boundary.

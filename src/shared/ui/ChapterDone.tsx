@@ -38,7 +38,7 @@ export default function ChapterDone({ open, take, childName, onPlayAgain, onExit
     if (!open) { spoken.current = false; return }
     if (spoken.current) return
     spoken.current = true
-    speak(take ? `${C.breakTitle(take).replace(' ⭐', '')} ${C.spotSaved}` : childName ? `All done, ${childName}! Nice work.` : 'All done! Nice work.')
+    speak(doneLine(take, childName))
   }, [open, take, childName, speak])
 
   if (!open) return null
@@ -77,3 +77,8 @@ const btn = (background: string, color: string) => ({
   border: background === 'transparent' ? '2px solid var(--ink-mute, #9DB3D1)' : 'none',
   fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 17, cursor: 'pointer',
 } as const)
+
+/** What the card says aloud. Exported so a question can hold its clip before the child answers (StoryWorld). */
+export function doneLine(take?: number, childName?: string): string {
+  return take ? `${C.breakTitle(take).replace(' ⭐', '')} ${C.spotSaved}` : childName ? `All done, ${childName}! Nice work.` : 'All done! Nice work.'
+}

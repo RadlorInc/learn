@@ -19,7 +19,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords, CSS as KIT_CSS, BigCount, nounFor } from '../lessons/_kit'
 import { TensOnes } from '../lessons/Numbers100Lesson'
 import WorldSelect from './WorldSelect'
@@ -157,9 +157,37 @@ function NumberedThing({ cfg, n, size, state, short, onClick, pending }: {
   )
 }
 
+// ─── What a round says ──────────────────────────────────────────────────────────────
+const askLine = (target: number) => `Find number ${numberToWords(target)}. Tap the one that says ${target}.`
+const wrongLine = (tapped: number, target: number) => `That one is ${numberToWords(tapped)}. Listen again — find ${numberToWords(target)}!`
+const yesLine = (target: number) => `Yes! That is ${numberToWords(target)}!`
+/** Every line a round can say once it has loaded: each wrong choice's line, and the guided round's ask and "Yes!". */
+function numLines(d: NumRound, mode: Mode): string[] {
+  return [...d.choices.filter(n => n !== d.target).map(n => wrongLine(n, d.target)), ...(mode === 'guided' ? [askLine(d.target), yesLine(d.target)] : [])]
+}
+/** "3 tens" / "4 ones" — said at the end of the re-teach and written under it. */
+const partsOf = (target: number) => {
+  const t = Math.floor(target / 10), o = target % 10
+  return [t > 0 ? `${t} ${nounFor(t, 'tens')}` : '', o > 0 ? `${o} ${nounFor(o, 'ones')}` : '']
+}
+/**
+ * The re-teach, in order: an opener, the tens counted up, the ones counted on, the whole. `NumberExplain` pairs
+ * lines[i] with its i-th reveal off the same two counts. (Built with push, as it always was: the static parser reads an
+ * array literal, and the opener would then have to be listed under all 23 chapters' clips — a corpus rebuild.)
+ */
+function explainLines(target: number): string[] {
+  const t = Math.floor(target / 10), o = target % 10
+  const lines: string[] = []
+  lines.push('Watch me build it!')
+  for (let k = 1; k <= t; k++) lines.push(numberToWords(k * 10))
+  for (let j = 1; j <= o; j++) lines.push(numberToWords(t * 10 + j))
+  lines.push(`${partsOf(target).filter(Boolean).join(' and ')} make ${numberToWords(target)}. That is ${numberToWords(target)}!`)
+  return lines
+}
+
 // ─── Interactive play surface (guided / practice) ───────────────────────────────────
 type Mode = 'guided' | 'practice'
-const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+export const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { scene, target, choices } = data
   const cfg = SCENE[scene]
   const [picked, setPicked] = useState<number | null>(null)
@@ -178,9 +206,10 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
   // and clear of the bottom edge.
   const rowTop = short ? '50%' : (world.groundY ?? '57%')
   const gap = short ? 'clamp(6px,2vw,20px)' : 'clamp(8px,3vw,44px)'
+  useQuestion(() => numLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
-    if (mode === 'guided') speakAfterCurrent(`Find number ${numberToWords(target)}. Tap the one that says ${target}.`)
+    if (mode === 'guided') speakAfterCurrent(askLine(target))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -202,11 +231,11 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
     if (done.current || picked !== null) return
     if (n === target) {
       setPicked(n); done.current = true
-      if (mode === 'guided') speak(`Yes! That is ${numberToWords(target)}!`)
+      if (mode === 'guided') speak(yesLine(target))
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1200)
     } else {
       erred.current = true; setWrongPick(n)
-      speak(`That one is ${numberToWords(n)}. Listen again — find ${numberToWords(target)}!`)
+      speak(wrongLine(n, target))
       window.setTimeout(() => setWrongPick(null), 1100)
     }
   }
@@ -245,22 +274,21 @@ const NumberExplain: React.FC<{ world: NumWorld; data: NumRound; onDone: () => v
   const [big, setBig] = useState<number | null>(null)   // running count
   const [showNum, setShowNum] = useState(false)
   const doneRef = useLatestRef(onDone)
-  const tensPart = t > 0 ? `${t} ${nounFor(t, 'tens')}` : ''
-  const onesPart = o > 0 ? `${o} ${nounFor(o, 'ones')}` : ''
+  const [tensPart, onesPart] = partsOf(target)
   useEffect(() => {
     // speakSteps drives BOTH the voice AND the matching visual reveal for each line:
     //  • audio working  → each reveal fires on that line's real speech `onstart`, so the
     //    ten-rods / ones pop in exactly as the voice says the number (no drift).
     //  • audio blocked   → a timer fallback paces the same reveals silently (no blank-then-jump).
     // Lines chain one-at-a-time (never cut), which is what the original ReadNumber relied on.
-    const lines: string[] = []
-    const steps: Array<() => void> = []
-    // short opener so the first rod appears almost immediately
-    lines.push('Watch me build it!'); steps.push(() => {})
-    for (let k = 1; k <= t; k++) { const v = k; lines.push(numberToWords(v * 10)); steps.push(() => { setRt(v); setBig(v * 10) }) }
-    for (let j = 1; j <= o; j++) { const v = j; lines.push(numberToWords(t * 10 + v)); steps.push(() => { setRo(v); setBig(t * 10 + v) }) }
-    lines.push(`${[tensPart, onesPart].filter(Boolean).join(' and ')} make ${numberToWords(target)}. That is ${numberToWords(target)}!`)
-    steps.push(() => { setShowNum(true); setBig(target) })
+    const lines = explainLines(target)
+    // lines[i] ↔ steps[i]: the short opener (so the first rod appears almost at once), t rods, o ones, the whole.
+    const steps = lines.map((_, i) => () => {
+      if (i === 0) return
+      if (i <= t) { setRt(i); setBig(i * 10) }
+      else if (i <= t + o) { setRo(i - t); setBig(t * 10 + i - t) }
+      else { setShowNum(true); setBig(target) }
+    })
     const cancel = speakSteps(lines, {
       onStep: (i) => { steps[i]?.() },
       onDone: () => { window.setTimeout(() => doneRef.current(), 1000) },
@@ -294,15 +322,20 @@ function makeRound(world: NumWorld, d: 1 | 2 | 3, round: number): NumRound {
   return { scene, target, choices: buildChoices(target, d) }
 }
 
+/** The unscored round after the demo — fixed, so the first question a child answers is always the same one. */
+export const guidedRound = (world: NumWorld): NumRound => ({ scene: world.scenes[2] ?? world.scenes[0], target: 16, choices: [12, 16, 20] })
+
 export function makeNumBeat(world: NumWorld): Beat<NumRound> {
   return {
     skillId: 'numbersTo100', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.target}`,   // dedupe on the target number (not the rotating scene)
     prompt: d => `Find ${numberToWords(d.target)}!`,
-    say: d => `Find number ${numberToWords(d.target)}. Tap the one that says ${d.target}.`,
+    say: d => askLine(d.target),
     Play: ({ data, onSubmit }) => <NumberPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <NumberExplain world={world} data={data} onDone={onDone} />,
+    feedbackLines: d => numLines(d, 'practice'),
+    reteachLines: d => explainLines(d.target),
   }
 }
 
@@ -340,7 +373,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
     { scene: world.scenes[0], target: 13, choices: buildChoices(13, 1) },
     { scene: world.scenes[1] ?? world.scenes[0], target: 24, choices: buildChoices(24, 2) },
   ]
-  const GUIDED_ROUND: NumRound = { scene: world.scenes[2] ?? world.scenes[0], target: 16, choices: [12, 16, 20] }
+  const GUIDED_ROUND = guidedRound(world)
   const bgScene: Scene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
   const Banner = (text: string) => (

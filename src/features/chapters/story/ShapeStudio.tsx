@@ -16,7 +16,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from '../lessons/Shapes2D3DLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
@@ -103,8 +103,10 @@ function Shape({ name, size }: { name: string; size: number }) {
 // ─── Play ─────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
 const sayFor = (d: ShRound) => d.mode === 'sides' ? `How many sides does this ${d.target} have?` : `Find the ${d.target}. Tap it!`
+const MISS = 'Not quite — try again!'
+const yesLine = (d: ShRound) => d.mode === 'sides' ? `Yes! ${d.answer} sides!` : `Yes! A ${d.target}!`
 
-const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
   const [pickedName, setPickedName] = useState<string | null>(null)
@@ -116,14 +118,16 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const [pendingName, setPendingName] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
 
+  // Before the ask below is spoken: the guided round opens its own question (a practice one's is opened by SkillBeat).
+  useQuestion(() => [sayFor(data), yesLine(data), MISS], mode === 'guided')
   useEffect(() => { if (mode === 'guided') speakAfterCurrent(sayFor(data)); }, []) // eslint-disable-line
 
   function finishOk() {
     done.current = true; setGlow(true)
-    if (mode === 'guided') speak(data.mode === 'sides' ? `Yes! ${data.answer} sides!` : `Yes! A ${data.target}!`)
+    if (mode === 'guided') speak(yesLine(data))
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1300)
   }
-  function wrong(reset: () => void) { erred.current = true; speak('Not quite — try again!'); window.setTimeout(reset, 900) }
+  function wrong(reset: () => void) { erred.current = true; speak(MISS); window.setTimeout(reset, 900) }
 
   /** A tap only CHOOSES; the grading below is unchanged and simply runs on Ready instead. */
   function gradeNum(n: number) {
@@ -217,6 +221,11 @@ function Prompt(text: string, world: ShWorld, short?: boolean) {
 }
 
 // ─── Demo / re-teach: name a shape + reveal its sides / "solid shape" via ONE speakSteps ─
+const explainLines = (data: ShRound) => [
+  `This is a ${data.target}.`,
+  is3D(data.target) ? `A ${data.target} is a solid shape you can hold.` : `A ${data.target} has ${sidesOf(data.target)} sides.`,
+]
+
 const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void }> = ({ world, data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
@@ -225,10 +234,7 @@ const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void
   const solid = is3D(data.target)
   const s = solid ? null : sidesOf(data.target)
   useEffect(() => {
-    const lines = [
-      `This is a ${data.target}.`,
-      solid ? `A ${data.target} is a solid shape you can hold.` : `A ${data.target} has ${s} sides.`,
-    ]
+    const lines = explainLines(data)
     const cancel = speakSteps(lines, { onStep: (i) => { if (i === 1) setLabel(true) }, onDone: () => { window.setTimeout(() => doneRef.current(), 1200) }, fallbackStepMs: 1500 })
     return cancel
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -260,11 +266,17 @@ export function makeShapeBeat(world: ShWorld): Beat<ShRound> {
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ShapePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ShapeExplain world={world} data={data} onDone={onDone} />,
+    // A practice round's one line of its own (the "Yes" is the guided round's); the re-teach is `explainLines`.
+    feedbackLines: () => [MISS],
+    reteachLines: explainLines,
   }
 }
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
+/** The one guided round: a square among the L1 shapes, on the world's third backdrop. */
+export const guidedFor = (world: ShWorld): ShRound =>
+  ({ bg: 2 % world.bgs.length, mode: 'name', target: 'square', options: buildNameChoices('square', POOL1) })
 export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: {
   world?: string
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
@@ -294,7 +306,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
     { bg: 0, mode: 'name', target: 'triangle', options: [] },
     { bg: 1 % world.bgs.length, mode: 'name', target: 'cube', options: [] },
   ]
-  const GUIDED: ShRound = { bg: 2 % world.bgs.length, mode: 'name', target: 'square', options: buildNameChoices('square', POOL1) }
+  const GUIDED = guidedFor(world)
   const bgIdx = phase === 'practice' ? bg : phase === 'guided' ? GUIDED.bg : DEMO[Math.min(demoIdx, DEMO.length - 1)].bg
 
   const Banner = (text: string) => (

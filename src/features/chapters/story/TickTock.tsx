@@ -36,7 +36,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { Arrive, SheetCell, inFlowJourney, hasSheet, CRITTER_CSS } from './critters'
 import { useViewport } from '@/shared/hooks/useViewport'
 import {
@@ -336,7 +336,22 @@ function Walker({ L: l, leaving, resetKey, vw }: { L: L; leaving: boolean; reset
 // ─── play ─────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
 
-const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: boolean) => void }> =
+/** Is this reading the answer? The ONE grader: `commit` asks it, and so does the list of what a round can say. A read
+ *  round is answered with the hour you SAY, which after half past is the next one. */
+const solved = (r: TimeRound, got: { h: number; m: number }) =>
+  got.m === r.m && got.h === (r.ask === 'set' ? r.h : spokenHourFor(r.h, r.m))
+const yesLine = (r: TimeRound) => `Yes — ${wordsFor(r.h, r.m)}. Time to ${sceneOf(r).what}!`
+/**
+ * Every line a round can say once the child starts turning the dials (founder, 2026-09-27, AUDIO-ROUND2 §1.5): the
+ * "Yes", and `hintFor` of every wrong reading the two dials can make — twelve hours by the minutes this round offers.
+ */
+function playLines(r: TimeRound): string[] {
+  const hints = (r.ask === 'set' ? RING : minsFor(r.d)).flatMap(m => Array.from({ length: 12 }, (_, i) => ({ h: i + 1, m })))
+    .filter(got => !solved(r, got)).map(got => hintFor(r, got))
+  return [yesLine(r), ...new Set(hints)]
+}
+
+export const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: boolean) => void }> =
 ({ data, mode, onComplete }) => {
   /**
    * ⚠️ ONLY THE GUIDED ROUNDS SPEAK FOR THEMSELVES. In practice `SkillBeat` already speaks `beat.say`
@@ -366,9 +381,10 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
 
   const gotM = ask === 'set' ? RING[smIdx] : mins[rmIdx]
   const gotH = ask === 'set' ? sh : rh
-  const wantH = ask === 'set' ? h : spokenHourFor(h, m)
 
   const askText = askTextFor(data)
+  // Before the ask below is spoken: a guided round opens its own question (a practice one's is opened by SkillBeat).
+  useQuestion(() => [askText, ...playLines(data)], mode === 'guided')
 
   useEffect(() => {
     // `speakAfterCurrent`: this mounts straight out of the lesson's last line, which is still
@@ -379,10 +395,10 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
 
   function commit() {
     if (settled.current) return
-    if (gotM === m && gotH === wantH) {
+    if (solved(data, { h: gotH, m: gotM })) {
       settled.current = true
       setDone(true); setHint(null)
-      speak(`Yes — ${wordsFor(h, m)}. Time to ${scene.what}!`)
+      speak(yesLine(data))
       // It leaves on its own legs, and the round ends when it is actually gone.
       const j = inFlowJourney(WALKER, l.walkerH, Math.round(vw - l.walkerLeft + l.walkerW * 0.4))
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), j.ms + 500)
@@ -446,6 +462,19 @@ const TimePlay: React.FC<{ data: TimeRound; mode: Mode; onComplete: (correct: bo
 }
 
 // ─── the re-teach, after three wrong ──────────────────────────────────────────────────
+/** The re-teach, in order — one line per step below. */
+function explainLines(r: TimeRound): string[] {
+  const { h, m } = r
+  const numeral = numeralForMinute(m)
+  return m === 0
+    ? [`Look — the long hand points straight up at the twelve. That means o'clock.`,
+       `And the short hand is on the ${h}.`,
+       `So it is ${wordsFor(h, m)}.`]
+    : [`The long hand is on the ${numeral}. On the outside ring, the ${numeral} means ${m} minutes.`,
+       `The short hand is just past the ${h}.`,
+       `So it is ${wordsFor(h, m)} — time to ${sceneOf(r).what}.`]
+}
+
 const Reteach: React.FC<{ data: TimeRound; onDone: () => void }> = ({ data, onDone }) => {
   const { h, m } = data
   const scene = sceneOf(data)
@@ -457,13 +486,7 @@ const Reteach: React.FC<{ data: TimeRound; onDone: () => void }> = ({ data, onDo
 
   useEffect(() => {
     const numeral = numeralForMinute(m)
-    const lines = m === 0
-      ? [`Look — the long hand points straight up at the twelve. That means o'clock.`,
-         `And the short hand is on the ${h}.`,
-         `So it is ${wordsFor(h, m)}.`]
-      : [`The long hand is on the ${numeral}. On the outside ring, the ${numeral} means ${m} minutes.`,
-         `The short hand is just past the ${h}.`,
-         `So it is ${wordsFor(h, m)} — time to ${scene.what}.`]
+    const lines = explainLines(data)
     const steps: Array<() => void> = m === 0
       ? [() => setView({ h: 12, m: 0, ring: true, dim: 'hour', ringLit: [0] }),
          () => setView({ h, m: 0, ring: true, dim: 'minute', hiNumeral: h }),
@@ -706,6 +729,8 @@ export function makeTimeBeat(): Beat<TimeRound> {
     say: r => askTextFor(r),
     Play: ({ data, onSubmit }) => <TimePlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <Reteach data={data} onDone={onDone} />,
+    feedbackLines: playLines,
+    reteachLines: explainLines,
   }
 }
 
@@ -718,7 +743,7 @@ type Phase = 'intro' | 'lesson' | 'bridge' | 'guided' | 'practice'
 
 /** The two rehearsals: one of each direction, because BOTH are graded and a graded gesture that was
  *  never walked through is a child marked wrong for a mechanic nobody showed them. */
-const GUIDED: TimeRound[] = [
+export const GUIDED: TimeRound[] = [
   { slot: 1, h: DAY[1].hour, m: 0, ask: 'read', d: 1 },
   { slot: 2, h: DAY[2].hour, m: 0, ask: 'set', d: 1 },
 ]

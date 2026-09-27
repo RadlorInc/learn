@@ -35,7 +35,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { lessonSeen, markLessonSeen } from '@/infra/storage/lessonSeen'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { Arrive, SheetCell, inFlowJourney, aspectOf, CRITTER_CSS } from './critters'
 /** ⚠️ A CONTACT SHADOW IS NOT DECORATION — it is the one cue that says a thing is standing IN the
  *  picture rather than lying ON it, and this chapter shipped without one under anybody. The founder
@@ -573,7 +573,18 @@ function Pool({ children }: { children: React.ReactNode }) {
 // ─── play ─────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
 
-const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
+/**
+ * Every line a round can say once the child starts laying (founder, 2026-09-27, AUDIO-ROUND2 §1.5): the reveal, and
+ * the miss for every board the tray can build — each piece it offers, laid 1 to den+2 times (see `lay`'s cap).
+ * Graded with the same `isSolved` the commit uses, so a board that would be marked right is never declared a miss.
+ */
+function playLines(d: FrRound): string[] {
+  const misses = piecesFor(d).flatMap(den => Array.from({ length: den + 2 }, (_, i) => ({ den, laid: i + 1 })))
+    .filter(got => !isSolved(d, got)).map(got => missFor(d, got))
+  return [revealFor(d), ...new Set(misses)]
+}
+
+export const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   /** ⚠️ ONLY THE GUIDED ROUNDS SPEAK FOR THEMSELVES. In practice `SkillBeat` already speaks
    *  `beat.say` on every round load, and both firing means two utterances where the second cancels
    *  the first — whichever order they happen to run in. */
@@ -621,6 +632,8 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
   }
 
   const askText = askTextFor(data)
+  // Before the ask below is spoken: a guided round opens its own question (a practice one's is opened by SkillBeat).
+  useQuestion(() => [askText, ...playLines(data)], mode === 'guided')
   useEffect(() => {
     // `speakAfterCurrent`: this mounts straight out of the lesson's last line, which is still
     // being said. Where nothing is talking it behaves exactly like `speak`.
@@ -687,6 +700,20 @@ const FrPlay: React.FC<{ data: FrRound; mode: Mode; onComplete: (correct: boolea
 }
 
 // ─── the re-teach, after three wrong ──────────────────────────────────────────────────
+/** The re-teach, in order — one line per step below. */
+function explainLines(data: FrRound): string[] {
+  const order = orderOf(data.slot)
+  const thing = data.on === 'group' ? `${numWord(data.n)} ${order.items}` : `the ${order.treat}`
+  return [
+    `Look — ${numWord(data.den)} friends are waiting, and they must ALL get the same.`,
+    `So I share ${thing} out, one piece at a time…`,
+    `…until everybody has one. ${sentenceCase(numWord(data.den))} equal ${data.on === 'group' ? 'piles' : 'pieces'}.`,
+    data.on === 'group'
+      ? `Each friend gets ${numWord(perShare(data))}. One ${denWord(data.den)} of ${numWord(data.n)} is ${numWord(perShare(data))}.`
+      : `Each friend gets one piece out of ${numWord(data.den)} — one ${denWord(data.den)}.`,
+  ]
+}
+
 const Reteach: React.FC<{ data: FrRound; onDone: () => void }> = ({ data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const l = layoutFor(vw, vh)
@@ -697,15 +724,7 @@ const Reteach: React.FC<{ data: FrRound; onDone: () => void }> = ({ data, onDone
   const doneRef = useLatestRef(onDone)
 
   useEffect(() => {
-    const thing = data.on === 'group' ? `${numWord(data.n)} ${order.items}` : `the ${order.treat}`
-    const lines = [
-      `Look — ${numWord(data.den)} friends are waiting, and they must ALL get the same.`,
-      `So I share ${thing} out, one piece at a time…`,
-      `…until everybody has one. ${sentenceCase(numWord(data.den))} equal ${data.on === 'group' ? 'piles' : 'pieces'}.`,
-      data.on === 'group'
-        ? `Each friend gets ${numWord(perShare(data))}. One ${denWord(data.den)} of ${numWord(data.n)} is ${numWord(perShare(data))}.`
-        : `Each friend gets one piece out of ${numWord(data.den)} — one ${denWord(data.den)}.`,
-    ]
+    const lines = explainLines(data)
     const steps = [() => setLaid(0), () => setLaid(1), () => setLaid(data.den), () => setShare(true)]
     // Self-paced for the same reason the lesson is — see the long note in `Lesson`. A re-teach whose
     // visuals hang off speech events freezes on any device that stops delivering them, and a frozen
@@ -958,6 +977,8 @@ export function makeFrBeat(): Beat<FrRound> {
     say: r => askTextFor(r),
     Play: ({ data, onSubmit }) => <FrPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <Reteach data={data} onDone={onDone} />,
+    feedbackLines: playLines,
+    reteachLines: explainLines,
   }
 }
 
@@ -971,7 +992,7 @@ type Phase = 'intro' | 'lesson' | 'bridge' | 'guided' | 'practice'
 
 /** The two rehearsals: one of each direction, because BOTH are graded and a graded gesture that was
  *  never walked through is a child marked wrong for a mechanic nobody showed them. */
-const GUIDED: FrRound[] = [
+export const GUIDED: FrRound[] = [
   { slot: 1, den: 2, on: 'shape', n: 0, ask: 'fit', d: 1 },
   { slot: 2, den: 4, on: 'shape', n: 0, ask: 'take', d: 1 },
 ]

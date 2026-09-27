@@ -31,7 +31,7 @@
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { matchTarget } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -128,12 +128,45 @@ function useSizes(n: number) {
 /** One surface for the demo, the guided round and the scored round — they differ only in who is
  *  doing the tapping, so they must not be three different pictures. */
 type Mode = 'demo' | 'guided' | 'practice'
-const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boolean) => void }> =
+
+const BACK = 'Back you go.'
+const nounFor = (d: HomeRound) => (d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural)
+const justRight = (target: number) => `${target}! Just right. Off we go!`
+const guidedAsk = (d: HomeRound) => `Now you! Send exactly ${d.target} ${nounFor(d)} home.`
+/** What Ready says when the group is not the number asked for — `have` is how many are with the leader. */
+const readyLine = (have: number, d: HomeRound) => have === 0
+  ? `Tap the ${kindAt(d.castIdx).plural} to send them home.`
+  : have < d.target
+    ? `That is only ${have}. We need ${d.target} — send some more!`
+    : `That is ${have} — too many! We need ${d.target}. Tap one to send it back.`
+/**
+ * Every line a round can say once it has loaded: the count as each one joins (up to the whole pool), "Back you go.", and
+ * Ready's line for every group size the pool allows — plus the guided round's ask and send-off (a scored round leaves
+ * in silence).
+ */
+function homeLines(d: HomeRound, mode: Mode): string[] {
+  const sizes = Array.from({ length: d.pool + 1 }, (_, h) => h)
+  return [
+    ...sizes.slice(1).map(String), BACK, ...sizes.filter(h => h !== d.target).map(h => readyLine(h, d)),
+    ...(mode === 'guided' ? [guidedAsk(d), justRight(d.target)] : []),
+  ]
+}
+/** The demo, in order — the re-teach is the same demo on the round's own number. */
+function demoLines(d: HomeRound): string[] {
+  return [
+    `We need exactly ${d.target} ${nounFor(d)} to walk home.`,
+    ...Array.from({ length: d.target }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
+    `That is ${d.target}. We have enough — so we STOP, even though there are more.`,
+    'Ready! Off we go.',
+  ]
+}
+export const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boolean) => void }> =
 ({ data, mode, onDone }) => {
   const { target, pool } = data
   const kind = kindAt(data.castIdx)
   const world = homeOf(kind)
   const { baby: baseSize, vw, vh } = useSizes(pool)
+  useQuestion(() => homeLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   // Same order of operations as chapter 2, and it matters: the leader's place comes from the UNCAPPED
   // size (an over-estimate, so it always fits), that fixes how much room the huddle has, and only
@@ -231,7 +264,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const setOff = useCallback(() => {
     if (done.current) return; done.current = true
     setMarching(true)
-    if (mode !== 'practice') speak(`${target}! Just right. Off we go!`)
+    if (mode !== 'practice') speak(justRight(target))
     after(MARCH_MS - 200, () => onDone(mode === 'practice' ? !erred.current : true))
   }, [mode, target, onDone, after])
 
@@ -240,16 +273,11 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
   const ran = useOnceGuard()
   useEffect(() => {
     if (mode !== 'demo') {
-      if (mode === 'guided') { setHint('take'); speakAfterCurrent(`Now you! Send exactly ${target} ${target === 1 ? kind.little : kind.plural} home.`) }
+      if (mode === 'guided') { setHint('take'); speakAfterCurrent(guidedAsk(data)) }
       return
     }
     if (ran.current) return; ran.current = true
-    const lines = [
-      `We need exactly ${target} ${target === 1 ? kind.little : kind.plural} to walk home.`,
-      ...Array.from({ length: target }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
-      `That is ${target}. We have enough — so we STOP, even though there are more.`,
-      'Ready! Off we go.',
-    ]
+    const lines = demoLines(data)
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         if (i === 0) return
@@ -277,7 +305,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
       send(i)
       if (hint === 'take' && Object.keys(slotsRef.current).length >= target) setHint('ready')
     } else {
-      speak('Back you go.')
+      speak(BACK)
       sendBack(i)
     }
   }
@@ -294,11 +322,7 @@ const HomeScene: React.FC<{ data: HomeRound; mode: Mode; onDone: (correct: boole
     setWrongSign(true); after(500, () => setWrongSign(false))
     if (!wrongLock.current) {
       wrongLock.current = true
-      speak(have === 0
-        ? `Tap the ${kind.plural} to send them home.`
-        : have < target
-          ? `That is only ${have}. We need ${target} — send some more!`
-          : `That is ${have} — too many! We need ${target}. Tap one to send it back.`)
+      speak(readyLine(have, data))
       after(1800, () => { wrongLock.current = false })
     }
   }
@@ -432,6 +456,9 @@ export function makeHomeBeat(): Beat<HomeRound> {
     say: d => `Send exactly ${d.target} ${d.target === 1 ? kindAt(d.castIdx).little : kindAt(d.castIdx).plural} home. Tap them one by one, then tap Ready.`,
     Play: ({ data, onSubmit }) => <HomeScene data={data} mode="practice" onDone={onSubmit} />,
     Reteach: ({ data, onDone }) => <HomeScene data={data} mode="demo" onDone={() => onDone()} />,
+    feedbackLines: d => homeLines(d, 'practice'),
+    // The demo's send-off is spoken by its last step, so it belongs to the re-teach too.
+    reteachLines: d => [...demoLines(d), justRight(d.target)],
   }
 }
 
@@ -442,6 +469,13 @@ const HT_CSS = `
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
 const TOTAL_ROUNDS = 10
+
+// The demo and the guided round deliberately use DIFFERENT habitats, so the first thing a child
+// learns is that the place changes but the rule does not. Both carry spares, because a demo
+// where the last one is taken is a demo of picking them ALL up, not of stopping.
+const DEMO_ROUND: HomeRound = { scene: HABITATS.meadow.scenes[0], target: 3, pool: 6, castIdx: 0 }
+/** Exported so the question-lines test can walk the guided round as the child meets it. */
+export const GUIDED_ROUND: HomeRound = { scene: HABITATS.reef.scenes[0], target: 2, pool: 5, castIdx: 1 }
 
 export default function HomeTime({ onFinish, onExit }: {
   world?: string     // accepted for the /story route's shared signature; the chapter is one world
@@ -457,11 +491,6 @@ export default function HomeTime({ onFinish, onExit }: {
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeHomeBeat(), [])
 
-  // The demo and the guided round deliberately use DIFFERENT habitats, so the first thing a child
-  // learns is that the place changes but the rule does not. Both carry spares, because a demo
-  // where the last one is taken is a demo of picking them ALL up, not of stopping.
-  const DEMO_ROUND: HomeRound = { scene: HABITATS.meadow.scenes[0], target: 3, pool: 6, castIdx: 0 }
-  const GUIDED_ROUND: HomeRound = { scene: HABITATS.reef.scenes[0], target: 2, pool: 5, castIdx: 1 }
   const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : DEMO_ROUND.scene
   const allScenes = useMemo(() => Object.values(HABITATS).flatMap(h => h.scenes), [])
 
