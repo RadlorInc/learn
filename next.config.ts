@@ -224,27 +224,8 @@ const nextConfig: NextConfig = {
         source: '/fonts/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
-      {
-        // Same argument, for the pre-rendered ElevenLabs voice clips (16 MB) and the PWA icons.
-        source: '/audio/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
-      },
-      {
-        /**
-         * ⚠️ THE VOICE MANIFEST IS AN INDEX, NOT AN ASSET, AND THE RULE BELOW WAS BURYING IT.
-         * ⚠️ IT SITS AFTER THE GENERAL RULE ON PURPOSE — the LAST matching rule wins (measured
-         * in assetCacheHeaders.test.ts), so placed above it this would have been inert.
-         * `/audio/:path*` gives it 30 days of freshness plus a YEAR of stale-while-revalidate —
-         * correct for a clip (content-addressed, can never go stale) and wrong for the one file
-         * that says WHICH clips exist. Measured 2026-09-04 on the founder's Chrome: it answered
-         * 433 keys against a live 670, so the new 17–18 clips were on the CDN and never asked
-         * for, while 12–14 and 15–16 (already in the stale copy) played perfectly — a
-         * band-shaped symptom with no band-shaped cause. Revalidate every time; it is 4 KB and
-         * an unchanged one costs a 304.
-         */
-        source: '/audio/:voice/manifest.json',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' }],
-      },
+      // (/audio/* went 2026-09-26: the recorded clips live in the lesson-audio bucket, which sets its own year-long
+      //  immutable Cache-Control per object; the index is a hashed JS chunk under /_next/static.)
       {
         source: '/icons/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],

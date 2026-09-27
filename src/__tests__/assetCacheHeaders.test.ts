@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import config from '../../next.config'
 
 /**
- * The caching rules for 57 MB of static art and audio, driven through the real `headers()` — the
+ * The caching rules for 57 MB of static art (the recorded audio left for the lesson-audio bucket, 2026-09-26), driven through the real `headers()` — the
  * same shape as `cspHeader.test.ts`, and for the same reason: `next.config.ts` is otherwise ungated,
  * and every fault here is silent.
  *
@@ -27,7 +27,7 @@ import config from '../../next.config'
 const matches = (source: string, path: string): boolean => {
   const wild = source.match(/^(.*)\/:[A-Za-z]+\*$/)
   if (wild) return path.startsWith(wild[1] + '/')
-  // A single-segment param with a literal tail — `/audio/:voice/manifest.json`. Still not a
+  // A single-segment param with a literal tail (e.g. `/x/:id/file.json`; none in use since /audio/ went). Still not a
   // path-to-regexp: one substitution, anchored, and `[^/]+` cannot cross a segment boundary.
   if (source.includes('/:')) {
     const re = source.split('/').map(seg => (seg.startsWith(':') ? '[^/]+' : seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('/')
@@ -79,24 +79,17 @@ describe('static asset caching', () => {
    */
   it.each([
     ['/assets/backgrounds/garden.png', 'public, max-age=2592000, stale-while-revalidate=31536000'],
-    // Josh's old same-origin folder, kept for ONE release so a tab still running the previous bundle keeps its voice;
-    // the next PR deletes it with these rows (the clips live in the lesson-audio bucket since 2026-09-26).
-    ['/audio/nzFihrBIvB34imQBuxub/hxmia9.mp3', 'public, max-age=2592000, stale-while-revalidate=31536000'],
     ['/icons/icon-192.png', 'public, max-age=2592000, stale-while-revalidate=31536000'],
     ['/sw.js', 'public, max-age=0, must-revalidate'],
-    // ⚠️ The index, not an asset. A stale one is a SHORTER key list, which is a clean miss on
-    // every clip it has dropped — silent, and it cost the 17–18 band its whole voice in Chrome
-    // while 12–14 and 15–16 played from the same stale copy. See next.config's note.
-    ['/audio/nzFihrBIvB34imQBuxub/manifest.json', 'public, max-age=0, must-revalidate'],
   ])('%s resolves to what production served', async (path, expected) => {
     expect(await cacheControlFor(path)).toBe(expected)
   })
 
-  it('art and audio are cached for weeks, not revalidated per request', async () => {
+  it('art and icons are cached for weeks, not revalidated per request', async () => {
     // The fault this replaced: Next's default for `public/` is `max-age=0, must-revalidate`, so
     // every backdrop cost a conditional round-trip on every load for any client the service worker
     // was not controlling. A week is the floor below which that is creeping back.
-    for (const p of ['/assets/backgrounds/garden.png', '/audio/x.mp3', '/icons/icon-192.png']) {
+    for (const p of ['/assets/backgrounds/garden.png', '/icons/icon-192.png']) {
       expect(maxAge((await cacheControlFor(p))!), p).toBeGreaterThanOrEqual(604800)
     }
   })
