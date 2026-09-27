@@ -1,5 +1,5 @@
 /**
- * The four render styles, named after the 2026-09-19 samples (/voice-samples.html) — docs/new-flow/voice.md says which
+ * The four render styles, named after the 2026-09-19 samples (a /voice-samples.html page, deleted 2026-09-26 with the Stevie and Teddy voices) — docs/new-flow/voice.md says which
  * line gets which. The model settings behind each name live in scripts/chatterbox-render.py (STYLES).
  *   A   Chatterbox Turbo, the words as written                  — a line nobody has re-voiced yet (the default)
  *   B   original Chatterbox, exaggeration 0.5, cfg_weight 0.5   — the everyday teacher

@@ -2,7 +2,7 @@
 
 > ⚠️ **BORRADOR PREPARADO POR MÁQUINA — NO REVISADO — NO ESTÁ EN VIGOR.**
 > MACHINE-PREPARED DRAFT. NOT REVIEWED BY ANY SPANISH READER. NOT IN FORCE. STATUS: DRAFT.
-> Translated by the engineering agent on 2026-09-23 from the PUBLIC part of
+> Translated by the engineering agent on 2026-09-23 (the lesson-audio edits of 2026-09-27 added the same way, also unreviewed) from the PUBLIC part of
 > `docs/legal/08-cookie-and-tracking-notice.md` (exactly the lines `src/app/legal/registry.ts` would render).
 > Every placeholder is kept word for word, in English. Links still point to the English pages.
 > Storage names (`milo-auth` and the rest) are technical identifiers and are kept as they are.
@@ -24,7 +24,8 @@ REVIEWED-BY:
 | — | Cookies | **No usamos ninguna.** | — | — |
 | `milo-kv-migrated` | Almacenamiento local | Recuerda que sus datos guardados ya se trasladaron al formato de almacenamiento más reciente | Hasta que usted lo borre | Estrictamente necesario |
 | Base de datos `milo`, almacén `kv` | Base de datos en el dispositivo | El perfil de su hijo, lo último que usó y dónde va en la práctica de cada tema, el trabajo pendiente de sincronizar si usted se queda sin conexión, el día en que se mostró por última vez la sugerencia de "practicar primero el tema anterior", las preferencias de voz y de velocidad, y el idioma elegido | Hasta que usted lo borre, salvo dónde va cada niño en cada tema (lecciones terminadas, nivel de práctica, la práctica en curso), que se borra del dispositivo cuando usted cierra la sesión, a menos que aún esté pendiente de sincronizar | Funcional |
-| `milo-shell`, `milo-static`, `milo-assets` | Almacenamiento en caché | La propia aplicación, sus imágenes y su audio, para que las lecciones funcionen sin conexión y usen menos datos. Unos 7 MB después de una lección, y aumenta con el audio de cada lección | Hasta que la aplicación se actualice a una versión nueva | Estrictamente necesario |
+| `milo-shell`, `milo-static`, `milo-assets-<versión>` | Almacenamiento en caché | La propia aplicación y sus imágenes, para que las lecciones funcionen sin conexión y usen menos datos | Hasta que la aplicación se actualice a una versión nueva | Estrictamente necesario |
+| `milo-assets-audio` | Almacenamiento en caché | Audio grabado de las lecciones — los mismos clips para todos los niños, nada sobre su hijo — para que las lecciones funcionen sin conexión y usen menos datos. Como máximo 2.000 clips (unos 40 MB); los más antiguos se eliminan primero | Se conserva entre actualizaciones de la aplicación hasta que el navegador lo elimine, o cuando usted borre los datos de este sitio | Estrictamente necesario |
 | `al-lang` | Almacenamiento local | El idioma que eligió para el panel de padres y las pantallas de consentimiento (inglés o español) *(leído del código, 24 sep 2026)* | Hasta que lo borre | Funcional |
 | `al-dash-prefs:<id de la cuenta>` | Almacenamiento local | Sus preferencias del panel: recordatorios pospuestos u ocultos, tipos de recordatorio desactivados, su última visita y qué recorridos guiados ya vio. Nada sobre un niño *(leído del código)* | Hasta que lo borre | Funcional |
 | `exercise-done:<id del niño>:<id del ejercicio>` | Almacenamiento local | Que un niño terminó un ejercicio de la clase, para mostrarlo como hecho en este dispositivo *(leído del código)* | Hasta que lo borre | Funcional |

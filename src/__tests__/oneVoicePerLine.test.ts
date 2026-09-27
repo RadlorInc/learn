@@ -3,41 +3,40 @@
  * the recorded clip said the same line. A line settles once — clip or browser speech — and never both.
  *
  * `fallback` is what starts browser speech for the line, so "TTS played" = fallback was called. Expectations are
- * written out by hand; the clip keys come from `clipKey`, the same function the renderer used to name the files.
+ * written out by hand; keys and checks come from `clipKey` / `clipCheck`, the functions the corpus is built with.
+ * (2026-09-26: the clip list is a per-module index handed over with the scene voice, and clips live on the audio
+ * bucket — AUDIO_BASE is mocked to a hand-written base here, since jsdom has no Supabase env.)
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { clipKey } from '@/core/voiceClips'
+import { clipKey, clipCheck } from '@/core/voiceClips'
 
-const BAND = 'bandVoiceAAAAAAAAAAA', LESSON = 'lessonVoiceBBBBBBBBBB'
-vi.mock('@/infra/storage/voicePref', () => ({ getVoicePref: () => 'bandVoiceAAAAAAAAAAA', BAND_VOICE: {} }))
-vi.mock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => null }))
+vi.mock('@/core/audioBase', () => ({ AUDIO_BASE: 'https://bucket.test/storage/v1/object/public/lesson-audio' }))
 
+const JOSH = 'nzFihrBIvB34imQBuxub'
 const LINE = 'Four plates, three cookies on each.'
+const NAME = '0123456789abcdef'   // an object name, written by hand
 const tick = (ms = 0) => new Promise(r => setTimeout(r, ms))
+const indexOf = (lines: string[], delay = 0) => async () => { if (delay) await tick(delay); return Object.fromEntries(lines.map(t => [clipKey(t), [NAME, clipCheck(t)] as [string, string]])) }
 
 let fetched: string[]
-let manifests: Record<string, { keys: string[]; delay?: number }>
 let tts: { cancel: ReturnType<typeof vi.fn>; speak: ReturnType<typeof vi.fn> }
 let play: ReturnType<typeof vi.spyOn>, pause: ReturnType<typeof vi.spyOn>
 
 beforeEach(() => {
-  vi.resetModules()                       // a fresh player: its manifests and its <audio> are per module
+  vi.resetModules()                       // a fresh player: its indexes and its <audio> are per module
   fetched = []
-  manifests = {}
-  vi.stubGlobal('fetch', async (url: string) => {
-    fetched.push(url)
-    const voice = url.match(/^\/audio\/([^/]+)\/manifest\.json$/)?.[1]
-    const m = voice ? manifests[voice] : undefined
-    if (m?.delay) await tick(m.delay)
-    return m ? { ok: true, json: async () => m.keys } : { ok: false, json: async () => [] }
-  })
+  vi.stubGlobal('fetch', async (url: string) => { fetched.push(url); return { ok: true } })
   tts = { cancel: vi.fn(), speak: vi.fn() }
   Object.defineProperty(window, 'speechSynthesis', { value: tts, configurable: true })
   pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
 })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals() })
 
-async function player() { return import('@/infra/voiceClipPlayer') }
+async function player(index = indexOf([LINE])) {
+  const p = await import('@/infra/voiceClipPlayer')
+  p.setSceneVoice(JOSH, index)
+  return p
+}
 function run(speakLine: (t: string, o: never) => () => void) {
   const out = { fallback: vi.fn(), onStart: vi.fn(), onDone: vi.fn() }
   speakLine(LINE, out as never)
@@ -46,7 +45,6 @@ function run(speakLine: (t: string, o: never) => () => void) {
 
 describe('one line, one voice', () => {
   it('a SLOW clip is waited for: only the recorded voice plays, browser speech never starts', async () => {
-    manifests[BAND] = { keys: [clipKey(LINE)] }
     play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => new Promise(r => setTimeout(r, 400)))
     const { speakLine } = await player()
     const out = run(speakLine as never)
@@ -54,20 +52,19 @@ describe('one line, one voice', () => {
     expect(out.fallback, 'browser speech started while the clip was still loading').not.toHaveBeenCalled()
     await tick(400)
     expect([out.onStart.mock.calls.length, out.fallback.mock.calls.length]).toEqual([1, 0])
+    expect(String((play.mock.contexts[0] as HTMLAudioElement).src)).toBe(`https://bucket.test/storage/v1/object/public/lesson-audio/${NAME}.mp3`)
   })
 
-  it('a MISSING clip: only browser speech — no play(), and no request for stitching fragments', async () => {
-    manifests[BAND] = { keys: ['somethingElse'] }
+  it('a MISSING clip: only browser speech — no play(), and no request of any kind', async () => {
     play = vi.spyOn(HTMLMediaElement.prototype, 'play')
-    const { speakLine } = await player()
+    const { speakLine } = await player(indexOf(['Some other line.']))
     const out = run(speakLine as never)
     await tick(20)
     expect([out.fallback.mock.calls.length, play.mock.calls.length]).toEqual([1, 0])
-    expect(fetched, 'the only request is the manifest (no /frag/fragments.json, no fragment-templates.json)').toEqual([`/audio/${BAND}/manifest.json`])
+    expect(fetched, 'a miss asks for nothing (no manifest, no /frag/fragments.json, no clip)').toEqual([])
   })
 
   it('when the clip starts, any browser speech still sounding is cancelled — before the line reports it started', async () => {
-    manifests[BAND] = { keys: [clipKey(LINE)] }
     const order: string[] = []
     tts.cancel.mockImplementation(() => { order.push('tts.cancel') })
     play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
@@ -79,7 +76,6 @@ describe('one line, one voice', () => {
   })
 
   it('a clip that starts AFTER the line fell back to browser speech is stopped, never played over it', async () => {
-    manifests[BAND] = { keys: [clipKey(LINE)] }
     let resolvePlay!: () => void
     play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() => new Promise<void>(r => { resolvePlay = r }))
     const { speakLine } = await player()
@@ -97,7 +93,6 @@ describe('one line, one voice', () => {
   })
 
   it('a clip that fails AFTER it started has spoken: the line ends — it is not said again in browser speech', async () => {
-    manifests[BAND] = { keys: [clipKey(LINE)] }
     play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
     const { speakLine } = await player()
     const out = run(speakLine as never)
@@ -107,22 +102,18 @@ describe('one line, one voice', () => {
     expect([out.fallback.mock.calls.length, out.onDone.mock.calls.length]).toEqual([0, 1])
   })
 
-  it('a SLOW manifest for another voice cannot replace the lesson voice\'s keys (the race behind the 404s)', async () => {
-    manifests[BAND] = { keys: [], delay: 200 }              // the child's home asked for the band voice first, slowly
-    manifests[LESSON] = { keys: [clipKey(LINE)] }            // then the lesson's own voice, quickly
+  it("a SLOW index for another module cannot replace this module's clips (the race behind the 2026-09-24 404s)", async () => {
+    const slowOther = indexOf([], 200), mine = indexOf([LINE])   // the previous module's index, slowly; this one's, quickly
     play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
-    const { speakLine, setSceneVoice } = await player()
-    const home = run(speakLine as never)                     // under the band voice
-    setSceneVoice(LESSON)
-    const lesson = run(speakLine as never)                   // under the lesson voice
-    await tick(300)                                          // the band manifest lands LAST
-    expect(home.fallback, 'control: the band voice has no clip for this line').toHaveBeenCalledTimes(1)
+    const { speakLine, setSceneVoice } = await player(slowOther)
+    const before = run(speakLine as never)                          // under the previous module
+    setSceneVoice(JOSH, mine)
+    const lesson = run(speakLine as never)                          // under this module
+    await tick(300)                                                 // the other index lands LAST
+    expect(before.fallback, 'control: the other module has no clip for this line').toHaveBeenCalledTimes(1)
     expect([lesson.onStart.mock.calls.length, lesson.fallback.mock.calls.length]).toEqual([1, 0])
-    // ⚠️ The damage is to the NEXT lesson line, spoken after the slow manifest landed: a shared key set now holds the
-    // band voice's keys, so the lesson's clip looks missing and the line goes to browser speech.
-    const next = run(speakLine as never)
+    const next = run(speakLine as never)                            // a later line, after the slow index landed
     await tick(20)
-    expect([next.onStart.mock.calls.length, next.fallback.mock.calls.length], 'a later lesson line fell back to browser speech').toEqual([1, 0])
-    expect(String((play.mock.contexts.at(-1) as HTMLAudioElement).src)).toContain(`/audio/${LESSON}/${clipKey(LINE)}.mp3`)
+    expect([next.onStart.mock.calls.length, next.fallback.mock.calls.length], 'a later line fell back to browser speech').toEqual([1, 0])
   })
 })

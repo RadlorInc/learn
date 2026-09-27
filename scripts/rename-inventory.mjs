@@ -36,7 +36,7 @@ const MASCOT_PATHS = [/^src\/features\/chapters\//, /^scripts\/\.voice-corpus/, 
 // 2026-09-13), or in teen/lab designs whose code was deleted 2026-09-20: mascot, not product name.
 const CHARACTER_DOCS = [/^docs\/(ux-design|ux-invariants|framing-12-18|labs-vision|teen-[\w-]+|chapter-[\w-]+)\.md$/, /^e2e\//]
 const importsChapters = f => { try { return /@\/features\/chapters|features\/chapters\//.test(readFileSync(f, 'utf8')) } catch { return false } }
-const THIRD_PARTY = [/^scripts\/stripe-products\.mts$/, /^scripts\/kaggle/, /^scripts\/chatterbox-kaggle/, /^supabase\/config\.toml$/]
+const THIRD_PARTY = [/^scripts\/stripe-products\.mts$/, /^scripts\/kaggle/, /^supabase\/config\.toml$/]
 const COMPANY = /^(support|noreply|admin)@radlor\.com\.?$|^(https?:\/\/)?(www\.)?radlor\.com(\/#organization|\/)?\.?$|^[a-z]+\.radlor\.com$/i
 
 function category(file, token) {

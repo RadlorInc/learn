@@ -1,7 +1,17 @@
-const VERSION      = 'v239'
+const VERSION      = 'v240'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
+/**
+ * The recorded lesson clips from the audio bucket (2026-09-26). NOT versioned, so a deploy does not throw them away:
+ * each object is named by the hash of its bytes, so a cached clip can never be stale — a re-render is a new name.
+ * CAPPED at AUDIO_CAP clips, oldest-stored first out: about one whole grade of lessons (932–1,330 clips, 19–27 MB) plus
+ * the previous grade's review, ≈ 40 MB at the ~20 KB a Josh clip averages — well inside what a phone's browser gives an
+ * origin, and never unbounded (every Josh clip would be 262 MB). Named under `milo-assets` because that is the storage the
+ * cookie notice already lists for "its audio" (docs/legal/08-cookie-and-tracking-notice.md). swAudioCache.test.ts.
+ */
+const AUDIO_CACHE  = 'milo-assets-audio'
+const AUDIO_CAP    = 2000
 
 // ⚠️ NO PAGE LIST (N26, 2026-09-26). Until v238 this precached a hand-kept APP_PAGES list for offline use; it went
 // stale twice (/profile and /shop answered 404, /modules and /lesson were never in it) and nothing promised it. The
@@ -20,15 +30,15 @@ self.addEventListener('install', event => {
 })
 
 // ─── Activate ─────────────────────────────────────────────────
-// ⚠️ This also drops milo-assets-* (voice clips, art) ON PURPOSE. A clip's URL hashes the line's TEXT, not the
-// audio, and clips have been re-rendered in place (56 trimmed, 2026-09-19); /assets/ art has been rewritten in place
-// too. Both are cache-first, so the bump is the only thing that refreshes them. Keep them across bumps only once
-// their URLs change with their bytes. Gated by swTakeover.test.ts.
+// ⚠️ This also drops the versioned milo-assets-* cache (art, and the OLD same-origin /audio/ clips) ON PURPOSE: /assets/
+// art is rewritten in place and those clip URLs hashed the line's TEXT, not the audio, so the bump is what refreshes them.
+// The bucket's clips (AUDIO_CACHE) are the exception the old comment asked for — "keep them across bumps only once their
+// URLs change with their bytes": a bucket object's name IS the hash of its bytes. Gated by swTakeover / swAudioCache.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k.startsWith('milo-') && !k.endsWith(VERSION)).map(k => caches.delete(k))
+        keys.filter(k => k.startsWith('milo-') && !k.endsWith(VERSION) && k !== AUDIO_CACHE).map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
   )
@@ -41,6 +51,12 @@ self.addEventListener('fetch', event => {
 
   if (request.method !== 'GET') return
   if (!url.protocol.startsWith('http')) return
+  // Recorded clips from the audio bucket, matched by their content-hash NAME rather than a host, so this keeps working
+  // if the bucket moves (src/core/audioBase.ts). BEFORE the Supabase bypass below — the bucket is on supabase.co today.
+  if (/\/[0-9a-f]{16}\.mp3$/.test(url.pathname)) {
+    event.respondWith(audioFirst(request))
+    return
+  }
   if (url.hostname.includes('supabase.co')) return
   if (url.pathname.includes('hmr') || url.pathname.includes('webpack')) return
   /**
@@ -107,6 +123,9 @@ self.addEventListener('fetch', event => {
    * Safari (no service worker) and was mute in Chrome (service worker, cached 433-key manifest),
    * on the same account, same deploy. Nothing was broken but this branch's absence.
    */
+  // ⚠️ SAME-ORIGIN /audio/ IS ONLY FOR A TAB STILL RUNNING THE PREVIOUS BUNDLE (2026-09-26): the app now plays clips from
+  // the audio bucket (the branch above). Josh's old folder stays deployed for one release so such a tab keeps its voice;
+  // the PR that deletes the folder deletes this branch with it.
   if (url.pathname.startsWith('/audio/')) {
     event.respondWith(
       url.pathname.endsWith('.json')
@@ -175,6 +194,35 @@ function store(cache, request, r) {
   if (r.status !== 200 || r.redirected) return
   if (request.headers && typeof request.headers.get === 'function' && request.headers.get('range')) return
   cache.put(request, r.clone()).catch(() => {})
+}
+
+/**
+ * Cache-first for a bucket clip. ⚠️ Two requests arrive for one clip and only one can be kept:
+ *   · prefetchClips' fetch() — CORS, no Range → a whole 200 with the bucket's CORS header: KEPT;
+ *   · the <audio> element's own request — no-cors with a Range header → an opaque or 206 answer: NEVER kept (a 206 is
+ *     not the file, and an opaque response is padded to megabytes of quota in Chrome). On a hit it is answered from the
+ *     kept 200, exactly as same-origin clips were before the move. ignoreVary: the two requests differ in their Origin
+ *     header, and a `Vary: Origin` from the bucket would otherwise turn every hit into a miss.
+ */
+async function audioFirst(request) {
+  const cache = await caches.open(AUDIO_CACHE)
+  const hit = await cache.match(request, { ignoreVary: true })
+  if (hit) return hit
+  try {
+    const r = await fetch(request)
+    if (r.status === 200 && !r.redirected && !(request.headers && typeof request.headers.get === 'function' && request.headers.get('range'))) {
+      await cache.put(request, r.clone()).then(() => trimAudio(cache)).catch(() => {})
+    }
+    return r
+  } catch {
+    return new Response('', { status: 503 })
+  }
+}
+
+/** Keep the newest AUDIO_CAP clips; Cache.keys() lists them in the order they were stored. */
+async function trimAudio(cache) {
+  const keys = await cache.keys()
+  if (keys.length > AUDIO_CAP) await Promise.all(keys.slice(0, keys.length - AUDIO_CAP).map(k => cache.delete(k)))
 }
 
 async function networkFirst(request, cacheName) {

@@ -16,9 +16,10 @@
 // ⚠️ The signed-out redirect `radlic.com/` → radlor.com/radlic is CLIENT-side too (HTTP says 200),
 // so it is also checked in the browser, in a fresh (signed-out) context.
 import { chromium } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 
 const BASE = (process.env.SMOKE_BASE ?? 'https://radlic.com').replace(/\/$/, '')
-const SW = process.env.SMOKE_SW ?? 'v239'
+const SW = process.env.SMOKE_SW ?? 'v240'
 const ONLY = process.env.SMOKE_ONLY
 const LANDING = 'https://radlor.com/radlic'
 const cb = () => `cb=${Date.now()}`
@@ -52,6 +53,32 @@ const checks = {
     const r = await get(`${BASE}/sw.js?${cb()}`); if (!r) return
     const v = /const VERSION\s*=\s*'(v\d+)'/.exec(await r.text())?.[1]
     v === SW ? ok(`service worker ${v}`) : bad(`service worker is '${v}', expected ${SW}`)
+  },
+  /**
+   * The recorded voice, as the browser sees it (2026-09-26: clips live in the lesson-audio bucket). The live CSP's
+   * media-src must name an audio origin, and a real manifest object on it must answer 200 audio/mpeg with the immutable
+   * cache header, plus 206 to a Range request (what the <audio> element sends). Positive control: the object name is a
+   * real one from scripts/audio/manifest.json, and a made-up name must NOT answer 200 — else the 200 proves nothing.
+   * ⚠️ The origin is read from the live CSP, i.e. from the same config value the player uses; if NEXT_PUBLIC_AUDIO_BASE_URL
+   * ever points at another host, set SMOKE_AUDIO_BASE to it (this derives the Supabase default only).
+   */
+  async audio() {
+    const r = await get(`${BASE}/auth?${cb()}`); if (!r) return
+    const media = (r.headers.get('content-security-policy') ?? '').split(';').map(s => s.trim()).find(s => s.startsWith('media-src ')) ?? ''
+    const origin = media.split(' ').find(t => /^https?:\/\//.test(t))
+    if (!origin) { bad(`live CSP media-src names no audio origin ('${media}') — every clip would be blocked`); return }
+    ok(`CSP media-src allows ${origin}`)
+    const base = process.env.SMOKE_AUDIO_BASE ?? `${origin}/storage/v1/object/public/lesson-audio`
+    const m = JSON.parse(readFileSync(new URL('./audio/manifest.json', import.meta.url), 'utf8'))
+    const name = Object.values(m.keys)[0].name
+    const g = await get(`${base}/${name}`); if (!g) return
+    const cc = g.headers.get('cache-control'), ct = g.headers.get('content-type')
+    g.status === 200 && /audio\/mpeg/.test(ct ?? '') && /immutable/.test(cc ?? '')
+      ? ok(`a real clip: 200 ${ct} · ${cc}`) : bad(`a real clip answered ${g.status} ${ct} · ${cc}`)
+    const rg = await get(`${base}/${name}`, { headers: { Range: 'bytes=0-99' } }); if (!rg) return
+    rg.status === 206 ? ok('a Range request answers 206') : bad(`a Range request answered ${rg.status}, not 206`)
+    const miss = await get(`${base}/0000000000000000.mp3`); if (!miss) return
+    miss.status !== 200 ? ok(`control: a made-up name answers ${miss.status}`) : bad('a made-up name answered 200 — the checks above prove nothing')
   },
   async og() {
     const r = await get(`${BASE}/opengraph-image?${cb()}`); if (!r) return

@@ -6,7 +6,8 @@
 Founder, 2026-09-22: one notebook per full grade.
 
 The notebook clones <branch>, reads scripts/.voice-corpus-lessons-josh.json, keeps the rows said by that module that have no
-clip yet, renders them with scripts/chatterbox-render.py and zips them as milo-voice-josh-<module>.zip. It asserts the
+clip yet (a row "has a clip" when its key is in scripts/audio/manifest.json — since 2026-09-26 the clips live in the
+lesson-audio bucket, not in public/audio, so the files are no longer there to look at), renders them with scripts/chatterbox-render.py and zips them as milo-voice-josh-<module>.zip. It asserts the
 count first, so a stale branch or an empty queue stops at cell 1 instead of spending GPU time.
 """
 import json, sys, pathlib
@@ -16,10 +17,10 @@ module, branch = sys.argv[1], sys.argv[2]
 skip = sys.argv[3:]
 root = pathlib.Path(__file__).resolve().parent
 corpus = json.load(open(root / '.voice-corpus-lessons-josh.json'))
-clips = root.parent / 'public/audio/nzFihrBIvB34imQBuxub'
+have = set(json.load(open(root / 'audio/manifest.json'))['keys'])   # rendered = in the bucket's manifest
 PREFIX = module + ('m' if 'm' not in module else '-')   # 'g3' -> 'g3m', 'g5m1' -> 'g5m1-'
 own = lambda srcs: any(s.startswith(PREFIX) and not any(s.startswith(k + '-') for k in skip) for s in srcs)
-todo = [r for r in corpus if own(r['sources']) and not (clips / f"{r['key']}.mp3").exists()]
+todo = [r for r in corpus if own(r['sources']) and r['key'] not in have]
 n = len(todo)
 assert n > 0, f'nothing queued for {module}'
 
@@ -45,8 +46,9 @@ if REPO.exists() and subprocess.run(['git', '-C', str(REPO), 'rev-parse', '--abb
 if not REPO.exists():
     subprocess.run(['git', 'clone', '--depth', '1', '--branch', BRANCH, 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
 rows = json.load(open(REPO / 'scripts/.voice-corpus-lessons-josh.json'))
+HAVE = set(json.load(open(REPO / 'scripts/audio/manifest.json'))['keys'])   # rendered = in the bucket's manifest (not on disk)
 todo = [r for r in rows if any(s.startswith(PREFIX) and not any(s.startswith(k + '-') for k in SKIP) for s in r['sources'])
-        and not (REPO / 'public/audio' / VOICE / f"{{r['key']}}.mp3").exists()]
+        and r['key'] not in HAVE]
 json.dump(todo, open(WORK / 'todo.json', 'w'))
 print(len(todo), 'lines to render ·', {{s: sum(r['style'] == s for r in todo) for s in ['A', 'B', 'B+']}})
 # At most {n}: lines shared with another module ("Okay. Your turn.") may already be rendered by the time this runs.

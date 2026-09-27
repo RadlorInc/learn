@@ -7,18 +7,17 @@
  * A real refusal (NotAllowedError, no user gesture yet) must still fall back, or a first line is silent.
  */
 import { it, expect, vi, beforeEach } from 'vitest'
-import { clipKey } from '@/core/voiceClips'
+import { clipKey, clipCheck } from '@/core/voiceClips'
 
-vi.mock('@/infra/storage/voicePref', () => ({ getVoicePref: () => 'XjGYkUkzth8BPs29fmcV', BAND_VOICE: {} }))
-vi.mock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => null }))
+vi.mock('@/core/audioBase', () => ({ AUDIO_BASE: 'https://bucket.test/lesson-audio' }))
 
-import { speakLine } from '@/infra/voiceClipPlayer'
+import { speakLine, setSceneVoice } from '@/infra/voiceClipPlayer'
 
 const LINE = 'Now you try.'
 const err = (name: string) => Object.assign(new Error(name), { name })
 
 beforeEach(() => {
-  vi.stubGlobal('fetch', async () => ({ ok: true, json: async () => [clipKey(LINE)] }))
+  setSceneVoice('nzFihrBIvB34imQBuxub', async () => ({ [clipKey(LINE)]: ['0123456789abcdef', clipCheck(LINE)] as [string, string] }))
 })
 
 /** The first play() rejects with `reason`; later ones succeed. Returns what happened to the line. */
