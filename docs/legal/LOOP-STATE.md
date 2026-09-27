@@ -985,6 +985,7 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 | [#299](https://github.com/RadlorInc/learn/pull/299) merge train: #289 → #292 → #290 → #291 | `f7e20f5ba` | CI 4/4 on latest main; local `npm ci`/tsc/vitest/build/audit 0; **177 files / 4,027 passed / 1 skipped = main's count** (vitest 4.1.11 → 5.0.1); lockfile: every one of 544 entries has a version from main's or one of the four PRs' locks (10 jsdom-30 transitive deps pinned back to #291's resolutions); production READY (GitHub deployment record — see below), `smoke:live` exit 0 |
 | [#300](https://github.com/RadlorInc/learn/pull/300) audio part A | `78dee7be1` | CI 4/4 on latest main (`rls-tests` applied the migration and ran S0–S5, "ALL ASSERTIONS PASSED"); local tsc/vitest (180 / 4,044)/build 0; smoke exit 0; migration approved by the founder, applied 03:08 |
 | [#301](https://github.com/RadlorInc/learn/pull/301) audio part B + the §5 legal wording (founder, 27 Sep: §5.1 variant (a); §5.2–5.4 as proposed; Spanish same, unreviewed; notice-v6 kept) | `b0ac61ca5` | `main` merged in (kept B's stricter `schemaFixtureStorage`); local tsc/vitest (184 / 4,063 = B's count)/build 0; built pages checked (new sentences in, old out); CI 4/4 after a close/reopen (a base change is no `pull_request` event); rollback target handed to the founder first (`78dee7be1`, `adaptivelearn-p3x6u58cj-radlor1.vercel.app`); production READY on `b0ac61ca5` at ~11:35 UTC; `smoke:live` exit 0, 16/16 (SW v240, CSP media-src = the Supabase project, a real clip 200/immutable, 206, made-up name 400); live `/legal/subprocessors` and `/legal/cookies` carry the new wording. **C (#302) may merge from ~11:35 UTC 29 Sep.** |
+| [#305](https://github.com/RadlorInc/learn/pull/305) KG / Grade 1 / Grade 2 on `main` now (founder, 28 Sep) — #303's eight commits cherry-picked onto `main` WITHOUT C | `507e0ce5f` | conflicts only where C and #303 met: SW **v241** (C will take v242), `smoke:live` default, `renameGate` keeps `public/audio/` until C; tsc 0 · vitest 196 / 4,183 · build 0 · manifest check 0 · audit 0; **`break:live` 8/8 on vitest 5** (required after the #299 upgrade) and six planted breaks re-run red on vitest 5; CI 4/4; rollback target handed over (`b0ac61ca5`, `adaptivelearn-2psj171m9-radlor1.vercel.app`); production READY on `507e0ce5f`; `smoke:live` exit 0, 16/16 (SW v241); the live `/parent` bundle carries the new strings (`Kínder`, "sees {what}, from {grades}.") and not the old one, control present. #303 closed as superseded. |
 
 ### After the upload (founder ran `upload-audio`, revoked the S3 key and both secrets)
 - **Public GET** (curl, from this Mac): `31c72a780c71b280.mp3` → **200**, `audio/mpeg`, `public, max-age=31536000, immutable`,
@@ -1000,13 +1001,17 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 | PR | head | state |
 |---|---|---|
 | [#302](https://github.com/RadlorInc/learn/pull/302) C — delete the old `/audio` folder | `02d015ebc` | merge ≥ 48 h after B |
-| [#303](https://github.com/RadlorInc/learn/pull/303) #233 rebuilt + the KG–2 prefetch | `4a2838c13` | after C. Prefetch built and proven (the founder's identical-requests test, 23 chapters' lines measured by rendering, 66 planted breaks); full suite 195 / 4,175 |
+| [#303](https://github.com/RadlorInc/learn/pull/303) #233 rebuilt + the KG–2 prefetch | — | superseded by #305 (merged 28 Sep, without C) and closed |
 
 ### Lessons
 - **The proof file failed a correct upload.** P4–P6 were written for "clips only" and never counted the canary the
   uploader itself keeps in the bucket, so the first real run read 16986 / 1 / 1. Measured before believing either side:
   the extra object by name, and the clips alone (16985 / 261998056 / 0). Fixed by excluding the canary BY NAME and
   asserting it in its own row (P7), so any other stray object still fails P4.
+- **My conflict-resolution script crashed halfway and `git add` + `cherry-pick --continue` committed two files with
+  conflict markers in them.** Caught by grepping the branch for markers before pushing; the branch (local, unpushed) was
+  reset to `main` and the cherry-picks redone with plain string replacement. A resolve step is not done until the markers
+  are measured gone — `git add` does not check.
 - **A timed-out test kept running and failed the NEXT test, naming the wrong chapter.** Two full-suite runs on a loaded
   Mac (load 50–90) failed: 6 walk tests timed out, and because a timeout does not stop the walk and the stubbed speaker
   is one shared list, its lines were measured by the following tests — 11 assertion failures in chapters that pass
