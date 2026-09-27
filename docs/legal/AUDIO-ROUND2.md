@@ -20,7 +20,10 @@ Three PRs, stacked, each a Draft. They merge **in this order and never out of it
 > 1. Re-encode: **no.**
 > 2. Upload keys: **Storage S3 access keys**, created by the founder just before the run and revoked right after it
 >    (§2 steps 5 and 8).
-> 3. §5 wording: **not decided yet — PR B stays a Draft until it is.**
+> 3. §5 wording: **decided 27 Sep, applied in PR B** — §5.1 variant **(a) accept** (the KG–2 prefetch stays as built: it only
+>    reduces what requests reveal, and the wording does not claim it); §5.2, §5.3 (the split cache row with
+>    `milo-assets-audio`) and §5.4 as proposed; the Spanish drafts get the same edits and stay marked unreviewed; the
+>    consent notice stays **notice-v6** (no bump).
 > 4. PR C: **merges ≥ 48 h after PR B is live.**
 > 5. KG–2 wrong-answer lines: **prefetch** — when a question loads, the clip of every option is fetched, with a test
 >    that the requests are identical whichever option is tapped. Built in the rebuilt #233 (A, B and C do not play KG–2).
