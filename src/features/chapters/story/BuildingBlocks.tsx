@@ -60,7 +60,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -416,8 +416,9 @@ function GroundPatch({ x0, w, label, ground, cube, vh }: {
 // ─── The round ────────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
 
-const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete: (c: boolean) => void }> =
+export const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete: (c: boolean) => void }> =
 ({ slot, data, mode, onComplete }) => {
+  useQuestion(() => pvLines(data), mode === 'guided')   // a practice round's is opened by SkillBeat
   const { n, kind, answer, digits: windows } = data
   const { w: vw, h: vh } = useViewport()
   const { cube, rodW, rodH, walkerH } = roomUnit(vw, vh)
@@ -458,7 +459,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     after(400, () => {
       setR(s => ({ ...s, bay: plan.firstWave, settled: 0, waiting: plan.waiting, from: 'right', key: 'b' }))
       after(inMs, () => {
-        if (plan.firstWave === 10) { sayNext('Ten ones on the ground — that is one ten. Tap them.') }
+        if (plan.firstWave === 10) { sayNext(FIRST_TEN) }
         else { setLive(true); sayNext(askFor(data)) }
       })
     })
@@ -520,7 +521,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     const built = r.rods * 10 + r.bay
     if (built === n) {
       setNote(`${Math.floor(n / 10)} tens and ${n % 10} ones make ${n}`)
-      speak(`Yes! ${numberToWords(Math.floor(n / 10))} tens and ${numberToWords(n % 10)} ones make ${numberToWords(n)}.`)
+      speak(madeLine(n))
       finish(true)
       return
     }
@@ -528,9 +529,9 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     // ⚠️ THE LESSON, DELIVERED WHERE IT BITES. Same two digits, wrong shelves — so name the number
     // they actually made. This is the one moment the chapter can say what place value IS.
     if (r.rods === n % 10 && r.bay === Math.floor(n / 10)) {
-      say(`That is ${numberToWords(built)}, not ${numberToWords(n)}. The tens side is on the left — look which one holds ${numberToWords(Math.floor(n / 10))}.`)
+      say(swappedLine(built, n))
     } else {
-      say(`Not yet — that is ${numberToWords(built)}. Count the tens, then the ones.`)
+      say(notYetLine(built))
     }
   }
 
@@ -539,7 +540,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     const v = digits.reduce((p, c) => p * 10 + c, 0)
     if (v === answer) {
       setNote(SOLVED[kind](n))
-      speak(`Yes! ${SOLVED[kind](n)}`)
+      speak(solvedLine(kind, n))
       finish(true)
     } else {
       erred.current = true
@@ -666,8 +667,46 @@ const RETRY: Record<QKind, string> = {
   ones: 'Not that one. Count the loose ones on the right.',
   value: 'Not that one. Each one of those is worth ten — count them in tens.',
 }
+const FIRST_TEN = 'Ten ones on the ground — that is one ten. Tap them.'
+/** The same two digits, the other way round — 34 → 43. */
+const swapOf = (n: number) => (n % 10) * 10 + Math.floor(n / 10)
+const madeLine = (n: number) => `Yes! ${numberToWords(Math.floor(n / 10))} tens and ${numberToWords(n % 10)} ones make ${numberToWords(n)}.`
+const swappedLine = (built: number, n: number) => `That is ${numberToWords(built)}, not ${numberToWords(n)}. The tens side is on the left — look which one holds ${numberToWords(Math.floor(n / 10))}.`
+const notYetLine = (built: number) => `Not yet — that is ${numberToWords(built)}. Count the tens, then the ones.`
+const solvedLine = (kind: QKind, n: number) => `Yes! ${SOLVED[kind](n)}`
+/**
+ * Every line a round can say once it has loaded — its own question included, since `prompt` is empty and the round
+ * asks it itself. MAKE: the trade it may be pushed into, and a verdict naming whatever was built. PACK: a trade per
+ * ten delivered (a second from 20 up), then the pad.
+ * ⚠️ MAKE's "Not yet — that is …" is declared for 0–99: every shelf a two-digit number can be (≤ 9 rods, ≤ 9 ones), and
+ * every value that line has a recorded clip for. A child CAN build past it — `callRod` has no cap, and nine rods plus
+ * a full bay is 100 — and those lines are the device voice whether declared or not, because no clip exists to fetch.
+ * ⚠️ The three lines written out below are ALSO written at their call sites, on purpose: voiceBoundaryVerb.test.ts
+ * keys its reasoned exceptions on that literal call text (`say('Ten again — trade them up.')`), so they cannot be
+ * a shared constant without editing that gate. A reworded one fails the play walk in questionLines68a.test.ts.
+ */
+function pvLines(d: PvRound): string[] {
+  const { n, kind } = d
+  if (kind === 'make') return [askFor(d), 'Ten ones on the ground — you cannot leave ten there. Trade them up.',
+    'Ten ones make ONE ten. It goes on the left shelf.', madeLine(n), swappedLine(swapOf(n), n),
+    ...Array.from({ length: 100 }, (_, built) => notYetLine(built))]
+  return [FIRST_TEN, ...(n >= 20 ? ['Ten again — trade them up.'] : []), askFor(d), solvedLine(kind, n), RETRY[kind]]
+}
 
 // ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
+/** The re-teach, in order — `PvExplain` pairs lines[i] with steps[i]. */
+function explainLines(a: number): string[] {
+  const b = swapOf(a)
+  const [aT, aO, bT, bO] = [Math.floor(a / 10), a % 10, Math.floor(b / 10), b % 10]
+  return [
+    `The order says ${numberToWords(a)}. Let's build it.`,
+    `${numberToWords(aT)} tens go on the LEFT.`,
+    `${numberToWords(aO)} ones go on the RIGHT. That is ${numberToWords(a)}.`,
+    `Now the order says ${numberToWords(b)} — the same two digits, the other way round.`,
+    `${numberToWords(bT)} tens, and ${numberToWords(bO)} ones. Look how much bigger the tens side is.`,
+    `Same digits, different sides, a different number. That is what the places mean.`,
+  ]
+}
 /**
  * ⚠️ **THE SWAP IS THE WHOLE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** The demo makes 34, then
  * makes 43 — the SAME two digits — and the tens shelf is visibly fuller the second time. That is the
@@ -681,21 +720,14 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
   const [line, setLine] = useState('')
   const [order, setOrder] = useState<number | null>(null)
   const doneRef = useLatestRef(onDone)
-  const a = data.n, b = (a % 10) * 10 + Math.floor(a / 10)      // the same digits, the other way round
+  const a = data.n, b = swapOf(a)
 
   useEffect(() => {
     const set = (p: Partial<Room>) => setR(s => ({ ...s, ...p }))
     const late: number[] = []
     const soon = (ms: number, fn: () => void) => late.push(window.setTimeout(fn, ms))
     const [aT, aO, bT, bO] = [Math.floor(a / 10), a % 10, Math.floor(b / 10), b % 10]
-    const lines = [
-      `The order says ${numberToWords(a)}. Let's build it.`,
-      `${numberToWords(aT)} tens go on the LEFT.`,
-      `${numberToWords(aO)} ones go on the RIGHT. That is ${numberToWords(a)}.`,
-      `Now the order says ${numberToWords(b)} — the same two digits, the other way round.`,
-      `${numberToWords(bT)} tens, and ${numberToWords(bO)} ones. Look how much bigger the tens side is.`,
-      `Same digits, different sides, a different number. That is what the places mean.`,
-    ]
+    const lines = explainLines(a)
     const steps: Array<() => void> = [
       () => { setOrder(a); set({ ...EMPTY }) },
       () => set({ rods: aT, from: 'left', key: 'a1' }),
@@ -734,7 +766,12 @@ export const BEAT: Beat<PvRound> = {
   prompt: () => '',
   Play: ({ data, onSubmit }) => <PvRoundView slot={slotAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
   Reteach: ({ data, onDone }) => <PvExplain slot={slotAt(data.slot)} data={data} onDone={onDone} />,
+  feedbackLines: pvLines,
+  reteachLines: d => explainLines(d.n),
 }
+
+/** The unscored round after the demo. */
+export const GUIDED: PvRound = { slot: GUIDED_SLOT, n: 23, kind: 'make', answer: 23, digits: 2 }
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -759,7 +796,6 @@ export default function BuildingBlocks({ onFinish, onExit }: {
     { slot: 0, n: 34, kind: 'make', answer: 34, digits: 2 },
     { slot: 1, n: 52, kind: 'make', answer: 52, digits: 2 },
   ], [])
-  const GUIDED: PvRound = useMemo(() => ({ slot: GUIDED_SLOT, n: 23, kind: 'make', answer: 23, digits: 2 }), [])
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.

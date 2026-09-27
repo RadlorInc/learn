@@ -61,7 +61,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -444,11 +444,35 @@ function Scene({ y, m, ch, rodW, rodH, walkerH, vw, vh, onRun, onRod, hint }: {
   )
 }
 
+// ─── What a round says ────────────────────────────────────────────────────────────────
+const ADD_STUCK = 'Ten ones on the ground, and more still waiting. Tap them — ten ones make ONE rod.'
+const ADD_ASK = 'All in. How many altogether?'
+const NOT_TEN = 'Not ten yet — count them.'
+const SUB_STUCK = 'Not enough ones left. Tap a rod to fetch it and break it open.'
+const SUB_ASK = 'All sent. How many are left?'
+const RETRY = 'Not that one. Count the rods, then the ones.'
+const yesLine = (op: Op, { a, b, answer }: ASRound) =>
+  `Yes! ${numberToWords(a)} ${op === '+' ? 'plus' : 'minus'} ${numberToWords(b)} is ${numberToWords(answer)}.`
+/**
+ * Every line a round can say once it has loaded — its own question included, since `prompt` is empty and the yard asks
+ * it itself once the load has landed. A round that regroups asks for the trade first and answers the tap that makes it.
+ * ⚠️ The two trade answers are written out here AND at their call sites, on purpose: voiceBoundaryVerb.test.ts keys
+ * their reasoned exceptions on that literal call text (`say('Ten ones make ONE rod.`). A reworded one fails the walk.
+ */
+function yardLines(op: Op, d: ASRound): string[] {
+  const p = loadPlan(op, d.a, d.b)
+  const work = op === '+'
+    ? ((p as { spill: number }).spill > 0 ? [ADD_STUCK, NOT_TEN, 'Ten ones make ONE rod. Now — how many altogether?'] : [ADD_ASK])
+    : ((p as { short: number }).short > 0 ? [SUB_STUCK, 'One rod opens back into ten ones. Now — how many are left?'] : [SUB_ASK])
+  return [...work, yesLine(op, d), RETRY]
+}
+
 // ─── The round ────────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
 
-const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onComplete: (c: boolean) => void }> =
+export const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onComplete: (c: boolean) => void }> =
 ({ slot, op, data, mode, onComplete }) => {
+  useQuestion(() => yardLines(op, data), mode === 'guided')   // a practice round's is opened by SkillBeat
   const { a, b, answer } = data
   const { w: vw, h: vh } = useViewport()
   const { cube, rodW, rodH, walkerH } = yardUnit(vw, vh)
@@ -482,8 +506,8 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', rods: s.rods + p.addCarts, ones: s.ones + p.fits,
           waiting: p.spill, from: 'lane', key: 'b' }))
         after(inMs, () => {
-          if (p.spill > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Ten ones on the ground, and more still waiting. Tap them — ten ones make ONE rod.') }
-          else { setY(s => ({ ...s, step: 'answer' })); sayNext('All in. How many altogether?') }
+          if (p.spill > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext(ADD_STUCK) }
+          else { setY(s => ({ ...s, step: 'answer' })); sayNext(ADD_ASK) }
         })
       } else {
         const p = plan as ReturnType<typeof loadPlan> & { takeCarts: number; takeOnes: number; short: number }
@@ -491,8 +515,8 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
         setY(s => ({ ...s, step: 'incoming', ones: s.ones - canTake, leaving: canTake }))
         after(1400, () => {
           setY(s => ({ ...s, leaving: 0 }))
-          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext('Not enough ones left. Tap a rod to fetch it and break it open.') }
-          else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); sayNext('All sent. How many are left?') }
+          if (p.short > 0) { setY(s => ({ ...s, step: 'stuck' })); sayNext(SUB_STUCK) }
+          else { setY(s => ({ ...s, step: 'answer', rods: s.rods - p.takeCarts })); sayNext(SUB_ASK) }
         })
       }
     })
@@ -502,7 +526,7 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
   /** MAKE A TEN — the ten slide together, become one rod, and the walker carries it up to the row. */
   function tradeUp() {
     if (y.step !== 'stuck' || op !== '+' || y.fusing) return
-    if (y.ones < 10) { say('Not ten yet — count them.'); return }   // a refusal is feedback, and it teaches
+    if (y.ones < 10) { say(NOT_TEN); return }   // a refusal is feedback, and it teaches
     setY(s => ({ ...s, step: 'bundling', fusing: true }))
     after(520, () => setY(s => ({ ...s, fusing: false, ones: 0, carried: true, carry: 1 })))
     after(520 + carryMs, () => setY(s => ({ ...s, carried: false, rods: s.rods + 1, carry: 2,
@@ -527,11 +551,11 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
     if (digits[0] * 10 + digits[1] === answer) {
       done.current = true; setOk(true)
       setNote(`${a} ${op === '+' ? '+' : '−'} ${b} = ${answer}`)     // the equation, AFTER the work
-      speak(`Yes! ${numberToWords(a)} ${op === '+' ? 'plus' : 'minus'} ${numberToWords(b)} is ${numberToWords(answer)}.`)
+      speak(yesLine(op, data))
       after(1800, () => onComplete(mode === 'practice' ? !erred.current : true))
     } else {
       erred.current = true
-      say('Not that one. Count the rods, then the ones.')
+      say(RETRY)
       after(1200, () => setDigits([]))
     }
   }
@@ -553,6 +577,23 @@ const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mode; onC
 }
 
 // ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
+/** The re-teach, in order — `ASExplain` pairs lines[i] with steps[i]. The same five for every sum of one op: it always
+ *  regroups, and the numbers are on the blocks, not in the words. */
+function explainLines(op: Op): string[] {
+  return op === '+' ? [
+    `We have these blocks in the yard.`,
+    `More arrive — the rods join the row, the ones go on the ground.`,
+    `That is ten ones on the ground, and some still waiting.`,
+    `Ten ones make ONE rod. It goes up to the row.`,
+    `Now the waiting ones come in. Count the rods, then the ones.`,
+  ] : [
+    `We have these blocks, and an order to send out.`,
+    `The ones go first — and we run out of them.`,
+    `So we fetch a rod back and break it open into ten ones.`,
+    `Now we can finish the ones, and send the rods.`,
+    `Count the rods, then the ones.`,
+  ]
+}
 /** The demo does one first, on the SAME yard the round uses — no modal teaching card. The example
  *  ALWAYS regroups: the old demo's four examples all avoided the carry, so the case the chapter
  *  exists for was never shown. Everything spoken is also written; Chrome often has no voice. */
@@ -572,16 +613,10 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
     const set = (p: Partial<Yard>) => setY(s => ({ ...s, ...p }))
     const late: number[] = []
     const soon = (ms: number, fn: () => void) => late.push(window.setTimeout(fn, ms))
-    let lines: string[], steps: Array<() => void>
+    const lines = explainLines(op)
+    let steps: Array<() => void>
     if (op === '+') {
       const p = plan as ReturnType<typeof loadPlan> & { addCarts: number; fits: number; spill: number }
-      lines = [
-        `We have these blocks in the yard.`,
-        `More arrive — the rods join the row, the ones go on the ground.`,
-        `That is ten ones on the ground, and some still waiting.`,
-        `Ten ones make ONE rod. It goes up to the row.`,
-        `Now the waiting ones come in. Count the rods, then the ones.`,
-      ]
       steps = [
         () => set({ ...initYard(plan), step: 'incoming' }),
         () => set({ rods: plan.start.carts + p.addCarts, ones: plan.start.onPlatform + p.fits, waiting: p.spill, from: 'lane', key: 'b' }),
@@ -597,13 +632,6 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
     } else {
       const p = plan as ReturnType<typeof loadPlan> & { takeCarts: number; takeOnes: number; short: number }
       const canTake = Math.min(plan.start.onPlatform, p.takeOnes)
-      lines = [
-        `We have these blocks, and an order to send out.`,
-        `The ones go first — and we run out of them.`,
-        `So we fetch a rod back and break it open into ten ones.`,
-        `Now we can finish the ones, and send the rods.`,
-        `Count the rods, then the ones.`,
-      ]
       steps = [
         () => set({ ...initYard(plan), step: 'incoming' }),
         () => { set({ ones: plan.start.onPlatform - canTake, leaving: canTake }); soon(1400, () => set({ leaving: 0 })) },
@@ -652,8 +680,15 @@ export function makeBeat(op: Op): Beat<ASRound> {
     prompt: () => '',
     Play: ({ data, onSubmit }) => <ASRoundView slot={slotAt(op, data.slot)} op={op} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ASExplain slot={slotAt(op, data.slot)} op={op} data={data} onDone={onDone} />,
+    feedbackLines: d => yardLines(op, d),
+    reteachLines: () => explainLines(op),
   }
 }
+
+/** The unscored round after the demo — it regroups, like both demos. */
+export const guidedRound = (op: Op): ASRound => (op === '+'
+  ? { slot: GUIDED_SLOT, a: 26, b: 18, answer: 44, regroup: true }
+  : { slot: GUIDED_SLOT, a: 43, b: 15, answer: 28, regroup: true })
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -679,9 +714,7 @@ export default function BlockYard({ op, onFinish, onExit }: {
   const DEMO: ASRound[] = useMemo(() => (op === '+'
     ? [{ slot: 0, a: 27, b: 15, answer: 42, regroup: true }, { slot: 1, a: 38, b: 24, answer: 62, regroup: true }]
     : [{ slot: 0, a: 52, b: 17, answer: 35, regroup: true }, { slot: 1, a: 64, b: 28, answer: 36, regroup: true }]), [op])
-  const GUIDED: ASRound = useMemo(() => (op === '+'
-    ? { slot: GUIDED_SLOT, a: 26, b: 18, answer: 44, regroup: true }
-    : { slot: GUIDED_SLOT, a: 43, b: 15, answer: 28, regroup: true }), [op])
+  const GUIDED = guidedRound(op)
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.

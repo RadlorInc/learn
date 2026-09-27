@@ -26,7 +26,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -519,11 +519,24 @@ function Stage({ world, item, op, a, b, s, short, boxBottomPx }: { world: SpWorl
 
 // ─── Interactive play surface (guided / practice) ─────────────────────────────────────
 type Mode = 'guided' | 'practice'
+const MISS = 'Not quite — listen to the story again, then try!'
+const YES = 'Yes! Let’s count.'
+const countLine = (n: number) => `${numberToWords(n)}!`
+/**
+ * Every line a round can say once it has loaded, besides the story itself (that is `say`): the question, spoken
+ * when the creatures have landed, and the miss. The miss names no number, so the choices — drawn inside the play
+ * component — do not change what can be said (founder, 2026-09-27, AUDIO-ROUND2 §1.5).
+ */
+const playLines = (d: SpRound) => [storyText(d.w, d.op, d.a, d.b, d.item).question, MISS]
+/** …and the guided round speaks its own story, then says "Yes!" and the count's last number. */
+const guidedLines = (d: SpRound) => [storyText(d.w, d.op, d.a, d.b, d.item).story, ...playLines(d), YES, countLine(d.answer)]
 const emptyStage: StageState = { aShown: 0, bShown: 0, showOp: false, leaving: false, litA: 0, litExtra: 0, boxValue: null, boxDone: false, showBox: false }
 
-const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
+export const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { w: world, item, op, a, b, answer } = data
   const txt = useMemo(() => storyText(world, op, a, b, item), [world, op, a, b, item])
+  // Before the story below is spoken: a guided round opens its own question (a practice one's is opened by SkillBeat).
+  useQuestion(() => guidedLines(data), mode === 'guided')
   const choices = useMemo(() => buildChoices(answer), [op, a, b, answer])
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
@@ -586,7 +599,7 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
     setPicked(n)
     if (n === answer) {
       done.current = true
-      if (mode === 'guided') speak('Yes! Let’s count.')
+      if (mode === 'guided') speak(YES)
       // count the answer objects one-by-one, box climbing 1..answer
       let k = 0
       const tick = () => {
@@ -595,13 +608,13 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
         else set({ litA: k, boxValue: k })
         if (k < answer) window.setTimeout(tick, 300)
         // `speakAfterCurrent`: the count runs 250 + answer*300ms, shorter than "Yes! Let's count."
-        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(`${numberToWords(answer)}!`) }
+        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(countLine(answer)) }
       }
       window.setTimeout(tick, 250)
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), answer * 300 + 1500)
     } else {
       erred.current = true
-      speak('Not quite — listen to the story again, then try!')
+      speak(MISS)
       window.setTimeout(() => setPicked(null), 1100)
     }
   }
@@ -655,8 +668,48 @@ const StoryPlay: React.FC<{ data: SpRound; mode: Mode; onComplete: (correct: boo
 }
 
 // ─── Teaching demo (opening preview + 3-wrong re-teach): narrate the story via ONE speakSteps ─
-const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, onDone }) => {
+/**
+ * The demo's narration, in order, with the step each line reveals. `holdsFor(n)` is the "here they come" filler a group
+ * of n needs to finish walking in — measured off the screen in `StoryExplain`, and the same line every time, so
+ * `reteachLines` passes one of each.
+ */
+function explainScript(data: SpRound, holdsFor: (n: number) => unknown[], set: (patch: Partial<StageState>) => void) {
   const { w: world, item, op, a, b, answer } = data
+  const lines: string[] = []
+  const steps: Array<() => void> = []
+  // One line per mover after the first, so the narration lasts as long as the arrival does and
+  // "let's count" never lands while somebody is still walking in. Same device as PlayTime's demo.
+  const alsoArriving = Array.from({ length: Math.max(0, b - 1) })
+  if (op === 'add') {
+    lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
+    holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
+    lines.push(`Then you ${world.join} ${qty(b, item)} more.`); steps.push(() => set({ bShown: b, showOp: true }))
+    alsoArriving.forEach(() => { lines.push('Here comes another one!'); steps.push(() => {}) })
+    lines.push('Let’s count them all!'); steps.push(() => set({ showBox: true, boxValue: 0 }))
+    for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litA: v, boxValue: v })) }
+    lines.push(`${numberToWords(answer)} ${item.many} altogether!`); steps.push(() => set({ boxDone: true }))
+  } else if (op === 'sub') {
+    lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
+    holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
+    lines.push(`Then ${qty(b, item)} ${world.leave}.`); steps.push(() => set({ leaving: true }))
+    alsoArriving.forEach(() => { lines.push('There goes another one.'); steps.push(() => {}) })
+    lines.push('Let’s count what’s left!'); steps.push(() => set({ showBox: true, boxValue: 0 }))
+    for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litA: v, boxValue: v })) }
+    lines.push(`${numberToWords(answer)} ${item.many} left!`); steps.push(() => set({ boxDone: true }))
+  } else {
+    lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
+    holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
+    lines.push(`${world.friend} has ${qty(b, item)}.`); steps.push(() => set({ bShown: b }))
+    holdsFor(b).forEach(() => { lines.push('And here are theirs.'); steps.push(() => {}) })
+    lines.push('You have more! How many more?'); steps.push(() => set({ showBox: true, boxValue: 0 }))
+    for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litExtra: v, boxValue: v })) }
+    lines.push(`You have ${numberToWords(answer)} more!`); steps.push(() => set({ boxDone: true }))
+  }
+  return { lines, steps }
+}
+
+const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, onDone }) => {
+  const { w: world, item, op, a, b } = data
   const txt = useMemo(() => storyText(world, op, a, b, item), [world, op, a, b, item])
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
@@ -664,11 +717,6 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
   const doneRef = useLatestRef(onDone)
   useEffect(() => {
-    const lines: string[] = []
-    const steps: Array<() => void> = []
-    // One line per mover after the first, so the narration lasts as long as the arrival does and
-    // "let's count" never lands while somebody is still walking in. Same device as PlayTime's demo.
-    const alsoArriving = Array.from({ length: Math.max(0, b - 1) })
     /**
      * The same device for the group that STEPS in — but counted from the journey rather than one
      * line per member, because a group of five does not need five lines. Without it the narration
@@ -678,31 +726,7 @@ const StoryExplain: React.FC<{ data: SpRound; onDone: () => void }> = ({ data, o
     const L = storyLayout(vw, vh, op, a, b, item.img)
     const holdsFor = (n: number) =>
       Array.from({ length: Math.max(0, Math.ceil(((Math.max(1, n) - 1) * STEP_GAP + L.ms) / 950) - 1) })
-    if (op === 'add') {
-      lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
-      holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
-      lines.push(`Then you ${world.join} ${qty(b, item)} more.`); steps.push(() => set({ bShown: b, showOp: true }))
-      alsoArriving.forEach(() => { lines.push('Here comes another one!'); steps.push(() => {}) })
-      lines.push('Let’s count them all!'); steps.push(() => set({ showBox: true, boxValue: 0 }))
-      for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litA: v, boxValue: v })) }
-      lines.push(`${numberToWords(answer)} ${item.many} altogether!`); steps.push(() => set({ boxDone: true }))
-    } else if (op === 'sub') {
-      lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
-      holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
-      lines.push(`Then ${qty(b, item)} ${world.leave}.`); steps.push(() => set({ leaving: true }))
-      alsoArriving.forEach(() => { lines.push('There goes another one.'); steps.push(() => {}) })
-      lines.push('Let’s count what’s left!'); steps.push(() => set({ showBox: true, boxValue: 0 }))
-      for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litA: v, boxValue: v })) }
-      lines.push(`${numberToWords(answer)} ${item.many} left!`); steps.push(() => set({ boxDone: true }))
-    } else {
-      lines.push(`You have ${qty(a, item)}.`); steps.push(() => set({ aShown: a }))
-      holdsFor(a).forEach(() => { lines.push('Here they come.'); steps.push(() => {}) })
-      lines.push(`${world.friend} has ${qty(b, item)}.`); steps.push(() => set({ bShown: b }))
-      holdsFor(b).forEach(() => { lines.push('And here are theirs.'); steps.push(() => {}) })
-      lines.push('You have more! How many more?'); steps.push(() => set({ showBox: true, boxValue: 0 }))
-      for (let k = 1; k <= answer; k++) { const v = k; lines.push(numberToWords(v)); steps.push(() => set({ litExtra: v, boxValue: v })) }
-      lines.push(`You have ${numberToWords(answer)} more!`); steps.push(() => set({ boxDone: true }))
-    }
+    const { lines, steps } = explainScript(data, holdsFor, set)
     const cancel = speakSteps(lines, {
       onStep: (i) => { steps[i]?.() },
       onDone: () => { window.setTimeout(() => doneRef.current(), 1100) },
@@ -742,6 +766,8 @@ export function makeStoryBeat(): Beat<SpRound> {
     say: d => storyText(d.w, d.op, d.a, d.b, d.item).story,
     Play: ({ data, onSubmit }) => <StoryPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <StoryExplain data={data} onDone={onDone} />,
+    feedbackLines: playLines,
+    reteachLines: d => explainScript(d, () => [0], () => {}).lines,
   }
 }
 
@@ -750,6 +776,8 @@ const ST_CSS = `
 @keyframes st_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.15);opacity:1} 100%{transform:scale(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
+/** The one guided round — the next creature in the run after the demo's three. */
+export const GUIDED: SpRound = { ...RUN[DEMO_N], op: 'add', a: 2, b: 2, answer: 4 }
 export default function StoryTime({ onFinish, onExit }: {
   world?: string     // accepted for the /story route's shared signature; the chapter is one run
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
@@ -784,7 +812,6 @@ export default function StoryTime({ onFinish, onExit }: {
     { ...RUN[1], op: 'sub', a: 5, b: 2, answer: 3 },
     { ...RUN[2], op: 'compare', a: 4, b: 2, answer: 2 },
   ]
-  const GUIDED: SpRound = { ...RUN[DEMO_N], op: 'add', a: 2, b: 2, answer: 4 }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (

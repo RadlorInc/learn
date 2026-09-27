@@ -14,7 +14,9 @@
 import React, { useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { speak, speakAfterCurrent, stopSpeech } from '@/infra/useMiloSpeaker'
-import { useAdaptive } from '@/shared/hooks/useAdaptive'
+import { useAdaptive, ENCOURAGEMENT } from '@/shared/hooks/useAdaptive'
+import { openQuestion } from '@/infra/voiceClipPlayer'
+import { doneLine } from '@/shared/ui/ChapterDone'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { chapterKey } from '@/core/chapters'
 import { loadStanding } from '@/infra/storage/lessonStanding'
@@ -111,6 +113,30 @@ export interface Beat<T> {
                                          // HEARD not read (e.g. number-recognition doors).
   Play: React.FC<{ data: T; onSubmit: (correct: boolean) => void }>
   Reteach: React.FC<{ data: T; onDone: () => void }>
+  /**
+   * EVERY line `Play` can say about this round once the child starts answering — each option's line, right and wrong,
+   * and anything the chapter says between this answer and the next question (an interlude). Handed to `openQuestion`
+   * when the round loads, so its clips are fetched BEFORE the child taps (founder, 2026-09-27, AUDIO-ROUND2 §1.5).
+   * ⚠️ A line left out is not a leak — while the question is open the player asks for nothing it was not given — but
+   * it is spoken by the device voice instead of Josh. `questionLines.test.ts` measures what each chapter really says.
+   */
+  feedbackLines?: (data: T) => string[]
+  /** Every line `Reteach` says for this round. Fetched with the question only when a re-teach can follow it. */
+  reteachLines?: (data: T) => string[]
+}
+
+/**
+ * Everything a round can lead to, for `openQuestion`: its prompt, the shell's praise and encouragement (the whole pools —
+ * which one is said is decided elsewhere), the chapter's own lines, the re-teach when one can follow, and the end card.
+ */
+export function questionLines<T>(beat: Beat<T>, data: T, reteachCanFollow: boolean): string[] {
+  return [
+    (beat.say ?? beat.prompt)(data),
+    ...(beat.ownsFeedback ? [] : [...PRAISE, ...ENCOURAGEMENT.flat()]),
+    ...(beat.feedbackLines?.(data) ?? []),
+    ...(reteachCanFollow ? beat.reteachLines?.(data) ?? [] : []),
+    doneLine(), doneLine(CHAPTER_TAKE),
+  ]
 }
 
 export type Scene =
@@ -160,6 +186,17 @@ export function useChapterShell(
     finishChapter(result.current.correct, result.current.wrong, mastered)
   }, [finishChapter])
   return { exit, finishChapter, tally }
+}
+
+/**
+ * A question that is NOT one of SkillBeat's rounds — a chapter's guided round — opens its own, the same way: every line
+ * it can lead to is fetched as it mounts, and nothing after the child taps (see openQuestion). ⚠️ Call it BEFORE any
+ * effect in the same component that speaks on mount: effects run in order, and a line spoken before the question is
+ * open is fetched the ordinary way. `lines` is read once, at mount.
+ */
+export function useQuestion(lines: () => string[], on = true): void {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => (on ? openQuestion(lines()) : undefined), [])
 }
 
 // ─── SkillBeat: the unbreakable pedagogy core ──────────────────
@@ -221,11 +258,15 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (k && !asked.current.includes(k)) asked.current = [...asked.current, k]
     }
     onRound?.(data, roundIdx)
+    // Every clip this round can lead to is fetched NOW, before the child answers — see openQuestion. A re-teach can only
+    // follow when this would be the RETEACH_AFTER-th miss in a row.
+    const release = openQuestion(questionLines(beat, data, wrongRun >= RETEACH_AFTER - 1))
     // ⚠️ `speakAfterCurrent`, NOT `speak`. The round advances on a 1300ms timer after the verdict
     // line is spoken (below), and most verdicts are longer than that — so a plain `speak` here cut
     // the voice off mid-praise on EVERY round of every storybook chapter, in all four bands that run on
     // this beat. The visuals still advance on their own timer; only the words wait their turn.
     speakAfterCurrent((beat.say ?? beat.prompt)(data))
+    return release
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roundIdx])
 

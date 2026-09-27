@@ -28,6 +28,62 @@ let _indexLoad: (() => Promise<ClipIndex>) | null = null
 export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>): void {
   _sceneVoice = v
   _indexLoad = v ? index ?? null : null
+  // A new scene starts with nothing held and nothing open: a question belongs to the chapter that opened it.
+  _held.clear()
+  _open = 0
+}
+
+/**
+ * ⚠️⚠️ A QUESTION'S CLIPS ARE ALL ASKED FOR WHEN IT LOADS, AND NONE AFTER THE CHILD ANSWERS (founder, 2026-09-27,
+ * docs/legal/AUDIO-ROUND2.md §1.5). Some KG–2 lines are built from what the child tapped ("That makes seventeen. I asked
+ * for twenty-one."), and a clip is a request to the bucket, so asking for it at the moment of the tap would put "this
+ * device chose 17" in the storage provider's logs. So:
+ *   · `openQuestion(lines)` — called as a question loads, with EVERY line it can lead to (each option's, right and wrong)
+ *     — fetches each line's clip into memory, as a `data:` URL (media-src already allows `data:`; no CSP change);
+ *   · while any question is open, a line plays ONLY from memory. A line that was not handed over is spoken by the
+ *     device voice and asks for NOTHING — so the requests are the same whichever option is tapped BY CONSTRUCTION, not
+ *     because every chapter remembered its lines. Forgetting one costs Josh's voice on that line, never a request;
+ *   · a held clip plays from memory even after its question closes (the praise still queued behind the last answer);
+ *     only a new scene (`setSceneVoice`) drops them, and each question keeps its own and the previous one's.
+ * The next question itself is chosen after the answer (the tier moves), so ITS lines can differ — that is "what comes
+ * next", not feedback on this answer, and the guarantee stops where the next question opens.
+ */
+const _held = new Map<string, { gen: number; src: Promise<string | null> }>()
+let _open = 0
+let _gen = 0
+
+function holdClip(url: string): Promise<string | null> {
+  return fetch(url)
+    .then(r => (r.ok ? r.blob() : null))
+    .then(b => b && new Promise<string | null>(res => {
+      const fr = new FileReader()
+      fr.onload = () => res(typeof fr.result === 'string' ? fr.result : null)
+      fr.onerror = () => res(null)
+      fr.readAsDataURL(new Blob([b], { type: 'audio/mpeg' }))
+    }))
+    .catch(() => null)
+}
+
+/** A question has loaded: hold the clip of every line it can lead to. Returns the release for when it is answered and gone. */
+export function openQuestion(texts: string[]): () => void {
+  _open++
+  const gen = ++_gen
+  // A question keeps its own clips and the previous question's (whose last line may still be queued); older ones go.
+  for (const [url, h] of _held) if (h.gen < gen - 1) _held.delete(url)
+  const load = _indexLoad
+  if (voiceNow() && load && typeof fetch !== 'undefined') {
+    void loadIndex(load).then(index => {
+      for (const t of new Set(texts)) {
+        const url = clipUrl(index, t)
+        if (!url) continue
+        const h = _held.get(url)
+        if (h) h.gen = gen
+        else _held.set(url, { gen, src: holdClip(url) })
+      }
+    })
+  }
+  let released = false
+  return () => { if (!released) { released = true; _open = Math.max(0, _open - 1) } }
 }
 
 /**
@@ -200,9 +256,17 @@ export function speakLine(text: string, opts: Opts): () => void {
     if (cancelled) return
     const url = clipUrl(index, text)
     if (!url) { miss(); return }
+    // Held with a question → play it from memory. Not held while a question is open → the device voice, and no
+    // request (see openQuestion). Otherwise the bucket, as before.
+    const held = _held.get(url)
+    if (held) { void held.src.then(src => { if (!cancelled) { if (src) play(src); else miss() } }); return }
+    if (_open > 0) { miss(); return }
+    play(url)
+  })
 
+  function play(src: string) {
     const audio = audioEl()
-    audio.src = url
+    audio.src = src
     _active = audio
 
     audio.onended = () => {
@@ -252,7 +316,7 @@ export function speakLine(text: string, opts: Opts): () => void {
       }
       miss()
     })
-  })
+  }
 
   return cancel
 }

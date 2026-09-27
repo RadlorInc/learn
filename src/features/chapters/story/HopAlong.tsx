@@ -31,7 +31,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, useChapterShell, type Beat } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { Hop, SheetCell, Arrive, CRITTER_CSS, hopOf, inFlowJourney } from './critters'
@@ -390,6 +390,37 @@ function Sign({ n, px }: { n: number | string; px: number }) {
   )
 }
 
+// ─── What a round says ───────────────────────────────────────────────────────────────
+const askLine = (d: FetchRound) => `We need ${d.target} ${d.item.many}. They come in ${d.w.family}s of ${d.group}. Tap a ${d.w.family} to fetch it!`
+const shortLine = (d: FetchRound) => `Not enough yet — we need ${d.target}. Fetch another ${d.w.family}!`
+const overLine = (d: FetchRound) => `That's too many — we only need ${d.target}. Tap the ones behind the frog to send a ${d.w.family} back.`
+const goLine = (d: FetchRound) => `${d.target}! Off we go!`
+/**
+ * Every line a round can say once it has loaded: the running total at each hop, out AND back to nothing (0 … families),
+ * both Ready misses, the send-off, and the guided round's ask.
+ * ⚠️ The count is `String(k * group)` here and `speak(String(next * data.group))` at its call site, written twice on
+ * purpose: voiceBoundaryVerb.test.ts keys that deferred call's reasoned exception on its literal text.
+ */
+function fetchLines(d: FetchRound, mode: Mode): string[] {
+  return [...Array.from({ length: d.families + 1 }, (_, k) => String(k * d.group)),
+    shortLine(d), overLine(d), goLine(d), ...(mode === 'guided' ? [askLine(d)] : [])]
+}
+/**
+ * The re-teach, in order — `Demo` pairs lines[i] with acts[i]. (Built with push, as it always was: the static parser reads
+ * an array literal, and "Oh no —" would then have to be listed under all 23 chapters' clips — a corpus rebuild.)
+ */
+function demoLines(r: FetchRound): string[] {
+  const lines: string[] = []
+  lines.push(`We have to count all the ${r.item.many}.`)
+  for (let i = 1; i <= 5; i++) lines.push(String(i))
+  lines.push(`Oh no — they keep moving. We lost count!`)
+  lines.push(`But look — they sit in ${r.w.family}s of ${r.group}.`)
+  lines.push(`So we can count the ${r.w.family}s instead — much faster!`)
+  for (let k = 1; k <= r.need; k++) lines.push(String(k * r.group))
+  lines.push(`${r.target}! ${r.need} ${r.w.family}s of ${r.group} makes ${r.target}.`)
+  return lines
+}
+
 // ─── The play surface ────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
 export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (correct: boolean) => void }> =
@@ -412,6 +443,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
 
   const hopperX = L.hopperAt(taken)
   const total = taken * data.group
+  useQuestion(() => fetchLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   /**
    * ⚠️ SPEAKING IS NOT FEEDBACK. Chrome ships no usable local voice on many machines, so a response
@@ -438,7 +470,7 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
   useEffect(() => () => window.clearTimeout(nudgeT.current), [])
 
   useEffect(() => {
-    if (mode === 'guided') tellNext(`We need ${data.target} ${data.item.many}. They come in ${data.w.family}s of ${data.group}. Tap a ${data.w.family} to fetch it!`)
+    if (mode === 'guided') tellNext(askLine(data))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -470,13 +502,11 @@ export const FetchPlay: React.FC<{ data: FetchRound; mode: Mode; onComplete: (co
     if (busy.current || committed) return
     if (total !== data.target) {
       erred.current = true
-      tell(total < data.target
-        ? `Not enough yet — we need ${data.target}. Fetch another ${data.w.family}!`
-        : `That's too many — we only need ${data.target}. Tap the ones behind the frog to send a ${data.w.family} back.`)
+      tell(total < data.target ? shortLine(data) : overLine(data))
       return
     }
     setCommitted(true)
-    tell(`${data.target}! Off we go!`)
+    tell(goLine(data))
     // The round ends when they have actually LEFT, off the journey's own numbers — not on a guessed
     // timer that cuts the walk-off in half.
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), exitMs + 260)
@@ -672,16 +702,15 @@ const Demo: React.FC<{ slot: Slot; group: number; need: number; onDone: () => vo
   const total = group * need
 
   useEffect(() => {
-    const lines: string[] = []
-    const acts: Array<() => void> = []
-    lines.push(`We have to count all the ${r.item.many}.`); acts.push(() => { setBeat(0); setOnes(0) })
+    const lines = demoLines(r)
+    const acts: Array<() => void> = [() => { setBeat(0); setOnes(0) }]
     // He gets a little way in one at a time — and they keep moving.
-    for (let i = 1; i <= 5; i++) { lines.push(String(i)); acts.push(() => { setOnes(i); setJig(j => j + 1) }) }
-    lines.push(`Oh no — they keep moving. We lost count!`); acts.push(() => setBeat(1))
-    lines.push(`But look — they sit in ${r.w.family}s of ${group}.`); acts.push(() => { setBeat(2); setOnes(0) })
-    lines.push(`So we can count the ${r.w.family}s instead — much faster!`); acts.push(() => setBeat(2))
-    for (let k = 1; k <= need; k++) { lines.push(String(k * group)); acts.push(() => setBeat(2 + k)) }
-    lines.push(`${total}! ${need} ${r.w.family}s of ${group} makes ${total}.`); acts.push(() => setBeat(2 + need))
+    for (let i = 1; i <= 5; i++) acts.push(() => { setOnes(i); setJig(j => j + 1) })
+    acts.push(() => setBeat(1))                              // we lost count
+    acts.push(() => { setBeat(2); setOnes(0) })              // they sit in families
+    acts.push(() => setBeat(2))                              // count the families instead
+    for (let k = 1; k <= need; k++) acts.push(() => setBeat(2 + k))
+    acts.push(() => setBeat(2 + need))
     return speakSteps(lines, {
       onStep: i => acts[i]?.(),
       onDone: () => window.setTimeout(() => doneRef.current(), 1200),
@@ -805,6 +834,8 @@ export function makeBeat(): Beat<FetchRound> {
     say: d => `We need ${d.target} ${d.item.many}. They come in ${d.w.family}s of ${d.group}.`,
     Play: ({ data, onSubmit }) => <FetchPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <Demo slot={{ w: data.w, item: data.item }} group={data.group} need={data.need} onDone={onDone} />,
+    feedbackLines: d => fetchLines(d, 'practice'),
+    reteachLines: demoLines,
   }
 }
 

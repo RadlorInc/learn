@@ -42,7 +42,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -261,6 +261,60 @@ export const sayFor = (page: Page, d: ColorRound) => {
   return `Color the ${t.noun} ${c}. See it glowing? Find the ${c} paint, then tap it!`
 }
 
+const noPaintLine = (step: Target) => `Pick up a paint first! We need ${COLORS[step.color].label}.`
+// "That's the tulip!" when they just tapped a tulip and were asked for the tulip is maddening.
+// The page has two of them and only the glow tells them apart, so the words have to admit it.
+const wrongPartLine = (hit: Target, step: Target) => (hit.noun === step.noun
+  ? `That's the other ${hit.noun}! Tap the one that is glowing.`
+  : `That's the ${hit.noun}! Tap the part that is glowing.`)
+const strayLine = (step: Target) => `Now, where is the ${step.noun}? Look for the glowing part!`
+/** The lesson's wrong pot — refused before it touches the page, pointing at the pot that is jumping. */
+const wrongPotLine = (brush: ColorName, step: Target) =>
+  `That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`
+/** The test's wrong paint, judged on Ready. */
+const wrongPaintLine = (brush: ColorName, step: Target) => `That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`
+const namedLine = (step: Target) => {
+  const c = COLORS[step.color].label
+  return `${c}! The ${step.noun} is ${c}.`
+}
+const teachLine = (t: Target) => {
+  const c = COLORS[t.color].label
+  return `This color is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`
+}
+/** The re-teach, in order. */
+function explainLines(page: Page, seq: number): string[] {
+  const t = page.targets[seq]
+  const c = COLORS[t.color].label
+  return [
+    `Let's do this one together. The ${t.noun} is glowing — that is the bit we color.`,
+    `We want ${c}. Remember the ${c} in the garden? This is the ${c} paint.`,
+    `Watch the ${t.noun} turn ${c}!`,
+  ]
+}
+/**
+ * Every line a toy-room round can say once it has loaded — all of it from the orchestrator's tap handlers, since the
+ * round's Play renders nothing: no paint on the brush, a tap on any OTHER named part of the page (the glow says which is
+ * wanted, but a finger can land on any of them), wandering off the question, and Ready with each wrong paint on the tray.
+ */
+function testLines(page: Page, d: ColorRound): string[] {
+  const step = page.targets[d.seq]
+  return [
+    noPaintLine(step), strayLine(step),
+    ...page.targets.filter(t => t !== step).map(t => wrongPartLine(t, step)),
+    ...d.pots.filter(c => c !== step.color).map(c => wrongPaintLine(c, step)),
+  ]
+}
+/** One lesson beat's: its ask, the same redirects, a wrong pot from the tray, and the colour named on the finished part. */
+function teachLines(seq: number, pots: ColorName[]): string[] {
+  const step = TEACH_PAGE.targets[seq]
+  return [
+    teachLine(step), noPaintLine(step), strayLine(step),
+    ...TEACH_PAGE.targets.filter(t => t !== step).map(t => wrongPartLine(t, step)),
+    ...pots.filter(c => c !== step.color).map(c => wrongPotLine(c, step)),
+    namedLine(step),
+  ]
+}
+
 /**
  * The scored round's play surface renders NOTHING — the page, the canvas and the paint box are all
  * the orchestrator's, because a coloured picture has to survive a round ending and `SkillBeat`
@@ -287,12 +341,7 @@ const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => voi
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const t = page.targets[seq]
-    const c = COLORS[t.color].label
-    const cancel = speakSteps([
-      `Let's do this one together. The ${t.noun} is glowing — that is the bit we color.`,
-      `We want ${c}. Remember the ${c} in the garden? This is the ${c} paint.`,
-      `Watch the ${t.noun} turn ${c}!`,
-    ], {
+    const cancel = speakSteps(explainLines(page, seq), {
       onStep: i => { if (i === 1) onLoad(t.color); if (i === 2) onPaint() },
       onDone: () => window.setTimeout(onDone, 1500),
     })
@@ -301,6 +350,50 @@ const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => voi
   }, [])
   return null
 }
+
+/**
+ * The scored practice. What it needs from the orchestrator — where to hand the round's submit, and the re-teach's two
+ * paint actions — is passed in, so the page and the canvas stay the orchestrator's.
+ */
+export function makeColorBeat(page: Page, register: (f: (c: boolean) => void) => void, onLoad: (c: ColorName) => void,
+  fillTarget: (seq: number) => void): Beat<ColorRound> {
+  return {
+    skillId: 'colors', rounds: SCORED_ROUNDS,
+    make: (d, round = 0) => makeColorRound(page, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.seq}`,   // one question per named area; the shuffled pot order is not variety
+    /**
+     * ⚠️ EMPTY ON PURPOSE — THIS CHAPTER DRAWS ITS OWN QUESTION, AND IT HAS TO.
+     *
+     * `SkillBeat`'s prompt pill is a real `<button>` (tap to hear it again), and in every other
+     * chapter that is right: it sits in a band the answers do not use. Here the answer surface is a
+     * colouring page that fills the whole frame, so the pill lies ACROSS the picture and swallows
+     * every tap underneath it. Measured at 640×320: the pill spans x 181–459, y 48–93 and the
+     * balloon this page asks for spans x 415–490, y 15–120 — so a child aiming at the middle of the
+     * answer hit the pill and the balloon never coloured.
+     *
+     * That is the same fault this file's own `Banner` comment already records for the LESSON
+     * banner, arriving in the scored half through a control the chapter does not own. The banner
+     * below is `pointerEvents: none`, so the question is still on screen and the picture is whole;
+     * the replay moved into the top chrome, beside Menu, where a small overlay is already accepted.
+     * ⚠️ `say` is untouched — SkillBeat still SPEAKS the round, it just draws nothing.
+     */
+    prompt: () => '',
+    say: d => sayFor(page, d),
+    Play: ({ onSubmit }) => <Register onSubmit={onSubmit} register={register} />,
+    Reteach: ({ data, onDone }) => (
+      <Explain page={page} seq={data.seq} onLoad={onLoad} onPaint={() => fillTarget(data.seq)} onDone={onDone} />
+    ),
+    feedbackLines: d => testLines(page, d),
+    reteachLines: d => explainLines(page, d.seq),
+  }
+}
+
+/**
+ * A lesson beat is not one of SkillBeat's rounds, so it opens its own question. `useQuestion` reads its lines once, so the
+ * parent keys this on the step; and a child's effects run before its parent's, so the question is open before the
+ * orchestrator speaks the beat's ask.
+ */
+const TeachQuestion: React.FC<{ lines: () => string[] }> = ({ lines }) => { useQuestion(lines); return null }
 
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 const RT_CSS = `
@@ -462,7 +555,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     const targets = pageRef.current.targets
     const step = targets[stepRef.current]
     const brush = loadedRef.current
-    if (!brush) { speak(`Pick up a paint first! We need ${COLORS[step.color].label}.`); return }
+    if (!brush) { speak(noPaintLine(step)); return }
 
     const region = floodRegion(p, ix, iy)
     let area = region                                     // what actually gets painted
@@ -501,11 +594,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     // a slipped finger or a wandering eye, and this chapter measures whether they know red. Point
     // back at the glow and leave the score alone.
     if (hit && hit !== step) {
-      // "That's the tulip!" when they just tapped a tulip and were asked for the tulip is maddening.
-      // The page has two of them and only the glow tells them apart, so the words have to admit it.
-      speak(hit.noun === step.noun
-        ? `That's the other ${hit.noun}! Tap the one that is glowing.`
-        : `That's the ${hit.noun}! Tap the part that is glowing.`)
+      speak(wrongPartLine(hit, step))
       nudge()
       return
     }
@@ -516,7 +605,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       // question they already have.
       fill(area, COLORS[brush].hex)
       strayFills.current += 1
-      if (strayFills.current % 3 === 0) { speak(`Now, where is the ${step.noun}? Look for the glowing part!`); nudge() }
+      if (strayFills.current % 3 === 0) { speak(strayLine(step)); nudge() }
       return
     }
     // The wrong paint, though, IS the skill, and it is the only thing here that counts as wrong.
@@ -531,7 +620,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     }
 
     if (brush !== step.color) {
-      speak(`That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`)
+      speak(wrongPotLine(brush, step))
       nudge()
       return
     }
@@ -541,8 +630,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (phaseRef.current === 'teach') {
       // Name it once more ON the finished colour, which is the moment the word and the thing are
       // both in front of the child at the same time.
-      const c = COLORS[step.color].label
-      speak(`${c}! The ${step.noun} is ${c}.`)
+      speak(namedLine(step))
       const next = stepRef.current + 1
       timers.current.push(window.setTimeout(() => {
         setLoaded(null)
@@ -568,7 +656,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (!step) return
     if (brush !== step.color) {
       erred.current = true
-      speak(`That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`)
+      speak(wrongPaintLine(brush, step))
       nudge()
       return
     }
@@ -594,42 +682,16 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (phase !== 'teach') return
     const t = TEACH_PAGE.targets[stepIdx]
     if (!t) return
-    const c = COLORS[t.color].label
     // `speakAfterCurrent`: a correct fill says "red! the tulip is red." and immediately advances
     // the step, so this beat's own line used to arrive on top of it.
-    speakAfterCurrent(`This color is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`)
+    speakAfterCurrent(teachLine(t))
   }, [phase, stepIdx])
 
   // Depends on the open page and nothing that changes DURING a round, so picking up a pot can never
   // regenerate the question or reshuffle the box under the child. The page is fixed before the test
   // starts, so listing it here costs nothing.
-  const beat = useMemo<Beat<ColorRound>>(() => ({
-    skillId: 'colors', rounds: SCORED_ROUNDS,
-    make: (d, round = 0) => makeColorRound(page, (d || 1) as 1 | 2 | 3, round),
-    sig: d => `${d.seq}`,   // one question per named area; the shuffled pot order is not variety
-    /**
-     * ⚠️ EMPTY ON PURPOSE — THIS CHAPTER DRAWS ITS OWN QUESTION, AND IT HAS TO.
-     *
-     * `SkillBeat`'s prompt pill is a real `<button>` (tap to hear it again), and in every other
-     * chapter that is right: it sits in a band the answers do not use. Here the answer surface is a
-     * colouring page that fills the whole frame, so the pill lies ACROSS the picture and swallows
-     * every tap underneath it. Measured at 640×320: the pill spans x 181–459, y 48–93 and the
-     * balloon this page asks for spans x 415–490, y 15–120 — so a child aiming at the middle of the
-     * answer hit the pill and the balloon never coloured.
-     *
-     * That is the same fault this file's own `Banner` comment already records for the LESSON
-     * banner, arriving in the scored half through a control the chapter does not own. The banner
-     * below is `pointerEvents: none`, so the question is still on screen and the picture is whole;
-     * the replay moved into the top chrome, beside Menu, where a small overlay is already accepted.
-     * ⚠️ `say` is untouched — SkillBeat still SPEAKS the round, it just draws nothing.
-     */
-    prompt: () => '',
-    say: d => sayFor(page, d),
-    Play: ({ onSubmit }) => <Register onSubmit={onSubmit} register={register} />,
-    Reteach: ({ data, onDone }) => (
-      <Explain page={page} seq={data.seq} onLoad={setLoaded} onPaint={() => fillTarget(data.seq)} onDone={onDone} />
-    ),
-  }), [register, fillTarget, page])
+  // eslint-disable-next-line react-hooks/refs -- both are stored for the round's Play and Reteach, never called here
+  const beat = useMemo(() => makeColorBeat(page, register, setLoaded, fillTarget), [register, fillTarget, page])
 
   // Landscape-first, like the rest of the 3–5 set: the picture is wide and the paint box needs the
   // width. Sits BELOW every hook — an early return above one makes turning the phone change the hook
@@ -708,6 +770,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       <ReadyBar show={phase === 'test' && pendingPaint !== null} onCommit={commitPaint} label="Done ✓" align="right" />
 
       {phase === 'teach' && target && Banner(`${stepIdx + 1} of ${TEACH_STEPS} · This is ${COLORS[target.color].label.toUpperCase()}`)}
+      {phase === 'teach' && target && <TeachQuestion key={stepIdx} lines={() => teachLines(stepIdx, pots)} />}
 
       {/* The scored question, in the chapter's own PASS-THROUGH banner — see the beat's `prompt`. */}
       {phase === 'test' && target && Banner(promptFor(page, { seq: stepIdx, pots }))}

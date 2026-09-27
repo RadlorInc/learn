@@ -52,7 +52,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -469,9 +469,48 @@ export const ASK_PILE: Record<QKind, string> = {
 export const askFor = (r: MoneyRound) => (r.asPile ? ASK_PILE : ASK)[r.kind]
 
 // ─── The round ────────────────────────────────────────────────────────────────────────
+/** Is this till a sale? The ONE grader: `pay` asks it, and so does the list of what a round can say. */
+const pays = (r: MoneyRound, laid: CoinValue[], best: number) =>
+  laid.reduce((s, v) => s + v, 0) === r.price && (r.kind !== 'fewest' || laid.length === best)
+/** The sale, as his bubble writes it; spoken with a "Yes!" in front. */
+const soldLine = (st: Stall, r: MoneyRound, best: number) => r.kind === 'fewest'
+  ? `${numberToWords(r.price)} in just ${numberToWords(best)} coins!`
+  : `That is ${numberToWords(r.price)}. The ${st.one} is yours!`
+const yesLine = (st: Stall, r: MoneyRound, best: number) => `Yes! ${soldLine(st, r, best)}`
+
+/**
+ * Every till the card can hold at this price — up to PURSE_MAX coins from `poolFor(price)`, one of each (count, total),
+ * which is all `missFor` reads. It starts EMPTY because Pay is never disabled: a total of zero is a real answer.
+ */
+function tillsFor(price: number): CoinValue[][] {
+  const out: CoinValue[][] = [[]], seen = new Set(['0:0'])
+  let layer: CoinValue[][] = [[]]
+  for (let k = 1; k <= PURSE_MAX; k++) {
+    const next: CoinValue[][] = []
+    for (const t of layer) for (const v of poolFor(price)) {
+      const till = [...t, v], key = `${k}:${till.reduce((s, c) => s + c, 0)}`
+      if (!seen.has(key)) { seen.add(key); next.push(till) }
+    }
+    out.push(...next); layer = next
+  }
+  return out
+}
+
+/**
+ * Everything a round can say once the buyer is at the counter (founder, 2026-09-27, AUDIO-ROUND2 §1.5): the keeper's
+ * opener, the sale, and the miss for every till that is not a sale — each total the card can reach, and on a `fewest`
+ * round each coin count that makes the price the long way. ⚠️ The misses name the child's OWN total, so this is every
+ * total the card can reach and not a band around the price: a line left out is Josh replaced by the device voice.
+ */
+function roundLines(st: Stall, r: MoneyRound): string[] {
+  const best = fewestFor(r.price, poolFor(r.price)).length
+  const misses = tillsFor(r.price).filter(t => !pays(r, t, best)).map(t => missFor(r, t, best))
+  return [openerFor(st, r), yesLine(st, r, best), ...new Set(misses)]
+}
+
 type Mode = 'demo' | 'guided' | 'practice'
 
-const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete: (c: boolean) => void }> =
+export const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete: (c: boolean) => void }> =
 ({ st, data, mode, onComplete }) => {
   const { kind, price } = data
   const { w: vw, h: vh } = useViewport()
@@ -481,6 +520,8 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
   const buyerH = buyerHFor(vh, groundPx, bannerBottom(vh))
   const pool = useMemo(() => poolFor(price), [price])
   const best = useMemo(() => fewestFor(price, pool).length, [price, pool])
+  // Before the opener below is spoken: the guided round opens its own question (a practice one's is opened by SkillBeat).
+  useQuestion(() => roundLines(st, data), mode === 'guided')
 
   const [t, setT] = useState<Till>(EMPTY)
   const [leg, setLeg] = useState<Leg>(0)
@@ -492,8 +533,6 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
   const say = useCallback((s: string) => { setNote(s); speak(s) }, [])
-
-  const total = t.laid.reduce((s, v) => s + v, 0)
 
   useEffect(() => {
     setT(EMPTY); setNote(''); setOk(false); setLive(false); setLeg(0)
@@ -531,11 +570,8 @@ const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onComplete:
 
   function pay() {
     if (done.current || !live) return
-    if (total === price && (kind !== 'fewest' || t.laid.length === best)) {
-      const line = kind === 'fewest'
-        ? `${numberToWords(price)} in just ${numberToWords(best)} coins!`
-        : `That is ${numberToWords(price)}. The ${st.one} is yours!`
-      setNote(line); speak(`Yes! ${line}`)
+    if (pays(data, t.laid, best)) {
+      setNote(soldLine(st, data, best)); speak(yesLine(st, data, best))
       finish(true)
       return
     }
@@ -649,6 +685,32 @@ function CoinCard({ pool, laid, band, vw, live, full, swept, onLay, onBack, onPa
  * SAME price twice — 30 as six 5s, then as one 25 and one 5 — so the child sees that the amount did
  * not change and the handful did. No amount of counting coins says that.
  */
+/** The demo's narration (and the re-teach's), in order, with the step each line shows. */
+function explainScript(st: Stall, data: MoneyRound, setT: React.Dispatch<React.SetStateAction<Till>>, setLeg: (leg: Leg) => void) {
+  const plan = fewestFor(data.price, poolFor(data.price))
+  const set = data.kind === 'fewest' ? plan : data.shown
+  // He is talking to the buyer, so he says what it costs — he does not narrate himself in the third
+  // person, which is what a bubble makes obvious and a top banner hid.
+  const lines: string[] = [`${aOrAn(st.one)[0].toUpperCase()}${aOrAn(st.one).slice(1)} ${st.one} — that is ${numberToWords(data.price)}.`]
+  const steps: Array<() => void> = [() => { setT({ ...EMPTY, key: 'd' }); setLeg(0) }]
+  // ⚠️ Each step says the RUNNING TOTAL, not the coin's own value. Naming the coin gave a bubble
+  // reading "30 · five" six times over, which is how you say what you are holding and not how you
+  // count money out — you say five, ten, fifteen. The demo should model the counting.
+  let run: CoinValue[] = []
+  let sum = 0
+  for (const v of set) {
+    run = [...run, v]; sum += v
+    const snap = run
+    lines.push(numberToWords(sum))
+    steps.push(() => setT(s => ({ ...s, laid: snap, settled: snap.length - 1 })))
+  }
+  lines.push(data.kind === 'fewest'
+    ? `The same ${numberToWords(data.price)} — in only ${numberToWords(set.length)} coins.`
+    : `That is ${numberToWords(data.price)}. Just right.`)
+  steps.push(() => { setT(s => ({ ...s, swept: true })); setLeg(1) })
+  return { lines, steps }
+}
+
 const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }> = ({ st, data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const band = CARD_BAND(vh)
@@ -658,27 +720,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
   const doneRef = useLatestRef(onDone)
 
   useEffect(() => {
-    const plan = fewestFor(data.price, poolFor(data.price))
-    const set = data.kind === 'fewest' ? plan : data.shown
-    // He is talking to the buyer, so he says what it costs — he does not narrate himself in the third
-    // person, which is what a bubble makes obvious and a top banner hid.
-    const lines: string[] = [`${aOrAn(st.one)[0].toUpperCase()}${aOrAn(st.one).slice(1)} ${st.one} — that is ${numberToWords(data.price)}.`]
-    const steps: Array<() => void> = [() => { setT({ ...EMPTY, key: 'd' }); setLeg(0) }]
-    // ⚠️ Each step says the RUNNING TOTAL, not the coin's own value. Naming the coin gave a bubble
-    // reading "30 · five" six times over, which is how you say what you are holding and not how you
-    // count money out — you say five, ten, fifteen. The demo should model the counting.
-    let run: CoinValue[] = []
-    let sum = 0
-    for (const v of set) {
-      run = [...run, v]; sum += v
-      const snap = run
-      lines.push(numberToWords(sum))
-      steps.push(() => setT(s => ({ ...s, laid: snap, settled: snap.length - 1 })))
-    }
-    lines.push(data.kind === 'fewest'
-      ? `The same ${numberToWords(data.price)} — in only ${numberToWords(set.length)} coins.`
-      : `That is ${numberToWords(data.price)}. Just right.`)
-    steps.push(() => { setT(s => ({ ...s, swept: true })); setLeg(1) })
+    const { lines, steps } = explainScript(st, data, setT, setLeg)
     const cancel = speakSteps(lines, {
       onStep: i => { steps[i]?.(); setNote(lines[i]) },
       onDone: () => window.setTimeout(() => doneRef.current(), 1200),
@@ -727,6 +769,8 @@ export const BEAT: Beat<MoneyRound> = {
   prompt: () => '',
   Play: ({ data, onSubmit }) => <CoinRound st={stallAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
   Reteach: ({ data, onDone }) => <CoinExplain st={stallAt(data.slot)} data={data} onDone={onDone} />,
+  feedbackLines: d => roundLines(stallAt(d.slot), d),
+  reteachLines: d => explainScript(stallAt(d.slot), d, () => {}, () => {}).lines,
 }
 
 const CS_CSS = `
@@ -736,6 +780,8 @@ const CS_CSS = `
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
+/** The one guided round: a numeral price, the simpler gesture (see DEMO below for why the pile gets no guided round). */
+export const GUIDED: MoneyRound = { slot: GUIDED_SLOT, kind: 'pay', price: 7, shown: [5, 1, 1], asPile: false }
 
 export default function CoinShop({ onFinish, onExit }: {
   /** kept so old `?world=` links do not 404 — there is no picker any more */
@@ -766,8 +812,6 @@ export default function CoinShop({ onFinish, onExit }: {
     { slot: 0, kind: 'pay', price: 30, shown: [5, 5, 5, 5, 5, 5], asPile: false },
     { slot: 1, kind: 'fewest', price: 30, shown: [5, 5, 5, 5, 5, 5], asPile: true },
   ], [])
-  const GUIDED: MoneyRound = useMemo(() =>
-    ({ slot: GUIDED_SLOT, kind: 'pay', price: 7, shown: [5, 1, 1], asPile: false }), [])
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.

@@ -27,7 +27,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -291,8 +291,21 @@ type Mode = 'guided' | 'practice'
  */
 export const ASK = 'Which sign is right?'
 const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. ${ASK}`
+const LOOK_AGAIN = 'Look again — which side is bigger? Try once more!'
+const yesLine = ({ a, b, answer }: CmpRound) =>
+  answer === '=' ? `Yes! ${numberToWords(a)} equals ${numberToWords(b)}!` : `Yes! ${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}!`
+/** Every line a round can say once it has loaded: the one wrong-sign line, and the guided round's ask and "Yes!". */
+const cmpLines = (d: CmpRound, mode: Mode): string[] => [LOOK_AGAIN, ...(mode === 'guided' ? [sayFor(d), yesLine(d)] : [])]
+/** The re-teach, in order — `CompareExplain` pairs lines[i] with steps[i]. */
+function explainLines({ a, b, answer }: CmpRound): string[] {
+  return [
+    `${numberToWords(a)} on this side, and ${numberToWords(b)} on that side.`,
+    answer === '=' ? `They are the same — ${numberToWords(a)} equals ${numberToWords(b)}.` : `${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}.`,
+    `So the sign is ${signWord(answer)}!`,
+  ]
+}
 
-const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
+export const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { a, b, item, answer } = data
   const { h: vh } = useViewport()
   const short = vh < 470
@@ -305,6 +318,7 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
   // comparing two numbers. Same fault as chapter 4's green Ready button and the teen band's
   // rejected live-tilt balance beam; see chapter-craft.md §1. It now tips only once they commit.
   const tilt = picked !== null
+  useQuestion(() => cmpLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
     if (mode === 'guided') speakAfterCurrent(sayFor(data))
@@ -329,11 +343,11 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
     if (done.current || picked !== null) return
     if (ch === answer) {
       setPicked(ch); done.current = true
-      if (mode === 'guided') speak(answer === '=' ? `Yes! ${numberToWords(a)} equals ${numberToWords(b)}!` : `Yes! ${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}!`)
+      if (mode === 'guided') speak(yesLine(data))
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1300)
     } else {
       erred.current = true
-      speak('Look again — which side is bigger? Try once more!')
+      speak(LOOK_AGAIN)
     }
   }
 
@@ -375,11 +389,7 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
   const [reveal, setReveal] = useState(false)
   const doneRef = useLatestRef(onDone)
   useEffect(() => {
-    const lines = [
-      `${numberToWords(a)} on this side, and ${numberToWords(b)} on that side.`,
-      answer === '=' ? `They are the same — ${numberToWords(a)} equals ${numberToWords(b)}.` : `${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}.`,
-      `So the sign is ${signWord(answer)}!`,
-    ]
+    const lines = explainLines(data)
     const steps: Array<() => void> = [
       () => { setTilt(false); setReveal(false) },
       () => setTilt(true),
@@ -409,6 +419,9 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
   )
 }
 
+/** The unscored round after the demo, on the slot after the demo's. */
+export const GUIDED: CmpRound = { ...RUN[DEMO_N], a: 3, b: 7, answer: compareSign(3, 7) }
+
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
 export function makeCompareBeat(): Beat<CmpRound> {
   return {
@@ -419,6 +432,8 @@ export function makeCompareBeat(): Beat<CmpRound> {
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ComparePlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <CompareExplain data={data} onDone={onDone} />,
+    feedbackLines: d => cmpLines(d, 'practice'),
+    reteachLines: explainLines,
   }
 }
 
@@ -461,7 +476,6 @@ export default function SeesawPark({ onFinish, onExit }: {
     { ...RUN[1], a: 2, b: 8, answer: compareSign(2, 8) },
     { ...RUN[2], a: 4, b: 4, answer: compareSign(4, 4) },
   ]
-  const GUIDED: CmpRound = { ...RUN[DEMO_N], a: 3, b: 7, answer: compareSign(3, 7) }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (

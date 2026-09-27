@@ -27,7 +27,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, speakSteps, useIsSpeaking, stopSpeech, useNoVoice } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
@@ -243,6 +243,23 @@ function sayFor(w: NestWorld, d: NestRound): string {
   return `Feed the ${w.noun} in nest number ${t}. Tap the nest that says ${t}!`
 }
 
+const wrongLine = (tapped: number, target: number) => `That's ${tapped}. Find nest number ${target}!`
+const yesLine = (target: number) => `Yes! Nest number ${target}! Great job!`
+/** Every line a nest round can say once it has loaded: each wrong nest's line, and the guided round's "Yes!" and ask. */
+function nestLines(world: NestWorld, d: NestRound, mode: Mode): string[] {
+  const t = d.nums[d.answerIdx]
+  return [...d.nums.filter((_, i) => i !== d.answerIdx).map(x => wrongLine(x, t)), ...(mode === 'guided' ? [yesLine(t), guidedSay(world, t)] : [])]
+}
+/** The re-teach, in order. */
+function explainLines(world: NestWorld, d: NestRound): string[] {
+  const t = d.nums[d.answerIdx]
+  return [
+    `This ${world.noun} is hungry. Listen: nest number ${t}.`,
+    `${t}! Find the nest that says ${t}.`,
+    `There it is! Mommy bird feeds nest number ${t}.`,
+  ]
+}
+
 /** Shared flight choreography: fly to the nest, feed, fly home. */
 function useFlight(slots: { left: number; top: number }[]) {
   const [at, setAt] = useState(PERCH)
@@ -260,7 +277,7 @@ function useFlight(slots: { left: number; top: number }[]) {
 
 // ─── Play surface (guided / practice) ────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
-const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+export const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { nums, answerIdx } = data
   const target = nums[answerIdx]
   const n = nums.length
@@ -273,10 +290,11 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
   const { at, flyTo } = useFlight(slots)
   const erred = useRef(false), done = useRef(false), wrongLock = useRef(false), tapLock = useRef(false)
   const speaking = useIsSpeaking()
+  useQuestion(() => nestLines(world, data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   const finish = useCallback(() => {
     if (done.current) return; done.current = true
-    if (mode === 'guided') speak(`Yes! Nest number ${target}! Great job!`)
+    if (mode === 'guided') speak(yesLine(target))
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1000)
   }, [mode, target, onComplete])
 
@@ -305,7 +323,7 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
       flyTo(i, () => { setFedIdx(i); window.setTimeout(finish, 700) })
     } else {
       erred.current = true; setWrongIdx(i)
-      if (!wrongLock.current) { wrongLock.current = true; speak(`That's ${nums[i]}. Find nest number ${target}!`); window.setTimeout(() => { wrongLock.current = false }, 1300) }
+      if (!wrongLock.current) { wrongLock.current = true; speak(wrongLine(nums[i], target)); window.setTimeout(() => { wrongLock.current = false }, 1300) }
       window.setTimeout(() => setWrongIdx(w => (w === i ? null : w)), 600)
     }
   }
@@ -346,11 +364,7 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
   const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const lines = [
-      `This ${world.noun} is hungry. Listen: nest number ${target}.`,
-      `${target}! Find the nest that says ${target}.`,
-      `There it is! Mommy bird feeds nest number ${target}.`,
-    ]
+    const lines = explainLines(world, data)
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         setLine(lines[i] ?? '')
@@ -397,6 +411,9 @@ function makeRound(world: NestWorld, d: 1 | 2 | 3, round: number): NestRound {
   return { scene, nums, answerIdx: nums.indexOf(target) }
 }
 
+/** The guided round: nest 2 of two, in the world's third scene. */
+export const guidedRound = (world: NestWorld): NestRound => ({ scene: world.scenes[2] ?? world.scenes[0], nums: [4, 2], answerIdx: 1 })
+
 export function makeNestBeat(world: NestWorld): Beat<NestRound> {
   return {
     skillId: 'numberRecognition', rounds: 10, walkEvery: 3,
@@ -406,6 +423,8 @@ export function makeNestBeat(world: NestWorld): Beat<NestRound> {
     say: d => sayFor(world, d),
     Play: ({ data, onSubmit }) => <NestPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <NestExplain world={world} data={data} onDone={onDone} />,
+    feedbackLines: d => nestLines(world, d, 'practice'),
+    reteachLines: d => explainLines(world, d),
   }
 }
 
@@ -464,7 +483,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
     { scene: world.scenes[0], nums: [2, 3], answerIdx: 1 },
     { scene: world.scenes[1] ?? world.scenes[0], nums: [5, 1, 8], answerIdx: 0 },
   ]
-  const GUIDED_ROUND: NestRound = { scene: world.scenes[2] ?? world.scenes[0], nums: [4, 2], answerIdx: 1 }
+  const GUIDED_ROUND = guidedRound(world)
   const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
   // ⚠️ THE GUIDED ROUND HAD NO WAY TO HEAR THE QUESTION TWICE. The number is spoken once, on

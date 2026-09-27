@@ -18,7 +18,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq, speakAfterCurrent, useIsSpeaking } from '@/infra/useMiloSpeaker'
 import { type Difficulty } from '@/core/progression'
-import type { Beat } from './StoryWorld'
+import { type Beat, useQuestion } from './StoryWorld'
 import { CountItem, type CountKind, COUNT_PLURAL } from './art'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -233,12 +233,24 @@ const CollectTray: React.FC<{ obj: CountKind; n: number; maxCell: number; vw: nu
     </div>
   )
 }
+/** The count said aloud, one number a tap (or a demo step), up to `n`. */
+const countAloud = (n: number) => Array.from({ length: n }, (_, i) => String(i + 1))
+/** The guided count's ask. ForestWalk says it as the round opens; it lives here so the round can declare it. */
+export const GUIDE_ASK = 'Now you count! Tap each one you see.'
+const COUNT_TOGETHER = "Let's count together!"
+const HOW_MANY_ASK = 'So how many did you count? Tap the number!'
+/** The counting demo, in order — and the re-teach, which is the same demo for the round's quantity. */
+const demoLines = (to: number) => [COUNT_TOGETHER, ...countAloud(to)]
+
 // The GUIDED count — now the same come-and-go PARADE as the demo/practice, but the CHILD does
 // the counting: creatures walk/fly/swim through ~2 at a time and the child taps each one to count
 // it (it pops, walks off, and the next enters). The running number climbs on the pill. There's no
 // "how many?" question here — that stays exclusive to the scored practice; once all N are counted
 // this guided beat is done.
 export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
+  // Only ever the guided round, so always a question of its own. ForestWalk's ask comes after this opens: a parent's
+  // effects run after its children's.
+  useQuestion(() => [GUIDE_ASK, ...countAloud(data.n)])
   const [stage, setStage] = useState<(Slot | null)[]>([null, null])
   const [counted, setCounted] = useState(0)
   const speaking = useIsSpeaking()              // block taps while the voice says a number, so fast taps can't skip the count
@@ -351,7 +363,7 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
   useEffect(() => {
     if (didInit.current) return
     didInit.current = true
-    speakAfterCurrent("Let's count together!")
+    speakAfterCurrent(COUNT_TOGETHER)
     // Fill the opening one/two slots (same spawn machinery as the practice parade).
     setStage(() => {
       const next: (Slot | null)[] = [null, null]
@@ -604,7 +616,7 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   function pick(v: number) { if (locked || picked != null) return; setPending(p => (p === v ? null : v)) }
   function commit() { const v = pending; if (v == null) return; setPending(null); choose(v) }
   useEffect(() => {
-    if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent('So how many did you count? Tap the number!') }
+    if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent(HOW_MANY_ASK) }
   }, [allCounted])
 
   return (
@@ -781,6 +793,9 @@ export function makePracticeCountBeat(story: Storytelling): Beat<HowManyData> {
     prompt: d => `Count the ${COUNT_PLURAL[d.obj]}!`,
     say: d => `Here come the ${COUNT_PLURAL[d.obj]}! Tap each one to count it.`,
     Play: ParadeCountPlay, Reteach: FlyingReteach,
+    // Counting the parade says nothing — the tray is the running count — so the one line after the first tap is the ask.
+    feedbackLines: () => [HOW_MANY_ASK],
+    reteachLines: d => demoLines(d.n),
   }
 }
 

@@ -35,7 +35,7 @@
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -212,7 +212,29 @@ export const markerHeight = (vh: number) => Math.max(44, Math.min(54, Math.round
  *  doing the tapping, so they must not be three different pictures. */
 type Mode = 'demo' | 'guided' | 'practice'
 
-const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boolean) => void }> =
+const missLine = (add: boolean) => (add ? 'Not quite — count them all again, one by one.' : 'Not quite — count who is still here.')
+const guidedLine = (add: boolean) => (add ? 'Some more come to play! Count them all, then tap how many.'
+  : 'Some go home! Count who is left, then tap how many.')
+/**
+ * Every line a round can say once it has loaded. The miss line is the same whichever marker was tapped — it never names
+ * the number — so there is one; the guided round adds its opening ask.
+ */
+function playLines(d: PlayRound, mode: Mode): string[] {
+  return [missLine(d.op === '+'), ...(mode === 'guided' ? [guidedLine(d.op === '+')] : [])]
+}
+/** The demo, in order — also the 3-wrong re-teach, which replays it on the round just missed. */
+function demoLines(d: PlayRound): string[] {
+  const add = d.op === '+'
+  return [
+    `${COUNT_WORDS[d.a]} ${kindAt(d.castIdx).plural} are playing.`,
+    ...Array.from({ length: d.b }, () => (add ? 'Another one comes to play!' : 'One goes home.')),
+    add ? 'Now count them ALL.' : 'Now count who is LEFT.',
+    ...Array.from({ length: d.answer }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
+    `That makes ${d.answer}. Tap the ${d.answer}!`,
+  ]
+}
+
+export const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boolean) => void }> =
 ({ data, mode, onDone }) => {
   const { op, a, b, answer, choices } = data
   const add = op === '+'
@@ -244,6 +266,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
   const [wrongPick, setWrongPick] = useState<number | null>(null)
   const [pending, setPending] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false), spoke = useRef(false)
+  useQuestion(() => playLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
   const timers = useRef<number[]>([])
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
   useEffect(() => () => { timers.current.forEach(clearTimeout); timers.current = [] }, [])
@@ -306,10 +329,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
         ? Math.max(...movers.map(i => journeyOf(spotOf(i, !add), spotOf(i, add), vw, vh, babySize, kind.src).ms))
         : 0
       after(OPENING_MS + (movers.length - 1) * JOIN_GAP_MS + longest + 200, () => setAsking(true))
-      if (mode === 'guided') {
-        speakAfterCurrent(add ? 'Some more come to play! Count them all, then tap how many.'
-                  : 'Some go home! Count who is left, then tap how many.')
-      }
+      if (mode === 'guided') speakAfterCurrent(guidedLine(add))
       return
     }
 
@@ -318,13 +338,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
     const counted = add
       ? Array.from({ length: pool }, (_, i) => i)
       : Array.from({ length: pool }, (_, i) => i).filter(i => i >= b)
-    const lines = [
-      `${COUNT_WORDS[a]} ${kind.plural} are playing.`,
-      ...movers.map(() => (add ? 'Another one comes to play!' : 'One goes home.')),
-      add ? 'Now count them ALL.' : 'Now count who is LEFT.',
-      ...Array.from({ length: answer }, (_, k) => `${COUNT_WORDS[k + 1] ?? k + 1}.`),
-      `That makes ${answer}. Tap the ${answer}!`,
-    ]
+    const lines = demoLines(data)
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         if (i === 0) return
@@ -370,7 +384,7 @@ const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct: boole
     after(520, () => setWrongPick(null))
     if (!spoke.current) {
       spoke.current = true
-      speak(add ? 'Not quite — count them all again, one by one.' : 'Not quite — count who is still here.')
+      speak(missLine(add))
       after(2000, () => { spoke.current = false })
     }
   }
@@ -522,6 +536,8 @@ export function makePlayBeat(op: Op): Beat<PlayRound> {
       : `${d.a} are playing. ${d.b} go home. Count who is left, then tap how many.`,
     Play: ({ data, onSubmit }) => <PlayScene data={data} mode="practice" onDone={onSubmit} />,
     Reteach: ({ data, onDone }) => <PlayScene data={data} mode="demo" onDone={() => onDone()} />,
+    feedbackLines: d => playLines(d, 'practice'),
+    reteachLines: demoLines,
   }
 }
 
@@ -532,6 +548,11 @@ const PT_CSS = `
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
 const TOTAL_ROUNDS = 10
+/** The guided round — a different habitat from the demo's (see below). */
+export const GUIDED_ROUND: Record<Op, PlayRound> = {
+  '+': { scene: HABITATS.reef.scenes[0], op: '+', a: 2, b: 1, answer: 3, choices: [2, 3, 4], castIdx: 1 },
+  '-': { scene: HABITATS.reef.scenes[0], op: '-', a: 4, b: 1, answer: 3, choices: [2, 3, 4], castIdx: 1 },
+}
 
 export default function PlayTime({ op = '+', onFinish, onExit }: {
   op?: Op
@@ -554,10 +575,8 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
   const DEMO_ROUND: PlayRound = add
     ? { scene: HABITATS.meadow.scenes[0], op, a: 2, b: 2, answer: 4, choices: [3, 4, 5], castIdx: 0 }
     : { scene: HABITATS.meadow.scenes[0], op, a: 5, b: 2, answer: 3, choices: [2, 3, 4], castIdx: 0 }
-  const GUIDED_ROUND: PlayRound = add
-    ? { scene: HABITATS.reef.scenes[0], op, a: 2, b: 1, answer: 3, choices: [2, 3, 4], castIdx: 1 }
-    : { scene: HABITATS.reef.scenes[0], op, a: 4, b: 1, answer: 3, choices: [2, 3, 4], castIdx: 1 }
-  const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : DEMO_ROUND.scene
+  const GUIDED = GUIDED_ROUND[op]
+  const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED.scene : DEMO_ROUND.scene
   const allScenes = useMemo(() => Object.values(HABITATS).flatMap(h => h.scenes), [])
 
   // Landscape-first: they walk ACROSS the picture, which a portrait phone has no room for. This
@@ -596,7 +615,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
         <PlayScene key="demo" data={DEMO_ROUND} mode="demo" onDone={() => setPhase('guided')} /></>)}
 
       {phase === 'guided' && (<>{Banner('Now you! Tap how many')}
-        <PlayScene key="guided" data={GUIDED_ROUND} mode="guided" onDone={() => setPhase('practice')} /></>)}
+        <PlayScene key="guided" data={GUIDED} mode="guided" onDone={() => setPhase('practice')} /></>)}
 
       {phase === 'practice' && (<>
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>

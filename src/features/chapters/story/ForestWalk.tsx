@@ -14,7 +14,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { hasChapterResume } from '@/infra/storage/chapterResume'
 import { useNeedsRotate } from './RotateGate'
 import { type CountKind } from './art'
-import { FlyingCountDemo, FlyingCountPlay } from './world1'
+import { FlyingCountDemo, FlyingCountPlay, GUIDE_ASK } from './world1'
 import { BIOMES, BIOME_ORDER, type BiomeId } from './biomes'
 
 const CSS = `
@@ -216,7 +216,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       const cap = window.setTimeout(go, Math.max(4500, beat.text.length * 90))
       return () => { cancel(); window.clearTimeout(cap) }
     }
-    if (beat.kind === 'guide') { speakAfterCurrent('Now you count! Tap each one you see.') }
+    if (beat.kind === 'guide') { speakAfterCurrent(GUIDE_ASK) }
     return () => stopSpeech()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])

@@ -32,7 +32,7 @@
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import type { Difficulty } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -229,10 +229,30 @@ function NumberSign({ n, size }: { n: number; size: number }) {
 // ─── The scene ───────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
 
-const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boolean) => void }> =
+const askWordOf = (d: CmpRound) => d.mode === 'more'
+  ? (d.counts.length > 2 ? 'the MOST' : 'MORE')
+  : (d.counts.length > 2 ? 'the FEWEST' : 'FEWER')
+const guidedAsk = (d: CmpRound) => `Now you! Tap the bunch with ${askWordOf(d)}.`
+const wrongLine = (d: CmpRound) => d.numerals ? `Not that one — look at the numbers again.` : `Not quite — count each bunch again.`
+/** Every line a round can say once it has loaded: a right bunch walks off in silence, so only the wrong-tap line — and
+ *  the guided round's ask. */
+const cmpLines = (d: CmpRound, mode: Mode) => [wrongLine(d), ...(mode === 'guided' ? [guidedAsk(d)] : [])]
+/** The demo, in order — the re-teach is the same demo on the round's own bunches. */
+function demoLines(d: CmpRound): string[] {
+  const { counts, numerals, want } = d
+  return numerals
+    ? [`This one has ${numerals[0]}. This one has ${numerals[1]}.`,
+       `${numerals[want]} is ${d.mode === 'more' ? 'bigger' : 'smaller'}. Tap that one!`]
+    : [`Let's count this bunch. ${counts[0]}.`,
+       `And this bunch. ${counts[1]}.`,
+       `${counts[want]} is ${d.mode === 'more' ? 'more' : 'fewer'} — that is the one we pick.`]
+}
+
+export const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boolean) => void }> =
 ({ data, mode, onDone }) => {
   const { counts, numerals, want } = data
   const kind = kindAt(data.castIdx)
+  useQuestion(() => cmpLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
   const { w: vw, h: vh } = useViewport()
   const { world, edgePct, rows, gapK, size: babySize, band, leadY, mx, hostSrc, rightPct } =
     compareLayout(vw, vh, counts, data.castIdx)
@@ -268,26 +288,17 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     after(MARCH_MS - 200, () => onDone(mode === 'practice' ? !erred.current : true))
   }, [mode, onDone, after])
 
-  const askWord = data.mode === 'more'
-    ? (counts.length > 2 ? 'the MOST' : 'MORE')
-    : (counts.length > 2 ? 'the FEWEST' : 'FEWER')
-
   const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
     if (mode !== 'demo') {
       after(OPENING_MS, () => setLive(true))
-      if (mode === 'guided') speakAfterCurrent(`Now you! Tap the bunch with ${askWord}.`)
+      if (mode === 'guided') speakAfterCurrent(guidedAsk(data))
       return
     }
     // The demo drives words and movement from ONE narration, so they cannot drift apart — and when
     // audio is blocked speakSteps still paces the steps on a timer.
-    const lines = numerals
-      ? [`This one has ${numerals[0]}. This one has ${numerals[1]}.`,
-         `${numerals[want]} is ${data.mode === 'more' ? 'bigger' : 'smaller'}. Tap that one!`]
-      : [`Let's count this bunch. ${counts[0]}.`,
-         `And this bunch. ${counts[1]}.`,
-         `${counts[want]} is ${data.mode === 'more' ? 'more' : 'fewer'} — that is the one we pick.`]
+    const lines = demoLines(data)
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         if (i < lines.length - 1) return
@@ -323,7 +334,7 @@ const CompareScene: React.FC<{ data: CmpRound; mode: Mode; onDone: (correct: boo
     after(560, () => setWrongPick(null))
     if (!spoke.current) {
       spoke.current = true
-      speak(numerals ? `Not that one — look at the numbers again.` : `Not quite — count each bunch again.`)
+      speak(wrongLine(data))
       after(2000, () => { spoke.current = false })
     }
   }
@@ -504,6 +515,8 @@ export function makeCmpBeat(): Beat<CmpRound> {
       : `Count each bunch. Tap the one with ${d.mode === 'more' ? (d.counts.length > 2 ? 'the most' : 'more') : (d.counts.length > 2 ? 'the fewest' : 'fewer')}.`,
     Play: ({ data, onSubmit }) => <CompareScene data={data} mode="practice" onDone={onSubmit} />,
     Reteach: ({ data, onDone }) => <CompareScene data={data} mode="demo" onDone={() => onDone()} />,
+    feedbackLines: d => cmpLines(d, 'practice'),
+    reteachLines: demoLines,
   }
 }
 
@@ -513,6 +526,12 @@ const BS_CSS = `
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
 const TOTAL_ROUNDS = 10
+
+// The demo and the guided round deliberately use DIFFERENT habitats, so the first thing a child
+// learns is that the place changes but the rule does not.
+const DEMO_ROUND: CmpRound = { scene: HABITATS.meadow.scenes[0], counts: [4, 2], mode: 'more', want: 0, castIdx: 0 }
+/** Exported so the question-lines test can walk the guided round as the child meets it. */
+export const GUIDED_ROUND: CmpRound = { scene: HABITATS.reef.scenes[0], counts: [2, 4], mode: 'more', want: 1, castIdx: 1 }
 
 export default function BigOrSmall({ onFinish, onExit }: {
   world?: string     // accepted for the /story route's shared signature; the chapter is one world
@@ -528,10 +547,6 @@ export default function BigOrSmall({ onFinish, onExit }: {
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeCmpBeat(), [])
 
-  // The demo and the guided round deliberately use DIFFERENT habitats, so the first thing a child
-  // learns is that the place changes but the rule does not.
-  const DEMO_ROUND: CmpRound = { scene: HABITATS.meadow.scenes[0], counts: [4, 2], mode: 'more', want: 0, castIdx: 0 }
-  const GUIDED_ROUND: CmpRound = { scene: HABITATS.reef.scenes[0], counts: [2, 4], mode: 'more', want: 1, castIdx: 1 }
   const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : DEMO_ROUND.scene
   const allScenes = useMemo(() => Object.values(HABITATS).flatMap(h => h.scenes), [])
 
