@@ -16,6 +16,16 @@ Three PRs, stacked, each a Draft. They merge **in this order and never out of it
 
 ## 1. What you must decide
 
+> **DECIDED by the founder, 27 Sep 2026** (the "resume after Pro" brief) — the list below is kept as the reasoning:
+> 1. Re-encode: **no.**
+> 2. Upload keys: **Storage S3 access keys**, created by the founder just before the run and revoked right after it
+>    (§2 steps 5 and 8).
+> 3. §5 wording: **not decided yet — PR B stays a Draft until it is.**
+> 4. PR C: **merges ≥ 48 h after PR B is live.**
+> 5. KG–2 wrong-answer lines: **prefetch** — when a question loads, the clip of every option is fetched, with a test
+>    that the requests are identical whichever option is tapped. Built in the rebuilt #233 (A, B and C do not play KG–2).
+> 6. Supabase plan: not part of this brief.
+
 1. **Re-encode? — recommendation: NO.** Every clip is already mono, 22.05 kHz, ~32 kbps MP3 (measured with `afinfo`
    on a sample of each voice; Josh averages 3.8 s and 15 KB). Opus would save ~20–25% (≈60 MB of 262 MB) and is the
    riskier format on older iPhones. Nothing was re-encoded, so there are no before/after samples; say so if you want them.
