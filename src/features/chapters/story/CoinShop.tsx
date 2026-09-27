@@ -497,16 +497,24 @@ function tillsFor(price: number): CoinValue[][] {
 }
 
 /**
- * Everything a round can say once the buyer is at the counter (founder, 2026-09-27, AUDIO-ROUND2 §1.5): the keeper's
- * opener, the sale, and the miss for every till that is not a sale — each total the card can reach, and on a `fewest`
- * round each coin count that makes the price the long way. ⚠️ The misses name the child's OWN total, so this is every
- * total the card can reach and not a band around the price: a line left out is Josh replaced by the device voice.
+ * The lines only a particular till leads to (founder, 2026-09-27, AUDIO-ROUND2 §1.5): the sale, and the miss for every
+ * till that is not a sale — each total the card can reach, and on a `fewest` round each coin count that makes the price
+ * the long way. ⚠️ The misses name the child's OWN total, so this is every total the card can reach and not a band
+ * around the price: a line left out is Josh replaced by the device voice. The keeper's opener is said as the buyer
+ * arrives, before any answer, so it is declared on its own.
  */
-function roundLines(st: Stall, r: MoneyRound): string[] {
+function answerLines(st: Stall, r: MoneyRound): string[] {
   const best = fewestFor(r.price, poolFor(r.price)).length
   const misses = tillsFor(r.price).filter(t => !pays(r, t, best)).map(t => missFor(r, t, best))
-  return [openerFor(st, r), yesLine(st, r, best), ...new Set(misses)]
+  return [yesLine(st, r, best), ...new Set(misses)]
 }
+/**
+ * ⚠️ HOW MUCH MAY BE FETCHED AHEAD (founder, 2026-09-27): a round's answer lines are fetched before the child pays only
+ * while their clips total at most this; past it they are fetched when said. A money round's misses are one line per
+ * reachable total — a median ~380 KB, up to ~1.2 MB — and the answer reaches Supabase anyway, through progress sync
+ * (first try or after a miss, on the correct answer; not which wrong total — see voiceClipPlayer's `_onTap`).
+ */
+export const ANSWER_BUDGET = 100_000
 
 type Mode = 'demo' | 'guided' | 'practice'
 
@@ -521,7 +529,7 @@ export const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onCo
   const pool = useMemo(() => poolFor(price), [price])
   const best = useMemo(() => fewestFor(price, pool).length, [price, pool])
   // Before the opener below is spoken: the guided round opens its own question (a practice one's is opened by SkillBeat).
-  useQuestion(() => roundLines(st, data), mode === 'guided')
+  useQuestion(() => [openerFor(st, data)], mode === 'guided', () => ({ lines: answerLines(st, data), maxBytes: ANSWER_BUDGET }))
 
   const [t, setT] = useState<Till>(EMPTY)
   const [leg, setLeg] = useState<Leg>(0)
@@ -769,7 +777,9 @@ export const BEAT: Beat<MoneyRound> = {
   prompt: () => '',
   Play: ({ data, onSubmit }) => <CoinRound st={stallAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
   Reteach: ({ data, onDone }) => <CoinExplain st={stallAt(data.slot)} data={data} onDone={onDone} />,
-  feedbackLines: d => roundLines(stallAt(d.slot), d),
+  feedbackLines: d => [openerFor(stallAt(d.slot), d)],
+  answerLines: d => answerLines(stallAt(d.slot), d),
+  answerBudget: ANSWER_BUDGET,
   reteachLines: d => explainScript(stallAt(d.slot), d, () => {}, () => {}).lines,
 }
 

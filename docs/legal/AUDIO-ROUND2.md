@@ -60,7 +60,11 @@ Three PRs, stacked, each a Draft. They merge **in this order and never out of it
    ⚠️ **What it does NOT hide, stated so §5.1 does not overclaim:** the NEXT question is chosen after the answer (the
    tier moves), so the sequence of questions a device asks for still follows how the child is doing; a re-teach's lines
    are fetched with the question only when the two answers before it were wrong; the end card comes sooner on a mastery
-   finish. And ⚠️ **Grades 3–8 lessons are not covered**: Screen 8 fetches "Right!" or the worked example, and Screen 9
+   finish. ⚠️ **And Money is the exception (founder, 27 Sep):** its answer lines (the sale and one miss per reachable
+   total) are fetched ahead only while they total ≤ 100 KB, otherwise when said — measured, 1 of 300 rounds fits, so a
+   Money miss IS a request at the tap, naming the total laid. The founder's reason: the answer reaches Supabase anyway
+   through progress sync — precisely, a signed-in child's correct answer uploads first-try-or-after-a-miss; the clip adds
+   which wrong total, with no account. And ⚠️ **Grades 3–8 lessons are not covered**: Screen 8 fetches "Right!" or the worked example, and Screen 9
    its won / keep-going line, at the moment of the answer (`LessonPlayer.tsx`). The same `openQuestion` would cover them;
    not built — it was not in the decision.
 6. **Supabase plan.** §4 — Pro covers even 10,000 families; the Free plan would not pass ~550.
@@ -157,7 +161,8 @@ PR B makes these published sentences false. Proposed replacements (English; Span
      too (§1 item 5):** **"…every audio clip a child hears is a pre-recorded file, the same for every child, served from
      the file storage of our database provider (Supabase, listed above). The request for a clip names only the recording
      — never the child or the account — and a question's recordings are all fetched when the question appears, so which
-     answer a child picks is not in the requests; which questions come next still follows how the child is doing. Where a
+     answer a child picks is not in the requests (except in Money, where the total paid can be); which questions come next
+     still follows how the child is doing. Where a
      clip is missing the fallback is the browser's own on-device speech."** Until the lessons are covered, use (a).
    - **(a) accept:** **"…every audio clip a child hears is a pre-recorded file, the same for
      every child, served from the file storage of our database provider (Supabase, listed above). The request for a clip
