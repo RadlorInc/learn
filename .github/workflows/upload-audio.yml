@@ -1,0 +1,121 @@
+name: Upload audio
+
+# Uploads the recorded clips named in scripts/audio/manifest.json to the `lesson-audio` Storage bucket — ONLY the
+# ones it does not have yet — and reads every new one back byte-for-byte (founder's "Audio storage" loop, 2026-09-26).
+#
+# ⚠️ RUN BY HAND, NEVER ON A PUSH, AND ONLY WITH APPROVAL: `production-db` has a required reviewer. The job holds
+# Storage S3 keys, which reach EVERY bucket and bypass RLS (Supabase's own warning), so the founder creates them just
+# before a run and revokes them right after (docs/legal/AUDIO-ROUND2.md). Nothing here prints a key, a URL list or
+# an object name — counts only.
+#
+# Where the audio comes from: not this checkout (clips are not in git any more) but `source_ref`, a git ref that still
+# holds them (default: the tag made when they left the tree). upload.py refuses unless every source file's SHA-256 is
+# the manifest's, so a wrong ref cannot upload the wrong audio.
+#
+# Moving to Cloudflare R2 later: same workflow with s3_endpoint / region / public_base set and R2 keys in the two secrets,
+# then change NEXT_PUBLIC_AUDIO_BASE_URL (src/core/audioBase.ts). docs/legal/AUDIO-ROUND2.md §6 has the whole list.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run = list and count only; upload = send the missing clips'
+        type: choice
+        options: [dry-run, upload]
+        default: dry-run
+      source_ref:
+        description: 'Git ref that holds public/audio/<voice>/*.mp3'
+        type: string
+        default: audio-src-josh-2026-09-26
+      region:
+        description: 'Storage S3 region — copy it from Supabase → Storage → S3 configuration'
+        type: string
+        default: us-east-1
+      s3_endpoint:
+        description: 'Only for a move off Supabase (e.g. Cloudflare R2): the S3 endpoint. Empty = this project''s Supabase Storage'
+        type: string
+        default: ''
+      public_base:
+        description: 'Only for a move off Supabase: the public base URL objects are read from (= NEXT_PUBLIC_AUDIO_BASE_URL). Empty = Supabase'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: upload-audio
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45 # 16,985 objects took 1 min 50 s against the local stack; the rest is headroom for a slow link
+    environment: production-db
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Refuse unless the configured ref is this repo's production
+        env:
+          PROD_PROJECT_REF: ${{ vars.PROD_PROJECT_REF }}
+        run: scripts/assert-prod-ref.sh
+
+      - name: Fetch the clip files from the source ref (not from this checkout)
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$SOURCE_REF" =~ ^[A-Za-z0-9._/-]+$ ]]; then echo "::error::source_ref has characters a git ref does not need"; exit 2; fi
+          git fetch --no-tags --depth=1 origin "+refs/tags/${SOURCE_REF}:refs/tags/${SOURCE_REF}" 2>/dev/null \
+            || git fetch --no-tags --depth=1 origin "+${SOURCE_REF}:refs/remotes/origin/audio-source" 2>/dev/null \
+            || { echo "::error::source_ref '${SOURCE_REF}' is neither a tag nor a branch on origin — nothing was checked"; exit 2; }
+          ref="refs/tags/${SOURCE_REF}"; git rev-parse -q --verify "$ref" >/dev/null || ref="refs/remotes/origin/audio-source"
+          mkdir -p "$RUNNER_TEMP/audio-src"
+          git archive "$ref" -- public/audio/nzFihrBIvB34imQBuxub | tar -x -C "$RUNNER_TEMP/audio-src" --strip-components=3
+          n=$(find "$RUNNER_TEMP/audio-src" -name '*.mp3' | wc -l)
+          echo "source ${SOURCE_REF}: ${n} mp3 files"
+          if [ "$n" -eq 0 ]; then echo "::error::source_ref holds no clips — nothing to upload, and nothing was checked"; exit 2; fi
+
+      - name: Install the uploader's dependencies (hash-pinned)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -q --require-hashes -r scripts/audio/requirements.txt
+
+      - name: Upload (or count, in dry-run)
+        env:
+          S3_ENDPOINT: ${{ inputs.s3_endpoint != '' && inputs.s3_endpoint || format('https://{0}.storage.supabase.co/storage/v1/s3', vars.PROD_PROJECT_REF) }}
+          S3_REGION: ${{ inputs.region }}
+          S3_ACCESS_KEY_ID: ${{ secrets.SUPABASE_S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.SUPABASE_S3_SECRET_ACCESS_KEY }}
+          AUDIO_BUCKET: lesson-audio
+          MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          flag=""; [ "$MODE" = "upload" ] || flag="--dry-run"
+          "$RUNNER_TEMP/venv/bin/python" scripts/audio/upload.py --src "$RUNNER_TEMP/audio-src" $flag
+
+      - name: A browser's view of one clip (upload mode)
+        if: ${{ inputs.mode == 'upload' }}
+        env:
+          REF: ${{ vars.PROD_PROJECT_REF }}
+          PUBLIC_BASE: ${{ inputs.public_base }}
+        run: |
+          set -euo pipefail
+          # What the app needs from the bucket, as a browser on radlic.com asks for it: 200 + the immutable header, the
+          # right type, CORS for the prefetch fetch(), and a real 206 for the <audio> element's Range request. A name
+          # that does not exist is the control — if it also answered 200, every check above would prove nothing.
+          name=$(python3 -c "import json;m=json.load(open('scripts/audio/manifest.json'));print(next(iter(m['keys'].values()))['name'])")
+          url="${PUBLIC_BASE:-https://${REF}.supabase.co/storage/v1/object/public/lesson-audio}"
+          h=$(curl -s -o /dev/null -D - -H 'Origin: https://radlic.com' "${url}/${name}" | tr -d '\r')
+          r=$(curl -s -o /dev/null -D - -H 'Range: bytes=0-99' "${url}/${name}" | tr -d '\r')
+          miss=$(curl -s -o /dev/null -w '%{http_code}' "${url}/0000000000000000.mp3")
+          echo "GET: $(echo "$h" | head -1) · $(echo "$h" | grep -i '^cache-control:' || true) · $(echo "$h" | grep -i '^content-type:' || true) · $(echo "$h" | grep -i '^access-control-allow-origin:' || true)"
+          echo "Range: $(echo "$r" | head -1) · missing name: ${miss}"
+          fail=0
+          echo "$h" | head -1 | grep -q ' 200' || { echo "::error::a manifest object is not publicly readable"; fail=1; }
+          echo "$h" | grep -qi '^cache-control: public, max-age=31536000, immutable' || { echo "::error::the immutable Cache-Control did not stick"; fail=1; }
+          echo "$h" | grep -qi '^content-type: audio/mpeg' || { echo "::error::not served as audio/mpeg"; fail=1; }
+          echo "$h" | grep -qiE '^access-control-allow-origin: (\*|https://radlic\.com)' || { echo "::error::no CORS for radlic.com — the prefetch would fail silently"; fail=1; }
+          echo "$r" | head -1 | grep -q ' 206' || { echo "::error::a Range request did not answer 206"; fail=1; }
+          case "$miss" in 200) echo "::error::a name that does not exist answered 200 — the checks above cannot be trusted"; fail=1;; esac
+          exit $fail

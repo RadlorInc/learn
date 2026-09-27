@@ -45,7 +45,9 @@ select c.relname, p.polname, p.polcmd,
        pg_get_expr(p.polwithcheck, p.polrelid) as check_expr
 from pg_policy p join pg_class c on c.oid = p.polrelid
 join pg_namespace n on n.oid = c.relnamespace
-where n.nspname = 'public' order by 1, 3, 2;
+where n.nspname in ('public', 'storage') order by 1, 3, 2;
+-- ⚠️ `storage` is in scope since the lesson-audio bucket (20260927100000): a storage.objects policy for anon or
+-- authenticated would make the voice bucket listable or writable. Expected there: NO rows for storage.objects.
 
 -- 3. Function security posture. Flags the two traps at once: an unpinned search_path, and the
 --    PUBLIC-EXECUTE default that made V19 (any anon caller could wipe the crash log).
@@ -65,6 +67,21 @@ where table_schema = 'public' and grantee in ('anon','authenticated')
 ```
 
 A non-empty diff = the live security posture changed; review why.
+
+## The lesson-audio bucket (since 2026-09-26)
+
+One public Supabase Storage bucket, `lesson-audio`, serves the recorded lesson clips (Josh). Public means **read by
+exact URL only**: object names are `sha256(bytes)[0:16].mp3`, the clips are the same for every child, and nothing about
+a child is in any name. The repo creates **no storage.objects policy**, so list / upload / overwrite / delete are refused
+for `anon` and `authenticated`. The migration refuses to apply if any EXISTING policy could let either role reach this
+bucket — a regex over each expression, then a behavioural probe acting as each role (with JWT claims, as the owner, in
+the owner's folder) — so a policy pinned to ANOTHER bucket is allowed; the proof SQL (P2) says whether any exists at all.
+`supabase/tests/rls_regression.sql` S0–S5 re-asserts it in CI. Only `.github/workflows/upload-audio.yml` writes, with
+Storage S3 keys that reach every bucket and bypass RLS: the founder creates them just before a run and revokes them
+right after (docs/legal/AUDIO-ROUND2.md §2).
+**To re-measure the live posture, run `scripts/audio/anon-probe.mjs`** — exit 0 means read-by-URL only **for the roles
+it names** (anon always; authenticated only with `SUPABASE_USER_JWT` of a test account). It never changes a real clip:
+it writes an object's own bytes back and deletes only its canary. Prefer running it to trusting this paragraph.
 
 ## Content-Security-Policy — status & roadmap
 
