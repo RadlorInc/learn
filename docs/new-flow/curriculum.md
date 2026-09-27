@@ -192,3 +192,13 @@ Its four parts: 1–6 Place value understanding for whole numbers · 7–11 Mult
 
 **Module 6 · Bivariate data and scatter plots**
 1 Scatter plot patterns · 2 A line of best fit · 3 Predict with the line · 4 Two-way tables · 5 Relative frequency
+
+## Content backlog (not built)
+
+Decided to build later, not now. Each line says what is missing and why it matters.
+
+- **Grade 2 place value to 1,000 (a hundreds shelf)** — founder, 2026-09-27. The KG–2 "Tens & Ones" chapter
+  (`placeValue`, `BuildingBlocks.tsx`) is **Grade 1**: tens and ones, targets 11–99, and since 27 Sep a child can
+  build at most 100 (nine tens called up). Grade 2's place value is hundreds, tens and ones up to 1,000, and **no Grade 2
+  chapter covers it today**. It needs a hundreds shelf and its own chapter (or a Grade 2 tier of this one), not a higher
+  cap on this one.
