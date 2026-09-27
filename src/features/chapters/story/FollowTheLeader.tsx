@@ -33,7 +33,7 @@
  */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { speakAfterCurrent, speak, speakSteps, stopSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { seqLength } from '@/core/progression'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
@@ -48,7 +48,7 @@ import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 import ReadyBar from './ReadyBar'
 
-// Just long enough to swallow a double-tap. It is deliberately NOT tied to Milo's voice: measured
+// Just long enough to swallow a double-tap. It is deliberately NOT tied to the voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
 // digit, and the watchdog that eventually clears it has a 6s ceiling. Gating taps on that made a
 // child wait seconds between little ones — the exact sluggishness this chapter was already
@@ -339,7 +339,26 @@ export function lineLayout(vw: number, vh: number, n: number, castIdx: number) {
  * doing the tapping, so they must not be three different pictures.
  */
 type Mode = 'demo' | 'guided' | 'practice'
-const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boolean) => void }> =
+
+const OFF_WE_GO = 'Off we go! Smallest first.'
+const wrongLine = (little: string) => `Not yet! Find the smallest ${little}.`
+const guidedAsk = (little: string) => `Now you! Tap the smallest ${little} first.`
+/** Every line a round can say once it has loaded: each number as it joins, the wrong-tap line, and the guided round's
+ *  ask and send-off (a scored round leaves in silence). */
+function lineLines(d: LineRound, mode: Mode): string[] {
+  const { little } = kindAt(d.castIdx)
+  return [...d.nums.map(String), wrongLine(little), ...(mode === 'guided' ? [guidedAsk(little), OFF_WE_GO] : [])]
+}
+/** The demo, in order — the re-teach is the same demo on the round's own numbers. */
+function demoLines(d: LineRound): string[] {
+  const sorted = [...d.nums].sort((a, b) => a - b)
+  return [
+    `${kindAt(d.castIdx).mother} is waiting. The smallest one goes first.`,
+    ...sorted.map((v, i) => (i === 0 ? `The smallest is ${v}. Come along, ${v}!` : `Then ${v}.`)),
+    'Everybody in line!',
+  ]
+}
+export const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boolean) => void }> =
 ({ data, mode, onDone }) => {
   const { nums } = data
   const n = nums.length
@@ -347,6 +366,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   const { w: vw, h: vh } = useViewport()
   const L = lineLayout(vw, vh, n, data.castIdx)
   const { kind, world, mx, edgePct, rows, babySize, band, headGap, huddleRightPct } = L
+  useQuestion(() => lineLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   const [joined, setJoined] = useState<number[]>([])     // values already in line, in join order
   const joinedRef = useRef<number[]>([])                 // same list, readable synchronously mid-tap
@@ -404,7 +424,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   const marchOff = useCallback(() => {
     if (done.current) return; done.current = true
     setMarching(true)
-    if (mode !== 'practice') speak('Off we go! Smallest first.')
+    if (mode !== 'practice') speak(OFF_WE_GO)
     // Ends only once they are actually gone, so the exit plays out instead of being cut off.
     after(MARCH_MS - 200, () => onDone(mode === 'practice' ? !erred.current : true))
   }, [mode, onDone, after])
@@ -413,13 +433,9 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   // when audio is blocked speakSteps still paces the steps on a timer.
   const ran = useOnceGuard()
   useEffect(() => {
-    if (mode !== 'demo') { if (mode === 'guided') speakAfterCurrent(`Now you! Tap the smallest ${kind.little} first.`); return }
+    if (mode !== 'demo') { if (mode === 'guided') speakAfterCurrent(guidedAsk(kind.little)); return }
     if (ran.current) return; ran.current = true
-    const lines = [
-      `${kind.mother} is waiting. The smallest one goes first.`,
-      ...sorted.map((v, i) => (i === 0 ? `The smallest is ${v}. Come along, ${v}!` : `Then ${v}.`)),
-      'Everybody in line!',
-    ]
+    const lines = demoLines(data)
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         if (i === 0) { setHint(sorted[0]); return }
@@ -437,7 +453,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
    *
    * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so Ready happens ONCE PER PLACE IN THE LINE rather than once
    * per round — the child chooses who is next, sends them, then chooses again. That keeps the
-   * per-step feedback the chapter teaches with (a wrong pick wiggles and Milo says which to look
+   * per-step feedback the chapter teaches with (a wrong pick wiggles and the voice says which to look
    * for) instead of holding a whole ordering back to be graded at the end, which would be a
    * different chapter.
    */
@@ -456,7 +472,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
   function tap(v: number) {
     // A tap waits for nothing but a double-tap guard. It does NOT wait for the previous little one
     // to reach the line — a child who has already found 2 should not be made to watch 1 walk first —
-    // and it does not wait for Milo's voice either; see TAP_LOCK_MS.
+    // and it does not wait for the voice either; see TAP_LOCK_MS.
     if (mode === 'demo' || done.current || tapLock.current) return
     if (joinedRef.current.includes(v)) return
     if (v === sorted[joinedRef.current.length]) {
@@ -472,7 +488,7 @@ const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct: boole
       setWiggling(v)
       if (!wrongLock.current) {
         wrongLock.current = true
-        speak(`Not yet! Find the smallest ${kind.little}.`)
+        speak(wrongLine(kind.little))
         after(1300, () => { wrongLock.current = false })
       }
       after(620, () => setWiggling(w => (w === v ? null : w)))
@@ -553,7 +569,7 @@ function MapStrip({ done, total, journey }: { done: number; total: number; journ
       {Array.from({ length: total }).map((_, i) => (
         <span key={i} style={{ position: 'relative', width: 10, height: 10, borderRadius: '50%',
           background: i < done ? 'var(--milo-orange)' : 'rgba(61,37,22,.2)', transition: 'background .4s' }}>
-          {i === done - 1 && <span style={{ position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', fontSize: 15 }}>🐴</span>}
+          {i === done - 1 && <span style={{ position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', fontSize: 15 }}>🐾</span>}
         </span>
       ))}
       <span style={{ fontSize: 17, filter: done >= total ? 'none' : 'grayscale(.55) opacity(.75)' }}>{journey.to}</span>
@@ -593,12 +609,21 @@ export function makeLineBeat(): Beat<LineRound> {
     say: d => `${kindAt(d.castIdx).mother} is ready! Tap the smallest ${kindAt(d.castIdx).little} first.`,
     Play: ({ data, onSubmit }) => <LineScene data={data} mode="practice" onDone={onSubmit} />,
     Reteach: ({ data, onDone }) => <LineScene data={data} mode="demo" onDone={() => onDone()} />,
+    feedbackLines: d => lineLines(d, 'practice'),
+    // The demo's send-off is spoken by its last step, so it belongs to the re-teach too.
+    reteachLines: d => [...demoLines(d), OFF_WE_GO],
   }
 }
 
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
 const TOTAL_ROUNDS = 10
+
+// The demo and the guided round deliberately use DIFFERENT habitats, so the first thing a child
+// learns is that the place changes but the rule does not.
+const DEMO_ROUND: LineRound = { scene: HABITATS.meadow.scenes[0], nums: [3, 1, 2], castIdx: 0 }
+/** Exported so the question-lines test can walk the guided round as the child meets it. */
+export const GUIDED_ROUND: LineRound = { scene: HABITATS.reef.scenes[0], nums: [2, 3, 1], castIdx: 1 }
 
 export default function FollowTheLeader({ onFinish, onExit }: {
   world?: string     // accepted for the /story route's shared signature; the chapter is one world now
@@ -614,17 +639,13 @@ export default function FollowTheLeader({ onFinish, onExit }: {
   const interlude = useCallback(() => new Promise<void>(res => window.setTimeout(res, 850)), [])
   const beat = useMemo(() => makeLineBeat(), [])
 
-  // The demo and the guided round deliberately use DIFFERENT habitats, so the first thing a child
-  // learns is that the place changes but the rule does not.
-  const DEMO_ROUND: LineRound = { scene: HABITATS.meadow.scenes[0], nums: [3, 1, 2], castIdx: 0 }
-  const GUIDED_ROUND: LineRound = { scene: HABITATS.reef.scenes[0], nums: [2, 3, 1], castIdx: 1 }
   const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : DEMO_ROUND.scene
   const allScenes = useMemo(() => Object.values(HABITATS).flatMap(h => h.scenes), [])
 
   // Landscape-first: the family walks ACROSS the picture, which a portrait phone has no room for.
   // This early return has to sit BELOW every hook — placed above `allScenes` it changed the hook
   // count the moment the phone was turned, and React tore the chapter down into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo&apos;s little ones line up in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="The little ones line up in landscape! 🐾" />
 
   const Banner = (text: string) => (
     <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>

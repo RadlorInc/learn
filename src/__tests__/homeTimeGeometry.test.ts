@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   CAST, HABITATS, homeOf, aspectOf, huddleGeom, huddleRows, waitSpot, clusterSpot, leadX, fitBands,
-  GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X as MILO_X, LEAD_SCALE as MILO_SCALE, BANNER_PX, STRIP_PX,
+  GATHER_LEFT, GATHER_COL, HUDDLE_RIGHT, LEAD_X, LEAD_SCALE, BANNER_PX, STRIP_PX,
   type Habitat, type Kind,
 } from '@/features/chapters/story/critters'
 
@@ -25,10 +25,7 @@ const bandsFor = (w: Habitat): Habitat => {
   return { ...w, lineY: b.cluster, waitY0: b.wait[0], waitY1: b.wait[1] }
 }
 
-const MILO_LAND = '/assets/characters/milo_side.png'
-const MILO_REEF = '/assets/characters/milo_underwater.png'
-
-/** The sizing chain out of HomeScene, in the same order — Milo's place from the UNCAPPED size,
+/** The sizing chain out of HomeScene, in the same order — the leader's place from the UNCAPPED size,
  *  then the huddle's room, then the sprite capped to its slot. */
 function layout(vw: number, vh: number, pool: number, castIdx: number) {
   const kind = CAST[castIdx]
@@ -37,16 +34,17 @@ function layout(vw: number, vh: number, pool: number, castIdx: number) {
   const baseSize = Math.round(Math.max(short ? 54 : 66, Math.min((vw * 0.86) / pool, vh * (short ? 0.28 : 0.24), 152)))
   const aspect = aspectOf(kind.src)
   const rawSize = baseSize * (kind.scale ?? 1)
-  const miloSrc = world.move === 'swim' ? MILO_REEF : MILO_LAND
-  const mx = leadX(MILO_X, rawSize, aspectOf(miloSrc), MILO_SCALE, vw)
+  // The leader is a grown-up of the round's own creature — same sprite, drawn at LEAD_SCALE.
+  const leadSrc = kind.src
+  const mx = leadX(LEAD_X, rawSize, aspectOf(leadSrc), LEAD_SCALE, vw)
   const edgePct = (rawSize * aspect / 2) / Math.max(1, vw) * 100
   const spanPct = huddleGeom(pool, HUDDLE_RIGHT, edgePct).span
   const rows = huddleRows(spanPct, (rawSize * aspect) / Math.max(1, vw) * 100)
   const slotPx = spanPct * rows / 100 * vw
   const size = Math.round(Math.max(40, Math.min(rawSize, (slotPx / aspect) * 0.98)))
-  const band: Habitat = fitBands(bandsFor(world), vh, size, MILO_SCALE)
+  const band: Habitat = fitBands(bandsFor(world), vh, size, LEAD_SCALE)
   const leadY = Math.max(band.lineY + 4, Math.min(BANDS[world.move].lead, (vh - STRIP_PX) / vh * 100))
-  return { kind, world, mx, edgePct, rows, size, band, leadY, aspect, miloSrc, spanPct }
+  return { kind, world, mx, edgePct, rows, size, band, leadY, aspect, leadSrc, spanPct }
 }
 const halfW = (size: number, scale: number, aspect: number, vw: number) => (size * scale * aspect / 2) / vw * 100
 
@@ -80,8 +78,8 @@ describe('Home Time layout invariants', () => {
           //    is 1.75× wider than it is tall and hangs off an edge a tall sprite clears.
           const leftMost = Math.min(...waits.map(w => w.left)) - half
           if (leftMost < 0) failures.push(`${tag}: leftmost sprite off screen at ${leftMost.toFixed(1)}%`)
-          const miloRight = L.mx + halfW(L.size, MILO_SCALE, aspectOf(L.miloSrc), vw)
-          if (miloRight > 97.5) failures.push(`${tag}: Milo's right edge at ${miloRight.toFixed(1)}%`)
+          const leadRight = L.mx + halfW(L.size, LEAD_SCALE, aspectOf(L.leadSrc), vw)
+          if (leadRight > 97.5) failures.push(`${tag}: the leader's right edge at ${leadRight.toFixed(1)}%`)
           const clusterRight = Math.max(...cluster.map(s => s.left)) + halfW(L.size, cluster[0].scale, L.aspect, vw)
           if (clusterRight > 100) failures.push(`${tag}: cluster runs off the right at ${clusterRight.toFixed(1)}%`)
 
@@ -117,9 +115,9 @@ describe('Home Time layout invariants', () => {
           // (that is its contract, and BANNER_PX already carries a few px of air) — without it the
           // sweep trips on float dust at every size where the fit actually binds.
           const EPS = 0.5
-          // Milo stands on his own GROUND line, not the cluster's or the huddle's — see BANDS.
-          const miloHead = L.leadY / 100 * vh - L.size * MILO_SCALE
-          if (miloHead < BANNER_PX - EPS) failures.push(`${tag}: Milo's head ${(BANNER_PX - miloHead).toFixed(0)}px behind the prompt`)
+          // The leader stands on its own line, not the cluster's or the huddle's — see BANDS.
+          const leadHead = L.leadY / 100 * vh - L.size * LEAD_SCALE
+          if (leadHead < BANNER_PX - EPS) failures.push(`${tag}: the leader's head ${(BANNER_PX - leadHead).toFixed(0)}px behind the prompt`)
           const clusterHead = L.band.lineY / 100 * vh - L.size * cluster[0].scale
           if (clusterHead < BANNER_PX - EPS) failures.push(`${tag}: gathered head ${(BANNER_PX - clusterHead).toFixed(0)}px behind the prompt`)
           // Measured off the REAL spots, not the band they came from: waitSpot adds an organic
@@ -129,7 +127,7 @@ describe('Home Time layout invariants', () => {
           if (waitHead < BANNER_PX - EPS) failures.push(`${tag}: waiting head ${(BANNER_PX - waitHead).toFixed(0)}px behind the prompt`)
           const feet = Math.max(L.leadY, ...waits.map(w => w.top)) / 100 * vh
           if (feet > vh - STRIP_PX + EPS) failures.push(`${tag}: feet ${(feet - (vh - STRIP_PX)).toFixed(0)}px inside the Ready button`)
-          // The leader must stand NEARER the camera than the group he is gathering, or he is
+          // The leader must stand NEARER the camera than the group it is gathering, or it is
           // standing among them rather than at the head of them.
           if (L.leadY <= L.band.lineY) failures.push(`${tag}: leader not in front of the group`)
           if (L.band.lineY >= L.band.waitY0) failures.push(`${tag}: cluster band is not behind the huddle`)

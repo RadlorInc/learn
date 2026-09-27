@@ -3,7 +3,7 @@
  * The COUNTING chapter's play surfaces — the hunt-and-count scene, its demo, and the ten-round
  * adaptive practice `chapters.tsx` builds the chapter from.
  *
- * ⚠️ THIS FILE USED TO ALSO HOLD `world1`, a five-scene "Milo's Picnic Party" World with its own
+ * ⚠️ THIS FILE USED TO ALSO HOLD `world1`, a five-scene "Picnic Party" World with its own
  * number-recognition, matching-quantity, more/less and number-order beats. **Deleted 2026-08-20:
  * nothing imported it** — those four skills each have a real chapter of their own now (NestTree,
  * HomeTime, BigOrSmall, FollowTheLeader) — and it was actively misleading, because all four of its
@@ -18,7 +18,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq, speakAfterCurrent, useIsSpeaking } from '@/infra/useMiloSpeaker'
 import { type Difficulty } from '@/core/progression'
-import type { Beat } from './StoryWorld'
+import { type Beat, useQuestion } from './StoryWorld'
 import { CountItem, type CountKind, COUNT_PLURAL } from './art'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -62,7 +62,7 @@ interface CountData { n: number; obj: CountKind; band?: Band }
 // Fireflies/butterflies are tucked into the leafy FOLIAGE BAND of the
 // frozen forest (the tree-tops), not the sky or the grass path, so the child has
 // to find each one and tap it. Positions are stable per round and kept clear of
-// the top bar, Milo (far left), and the edges.
+// the top bar, the far-left strip (where a walking guide once stood), and the edges.
 const frac = (x: number) => x - Math.floor(x)
 const seed = (i: number, s: number) => frac(Math.sin((i + 1) * s) * 43758.5453)
 // Lay objects out so they look SCATTERED across the tree — perched at many
@@ -71,7 +71,7 @@ const seed = (i: number, s: number) => frac(Math.sin((i + 1) * s) * 43758.5453)
 //   • shove it hard in Y (±0.5 cell) → every object sits at its own "branch" height
 //   • stagger alternate rows sideways → columns don't line up
 //   • tilt it a little → it reads as resting on a branch, not floating upright
-// The window (X0..X1, Y0..Y1) is the tree-canopy band: left clears Milo, bottom
+// The window (X0..X1, Y0..Y1) is the tree-canopy band: left clears the far-left strip, bottom
 // stays above the trunks/grass so objects read as "in the leaves".
 type Spot = { left: number; top: number; size: number; dur: number; rot: number; delay: number; depth: number }
 // `band` is the per-biome spawn window (water low, sky high, leaves mid). Defaults
@@ -233,15 +233,27 @@ const CollectTray: React.FC<{ obj: CountKind; n: number; maxCell: number; vw: nu
     </div>
   )
 }
+/** The count said aloud, one number a tap (or a demo step), up to `n`. */
+const countAloud = (n: number) => Array.from({ length: n }, (_, i) => String(i + 1))
+/** The guided count's ask. ForestWalk says it as the round opens; it lives here so the round can declare it. */
+export const GUIDE_ASK = 'Now you count! Tap each one you see.'
+const COUNT_TOGETHER = "Let's count together!"
+const HOW_MANY_ASK = 'So how many did you count? Tap the number!'
+/** The counting demo, in order — and the re-teach, which is the same demo for the round's quantity. */
+const demoLines = (to: number) => [COUNT_TOGETHER, ...countAloud(to)]
+
 // The GUIDED count — now the same come-and-go PARADE as the demo/practice, but the CHILD does
 // the counting: creatures walk/fly/swim through ~2 at a time and the child taps each one to count
 // it (it pops, walks off, and the next enters). The running number climbs on the pill. There's no
 // "how many?" question here — that stays exclusive to the scored practice; once all N are counted
 // this guided beat is done.
 export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
+  // Only ever the guided round, so always a question of its own. ForestWalk's ask comes after this opens: a parent's
+  // effects run after its children's.
+  useQuestion(() => [GUIDE_ASK, ...countAloud(data.n)])
   const [stage, setStage] = useState<(Slot | null)[]>([null, null])
   const [counted, setCounted] = useState(0)
-  const speaking = useIsSpeaking()              // block taps while Milo says a number, so fast taps can't skip the count
+  const speaking = useIsSpeaking()              // block taps while the voice says a number, so fast taps can't skip the count
   const { w: vw, h: vh } = useViewport()
   const scale = useScale()
   const spawnedRef = useRef(0)
@@ -318,7 +330,7 @@ const CATCH_INTRO: Partial<Record<CountKind, string>> = {
 }
 
 // The opening demo, now in the SAME come-and-go PARADE as the practice: creatures walk/
-// fly/swim into the scene ~2 at a time, Milo counts each one aloud (1…N, the number pops
+// fly/swim into the scene ~2 at a time, and each one is counted aloud (1…N, the number pops
 // on the pill) and then it strolls off the far side so the next can enter — instead of all
 // N piling up on the screen at once. Explanation → practice is one continuous look.
 export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band; onDone: () => void }> = ({ to, obj, band, onDone }) => {
@@ -351,7 +363,7 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
   useEffect(() => {
     if (didInit.current) return
     didInit.current = true
-    speakAfterCurrent("Let's count together!")
+    speakAfterCurrent(COUNT_TOGETHER)
     // Fill the opening one/two slots (same spawn machinery as the practice parade).
     setStage(() => {
       const next: (Slot | null)[] = [null, null]
@@ -410,11 +422,11 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
 // ── The PRACTICE: 10 adaptive "How many do you see?" questions ──
 // Objects fly around the scene; the child counts and taps the matching number.
 // Wrong is possible (unlike tap-to-collect), so the adaptive + 3-wrong-streak
-// re-explanation actually fires. Re-explanation = Milo counts them out (a flying
+// re-explanation actually fires. Re-explanation = counting them out (a flying
 // demo of exactly this quantity).
 interface HowManyData { n: number; obj: CountKind; choices: number[]; band?: Band; biomeId?: BiomeId }
 // Two steps: (1) the child taps each flying object to COUNT it — each tap grows the
-// object (so none are recounted or missed) and Milo says the running count; (2) once
+// object (so none are recounted or missed) and the voice says the running count; (2) once
 // every object is tapped, the number choices appear and the child picks the answer.
 // ── Object-aware locomotion — how each creature moves through the scene ──────────────────
 // flyers fly, swimmers swim, walkers walk, insects scuttle. Drives both WHERE a creature travels
@@ -604,7 +616,7 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   function pick(v: number) { if (locked || picked != null) return; setPending(p => (p === v ? null : v)) }
   function commit() { const v = pending; if (v == null) return; setPending(null); choose(v) }
   useEffect(() => {
-    if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent('So how many did you count? Tap the number!') }
+    if (allCounted && !asked.current) { asked.current = true; speakAfterCurrent(HOW_MANY_ASK) }
   }, [allCounted])
 
   return (
@@ -648,7 +660,7 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
     </>
   )
 }
-// Re-explanation: Milo counts these objects out, 1…n, flying in the scene.
+// Re-explanation: these objects are counted out, 1…n, flying in the scene.
 const FlyingReteach: React.FC<{ data: HowManyData; onDone: () => void }> = ({ data, onDone }) =>
   <FlyingCountDemo to={data.n} obj={data.obj} band={data.band} onDone={onDone} />
 
@@ -665,7 +677,7 @@ const MAX_N: Partial<Record<CountKind, number>> = {
   lamb: 6, astronaut: 6, alien: 7, duck: 7, frog: 7, rocket: 7, satellite: 7, planet: 7,
 }
 // Per-creature spawn band overrides so each animal appears where it naturally lives.
-// Y0 = top of window, Y1 = bottom (viewport %). X0 clears Milo on the left.
+// Y0 = top of window, Y1 = bottom (viewport %). X0 clears the far-left strip.
 function bandFor(biome: Biome, obj: CountKind): Band {
   const b = biome.band
   switch (obj) {
@@ -718,8 +730,8 @@ function howManyData(biome: Biome, obj: CountKind, d: 1 | 2 | 3): HowManyData {
 // THE scored practice — ONE continuous 10-round adaptive sequence. The pedagogy is
 // unbroken across all 10 rounds:
 //   • difficulty ramps UP on a correct streak and DOWN when struggling (adaptive),
-//   • a walk interlude plays every 3 rounds so Milo stays animated,
-//   • after 3 wrong IN A ROW Milo re-explains by counting that exact quantity out.
+//   • a walk interlude plays every 3 rounds so the scene keeps moving,
+//   • after 3 wrong IN A ROW the round is re-explained by counting that exact quantity out.
 // Background cross-fades smoothly via BiomeBackground's 1s opacity transition.
 /**
  * Dev-only `?obj=<creature>` override for the practice rounds — stripped from production builds.
@@ -761,8 +773,8 @@ function buildPlan(story: Storytelling): PlanCell[] {
 // THE scored practice for a storytelling — ONE continuous adaptive sequence, one round
 // per pool creature (so a correctly-answered question never comes back). The pedagogy is
 // unbroken across all rounds: difficulty ramps UP on a correct streak and DOWN when
-// struggling; a walk interlude plays every 3 rounds; after 3 wrong IN A ROW Milo
-// re-explains by counting that exact quantity out. The biome cross-fades per round.
+// struggling; a walk interlude plays every 3 rounds; after 3 wrong IN A ROW the
+// round is re-explained by counting that exact quantity out. The biome cross-fades per round.
 export function makePracticeCountBeat(story: Storytelling): Beat<HowManyData> {
   const fallbackBiome = BIOMES[story.biomes[0]]
   const fallbackObj = practicePool(story)[0]?.obj ?? fallbackBiome.objects[0]
@@ -781,6 +793,9 @@ export function makePracticeCountBeat(story: Storytelling): Beat<HowManyData> {
     prompt: d => `Count the ${COUNT_PLURAL[d.obj]}!`,
     say: d => `Here come the ${COUNT_PLURAL[d.obj]}! Tap each one to count it.`,
     Play: ParadeCountPlay, Reteach: FlyingReteach,
+    // Counting the parade says nothing — the tray is the running count — so the one line after the first tap is the ask.
+    feedbackLines: () => [HOW_MANY_ASK],
+    reteachLines: d => demoLines(d.n),
   }
 }
 

@@ -16,11 +16,24 @@ import type { Lesson, Obj, Problem } from './script'
 import type { Level } from './adaptive'
 import type { Module } from './modules'
 import CATALOGUE_JSON from './catalogue.json'
+import { STORY_GRADES, chaptersForGrade, chapterKey, type ChapterType } from '@/core/chapters'
 
 export interface LessonMeta { id: string; title: string; obj?: Obj }
-export interface ModuleMeta { id: string; grade: number; n: number; title: string; lessons: LessonMeta[] }
+/** `story`: a KG–2 story chapter shown as a module (see STORY_CATALOGUE). */
+export interface ModuleMeta { id: string; grade: number; n: number; title: string; lessons: LessonMeta[]; story?: ChapterType }
 
+/** The 36 lesson modules, Grades 3–8. */
 export const CATALOGUE = CATALOGUE_JSON as ModuleMeta[]
+
+/**
+ * KG, Grade 1 and Grade 2 (founder, 2026-09-25): each story chapter is a module `k<grade>m<n>` whose one "lesson" is the
+ * chapter itself, id `c:<chapter>` — the id its progress and points are recorded under. It plays at /game, never in the
+ * lesson player, and has no practice. Built from core/chapters (23 small rows), so it is not in catalogue.json.
+ */
+export const STORY_CATALOGUE: ModuleMeta[] = STORY_GRADES.flatMap(grade => chaptersForGrade(grade).map((c, i) => (
+  { id: `k${grade}m${i + 1}`, grade, n: i + 1, title: c.name, lessons: [{ id: chapterKey(c.id), title: c.name }], story: c.id })))
+/** The chapter a story module id (`k0m1`) or its lesson id (`c:counting`) stands for; undefined for anything else. */
+export const storyOf = (id: string | null) => STORY_CATALOGUE.find(m => m.id === id || m.lessons[0].id === id)?.story
 
 /**
  * What a child sees when their parent chose topics: each module keeps only the chosen lessons, and a module with none
@@ -126,6 +139,7 @@ export function useModule(id: string | undefined): Module | undefined {
  * ponytail: one problem per topic, fixed order. Add more per topic, or pick the child's weakest topics, when there is data.
  */
 export function mixedPractice(m: Module): { problem: Problem; lesson: Lesson }[] {
+  if (m.story) return []   // a story chapter has no practice problems; it practises inside the game
   const items = m.lessons.map(lesson => ({ problem: lesson.practice[lesson.practice.length - 1].problem, lesson }))
   const half = Math.ceil(items.length / 2)
   return items.flatMap((_, i) => i < half ? [items[i], items[i + half]].filter(Boolean) : [])

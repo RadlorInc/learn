@@ -40,6 +40,8 @@ export const makeT = (lang: Lang): T => (s, v) => {
   return v ? out.replace(/\{(\w+)\}/g, (m, k: string) => (k in v ? String(v[k]) : m)) : out
 }
 export const en = makeT('en')
+/** "KG" or "Grade 3" — KG–2 are the story chapters, one module each (2026-09-25). */
+export const gradeText = (g: number, t: T = en) => g === 0 ? t('KG') : t('Grade {g}', { g })
 
 export const LangContext = createContext<Lang>('en')
 export const useLang = () => useContext(LangContext)
@@ -224,12 +226,13 @@ export const ES: Record<string, string> = {
   '{n} whole modules': '{n} módulos completos',
   '{n} single topic': '{n} tema suelto',
   '{n} single topics': '{n} temas sueltos',
-  '{name} sees {what}, from Grade {grades}.': '{name} ve {what} · grado {grades}.',
+  '{name} sees {what}, from {grades}.': '{name} ve {what} · {grades}.',
   'This needs a database update that has not been applied yet. Nothing was saved.': 'Esto necesita una actualización de la base de datos que aún no se ha aplicado. No se guardó nada.',
   'Could not save. Only the parent who added {name} can change their lessons.': 'No se pudo guardar. Solo el padre o la madre que agregó a {name} puede cambiar sus lecciones.',
   'What {name} sees': 'Lo que ve {name}',
   'Change': 'Cambiar',
   'Grade {g}': 'Grado {g}',
+  'KG': 'Kínder',
   '{n} of {total} topics': '{n} de {total} temas',
   '+ {n} more': '+ {n} más',
   'Only the parent who added {name} can change their lessons.': 'Solo el padre o la madre que agregó a {name} puede cambiar sus lecciones.',

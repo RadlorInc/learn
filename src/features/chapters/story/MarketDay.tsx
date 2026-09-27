@@ -25,7 +25,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -67,7 +67,6 @@ interface MultWorld {
   group: string            // what one group is called: "tray", "bed", "pod"
   groupPlural: string
   dark?: boolean
-  milo: { src: string; emoji: string; accessory: string }
 }
 const SETTINGS: MultWorld[] = [
   { id: 'farm', ground: 64, group: 'pen', groupPlural: 'pens',
@@ -77,8 +76,7 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#cfe8f2 0%, #d8ebcc 55%, #b6d6a0 100%)', img: '/assets/backgrounds/farm_pond.png' },
     ],
     items: [IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings'), IT('lamb', 'lamb', 'lambs'),
-      IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits')],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🐔' } },
+      IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits')] },
   { id: 'garden', ground: 64, group: 'patch', groupPlural: 'patches',
     bgs: [
       { grad: 'linear-gradient(#cfe6f7 0%, #dcecdb 60%, #c6e0b6 100%)', img: '/assets/backgrounds/garden.png' },
@@ -86,8 +84,7 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#cfe8f5 0%, #dcecda 60%, #c4dfb4 100%)', img: '/assets/backgrounds/garden_fence.png' },
     ],
     items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('ant', 'ant', 'ants'),
-      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' } },
+      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')] },
   { id: 'woods', ground: 62, group: 'nest', groupPlural: 'nests',
     bgs: [
       { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/forest_1.jpeg' },
@@ -95,10 +92,9 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_4.jpeg' },
     ],
     items: [IT('bird', 'bird', 'birds'), IT('squirrel', 'squirrel', 'squirrels'), IT('eagle', 'eagle', 'eagles'),
-      IT('firefly', 'firefly', 'fireflies')],
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' } },
+      IT('firefly', 'firefly', 'fireflies')] },
 ]
-const INTRO = 'Milo makes things in EQUAL groups. Count the groups and how many are in each, then tap how many there are in all. First, watch Milo count!'
+const INTRO = 'Let’s make EQUAL groups! Count the groups and how many are in each, then tap how many there are in all. First, watch how we count!'
 /** Every backdrop in the chapter, so one <Background> can crossfade between any two of them. */
 const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
@@ -166,24 +162,6 @@ function Background({ bg, dark }: { bg: Bg; dark?: boolean }) {
           <SceneBg src={b.img} priority={b === bg} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
-    </div>
-  )
-}
-
-function MiloHost({ left, milo }: { left: number; milo: MultWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'md_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
     </div>
   )
 }
@@ -396,8 +374,29 @@ const empty: StageState = { shown: 0, glowN: 0, boxValue: null, boxDone: false, 
 const groupWord = (world: MultWorld, view: View) => view === 'array' ? 'rows' : world.groupPlural
 const sayFor = (world: MultWorld, d: MultRound) =>
   `${numberToWords(d.g)} ${groupWord(world, d.view)} of ${numberToWords(d.per)} ${d.item.many}. How many in all?`
+const HOW_MANY = 'How many in all?'
+const YES_COUNT = 'Yes! Let’s skip-count.'
+const wrongLine = (d: MultRound) => `Not quite — count the ${groupWord(d.w, d.view)} of ${numberToWords(d.per)}. Try again!`
+const timesLine = ({ g, per, answer }: MultRound) => `${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}!`
+/**
+ * Every line a round can say once it has loaded: the question once the pens are full, and the one miss line — it names
+ * the groups, not the number tapped, so the three choices drawn inside `MultPlay` do not change it. The guided round
+ * also reads its story (and again from the pill) and counts out the answer.
+ */
+function multLines(d: MultRound, mode: Mode): string[] {
+  return [HOW_MANY, wrongLine(d), ...(mode === 'guided' ? [sayFor(d.w, d), YES_COUNT, timesLine(d)] : [])]
+}
+/** The re-teach, in order — `MultExplain` pairs lines[i] with steps[i]: the story, one count per group, the product. */
+function explainLines(d: MultRound): string[] {
+  const { w: world, g, per, answer, item } = d
+  return [
+    `${numberToWords(g)} ${groupWord(world, d.view)} of ${numberToWords(per)} ${item.many}. Let’s skip-count!`,
+    ...Array.from({ length: g }, (_, k) => numberToWords((k + 1) * per)),
+    `${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}! ${numberToWords(answer)} ${item.many} in all.`,
+  ]
+}
 
-const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
+export const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { w: world, g, per, answer } = data
   const choices = useMemo(() => multChoices(answer, g, per), [g, per, answer])
   const { w: vw, h: vh } = useViewport()
@@ -411,6 +410,7 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
   const [pending, setPending] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false)
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
+  useQuestion(() => multLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
     const T: number[] = []
@@ -422,7 +422,7 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
     t += groupFillMs(data.item.img, itemPxFor(g, per, vw, vh, data.item.img, short), per) + 120
     // `speakAfterCurrent`: on a small round the pens fill in less time than the story line takes
     // to say, and the question used to cut it off.
-    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speakAfterCurrent('How many in all?') }, t))
+    T.push(window.setTimeout(() => { setAsking(true); set({ showBox: true }); speakAfterCurrent(HOW_MANY) }, t))
     return () => T.forEach(id => window.clearTimeout(id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -444,20 +444,20 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
     setPicked(n)
     if (n === answer) {
       done.current = true
-      if (mode === 'guided') speak('Yes! Let’s skip-count.')
+      if (mode === 'guided') speak(YES_COUNT)
       let k = 0
       const tick = () => {
         k++; set({ glowN: k, boxValue: k * per })
         if (k < g) window.setTimeout(tick, 460)
         // `speakAfterCurrent`: the count runs 250 + g*460ms, which on a two-group round is shorter
         // than "Yes! Let's skip-count." takes to say.
-        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(`${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}!`) }
+        else { set({ boxDone: true }); if (mode === 'guided') speakAfterCurrent(timesLine(data)) }
       }
       window.setTimeout(tick, 250)
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), g * 460 + 1500)
     } else {
       erred.current = true
-      speak(`Not quite — count the ${groupWord(world, data.view)} of ${numberToWords(per)}. Try again!`)
+      speak(wrongLine(data))
       window.setTimeout(() => setPicked(null), 1100)
     }
   }
@@ -499,7 +499,7 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
           y 190–237 against a readout at 193–235 and covered it completely, and the gap between the
           readout and the chips is 14px against a 47px bar — there is no room in that column. The
           chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
-          them, which is empty in every chapter here (Milo owns bottom-LEFT). */}
+          them, which is empty in every chapter here. */}
       <ReadyBar show={pending !== null} onCommit={commit} align="right"
         bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
     </>
@@ -508,19 +508,16 @@ const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (correct: bo
 
 // ─── Teaching demo (opening preview + 3-wrong re-teach): skip-count the groups via ONE speakSteps ─
 const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, onDone }) => {
-  const { w: world, g, per, answer, item } = data
+  const { w: world, g, per, item } = data
   const { h: vh } = useViewport()
   const short = vh < 470
   const [s, setS] = useState<StageState>(empty)
   const set = (patch: Partial<StageState>) => setS(prev => ({ ...prev, ...patch }))
   const doneRef = useLatestRef(onDone)
   useEffect(() => {
-    const lines: string[] = []
-    const steps: Array<() => void> = []
-    lines.push(`${numberToWords(g)} ${groupWord(world, data.view)} of ${numberToWords(per)} ${item.many}. Let’s skip-count!`)
-    steps.push(() => set({ shown: 0, glowN: 0, showBox: true, boxValue: 0 }))
-    for (let k = 1; k <= g; k++) { const v = k; lines.push(numberToWords(v * per)); steps.push(() => set({ shown: v, glowN: v, boxValue: v * per })) }
-    lines.push(`${numberToWords(g)} times ${numberToWords(per)} is ${numberToWords(answer)}! ${numberToWords(answer)} ${item.many} in all.`)
+    const lines = explainLines(data)
+    const steps: Array<() => void> = [() => set({ shown: 0, glowN: 0, showBox: true, boxValue: 0 })]
+    for (let k = 1; k <= g; k++) { const v = k; steps.push(() => set({ shown: v, glowN: v, boxValue: v * per })) }
     steps.push(() => set({ boxDone: true, glowN: g }))
     const cancel = speakSteps(lines, {
       onStep: (i) => { steps[i]?.() },
@@ -543,6 +540,9 @@ const MultExplain: React.FC<{ data: MultRound; onDone: () => void }> = ({ data, 
   )
 }
 
+/** The unscored round after the demo, on the slot after the demo's. */
+export const GUIDED: MultRound = { ...RUN[DEMO_N], view: 'groups', g: 2, per: 3, answer: 6 }
+
 // ─── Value generation ──────────────────────────────────────────────────────────────
 export function makeMultBeat(): Beat<MultRound> {
   return {
@@ -556,12 +556,13 @@ export function makeMultBeat(): Beat<MultRound> {
     say: d => sayFor(d.w, d),
     Play: ({ data, onSubmit }) => <MultPlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <MultExplain data={data} onDone={onDone} />,
+    feedbackLines: d => multLines(d, 'practice'),
+    reteachLines: explainLines,
   }
 }
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 const MD_CSS = `
-@keyframes md_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes md_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.12);opacity:1} 100%{transform:scale(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -583,7 +584,7 @@ export default function MarketDay({ onFinish, onExit }: {
 
   // The band is landscape-only. This early return must sit BELOW every hook — above one, turning
   // the phone changes the hook count and React tears the chapter into the error boundary.
-  if (needsRotate) return <RotateGate line="Milo lays out his trays in landscape! 🐴" />
+  if (needsRotate) return <RotateGate line="Equal groups play in landscape! 🧺" />
 
   // One of each view, each in a DIFFERENT setting — so the first thing a child learns is that the
   // place changes but the rule does not, which is also what the scored rounds then do.
@@ -594,7 +595,6 @@ export default function MarketDay({ onFinish, onExit }: {
     { ...RUN[0], view: 'groups', g: 3, per: 2, answer: 6 },
     { ...RUN[1], view: 'array', g: 3, per: 4, answer: 12 },
   ]
-  const GUIDED: MultRound = { ...RUN[DEMO_N], view: 'groups', g: 2, per: 3, answer: 6 }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (
@@ -621,7 +621,7 @@ export default function MarketDay({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo skip-count  (${demoIdx + 1}/${DEMO.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch us skip-count  (${demoIdx + 1}/${DEMO.length})`)}
         <MultExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -636,8 +636,6 @@ export default function MarketDay({ onFinish, onExit }: {
         </div>
       )}
 
-      {/* Milo belongs to the round's setting — chef in the bakery, painter at the craft table. */}
-      <MiloHost left={10} milo={shown.w.milo} />
     </div>
   )
 }

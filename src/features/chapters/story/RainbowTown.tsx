@@ -13,19 +13,19 @@
  * What makes it a colouring page is that the SCENE is the thing, the areas come from the drawing,
  * and there are far more of them than there are questions.
  *
- * THE LESSON RIDES ON TOP OF THAT, it does not replace it. Milo asks for a colour AND a thing —
+ * THE LESSON RIDES ON TOP OF THAT, it does not replace it. The voice asks for a colour AND a thing —
  * "colour the roof red" — so the child learns the colour word and the object word together, and a
- * wrong tap names what was actually touched. Everything Milo has NOT asked for is still colourable,
+ * wrong tap names what was actually touched. Everything NOT asked for is still colourable,
  * with any colour, ungraded: that is the child's picture, and taking it away to protect the quiz
  * would be exactly the mistake the first two versions made.
  *
  * THE SKILL IS COLOUR, SO ONLY THE COLOUR IS GRADED. The asked-for area GLOWS. Finding which shape
  * is "the roof" is a second, unrelated hurdle standing in front of the thing this chapter measures,
- * and a child who knows red perfectly well could fail on it. So Milo names the thing AND shows it,
+ * and a child who knows red perfectly well could fail on it. So the voice names the thing AND the page shows it,
  * and the one decision left is which paint. Tapping the wrong area is a redirect, never a mark
  * against them; picking the wrong paint is the only thing that counts as wrong.
  *
- * AND MILO NEVER ASKS FOR A COLOUR THE THING CANNOT HONESTLY BE. The box holds six paints and none
+ * AND THE VOICE NEVER ASKS FOR A COLOUR THE THING CANNOT HONESTLY BE. The box holds six paints and none
  * of them is white, grey or brown, so the clouds and the tree trunk are simply not questions — they
  * stay free to colour, they are just never asked for. A chapter that says "colour the cloud purple"
  * teaches a three-year-old that the colour words do not mean anything.
@@ -42,7 +42,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { useNeedsRotate, RotateGate } from './RotateGate'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
@@ -248,38 +248,71 @@ function PaintBox({ pots, loaded, onPick, hint }: {
   )
 }
 
-// ─── Milo ────────────────────────────────────────────────────────────────────────────
-function MiloPainter() {
-  const [step, setStep] = useState(0)
-  const { short } = useLayout()
-  const srcs = ['/assets/characters/milo_painter.png', '/assets/characters/milo_idle.png']
-  const dim = short ? 'min(19vh, 90px)' : 'min(22vh, 160px)'
-  return (
-    <div aria-hidden style={{ position: 'fixed', left: '6%', bottom: 0, transform: 'translateX(-50%)', zIndex: 26,
-      width: dim, height: dim, pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'rt_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 70, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>🐴</span>
-            </div>
-          : <img src={srcs[step]} alt="" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
-
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
 export const promptFor = (page: Page, d: ColorRound) => {
   const t = page.targets[d.seq]
-  return `Colour the ${t.noun} ${COLORS[t.color].label}!`
+  return `Color the ${t.noun} ${COLORS[t.color].label}!`
 }
 export const sayFor = (page: Page, d: ColorRound) => {
   const t = page.targets[d.seq]
   const c = COLORS[t.color].label
   // Names the colour twice and the glow once. The glow settles WHERE, so all the words can spend
   // themselves on the one thing being learned.
-  return `Colour the ${t.noun} ${c}. See it glowing? Find the ${c} paint, then tap it!`
+  return `Color the ${t.noun} ${c}. See it glowing? Find the ${c} paint, then tap it!`
+}
+
+const noPaintLine = (step: Target) => `Pick up a paint first! We need ${COLORS[step.color].label}.`
+// "That's the tulip!" when they just tapped a tulip and were asked for the tulip is maddening.
+// The page has two of them and only the glow tells them apart, so the words have to admit it.
+const wrongPartLine = (hit: Target, step: Target) => (hit.noun === step.noun
+  ? `That's the other ${hit.noun}! Tap the one that is glowing.`
+  : `That's the ${hit.noun}! Tap the part that is glowing.`)
+const strayLine = (step: Target) => `Now, where is the ${step.noun}? Look for the glowing part!`
+/** The lesson's wrong pot — refused before it touches the page, pointing at the pot that is jumping. */
+const wrongPotLine = (brush: ColorName, step: Target) =>
+  `That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`
+/** The test's wrong paint, judged on Ready. */
+const wrongPaintLine = (brush: ColorName, step: Target) => `That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`
+const namedLine = (step: Target) => {
+  const c = COLORS[step.color].label
+  return `${c}! The ${step.noun} is ${c}.`
+}
+const teachLine = (t: Target) => {
+  const c = COLORS[t.color].label
+  return `This color is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`
+}
+/** The re-teach, in order. */
+function explainLines(page: Page, seq: number): string[] {
+  const t = page.targets[seq]
+  const c = COLORS[t.color].label
+  return [
+    `Let's do this one together. The ${t.noun} is glowing — that is the bit we color.`,
+    `We want ${c}. Remember the ${c} in the garden? This is the ${c} paint.`,
+    `Watch the ${t.noun} turn ${c}!`,
+  ]
+}
+/**
+ * Every line a toy-room round can say once it has loaded — all of it from the orchestrator's tap handlers, since the
+ * round's Play renders nothing: no paint on the brush, a tap on any OTHER named part of the page (the glow says which is
+ * wanted, but a finger can land on any of them), wandering off the question, and Ready with each wrong paint on the tray.
+ */
+function testLines(page: Page, d: ColorRound): string[] {
+  const step = page.targets[d.seq]
+  return [
+    noPaintLine(step), strayLine(step),
+    ...page.targets.filter(t => t !== step).map(t => wrongPartLine(t, step)),
+    ...d.pots.filter(c => c !== step.color).map(c => wrongPaintLine(c, step)),
+  ]
+}
+/** One lesson beat's: its ask, the same redirects, a wrong pot from the tray, and the colour named on the finished part. */
+function teachLines(seq: number, pots: ColorName[]): string[] {
+  const step = TEACH_PAGE.targets[seq]
+  return [
+    teachLine(step), noPaintLine(step), strayLine(step),
+    ...TEACH_PAGE.targets.filter(t => t !== step).map(t => wrongPartLine(t, step)),
+    ...pots.filter(c => c !== step.color).map(c => wrongPotLine(c, step)),
+    namedLine(step),
+  ]
 }
 
 /**
@@ -308,12 +341,7 @@ const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => voi
   useEffect(() => {
     if (ran.current) return; ran.current = true
     const t = page.targets[seq]
-    const c = COLORS[t.color].label
-    const cancel = speakSteps([
-      `Let's do this one together. The ${t.noun} is glowing — that is the bit we colour.`,
-      `We want ${c}. Remember the ${c} in the garden? This is the ${c} paint.`,
-      `Watch the ${t.noun} turn ${c}!`,
-    ], {
+    const cancel = speakSteps(explainLines(page, seq), {
       onStep: i => { if (i === 1) onLoad(t.color); if (i === 2) onPaint() },
       onDone: () => window.setTimeout(onDone, 1500),
     })
@@ -323,9 +351,52 @@ const Explain: React.FC<{ page: Page; seq: number; onLoad: (c: ColorName) => voi
   return null
 }
 
+/**
+ * The scored practice. What it needs from the orchestrator — where to hand the round's submit, and the re-teach's two
+ * paint actions — is passed in, so the page and the canvas stay the orchestrator's.
+ */
+export function makeColorBeat(page: Page, register: (f: (c: boolean) => void) => void, onLoad: (c: ColorName) => void,
+  fillTarget: (seq: number) => void): Beat<ColorRound> {
+  return {
+    skillId: 'colors', rounds: SCORED_ROUNDS,
+    make: (d, round = 0) => makeColorRound(page, (d || 1) as 1 | 2 | 3, round),
+    sig: d => `${d.seq}`,   // one question per named area; the shuffled pot order is not variety
+    /**
+     * ⚠️ EMPTY ON PURPOSE — THIS CHAPTER DRAWS ITS OWN QUESTION, AND IT HAS TO.
+     *
+     * `SkillBeat`'s prompt pill is a real `<button>` (tap to hear it again), and in every other
+     * chapter that is right: it sits in a band the answers do not use. Here the answer surface is a
+     * colouring page that fills the whole frame, so the pill lies ACROSS the picture and swallows
+     * every tap underneath it. Measured at 640×320: the pill spans x 181–459, y 48–93 and the
+     * balloon this page asks for spans x 415–490, y 15–120 — so a child aiming at the middle of the
+     * answer hit the pill and the balloon never coloured.
+     *
+     * That is the same fault this file's own `Banner` comment already records for the LESSON
+     * banner, arriving in the scored half through a control the chapter does not own. The banner
+     * below is `pointerEvents: none`, so the question is still on screen and the picture is whole;
+     * the replay moved into the top chrome, beside Menu, where a small overlay is already accepted.
+     * ⚠️ `say` is untouched — SkillBeat still SPEAKS the round, it just draws nothing.
+     */
+    prompt: () => '',
+    say: d => sayFor(page, d),
+    Play: ({ onSubmit }) => <Register onSubmit={onSubmit} register={register} />,
+    Reteach: ({ data, onDone }) => (
+      <Explain page={page} seq={data.seq} onLoad={onLoad} onPaint={() => fillTarget(data.seq)} onDone={onDone} />
+    ),
+    feedbackLines: d => testLines(page, d),
+    reteachLines: d => explainLines(page, d.seq),
+  }
+}
+
+/**
+ * A lesson beat is not one of SkillBeat's rounds, so it opens its own question. `useQuestion` reads its lines once, so the
+ * parent keys this on the step; and a child's effects run before its parent's, so the question is open before the
+ * orchestrator speaks the beat's ask.
+ */
+const TeachQuestion: React.FC<{ lines: () => string[] }> = ({ lines }) => { useQuestion(lines); return null }
+
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 const RT_CSS = `
-@keyframes rt_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 /* Strong on purpose. At .10–.44 a big shape like the sky read fine and a tulip did not — 76px of
    pale grey on a white page, next to an identical tulip that is not the answer, is not a signpost.
    The floor matters as much as the peak: at the bottom of the pulse the mark has to still be there. */
@@ -347,7 +418,7 @@ const RT_CSS = `
  * beats followed by a demo and a guided round would be three kinds of hand-holding in a row.
  *
  * ⚠️ `start` IS ONE TAP AND CANNOT BE REMOVED, however much it looks like a screen worth deleting.
- * `unlockSpeech()` has to run inside a real user gesture or mobile autoplay policy silences Milo for
+ * `unlockSpeech()` has to run inside a real user gesture or mobile autoplay policy silences the voice for
  * the whole chapter, and nothing upstream unlocks it — every chapter in the app does its own. This
  * is the ONE chapter that is unanswerable without voice, because naming the colour IS the question.
  * So it is stripped to a single button over the picture, with no explaining card and no page picker:
@@ -383,7 +454,7 @@ export default function RainbowTown({ onFinish, onExit }: {
    * see it, they can pick up another pot and paint straight over it as often as they like, and
    * nothing is graded until Ready.
    * ⚠️ THE LESSON IS DELIBERATELY UNCHANGED — there the wrong pot is still refused before it touches
-   * the page and Milo points at the one that is jumping, because that half of the chapter is
+   * the page and the voice points at the one that is jumping, because that half of the chapter is
    * teaching the word rather than measuring it.
    */
   const [pendingPaint, setPendingPaint] = useState<ColorName | null>(null)
@@ -435,9 +506,9 @@ export default function RainbowTown({ onFinish, onExit }: {
   const pageRef = useLatestRef(page)
 
   /**
-   * Light up the area Milo is asking for. The child should never have to work out WHICH shape is the
+   * Light up the area being asked for. The child should never have to work out WHICH shape is the
    * roof — that is object vocabulary, not colour recognition, and failing it would be scored as
-   * though they did not know red. Milo says the word and the shape glows; the only open question is
+   * though they did not know red. The voice says the word and the shape glows; the only open question is
    * the paint. Repainted whenever the round moves on, and wiped the moment the area is filled.
    */
   useEffect(() => {
@@ -452,7 +523,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (r) paintRegion(ctx, p, r, HINT_HEX)
   }, [stepIdx, phase, ready, page])
 
-  /** Colour a NAMED area outright — Milo's demo and the re-teach both use this. */
+  /** Colour a NAMED area outright — the lesson's demo and the re-teach both use this. */
   const fillTarget = useCallback((seq: number) => {
     const p = bmp.current
     if (!p) return
@@ -467,7 +538,7 @@ export default function RainbowTown({ onFinish, onExit }: {
    * A tap on the picture. The flood answers both questions at once: which pixels to colour, and what
    * the child actually touched — by testing each named point against the flooded area.
    *
-   * Anything Milo has NOT asked for simply fills, in whatever colour is on the brush, ungraded. That
+   * Anything NOT asked for simply fills, in whatever colour is on the brush, ungraded. That
    * is the difference between a colouring game and a quiz with a paint bucket, and it costs nothing:
    * the named areas are still graded, so the lesson is intact.
    */
@@ -484,7 +555,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     const targets = pageRef.current.targets
     const step = targets[stepRef.current]
     const brush = loadedRef.current
-    if (!brush) { speak(`Pick up a paint first! We need ${COLORS[step.color].label}.`); return }
+    if (!brush) { speak(noPaintLine(step)); return }
 
     const region = floodRegion(p, ix, iy)
     let area = region                                     // what actually gets painted
@@ -523,22 +594,18 @@ export default function RainbowTown({ onFinish, onExit }: {
     // a slipped finger or a wandering eye, and this chapter measures whether they know red. Point
     // back at the glow and leave the score alone.
     if (hit && hit !== step) {
-      // "That's the tulip!" when they just tapped a tulip and were asked for the tulip is maddening.
-      // The page has two of them and only the glow tells them apart, so the words have to admit it.
-      speak(hit.noun === step.noun
-        ? `That's the other ${hit.noun}! Tap the one that is glowing.`
-        : `That's the ${hit.noun}! Tap the part that is glowing.`)
+      speak(wrongPartLine(hit, step))
       nudge()
       return
     }
     if (!hit) {
       // Free colouring, and it stays free — but a child can otherwise paint the whole page without
       // ever meeting the question, with nothing telling them they have wandered off it. After a few
-      // strokes Milo asks again and the glow gets a nudge. It never says which paint; it repeats the
+      // strokes the voice asks again and the glow gets a nudge. It never says which paint; it repeats the
       // question they already have.
       fill(area, COLORS[brush].hex)
       strayFills.current += 1
-      if (strayFills.current % 3 === 0) { speak(`Now, where is the ${step.noun}? Look for the glowing part!`); nudge() }
+      if (strayFills.current % 3 === 0) { speak(strayLine(step)); nudge() }
       return
     }
     // The wrong paint, though, IS the skill, and it is the only thing here that counts as wrong.
@@ -553,7 +620,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     }
 
     if (brush !== step.color) {
-      speak(`That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`)
+      speak(wrongPotLine(brush, step))
       nudge()
       return
     }
@@ -563,8 +630,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (phaseRef.current === 'teach') {
       // Name it once more ON the finished colour, which is the moment the word and the thing are
       // both in front of the child at the same time.
-      const c = COLORS[step.color].label
-      speak(`${c}! The ${step.noun} is ${c}.`)
+      speak(namedLine(step))
       const next = stepRef.current + 1
       timers.current.push(window.setTimeout(() => {
         setLoaded(null)
@@ -579,7 +645,7 @@ export default function RainbowTown({ onFinish, onExit }: {
 
   /**
    * Ready. Only now is the colour on the glowing part judged — and a wrong one is still retried in
-   * place, exactly as a wrong pot used to be: Milo names what they used and what is wanted, and the
+   * place, exactly as a wrong pot used to be: the voice names what they used and what is wanted, and the
    * child paints over it. The ring, the fill and the bar say nothing about which paint is right.
    */
   const commitPaint = useCallback(() => {
@@ -590,7 +656,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (!step) return
     if (brush !== step.color) {
       erred.current = true
-      speak(`That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`)
+      speak(wrongPaintLine(brush, step))
       nudge()
       return
     }
@@ -616,47 +682,21 @@ export default function RainbowTown({ onFinish, onExit }: {
     if (phase !== 'teach') return
     const t = TEACH_PAGE.targets[stepIdx]
     if (!t) return
-    const c = COLORS[t.color].label
     // `speakAfterCurrent`: a correct fill says "red! the tulip is red." and immediately advances
     // the step, so this beat's own line used to arrive on top of it.
-    speakAfterCurrent(`This colour is ${c}. The ${t.noun} is ${c}! Pick up the ${c} paint — it is jumping up and down — then tap the ${t.noun}.`)
+    speakAfterCurrent(teachLine(t))
   }, [phase, stepIdx])
 
   // Depends on the open page and nothing that changes DURING a round, so picking up a pot can never
   // regenerate the question or reshuffle the box under the child. The page is fixed before the test
   // starts, so listing it here costs nothing.
-  const beat = useMemo<Beat<ColorRound>>(() => ({
-    skillId: 'colors', rounds: SCORED_ROUNDS,
-    make: (d, round = 0) => makeColorRound(page, (d || 1) as 1 | 2 | 3, round),
-    sig: d => `${d.seq}`,   // one question per named area; the shuffled pot order is not variety
-    /**
-     * ⚠️ EMPTY ON PURPOSE — THIS CHAPTER DRAWS ITS OWN QUESTION, AND IT HAS TO.
-     *
-     * `SkillBeat`'s prompt pill is a real `<button>` (tap to hear it again), and in every other
-     * chapter that is right: it sits in a band the answers do not use. Here the answer surface is a
-     * colouring page that fills the whole frame, so the pill lies ACROSS the picture and swallows
-     * every tap underneath it. Measured at 640×320: the pill spans x 181–459, y 48–93 and the
-     * balloon this page asks for spans x 415–490, y 15–120 — so a child aiming at the middle of the
-     * answer hit the pill and the balloon never coloured.
-     *
-     * That is the same fault this file's own `Banner` comment already records for the LESSON
-     * banner, arriving in the scored half through a control the chapter does not own. The banner
-     * below is `pointerEvents: none`, so the question is still on screen and the picture is whole;
-     * the replay moved into the top chrome, beside Menu, where a small overlay is already accepted.
-     * ⚠️ `say` is untouched — SkillBeat still SPEAKS the round, it just draws nothing.
-     */
-    prompt: () => '',
-    say: d => sayFor(page, d),
-    Play: ({ onSubmit }) => <Register onSubmit={onSubmit} register={register} />,
-    Reteach: ({ data, onDone }) => (
-      <Explain page={page} seq={data.seq} onLoad={setLoaded} onPaint={() => fillTarget(data.seq)} onDone={onDone} />
-    ),
-  }), [register, fillTarget, page])
+  // eslint-disable-next-line react-hooks/refs -- both are stored for the round's Play and Reteach, never called here
+  const beat = useMemo(() => makeColorBeat(page, register, setLoaded, fillTarget), [register, fillTarget, page])
 
   // Landscape-first, like the rest of the 3–5 set: the picture is wide and the paint box needs the
   // width. Sits BELOW every hook — an early return above one makes turning the phone change the hook
   // count, which tore chapter 2 into the error boundary.
-  if (needsRotate) return <RotateGate line="The colouring book plays in landscape! 🎨" />
+  if (needsRotate) return <RotateGate line="The coloring book plays in landscape! 🎨" />
 
   const target = page.targets[stepIdx]
 
@@ -709,7 +749,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       </div>
 
       {/* One button on the open page — no explaining card, no picker. It exists only to carry the
-          speech unlock (see the Phase comment); everything it used to say, Milo now says out loud in
+          speech unlock (see the Phase comment); everything it used to say is now said out loud in
           the first beat of the lesson, which is where a three-year-old was going to get it anyway. */}
       {phase === 'start' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(251,247,238,.55)' }}>
@@ -730,6 +770,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       <ReadyBar show={phase === 'test' && pendingPaint !== null} onCommit={commitPaint} label="Done ✓" align="right" />
 
       {phase === 'teach' && target && Banner(`${stepIdx + 1} of ${TEACH_STEPS} · This is ${COLORS[target.color].label.toUpperCase()}`)}
+      {phase === 'teach' && target && <TeachQuestion key={stepIdx} lines={() => teachLines(stepIdx, pots)} />}
 
       {/* The scored question, in the chapter's own PASS-THROUGH banner — see the beat's `prompt`. */}
       {phase === 'test' && target && Banner(promptFor(page, { seq: stepIdx, pots }))}
@@ -756,7 +797,7 @@ export default function RainbowTown({ onFinish, onExit }: {
       {phase === 'bridge' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: short ? 12 : 20, background: 'rgba(251,247,238,.94)', padding: '0 12px' }}>
           <div style={{ maxWidth: '78%', background: '#fff', border: '3px solid var(--outline)', borderRadius: 18, padding: short ? '10px 18px' : '14px 22px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: short ? 15 : 18, color: 'var(--ink)', textAlign: 'center', boxShadow: '0 4px 0 rgba(61,37,22,.1)' }}>
-            You know all six colours now! 🎨 Milo has a new picture — the toy room. This time nobody shows you which paint. Listen carefully!
+            You know all six colors now! 🎨 Here is a new picture — the toy room. This time nobody shows you which paint. Listen carefully!
           </div>
           <button onClick={() => {
             stopSpeech()
@@ -779,7 +820,6 @@ export default function RainbowTown({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase !== 'start' && <MiloPainter />}
     </div>
   )
 }

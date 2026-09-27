@@ -1,10 +1,18 @@
 /**
  * What the public surfaces PROMISE — founder's decision N21, 2026-09-26.
  *
- * Only grades 3–8 are live (KG–2 exists only in Draft #233); `/play` says games are "coming soon" and spends
- * no points; teachers adding students is paused until a school-consent route exists. So the titles,
- * descriptions, share card, JSON-LD, manifest, llms.txt, /help and /auth must say "grades 3 to 8" and must not
- * sell KG, game time or class rosters. Flip this gate in the SAME change that ships any of them.
+ * Only grades 3–8 were live when N21 was decided; `/play` says games are "coming soon" and spends no points;
+ * teachers adding students is paused until a school-consent route exists. So the titles, descriptions, share card,
+ * JSON-LD, manifest, llms.txt, /help and /auth must say "grades 3 to 8" and must not sell KG, game time or class
+ * rosters. Flip this gate in the SAME change that ships any of them.
+ *
+ * ⚠️ KG–2 (#233, rebuilt 2026-09-27) puts the KG story chapters INSIDE the app — the child's home and the parent's
+ * dashboard label a grade "KG" ("Kínder" in Spanish, in the dashboard's dictionary, i18n.tsx). That is not a public
+ * claim, so it does not flip this gate; whether the public surfaces start saying "KG to 8" is the founder's call.
+ * What changed here is the instrument for /auth's Spanish: it used to read ALL of i18n.tsx — the whole dashboard's
+ * dictionary — as a stand-in for the sign-in screen, and the dashboard's own "KG" label turned it red. It now reads
+ * the Spanish of exactly the literal keys /auth passes to `t()` (plus /auth's own source, as before). NOT covered:
+ * keys /auth reaches through `errorWording()` rather than a literal.
  *
  * ⚠️ The forbidden phrases and the required phrase are written out here by hand, not read from the code —
  * a gate that derived them from the files would pass through any rewording. llms.txt is checked on what
@@ -15,6 +23,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { GET as llms } from '@/app/llms.txt/route'
+import { ES } from '@/features/dashboard/i18n'
 
 const src = (p: string) => readFileSync(join(process.cwd(), p), 'utf8')
 
@@ -27,7 +36,11 @@ const MARKETING = [
   'src/app/help/page.tsx',         // FAQ + its FAQPage JSON-LD
 ]
 // Adult sign-in screen + its Spanish strings: only the grade claim (they legitimately mention teachers).
-const GRADE_ONLY = ['src/app/auth/page.tsx', 'src/features/dashboard/i18n.tsx']
+const AUTH = 'src/app/auth/page.tsx'
+// Every literal key /auth asks `t()` for — a single-quoted literal cannot contain an unescaped quote, so the class is its
+// real boundary — and the Spanish the screen shows for it.
+const authKeys = () => [...src(AUTH).matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)].map(m => m[1])
+const authSpanish = (): [string, string] => [`${AUTH} in Spanish`, authKeys().map(k => ES[k] ?? '').join('\n')]
 
 const KG = /\bKG\b|kindergarten|k[ií]nder/i
 const GAME_TIME = /game[ -]?time|minutes of (a |the )?(building )?game|spend (them|points|it) on (game|minutes)/i
@@ -46,10 +59,14 @@ describe('public claims match what ships (N21)', () => {
       expect(text, `${name} no longer states the grades`).toMatch(/3 to 8/)
     }
     expect(src('src/app/auth/page.tsx')).toMatch(/grades 3 to 8/)
+    // …and the Spanish half reads the screen's real strings: the keys it asks for, translated.
+    expect(authKeys().length, 'no t() key read out of /auth').toBeGreaterThan(30)
+    expect(authSpanish()[1]).toContain('Continuar con Google')
+    expect(authSpanish()[1]).toContain('de 3.º a 8.º grado')
   })
 
   it('no surface claims KG / kindergarten', async () => {
-    const all: [string, string][] = [...(await surfaces()), ...GRADE_ONLY.map(p => [p, src(p)] as [string, string])]
+    const all: [string, string][] = [...(await surfaces()), [AUTH, src(AUTH)], authSpanish()]
     for (const [name, text] of all) expect(text, `${name} claims KG`).not.toMatch(KG)
   })
 

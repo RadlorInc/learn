@@ -41,12 +41,32 @@ Three PRs, stacked, each a Draft. They merge **in this order and never out of it
 4. **When PR C merges** (deleting Josh's old same-origin files). Recommendation: **≥ 48 h after PR B is live.** Until
    then a tab or installed app still running the previous bundle keeps its voice; after it, such a tab hears the device
    voice until it reloads.
-5. **KG–2 wrong-answer lines (privacy, not blocking).** Some KG–2 feedback lines are built from the option a child
-   tapped ("That makes seventeen. I asked for twenty-one.") and are recorded. The request names only a content hash, but
+5. **KG–2 wrong-answer lines (privacy). Not blocking PR B, but it BLOCKS the §5.1 sentence: decide this first, then
+   publish the §5.1 variant that matches.** Some KG–2 feedback lines are built from the option a child
+   tapped ("That makes seventeen. I asked for twenty-one." — 1,595 such lines in Money; "That one is <what was
+   tapped>…" another 464 across Numbers to 100, Colors and Patterns; counted 2026-09-27) and are recorded. The request names only a content hash, but
    anyone holding the public manifest could map a request in Supabase's logs to "this device chose 17". No identity is
    in it; today the same is true of Vercel's logs. Options: accept (recommended — bounded, no identity, same as today),
    or prefetch each question's whole feedback set so the request no longer depends on the choice (+egress), or speak
    those lines with the device voice.
+   ✅ **Decided 27 Sep: prefetch — and the rebuilt #233 does it** (`openQuestion` in `src/infra/voiceClipPlayer.ts`). When
+   a question loads (every scored round, and each chapter's guided round) the clip of every line it can lead to — each
+   option's line, right and wrong, the praise, the encouragement, the re-teach when one can follow, the end card — is
+   fetched into memory; while the question is open a line plays ONLY from that memory, and a line it was not given is
+   spoken by the device voice and asks for nothing. So the requests are the same whichever option is tapped **by
+   construction**, not because every chapter listed its lines: a line a chapter forgot costs Josh's voice, never a request.
+   Proof: `questionLock.test.ts` (the player), `kg2IdenticalRequests.test.ts` (the founder's test: a real round, four
+   nests, four identical request lists), `questionLines*.test.ts` (each chapter's lines, measured by rendering it).
+   ⚠️ **What it does NOT hide, stated so §5.1 does not overclaim:** the NEXT question is chosen after the answer (the
+   tier moves), so the sequence of questions a device asks for still follows how the child is doing; a re-teach's lines
+   are fetched with the question only when the two answers before it were wrong; the end card comes sooner on a mastery
+   finish. ⚠️ **And Money is the exception (founder, 27 Sep):** its answer lines (the sale and one miss per reachable
+   total) are fetched ahead only while they total ≤ 100 KB, otherwise when said — measured, 1 of 300 rounds fits, so a
+   Money miss IS a request at the tap, naming the total laid. The founder's reason: the answer reaches Supabase anyway
+   through progress sync — precisely, a signed-in child's correct answer uploads first-try-or-after-a-miss; the clip adds
+   which wrong total, with no account. And ⚠️ **Grades 3–8 lessons are not covered**: Screen 8 fetches "Right!" or the worked example, and Screen 9
+   its won / keep-going line, at the moment of the answer (`LessonPlayer.tsx`). The same `openQuestion` would cover them;
+   not built — it was not in the decision.
 6. **Supabase plan.** §4 — Pro covers even 10,000 families; the Free plan would not pass ~550.
 
 ## 2. What you do, in order
@@ -136,9 +156,23 @@ PR B makes these published sentences false. Proposed replacements (English; Span
 
 1. **`docs/legal/07-subprocessors.md:30`** — now: *"…every audio clip a child hears is a static file served from our own
    domain, and where a clip is missing the fallback is the browser's own on-device speech."*
-   → **"…every audio clip a child hears is a pre-recorded file, the same for every child, served from the file storage
-   of our database provider (Supabase, listed above). The request for a clip names only the recording — never the
-   child, the account or an answer — and where a clip is missing the fallback is the browser's own on-device speech."**
+   → ✅ **Decided 27 Sep: variant (a) "accept", applied in PR B (#301).** The prefetch stays as built — it only reduces
+   what requests reveal — and the wording does not claim it. The variants, kept as the reasoning:
+   - **(b) prefetch (what the rebuilt #233 does, decided 27 Sep) — true only once the lessons' Screens 8–9 are covered
+     too (§1 item 5):** **"…every audio clip a child hears is a pre-recorded file, the same for every child, served from
+     the file storage of our database provider (Supabase, listed above). The request for a clip names only the recording
+     — never the child or the account — and a question's recordings are all fetched when the question appears, so which
+     answer a child picks is not in the requests (except in Money, where the total paid can be); which questions come next
+     still follows how the child is doing. Where a
+     clip is missing the fallback is the browser's own on-device speech."** Until the lessons are covered, use (a).
+   - **(a) accept:** **"…every audio clip a child hears is a pre-recorded file, the same for
+     every child, served from the file storage of our database provider (Supabase, listed above). The request for a clip
+     names only the recording — never the child or the account. Some recordings are feedback on an answer (for example
+     "Not quite"), so which clips a device asks for can reflect how a question went, but not who answered. Where a clip
+     is missing the fallback is the browser's own on-device speech."**
+   - **(c) device voice for every feedback line (needs a code change first — not built):** the sentence as first
+     proposed, *"…The request for a clip names only the recording — never the child, the account or an answer — …"*.
+     ⚠️ Not with (b): (b) hides the answer to a question, not how the child is doing across questions.
 2. **`07-subprocessors.md:19`** (Supabase row, "What it does") — add: *"…file storage, **including serving the
    pre-recorded lesson audio**."* No change to the data column: no child data is stored there.
 3. **`docs/legal/08-cookie-and-tracking-notice.md:21`** — now one row for `milo-shell, milo-static, milo-assets` kept
