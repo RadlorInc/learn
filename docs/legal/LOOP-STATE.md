@@ -949,3 +949,65 @@ The founder's checklist: `docs/legal/AUDIO-ROUND2.md`.
 - The migration's regex check was a proxy twice (joined expressions; an `OR owner = auth.uid()`); the behavioural probe as the owner is what catches those, watched against the previous version applying cleanly.
 - **"Listed and asserted" is not "played"** (#233 review): a line's clip can exist and still never be requested if the index it is filed under is not the one the screen loads — count-aloud numbers and shared re-teach lines lost Josh that way until a reviewer read the call sites against the corpus.
 - Measurement traps hit and named: Docker Desktop does not share `/private/tmp` (an empty mount read as "wrong source" → now exit 2), Playwright routes stop a service worker controlling, production's CSP `upgrade-insecure-requests` breaks any non-loopback `http:` host, zsh does not word-split `$var` (three harness runs reported nothing until caught), `vi.waitFor` over fixed sleeps.
+
+## Resume after Pro (27 September 2026) — the founder's one-session permissions
+
+The founder allowed, **for this session only**: merge when CI is green on the latest `main` (Vercel included) and local
+`tsc` + vitest + build exit 0; a rollback target recorded before each runtime merge and `npm run smoke:live` once
+production is READY on that commit; the committed before-/proof-SQL files run on production **read-only** (SELECT only,
+counts / PASS-FAIL, never child names, answers or emails, every query logged here); triggering the Backup workflow.
+Never: approving `production-db`, creating or reading keys/secrets. Anything new is a Draft PR.
+
+### Production queries run (read-only, Supabase MCP, role `supabase_read_only_user`)
+| when (UTC) | file / query | result |
+|---|---|---|
+| 01:27:59 | probe: `set transaction read only; select current_setting('transaction_read_only')` | `on` — the connection cannot write |
+| 01:28 | `audio-bucket-before.sql` B1 · B4 · B5 | `lesson-audio` buckets **0** · RLS on `storage.objects` **true** · all storage objects **0** |
+| 01:28 | `audio-bucket-before.sql` B2 · B3 | buckets **0 rows** · `storage.objects` policies **0 rows** |
+| 01:29 | control (added): role, `rolbypassrls`, `count(*) from storage.migrations` | `supabase_read_only_user` · **true** · **73** — the zeros above are real zeros, not a role that cannot see |
+| 03:09 | `audio-bucket-proof.sql` P1–P4 (after `migrate-prod`) | PASS — `lesson-audio` · public **true** · **262144** · `{audio/mpeg}` · storage.objects policies **0** · `20260927100000` recorded **1** · badly named **0** (0 objects: cannot fail yet) |
+| 03:09 | `audio-bucket-proof.sql` P5–P6 + control, before the upload | **0 \| null** (the "before" half, as written) · without immutable 0 (vacuous) · buckets **1** (only `lesson-audio` — the S3 keys reach nothing else) |
+
+### Backups
+| when (UTC) | run | artifact |
+|---|---|---|
+| 01:28 | [36285657787](https://github.com/RadlorInc/learn/actions/runs/36285657787) green | `milo-db-backup-36285657787`, 63,874 bytes |
+| 03:08 (migrate-prod, pre-migrate) | [36287402302](https://github.com/RadlorInc/learn/actions/runs/36287402302) green | `milo-db-backup-premigrate-36287402302`, 63,938 bytes |
+
+### What merged
+| PR | commit | proof |
+|---|---|---|
+| [#299](https://github.com/RadlorInc/learn/pull/299) merge train: #289 → #292 → #290 → #291 | `f7e20f5ba` | CI 4/4 on latest main; local `npm ci`/tsc/vitest/build/audit 0; **177 files / 4,027 passed / 1 skipped = main's count** (vitest 4.1.11 → 5.0.1); lockfile: every one of 544 entries has a version from main's or one of the four PRs' locks (10 jsdom-30 transitive deps pinned back to #291's resolutions); production READY (GitHub deployment record — see below), `smoke:live` exit 0 |
+| [#300](https://github.com/RadlorInc/learn/pull/300) audio part A | `78dee7be1` | CI 4/4 on latest main (`rls-tests` applied the migration and ran S0–S5, "ALL ASSERTIONS PASSED"); local tsc/vitest (180 / 4,044)/build 0; smoke exit 0; migration approved by the founder, applied 03:08 |
+
+### Pushed as Drafts (not merged)
+| PR | head | state |
+|---|---|---|
+| [#301](https://github.com/RadlorInc/learn/pull/301) B — the app plays Josh from the bucket | `26f56b306` | Draft until the founder approves AUDIO-ROUND2 §5; needs `main` merged in (vitest 5 / jsdom 30) and CI on `main` before it can merge |
+| [#302](https://github.com/RadlorInc/learn/pull/302) C — delete the old `/audio` folder | `02d015ebc` | merge ≥ 48 h after B |
+| [#303](https://github.com/RadlorInc/learn/pull/303) #233 rebuilt + the KG–2 prefetch | `4a2838c13` | after C. Prefetch built and proven (the founder's identical-requests test, 23 chapters' lines measured by rendering, 66 planted breaks); full suite 195 / 4,175 |
+
+### Lessons
+- **A timed-out test kept running and failed the NEXT test, naming the wrong chapter.** Two full-suite runs on a loaded
+  Mac (load 50–90) failed: 6 walk tests timed out, and because a timeout does not stop the walk and the stubbed speaker
+  is one shared list, its lines were measured by the following tests — 11 assertion failures in chapters that pass
+  alone. The harness now refuses a walk while another is still running, with that reason, so the failure is "could not
+  look" rather than a false defect; the walk files carry a 300 s timeout. Third run green. (The refusal itself has not
+  been watched firing.) A timeout is not an assertion failure — and here it MANUFACTURED assertion failures.
+- **A stack measured only at its top.** Part A was "no app change", so it was only ever tested with B and C on top. Alone,
+  on `main`, it turned **26 test files red**: the pglite schema fixture replayed its Storage migration (`storage.buckets
+  does not exist`), and the fix lived in B's first commit. Moved down into A (`fc4e58c23`), gate re-proved with
+  `break-check.sh`. Every PR in a stack is measured on its own base, not only as part of the pile.
+- **Vercel access changed under the session.** At the start the CLI user saw team `radlor1` (plan **pro**) and could
+  redeploy; ~40 minutes later `vercel teams ls` no longer listed it and the connector answered 403 on deployments. So
+  "production READY on the commit" was read from GitHub's deployment record (Vercel sets it on READY), and **instant
+  rollback was not available to the agent** — the fallback would have been a revert PR through Deploy.
+- My own Vercel poll printed nothing for ten minutes because of a Python syntax error inside the loop — an instrument
+  that failed silently and read as "still building". Caught by reading its output, not its silence.
+- **Three gates bound to the text of the file, found while moving spoken templates into functions (#233 rebuilt), not
+  fixed there — written down so the next edit does not trip on them** (CLAUDE.md: bind a check to the value, not to where
+  a literal lives): `coinShopPay.test.ts` "no ASK line names the price" reads everything between `export const ASK` and
+  `// ─── The round` — a byte window standing in for the `ASK`/`ASK_PILE` objects (it went red when helpers were placed
+  inside it); `chapterDirections.test.ts` greps ShapeTown for the literal `speak("Great job! The ${label} fits!")`, so that
+  line is written twice (a walk catches a drift); `voiceBoundaryVerb.test.ts` matches its exceptions on the literal call
+  text, so five BuildingBlocks/BlockYard lines and HopAlong's count stay literal at the call and are declared again.
