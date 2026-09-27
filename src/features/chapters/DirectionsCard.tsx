@@ -48,7 +48,7 @@ import { useViewport } from '@/shared/hooks/useViewport'
 const LANE_LEFT = 104
 const LANE_RIGHT = 96
 /**
- * ⚠️ BELOW THE CHAPTER'S OWN CHROME (44–46), ABOVE ITS SCENE (Milo is 26). Three chapters put a
+ * ⚠️ BELOW THE CHAPTER'S OWN CHROME (44–46), ABOVE ITS SCENE (the scene's guide figure was 26). Three chapters put a
  * banner of their own on this row — ShapeStudio and SeesawPark at `top: 12`, and MeasureIt at
  * `pillTop(short) = 14` on a landscape phone, which it moved up there to buy height for the blocks.
  * Ranked underneath them, the worst that happens in those three is that part of this strip is

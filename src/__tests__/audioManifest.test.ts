@@ -88,4 +88,38 @@ describe('audio manifest', () => {
     const loaders = [...readFileSync(`${dir}/index.ts`, 'utf8').matchAll(/import\('\.\/([a-z0-9]+)\.json'\)/g)].map(m => `${m[1]}.json`).sort()
     expect(loaders).toEqual(files)
   })
+
+  it("every KG–2 chapter's runtime index lists exactly its corpus lines, with the manifest's object and the line's check", () => {
+    // src/features/chapters/voice-index is GENERATED (build-manifest.mjs) from each row's `chapters`. Both directions:
+    // a row missing from a chapter it names is that line in the device voice there with its clip in the bucket; an
+    // entry no row gives that chapter is a stale or hand-edited file.
+    const dir = 'src/features/chapters/voice-index'
+    const files = readdirSync(dir).filter(f => f.endsWith('.json')).sort()
+    const rows = JSON.parse(readFileSync('scripts/.voice-corpus-chapters-josh.json', 'utf8')) as { key: string; check: string; chapters: string[] }[]
+    const idx = Object.fromEntries(files.map(f => [f.slice(0, -5), JSON.parse(readFileSync(`${dir}/${f}`, 'utf8')) as Record<string, [string, string, number]>]))
+    const wrong: string[] = []
+    const want = new Set<string>()
+    for (const r of rows) for (const ch of r.chapters) {
+      want.add(`${ch} ${r.key}`)
+      const e = idx[ch]?.[r.key]
+      if (!e) wrong.push(`${ch}.json lacks ${r.key}`)
+      else {
+        if (M.keys[r.key]?.name !== `${e[0]}.mp3`) wrong.push(`${ch}.json ${r.key}: object ${e[0]}`)
+        if (e[1] !== r.check) wrong.push(`${ch}.json ${r.key}: check ${e[1]}`)
+        // The size a question's answer budget is judged by (openQuestion, Money): it must be the clip's real size.
+        if (e[2] !== M.keys[r.key]?.bytes) wrong.push(`${ch}.json ${r.key}: ${e[2]} bytes, the manifest says ${M.keys[r.key]?.bytes}`)
+      }
+    }
+    for (const [ch, ix] of Object.entries(idx)) for (const k of Object.keys(ix)) if (!want.has(`${ch} ${k}`)) wrong.push(`${ch}.json lists ${k}, which no row gives it`)
+    expect(wrong.slice(0, 5)).toEqual([])
+    // Hand-written (2026-09-27): 23 chapters; "4. The sunflower is 4 blocks tall." is measurement's alone, object
+    // 1a11c30ab68a845d, 12,974 bytes, from scripts/audio/manifest.json; "Great job!" (SkillBeat's praise) is in all 23.
+    expect(files.length, 'positive control: one index per KG–2 chapter').toBe(23)
+    expect(idx.measurement.hsjnug).toEqual(['1a11c30ab68a845d', '1l998u0noqc', 12974])
+    expect(Object.keys(idx).filter(ch => idx[ch].hsjnug)).toEqual(['measurement'])
+    expect(Object.keys(idx).filter(ch => idx[ch]['163yjlw']).length).toBe(23)
+    const loaders = [...readFileSync(`${dir}/index.ts`, 'utf8').matchAll(/(\w+): \(\) => import\('\.\/(\w+)\.json'\)/g)]
+    expect(loaders.every(m => m[1] === m[2]), 'a loader imports another chapter\'s file').toBe(true)
+    expect(loaders.map(m => `${m[2]}.json`).sort()).toEqual(files)
+  })
 })

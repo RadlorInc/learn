@@ -2,7 +2,7 @@
 /**
  * Chapter 11 — MEASUREMENT (skill `measurement`). The verb is **MEASURE IT**.
  *
- * The child lays a repeating unit — one of Milo's blocks — end to end against the thing, and
+ * The child lays a repeating unit — one block — end to end against the thing, and
  * decides when the run has reached the end of it. A ruler is nothing but repeated units, counted;
  * this chapter is that idea before the ruler exists.
  *
@@ -37,7 +37,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, speakPaced, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { TintedSprite } from './TintedSprite'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -105,16 +105,13 @@ export interface MWorld {
   things: Thing[]
   tint: string                       // the blocks' colour — chosen to sit apart from the scene
   word: string                       // "tall" / "long"
-  milo: { src: string; emoji: string; accessory: string }
   intro: string
 }
 export const WORLDS: MWorld[] = [
   { id: 'forest', label: 'Tall Forest', emoji: '🌳', axis: 'up', things: FOREST, tint: '#e2643c', word: 'tall',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '📏' },
-    intro: "Milo measures things with his blocks! Stack them up beside it until you reach the very top — then count how many. Watch Milo first!" },
+    intro: "Let's measure things with blocks! Stack them up beside it until you reach the very top — then count how many. Watch first!" },
   { id: 'trail', label: 'Long Trail', emoji: '🐛', axis: 'along', things: TRAIL, tint: '#3f8fd8', word: 'long',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '📐' },
-    intro: "Milo measures things with his blocks! Lay them along it until you reach the very end — then count how many. Watch Milo first!" },
+    intro: "Let's measure things with blocks! Lay them along it until you reach the very end — then count how many. Watch first!" },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.things[0].bg }))
@@ -254,7 +251,22 @@ function Controls({ world, count, onAdd, onUndo, onDone, live }: {
 
 // ─── Play (guided + practice) ───────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
-const MeasurePlay: React.FC<{
+const yourTurnLine = (t: Thing) => `Your turn! Lay the blocks until you reach the end of the ${t.noun}.`
+const rightLine = (n: number, t: Thing, w: MWorld) => `${n} blocks! The ${t.noun} is ${n} blocks ${w.word}.`
+const PAST_LINE = 'Oops — that went past the end. Watch…'
+const SHORT_LINE = 'Not quite there yet. Watch…'
+const measuredLine = (t: Thing, w: MWorld) => `${t.units}. The ${t.noun} is ${t.units} blocks ${w.word}.`
+/**
+ * The count said as a block goes on or comes off: down to 0, and up to 20 because that is where the clips stop — the
+ * add control has no ceiling, so a 21st block is said by the device voice, with or without a declaration.
+ */
+const COUNT_ALOUD = Array.from({ length: 21 }, (_, i) => String(i))
+/** Every line a measuring round can say once it has loaded: the count aloud, Done right and wrong, the guided ask. */
+function measureLines(w: MWorld, t: Thing, mode: Mode): string[] {
+  return [...COUNT_ALOUD, rightLine(t.units, t, w), PAST_LINE, SHORT_LINE, measuredLine(t, w), ...(mode === 'guided' ? [yourTurnLine(t)] : [])]
+}
+
+export const MeasurePlay: React.FC<{
   world: MWorld; thing: Thing; mode: Mode; onRecord?: (t: Thing) => void; onComplete: (correct: boolean) => void
 }> = ({ world, thing, mode, onRecord, onComplete }) => {
   const { w: vw, h: vh } = useViewport()
@@ -265,10 +277,11 @@ const MeasurePlay: React.FC<{
   const keyRef = useRef(0), lockRef = useRef(0), doneRef = useRef(false)
   const timers = useRef<number[]>([])
   const after = useCallback((ms: number, fn: () => void) => { timers.current.push(window.setTimeout(fn, ms)) }, [])
+  useQuestion(() => measureLines(world, thing, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
   useEffect(() => () => { timers.current.forEach(t => window.clearTimeout(t)) }, [])
 
   useEffect(() => {
-    if (mode === 'guided') speakAfterCurrent(`Your turn! Lay the blocks until you reach the end of the ${thing.noun}.`)
+    if (mode === 'guided') speakAfterCurrent(yourTurnLine(thing))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -295,7 +308,7 @@ const MeasurePlay: React.FC<{
     const n = laid.filter(l => !l.leaving).length
     if (n === thing.units) {
       setGlow(true)
-      speak(`${n} blocks! The ${thing.noun} is ${n} blocks ${world.word}.`)
+      speak(rightLine(n, thing, world))
       onRecord?.(thing)
       after(1500, () => onComplete(true))
       return
@@ -310,14 +323,14 @@ const MeasurePlay: React.FC<{
     // Two lines, one narration: "Watch…" runs ~2.6s and the measure used to land on top of it at
     // `end + 260`. The blocks still move on their own timers above; only the words wait.
     speakPaced([
-      n > thing.units ? 'Oops — that went past the end. Watch…' : 'Not quite there yet. Watch…',
-      `${thing.units}. The ${thing.noun} is ${thing.units} blocks ${world.word}.`,
+      n > thing.units ? PAST_LINE : SHORT_LINE,
+      measuredLine(thing, world),
     ], {
       onStep: (i) => { if (i === 1) setGlow(true) },
       minMs: (_l, i) => (i === 0 ? end + 260 : 1800),
       onDone: () => onComplete(false),
     })
-  }, [laid, live, thing, world.word, onComplete, onRecord, after])
+  }, [laid, live, thing, world, onComplete, onRecord, after])
 
   return (<>
     <Stage world={world} thing={thing} laid={laid} glow={glow} unit={unit} band={band} />
@@ -325,7 +338,17 @@ const MeasurePlay: React.FC<{
   </>)
 }
 
-// ─── Milo does it (opening demo + the 3-wrong re-teach) ─────────────────────────────
+// ─── Watch it done (opening demo + the 3-wrong re-teach) ─────────────────────────────
+/** The demo, in order: the question, a count per block laid, and what was found. */
+function explainLines(w: MWorld, t: Thing): string[] {
+  const end = w.axis === 'up' ? 'the very top' : 'the very end'
+  return [
+    `How ${w.word} is the ${t.noun}? Let's lay the blocks!`,
+    ...Array.from({ length: t.units }, (_, i) => String(i + 1)),
+    `We reached ${end}! So the ${t.noun} is ${t.units} blocks ${w.word}.`,
+  ]
+}
+
 const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void }> = ({ world, thing, onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const { unit, band } = measureLayout(world.axis, vw, vh)
@@ -335,7 +358,6 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
 
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const end = world.axis === 'up' ? 'the very top' : 'the very end'
     const timers: number[] = []
     const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms))
 
@@ -347,15 +369,11 @@ const MeasureExplain: React.FC<{ world: MWorld; thing: Thing; onDone: () => void
      * showcases already run on.
      */
     const LAY = 1000
-    const lines = [
-      `How ${world.word} is the ${thing.noun}? Let's lay Milo's blocks!`,
-      ...Array.from({ length: thing.units }, (_, i) => String(i + 1)),
-      `We reached ${end}! So the ${thing.noun} is ${thing.units} blocks ${world.word}.`,
-    ]
-    // ⚠️ The opening line ran ~3.5s with a real clip and the first count landed at 2200ms, so Milo
+    const lines = explainLines(world, thing)
+    // ⚠️ The opening line ran ~3.5s with a real clip and the first count landed at 2200ms, so the voice
     // was cut off mid-sentence on the very first thing this chapter says. `speakPaced` keeps the
     // deterministic pacing the note above is about (a block a second, timer-driven, never hanging
-    // on a speech event) and simply will not START the next step while he is still talking.
+    // on a speech event) and simply will not START the next step while the voice is still talking.
     const cancel = speakPaced(lines, {
       onStep: (i) => {
         if (i === 0) return
@@ -395,25 +413,6 @@ function Notebook({ rows, tint }: { rows: Thing[]; tint: string }) {
   )
 }
 
-function MiloHost({ milo }: { milo: MWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: '7%', bottom: BOTTOM_BAND - 8, transform: 'translateX(-50%)', zIndex: 26,
-      width: 'min(22vh, 190px)', height: 'min(22vh, 190px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'mi_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 72, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 32 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(30,42,60,.3))' }} />}
-      </div>
-    </div>
-  )
-}
-
 function Background({ thing, things }: { thing: Thing; things: Thing[] }) {
   const srcs = Array.from(new Set(things.map(t => t.bg)))
   return (
@@ -446,12 +445,13 @@ export function makeMeasureBeat(world: MWorld, onRecord: (t: Thing) => void): Be
     say: t => `How ${world.word} is the ${t.noun}? Lay the blocks!`,
     Play: ({ data, onSubmit }) => <MeasurePlay world={world} thing={data} mode="practice" onRecord={onRecord} onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <MeasureExplain world={world} thing={data} onDone={onDone} />,
+    feedbackLines: t => measureLines(world, t, 'practice'),
+    reteachLines: t => explainLines(world, t),
   }
 }
 
 // ─── Orchestrator ───────────────────────────────────────────────────────────────────
 const MI_CSS = `
-@keyframes mi_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes mi_in  { 0%{transform:translate(46px,38px) scale(.5);opacity:0} 100%{transform:translate(0,0) scale(1);opacity:1} }
 @keyframes mi_out { 0%{transform:translate(0,0) scale(1);opacity:1} 100%{transform:translate(46px,38px) scale(.5);opacity:0} }
 `
@@ -524,7 +524,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo measure  (${demoIdx + 1}/${demos.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch how to measure  (${demoIdx + 1}/${demos.length})`)}
         <MeasureExplain key={`demo${demoIdx}`} world={world} thing={demos[demoIdx]}
           onDone={() => { if (demoIdx + 1 < demos.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -540,7 +540,6 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
       )}
 
       <Notebook rows={book} tint={world.tint} />
-      <MiloHost milo={world.milo} />
     </div>
   )
 }

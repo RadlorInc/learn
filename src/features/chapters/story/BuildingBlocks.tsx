@@ -8,8 +8,8 @@
  *    answerable off the digit.** The same fault BlockYard shipped, on the same manipulative.
  * ② **The bundling arrived already done.** Three stacks and four loose were drawn for you. Bundling
  *    IS place value, and it was being handed over finished.
- * ③ Band-wide: a world picker, no rotate gate, no journey, and Milo as a 🦊 emoji fallback standing
- *    in a painted scene.
+ * ③ Band-wide: a world picker, no rotate gate, no journey, and a mascot as an emoji fallback
+ *    standing in a painted scene.
  *
  * ══ WHAT THE CHILD IS ACTUALLY LEARNING ══════════════════════════════════════════════
  * The curriculum's own words for this skill are *"Build a number from tens + ones (34 = 3 tens,
@@ -60,7 +60,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import { RotateGate, useNeedsRotate } from './RotateGate'
 import { useViewport } from '@/shared/hooks/useViewport'
@@ -75,7 +75,9 @@ import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
-const MILO = '/assets/characters/milo_side.png'
+/** The one who carries each finished ten to its shelf — the yard's foreman bear, a real walk cycle
+ *  (cellAspect 0.578, near enough the old walker's 0.586 that the shelves did not have to move). */
+const WALKER = '/assets/objects/foreman_bear_side.png'
 
 // ─── Material ─────────────────────────────────────────────────────────────────────────
 /**
@@ -115,7 +117,7 @@ export const HUE_BAND: [number, number] = [140, 340]
  * ⚠️ **THESE ARE OPEN-GROUND SCENES, AND GETTING HERE TOOK TWO WRONG ANSWERS.**
  * ① Built indoors first — a "packing bench" — with scenes chosen on hue and quietness, which are
  *    PALETTE checks. Nobody measured where the painted SURFACE actually is. `craft_gems` is a glass
- *    display case topping out at 0.60, so at a flat bench line of 0.70 the blocks and Milo floated
+ *    display case topping out at 0.60, so at a flat bench line of 0.70 the blocks and the walker floated
  *    INSIDE the cabinet over the necklaces; the rest were counters and shelves — real surfaces, but
  *    furniture, a pony standing on a bakery worktop.
  * ② Moved outdoors to the FORESTS, which passed the walkable-ground gate — and everything still
@@ -215,7 +217,19 @@ export { GROUND, groundOf }
 /** THE TENS SHELF — on the LEFT, because that is where the tens digit is written. */
 export const RACK_X0 = 14, RACK_COL = 3.3
 export const rackSpot = (i: number) => ({ x: RACK_X0 + i * RACK_COL })
-export const MILO_X = 52
+export const WALKER_X = 52
+/**
+ * ⚠️ THE MOST A CHILD CAN BUILD (founder, 2026-09-27): nine tens called up, and never more than 100 in all. Every MAKE
+ * target is 11–99, so nothing past it is ever right — and past fourteen rods the tens were drawn over the ONES shelf,
+ * muddling the one idea this round teaches. A trade keeps the value (ten ones become a ten), so nine rods and a full
+ * ones shelf trade up into a tenth rod at exactly 100, and then nothing more can be added.
+ */
+export const MAX_RODS = 9, MAX_BUILD = 100
+/** Whether one more ten (`unit` 10) or one more one (`unit` 1) may be put down. */
+export function canAdd(s: { rods: number; bay: number }, unit: 1 | 10): boolean {
+  if (s.rods * 10 + s.bay + unit > MAX_BUILD) return false
+  return unit === 10 ? s.rods < MAX_RODS : s.bay < 10
+}
 /** THE ONES SHELF — on the RIGHT. It can hold ten, and only for as long as it takes to trade them. */
 export const BAY_X0 = 62, BAY_COL = 3.2
 export const baySpot = (i: number) => ({
@@ -270,7 +284,7 @@ interface Room {
   waiting: number
   from: 'right' | 'left' | 'none'
   fusing: boolean
-  carry: 0 | 1 | 2           // Milo: idle · walking the rod to the shelf · walking back
+  carry: 0 | 1 | 2           // the walker: idle · walking the rod to the shelf · walking back
   carried: boolean
   key: string
 }
@@ -292,16 +306,16 @@ function TravellingRod({ w, h, m, x, ground, dist, ms, resetKey, z }: {
   )
 }
 
-function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
-  r: Room; m: Shades; cube: number; rodW: number; rodH: number; miloH: number; vw: number; vh: number
+function Scene({ r, m, cube, rodW, rodH, walkerH, vw, vh, onBay, onRod, hint }: {
+  r: Room; m: Shades; cube: number; rodW: number; rodH: number; walkerH: number; vw: number; vh: number
   onBay?: () => void; onRod?: (i: number) => void; hint?: boolean
 }) {
   const ground = groundOf(vh)
-  const miloW = Math.round(miloH * aspectOf(MILO))
+  const walkerW = Math.round(walkerH * aspectOf(WALKER))
   // He carries LEFTWARD, from the ones shelf to the tens shelf — the direction a ten travels when
   // it is made. In BlockYard he walks the other way, which is the same job in a mirrored room.
-  const carryDist = ((RACK_X0 - 1 - MILO_X) / 100) * vw
-  const carryJ = inFlowJourney(MILO, miloH, carryDist)
+  const carryDist = ((RACK_X0 - 1 - WALKER_X) / 100) * vw
+  const carryJ = inFlowJourney(WALKER, walkerH, carryDist)
   const leg = (fromX: number, toX: number) => {
     const dist = ((fromX - toX) / 100) * vw
     // A block has no gait, so `inFlowJourney` falls back to CARRY_SPEED — travel and cycle are
@@ -355,9 +369,9 @@ function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
           dist={j.dist} ms={j.ms} delayMs={i * 110} resetKey={`${r.key}-w${i}`} z={16 - i} />
       })}
 
-      {/* MILO — he carries every finished ten across to its shelf. The rod rides INSIDE his
+      {/* THE WALKER — he carries every finished ten across to its shelf. The rod rides INSIDE his
           travelling element, because two things that must move as one have to BE one element. */}
-      <div style={{ position: 'fixed', left: `${MILO_X}%`, top: `${ground * 100}%`,
+      <div style={{ position: 'fixed', left: `${WALKER_X}%`, top: `${ground * 100}%`,
         transform: 'translate(-50%,-100%)', zIndex: 30, pointerEvents: 'none' }}>
         <span style={{ display: 'block', position: 'relative',
           transform: `translateX(${r.carry === 1 ? Math.round(carryDist) : 0}px)`,
@@ -367,10 +381,10 @@ function Scene({ r, m, cube, rodW, rodH, miloH, vw, vh, onBay, onRod, hint }: {
               <Rod w={rodW} h={rodH} m={m} />
             </span>
           )}
-          <span style={{ display: 'block', position: 'relative', width: miloW, height: miloH }}>
-            <Shadow w={Math.round(miloW * 0.66)} h={Math.round(miloH * 0.1)} />
+          <span style={{ display: 'block', position: 'relative', width: walkerW, height: walkerH }}>
+            <Shadow w={Math.round(walkerW * 0.66)} h={Math.round(walkerH * 0.1)} />
             <span style={{ position: 'relative', zIndex: 1, display: 'block' }}>
-              <SheetCell src={MILO} h={miloH} moving={r.carry !== 0} facesLeft={r.carry === 1}
+              <SheetCell src={WALKER} h={walkerH} moving={r.carry !== 0} facesLeft={r.carry === 1}
                 breathe cycleScale={carryJ.cycleScale} />
             </span>
           </span>
@@ -414,11 +428,12 @@ function GroundPatch({ x0, w, label, ground, cube, vh }: {
 // ─── The round ────────────────────────────────────────────────────────────────────────
 type Mode = 'demo' | 'guided' | 'practice'
 
-const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete: (c: boolean) => void }> =
+export const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete: (c: boolean) => void }> =
 ({ slot, data, mode, onComplete }) => {
+  useQuestion(() => pvLines(data), mode === 'guided')   // a practice round's is opened by SkillBeat
   const { n, kind, answer, digits: windows } = data
   const { w: vw, h: vh } = useViewport()
-  const { cube, rodW, rodH, miloH } = roomUnit(vw, vh)
+  const { cube, rodW, rodH, walkerH } = roomUnit(vw, vh)
   const m = useMemo(() => matOf(slot), [slot])
   const plan = useMemo(() => bundlePlan(n), [n])
   const isMake = kind === 'make'
@@ -444,7 +459,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [r.bay])
 
-  const carryMs = useMemo(() => inFlowJourney(MILO, miloH, ((RACK_X0 - 1 - MILO_X) / 100) * vw).ms, [miloH, vw])
+  const carryMs = useMemo(() => inFlowJourney(WALKER, walkerH, ((RACK_X0 - 1 - WALKER_X) / 100) * vw).ms, [walkerH, vw])
   const inMs = useMemo(() => inFlowJourney('', cube, ((ENTER_RIGHT - BAY_X0) / 100) * vw).ms + 9 * 110, [cube, vw])
 
   useEffect(() => {
@@ -456,14 +471,14 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     after(400, () => {
       setR(s => ({ ...s, bay: plan.firstWave, settled: 0, waiting: plan.waiting, from: 'right', key: 'b' }))
       after(inMs, () => {
-        if (plan.firstWave === 10) { sayNext('Ten ones on the ground — that is one ten. Tap them.') }
+        if (plan.firstWave === 10) { sayNext(FIRST_TEN) }
         else { setLive(true); sayNext(askFor(data)) }
       })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n, kind])
 
-  /** TRADE UP — the ten slide together, become one rod, and Milo walks it across to the tens shelf. */
+  /** TRADE UP — the ten slide together, become one rod, and the walker carries it across to the tens shelf. */
   function trade() {
     if (r.bay < 10 || r.fusing) return
     setR(s => ({ ...s, fusing: true }))
@@ -494,10 +509,11 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
    */
   function callRod() {
     if (!live || ok) return
-    setR(s => ({ ...s, rods: s.rods + 1, from: 'left', key: `r${s.rods}` }))
+    setR(s => (canAdd(s, 10) ? { ...s, rods: s.rods + 1, from: 'left', key: `r${s.rods}` } : s))
   }
   function callOne() {
     if (!live || ok) return
+    // (No 100 check here: the ones stop at ten, so a burst cannot carry them past 100 — at 100 the button is off.)
     setR(s => (s.bay >= 10 ? s : { ...s, bay: s.bay + 1, settled: s.bay, from: 'right', key: s.key }))
   }
   /** Available at EVERY count — one that appears only when the set is wrong is a verdict handed
@@ -518,7 +534,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     const built = r.rods * 10 + r.bay
     if (built === n) {
       setNote(`${Math.floor(n / 10)} tens and ${n % 10} ones make ${n}`)
-      speak(`Yes! ${numberToWords(Math.floor(n / 10))} tens and ${numberToWords(n % 10)} ones make ${numberToWords(n)}.`)
+      speak(madeLine(n))
       finish(true)
       return
     }
@@ -526,9 +542,9 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     // ⚠️ THE LESSON, DELIVERED WHERE IT BITES. Same two digits, wrong shelves — so name the number
     // they actually made. This is the one moment the chapter can say what place value IS.
     if (r.rods === n % 10 && r.bay === Math.floor(n / 10)) {
-      say(`That is ${numberToWords(built)}, not ${numberToWords(n)}. The tens side is on the left — look which one holds ${numberToWords(Math.floor(n / 10))}.`)
+      say(swappedLine(built, n))
     } else {
-      say(`Not yet — that is ${numberToWords(built)}. Count the tens, then the ones.`)
+      say(notYetLine(built))
     }
   }
 
@@ -537,7 +553,7 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
     const v = digits.reduce((p, c) => p * 10 + c, 0)
     if (v === answer) {
       setNote(SOLVED[kind](n))
-      speak(`Yes! ${SOLVED[kind](n)}`)
+      speak(solvedLine(kind, n))
       finish(true)
     } else {
       erred.current = true
@@ -555,13 +571,14 @@ const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onComplete:
         side="right" lead={isMake && !ok ? n : undefined} />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
-      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh}
+      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh}
         hint={r.bay === 10} onBay={r.bay === 10 && !ok ? trade : undefined} />
 
       <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
         display: 'flex', justifyContent: 'center' }}>
         {isMake
           ? <MakeControls m={m} cube={cube} band={band} vw={vw} live={live && !ok} canUndo={r.rods + r.bay > 0}
+              canRod={canAdd(r, 10)} canOne={canAdd(r, 1)}
               onRod={callRod} onOne={callOne} onBack={sendBack} onDone={commitMake} />
           : <AnswerPad digits={digits} band={band} live={live && !ok} windows={windows}
               onDigit={d => setDigits(x => (x.length >= windows ? x : [...x, d]))}
@@ -581,19 +598,19 @@ export const trayUnit = (band: number, cube: number, vw: number) =>
   blockSet(Math.max(8, Math.round(Math.min(cube, band / 4.6, vw * 0.017))))
 
 /** MAKE's answering surface: call for a ten, call for a one, send the last one back, commit. */
-function MakeControls({ m, cube, band, vw, live, canUndo, onRod, onOne, onBack, onDone }: {
-  m: Shades; cube: number; band: number; vw: number; live: boolean; canUndo: boolean
+function MakeControls({ m, cube, band, vw, live, canUndo, canRod, canOne, onRod, onOne, onBack, onDone }: {
+  m: Shades; cube: number; band: number; vw: number; live: boolean; canUndo: boolean; canRod: boolean; canOne: boolean
   onRod: () => void; onOne: () => void; onBack: () => void; onDone: () => void
 }) {
   const w = Math.max(30, Math.min(58, Math.floor((band - 10) / 1.9)))
   // ⚠️ Both trays are drawn from ONE derived set — there is no multiplier here to get wrong.
   const t = trayUnit(band, cube, vw)
-  const tray = (label: string, onClick: () => void, child: React.ReactNode): React.ReactNode => (
-    <button onClick={onClick} style={{
+  const tray = (label: string, onClick: () => void, can: boolean, child: React.ReactNode): React.ReactNode => (
+    <button onClick={onClick} disabled={!can} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
       gap: 3, height: w * 1.5, padding: '4px 12px 6px',
       borderRadius: w * 0.24, border: '3px solid var(--outline)', background: 'var(--paper)',
-      cursor: 'pointer',
+      opacity: can ? 1 : .45, cursor: can ? 'pointer' : 'default',
     }}>
       <span style={{ display: 'flex', alignItems: 'flex-end', height: w * 0.85 }}>{child}</span>
       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.26,
@@ -603,8 +620,8 @@ function MakeControls({ m, cube, band, vw, live, canUndo, onRod, onOne, onBack, 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: w * 0.3,
       pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .3, transition: 'opacity .3s ease' }}>
-      {tray('A TEN', onRod, <Rod axis="h" w={t.rodW} h={t.rodH} m={m} />)}
-      {tray('A ONE', onOne, <Cube s={t.cube} m={m} />)}
+      {tray('A TEN', onRod, canRod, <Rod axis="h" w={t.rodW} h={t.rodH} m={m} />)}
+      {tray('A ONE', onOne, canOne, <Cube s={t.cube} m={m} />)}
       <button onClick={onBack} disabled={!canUndo} style={{
         height: w * 0.95, padding: `0 ${w * 0.42}px`, borderRadius: w * 0.48,
         border: '3px solid var(--outline)', background: 'var(--paper)', color: 'var(--ink)',
@@ -664,36 +681,66 @@ const RETRY: Record<QKind, string> = {
   ones: 'Not that one. Count the loose ones on the right.',
   value: 'Not that one. Each one of those is worth ten — count them in tens.',
 }
+const FIRST_TEN = 'Ten ones on the ground — that is one ten. Tap them.'
+/** The same two digits, the other way round — 34 → 43. */
+const swapOf = (n: number) => (n % 10) * 10 + Math.floor(n / 10)
+const madeLine = (n: number) => `Yes! ${numberToWords(Math.floor(n / 10))} tens and ${numberToWords(n % 10)} ones make ${numberToWords(n)}.`
+const swappedLine = (built: number, n: number) => `That is ${numberToWords(built)}, not ${numberToWords(n)}. The tens side is on the left — look which one holds ${numberToWords(Math.floor(n / 10))}.`
+const notYetLine = (built: number) => `Not yet — that is ${numberToWords(built)}. Count the tens, then the ones.`
+const solvedLine = (kind: QKind, n: number) => `Yes! ${SOLVED[kind](n)}`
+/**
+ * Every line a round can say once it has loaded — its own question included, since `prompt` is empty and the round
+ * asks it itself. MAKE: the trade it may be pushed into, and a verdict naming whatever was built. PACK: a trade per
+ * ten delivered (a second from 20 up), then the pad.
+ * ⚠️ MAKE's "Not yet — that is …" is declared for every value a child can build, 0–100 (MAX_BUILD). Clips exist for
+ * 0–99; "one hundred" is the device voice — declared all the same, so the walk that checks this still sees it.
+ * ⚠️ The three lines written out below are ALSO written at their call sites, on purpose: voiceBoundaryVerb.test.ts
+ * keys its reasoned exceptions on that literal call text (`say('Ten again — trade them up.')`), so they cannot be
+ * a shared constant without editing that gate. A reworded one fails the play walk in questionLines68a.test.ts.
+ */
+function pvLines(d: PvRound): string[] {
+  const { n, kind } = d
+  if (kind === 'make') return [askFor(d), 'Ten ones on the ground — you cannot leave ten there. Trade them up.',
+    'Ten ones make ONE ten. It goes on the left shelf.', madeLine(n), swappedLine(swapOf(n), n),
+    ...Array.from({ length: MAX_BUILD + 1 }, (_, built) => notYetLine(built))]
+  return [FIRST_TEN, ...(n >= 20 ? ['Ten again — trade them up.'] : []), askFor(d), solvedLine(kind, n), RETRY[kind]]
+}
 
 // ─── Demo / re-teach ──────────────────────────────────────────────────────────────────
+/** The re-teach, in order — `PvExplain` pairs lines[i] with steps[i]. */
+function explainLines(a: number): string[] {
+  const b = swapOf(a)
+  const [aT, aO, bT, bO] = [Math.floor(a / 10), a % 10, Math.floor(b / 10), b % 10]
+  return [
+    `The order says ${numberToWords(a)}. Let's build it.`,
+    `${numberToWords(aT)} tens go on the LEFT.`,
+    `${numberToWords(aO)} ones go on the RIGHT. That is ${numberToWords(a)}.`,
+    `Now the order says ${numberToWords(b)} — the same two digits, the other way round.`,
+    `${numberToWords(bT)} tens, and ${numberToWords(bO)} ones. Look how much bigger the tens side is.`,
+    `Same digits, different sides, a different number. That is what the places mean.`,
+  ]
+}
 /**
- * ⚠️ **THE SWAP IS THE WHOLE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** Milo makes 34, then
+ * ⚠️ **THE SWAP IS THE WHOLE LESSON AND IT LIVES HERE, WHERE IT COSTS NOTHING.** The demo makes 34, then
  * makes 43 — the SAME two digits — and the tens shelf is visibly fuller the second time. That is the
  * one picture that says a digit's value comes from its place, and no amount of counting rods says it.
  */
 const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = ({ slot, data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
-  const { cube, rodW, rodH, miloH } = roomUnit(vw, vh)
+  const { cube, rodW, rodH, walkerH } = roomUnit(vw, vh)
   const m = useMemo(() => matOf(slot), [slot])
   const [r, setR] = useState<Room>(EMPTY)
   const [line, setLine] = useState('')
   const [order, setOrder] = useState<number | null>(null)
   const doneRef = useLatestRef(onDone)
-  const a = data.n, b = (a % 10) * 10 + Math.floor(a / 10)      // the same digits, the other way round
+  const a = data.n, b = swapOf(a)
 
   useEffect(() => {
     const set = (p: Partial<Room>) => setR(s => ({ ...s, ...p }))
     const late: number[] = []
     const soon = (ms: number, fn: () => void) => late.push(window.setTimeout(fn, ms))
     const [aT, aO, bT, bO] = [Math.floor(a / 10), a % 10, Math.floor(b / 10), b % 10]
-    const lines = [
-      `The order says ${numberToWords(a)}. Milo builds it.`,
-      `${numberToWords(aT)} tens go on the LEFT.`,
-      `${numberToWords(aO)} ones go on the RIGHT. That is ${numberToWords(a)}.`,
-      `Now the order says ${numberToWords(b)} — the same two digits, the other way round.`,
-      `${numberToWords(bT)} tens, and ${numberToWords(bO)} ones. Look how much bigger the tens side is.`,
-      `Same digits, different sides, a different number. That is what the places mean.`,
-    ]
+    const lines = explainLines(a)
     const steps: Array<() => void> = [
       () => { setOrder(a); set({ ...EMPTY }) },
       () => set({ rods: aT, from: 'left', key: 'a1' }),
@@ -714,10 +761,10 @@ const PvExplain: React.FC<{ slot: Slot; data: PvRound; onDone: () => void }> = (
   const ground = groundOf(vh)
   return (
     <>
-      <Banner text={line || 'Watch Milo fill the order…'} vh={vh} side="right" lead={order ?? undefined} chapter="placeValue" />
+      <Banner text={line || 'Watch the order get filled…'} vh={vh} side="right" lead={order ?? undefined} chapter="placeValue" />
       <GroundPatch x0={RACK_X0 - 2.4} w={9 * RACK_COL + 5} label="TENS" ground={ground} cube={cube} vh={vh} />
       <GroundPatch x0={BAY_X0 - 2.4} w={9 * BAY_COL + 5} label="ONES" ground={ground} cube={cube} vh={vh} />
-      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} miloH={miloH} vw={vw} vh={vh} />
+      <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} />
     </>
   )
 }
@@ -732,7 +779,12 @@ export const BEAT: Beat<PvRound> = {
   prompt: () => '',
   Play: ({ data, onSubmit }) => <PvRoundView slot={slotAt(data.slot)} data={data} mode="practice" onComplete={onSubmit} />,
   Reteach: ({ data, onDone }) => <PvExplain slot={slotAt(data.slot)} data={data} onDone={onDone} />,
+  feedbackLines: pvLines,
+  reteachLines: d => explainLines(d.n),
 }
+
+/** The unscored round after the demo. */
+export const GUIDED: PvRound = { slot: GUIDED_SLOT, n: 23, kind: 'make', answer: 23, digits: 2 }
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────────────
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -757,11 +809,10 @@ export default function BuildingBlocks({ onFinish, onExit }: {
     { slot: 0, n: 34, kind: 'make', answer: 34, digits: 2 },
     { slot: 1, n: 52, kind: 'make', answer: 52, digits: 2 },
   ], [])
-  const GUIDED: PvRound = useMemo(() => ({ slot: GUIDED_SLOT, n: 23, kind: 'make', answer: 23, digits: 2 }), [])
 
   // Every hook is above this line — an early return that changes the hook count tears the chapter
   // into the error boundary the moment the phone is turned.
-  if (needsRotate) return <RotateGate line="Turn your phone sideways to help Milo fill the orders!" />
+  if (needsRotate) return <RotateGate line="Turn your phone sideways to fill the orders!" />
 
   const active = phase === 'practice' ? slotIdx : phase === 'guided' ? GUIDED_SLOT : DEMO[Math.min(demoIdx, DEMO.length - 1)].slot
 
@@ -795,8 +846,8 @@ export default function BuildingBlocks({ onFinish, onExit }: {
       {phase === 'intro' && (
         <div style={{ position: 'absolute', inset: 0, zIndex: 45, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
           <div style={{ maxWidth: '74%', background: 'rgba(255,252,244,.94)', border: '3px solid var(--outline)', borderRadius: 18, padding: '14px 20px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: `clamp(14px, ${Math.round(vh * 0.034)}px, 20px)`, color: 'var(--ink)', textAlign: 'center' }}>
-            Milo stacks what he gathers. TENS go on the LEFT, ONES on the RIGHT — just the way a
-            number is written. Watch him fill two orders first!
+            Let&apos;s stack the blocks. TENS go on the LEFT, ONES on the RIGHT — just the way a
+            number is written. Watch two orders get filled first!
           </div>
           <button onClick={() => { unlockSpeech(); setPhase('demo') }}
             style={{ padding: '14px 38px', borderRadius: 50, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,var(--milo-orange),var(--milo-orange-deep))', color: '#fff', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, boxShadow: '0 6px 16px rgba(242,107,44,.4)' }}>

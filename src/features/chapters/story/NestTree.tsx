@@ -27,7 +27,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, speakSteps, useIsSpeaking, stopSpeech, useNoVoice } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { SHEETS } from './canvas/sheets'
@@ -54,7 +54,6 @@ export interface NestWorld {
   chick: string                        // the baby sprite in every nest
   noun: string                         // "chick" / "duckling"
   dusk?: boolean                       // darken the scene a touch
-  milo: { src: string; emoji: string; accessory: string }
   intro: string
 }
 export const WORLDS: NestWorld[] = [
@@ -62,22 +61,19 @@ export const WORLDS: NestWorld[] = [
     id: 'forest', label: 'Forest Nests', emoji: '🌳',
     scenes: ['/assets/backgrounds/forest_2.jpeg', '/assets/backgrounds/forest_3.jpeg', '/assets/backgrounds/forest_4.jpeg'],
     chick: '/assets/objects/chick.png', noun: 'chick',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌳' },
-    intro: 'The baby birds are hungry! Listen for the number, then tap that nest. First, watch Milo!',
+    intro: 'The baby birds are hungry! Listen for the number, then tap that nest. First, watch how it works!',
   },
   {
     id: 'meadow', label: 'Meadow Nests', emoji: '🌼',
     scenes: ['/assets/backgrounds/garden_meadow.png', '/assets/backgrounds/garden_fence.png', '/assets/backgrounds/garden_park.png'],
     chick: '/assets/objects/duckling.png', noun: 'duckling',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🌼' },
-    intro: 'The ducklings are hungry! Listen for the number, then tap that nest. First, watch Milo!',
+    intro: 'The ducklings are hungry! Listen for the number, then tap that nest. First, watch how it works!',
   },
   {
     id: 'evening', label: 'Evening Nests', emoji: '🌙',
     scenes: ['/assets/backgrounds/sky.jpeg', '/assets/backgrounds/lake.jpeg', '/assets/backgrounds/forest_3.jpeg'],
     chick: '/assets/objects/chick.png', noun: 'chick', dusk: true,
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌙' },
-    intro: 'One last feed before bedtime! Listen for the number, then tap that nest. First, watch Milo!',
+    intro: 'One last feed before bedtime! Listen for the number, then tap that nest. First, watch how it works!',
   },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
@@ -247,6 +243,23 @@ function sayFor(w: NestWorld, d: NestRound): string {
   return `Feed the ${w.noun} in nest number ${t}. Tap the nest that says ${t}!`
 }
 
+const wrongLine = (tapped: number, target: number) => `That's ${tapped}. Find nest number ${target}!`
+const yesLine = (target: number) => `Yes! Nest number ${target}! Great job!`
+/** Every line a nest round can say once it has loaded: each wrong nest's line, and the guided round's "Yes!" and ask. */
+function nestLines(world: NestWorld, d: NestRound, mode: Mode): string[] {
+  const t = d.nums[d.answerIdx]
+  return [...d.nums.filter((_, i) => i !== d.answerIdx).map(x => wrongLine(x, t)), ...(mode === 'guided' ? [yesLine(t), guidedSay(world, t)] : [])]
+}
+/** The re-teach, in order. */
+function explainLines(world: NestWorld, d: NestRound): string[] {
+  const t = d.nums[d.answerIdx]
+  return [
+    `This ${world.noun} is hungry. Listen: nest number ${t}.`,
+    `${t}! Find the nest that says ${t}.`,
+    `There it is! Mommy bird feeds nest number ${t}.`,
+  ]
+}
+
 /** Shared flight choreography: fly to the nest, feed, fly home. */
 function useFlight(slots: { left: number; top: number }[]) {
   const [at, setAt] = useState(PERCH)
@@ -264,7 +277,7 @@ function useFlight(slots: { left: number; top: number }[]) {
 
 // ─── Play surface (guided / practice) ────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
-const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+export const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { nums, answerIdx } = data
   const target = nums[answerIdx]
   const n = nums.length
@@ -277,10 +290,11 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
   const { at, flyTo } = useFlight(slots)
   const erred = useRef(false), done = useRef(false), wrongLock = useRef(false), tapLock = useRef(false)
   const speaking = useIsSpeaking()
+  useQuestion(() => nestLines(world, data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   const finish = useCallback(() => {
     if (done.current) return; done.current = true
-    if (mode === 'guided') speak(`Yes! Nest number ${target}! Great job!`)
+    if (mode === 'guided') speak(yesLine(target))
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1000)
   }, [mode, target, onComplete])
 
@@ -309,7 +323,7 @@ const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode; onComp
       flyTo(i, () => { setFedIdx(i); window.setTimeout(finish, 700) })
     } else {
       erred.current = true; setWrongIdx(i)
-      if (!wrongLock.current) { wrongLock.current = true; speak(`That's ${nums[i]}. Find nest number ${target}!`); window.setTimeout(() => { wrongLock.current = false }, 1300) }
+      if (!wrongLock.current) { wrongLock.current = true; speak(wrongLine(nums[i], target)); window.setTimeout(() => { wrongLock.current = false }, 1300) }
       window.setTimeout(() => setWrongIdx(w => (w === i ? null : w)), 600)
     }
   }
@@ -350,11 +364,7 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
   const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const lines = [
-      `This ${world.noun} is hungry. Milo says nest number ${target}.`,
-      `${target}! Find the nest that says ${target}.`,
-      `There it is! Mummy bird feeds nest number ${target}.`,
-    ]
+    const lines = explainLines(world, data)
     const cancel = speakSteps(lines, {
       onStep: (i) => {
         setLine(lines[i] ?? '')
@@ -376,7 +386,7 @@ const NestExplain: React.FC<{ world: NestWorld; data: NestRound; onDone: () => v
       ))}
       <Mother at={at} h={Math.round(size * 0.62)} facingLeft={false} />
       {/* Sits in the demo banner's own band, below it — the nests are on the branch further down
-          and Milo is bottom-left, so this is the one strip of the frame nothing else occupies. */}
+          and the mother bird perches top-left, so this is the one strip of the frame nothing else occupies. */}
       {line && (
         <div style={{ position: 'absolute', top: 96, left: 0, right: 0, zIndex: 44, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
           <div style={{ maxWidth: '76%', background: 'rgba(255,255,255,.94)', border: '3px solid var(--outline)', borderRadius: 16, padding: '8px 18px', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 'clamp(13px, 1.6vh, 17px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(61,37,22,.12)' }}>{line}</div>
@@ -401,6 +411,9 @@ function makeRound(world: NestWorld, d: 1 | 2 | 3, round: number): NestRound {
   return { scene, nums, answerIdx: nums.indexOf(target) }
 }
 
+/** The guided round: nest 2 of two, in the world's third scene. */
+export const guidedRound = (world: NestWorld): NestRound => ({ scene: world.scenes[2] ?? world.scenes[0], nums: [4, 2], answerIdx: 1 })
+
 export function makeNestBeat(world: NestWorld): Beat<NestRound> {
   return {
     skillId: 'numberRecognition', rounds: 10, walkEvery: 3,
@@ -410,12 +423,13 @@ export function makeNestBeat(world: NestWorld): Beat<NestRound> {
     say: d => sayFor(world, d),
     Play: ({ data, onSubmit }) => <NestPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <NestExplain world={world} data={data} onDone={onDone} />,
+    feedbackLines: d => nestLines(world, d, 'practice'),
+    reteachLines: d => explainLines(world, d),
   }
 }
 
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 const NT_CSS = `
-@keyframes nt_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes nt_peep { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
 @keyframes nt_pop { 0%{transform:scale(1)} 45%{transform:scale(1.09)} 100%{transform:scale(1)} }
 @keyframes nt_shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px) rotate(-2deg)} 75%{transform:translateX(6px) rotate(2deg)} }
@@ -469,7 +483,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
     { scene: world.scenes[0], nums: [2, 3], answerIdx: 1 },
     { scene: world.scenes[1] ?? world.scenes[0], nums: [5, 1, 8], answerIdx: 0 },
   ]
-  const GUIDED_ROUND: NestRound = { scene: world.scenes[2] ?? world.scenes[0], nums: [4, 2], answerIdx: 1 }
+  const GUIDED_ROUND = guidedRound(world)
   const bgScene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
   // ⚠️ THE GUIDED ROUND HAD NO WAY TO HEAR THE QUESTION TWICE. The number is spoken once, on
@@ -499,7 +513,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
       {noVoice && phase !== 'demo' && (
         <div style={{ position: 'fixed', top: 96, left: 0, right: 0, zIndex: 46, display: 'flex', justifyContent: 'center', padding: '0 12px', pointerEvents: 'none' }}>
           <div style={{ maxWidth: '78%', background: 'rgba(255,248,235,.96)', border: '3px solid var(--milo-orange)', borderRadius: 14, padding: '7px 16px', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 'clamp(12px, 1.6vh, 15px)', color: 'var(--ink)', textAlign: 'center', boxShadow: '0 3px 0 rgba(242,107,44,.2)' }}>
-            🔇 This game needs sound — Milo says the number out loud and never writes it down.
+            🔇 This game needs sound — the number is said out loud and never written down.
             This browser has no voice available.
           </div>
         </div>
@@ -519,7 +533,7 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
         <NestExplain key={`demo${demoIdx}`} world={world} data={DEMO_ROUNDS[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
-      {phase === 'guided' && (<>{Banner(`Now you! Tap the nest Milo says`, () => speak(guidedSay(world, GUIDED_ROUND.nums[GUIDED_ROUND.answerIdx])))}
+      {phase === 'guided' && (<>{Banner(`Now you! Tap the nest you hear`, () => speak(guidedSay(world, GUIDED_ROUND.nums[GUIDED_ROUND.answerIdx])))}
         <NestPlay key="guided" world={world} data={GUIDED_ROUND} mode="guided" onComplete={() => setPhase('practice')} /></>)}
 
       {phase === 'practice' && (
@@ -529,27 +543,6 @@ export default function NestTree({ world: forcedWorldId, onFinish, onExit }: {
             onComplete={tally} />
         </div>
       )}
-
-      {<MiloHost left={11} milo={world.milo} />}
-    </div>
-  )
-}
-
-// ─── Milo ────────────────────────────────────────────────────────────────────────────
-function MiloHost({ left, milo }: { left: number; milo: NestWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(30vh, 260px)', height: 'min(30vh, 260px)' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'nt_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 100, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 20, fontSize: 46 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
     </div>
   )
 }

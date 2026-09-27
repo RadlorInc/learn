@@ -42,9 +42,9 @@ export interface Sheet {
    * the exact fault that makes a hop unfit for `Critter`'s linear travel.
    *
    * MEASURE IT, don't guess: split the strip, take each cell's alpha bbox, and count the leading
-   * frames whose feet are still down. It differs wildly per creature — Milo is grounded for 8 of 19
-   * frames (0.42) and the frog for 9 of 12 (0.75), because a frog is mostly a coiled spring and Milo
-   * is mostly a pony. Cutting the clip so the cycle STARTS on a grounded frame is what makes this a
+   * frames whose feet are still down. It differs wildly per creature — the old pony character's hop is grounded for 8 of 19
+   * frames (0.42) and the frog for 9 of 12 (0.75), because a frog is mostly a coiled spring and the
+   * pony is mostly a pony. Cutting the clip so the cycle STARTS on a grounded frame is what makes this a
    * single leading share rather than a window straddling the loop boundary.
    */
   groundShare?: number
@@ -86,12 +86,6 @@ export const SHEETS: Record<string, Sheet> = {
   // (beak opens, beak shuts) with no clean cycle, so playing it forward-then-back loops
   // seamlessly by construction. 16fps ≈ one bob per 1.4s — eager, not frantic.
   '/assets/objects/nest_side.png': { url: '/assets/objects/nest_walk.png', cellAspect: 1.113, frames: 22, fps: 12 },
-  // ── Milo himself (Stepping Stones / number order) ──
-  // The first drawn cycle for the CHARACTER rather than a creature, so it is not chapter-specific:
-  // any later chapter where Milo has to actually go somewhere can key off this same sprite.
-  // 12 cells span one 22-frame source cycle (~0.9s), so 14fps plays it at close to natural pace —
-  // and since he only walks while hopping, slightly brisk reads as effort rather than a stroll.
-  '/assets/characters/milo_side.png': { url: '/assets/characters/milo_walk.png', cellAspect: 0.586, frames: 12, fps: 10 },
 
   // ── Farm · Pond · Space (generated 2026-07-27; closes the parade's long-parked "9 creatures") ──
   // Image-to-video off each creature's existing `_side` still, so the still IS the style lock. Every
@@ -105,10 +99,10 @@ export const SHEETS: Record<string, Sheet> = {
   '/assets/objects/lamb_side.png': { url: '/assets/objects/lamb_walk.png', cellAspect: 0.965, frames: 12, fps: 12 },
   // A hop, not a walk: coiled for 9 of 12 frames and airborne for 3. That shape does NOT fit
   // Critter's linear travel — see chapter-craft.md. Play it for a discrete jump, not a journey.
-  // Measured feet-lift per frame: 0 0 0 0 0 0 8 44 27 0 0 0 — so the arc is drawn in (peak 44px of
+  // Measured feet-lift per frame: 0 0 0 0 0 0 0 0 0 8 44 27 — so the arc is drawn in (peak 44px of
   // a 256px cell, 17% of body height) and `hop()` must supply ONLY the horizontal.
-  // ⚠️ groundShare is 0.75 but its cycle is NOT phase-aligned (it is grounded at BOTH ends, f0-5 and
-  // f9-11), so re-cut it to start on a grounded frame before using it — see Milo's entry below.
+  // The strip was re-cut 2026-09-25 to START on a grounded frame (it used to run 0×6, 8 44 27, 0×3 —
+  // grounded at both ends), so groundShare 9/12 is one leading window. It became Skip Counting's hopper.
   '/assets/objects/frog_side.png': { url: '/assets/objects/frog_walk.png', cellAspect: 0.637, frames: 12, fps: 14, groundShare: 9 / 12 },
   '/assets/objects/bee_side.png': { url: '/assets/objects/bee_walk.png', cellAspect: 1.066, frames: 12, fps: 17 },
   '/assets/objects/dragonfly_side.png': { url: '/assets/objects/dragonfly_walk.png', cellAspect: 1.074, frames: 12, fps: 18 },
@@ -116,24 +110,6 @@ export const SHEETS: Record<string, Sheet> = {
   // Low gravity: a slow, buoyant stride. 8fps for the same reason the eagle sits at 7 — anything
   // brisker stops reading as weightless.
   '/assets/objects/astronaut_side.png': { url: '/assets/objects/astronaut_walk.png', cellAspect: 0.523, frames: 12, fps: 8 },
-  /**
-   * Milo's HOP — a real ballistic jump, for a chapter where he goes between places rather than
-   * walking to one. ⚠️ THE FILE THAT SAT HERE UNTIL 2026-07-28 WAS A WALK: a second take of
-   * `milo_walk.png`, measured lift 0 in all 12 frames, registered under this comment and named in
-   * two docs as the foundation of HopAlong. Nobody had opened it. A sheet's name is a claim — split
-   * the strip and print each cell's alpha bbox before designing on it (chapter-craft.md).
-   *
-   * 19 CELLS, not the usual 12, and that is the point: a walk is uniform so twelve samples carry it,
-   * but a hop's whole character is in its UNEVEN timing, and down-sampling averages the hold frames
-   * away. These are the source's own frames at its own rate, so playing 19 @ 24fps reproduces the
-   * generated animation exactly — the anticipation and the hang time come free, with no hand-authored
-   * timing chart. Measured: 7 grounded frames crouching (body 215px → 177px, real squash), 3 frames
-   * rising, a 3-frame hang at the top, 4 descending.
-   *
-   * ⚠️ THE ARC IS DRAWN INTO THE FRAMES — feet lift 0 → 47 → 0 px in a 256px cell, 22% of body
-   * height. `hop()` therefore animates ONLY the horizontal; adding a CSS arc makes him rise twice.
-   */
-  '/assets/characters/milo_hop_side.png': { url: '/assets/characters/milo_hop.png', cellAspect: 0.621, frames: 19, fps: 24, groundShare: 8 / 19 },
 
   // ── The 9–11 WORKING CAST (generated 2026-07-31) ──────────────────────────────────────────────
   // The band's whole problem was never the engine, it was the CAST: all 24 cycles above are cozy
@@ -152,7 +128,7 @@ export const SHEETS: Record<string, Sheet> = {
   //
   // ⚠️ Keyed on MAGENTA: the hi-vis hat is yellow and a green key nibbles yellow edges.
   // fps is tuned by ear and also sets ground speed. The bear is the heaviest thing in the band, so
-  // he sits just under Milo's 10 — a foreman plods.
+  // he sits just under the old pony walk's 10 — a foreman plods.
   '/assets/objects/foreman_bear_side.png': { url: '/assets/objects/foreman_bear_walk.png', cellAspect: 0.578, frames: 12, fps: 9 },
   '/assets/objects/driver_badger_side.png': { url: '/assets/objects/driver_badger_walk.png', cellAspect: 0.727, frames: 12, fps: 11 },
   // SLATE — the 9–11 band's apprentice, and the first PROTAGONIST cycle it has ever had. Cut from a

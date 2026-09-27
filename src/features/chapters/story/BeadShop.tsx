@@ -8,7 +8,7 @@
  * frame the corner card sat on top of the tray the child had to tap. The fix is not to move the
  * card. It is that there was only ever supposed to be one string.
  *
- * So: Milo is making ONE thing, and it grows for the whole chapter. Every item the child gets right
+ * So: the child is making ONE thing, and it grows for the whole chapter. Every item the child gets right
  * is threaded onto the end of it and stays there. The question is the run of items already on the
  * string, and the answer is what comes next on that same string — which is what continuing a
  * pattern actually is. Three consequences:
@@ -23,11 +23,11 @@
  * every colour and stay identical to the spoken labels. And the run is read left to right, so it is
  * a deliberate straight line — nothing in it may re-order or drift.
  *
- * THE PATTERN IS ALSO A CHANT. Milo says "red, blue, red, blue…" as he goes, because at three a
+ * THE PATTERN IS ALSO A CHANT. The voice says "red, blue, red, blue…" as it goes, because at three a
  * pattern is as much a rhythm as a picture, and the two reinforce each other.
  *
- * WHEN THE PATTERN CHANGES (the adaptive tier moves AB → ABC → ABCD, or demotes) Milo starts a new
- * run on the SAME string, opening it with a few items of his own so there is always something to
+ * WHEN THE PATTERN CHANGES (the adaptive tier moves AB → ABC → ABCD, or demotes) a new
+ * run starts on the SAME string, opening with a few starter items so there is always something to
  * read. A gold joint marks where the new pattern starts; everything before it shrinks and dims into
  * the tail, so the string is visibly long without the old run competing with the one being read.
  *
@@ -35,7 +35,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, speakSteps, stopSpeech, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
 import { patternUnitLen, type Difficulty } from '@/core/progression'
@@ -70,7 +70,7 @@ export const BEADS: Record<BeadColor, { label: string; hex: string; deep: string
 }
 const BEAD_ORDER: BeadColor[] = ['red', 'blue', 'yellow', 'green', 'orange', 'purple', 'pink']
 
-// ─── The three things Milo can make ──────────────────────────────────────────────────
+// ─── The three things to make ──────────────────────────────────────────────────
 /**
  * ONE item kind per run, because you do not thread a bead, then a button, then a gem onto the same
  * necklace — and there is only one string now. The picker is therefore a genuine choice of what to
@@ -90,15 +90,15 @@ export const MAKES: Make[] = [
   { id: 'beads', label: 'A necklace', emoji: '📿', kind: 'bead', noun: 'bead', thing: 'necklace',
     connector: 'string', line: 0.5, src: '/assets/objects/pat_bead.png',
     bg: '/assets/backgrounds/bead_shop.png', grad: 'linear-gradient(#ffe9cf 0%, #fff3e2 52%, #f3dcc0 100%)',
-    intro: 'Milo is making ONE long necklace today! The colours repeat, over and over. Every bead you find gets threaded on.' },
+    intro: 'Let\'s make ONE long necklace today! The colors repeat, over and over. Every bead you find gets threaded on.' },
   { id: 'party', label: 'Party bunting', emoji: '🎉', kind: 'flag', noun: 'flag', thing: 'bunting',
     connector: 'cord', line: 0.08, src: '/assets/objects/pat_flag.png',
     bg: '/assets/backgrounds/party_banner.png', grad: 'linear-gradient(#e7f3ff 0%, #fff3e2 52%, #ffe2ef 100%)',
-    intro: 'Milo is hanging ONE long line of bunting! The colours repeat, over and over. Every flag you find gets pegged on.' },
+    intro: 'Let\'s hang ONE long line of bunting! The colors repeat, over and over. Every flag you find gets pegged on.' },
   { id: 'toys', label: 'A long train', emoji: '🚂', kind: 'car', noun: 'train car', thing: 'train',
     connector: 'track', line: 0.9, src: '/assets/objects/pat_car.png',
     bg: '/assets/backgrounds/train_station.png', grad: 'linear-gradient(#dff0ff 0%, #eef6ff 52%, #d7e3ec 100%)',
-    intro: 'Milo is building ONE long train! The colours repeat, over and over. Every car you find gets hooked on.' },
+    intro: 'Let\'s build ONE long train! The colors repeat, over and over. Every car you find gets hooked on.' },
 ]
 const makeById = (id: string) => MAKES.find(m => m.id === id)
 const PICK = MAKES.map(m => ({ id: m.id, label: m.label, emoji: m.emoji, bgImage: m.bg }))
@@ -108,7 +108,7 @@ const TOP_ALIGN = new Set<ItemKind>(['flag'])
 // ─── Round shape ─────────────────────────────────────────────────────────────────────
 interface PatternRound {
   unit: BeadColor[]
-  /** Items Milo strings himself before the question — non-empty only when a NEW pattern starts. */
+  /** Starter items strung before the question — non-empty only when a NEW pattern starts. */
   seed: BeadColor[]
   answer: BeadColor
   choices: BeadColor[]
@@ -320,32 +320,6 @@ function Tray({ make, choices, stateFor, onTap, trayRef }: {
   )
 }
 
-// ─── Milo ────────────────────────────────────────────────────────────────────────────
-function MiloBead({ make }: { make: Make }) {
-  const [step, setStep] = useState(0)
-  const { h: vh } = useViewport()
-  // ⚠️ `milo_beads.png` WAS NEVER DRAWN. It headed this list, so every single load of the chapter
-  // fetched it, took a 404, and fell through to `milo_idle.png` — the picture was always right and
-  // the console always had an error in it, which is the kind of noise a real error then hides in.
-  // (It also fails this repo's own e2e contract, which is zero console errors.) The remaining
-  // fallback to an emoji stays: that is a last resort for a missing file, not art direction.
-  const srcs = ['/assets/characters/milo_idle.png']
-  const dim = vh < SHORT_H ? 'min(24vh, 118px)' : 'min(28vh, 230px)'
-  return (
-    <div style={{ position: 'fixed', left: '9%', bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: dim, height: dim }}>
-      <div style={{ width: '100%', height: '100%', animation: 'bs_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 88, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>🐴</span>
-              <span style={{ position: 'absolute', bottom: 8, right: 10, fontSize: 38 }}>{make.emoji}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
-
 // ─── Threading: the tap causes the journey, and the journey is the answer ────────────
 // Returns how long the flight takes, so the round can end when the item LANDS rather than after a
 // fixed delay that drifts out of step with it.
@@ -353,24 +327,42 @@ type Thread = (from: HTMLElement, color: BeadColor) => number
 
 // ─── Round copy ──────────────────────────────────────────────────────────────────────
 export const promptFor = () => 'What comes next?'
-/** The chant. A pattern at this age is a rhythm as much as a picture, so Milo says it out loud. */
+/** The chant. A pattern at this age is a rhythm as much as a picture, so it is said out loud. */
 export const sayFor = (make: Make) => (d: PatternRound) => {
   const chant = d.unit.map(c => BEADS[c].label).join(', ')
   return `${chant}, ${chant}… what ${make.noun} comes next? Tap it!`
 }
 
+const wrongLine = (tapped: BeadColor) => `That one is ${BEADS[tapped].label}. Look at the pattern again — what comes next?`
+const nowYouLine = (make: Make) => `Now you! What ${make.noun} comes next? Tap it!`
+const yesLine = (answer: BeadColor) => `Yes! The ${BEADS[answer].label} one!`
+
 // ─── Play (guided + scored) ──────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
-const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: Thread; onComplete: (correct: boolean) => void }> = ({ data, make, mode, thread, onComplete }) => {
+/** Every line a pattern round can say once it has loaded: each wrong item's line, and the guided round's ask and "Yes!". */
+function beadLines(make: Make, d: PatternRound, mode: Mode): string[] {
+  return [...d.choices.filter((_, i) => i !== d.answerIdx).map(wrongLine), ...(mode === 'guided' ? [nowYouLine(make), yesLine(d.answer)] : [])]
+}
+/** The re-teach, in order. */
+function explainLines(make: Make, d: PatternRound): string[] {
+  const chant = d.unit.map(c => BEADS[c].label).join(', ')
+  return [
+    `Look at the pattern. It goes ${chant}, ${chant}, over and over.`,
+    `So the next ${make.noun} is ${BEADS[d.answer].label}. Watch it go on!`,
+  ]
+}
+
+export const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: Thread; onComplete: (correct: boolean) => void }> = ({ data, make, mode, thread, onComplete }) => {
   const { choices, answer, answerIdx } = data
   const [taken, setTaken] = useState<number | null>(null)
   const [wrongIdx, setWrongIdx] = useState<number | null>(null)
   const erred = useRef(false), done = useRef(false), tapLock = useRef(false)
   const [pending, setPending] = useState<number | null>(null)
   const pendingEl = useRef<HTMLElement | null>(null)
+  useQuestion(() => beadLines(make, data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
-    if (mode === 'guided') speakAfterCurrent(`Now you! What ${make.noun} comes next? Tap it!`)
+    if (mode === 'guided') speakAfterCurrent(nowYouLine(make))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -395,7 +387,7 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
     if (i !== answerIdx) {
       erred.current = true
       setWrongIdx(i)
-      speak(`That one is ${BEADS[choices[i]].label}. Look at the pattern again — what comes next?`)
+      speak(wrongLine(choices[i]))
       window.setTimeout(() => setWrongIdx(w => (w === i ? null : w)), 600)
       return
     }
@@ -403,7 +395,7 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
     setTaken(i)
     // The item leaves the tray and travels to the empty place; the round ends when it lands there.
     const ms = thread(el, answer)
-    if (mode === 'guided') speak(`Yes! The ${BEADS[answer].label} one!`)
+    if (mode === 'guided') speak(yesLine(answer))
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), ms + 260)
   }
 
@@ -417,9 +409,9 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
   </>
 }
 
-// ─── Milo shows how (opening demo + the 3-wrong re-teach) ────────────────────────────
+// ─── Watch it done (opening demo + the 3-wrong re-teach) ────────────────────────────
 /**
- * Milo reads the pattern aloud and points at what comes next.
+ * The demo reads the pattern aloud and points at what comes next.
  *
  * `place` is the whole subtlety, and getting it wrong put a DUPLICATE on the string. The opening
  * demo must thread its item — it is what starts the pattern off. A re-teach must NOT, because
@@ -428,18 +420,14 @@ const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; thread: 
  * second copy and the repeat breaks: caught by reading the strand back as `RBRBBB|RBBBRBR`.
  */
 const BeadsExplain: React.FC<{ data: PatternRound; make: Make; thread: Thread; place: boolean; onDone: () => void }> = ({ data, make, thread, place, onDone }) => {
-  const { unit, answer, answerIdx } = data
+  const { answer, answerIdx } = data
   const [taken, setTaken] = useState<number | null>(null)
   const [glow, setGlow] = useState(false)
   const trayRef = useRef<HTMLDivElement | null>(null)
   const ran = useOnceGuard()
   useEffect(() => {
     if (ran.current) return; ran.current = true
-    const chant = unit.map(c => BEADS[c].label).join(', ')
-    const cancel = speakSteps([
-      `Look at the pattern. It goes ${chant}, ${chant}, over and over.`,
-      `So the next ${make.noun} is ${BEADS[answer].label}. Watch it go on!`,
-    ], {
+    const cancel = speakSteps(explainLines(make, data), {
       onStep: i => {
         if (i !== 1) return
         setTaken(place ? answerIdx : null)
@@ -456,9 +444,41 @@ const BeadsExplain: React.FC<{ data: PatternRound; make: Make; thread: Thread; p
     stateFor={i => (taken === i ? 'pop' : glow && i === answerIdx ? 'glow' : 'idle')} />
 }
 
+/** The scored practice, over whatever `strand` says the string holds now (the orchestrator's, read through a ref). */
+export function makeBeadBeat(make: Make, thread: Thread, strand: () => StrandState): Beat<PatternRound> {
+  return {
+    skillId: 'patterns', rounds: 10, walkEvery: 4,
+    make: (d, round = 0) => makePatternRound(strand(), (d || 1) as Difficulty, round),
+    // `at` is the strand length, so every round has a distinct signature and makeDistinct — which
+    // would otherwise re-roll a generator that reads state and returns the same thing — never spins.
+    sig: d => `${d.unit.join(',')}|${d.at}`,
+    prompt: promptFor,
+    say: sayFor(make),
+    Play: ({ data, onSubmit }) => <BeadsPlay data={data} make={make} mode="practice" thread={thread} onComplete={onSubmit} />,
+    // place=false: this round's item is already on the string (a re-teach only runs after the round
+    // was submitted, and it is submitted when the child finally gets it right).
+    Reteach: ({ data, onDone }) => <BeadsExplain data={data} make={make} thread={thread} place={false} onDone={onDone} />,
+    feedbackLines: d => beadLines(make, d, 'practice'),
+    reteachLines: d => explainLines(make, d),
+  }
+}
+
+// The demo opens the chapter's first pattern; the guided round continues that same one, because
+// there is only ever one string.
+export const DEMO_ROUND: PatternRound = (() => {
+  const u: BeadColor[] = ['red', 'blue']
+  const seed: BeadColor[] = ['red', 'blue', 'red', 'blue', 'red']
+  const choices = ['blue', 'red', 'green'] as BeadColor[]
+  return { unit: u, seed, answer: 'blue', choices, answerIdx: 0, at: 0 }
+})()
+export function guidedRound({ strand, runStart, unit }: StrandState): PatternRound {
+  const guidedAnswer = unit.length ? unit[(strand.length - runStart) % unit.length] : 'red'
+  return { unit: unit.length ? unit : ['red', 'blue'], seed: [], answer: guidedAnswer,
+    choices: ['blue', 'red', 'green'] as BeadColor[], answerIdx: (['blue', 'red', 'green'] as BeadColor[]).indexOf(guidedAnswer), at: strand.length }
+}
+
 // ─── Orchestrator ────────────────────────────────────────────────────────────────────
 const BS_CSS = `
-@keyframes bs_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes bs_pop { 0%{transform:scale(.3);opacity:.4} 55%{transform:scale(1.18);opacity:1} 100%{transform:scale(1)} }
 @keyframes bs_shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px) rotate(-3deg)} 75%{transform:translateX(6px) rotate(3deg)} }
 `
@@ -496,7 +516,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
 
   const { exit, tally } = useChapterShell(onFinish, onExit)
 
-  /** A new pattern begins: Milo's opening items go on the string and the joint moves behind them. */
+  /** A new pattern begins: its starter items go on the string and the joint moves behind them. */
   // The new run starts where the string currently ends, read off the ref rather than from inside the
   // strand updater — an updater has to stay pure, and React calls it twice in development.
   const openRun = useCallback((u: BeadColor[], seed: BeadColor[]) => {
@@ -530,19 +550,8 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
   // Deliberately does NOT depend on any size: SkillBeat memoizes the round on `[roundIdx, beat]`, so
   // a beat that changes on resize regenerates the question under the child mid-round. The tray
   // measures itself instead.
-  const beat = useMemo<Beat<PatternRound> | null>(() => make && ({
-    skillId: 'patterns', rounds: 10, walkEvery: 4,
-    make: (d, round = 0) => makePatternRound(sRef.current, (d || 1) as Difficulty, round),
-    // `at` is the strand length, so every round has a distinct signature and makeDistinct — which
-    // would otherwise re-roll a generator that reads state and returns the same thing — never spins.
-    sig: d => `${d.unit.join(',')}|${d.at}`,
-    prompt: promptFor,
-    say: sayFor(make),
-    Play: ({ data, onSubmit }) => <BeadsPlay data={data} make={make} mode="practice" thread={thread} onComplete={onSubmit} />,
-    // place=false: this round's item is already on the string (a re-teach only runs after the round
-    // was submitted, and it is submitted when the child finally gets it right).
-    Reteach: ({ data, onDone }) => <BeadsExplain data={data} make={make} thread={thread} place={false} onDone={onDone} />,
-  }), [make, thread])
+  // eslint-disable-next-line react-hooks/refs -- the reader is stored, not called here: SkillBeat calls it to draw a round, as before
+  const beat = useMemo(() => make && makeBeadBeat(make, thread, () => sRef.current), [make, thread])
 
   // Landscape-first, like the rest of the 3–5 set: the strand runs wide and has nowhere to go in a
   // portrait column. Sits BELOW every hook — an early return above one makes turning the phone
@@ -557,17 +566,8 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
     )
   }
 
-  // The demo opens the chapter's first pattern; the guided round continues that same one, because
-  // there is only ever one string.
-  const DEMO: PatternRound = (() => {
-    const u: BeadColor[] = ['red', 'blue']
-    const seed: BeadColor[] = ['red', 'blue', 'red', 'blue', 'red']
-    const choices = ['blue', 'red', 'green'] as BeadColor[]
-    return { unit: u, seed, answer: 'blue', choices, answerIdx: 0, at: 0 }
-  })()
-  const guidedAnswer = unit.length ? unit[(strand.length - runStart) % unit.length] : 'red'
-  const GUIDED: PatternRound = { unit: unit.length ? unit : ['red', 'blue'], seed: [], answer: guidedAnswer,
-    choices: ['blue', 'red', 'green'] as BeadColor[], answerIdx: (['blue', 'red', 'green'] as BeadColor[]).indexOf(guidedAnswer), at: strand.length }
+  const DEMO = DEMO_ROUND
+  const GUIDED = guidedRound({ strand, runStart, unit })
 
   const tail = strand.slice(0, runStart)
   const run = strand.slice(runStart)
@@ -608,11 +608,10 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
               <Strand make={make} tail={tail} run={run} slotRef={slotRef} />
             </FitBox>
           </div>
-          <MiloBead make={make} />
         </>
       )}
 
-      {phase === 'demo' && (<>{Banner('Watch Milo read the pattern')}
+      {phase === 'demo' && (<>{Banner('Watch how to read the pattern')}
         <BeadsExplain data={DEMO} make={make} thread={thread} place onDone={() => setPhase('guided')} /></>)}
 
       {phase === 'guided' && (<>{Banner(`Now you! Tap the ${make.noun} that comes next`)}
@@ -622,7 +621,7 @@ export default function BeadShop({ world: forcedId, onFinish, onExit }: {
       {phase === 'practice' && (
         <div style={{ position: 'absolute', top: 48, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
           <SkillBeat beat={beat} onInterlude={interlude}
-            // A round that opens a NEW pattern brings Milo's starter items with it; they go onto
+            // A round that opens a NEW pattern brings its starter items with it; they go onto
             // the same string, and the joint moves in behind them.
             onRound={(data: PatternRound) => { if (data.seed.length) openRun(data.unit, data.seed) }}
             onComplete={tally} />

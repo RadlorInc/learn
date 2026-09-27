@@ -16,7 +16,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { ShapeView, SHAPES_2D, SHAPES_3D, sidesOf, is3D, buildNameChoices } from '../lessons/Shapes2D3DLesson'
 import WorldSelect from './WorldSelect'
 import FitBox from './FitBox'
@@ -31,21 +31,18 @@ import { DirectionsInline } from '@/features/chapters/directions'
 
 // ─── Worlds ──────────────────────────────────────────────────────────────────────────
 interface Bg { grad: string; img: string }
-export interface ShWorld { id: string; label: string; emoji: string; bgs: Bg[]; milo: { src: string; emoji: string; accessory: string }; intro: string }
+export interface ShWorld { id: string; label: string; emoji: string; bgs: Bg[]; intro: string }
 const G = (grad: string, img: string): Bg => ({ grad, img: `/assets/backgrounds/${img}` })
 export const WORLDS: ShWorld[] = [
   { id: 'studio', label: 'Art Studio', emoji: '🎨',
     bgs: [G('linear-gradient(#f3dff7,#e0d4ee)', 'rainbow_market.jpeg'), G('linear-gradient(#e8e0ee,#d8d2e6)', 'craft_gems.png'), G('linear-gradient(#f0e4dc,#e4d2c4)', 'craft_buttons.png')],
-    milo: { src: '/assets/characters/milo_painter.png', emoji: '🦊', accessory: '🎨' },
-    intro: 'Welcome to the Art Studio! Milo draws shapes. Listen for the shape, then tap it. First, watch Milo!' },
+    intro: 'Welcome to the Art Studio! Let\'s draw shapes. Listen for the shape, then tap it. First, watch and listen!' },
   { id: 'build', label: 'Build Site', emoji: '🏗️',
     bgs: [G('linear-gradient(#dfe7f2,#d4d0c4)', 'town_street.jpeg'), G('linear-gradient(#e4e8ee,#d8ccb0)', 'door_shops.jpeg'), G('linear-gradient(#eae4d6,#d8ccb0)', 'order_yard.png')],
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🏗️' },
-    intro: 'On the Build Site, Milo builds with shapes. Listen for the shape, then tap it. First, watch Milo!' },
+    intro: 'On the Build Site, we build with shapes. Listen for the shape, then tap it. First, watch and listen!' },
   { id: 'playroom', label: 'Playroom', emoji: '🧸',
     bgs: [G('linear-gradient(#e6eefc,#c8d6f0)', 'toy_blocks.png'), G('linear-gradient(#fdeede,#f6e0c8)', 'toy_ducks.png'), G('linear-gradient(#f2e0ec,#ecd2d4)', 'candy_counter.png')],
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🧸' },
-    intro: 'In the Playroom, Milo plays with shape blocks. Listen for the shape, then tap it. First, watch Milo!' },
+    intro: 'In the Playroom, we play with shape blocks. Listen for the shape, then tap it. First, watch and listen!' },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: w.bgs[0].img }))
@@ -93,24 +90,6 @@ function Background({ bg, world }: { bg: number; world: ShWorld }) {
   )
 }
 
-function MiloHost({ left, milo }: { left: number; milo: ShWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(24vh, 200px)', height: 'min(24vh, 200px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'ss_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 72, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 10, right: 12, fontSize: 30 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
-
 // A shape: 2D via the exact SVG ShapeView, 3D via a real solid sprite (emoji fallback).
 function Shape({ name, size }: { name: string; size: number }) {
   const [missing, setMissing] = useState(false)
@@ -124,8 +103,10 @@ function Shape({ name, size }: { name: string; size: number }) {
 // ─── Play ─────────────────────────────────────────────────────────────────────────────
 type Mode = 'guided' | 'practice'
 const sayFor = (d: ShRound) => d.mode === 'sides' ? `How many sides does this ${d.target} have?` : `Find the ${d.target}. Tap it!`
+const MISS = 'Not quite — try again!'
+const yesLine = (d: ShRound) => d.mode === 'sides' ? `Yes! ${d.answer} sides!` : `Yes! A ${d.target}!`
 
-const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
   const [pickedName, setPickedName] = useState<string | null>(null)
@@ -137,14 +118,16 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
   const [pendingName, setPendingName] = useState<string | null>(null)
   const erred = useRef(false), done = useRef(false)
 
+  // Before the ask below is spoken: the guided round opens its own question (a practice one's is opened by SkillBeat).
+  useQuestion(() => [sayFor(data), yesLine(data), MISS], mode === 'guided')
   useEffect(() => { if (mode === 'guided') speakAfterCurrent(sayFor(data)); }, []) // eslint-disable-line
 
   function finishOk() {
     done.current = true; setGlow(true)
-    if (mode === 'guided') speak(data.mode === 'sides' ? `Yes! ${data.answer} sides!` : `Yes! A ${data.target}!`)
+    if (mode === 'guided') speak(yesLine(data))
     window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1300)
   }
-  function wrong(reset: () => void) { erred.current = true; speak('Not quite — try again!'); window.setTimeout(reset, 900) }
+  function wrong(reset: () => void) { erred.current = true; speak(MISS); window.setTimeout(reset, 900) }
 
   /** A tap only CHOOSES; the grading below is unchanged and simply runs on Ready instead. */
   function gradeNum(n: number) {
@@ -166,7 +149,7 @@ const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; onComplet
             also draws its own ships TWO pills saying the same thing (chapter-craft §3). Measured on
             production 2026-08-20: both rendered, 21px apart, the lower one `text-transform:
             capitalize` so it read "Tap The Triangle!". SkillBeat's is the one to keep — it replays
-            Milo's voice on a tap; this one is `pointerEvents: none`. The guided round renders
+            the voice on a tap; this one is `pointerEvents: none`. The guided round renders
             OUTSIDE SkillBeat, so there it is the only pill and stays. */}
         {mode !== 'practice' && Prompt(promptFor(data), world, short)}
         <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '44%' : '42%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw', filter: glow ? 'drop-shadow(0 0 16px var(--sun-yellow))' : 'none', transition: 'filter .3s' }}>
@@ -238,6 +221,11 @@ function Prompt(text: string, world: ShWorld, short?: boolean) {
 }
 
 // ─── Demo / re-teach: name a shape + reveal its sides / "solid shape" via ONE speakSteps ─
+const explainLines = (data: ShRound) => [
+  `This is a ${data.target}.`,
+  is3D(data.target) ? `A ${data.target} is a solid shape you can hold.` : `A ${data.target} has ${sidesOf(data.target)} sides.`,
+]
+
 const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void }> = ({ world, data, onDone }) => {
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
@@ -246,17 +234,14 @@ const ShapeExplain: React.FC<{ world: ShWorld; data: ShRound; onDone: () => void
   const solid = is3D(data.target)
   const s = solid ? null : sidesOf(data.target)
   useEffect(() => {
-    const lines = [
-      `This is a ${data.target}.`,
-      solid ? `A ${data.target} is a solid shape you can hold.` : `A ${data.target} has ${s} sides.`,
-    ]
+    const lines = explainLines(data)
     const cancel = speakSteps(lines, { onStep: (i) => { if (i === 1) setLabel(true) }, onDone: () => { window.setTimeout(() => doneRef.current(), 1200) }, fallbackStepMs: 1500 })
     return cancel
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return (
     <>
-      {Prompt('Watch Milo', world, short)}
+      {Prompt('Watch and listen', world, short)}
       <div style={{ position: 'fixed', left: 0, right: 0, top: short ? '46%' : '44%', transform: 'translateY(-50%)', zIndex: 30, display: 'flex', justifyContent: 'center', padding: '0 3vw' }}>
         <FitBox availW={vw * 0.9} availH={short ? vh * 0.4 : vh * 0.5} max={2.4}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
@@ -281,12 +266,17 @@ export function makeShapeBeat(world: ShWorld): Beat<ShRound> {
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ShapePlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <ShapeExplain world={world} data={data} onDone={onDone} />,
+    // A practice round's one line of its own (the "Yes" is the guided round's); the re-teach is `explainLines`.
+    feedbackLines: () => [MISS],
+    reteachLines: explainLines,
   }
 }
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
-const SS_CSS = `@keyframes ss_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }`
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
+/** The one guided round: a square among the L1 shapes, on the world's third backdrop. */
+export const guidedFor = (world: ShWorld): ShRound =>
+  ({ bg: 2 % world.bgs.length, mode: 'name', target: 'square', options: buildNameChoices('square', POOL1) })
 export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: {
   world?: string
   onFinish?: (correct: number, wrong: number, mastered?: boolean) => void
@@ -316,7 +306,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
     { bg: 0, mode: 'name', target: 'triangle', options: [] },
     { bg: 1 % world.bgs.length, mode: 'name', target: 'cube', options: [] },
   ]
-  const GUIDED: ShRound = { bg: 2 % world.bgs.length, mode: 'name', target: 'square', options: buildNameChoices('square', POOL1) }
+  const GUIDED = guidedFor(world)
   const bgIdx = phase === 'practice' ? bg : phase === 'guided' ? GUIDED.bg : DEMO[Math.min(demoIdx, DEMO.length - 1)].bg
 
   const Banner = (text: string) => (
@@ -327,7 +317,6 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden' }}>
-      <style>{SS_CSS}</style>
       <Background bg={bgIdx} world={world} />
       <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', zIndex: 50 }}>
         <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
@@ -343,7 +332,7 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo  (${demoIdx + 1}/${DEMO.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch and listen  (${demoIdx + 1}/${DEMO.length})`)}
         <ShapeExplain key={`demo${demoIdx}`} world={world} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -358,7 +347,6 @@ export default function ShapeStudio({ world: forcedWorldId, onFinish, onExit }: 
         </div>
       )}
 
-      <MiloHost left={10} milo={world.milo} />
     </div>
   )
 }

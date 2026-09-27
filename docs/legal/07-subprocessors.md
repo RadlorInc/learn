@@ -3,7 +3,7 @@
 > **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > This list is published alongside the Privacy Policy and must match it exactly. It is also the working document for the vendor review in the Information Security Program.
 
-**Last reviewed:** 22 September 2026, from the code, the database and a driven session on production — not from memory.
+**Last reviewed:** 27 September 2026 for the lesson audio (the bucket, its access rules and a clip read back, measured on production); the rest 22 September 2026, from the code, the database and a driven session on production — not from memory.
 **Reviewed by:** Rakif Bobre
 
 ---
@@ -16,7 +16,7 @@ A **service provider** processes data on our instructions and for no purpose of 
 
 | Vendor | What it does for us | Does it receive information about a child? | Exactly what | Where | Basis |
 |---|---|---|---|---|---|
-| **Supabase** | The entire backend — database, authentication, file storage. The browser talks to it directly. | **Yes.** This is the only service that holds a child's information. | First name, avatar number, age band, grade, chosen lessons; lesson progress, points, game-time settings; "didn't get it" taps; product events; crash records; the child's sign-in credentials | us-east-1 (read from the provider's API) | Service provider — integral to delivering the service |
+| **Supabase** | The entire backend — database, authentication, file storage, including serving the pre-recorded lesson audio. The browser talks to it directly. | **Yes.** This is the only service that holds a child's information. | First name, avatar number, age band, grade, chosen lessons; lesson progress, points, game-time settings; "didn't get it" taps; product events; crash records; the child's sign-in credentials | us-east-1 (read from the provider's API) | Service provider — integral to delivering the service |
 | **Supabase platform logs** (same vendor, separate matter) | The provider's own request logging, outside our database schema | **Yes, incidentally.** Every request a child's device makes | IP address, user agent, and an approximate location derived from IP — city, region and country — on every request sampled, plus the signed-in account id on most | Same | Service provider. **Outside our own retention jobs — see the Retention Policy** |
 | **Vercel** | Hosting and content delivery | **Yes, incidentally.** Request logs, and crash lines written to the console | IP address, request path, user agent; a crash line can carry a child's internal id and the page being viewed | Functions run in iad1, Washington, D.C., USA (confirmed from the Vercel dashboard, 24 September 2026) | Service provider — integral |
 | **Stripe** | Subscription checkout and billing — **not used during the beta**: billing is switched off and no data is sent to Stripe | **No.** | None during the beta | — | Service provider, parent data only, once billing starts |
@@ -27,7 +27,7 @@ A **service provider** processes data on our instructions and for no purpose of 
 
 ## Services that receive nothing about a child
 
-No analytics provider. No error or crash monitoring provider. No advertising or tracking service. No AI or text-to-speech provider at runtime — every audio clip a child hears is a static file served from our own domain, and where a clip is missing the fallback is the browser's own on-device speech. **No child's input is ever sent to an AI or audio vendor.**
+No analytics provider. No error or crash monitoring provider. No advertising or tracking service. No AI or text-to-speech provider at runtime — every audio clip a child hears is a pre-recorded file, the same for every child, served from the file storage of our database provider (Supabase, listed above). The request for a clip names only the recording — never the child or the account. Some recordings are feedback on an answer (for example "Not quite"), so which clips a device asks for can reflect how a question went, but not who answered. Where a clip is missing the fallback is the browser's own on-device speech. **No child's input is ever sent to an AI or audio vendor.**
 
 **How this absence was established**, so it can be checked again rather than taken on trust: no analytics package is installed; no external script, beacon, `sendBeacon`, WebSocket or tracking pixel exists in the source; the Content-Security-Policy served by production restricts connections to our own origin and Supabase, so the browser is structurally unable to reach an analytics host; and a real child session driven on production — module list, a full lesson with audio, practice problems — produced 56 requests to exactly one origin, our own, with zero third-party requests. The same capture shows the audio and page loads, which proves the capture was live rather than empty.
 

@@ -27,7 +27,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords } from '../lessons/_kit'
 import FitBox from './FitBox'
 import { useNeedsRotate, RotateGate } from './RotateGate'
@@ -57,7 +57,6 @@ interface CmpWorld {
   id: string
   bgs: Bg[]
   items: Item[]
-  milo: { src: string; emoji: string; accessory: string }
 }
 const SETTINGS: CmpWorld[] = [
   { id: 'playground',
@@ -67,8 +66,7 @@ const SETTINGS: CmpWorld[] = [
       { grad: 'linear-gradient(#d2eefc 0%, #e4f2d6 52%, #c0e498 100%)', img: '/assets/backgrounds/town_garden.jpeg' },
     ],
     items: [IT('rabbit_side', '🐰', true), IT('duck_side', '🦆'), IT('ladybug_side', '🐞'),
-      IT('chick_side', '🐤'), IT('lamb_side', '🐑')],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🛝' } },
+      IT('chick_side', '🐤'), IT('lamb_side', '🐑')] },
   { id: 'forest',
     bgs: [
       { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/forest_1.jpeg' },
@@ -76,8 +74,7 @@ const SETTINGS: CmpWorld[] = [
       { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_3.jpeg' },
     ],
     items: [IT('squirrel_side', '🐿️'), IT('butterfly_side', '🦋'), IT('ant_side', '🐜'),
-      IT('eagle_side', '🦅'), IT('bird_side', '🐦')],
-    milo: { src: '/assets/characters/milo_idle.png', emoji: '🦊', accessory: '🌲' } },
+      IT('eagle_side', '🦅'), IT('bird_side', '🐦')] },
   /**
    * ⚠️ THE THREE SCENES THIS REPLACES WERE FLAT VECTOR CARTOONS — `pond` / `lake` / `pond_top`, all
    * thick uniform outlines and flat fills, under painted sprites. That is a STYLE mismatch, not a
@@ -102,10 +99,9 @@ const SETTINGS: CmpWorld[] = [
     // creature along the ground while it is crouched. A hop needs a discrete hop(from, to), which
     // does not exist yet; HopAlong is where that sheet earns its place.
     items: [IT('fish_side', '🐟'), IT('turtle_side', '🐢'), IT('crab_side', '🦀'),
-      IT('duckling_side', '🐥')],
-    milo: { src: '/assets/characters/milo_fishing.png', emoji: '🦊', accessory: '🐸' } },
+      IT('duckling_side', '🐥')] },
 ]
-const INTRO = 'Milo puts animals on each side of the balance. The side with MORE tips DOWN! Pick the sign that opens toward the bigger number. First, watch Milo!'
+const INTRO = 'We put animals on each side of the balance. The side with MORE tips DOWN! Pick the sign that opens toward the bigger number. First, watch!'
 /** Every backdrop in the chapter, so one <Background> can crossfade between any two of them. */
 const ALL_BGS = SETTINGS.flatMap(w => w.bgs)
 
@@ -169,25 +165,6 @@ function Background({ bg }: { bg: Bg }) {
     </div>
   )
 }
-
-function MiloHost({ left, milo }: { left: number; milo: CmpWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'sp_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
-    </div>
-  )
-}
-
 
 // ─── A pan: a group of animals (small n) OR a numeral card (big n) + a numeral chip ────
 function Pan({ n, item, mode, glow, short, px, roundKey }: { n: number; item: Item; mode: 'objects' | 'numeral'; glow: boolean; short?: boolean; px: number; roundKey: string }) {
@@ -314,8 +291,21 @@ type Mode = 'guided' | 'practice'
  */
 export const ASK = 'Which sign is right?'
 const sayFor = (d: CmpRound) => `${numberToWords(d.a)} and ${numberToWords(d.b)}. ${ASK}`
+const LOOK_AGAIN = 'Look again — which side is bigger? Try once more!'
+const yesLine = ({ a, b, answer }: CmpRound) =>
+  answer === '=' ? `Yes! ${numberToWords(a)} equals ${numberToWords(b)}!` : `Yes! ${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}!`
+/** Every line a round can say once it has loaded: the one wrong-sign line, and the guided round's ask and "Yes!". */
+const cmpLines = (d: CmpRound, mode: Mode): string[] => [LOOK_AGAIN, ...(mode === 'guided' ? [sayFor(d), yesLine(d)] : [])]
+/** The re-teach, in order — `CompareExplain` pairs lines[i] with steps[i]. */
+function explainLines({ a, b, answer }: CmpRound): string[] {
+  return [
+    `${numberToWords(a)} on this side, and ${numberToWords(b)} on that side.`,
+    answer === '=' ? `They are the same — ${numberToWords(a)} equals ${numberToWords(b)}.` : `${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}.`,
+    `So the sign is ${signWord(answer)}!`,
+  ]
+}
 
-const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
+export const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ data, mode, onComplete }) => {
   const { a, b, item, answer } = data
   const { h: vh } = useViewport()
   const short = vh < 470
@@ -328,6 +318,7 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
   // comparing two numbers. Same fault as chapter 4's green Ready button and the teen band's
   // rejected live-tilt balance beam; see chapter-craft.md §1. It now tips only once they commit.
   const tilt = picked !== null
+  useQuestion(() => cmpLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
     if (mode === 'guided') speakAfterCurrent(sayFor(data))
@@ -352,11 +343,11 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
     if (done.current || picked !== null) return
     if (ch === answer) {
       setPicked(ch); done.current = true
-      if (mode === 'guided') speak(answer === '=' ? `Yes! ${numberToWords(a)} equals ${numberToWords(b)}!` : `Yes! ${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}!`)
+      if (mode === 'guided') speak(yesLine(data))
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1300)
     } else {
       erred.current = true
-      speak('Look again — which side is bigger? Try once more!')
+      speak(LOOK_AGAIN)
     }
   }
 
@@ -367,7 +358,7 @@ const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (correct: 
         `beat.prompt`, so rendering this one too put "Which sign is right?" on screen TWICE — one
         pill 80px down and another above it. The guided round runs outside SkillBeat, so there this
         is the only pill and it stays. SkillBeat's is the one worth keeping in play: a tap on it
-        replays Milo's voice, this one is `pointerEvents: none`.
+        replays the voice, this one is `pointerEvents: none`.
         It had shipped, and no gate could see it: both halves are individually correct and the
         duplication is a property of the rendered DOM. It took driving the chapter into a scored
         round, which only became possible once the StrictMode guard was fixed (useOnceGuard).
@@ -398,11 +389,7 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
   const [reveal, setReveal] = useState(false)
   const doneRef = useLatestRef(onDone)
   useEffect(() => {
-    const lines = [
-      `${numberToWords(a)} on this side, and ${numberToWords(b)} on that side.`,
-      answer === '=' ? `They are the same — ${numberToWords(a)} equals ${numberToWords(b)}.` : `${numberToWords(a)} is ${signWord(answer)} ${numberToWords(b)}.`,
-      `So the sign is ${signWord(answer)}!`,
-    ]
+    const lines = explainLines(data)
     const steps: Array<() => void> = [
       () => { setTilt(false); setReveal(false) },
       () => setTilt(true),
@@ -432,6 +419,9 @@ const CompareExplain: React.FC<{ data: CmpRound; onDone: () => void }> = ({ data
   )
 }
 
+/** The unscored round after the demo, on the slot after the demo's. */
+export const GUIDED: CmpRound = { ...RUN[DEMO_N], a: 3, b: 7, answer: compareSign(3, 7) }
+
 // ─── Beat ───────────────────────────────────────────────────────────────────────────
 export function makeCompareBeat(): Beat<CmpRound> {
   return {
@@ -442,12 +432,13 @@ export function makeCompareBeat(): Beat<CmpRound> {
     say: d => sayFor(d),
     Play: ({ data, onSubmit }) => <ComparePlay data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <CompareExplain data={data} onDone={onDone} />,
+    feedbackLines: d => cmpLines(d, 'practice'),
+    reteachLines: explainLines,
   }
 }
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 const SP_CSS = `
-@keyframes sp_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes sp_prop { from{transform:scaleY(0);opacity:0} to{transform:scaleY(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -472,7 +463,7 @@ export default function SeesawPark({ onFinish, onExit }: {
   // ⚠️ EVERY early return below this line must sit BELOW every hook — putting one above a useMemo
   // changes the hook count when the phone turns and React tears the chapter into the error
   // boundary. That crashed chapter 2 the first time the gate was wired.
-  if (needsRotate) return <RotateGate line="Milo&apos;s balance scale needs a wide screen! ⚖️" />
+  if (needsRotate) return <RotateGate line="The balance scale needs a wide screen! ⚖️" />
 
   // Demo teaches all three signs: greater (>), less (<), then equal (=) — all object-driven, and
   // each in a DIFFERENT setting, so the first thing a child learns is that the place changes but
@@ -485,7 +476,6 @@ export default function SeesawPark({ onFinish, onExit }: {
     { ...RUN[1], a: 2, b: 8, answer: compareSign(2, 8) },
     { ...RUN[2], a: 4, b: 4, answer: compareSign(4, 4) },
   ]
-  const GUIDED: CmpRound = { ...RUN[DEMO_N], a: 3, b: 7, answer: compareSign(3, 7) }
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (
@@ -512,7 +502,7 @@ export default function SeesawPark({ onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo compare  (${demoIdx + 1}/${DEMO.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch and compare  (${demoIdx + 1}/${DEMO.length})`)}
         <CompareExplain key={`demo${demoIdx}`} data={DEMO[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -526,9 +516,6 @@ export default function SeesawPark({ onFinish, onExit }: {
             onComplete={tally} />
         </div>
       )}
-
-      {/* Milo belongs to the round's setting — explorer at the playground, fishing at the pond. */}
-      <MiloHost left={10} milo={shown.w.milo} />
     </div>
   )
 }

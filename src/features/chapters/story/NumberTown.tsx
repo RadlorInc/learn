@@ -2,7 +2,7 @@
 /**
  * Chapter (6–8) — NUMBERS TO 100 (skill `numbersTo100`) as STORY MODE.
  *
- * Milo hears a number (word + spoken); the child taps the thing wearing that numeral
+ * The child hears a number (word + spoken) and taps the thing wearing that numeral
  * from three choices. The real skill is reading a two-digit number. The child PICKS one
  * of three worlds; in each the same skill is dressed differently and the scene rotates
  * across the 10 adaptive rounds (one continuous SkillBeat — harder on a streak, gentler
@@ -14,12 +14,12 @@
  * BLEND: each numbered thing is BIG and rests on the scene's own ground with a soft contact
  * shadow (no floating band); the numeral rides a chip that floats ABOVE the object so it never
  * hides it. The demo + 3-wrong re-teach reuse the lesson's ReadNumber (build the number from
- * tens + ones, spoken by Milo). Difficulty widens the range via pickTarget: 10–20 → 20–60 →
+ * tens + ones, spoken aloud). Difficulty widens the range via pickTarget: 10–20 → 20–60 →
  * 50–100. Reuses committed art (no new assets). Wrapped by game/Numbers100Chapter.tsx.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speakAfterCurrent, speak, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'
-import { SkillBeat, type Beat, useChapterShell } from './StoryWorld'
+import { SkillBeat, type Beat, useChapterShell, useQuestion } from './StoryWorld'
 import { numberToWords, CSS as KIT_CSS, BigCount, nounFor } from '../lessons/_kit'
 import { TensOnes } from '../lessons/Numbers100Lesson'
 import WorldSelect from './WorldSelect'
@@ -60,7 +60,6 @@ const SCENE: Record<Scene, SceneCfg> = {
 export interface NumWorld {
   id: string; label: string; emoji: string
   scenes: Scene[]
-  milo: { src: string; emoji: string; accessory: string }
   dark?: boolean
   groundY?: string                        // vertical center of the object row (grounds them per scene)
   objSize?: string                        // per-world object size (some sprites are taller/narrower)
@@ -68,20 +67,18 @@ export interface NumWorld {
 }
 export const WORLDS: NumWorld[] = [
   { id: 'street', label: 'Number Street', emoji: '🏘️', scenes: ['house', 'shop', 'mailbox'],
-    milo: { src: '/assets/characters/milo_postman.png', emoji: '🦊', accessory: '✉️' },
-    intro: 'Milo is the postman today! Every house has a number. Listen for the number, then tap the one that matches so Milo can deliver. First, watch Milo read a number!' },
+    intro: 'You are the postman today! Every house has a number. Listen for the number, then tap the one that matches to deliver the letter. First, watch how to read a number!' },
   { id: 'lockers', label: 'Locker Room', emoji: '🏫', scenes: ['lockerA', 'lockerB', 'lockerC'], groundY: '62%', objSize: 'clamp(120px, 31vw, 260px)',
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🎒' },
-    intro: 'Time for the locker room! Each locker has a number. Listen for the number Milo needs, then tap the matching locker. First, watch Milo read a number!' },
+    intro: 'Time for the locker room! Each locker has a number. Listen for the number, then tap the matching locker. First, watch how to read a number!' },
   { id: 'space', label: 'Space Station', emoji: '🚀', scenes: ['rocket', 'planet', 'satellite'],
-    milo: { src: '/assets/characters/milo_explorer.png', emoji: '🦊', accessory: '🛸' }, dark: true,
-    intro: 'Blast off to the space station! Each craft has a number. Listen for the number, then tap the one that matches. First, watch Milo read a number!' },
+    dark: true,
+    intro: 'Blast off to the space station! Each craft has a number. Listen for the number, then tap the one that matches. First, watch how to read a number!' },
 ]
 const worldById = (id: string) => WORLDS.find(w => w.id === id)
 const PICK_WORLDS = WORLDS.map(w => ({ id: w.id, label: w.label, emoji: w.emoji, bgImage: SCENE[w.scenes[0]].bg.img, itemImage: SCENE[w.scenes[0]].itemImg }))
 
 // Live viewport size — so a short/landscape frame can shrink + reposition the stage so the
-// banner (top), the numbered objects, and Milo never collide.
+// banner (top) and the numbered objects never collide.
 
 interface NumRound { scene: Scene; target: number; choices: number[] }
 
@@ -112,24 +109,6 @@ function Background({ scene, scenes }: { scene: Scene; scenes: Scene[] }) {
           <SceneBg src={SCENE[s].bg.img} priority={s === scene} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
         </div>
       ))}
-    </div>
-  )
-}
-
-function MiloHost({ left, milo }: { left: number; milo: NumWorld['milo'] }) {
-  const [step, setStep] = useState(0)
-  const srcs = [milo.src, '/assets/characters/milo_idle.png']
-  return (
-    <div style={{ position: 'fixed', left: `${left}%`, bottom: 0, transform: 'translateX(-50%)', zIndex: 26, width: 'min(26vh, 220px)', height: 'min(26vh, 220px)', pointerEvents: 'none' }}>
-      <div style={{ width: '100%', height: '100%', animation: 'nt_float 3.4s ease-in-out infinite' }}>
-        {step >= srcs.length
-          ? <div style={{ width: '100%', height: '100%', position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
-              <span style={{ fontSize: 80, filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }}>{milo.emoji}</span>
-              <span style={{ position: 'absolute', bottom: 12, right: 14, fontSize: 34 }}>{milo.accessory}</span>
-            </div>
-          : <img src={srcs[step]} alt="Milo" draggable={false} decoding="async" loading="lazy" onError={() => setStep(s => s + 1)}
-              style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'bottom', filter: 'drop-shadow(0 5px 8px rgba(0,0,0,.35))' }} />}
-      </div>
     </div>
   )
 }
@@ -178,9 +157,37 @@ function NumberedThing({ cfg, n, size, state, short, onClick, pending }: {
   )
 }
 
+// ─── What a round says ──────────────────────────────────────────────────────────────
+const askLine = (target: number) => `Find number ${numberToWords(target)}. Tap the one that says ${target}.`
+const wrongLine = (tapped: number, target: number) => `That one is ${numberToWords(tapped)}. Listen again — find ${numberToWords(target)}!`
+const yesLine = (target: number) => `Yes! That is ${numberToWords(target)}!`
+/** Every line a round can say once it has loaded: each wrong choice's line, and the guided round's ask and "Yes!". */
+function numLines(d: NumRound, mode: Mode): string[] {
+  return [...d.choices.filter(n => n !== d.target).map(n => wrongLine(n, d.target)), ...(mode === 'guided' ? [askLine(d.target), yesLine(d.target)] : [])]
+}
+/** "3 tens" / "4 ones" — said at the end of the re-teach and written under it. */
+const partsOf = (target: number) => {
+  const t = Math.floor(target / 10), o = target % 10
+  return [t > 0 ? `${t} ${nounFor(t, 'tens')}` : '', o > 0 ? `${o} ${nounFor(o, 'ones')}` : '']
+}
+/**
+ * The re-teach, in order: an opener, the tens counted up, the ones counted on, the whole. `NumberExplain` pairs
+ * lines[i] with its i-th reveal off the same two counts. (Built with push, as it always was: the static parser reads an
+ * array literal, and the opener would then have to be listed under all 23 chapters' clips — a corpus rebuild.)
+ */
+function explainLines(target: number): string[] {
+  const t = Math.floor(target / 10), o = target % 10
+  const lines: string[] = []
+  lines.push('Watch me build it!')
+  for (let k = 1; k <= t; k++) lines.push(numberToWords(k * 10))
+  for (let j = 1; j <= o; j++) lines.push(numberToWords(t * 10 + j))
+  lines.push(`${partsOf(target).filter(Boolean).join(' and ')} make ${numberToWords(target)}. That is ${numberToWords(target)}!`)
+  return lines
+}
+
 // ─── Interactive play surface (guided / practice) ───────────────────────────────────
 type Mode = 'guided' | 'practice'
-const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
+export const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComplete: (correct: boolean) => void }> = ({ world, data, mode, onComplete }) => {
   const { scene, target, choices } = data
   const cfg = SCENE[scene]
   const [picked, setPicked] = useState<number | null>(null)
@@ -190,18 +197,19 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
   const { w: vw, h: vh } = useViewport()
   const short = vh < 470
   // On a short/landscape frame drive the object size off the (small) HEIGHT so chip + object +
-  // shadow all fit below the banner and above Milo; also cap by width so 3 never overflow.
+  // shadow all fit below the banner and above the bottom edge; also cap by width so 3 never overflow.
   // On tall frames keep the original design size untouched.
   const size = short
     ? `${Math.round(Math.max(64, Math.min(vh * 0.34, vw / 4.4)))}px`
     : (world.objSize ?? 'clamp(96px, 25vw, 210px)')
   // Pull the row up a touch on short frames so it sits clearly under the banner (which ends ≈92px)
-  // and above Milo at the bottom.
+  // and clear of the bottom edge.
   const rowTop = short ? '50%' : (world.groundY ?? '57%')
   const gap = short ? 'clamp(6px,2vw,20px)' : 'clamp(8px,3vw,44px)'
+  useQuestion(() => numLines(data, 'guided'), mode === 'guided')   // a practice round's is opened by SkillBeat
 
   useEffect(() => {
-    if (mode === 'guided') speakAfterCurrent(`Find number ${numberToWords(target)}. Tap the one that says ${target}.`)
+    if (mode === 'guided') speakAfterCurrent(askLine(target))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -223,11 +231,11 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
     if (done.current || picked !== null) return
     if (n === target) {
       setPicked(n); done.current = true
-      if (mode === 'guided') speak(`Yes! That is ${numberToWords(target)}!`)
+      if (mode === 'guided') speak(yesLine(target))
       window.setTimeout(() => onComplete(mode === 'practice' ? !erred.current : true), 1200)
     } else {
       erred.current = true; setWrongPick(n)
-      speak(`That one is ${numberToWords(n)}. Listen again — find ${numberToWords(target)}!`)
+      speak(wrongLine(n, target))
       window.setTimeout(() => setWrongPick(null), 1100)
     }
   }
@@ -257,7 +265,7 @@ const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode; onComp
 // ─── Teaching demo (opening preview + 3-wrong re-teach): build the number from tens+ones ─
 // SELF-PACED / timer-driven: the ten-rods then the ones pop in one-by-one on a fixed timer
 // (NOT tied to speech word events), so the build-up always animates even when audio is
-// blocked or the device has no TTS. Milo speaks alongside as a best-effort layer.
+// blocked or the device has no TTS. The voice speaks alongside as a best-effort layer.
 const NumberExplain: React.FC<{ world: NumWorld; data: NumRound; onDone: () => void }> = ({ world, data, onDone }) => {
   const { target } = data
   const t = Math.floor(target / 10), o = target % 10
@@ -266,22 +274,21 @@ const NumberExplain: React.FC<{ world: NumWorld; data: NumRound; onDone: () => v
   const [big, setBig] = useState<number | null>(null)   // running count
   const [showNum, setShowNum] = useState(false)
   const doneRef = useLatestRef(onDone)
-  const tensPart = t > 0 ? `${t} ${nounFor(t, 'tens')}` : ''
-  const onesPart = o > 0 ? `${o} ${nounFor(o, 'ones')}` : ''
+  const [tensPart, onesPart] = partsOf(target)
   useEffect(() => {
     // speakSteps drives BOTH the voice AND the matching visual reveal for each line:
     //  • audio working  → each reveal fires on that line's real speech `onstart`, so the
-    //    ten-rods / ones pop in exactly as Milo says the number (no drift).
+    //    ten-rods / ones pop in exactly as the voice says the number (no drift).
     //  • audio blocked   → a timer fallback paces the same reveals silently (no blank-then-jump).
     // Lines chain one-at-a-time (never cut), which is what the original ReadNumber relied on.
-    const lines: string[] = []
-    const steps: Array<() => void> = []
-    // short opener so the first rod appears almost immediately
-    lines.push('Watch me build it!'); steps.push(() => {})
-    for (let k = 1; k <= t; k++) { const v = k; lines.push(numberToWords(v * 10)); steps.push(() => { setRt(v); setBig(v * 10) }) }
-    for (let j = 1; j <= o; j++) { const v = j; lines.push(numberToWords(t * 10 + v)); steps.push(() => { setRo(v); setBig(t * 10 + v) }) }
-    lines.push(`${[tensPart, onesPart].filter(Boolean).join(' and ')} make ${numberToWords(target)}. That is ${numberToWords(target)}!`)
-    steps.push(() => { setShowNum(true); setBig(target) })
+    const lines = explainLines(target)
+    // lines[i] ↔ steps[i]: the short opener (so the first rod appears almost at once), t rods, o ones, the whole.
+    const steps = lines.map((_, i) => () => {
+      if (i === 0) return
+      if (i <= t) { setRt(i); setBig(i * 10) }
+      else if (i <= t + o) { setRo(i - t); setBig(t * 10 + i - t) }
+      else { setShowNum(true); setBig(target) }
+    })
     const cancel = speakSteps(lines, {
       onStep: (i) => { steps[i]?.() },
       onDone: () => { window.setTimeout(() => doneRef.current(), 1000) },
@@ -315,21 +322,25 @@ function makeRound(world: NumWorld, d: 1 | 2 | 3, round: number): NumRound {
   return { scene, target, choices: buildChoices(target, d) }
 }
 
+/** The unscored round after the demo — fixed, so the first question a child answers is always the same one. */
+export const guidedRound = (world: NumWorld): NumRound => ({ scene: world.scenes[2] ?? world.scenes[0], target: 16, choices: [12, 16, 20] })
+
 export function makeNumBeat(world: NumWorld): Beat<NumRound> {
   return {
     skillId: 'numbersTo100', rounds: 10, walkEvery: 3,
     make: (d, round = 0) => makeRound(world, (d || 1) as 1 | 2 | 3, round),
     sig: d => `${d.target}`,   // dedupe on the target number (not the rotating scene)
     prompt: d => `Find ${numberToWords(d.target)}!`,
-    say: d => `Find number ${numberToWords(d.target)}. Tap the one that says ${d.target}.`,
+    say: d => askLine(d.target),
     Play: ({ data, onSubmit }) => <NumberPlay world={world} data={data} mode="practice" onComplete={onSubmit} />,
     Reteach: ({ data, onDone }) => <NumberExplain world={world} data={data} onDone={onDone} />,
+    feedbackLines: d => numLines(d, 'practice'),
+    reteachLines: d => explainLines(d.target),
   }
 }
 
 // ─── Orchestrator ──────────────────────────────────────────────────────────────────
 const NT_CSS = `
-@keyframes nt_float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 @keyframes nt_pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.12);opacity:1} 100%{transform:scale(1);opacity:1} }
 `
 type Phase = 'intro' | 'demo' | 'guided' | 'practice'
@@ -362,7 +373,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
     { scene: world.scenes[0], target: 13, choices: buildChoices(13, 1) },
     { scene: world.scenes[1] ?? world.scenes[0], target: 24, choices: buildChoices(24, 2) },
   ]
-  const GUIDED_ROUND: NumRound = { scene: world.scenes[2] ?? world.scenes[0], target: 16, choices: [12, 16, 20] }
+  const GUIDED_ROUND = guidedRound(world)
   const bgScene: Scene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
   const Banner = (text: string) => (
@@ -389,7 +400,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
         </div>
       )}
 
-      {phase === 'demo' && (<>{Banner(`Watch Milo read the number  (${demoIdx + 1}/${DEMO_ROUNDS.length})`)}
+      {phase === 'demo' && (<>{Banner(`Watch how to read the number  (${demoIdx + 1}/${DEMO_ROUNDS.length})`)}
         <NumberExplain key={`demo${demoIdx}`} world={world} data={DEMO_ROUNDS[demoIdx]}
           onDone={() => { if (demoIdx + 1 < DEMO_ROUNDS.length) setDemoIdx(demoIdx + 1); else setPhase('guided') }} /></>)}
 
@@ -404,7 +415,6 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
         </div>
       )}
 
-      <MiloHost left={10} milo={world.milo} />
     </div>
   )
 }

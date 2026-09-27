@@ -18,22 +18,99 @@ import { AUDIO_BASE } from '@/core/audioBase'
 // (Clip-only mode — a missing clip stays silent — was removed 2026-09-24 with the fragment stitcher it depended on;
 // its one caller, the teen GameShell, was deleted 2026-09-20. A line with no clip is spoken by the browser.)
 
-/** One module's clips: clip key → [object name (16 hex), clipCheck of the line]. Built by scripts/audio/build-manifest.mjs. */
-export type ClipIndex = Record<string, [string, string]>
+/** One module's clips: clip key → [object name (16 hex), clipCheck of the line, and — in a KG–2 chapter's index — the
+ *  clip's size in bytes]. Built by scripts/audio/build-manifest.mjs. */
+export type ClipIndex = Record<string, [string, string, number?]>
 
-// The voice a SCREEN speaks in, and where that screen's clips are listed — set while a lesson is mounted (LessonPlayer
-// passes its module's index loader, so infra never imports lesson content).
+// The voice a SCREEN speaks in, and where that screen's clips are listed — set while a lesson or a KG–2 chapter is mounted
+// (LessonPlayer passes its module's index loader, /game the playing chapter's, so infra never imports content).
 let _sceneVoice: string | null = null
 let _indexLoad: (() => Promise<ClipIndex>) | null = null
 export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>): void {
   _sceneVoice = v
   _indexLoad = v ? index ?? null : null
+  // A new scene starts with nothing held and nothing open: a question belongs to the chapter that opened it.
+  _held.clear()
+  _onTap.clear()
+  _open = 0
+}
+
+/**
+ * ⚠️⚠️ A QUESTION'S CLIPS ARE ALL ASKED FOR WHEN IT LOADS, AND NONE AFTER THE CHILD ANSWERS (founder, 2026-09-27,
+ * docs/legal/AUDIO-ROUND2.md §1.5). Some KG–2 lines are built from what the child tapped ("That makes seventeen. I asked
+ * for twenty-one."), and a clip is a request to the bucket, so asking for it at the moment of the tap would put "this
+ * device chose 17" in the storage provider's logs. So:
+ *   · `openQuestion(lines)` — called as a question loads, with EVERY line it can lead to (each option's, right and wrong)
+ *     — fetches each line's clip into memory, as a `data:` URL (media-src already allows `data:`; no CSP change);
+ *   · while any question is open, a line plays ONLY from memory. A line that was not handed over is spoken by the
+ *     device voice and asks for NOTHING — so the requests are the same whichever option is tapped BY CONSTRUCTION, not
+ *     because every chapter remembered its lines. Forgetting one costs Josh's voice on that line, never a request;
+ *   · a held clip plays from memory even after its question closes (the praise still queued behind the last answer);
+ *     only a new scene (`setSceneVoice`) drops them, and each question keeps its own and the previous one's.
+ * The next question itself is chosen after the answer (the tier moves), so ITS lines can differ — that is "what comes
+ * next", not feedback on this answer, and the guarantee stops where the next question opens.
+ */
+const _held = new Map<string, { gen: number; src: Promise<string | null> }>()
+/**
+ * ⚠️ THE ONE EXCEPTION, AND WHY (founder, 2026-09-27): a question's ANSWER lines are fetched ahead only while they total
+ * at most `maxBytes`; past that they are fetched when said, as before the lock. Money's are the case — every total the
+ * child can lay makes its own line, a median ~380 KB a question (only 1 of 300 measured rounds fits 100 KB). The
+ * founder's reason: the answer reaches Supabase anyway through progress sync. Precisely: a signed-in child's CORRECT
+ * answer uploads level, streak, mastery and first-try-or-after-a-miss (useAdaptive → record_lesson_progress); a miss
+ * clip adds WHICH wrong total was laid, and carries no account.
+ * These are the clips allowed on tap while their question is open; every other line is still held or refused.
+ */
+const _onTap = new Map<string, number>()
+let _open = 0
+let _gen = 0
+
+function holdClip(url: string): Promise<string | null> {
+  return fetch(url)
+    .then(r => (r.ok ? r.blob() : null))
+    .then(b => b && new Promise<string | null>(res => {
+      const fr = new FileReader()
+      fr.onload = () => res(typeof fr.result === 'string' ? fr.result : null)
+      fr.onerror = () => res(null)
+      fr.readAsDataURL(new Blob([b], { type: 'audio/mpeg' }))
+    }))
+    .catch(() => null)
+}
+
+/**
+ * A question has loaded: hold the clip of every line it can lead to. Returns the release for when it is answered and gone.
+ * `answers` (optional): the lines only a particular answer leads to, held too while their clips total at most `maxBytes`
+ * — otherwise allowed to be fetched when said (see `_onTap`). A clip whose size the index does not carry counts as over.
+ */
+export function openQuestion(texts: string[], answers?: { lines: string[]; maxBytes: number }): () => void {
+  _open++
+  const gen = ++_gen
+  // A question keeps its own clips and the previous question's (whose last line may still be queued); older ones go.
+  for (const [url, h] of _held) if (h.gen < gen - 1) _held.delete(url)
+  for (const [url, g] of _onTap) if (g < gen - 1) _onTap.delete(url)
+  const load = _indexLoad
+  if (voiceNow() && load && typeof fetch !== 'undefined') {
+    void loadIndex(load).then(index => {
+      const hold = (url: string) => {
+        const h = _held.get(url)
+        if (h) h.gen = gen
+        else _held.set(url, { gen, src: holdClip(url) })
+      }
+      for (const t of new Set(texts)) { const url = clipUrl(index, t); if (url) hold(url) }
+      if (!answers) return
+      const clips = [...new Set(answers.lines)].map(t => ({ url: clipUrl(index, t), bytes: index[clipKey(t)]?.[2] }))
+        .filter((c): c is { url: string; bytes: number | undefined } => !!c.url)
+      const total = clips.reduce((a, c) => a + (c.bytes ?? Infinity), 0)
+      for (const c of clips) { if (total <= answers.maxBytes) hold(c.url); else _onTap.set(c.url, gen) }
+    })
+  }
+  let released = false
+  return () => { if (!released) { released = true; _open = Math.max(0, _open - 1) } }
 }
 
 /**
  * The voice a line plays in, or null for the device voice. ⚠️ ONLY JOSH (founder, 2026-09-26): Stevie and Teddy are
  * deleted, and so are the two things that used to reach them — the per-device pick (default Stevie) and the 3–5 band's
- * voice (Teddy). Anything but JOSH, and any line spoken outside a lesson, is the device voice, as it was before
+ * voice (Teddy). Anything but JOSH, and any line spoken outside a lesson or a KG–2 chapter, is the device voice, as before
  * (their static lines had 0 clips). One guard, so no path can ask for a deleted voice's files.
  */
 function voiceNow(): string | null {
@@ -200,9 +277,17 @@ export function speakLine(text: string, opts: Opts): () => void {
     if (cancelled) return
     const url = clipUrl(index, text)
     if (!url) { miss(); return }
+    // Held with a question → play it from memory. Not held while a question is open → the device voice, and no
+    // request (see openQuestion). Otherwise the bucket, as before.
+    const held = _held.get(url)
+    if (held) { void held.src.then(src => { if (!cancelled) { if (src) play(src); else miss() } }); return }
+    if (_open > 0 && !_onTap.has(url)) { miss(); return }
+    play(url)
+  })
 
+  function play(src: string) {
     const audio = audioEl()
-    audio.src = url
+    audio.src = src
     _active = audio
 
     audio.onended = () => {
@@ -252,7 +337,7 @@ export function speakLine(text: string, opts: Opts): () => void {
       }
       miss()
     })
-  })
+  }
 
   return cancel
 }

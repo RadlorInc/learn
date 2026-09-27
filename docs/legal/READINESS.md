@@ -28,7 +28,7 @@ must still be ticked **before any payment**.
 - [x] **Delete one child**: every row + the child's login gone, sibling untouched (D5, real rows)
 - [x] **Crash records cascade with the child**: 0 orphans (D4/D6)
 - [x] **Nightly encrypted backup** running unattended; restore proven (32 tables / 968 rows) (#40–#42)
-- [x] **No third-party tracking in a child's session**: one origin; CSP `connect-src` limited (23 Sep audit)
+- [x] **No third-party tracking in a child's session**: our own origin and our own Supabase project (lesson audio, since 27 Sep 2026); CSP `connect-src` limited (23 Sep audit)
 - [x] **Legal surface**: 7 pages routed and linked from every collection point; the publish switch refuses a page for placeholders / draft / sign-off / Spanish (`legalSwitch`, `legalSurface`). Five published for the beta (#208), Terms published as beta (#267), Refund dark
 - [x] **Teacher roster paused** until school consent exists (live since D4)
 - [x] **Secret scanning + push protection on**; **org 2FA required** (measured 24 Sep)

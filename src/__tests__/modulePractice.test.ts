@@ -33,11 +33,14 @@ describe('mixed practice', () => {
 
 describe('topics a parent chose', () => {
   it('shows every module when no choice was made, and only the chosen topics otherwise', async () => {
-    const { chosenModules, MODULES } = await import('@/features/lessons/modules')
-    expect(chosenModules(null)).toBe(MODULES)
-    expect(chosenModules([])).toBe(MODULES)
-    const picked = chosenModules(['g4m2-t3', 'g3m1-t2', 'g4m2-t1', 'nope'])
+    const { chosenModules, ALL_MODULES } = await import('@/features/lessons/modules')
+    expect(chosenModules(null)).toBe(ALL_MODULES)
+    expect(chosenModules([])).toBe(ALL_MODULES)
+    // A KG–2 story chapter is chosen by its `c:` id, exactly like a topic (founder, 2026-09-25).
+    const picked = chosenModules(['g4m2-t3', 'g3m1-t2', 'c:money', 'g4m2-t1', 'c:counting', 'nope'])
     expect(picked.map(m => [m.id, m.lessons.map(l => l.id)])).toEqual([
+      ['k0m1', ['c:counting']],
+      ['k2m4', ['c:money']],
       ['g3m1', ['g3m1-t2']],
       ['g4m2', ['g4m2-t1', 'g4m2-t3']],
     ])

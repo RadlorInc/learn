@@ -1,0 +1,137 @@
+/**
+ * THE JOSH CLIP CORPUS IS CURRENT WITH WHAT THE KG–2 CHAPTERS SAY.
+ *
+ * A clip is used only when its key is `clipKey` of EXACTLY the string a chapter passes at runtime, so
+ * a line reworded in a chapter and not re-queued falls back to browser speech with nothing going red.
+ * This reads the chapter source with the TypeScript parser (`_spokenLiterals.ts`) and requires, of
+ * `scripts/.voice-corpus-chapters-josh.json`:
+ *   1. every STATIC spoken literal has its key in the corpus;
+ *   2. every spoken TEMPLATE (a `${}` line) matches at least one row — a reworded template, or one
+ *      the builders stopped enumerating, has none;
+ *   3. no row says "Milo";
+ *   4. each row is internally honest: key = clipKey(spoken), text = speakable(spoken), style 'A',
+ *      grade = the chapter's grade, check = clipCheck(spoken), `chapters` in play order and naming its `chapter`;
+ *   5. the lines ANY chapter can say are listed for all 23 (`chapters` is what each chapter's clip index is built from).
+ * When it fails, rebuild:  VOICE_CORPUS=1 npx vitest run src/__tests__/_voiceCorpusChapters.test.ts
+ *
+ * ⚠️ POSITIVE CONTROL: the parser must find ≥ 80 static literals and ≥ 100 templates, and must find
+ * named lines that are known to be spoken — a reader that finds nothing cannot pass.
+ * Watched red 2026-09-25: a planted reword of one TickTock lesson line failed assertion 1 naming it.
+ */
+import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { clipKey, clipCheck } from '@/core/voiceClips'
+import { CHAPTERS } from '@/core/chapters'
+import { PRAISE } from '@/core/praise'
+import { ENCOURAGEMENT } from '@/shared/hooks/useAdaptive'
+import { speakable } from '@/features/lessons/content/voice/styles'
+import { spokenLiterals, chapterSourceFiles } from './_spokenLiterals'
+
+interface Row { key: string; text: string; style: string; chapter: string; grade: number; spoken: string; check: string; chapters: string[] }
+const rows: Row[] = JSON.parse(readFileSync('scripts/.voice-corpus-chapters-josh.json', 'utf8'))
+const keys = new Set(rows.map(r => r.key))
+const found = spokenLiterals(chapterSourceFiles())
+const statics = found.filter(l => !l.template)
+const templates = found.filter(l => l.template)
+const where = (l: { file: string; line: number }) => `${l.file.replace(/^.*\/src\//, 'src/')}:${l.line}`
+
+/**
+ * Templates no enumeration can reach, each with its reason. An entry whose template has left the
+ * source fails below, so this list cannot outlive what it excuses.
+ */
+const UNREACHABLE: Record<string, string> = {
+  'ChapterDone.tsx ^All done, (.*?)! Nice work\\.$': "the child's own name — runtime data, device speech by design; with no learner /game passes '' and the recorded 'All done! Nice work.' plays (gameChapterVoice.test.ts)",
+  'SeesawPark.tsx ^Yes! (.*?) equals (.*?)!$': 'said only on the guided round, which is three and seven',
+  'ShapeStudio.tsx ^Yes! (.*?) sides!$': 'said only on the guided round, which is a name round (the square)',
+}
+const idOf = (l: { file: string; text: string }) => `${l.file.replace(/^.*\//, '')} ${l.text}`
+
+describe('the KG–2 Josh corpus is current with the chapter source', () => {
+  it('positive control: the reader finds the chapters’ spoken lines', () => {
+    expect(statics.length).toBeGreaterThanOrEqual(80)
+    expect(templates.length).toBeGreaterThanOrEqual(100)
+    // a lesson line (speakPaced of a script table), a wrapper-spoken line (BuildingBlocks' `say`),
+    // an imported helper (clock.ts' hintFor) and a template (FollowTheLeader's wrong tap)
+    const texts = found.map(l => l.text)
+    expect(texts).toContain('Every clock has two hands, and they are not the same.')
+    expect(texts).toContain('Ten again — trade them up.')
+    expect(texts).toContain('Careful — after half past we count to the NEXT hour.')
+    expect(texts).toContain('^Not yet! Find the smallest (.*?)\\.$')
+    expect(rows.length).toBeGreaterThan(1000)
+  })
+
+  it('every static spoken line has a clip key in the corpus', () => {
+    const missing = statics.filter(l => !keys.has(clipKey(l.text))).map(l => `${where(l)}  ${l.text}`)
+    expect(missing, 'spoken but not in the corpus — rebuild it (command at the top of this file)').toEqual([])
+  })
+
+  it('every spoken template matches at least one row', () => {
+    const spoken = rows.map(r => r.spoken)
+    const missing = templates.filter(l => !UNREACHABLE[idOf(l)] && !spoken.some(s => new RegExp(l.text).test(s)))
+      .map(l => `${where(l)}  ${l.text}`)
+    expect(missing, 'no row matches this template — reworded in the chapter, or no longer enumerated by a builder').toEqual([])
+    const stale = Object.keys(UNREACHABLE).filter(id => !templates.some(l => idOf(l) === id))
+    expect(stale, 'an UNREACHABLE entry names a template that is no longer in the source').toEqual([])
+  })
+
+  it('the shared SkillBeat lines are in it', () => {
+    const missing = [...PRAISE, ...ENCOURAGEMENT.flat()].filter(t => !keys.has(clipKey(t)))
+    expect(missing).toEqual([])
+  })
+
+  it('no row says Milo', () => {
+    expect(rows.filter(r => /milo/i.test(r.text) || /milo/i.test(r.spoken)).map(r => r.spoken)).toEqual([])
+  })
+
+  it('every row is honest about itself', () => {
+    const grade = new Map(CHAPTERS.map(c => [c.id as string, c.grade]))
+    const play = CHAPTERS.map(c => c.id as string)
+    const bad = rows.filter(r => r.key !== clipKey(r.spoken) || r.text !== speakable(r.spoken) || r.style !== 'A'
+      || grade.get(r.chapter) !== r.grade || r.check !== clipCheck(r.spoken) || !r.chapters.includes(r.chapter)
+      || r.chapters.join() !== play.filter(c => r.chapters.includes(c)).join()).map(r => r.spoken)
+    expect(bad).toEqual([])
+    expect(new Set(rows.map(r => r.key)).size, 'a key appears twice').toBe(rows.length)
+    expect(rows.map(r => r.grade), 'rows are sorted by grade').toEqual([...rows.map(r => r.grade)].sort((a, b) => a - b))
+  })
+
+  // A builder files a line under the chapter it swept; shared plumbing and a file serving two chapters make that wrong,
+  // and a chapter whose index lacks a line says it in the device voice. Measured 2026-09-27 before the fix: "Great job!"
+  // was filed under 2 chapters, the end card under 1, and BlockYard's subtract-only line below under additionTo100 alone.
+  it('the lines any chapter can say are in every chapter (23), and a shared file’s lines reach both its chapters', () => {
+    const chaptersOf = (t: string) => rows.find(r => r.spoken === t)?.chapters ?? []
+    for (const t of [...PRAISE, ...ENCOURAGEMENT.flat(), 'All done! Nice work.', 'Great work, 5 questions done! Your spot is saved.'])
+      expect(chaptersOf(t).length, t).toBe(23)
+    for (const l of statics) expect(chaptersOf(l.text.replace(/\s+/g, ' ').trim()).length, `${where(l)} ${l.text}`).toBe(23)
+    expect(chaptersOf('Not enough ones left. Tap a rod to fetch it and break it open.')).toContain('subtractionTo100')
+    expect(chaptersOf('Not quite — count who is still here.')).toContain('subtraction')
+  })
+
+  // Lines a chapter builds at RUNTIME, which the parser above cannot see (`speak(String(n))` is neither a literal nor a
+  // template) or which a builder filed under one chapter of a file that serves two. Read from the GENERATED index each
+  // chapter plays from, with key AND check as the player matches them. Expectations written by hand (review, 2026-09-27):
+  //   HomeTime says the count each tap reaches (pool ≤ 10); FollowTheLeader each right tap's number (1–10); MeasureIt the
+  //   count laid and, on undo, one less (to 0; no cap, clips exist to 20); PlayScene's re-teach (PlayTime.tsx) the same
+  //   lines for + and −, where 10 − 3 with squirrels says "Ten squirrels are playing." … "That makes 7. Tap the 7!".
+  it('each chapter’s index lists the lines it builds at runtime: count-aloud numbers, and PlayTime’s re-teach under subtraction', () => {
+    const index = (ch: string) => JSON.parse(readFileSync(`src/features/chapters/voice-index/${ch}.json`, 'utf8')) as Record<string, [string, string]>
+    const nums = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => String(a + i))
+    const want: [string, string[]][] = [
+      ['matchingQuantities', nums(1, 10)],
+      ['numberOrdering', nums(1, 10)],
+      ['measurement', nums(0, 20)],
+      ['subtraction', ['Ten squirrels are playing.', 'Seven squirrels are playing.', 'Seven.', 'That makes 7. Tap the 7!']],
+    ]
+    const missing = want.flatMap(([ch, lines]) => { const ix = index(ch); return lines.filter(t => ix[clipKey(t)]?.[1] !== clipCheck(t)).map(t => `${ch}: ${t}`) })
+    expect(missing, 'said at runtime in this chapter, not in its index — the device voice says it with the clip in the bucket').toEqual([])
+  })
+
+  // With the tests above, a chapter line reworded or added without a clip goes red here instead of
+  // quietly falling back to browser speech. All 10,347 were rendered and merged 2026-09-26.
+  // (2026-09-27: the clips live in the lesson-audio bucket, not public/audio; scripts/audio/manifest.json is the record
+  // of which object each clip is — "listed there" is what CI can check; the bytes are upload.py's to prove.)
+  it('every row has a Josh clip in the bucket manifest', () => {
+    const manifest = JSON.parse(readFileSync('scripts/audio/manifest.json', 'utf8')) as { keys: Record<string, { name: string }> }
+    const noClip = rows.filter(r => !manifest.keys[r.key])
+    expect(noClip.map(r => `${r.chapter}: ${r.spoken}`).slice(0, 10)).toEqual([])
+  })
+})
