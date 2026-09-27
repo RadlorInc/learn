@@ -968,6 +968,10 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 | 03:09 | `audio-bucket-proof.sql` P1–P4 (after `migrate-prod`) | PASS — `lesson-audio` · public **true** · **262144** · `{audio/mpeg}` · storage.objects policies **0** · `20260927100000` recorded **1** · badly named **0** (0 objects: cannot fail yet) |
 | 03:09 | `audio-bucket-proof.sql` P5–P6 + control, before the upload | **0 \| null** (the "before" half, as written) · without immutable 0 (vacuous) · buckets **1** (only `lesson-audio` — the S3 keys reach nothing else) |
 | 09:48 | `audio-bucket-proof.sql` P1–P6 + control, re-run at the founder's request | unchanged: PASS P1–P4 · P5 **0 \| null** · P6 0 · buckets **1** · all storage objects **0** · read-only `on` |
+| 10:27 | `audio-bucket-proof.sql` P5–P6 (+P4, mimetype, control) after upload run [36311689589](https://github.com/RadlorInc/learn/actions/runs/36311689589) (read back by the agent: success on `main@78dee7be1`, `uploaded: 16985`, `verified: … byte-identical`) | as written it read **16986 \| 261998057 · P6 1 · P4 1** — all three from `anon-probe-canary.mp3`; not audio/mpeg 0; policies 0; buckets 1 |
+| 10:27 | the extra object, by name + the clips alone | `anon-probe-canary.mp3`, 1 byte, `no-store` (put there by `upload.py` for the probe) · clips: **16985 \| 261998056 · 0 without immutable** → the proof file's expectation was wrong, not the upload |
+| 10:28 | after the anon probe | 16986 objects, **0** probe leftovers, canary 1 — the probe changed nothing |
+| 10:29 | corrected `audio-bucket-proof.sql` (`fd00bed61`) P4–P7 | PASS — P4 **0** · P5 **16985 \| 261998056** · P6 **0** · P7 **1 \| 1 \| no-store** |
 
 ### Backups
 | when (UTC) | run | artifact |
@@ -981,6 +985,16 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 | [#299](https://github.com/RadlorInc/learn/pull/299) merge train: #289 → #292 → #290 → #291 | `f7e20f5ba` | CI 4/4 on latest main; local `npm ci`/tsc/vitest/build/audit 0; **177 files / 4,027 passed / 1 skipped = main's count** (vitest 4.1.11 → 5.0.1); lockfile: every one of 544 entries has a version from main's or one of the four PRs' locks (10 jsdom-30 transitive deps pinned back to #291's resolutions); production READY (GitHub deployment record — see below), `smoke:live` exit 0 |
 | [#300](https://github.com/RadlorInc/learn/pull/300) audio part A | `78dee7be1` | CI 4/4 on latest main (`rls-tests` applied the migration and ran S0–S5, "ALL ASSERTIONS PASSED"); local tsc/vitest (180 / 4,044)/build 0; smoke exit 0; migration approved by the founder, applied 03:08 |
 
+### After the upload (founder ran `upload-audio`, revoked the S3 key and both secrets)
+- **Public GET** (curl, from this Mac): `31c72a780c71b280.mp3` → **200**, `audio/mpeg`, `public, max-age=31536000, immutable`,
+  `access-control-allow-origin: *`; `Range: bytes=0-99` → **206** `bytes 0-99/8272`; a made-up name → **400**; the
+  downloaded clip's SHA-256 **= the manifest's**, 8,272 bytes.
+- **Anon probe** (`scripts/audio/anon-probe.mjs`, with the public `sb_publishable_` key read out of the live radlic.com
+  bundle at the founder's word — never printed, its file deleted after): **exit 0**, `all refused (anon only):
+  read-by-URL only` — controls 200 (clip, immutable) and 200 (canary); list 200 / 0 entries, upload 400, overwrite 400,
+  delete 200 / 0 removed; the clip unchanged afterwards (sha256 + header). `authenticated` not probed (no test JWT):
+  covered by P2, the migration's probe and CI S0–S5.
+
 ### Pushed as Drafts (not merged)
 | PR | head | state |
 |---|---|---|
@@ -989,6 +1003,10 @@ Never: approving `production-db`, creating or reading keys/secrets. Anything new
 | [#303](https://github.com/RadlorInc/learn/pull/303) #233 rebuilt + the KG–2 prefetch | `4a2838c13` | after C. Prefetch built and proven (the founder's identical-requests test, 23 chapters' lines measured by rendering, 66 planted breaks); full suite 195 / 4,175 |
 
 ### Lessons
+- **The proof file failed a correct upload.** P4–P6 were written for "clips only" and never counted the canary the
+  uploader itself keeps in the bucket, so the first real run read 16986 / 1 / 1. Measured before believing either side:
+  the extra object by name, and the clips alone (16985 / 261998056 / 0). Fixed by excluding the canary BY NAME and
+  asserting it in its own row (P7), so any other stray object still fails P4.
 - **A timed-out test kept running and failed the NEXT test, naming the wrong chapter.** Two full-suite runs on a loaded
   Mac (load 50–90) failed: 6 walk tests timed out, and because a timeout does not stop the walk and the stubbed speaker
   is one shared list, its lines were measured by the following tests — 11 assertion failures in chapters that pass
