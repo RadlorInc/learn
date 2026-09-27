@@ -11,8 +11,6 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { createElement, type FC } from 'react'
-import { readFileSync } from 'node:fs'
-import { clipKey, clipCheck } from '@/core/voiceClips'
 
 // Everything said and every question opened, kept across the walk's own resets: the walk measures from the first tap,
 // and a guided round's ask is spoken on mount — it has to land INSIDE its question, so the order is measured too.
@@ -62,36 +60,49 @@ const CHAPTERS: { ch: string; beats: () => Beat<any>[]; steps?: number }[] = [
 
 const DRAWS = 12, WALKS = 4
 
-/**
- * Lines a child can reach that NO finite declaration covers, each with why. ⚠️ An entry can only excuse a line with no
- * recorded clip in the chapter's index — so it never excuses a line Josh recorded and the chapter forgot to declare;
- * those stay red. It exists to say out loud what the chapter can reach, not to make the walk quieter.
- */
-const NO_CLIP: Record<string, { re: RegExp; why: string }> = {
-  placeValue: {
-    re: /^Not yet — that is (one hundred|\d{3,})\. Count the tens, then the ones\.$/,
-    why: 'MAKE names whatever was built and `callRod` has no cap — a tenth rod builds 100, a twelfth 120. Clips exist '
-      + 'for 0–99 only, which is what is declared; past that the device voice says it, declared or not. A nine-rod cap '
-      + 'on the tens shelf would make this entry deletable (the founder\'s call: it changes what a child can build).',
-  },
-}
-const index = (ch: string): Record<string, [string, string]> =>
-  JSON.parse(readFileSync(`src/features/chapters/voice-index/${ch}.json`, 'utf8'))
-const hasClip = (ch: string, l: string) => index(ch)[clipKey(l)]?.[1] === clipCheck(l)
-/** What the walk said that was not declared, less what NO_CLIP excuses — and an excuse for a recorded line is itself a failure. */
-function undeclared(ch: string, said: string[], declared: string[]): string[] {
-  const miss = said.filter(l => !declared.includes(l))
-  const excused = miss.filter(l => NO_CLIP[ch]?.re.test(l))
-  expect(excused.filter(l => hasClip(ch, l)), `${ch}: NO_CLIP excused a line that HAS a clip — declare it`).toEqual([])
-  return miss.filter(l => !excused.includes(l))
-}
+/** What the walk said that was not declared. */
+const undeclared = (_ch: string, said: string[], declared: string[]) => said.filter(l => !declared.includes(l))
 
-it('NO_CLIP can see a clip: a declared MAKE verdict has one, and the first excused value does not', () => {
-  // positive control — a blind `hasClip` would excuse anything the pattern matches, recorded or not
-  expect(hasClip('placeValue', 'Not yet — that is forty-seven. Count the tens, then the ones.')).toBe(true)
-  expect(hasClip('placeValue', 'Not yet — that is one hundred. Count the tens, then the ones.')).toBe(false)
-  expect(NO_CLIP.placeValue.re.test('Not yet — that is one hundred. Count the tens, then the ones.')).toBe(true)
-  expect(NO_CLIP.placeValue.re.test('Not yet — that is forty-seven. Count the tens, then the ones.')).toBe(false)
+/**
+ * MAKE builds nothing past 100 (founder, 2026-09-27): at most nine tens called up, and never more than 100 in all, so
+ * every line MAKE can say is declared — there is no exception list. Driven on the real round and read off what the
+ * CHAPTER SAYS on Done ("Not yet — that is …" names what was built), not off the rods drawn: the newest ten is drawn
+ * travelling, and counting buttons read one short. Each burst of twenty taps lands in one React batch, before a button
+ * can re-render as disabled — so the tap handlers' own limit is what is measured. Expected values written by hand.
+ */
+it('placeValue MAKE: a burst of twenty tens builds ninety, twenty ones then make 100, and nothing goes past it', async () => {
+  const React = await import('react')
+  const { createRoot } = await import('react-dom/client')
+  const host = document.createElement('div'); document.body.appendChild(host)
+  const root = createRoot(host)
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame', 'Date'] })
+  try {
+    const data = { ...PV_GUIDED, kind: 'make' as const }   // n = 23: every build below is wrong, so Done names it
+    await React.act(async () => { root.render(React.createElement(PvRoundView, { data, slot: pvSlot(data.slot), mode: 'practice', onComplete: () => {} })) })
+    await React.act(async () => { vi.advanceTimersByTime(1000) })
+    const button = (label: string) => [...host.querySelectorAll('button')].find(b => b.textContent?.includes(label))!
+    const burst = async (label: string) => {
+      const el = button(label)
+      await React.act(async () => { for (let i = 0; i < 20; i++) el.click() })
+      await React.act(async () => { vi.advanceTimersByTime(1500) })
+    }
+    const verdict = async () => {
+      log.said.length = 0
+      await React.act(async () => { button('Done').click(); vi.advanceTimersByTime(1500) })
+      return log.said.find(l => l.startsWith('Not yet — that is'))
+    }
+    await burst('A TEN')
+    expect(await verdict(), 'twenty taps on A TEN put down nine tens').toBe('Not yet — that is ninety. Count the tens, then the ones.')
+    expect(button('A TEN').disabled).toBe(true)
+    await burst('A ONE')
+    expect(await verdict(), 'and ten ones make 100 — the most there is').toBe('Not yet — that is one hundred. Count the tens, then the ones.')
+    const trade = host.querySelector('button[aria-label="trade ten ones for one ten"]') as HTMLButtonElement | null
+    expect(trade, 'ten ones on the ground offer a trade').not.toBeNull()
+    await React.act(async () => { trade!.click(); vi.advanceTimersByTime(8000) })
+    await burst('A ONE'); await burst('A TEN')
+    expect(await verdict(), 'traded up into a tenth ten, it is still 100').toBe('Not yet — that is one hundred. Count the tens, then the ones.')
+    expect([button('A TEN').disabled, button('A ONE').disabled], 'at 100 nothing more can be put down').toEqual([true, true])
+  } finally { vi.useRealTimers(); await React.act(async () => { root.unmount() }); host.remove() }
 })
 
 describe.each(CHAPTERS)('$ch', ({ ch, beats, steps }) => {

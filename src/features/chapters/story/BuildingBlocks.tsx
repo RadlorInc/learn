@@ -218,6 +218,18 @@ export { GROUND, groundOf }
 export const RACK_X0 = 14, RACK_COL = 3.3
 export const rackSpot = (i: number) => ({ x: RACK_X0 + i * RACK_COL })
 export const WALKER_X = 52
+/**
+ * ⚠️ THE MOST A CHILD CAN BUILD (founder, 2026-09-27): nine tens called up, and never more than 100 in all. Every MAKE
+ * target is 11–99, so nothing past it is ever right — and past fourteen rods the tens were drawn over the ONES shelf,
+ * muddling the one idea this round teaches. A trade keeps the value (ten ones become a ten), so nine rods and a full
+ * ones shelf trade up into a tenth rod at exactly 100, and then nothing more can be added.
+ */
+export const MAX_RODS = 9, MAX_BUILD = 100
+/** Whether one more ten (`unit` 10) or one more one (`unit` 1) may be put down. */
+export function canAdd(s: { rods: number; bay: number }, unit: 1 | 10): boolean {
+  if (s.rods * 10 + s.bay + unit > MAX_BUILD) return false
+  return unit === 10 ? s.rods < MAX_RODS : s.bay < 10
+}
 /** THE ONES SHELF — on the RIGHT. It can hold ten, and only for as long as it takes to trade them. */
 export const BAY_X0 = 62, BAY_COL = 3.2
 export const baySpot = (i: number) => ({
@@ -497,10 +509,11 @@ export const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onCo
    */
   function callRod() {
     if (!live || ok) return
-    setR(s => ({ ...s, rods: s.rods + 1, from: 'left', key: `r${s.rods}` }))
+    setR(s => (canAdd(s, 10) ? { ...s, rods: s.rods + 1, from: 'left', key: `r${s.rods}` } : s))
   }
   function callOne() {
     if (!live || ok) return
+    // (No 100 check here: the ones stop at ten, so a burst cannot carry them past 100 — at 100 the button is off.)
     setR(s => (s.bay >= 10 ? s : { ...s, bay: s.bay + 1, settled: s.bay, from: 'right', key: s.key }))
   }
   /** Available at EVERY count — one that appears only when the set is wrong is a verdict handed
@@ -565,6 +578,7 @@ export const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onCo
         display: 'flex', justifyContent: 'center' }}>
         {isMake
           ? <MakeControls m={m} cube={cube} band={band} vw={vw} live={live && !ok} canUndo={r.rods + r.bay > 0}
+              canRod={canAdd(r, 10)} canOne={canAdd(r, 1)}
               onRod={callRod} onOne={callOne} onBack={sendBack} onDone={commitMake} />
           : <AnswerPad digits={digits} band={band} live={live && !ok} windows={windows}
               onDigit={d => setDigits(x => (x.length >= windows ? x : [...x, d]))}
@@ -584,19 +598,19 @@ export const trayUnit = (band: number, cube: number, vw: number) =>
   blockSet(Math.max(8, Math.round(Math.min(cube, band / 4.6, vw * 0.017))))
 
 /** MAKE's answering surface: call for a ten, call for a one, send the last one back, commit. */
-function MakeControls({ m, cube, band, vw, live, canUndo, onRod, onOne, onBack, onDone }: {
-  m: Shades; cube: number; band: number; vw: number; live: boolean; canUndo: boolean
+function MakeControls({ m, cube, band, vw, live, canUndo, canRod, canOne, onRod, onOne, onBack, onDone }: {
+  m: Shades; cube: number; band: number; vw: number; live: boolean; canUndo: boolean; canRod: boolean; canOne: boolean
   onRod: () => void; onOne: () => void; onBack: () => void; onDone: () => void
 }) {
   const w = Math.max(30, Math.min(58, Math.floor((band - 10) / 1.9)))
   // ⚠️ Both trays are drawn from ONE derived set — there is no multiplier here to get wrong.
   const t = trayUnit(band, cube, vw)
-  const tray = (label: string, onClick: () => void, child: React.ReactNode): React.ReactNode => (
-    <button onClick={onClick} style={{
+  const tray = (label: string, onClick: () => void, can: boolean, child: React.ReactNode): React.ReactNode => (
+    <button onClick={onClick} disabled={!can} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
       gap: 3, height: w * 1.5, padding: '4px 12px 6px',
       borderRadius: w * 0.24, border: '3px solid var(--outline)', background: 'var(--paper)',
-      cursor: 'pointer',
+      opacity: can ? 1 : .45, cursor: can ? 'pointer' : 'default',
     }}>
       <span style={{ display: 'flex', alignItems: 'flex-end', height: w * 0.85 }}>{child}</span>
       <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: w * 0.26,
@@ -606,8 +620,8 @@ function MakeControls({ m, cube, band, vw, live, canUndo, onRod, onOne, onBack, 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: w * 0.3,
       pointerEvents: live ? 'auto' : 'none', opacity: live ? 1 : .3, transition: 'opacity .3s ease' }}>
-      {tray('A TEN', onRod, <Rod axis="h" w={t.rodW} h={t.rodH} m={m} />)}
-      {tray('A ONE', onOne, <Cube s={t.cube} m={m} />)}
+      {tray('A TEN', onRod, canRod, <Rod axis="h" w={t.rodW} h={t.rodH} m={m} />)}
+      {tray('A ONE', onOne, canOne, <Cube s={t.cube} m={m} />)}
       <button onClick={onBack} disabled={!canUndo} style={{
         height: w * 0.95, padding: `0 ${w * 0.42}px`, borderRadius: w * 0.48,
         border: '3px solid var(--outline)', background: 'var(--paper)', color: 'var(--ink)',
@@ -678,9 +692,8 @@ const solvedLine = (kind: QKind, n: number) => `Yes! ${SOLVED[kind](n)}`
  * Every line a round can say once it has loaded — its own question included, since `prompt` is empty and the round
  * asks it itself. MAKE: the trade it may be pushed into, and a verdict naming whatever was built. PACK: a trade per
  * ten delivered (a second from 20 up), then the pad.
- * ⚠️ MAKE's "Not yet — that is …" is declared for 0–99: every shelf a two-digit number can be (≤ 9 rods, ≤ 9 ones), and
- * every value that line has a recorded clip for. A child CAN build past it — `callRod` has no cap, and nine rods plus
- * a full bay is 100 — and those lines are the device voice whether declared or not, because no clip exists to fetch.
+ * ⚠️ MAKE's "Not yet — that is …" is declared for every value a child can build, 0–100 (MAX_BUILD). Clips exist for
+ * 0–99; "one hundred" is the device voice — declared all the same, so the walk that checks this still sees it.
  * ⚠️ The three lines written out below are ALSO written at their call sites, on purpose: voiceBoundaryVerb.test.ts
  * keys its reasoned exceptions on that literal call text (`say('Ten again — trade them up.')`), so they cannot be
  * a shared constant without editing that gate. A reworded one fails the play walk in questionLines68a.test.ts.
@@ -689,7 +702,7 @@ function pvLines(d: PvRound): string[] {
   const { n, kind } = d
   if (kind === 'make') return [askFor(d), 'Ten ones on the ground — you cannot leave ten there. Trade them up.',
     'Ten ones make ONE ten. It goes on the left shelf.', madeLine(n), swappedLine(swapOf(n), n),
-    ...Array.from({ length: 100 }, (_, built) => notYetLine(built))]
+    ...Array.from({ length: MAX_BUILD + 1 }, (_, built) => notYetLine(built))]
   return [FIRST_TEN, ...(n >= 20 ? ['Ten again — trade them up.'] : []), askFor(d), solvedLine(kind, n), RETRY[kind]]
 }
 

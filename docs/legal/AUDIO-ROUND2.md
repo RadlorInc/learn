@@ -156,7 +156,8 @@ PR B makes these published sentences false. Proposed replacements (English; Span
 
 1. **`docs/legal/07-subprocessors.md:30`** — now: *"…every audio clip a child hears is a static file served from our own
    domain, and where a clip is missing the fallback is the browser's own on-device speech."*
-   → **depends on §1 item 5 — use the variant that matches what is built:**
+   → ✅ **Decided 27 Sep: variant (a) "accept", applied in PR B (#301).** The prefetch stays as built — it only reduces
+   what requests reveal — and the wording does not claim it. The variants, kept as the reasoning:
    - **(b) prefetch (what the rebuilt #233 does, decided 27 Sep) — true only once the lessons' Screens 8–9 are covered
      too (§1 item 5):** **"…every audio clip a child hears is a pre-recorded file, the same for every child, served from
      the file storage of our database provider (Supabase, listed above). The request for a clip names only the recording
