@@ -123,6 +123,13 @@ export interface Beat<T> {
   feedbackLines?: (data: T) => string[]
   /** Every line `Reteach` says for this round. Fetched with the question only when a re-teach can follow it. */
   reteachLines?: (data: T) => string[]
+  /**
+   * The lines only a particular ANSWER leads to, when there are too many to always fetch ahead: they are held with the
+   * question while their clips total at most `answerBudget` bytes, and otherwise fetched when said (openQuestion). Only
+   * Money declares these (founder, 2026-09-27); every other chapter's answer lines are in `feedbackLines`, always held.
+   */
+  answerLines?: (data: T) => string[]
+  answerBudget?: number
 }
 
 /**
@@ -194,9 +201,9 @@ export function useChapterShell(
  * effect in the same component that speaks on mount: effects run in order, and a line spoken before the question is
  * open is fetched the ordinary way. `lines` is read once, at mount.
  */
-export function useQuestion(lines: () => string[], on = true): void {
+export function useQuestion(lines: () => string[], on = true, answers?: () => { lines: string[]; maxBytes: number }): void {
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => (on ? openQuestion(lines()) : undefined), [])
+  useEffect(() => (on ? openQuestion(lines(), answers?.()) : undefined), [])
 }
 
 // ─── SkillBeat: the unbreakable pedagogy core ──────────────────
@@ -260,7 +267,8 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     onRound?.(data, roundIdx)
     // Every clip this round can lead to is fetched NOW, before the child answers — see openQuestion. A re-teach can only
     // follow when this would be the RETEACH_AFTER-th miss in a row.
-    const release = openQuestion(questionLines(beat, data, wrongRun >= RETEACH_AFTER - 1))
+    const release = openQuestion(questionLines(beat, data, wrongRun >= RETEACH_AFTER - 1),
+      beat.answerLines ? { lines: beat.answerLines(data), maxBytes: beat.answerBudget ?? 0 } : undefined)
     // ⚠️ `speakAfterCurrent`, NOT `speak`. The round advances on a 1300ms timer after the verdict
     // line is spoken (below), and most verdicts are longer than that — so a plain `speak` here cut
     // the voice off mid-praise on EVERY round of every storybook chapter, in all four bands that run on

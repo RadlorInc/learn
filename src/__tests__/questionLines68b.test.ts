@@ -16,7 +16,7 @@ vi.mock('@/infra/useMiloSpeaker', async (orig) =>
   ({ ...(await orig<object>()), ...(await import('./_voiceCorpusKit')).SPEAKER_STUB }))
 const opened = vi.hoisted(() => [] as string[])
 vi.mock('@/infra/voiceClipPlayer', async (orig) =>
-  ({ ...(await orig<object>()), openQuestion: (texts: string[]) => { opened.push(...texts); return () => {} } }))
+  ({ ...(await orig<object>()), openQuestion: (texts: string[], answers?: { lines: string[] }) => { opened.push(...texts, ...(answers?.lines ?? [])); return () => {} } }))
 
 import { questionLines, type Beat } from '@/features/chapters/story/StoryWorld'
 import { makeFrBeat, FrPlay, GUIDED as FR_GUIDED } from '@/features/chapters/story/SliceShop'
@@ -70,7 +70,8 @@ describe.each(CHAPTERS)('$ch', ({ ch, beats, guided, steps }) => {
   it('playing a question says only lines in questionLines(data) — and the walk really answers', async () => {
     let said = 0, finished = 0, seed = 1
     for (const beat of beats()) for (const data of draws(beat, DRAWS)) {
-      const declared = questionLines(beat, data, true)
+      // Money's answer lines are declared apart (fetched ahead only under its byte budget) — declared all the same.
+      const declared = [...questionLines(beat, data, true), ...(beat.answerLines?.(data) ?? [])]
       for (let w = 0; w < WALKS; w++) {
         const r = await walk(beat.Play, data, rng(seed++), steps)
         said += r.said.length

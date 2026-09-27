@@ -119,3 +119,57 @@ it("a clip that could not be fetched is device speech, not a second request afte
   expect(fallback).toHaveBeenCalledTimes(1)
   expect(fetched).toEqual([url('3333333333333333')])
 })
+
+/**
+ * The one exception (founder, 2026-09-27): a question's ANSWER lines are fetched ahead only while their clips total at
+ * most the budget; past it they are fetched when said. Money is the case — the founder's reason: the answer reaches
+ * Supabase anyway through progress sync (precisely: first try or after a miss; the clip adds which wrong total). Sizes come from the chapter index's third field; the numbers here are written by hand.
+ */
+const sized = (sizes: Record<string, number | undefined>) => async () =>
+  Object.fromEntries(Object.entries(OBJ).map(([t, o]) => [clipKey(t), [o, clipCheck(t), sizes[t]] as [string, string, number?]]))
+const ANSWERS = [RIGHT, WRONG_2, WRONG_7]
+const BUDGET = 100_000
+
+async function tapWith(sizes: Record<string, number | undefined>, tap: string) {
+  fetched = []; srcs = []
+  setSceneVoice(JOSH, sized(sizes))
+  openQuestion([PROMPT], { lines: ANSWERS, maxBytes: BUDGET })
+  await settle()
+  const atLoad = [...fetched]
+  const fallback = vi.fn()
+  speakLine(tap, { fallback })
+  await settle()
+  return { atLoad, afterTap: [...fetched.slice(atLoad.length), ...srcs.filter(s => !s.startsWith('data:'))], fallback }
+}
+
+it('answer lines within the budget are held with the question — the tap asks for nothing', async () => {
+  const r = await tapWith({ [RIGHT]: 5_000, [WRONG_2]: 40_000, [WRONG_7]: 50_000 }, WRONG_7)   // 95,000 ≤ 100,000
+  expect(r.atLoad.sort()).toEqual(['1111111111111111', '2222222222222222', '3333333333333333', '4444444444444444'].map(url))
+  expect(r.afterTap).toEqual([])
+  expect(r.fallback).not.toHaveBeenCalled()
+})
+
+it('over the budget they are fetched when said — only the one said, and Josh still says it', async () => {
+  const r = await tapWith({ [RIGHT]: 5_000, [WRONG_2]: 40_000, [WRONG_7]: 70_000 }, WRONG_7)   // 115,000 > 100,000
+  expect(r.atLoad).toEqual([url('1111111111111111')])
+  expect(r.afterTap).toEqual([url('4444444444444444')])
+  expect(r.fallback).not.toHaveBeenCalled()
+})
+
+it('over the budget, a line in NEITHER list is still refused while the question is open', async () => {
+  fetched = []; srcs = []
+  setSceneVoice(JOSH, sized({ [RIGHT]: 5_000, [WRONG_2]: 40_000, [WRONG_7]: 70_000 }))
+  openQuestion([PROMPT], { lines: [RIGHT, WRONG_2], maxBytes: 1 })
+  await settle()
+  const fallback = vi.fn()
+  speakLine(WRONG_7, { fallback })
+  await settle()
+  expect(fallback).toHaveBeenCalledTimes(1)
+  expect(srcs).toEqual([])
+})
+
+it('a clip whose size the index does not carry counts as over the budget', async () => {
+  const r = await tapWith({ [RIGHT]: 5_000, [WRONG_2]: undefined, [WRONG_7]: 1_000 }, WRONG_7)
+  expect(r.atLoad).toEqual([url('1111111111111111')])
+  expect(r.afterTap).toEqual([url('4444444444444444')])
+})
