@@ -60,6 +60,16 @@ const substitute = (sql: string) =>
     .replace(/\bextensions\.citext\b/gi, 'text')
     .replace(/\bcitext\b/gi, 'text')
 
+/**
+ * ⚠️ THE ONE THING NOT REPLAYED HERE, NAMED (and gated by schemaFixtureStorage.test.ts). pglite has no `storage` schema —
+ * Supabase's Storage service creates it — so a migration about the Storage bucket cannot run here. Such a migration is
+ * listed below instead of being stubbed: a hand-written storage schema would be a second copy that drifts from the real
+ * one exactly where the bucket's security lives. They are applied, and their security asserted, on a REAL Postgres by
+ * `ci / rls-tests` (supabase/tests/rls_regression.sql S0–S5). The gate fails if a listed file touches anything but
+ * `storage.*`, and if any migration that touches `storage.*` is not listed — so nothing can hide in here.
+ */
+export const STORAGE_ONLY_MIGRATIONS = new Set(['20260927100000_lesson_audio_bucket.sql'])
+
 export interface Loaded { db: PGlite; files: number }
 export const applyFile = (db: PGlite, file: string, dir = 'supabase/migrations') =>
   db.exec(substitute(readFileSync(resolve(ROOT, dir, file), 'utf8')))
@@ -72,7 +82,7 @@ export async function loadSchema(opts: { before?: string } = {}): Promise<Loaded
 
   const files: [string, string][] = [
     ['baseline_schema.sql', readFileSync(resolve(ROOT, 'supabase/schema/baseline_schema.sql'), 'utf8')],
-    ...readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql')).sort()
+    ...readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql') && !STORAGE_ONLY_MIGRATIONS.has(f)).sort()
       // `before`: stop short of one migration, to set up the state it will meet (and then apply it).
       .filter(f => !opts.before || f < opts.before)
       .map(f => [f, readFileSync(resolve(ROOT, 'supabase/migrations', f), 'utf8')] as [string, string]),
@@ -152,7 +162,7 @@ export const CONSENT_ONCE = '20260924100000_consent_once.sql'
 
 /** The second half of `loadSchema({ before: file })`: applies `file` and every migration after it, in order. */
 export async function applyFrom(db: PGlite, file: string): Promise<void> {
-  for (const f of readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql') && f >= file).sort())
+  for (const f of readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql') && f >= file && !STORAGE_ONLY_MIGRATIONS.has(f)).sort())
     await applyFile(db, f)
 }
 
