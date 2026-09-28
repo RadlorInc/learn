@@ -46,6 +46,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder sets (dashboards and accounts)
 
+- **Before the repo goes private again, fix Vercel.** Measured 28 Sep: while `learn` was private, Vercel refused both
+  production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
+  On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
+  (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
@@ -82,10 +86,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 ## Open — agent work
 
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
-- **Seen 28 Sep, cause not isolated:** on a local build with a fake backend (Supabase and the audio bucket both
-  unreachable), 14 of 23 KG–2 chapters sat on their intro with the answer buttons disabled for over a minute,
-  started by mouse or keyboard; the device voice worked in that browser. Find out which of the two it waits on; if it
-  is the clips, a child whose network blocks the bucket is stuck.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.

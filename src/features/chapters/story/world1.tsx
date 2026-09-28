@@ -258,24 +258,16 @@ export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean)
   const scale = useScale()
   const spawnedRef = useRef(0)
   const keyRef = useRef(0)
-  const didInit = useRef(false)
   const done = useRef(false)
 
   const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[data.obj] ?? 1) * scale)))
   const bnd = data.band ?? BIOMES.forest.band
   const allCounted = counted >= data.n
 
-  // Fill the opening one/two slots (didInit guards React strict-mode double effects).
+  // Fill the opening one/two slots — from zero, so a second run lands on the same two (see `claim`).
   useEffect(() => {
-    if (didInit.current) return
-    didInit.current = true
-    setStage(() => {
-      const next: (Slot | null)[] = [null, null]
-      for (let s = 0 as 0 | 1; s < 2; s++) {
-        if (spawnedRef.current < data.n) { next[s] = { key: keyRef.current++, slot: s, leaving: false }; spawnedRef.current++ }
-      }
-      return next
-    })
+    spawnedRef.current = 0
+    setStage([claim(spawnedRef, keyRef, data.n, 0), claim(spawnedRef, keyRef, data.n, 1)])
   }, [data.n])
 
   function tap(slot: 0 | 1) {
@@ -287,12 +279,8 @@ export const FlyingCountPlay: React.FC<{ data: CountData; onSubmit: (c: boolean)
   }
   // A creature finished walking off: clear its slot and send in the next queued creature.
   function gone(slot: 0 | 1) {
-    setStage(prev => {
-      const next = [...prev]
-      next[slot] = spawnedRef.current < data.n ? { key: keyRef.current++, slot, leaving: false } : null
-      if (next[slot]) spawnedRef.current++
-      return next
-    })
+    const next = claim(spawnedRef, keyRef, data.n, slot)
+    setStage(prev => prev.map((it, i) => (i === slot ? next : it)))
   }
   // The 950ms is the beat between the last tap and the round being marked — long enough for a child
   // to see what they counted. ⚠️ It is CLEARED on unmount: without that, a child who counts the last
@@ -340,7 +328,7 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
   const scale = useScale()
   const spawnedRef = useRef(0)
   const keyRef = useRef(0)
-  const didInit = useRef(false)
+  const said = useRef(false)
   const timers = useRef<number[]>([])
   const stageRef = useRef<(Slot | null)[]>([null, null])
   const countedRef = useRef(0)
@@ -352,26 +340,19 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
 
   // A creature finished walking off: clear its slot and send in the next queued creature.
   function gone(slot: 0 | 1) {
-    setStage(prev => {
-      const next = [...prev]
-      next[slot] = spawnedRef.current < to ? { key: keyRef.current++, slot, leaving: false } : null
-      if (next[slot]) spawnedRef.current++
-      return next
-    })
+    const next = claim(spawnedRef, keyRef, to, slot)
+    setStage(prev => prev.map((it, i) => (i === slot ? next : it)))
   }
 
+  // Said once. Nothing here is cancelled, so a plain once-ref is right — and StrictMode's re-run must not say it twice.
+  useEffect(() => { if (said.current) return; said.current = true; speakAfterCurrent(COUNT_TOGETHER) }, [])
+
+  // ⚠️ NO ONCE-GUARD ON THIS ONE: its cleanup clears the step timers, so a guarded re-run (StrictMode: mount → cleanup →
+  // mount) started nothing and the demo stood on its first creature for ever. It starts over from zero instead.
   useEffect(() => {
-    if (didInit.current) return
-    didInit.current = true
-    speakAfterCurrent(COUNT_TOGETHER)
-    // Fill the opening one/two slots (same spawn machinery as the practice parade).
-    setStage(() => {
-      const next: (Slot | null)[] = [null, null]
-      for (let s = 0 as 0 | 1; s < 2; s++) {
-        if (spawnedRef.current < to) { next[s] = { key: keyRef.current++, slot: s, leaving: false }; spawnedRef.current++ }
-      }
-      return next
-    })
+    spawnedRef.current = 0; countedRef.current = 0; finished.current = false
+    setCounted(0)
+    setStage([claim(spawnedRef, keyRef, to, 0), claim(spawnedRef, keyRef, to, 1)])
 
     // Auto-count the paraders — the demo taps for the child. Each step marks the creature
     // that entered EARLIEST (smallest key) as "counted": it pops, walks off (→ a replacement
@@ -402,7 +383,7 @@ export const FlyingCountDemo: React.FC<{ to: number; obj: CountKind; band?: Band
     }
     // Let the first (slower) creatures fully walk in before the counting starts.
     timers.current.push(window.setTimeout(step, 2000))
-    return () => timers.current.forEach(clearTimeout)
+    return () => { timers.current.forEach(clearTimeout); timers.current = [] }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -542,6 +523,18 @@ const Parader: React.FC<{ obj: CountKind; band: Band; slot: 0 | 1; size: number;
 
 interface Slot { key: number; slot: 0 | 1; leaving: boolean; num?: number }
 
+/**
+ * Send in the next creature of `n`, or null when all have come. ⚠️ CALLED OUTSIDE A STATE UPDATER, and the parades'
+ * opening effects reset `spawned` to 0 before claiming: React StrictMode runs an updater twice and an effect
+ * mount → cleanup → mount, and a count kept in a ref then advanced twice — only about half the creatures ever walked
+ * on and the counting demo froze (dev server, 2026-09-28; `countParadeStrictMode.test.ts`).
+ */
+function claim(spawned: React.MutableRefObject<number>, keys: React.MutableRefObject<number>, n: number, slot: 0 | 1): Slot | null {
+  if (spawned.current >= n) return null
+  spawned.current++
+  return { key: keys.current++, slot, leaving: false }
+}
+
 const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => void }> = ({ data, onSubmit }) => {
   // The creatures parade through ~2 at a time, moving naturally. The child taps each to count it —
   // it pops, then walks/flies/swims off and the next one comes in. Once all N have been counted, the
@@ -563,7 +556,6 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   const asked = useRef(false)
   const spawnedRef = useRef(0)
   const keyRef = useRef(0)
-  const didInit = useRef(false)
 
   const size = Math.max(48, Math.min(Math.round(vh * 0.3), Math.round(88 * (SIZE_BOOST[data.obj] ?? 1) * scale)))
   const btn = Math.max(52, Math.min(94, Math.round(Math.min(vw / 8.8, vh / 5.2))))
@@ -571,17 +563,10 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   const paradeBand = data.band ?? BIOMES.forest.band
   const locked = picked != null || speaking
 
-  // Fill the opening one/two slots (didInit guards React strict-mode double effects).
+  // Fill the opening one/two slots — from zero, so a second run lands on the same two (see `claim`).
   useEffect(() => {
-    if (didInit.current) return
-    didInit.current = true
-    setCrowd(() => {
-      const next: Slot[] = []
-      for (let s = 0 as 0 | 1; s < 2; s++) {
-        if (spawnedRef.current < data.n) { next.push({ key: keyRef.current++, slot: s, leaving: false }); spawnedRef.current++ }
-      }
-      return next
-    })
+    spawnedRef.current = 0
+    setCrowd([claim(spawnedRef, keyRef, data.n, 0), claim(spawnedRef, keyRef, data.n, 1)].filter((c): c is Slot => c !== null))
   }, [data.n])
 
   // The already-counted guard is a REF, never the `crowd` state this handler also sets: two taps
@@ -594,8 +579,7 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
     // Send the next one in the MOMENT this is tapped, not once it has finished walking off —
     // otherwise the child answers and then sits watching dead time. Claimed here rather than inside
     // the updater below, so the updater stays a pure function of the previous state.
-    let replacement: Slot | null = null
-    if (spawnedRef.current < data.n) { replacement = { key: keyRef.current++, slot, leaving: false }; spawnedRef.current++ }
+    const replacement = claim(spawnedRef, keyRef, data.n, slot)
     setCrowd(prev => {
       const next = prev.map(c => (c.key === key ? { ...c, leaving: true } : c))
       if (replacement) next.push(replacement)
