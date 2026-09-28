@@ -5,6 +5,7 @@ import { NOTICE_VERSION } from '@/features/consent/copy'
 import { PENDING_TTL_DAYS } from '@/features/consent/config'
 import { renderConfirm, renderSignup } from '@/features/consent/email'
 import { firstNameOf } from '@/features/consent/firstName'
+import { MIN_PASSWORD } from '@/core/childLogin'
 import {
   ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, generateSignupLink, hashToken, lastSignupLinkAt, newToken, rpc, scrambleUnconfirmedPassword, sendEmail,
   type RpcError,
@@ -38,12 +39,12 @@ export async function POST(req: Request) {
   const role = body.role === 'teacher' ? 'teacher' : body.role === 'parent' ? 'parent' : null
   const firstName = firstNameOf({ first_name: body.firstName })
   const lang = body.lang === 'es' ? 'es' : 'en'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 6 || !role || !firstName) {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < MIN_PASSWORD || !role || !firstName) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 })
   }
   // The adult ticks "I'm 18 or older" on the form (Terms: "You must be 18 or older"). Refused here too, so every account
   // this route creates carries that statement — a request built by hand does not skip it. Its own code, so the form
-  // can say what is missing instead of "Password must be at least 6 characters".
+  // can say what is missing instead of "Password must be at least 8 characters".
   if (body.adult !== true) return NextResponse.json({ error: 'adult_required' }, { status: 400 })
 
   try {

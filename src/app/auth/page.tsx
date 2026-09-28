@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { signUpOneEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
 import { getMyRole, homeForRole, enterAsChild, classifyUserError } from '@/data/repositories'
 import { errorWording } from '@/shared/ui/errorWording'
-import { loginEmail } from '@/core/childLogin'
+import { loginEmail, MIN_PASSWORD } from '@/core/childLogin'
 import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
@@ -87,8 +87,9 @@ export default function AuthPage() {
       setError(mode === 'login' ? t('Please enter your email or username, and your password') : t('Please enter your email and password'))
       return
     }
-    if (password.length < 6) {
-      setError(t('Password must be at least 6 characters'))
+    // Sign-up only: a password set before the minimum rose (6 or 7 characters) still signs in (core/childLogin.ts).
+    if (mode === 'signup' && password.length < MIN_PASSWORD) {
+      setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD }))
       return
     }
     if (mode === 'signup' && !firstNameOf({ first_name: firstName })) {
@@ -122,7 +123,7 @@ export default function AuthPage() {
         } else if (r === 'adult_required') {
           setError(t('Please confirm you are 18 or older'))
         } else if (r === 'weak_password' || r === 'invalid') {
-          setError(t('Password must be at least 6 characters'))
+          setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD }))
         } else if (r !== 'ok') {
           setError(t('Something went wrong. Please try again.'))
         } else {
@@ -380,7 +381,7 @@ export default function AuthPage() {
               </div>
               <PasswordInput
                 id="auth-password"
-                placeholder={mode === 'signup' ? t('At least 6 characters') : '••••••••'}
+                placeholder={mode === 'signup' ? t('At least {n} characters', { n: MIN_PASSWORD }) : '••••••••'}
                 value={password}
                 onChange={e => { setPassword(e.target.value); reset() }}
                 onKeyDown={e => e.key === 'Enter' && handleEmailAuth()}

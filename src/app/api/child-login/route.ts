@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { callerKey, overLimit } from '../_rateLimit'
-import { CHILD_MIN_PASSWORD, childEmail, normalizeUsername, usernameFromEmail } from '@/core/childLogin'
+import { MIN_PASSWORD, childEmail, normalizeUsername, usernameFromEmail } from '@/core/childLogin'
 
 /**
  * A child's username and password, set by the adult who CREATED that learner — a parent or a teacher
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
   // A password an adult sets by hand is not temporary, and setting one clears any old flag.
   const mustChange = body.temporary === true
   if (!username) return json({ ok: false, error: 'bad_username' }, 400)
-  if (password.length < CHILD_MIN_PASSWORD || password.length > 72) return json({ ok: false, error: 'weak_password' }, 400)
+  if (password.length < MIN_PASSWORD || password.length > 72) return json({ ok: false, error: 'weak_password' }, 400)
 
   const rows = await selfRows(b.e, [learner.id])
   if (rows === null) return json({ ok: false, error: 'lookup_failed' }, 502)
