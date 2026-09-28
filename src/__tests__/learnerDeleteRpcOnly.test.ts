@@ -50,7 +50,7 @@ beforeAll(async () => {
 describe('a signed-in client cannot delete a learners row directly', () => {
   it("the owner's direct delete is refused, and the row is still there", async () => {
     const id = await child('Direct', false)
-    expect(await asOwner(`delete from public.learners where id = '${id}'`)).toMatch(/permission denied/)
+    expect(String(await asOwner(`delete from public.learners where id = '${id}'`)), "the direct delete was not refused").toMatch(/permission denied/)
     expect(await exists(id)).toBe(true)
   })
 })
