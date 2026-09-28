@@ -46,8 +46,9 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder sets (dashboards and accounts)
 
-- Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
-  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
+- Admin two-step verification in the database (`20260928200000`): approve `production-db`, then run
+  `docs/legal/sql/admin-mfa-proof.sql` and sign in to `/admin` with the code
+  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
