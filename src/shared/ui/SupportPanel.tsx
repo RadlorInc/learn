@@ -94,7 +94,7 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
               style={{
                 width: '100%', boxSizing: 'border-box', resize: 'vertical',
                 border: '1.5px solid #d3e9f9', borderRadius: 12, padding: 12,
-                fontSize: 14, fontFamily: 'inherit', lineHeight: 1.5,
+                fontSize: 16, fontFamily: 'inherit', lineHeight: 1.5,
               }}
             />
 

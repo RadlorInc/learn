@@ -196,7 +196,7 @@ export default function InvitesPage() {
             onKeyDown={e => e.key === 'Enter' && handleSend()}
             style={{
               width: '100%', padding: '13px 16px',
-              fontSize: 15, fontWeight: 500,
+              fontSize: 16, fontWeight: 500,
               border: '2px solid #d3e9f9', borderRadius: 14,
               outline: 'none', boxSizing: 'border-box',
               marginBottom: 12,

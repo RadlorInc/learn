@@ -56,6 +56,9 @@ fixed yet are tracked outside this public repo; ask the founder.
   who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
+- Hard spend caps, not alerts (the "surprise bill" reel, 28 Sep): Vercel Spend Management with "pause production
+  deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
+  Vercel connector does not show it.
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
   27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
 
@@ -74,10 +77,18 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Use the new dashboard signed in: the Help walkthroughs, a class CSV upload → temporary password → first-login
   change, the parent PIN's "Forgot PIN" and its lock after 5 wrong tries.
 - Crash forwarding: send a test error to `/api/report-error`, then read it back in `error_events`.
+- RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
 
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
+- **Seen 28 Sep, cause not isolated:** on a local build with a fake backend (Supabase and the audio bucket both
+  unreachable), 14 of 23 KG–2 chapters sat on their intro with the answer buttons disabled for over a minute,
+  started by mouse or keyboard; the device voice worked in that browser. Find out which of the two it waits on; if it
+  is the clips, a child whose network blocks the bucket is stuck.
+- ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
+  zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
+  button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
 - `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
