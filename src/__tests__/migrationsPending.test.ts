@@ -230,7 +230,8 @@ describe('the prod-db-migrated tag (the record migrate-prod leaves)', () => {
 
   it('record-migrated runs only after a successful migrate-prod, and writes nothing else', () => {
     expect([REC.needs].flat()).toEqual(['migrate-prod'])
-    expect(REC.if).toMatch(/needs\.migrate-prod\.result == 'success'/)
+    // No condition at all: any `if:` with a status function (always(), !cancelled()) would run it after a failed apply.
+    expect(REC.if).toBeUndefined()
     expect(REC.permissions).toEqual({ contents: 'write' })
   })
 
