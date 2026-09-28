@@ -13,7 +13,8 @@ import { useEffect, useState } from 'react'
 import { enrolTotp, verifiedTotpFactor, verifyTotp } from '@/data/auth'
 import { S, useMetrics, LoadError } from '../_parts'
 
-/** Supabase hands back `data:image/svg+xml;utf-8,<svg…>` unencoded; a `#` in it would end the URL early. */
+/** Supabase hands back `data:image/svg+xml;utf-8,<svg…>` unencoded. Its SVG had no `#` when measured (local Supabase
+ *  Auth v2.196, 2026-09-28), but one colour code in a future version would end the URL early, so it is encoded. */
 const qrSrc = (qr: string) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qr.replace(/^data:[^,]*,/, ''))
 
 export default function AdminMfa() {
