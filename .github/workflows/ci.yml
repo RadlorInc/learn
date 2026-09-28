@@ -48,6 +48,9 @@ jobs:
   rls-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10 # p95 2.5 min over 56 runs; 10 min floor (ARC-07; GitHub default 360)
+    permissions:
+      contents: read
+      packages: read # sign in to ghcr.io with this run's own GITHUB_TOKEN to pull Supabase's public images
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -76,14 +79,69 @@ jobs:
       - name: Stage baseline schema as the first migration (CI only, never committed)
         run: cp supabase/schema/baseline_schema.sql supabase/migrations/00000000000000_baseline.sql
 
-      # ⚠️ PULL FROM public.ecr.aws, NOT ghcr.io. setup-cli exports SUPABASE_INTERNAL_IMAGE_REGISTRY=ghcr.io, and on
-      # 2026-09-23 ghcr answered `toomanyrequests` to every pull of supabase/postgres for hours — every PR's
-      # rls-tests went red before a single assertion ran. The same image is published to public.ecr.aws (the CLI's
-      # own default); a step-level env overrides the exported value.
+      # ⚠️ THE DATABASE IMAGES ARE PULLED SIGNED IN, NEVER ANONYMOUSLY. Both public registries have refused anonymous
+      # pulls from GitHub's shared runner IPs: ghcr.io on 2026-09-23 (`toomanyrequests` for hours, every PR red) and
+      # public.ecr.aws on 2026-09-28 (`toomanyrequests: Data limit exceeded`, two deploy runs of #309 red before a
+      # single assertion ran). Switching anonymous registries only moved the failure; signing in is the fix.
+      #
+      # So: `docker login ghcr.io` with this run's own GITHUB_TOKEN (no stored secret, nothing paid), then pull, with
+      # backoff, every image `supabase db start` needs. MEASURED 2026-09-28, not assumed: `db start` pulls FOUR images
+      # (postgres, realtime, storage-api, gotrue), not one. The tags come from the pinned CLI (`supabase services`), so
+      # a CLI bump cannot leave this pulling yesterday's images.
+      #
+      # The CLI looks in the local cache before it pulls (DockerResolveImageIfNotCached, CLI v2.117.0), and with
+      # SUPABASE_INTERNAL_IMAGE_REGISTRY=ghcr.io the cached ghcr.io names are the only ones it looks for — so
+      # `db start` pulls nothing. And if a future CLI needs an image missing from the list, its own pull still reads
+      # this login (GetRegistryAuthForImage), so it is signed in too; the next step says so rather than hiding it.
+      - name: Pull the database images from ghcr.io, signed in
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          set -uo pipefail
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin || { echo "::error::docker login ghcr.io failed"; exit 1; }
+          services=$(supabase services -o json)
+          echo "### 🐘 Database images — pulled from ghcr.io, signed in" >> "$GITHUB_STEP_SUMMARY"
+          for name in postgres realtime storage-api gotrue; do
+            # `-o json` prints a bare array; the non-TTY default wraps it in {"services": …}. Accept either.
+            tag=$(jq -r --arg n "supabase/$name" '(.services? // .)[] | select(.name == $n) | .local' <<<"$services")
+            if [ -z "$tag" ] || [ "$tag" = null ]; then
+              echo "::error::supabase services names no supabase/$name image — cannot tell which tag db start will want"
+              exit 1
+            fi
+            img="ghcr.io/supabase/$name:$tag"
+            ok=
+            for wait in 0 10 30 60; do
+              sleep "$wait"
+              if docker pull -q "$img"; then ok=1; break; fi
+              echo "pull of $img failed; trying again"
+            done
+            if [ -z "$ok" ]; then
+              echo "::error::ghcr.io refused $img four times over 100 s, signed in"
+              exit 1
+            fi
+            digest=$(docker image inspect --format '{{index .RepoDigests 0}}' "$img")
+            echo "$img <- $digest"
+            echo "- \`$img\` ← \`$digest\`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
       - name: Start local Postgres and apply baseline + migrations
         env:
-          SUPABASE_INTERNAL_IMAGE_REGISTRY: public.ecr.aws
-        run: supabase db start
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
+        run: |
+          set -euo pipefail
+          supabase db start 2>&1 | tee /tmp/db-start.log
+          # ⚠️ SAY WHETHER THE CLI HAD TO PULL ANYTHING ITSELF. Measured 2026-09-28 with nothing cached: `db start` prints
+          # "<tag>: Pulling from supabase/<name>" and "Downloaded newer image for …" for each image it pulls (8 lines for 4
+          # images); with the step above done it printed none. A line here means the list above is missing an image —
+          # still pulled signed in, but without this job's backoff — so it is a warning, not a red deploy.
+          pulled=$(grep -E 'Pulling from|Downloaded newer image' /tmp/db-start.log || true)
+          if [ -n "$pulled" ]; then
+            echo "::warning::supabase db start pulled images itself; add them to the pull step above: $(echo "$pulled" | tr '\n' ' ')"
+          else
+            echo "supabase db start pulled nothing: every image came from the signed-in step above."
+          fi
+          echo "database container runs: $(docker ps --filter name=supabase_db_ --format '{{.Image}}')"
 
       - name: Run the RLS regression suite
         env:
