@@ -35,12 +35,27 @@ export async function POST(req: Request) {
       ua: cap(req.headers.get('user-agent'), 300),
       // WHO. Turns the log from a pile of stack traces into something answerable when a parent
       // writes in: grep this id. A learner id is a UUID, not PII, and it joins to the owning
-      // account in one hop. Capped like every other field so this public endpoint stays bounded.
-      learnerId: cap(body.learnerId, 64),
+      // account in one hop. Kept only when the caller's own session can read that learner.
+      learnerId: await readableLearner(req, cap(body.learnerId, 64)),
     }
     await sinkError(record)
   } catch {
     /* reporting must never fail the caller */
   }
   return NextResponse.json({ ok: true })
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** `id` if the request's bearer token can read that learner under RLS (the caller's token, never a
+ *  service key), else undefined: the report is still stored, without the id. */
+async function readableLearner(req: Request, id: string | undefined): Promise<string | undefined> {
+  const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!id || !UUID.test(id) || !token || !url || !anon) return undefined
+  const r = await fetch(`${url}/rest/v1/learners?id=eq.${id}&select=id`, {
+    headers: { apikey: anon, Authorization: `Bearer ${token}` },
+  }).catch(() => null)
+  const rows: unknown = r?.ok ? await r.json().catch(() => null) : null
+  return Array.isArray(rows) && rows.length === 1 ? id : undefined
 }
