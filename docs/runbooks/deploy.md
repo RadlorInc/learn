@@ -49,6 +49,7 @@ Never push to `release` by hand. Pointing it at an older commit deploys nothing,
 | Job | When (UTC) | What it does | When it fails |
 |---|---|---|---|
 | `backup.yml` | 02:30 daily, plus manual. Scheduled runs started 5–6 h late (measured 2026-09-28, `gh run list --event schedule`) | Encrypted production dump, 30-day artifact ([backup-restore.md](backup-restore.md)) | Red run, flagged in the ops digest. No issue |
+| `daily-smoke.yml` | 03:11 daily, plus manual | `npm run smoke:live` against the live site (read-only, no secret), expecting the service-worker version on `release` | Updates the issue "Daily production smoke is red" and closes it on green |
 | `nightly-e2e.yml` | 03:15 daily | Legacy chapter sweep. **Paused** while `LEGACY_CHAPTERS_HIDDEN = true`: green with a warning, tests nothing | Updates the issue "Nightly E2E is red" and closes it on green |
 | `weekly-layout.yml` | Mondays 04:40 | Short-landscape layout sweep. **Paused** the same way | Red run only |
 | `red-main.yml` | After every failed Deploy run on `main`, plus a drift check at 06:37 daily | Files one issue per kind: main red · promote failed · app live but database not migrated · `main` more than 2 commits ahead of `release` | — |

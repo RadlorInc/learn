@@ -1,0 +1,74 @@
+name: Daily production smoke
+
+# Every day, the same read-only checks the deploy runbook runs by hand (`npm run smoke:live`) against the live site:
+# the landing page and its redirect, the service worker, a real audio clip, the share image, the sign-in form drawn in a
+# real browser. No secret, no database: it sees only what a visitor sees.
+#
+# It replaces a daily Claude routine that had been pointed at the old URL and project since the move, and so reported
+# "could not check" every morning without checking anything (found 2026-09-28).
+#
+# ⚠️ THE EXPECTED SERVICE-WORKER VERSION IS READ FROM `release`, THE BRANCH PRODUCTION IS BUILT FROM. The script's default
+# is a literal that goes stale on every bump; a daily job holding a stale literal would go red on correct code, and a
+# job that cries wolf gets ignored.
+#
+# A red run (a check failed, or the site could not be looked at) opens one issue, updated in place, closed by the next
+# green run. On a pull request that touches this file it runs once, so it is green on the commit that adds it.
+
+on:
+  schedule:
+    - cron: '11 3 * * *'   # 03:11 UTC; GitHub often starts scheduled runs hours late
+  workflow_dispatch:
+  pull_request:
+    paths: ['.github/workflows/daily-smoke.yml', 'scripts/smoke-live.mjs']
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: release
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Smoke the live site
+        run: |
+          set -o pipefail
+          SW=$(grep -m1 -oE "^const VERSION *= *'v[0-9]+'" public/sw.js | grep -oE "v[0-9]+" || true)
+          if [ -z "$SW" ]; then echo "::error::could not read VERSION from release's public/sw.js"; exit 2; fi
+          echo "expecting service worker $SW (release $(git rev-parse --short HEAD))"
+          SMOKE_SW="$SW" node scripts/smoke-live.mjs 2>&1 | tee /tmp/smoke.log
+
+      - name: File (or update) the failure notice
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE='Daily production smoke is red'
+          LOG=$(tail -30 /tmp/smoke.log 2>/dev/null || echo '(the run failed before the smoke started — see the log)')
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n%s\n' "Red run: $RUN_URL" "$LOG" \
+            "Exit 1 = a check failed; exit 2 = the site could not be looked at. Updated in place while red; closed by the next green run.")
+          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then gh issue comment "$EXISTING" -R "$REPO" --body "$BODY"
+          else gh issue create -R "$REPO" --title "$TITLE" --body "$BODY" --label bug || gh issue create -R "$REPO" --title "$TITLE" --body "$BODY"; fi
+
+      - name: Close the notice on a green run
+        if: success() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          EXISTING=$(gh issue list -R "$REPO" --state open --search 'Daily production smoke is red in:title' --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then gh issue close "$EXISTING" -R "$REPO" --comment "Green again: $RUN_URL"; fi

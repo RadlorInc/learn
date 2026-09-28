@@ -14,26 +14,19 @@ fixed yet are tracked outside this public repo; ask the founder.
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
   spends nothing until a game is attached); six legal pages as beta versions; nightly backups green.
-- **Not on GitHub:** the founder's main checkout, branch `game-in-play` (based on 18 September), holds `blockcraft/`
-  (a violence-free block-building game framed on `/play`), migration `20260919100000_game_saves.sql` (not applied)
-  and three test files (`adaptiveEngine`, `adaptiveWiring`, `lessonFlowAllModules`). Branch `classroom-parked`
-  (on GitHub) holds the first classroom build — never ship it as is. Local branch `learner-grade` defines its own
-  "notice-v7", which now clashes with the one that shipped.
-- **Docs rebuilt** in #312 (a Draft, waiting for the founder's OK to merge): the structure is in
-  [docs/START-HERE.md](docs/START-HERE.md); 109 old docs became 48, and the deleted ones are in git history. Whoever
-  merges it deletes this line. Until then the main checkout (on `game-in-play`) still loads its own old, uncommitted
-  `handoff.md`, which points here.
+- **The game is on GitHub, not on `main`:** branch `wip/game-in-play` (a snapshot based on 18 September, not rebased
+  or re-tested on `main`) holds `blockcraft/` (a violence-free block-building game framed on `/play`), migration
+  `20260919100000_game_saves.sql` (not applied) and the test files `adaptiveEngine`, `adaptiveWiring`,
+  `lessonFlowAllModules`. The founder's main checkout is back on `main`; its other uncommitted leftovers are in a local
+  `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
+  Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
 
 ## Open — the founder decides
 
-- Merge #312 after reading START-HERE and the before/after counts in the PR. Then, in a follow-up: take the two
-  personal names out of `docs/legal/PLACEHOLDERS.md` (from before #312; the file is test-read), and keep or delete the
-  non-Markdown folders the old docs left behind (`docs/legal/screenshots/`, `docs/art/`, `docs/verification/`,
-  `docs/rename/`). `docs/review/sql/` stays while it holds pending proof SQL.
-- Commit the uncommitted work above (`blockcraft/` and its `/play` framing, the three test files) or drop it;
-  blockcraft multiplayer later (needs a server decision; a children's app means no chat); try it on a real tablet.
+- `wip/game-in-play`: rebase onto `main` and ship it, or drop it; blockcraft multiplayer later (needs a server
+  decision; a children's app means no chat); try it on a real tablet.
 - `learner-grade`: rework on top of notice-v7, or drop.
 - Whether both repos stay public now that Vercel is on Pro (the original reason has gone), and where backups are kept.
 - A "not this month" list and one deciding metric (7-day activation); a paid pilot before new surfaces.
@@ -54,6 +47,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 ## Open — the founder sets (dashboards and accounts)
 
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
+- Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
+  still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
@@ -72,7 +67,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 Consent and sign-up checks are in READINESS. The step lists below are in git history; `git show <path>` prints them.
 - Deep-review fixes #235, #239, #242, #251, #262, #268, #269, #275, #246 — steps in
   `fbf193280:docs/review/ROUND2.md` §3. Then read the first deletion-log rows and the prune check with
-  `docs/review/sql/fix-FND-15-proof.sql` and `docs/review/sql/fix-BUG-09-proof.sql`.
+  `docs/review/sql/fix-FND-15-proof.sql` and `docs/review/sql/fix-BUG-09-proof.sql`. Once both have run, delete
+  `docs/review/sql/` (founder, 28 Sep).
 - Short sessions, 14 rows (re-check 4b on the same child) — `fbf193280:docs/legal/SHORT-SESSIONS-ROUND2.md` §3.
 - Review 1, 14 rows, including the Apple Pencil on a real iPad — `fbf193280:docs/legal/REVIEW1-ROUND2.md` §4.
 - Audio on an iPhone: Josh speaks, a replay starts without a pause, airplane mode falls back to the device voice; in
@@ -95,6 +91,11 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
+- `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
+  it missed the successful `migrate-prod` at `774ac5170`, named `78dee7be1` instead, and offered `production-db` with
+  nothing to apply (the same script run locally a minute later said `changed=false`). The run was cancelled. Its
+  blind-read guard only catches a run with no jobs; a job list missing one job passes it. Cross-check with a second
+  source (e.g. the `production-db` deployments list) before trusting a `true`.
 - No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
   `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
   (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
@@ -137,5 +138,5 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
 - Never recorded, so check or drop: the console 404 on every page; whether Vercel firewall rules exist; whether an
-  Instant Rollback has ever been timed; whether the daily health-check routine still runs; the classroom AR demo
+  Instant Rollback has ever been timed; the classroom AR demo
   (labs) track; the id-free event rollup decided on 5 September and never built.
