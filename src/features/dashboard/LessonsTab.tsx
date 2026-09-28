@@ -221,5 +221,5 @@ function Chooser({ name, initial, onClose, onSave }: {
   )
 }
 
-const field: CSSProperties = { minHeight: 44, border: '1.5px solid var(--card-border)', borderRadius: 10, padding: '0 10px', background: '#fff', fontWeight: 700, fontSize: 15, color: 'var(--ink)' }
+const field: CSSProperties = { minHeight: 44, border: '1.5px solid var(--card-border)', borderRadius: 10, padding: '0 10px', background: '#fff', fontWeight: 700, fontSize: 16, color: 'var(--ink)' }
 const box: CSSProperties = { width: 20, height: 20, accentColor: 'var(--milo-orange)', flexShrink: 0 }

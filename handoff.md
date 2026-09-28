@@ -46,6 +46,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder sets (dashboards and accounts)
 
+- **Before the repo goes private again, fix Vercel.** Measured 28 Sep: while `learn` was private, Vercel refused both
+  production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
+  On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
+  (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
@@ -56,6 +60,9 @@ fixed yet are tracked outside this public repo; ask the founder.
   who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
+- Hard spend caps, not alerts (the "surprise bill" reel, 28 Sep): Vercel Spend Management with "pause production
+  deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
+  Vercel connector does not show it.
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
   27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
 
@@ -74,10 +81,14 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Use the new dashboard signed in: the Help walkthroughs, a class CSV upload → temporary password → first-login
   change, the parent PIN's "Forgot PIN" and its lock after 5 wrong tries.
 - Crash forwarding: send a test error to `/api/report-error`, then read it back in `error_events`.
+- RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
 
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
+- ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
+  zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
+  button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
 - `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
