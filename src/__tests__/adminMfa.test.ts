@@ -178,10 +178,10 @@ describe('/admin/login: an account with an authenticator gives its code before i
     const { default: Login } = await import('@/app/admin/login/page')
     const m = await mount(createElement(Login))
     expect(m.host.querySelector('[data-admin-step="code"]')).toBeTruthy()
-    // "Use a different account" signs out and shows the password form again
-    await click(button(m.host, /^Use a different account$/))
+    // "Sign out" is the way out for someone without the phone: the app's one sign-out, which lands on /auth
+    await click(button(m.host, /^Sign out$/))
     expect(st.session).toBeNull()
-    expect(m.host.querySelector('input[type="password"]')).toBeTruthy()
+    expect(window.location.href).toBe('/auth')
     await m.done()
   })
 

@@ -11,7 +11,7 @@
  */
 import { useEffect, useState } from 'react'
 import { signInWithEmail, needsSecondStep, verifiedTotpFactor, verifyTotp } from '@/data/auth'
-import { createClient } from '@/data/supabase/client'
+import { signOut } from '@/data/repositories'
 
 export default function AdminLogin() {
   const [email, setEmail] = useState(''); const [pw, setPw] = useState(''); const [code, setCode] = useState('')
@@ -41,11 +41,6 @@ export default function AdminLogin() {
     window.location.href = '/admin'
   }
 
-  async function otherAccount() {
-    await createClient().auth.signOut()
-    setStep('password'); setCode(''); setErr(null)
-  }
-
   return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: '#f3f9ff', fontFamily: 'ui-sans-serif, system-ui' }}>
       {step === 'password' ? (
@@ -70,9 +65,10 @@ export default function AdminLogin() {
             {busy ? '…' : 'Continue'}
           </button>
           {err && <p style={{ color: '#8a1c1c', fontSize: 12, marginBottom: 0 }}>{err}</p>}
-          <button type="button" onClick={otherAccount}
+          {/* The app's one sign-out path (it clears the device's copies too; signOutClearsProgress.test.ts). It lands on /auth. */}
+          <button type="button" onClick={() => signOut()}
                   style={{ background: 'none', border: 0, padding: 0, marginTop: 12, fontSize: 12, color: '#3d6fb8', cursor: 'pointer' }}>
-            Use a different account
+            Sign out
           </button>
         </form>
       )}
