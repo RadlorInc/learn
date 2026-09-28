@@ -4,7 +4,7 @@
 import { db } from '@/data/repositories/_shared'
 import { logAuthEvent } from '@/data/auth'
 import { clearActiveLearner } from '@/data/supabase/useLearnerSession'
-import { clearSyncedProgress } from '@/infra/storage/lessonSync'
+import { clearChildrenFromDevice } from '@/infra/storage/lessonSync'
 import type { UserRole } from '@/data/supabase/types'
 
 /**
@@ -63,6 +63,6 @@ export async function signOut() {
   } catch { /* best-effort — never block sign-out */ }
   await supabase.auth.signOut()
   clearActiveLearner()        // else the next account (same tab) briefly sees the previous child's profile
-  clearSyncedProgress()       // the children's progress copies leave the device with the account (N16); unsent work stays
+  clearChildrenFromDevice()   // every child's keys leave the device with the account (N16); a child with unsent work keeps them
   window.location.href = '/auth'
 }
