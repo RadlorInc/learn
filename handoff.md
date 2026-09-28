@@ -118,8 +118,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist; the comments in
   `content/voice/styles.ts` name a test that does not exist; `scripts/lesson-questions.mjs` now needs `npx tsx`.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
-  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comments: `/api/health`
-  mentions tools we do not use; `admin/login/page.tsx` says "the admin role" (the gate is the `admin_users` table).
+  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
+  mentions tools we do not use.
 - Points, read from the code and not measured: a chapter's (or a topic's) first uploaded answer may also pay the +3
   level-up, because tiers start at 1 and a new row starts at 0. Measure on a local stack before changing anything.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
