@@ -73,14 +73,15 @@ combined tree (tsc 0; 214 files, 4,302 passed). A migration PR runs its before-S
   production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
-  ⚠️ Whether Vercel checks the commit's author (the founder, who merges) or the pusher (GitHub Actions) was not
-  measured: the blocked deployment's message names the GitHub user. The author → link the founder's GitHub login to
-  their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote` (the agent builds it).
+- Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
+- Vercel, before `learn` goes private: whether the block checks the commit's author (the founder, who merges) or
+  the pusher (GitHub Actions) was not measured; the blocked deployment's message names the GitHub user. The author →
+  link the founder's GitHub login to their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote`
+  (the agent builds it).
 - **If `learn` goes private, Actions minutes cost money**: measured 28 Sep, about 5,400 minutes in 30 days (CI on PR
   pushes ~2,300, Deploy ~2,700) against 2,000 included on the free org plan — roughly US$20 a month over. Without a
   payment method or budget, Actions stops when the 2,000 are used, and deploys stop with it. Set an Actions budget
   before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
-- Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
