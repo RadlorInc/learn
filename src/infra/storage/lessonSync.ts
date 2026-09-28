@@ -141,10 +141,13 @@ export const EXERCISE_PENDING = 'exercise-results-pending'
  *  kv: topic done / standing / practice run (lessonProgress, lessonStanding, lessonRun), a chapter's lesson seen
  *  (lessonSeen), the nudge day (nudgeSeen), a chapter's unfinished run (chapterResume), the last chapter (lastPlayed).
  *  localStorage: the older plan record (activePlan), a class exercise marked done (ExerciseHome).
+ *  No longer written, still on devices used before 20 September 2026: kv `milo-profile-` (the old profile store, the
+ *  child's name included), `milo-chlvl-` (chapter level), `milo-diag-resume-` (placement check); localStorage
+ *  `milo_checkup_done_` / `milo_checkup_skips_` (placement check).
  * Not here, on purpose: the two queues; the signed-out `…-device-…` and `exercise-done:none:…` keys (doc 08); and
  * `al-dash-prefs:<account id>`, which is the ADULT's own dashboard choices, not a child's.
  */
-const CHILD_KEY = /^(?:milo-newflow-(?:done|standing|run)-|milo-lesson-|milo-nudge-|milo-chres-|milo-last-played-|milo_active_plan_|exercise-done:)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[-:]|$)/i
+const CHILD_KEY = /^(?:milo-newflow-(?:done|standing|run)-|milo-lesson-|milo-nudge-|milo-chres-|milo-last-played-|milo-profile-|milo-chlvl-|milo-diag-resume-|milo_active_plan_|milo_checkup_(?:done|skips)_|exercise-done:)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[-:]|$)/i
 
 /**
  * Sign-out (N16 / ARC-02; founder, 2026-09-28): removes every child's keys from this device, so a shared or school

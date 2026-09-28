@@ -11,8 +11,11 @@
  *   C — a class-exercise result waiting         → all of C's keys remain, and the pending list.
  * The keys that must remain are WRITTEN OUT below, by hand, as the stores' key shapes are meant to be — a store that
  * changes its shape fails here rather than silently escaping the sweep.
+ * Last, the published doc 08's per-child local-storage rows say "Until you sign out": each is driven through sign-out.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 const world = vi.hoisted(() => ({ session: null as null | string, offline: false, kv: new Map<string, string>() }))
 vi.mock('@/infra/storage/kv', () => ({
@@ -62,17 +65,21 @@ beforeEach(() => { world.kv.clear(); localStorage.clear(); sessionStorage.clear(
 const kvKeys = () => [...world.kv.keys()].sort()
 const lsKeys = () => Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!).sort()
 
-// Every per-child key a store writes, for one child — by hand.
+// Every per-child key, for one child — by hand. The last three kv keys and the two checkup keys are no longer written
+// by anything, but devices used before 20 September 2026 still hold them (the old profile store carried the child's name).
 const kvOf = (L: string) => [
+  `milo-chlvl-${L}-counting`,
   `milo-chres-${L}-counting`,
+  `milo-diag-resume-${L}`,
   `milo-last-played-${L}`,
   `milo-lesson-${L}-counting`,
   `milo-newflow-done-${L}-g3m1-t1`,
   `milo-newflow-run-${L}-g3m1-t1`,
   `milo-newflow-standing-${L}-g3m1-t1`,
   `milo-nudge-${L}-g3m1-t2`,
+  `milo-profile-${L}`,
 ]
-const lsOf = (L: string) => [`exercise-done:${L}:ex-1`, `milo_active_plan_${L}`]
+const lsOf = (L: string) => [`exercise-done:${L}:ex-1`, `milo_active_plan_${L}`, `milo_checkup_done_${L}`, `milo_checkup_skips_${L}`]
 
 async function seed() {
   for (const L of [A, B, C]) {
@@ -81,8 +88,13 @@ async function seed() {
     setChapterResume(L, 'counting', { round: 3, correct: 2, wrong: 1, seen: [], asked: [] }); setLastPlayed(L, 'counting')
     setActivePlan(L, '3-5', ['counting'])
     localStorage.setItem(`exercise-done:${L}:ex-1`, '1')   // ExerciseHome's markDone is not exported; its key, by hand
+    // Left by the code deleted on 20 September 2026 (nothing writes these now), as it wrote them:
+    world.kv.set(`milo-profile-${L}`, JSON.stringify({ state: { profile: { name: 'Sam' } } }))
+    world.kv.set(`milo-chlvl-${L}-counting`, '2'); world.kv.set(`milo-diag-resume-${L}`, '{}')
+    localStorage.setItem(`milo_checkup_done_${L}`, '1'); localStorage.setItem(`milo_checkup_skips_${L}`, '1')
   }
-  // Signed out (doc 08) and the adult's own: never a child's.
+  // Signed out (doc 08), the old profile store's no-child fallback, and the adult's own: never a child's.
+  world.kv.set('milo-profile-v2', '{}')
   markLessonDone(null, 'g3m1-t1'); saveStanding(null, 'g3m1-t1', { level: 1, streak: 0, mastered: false }); markLessonSeen(null, 'counting')
   localStorage.setItem('exercise-done:none:ex-1', '1')
   savePrefs(ADULT, { ...loadPrefs(ADULT), seen: ['first'] }); saveTextSize('large')
@@ -110,6 +122,7 @@ describe('sign-out clears every per-child key on the device, except a child with
       'milo-lesson-sync-queue',
       'milo-newflow-done-device-g3m1-t1',
       'milo-newflow-standing-device-g3m1-t1',
+      'milo-profile-v2',
     ].sort())
     expect(lsKeys(), 'localStorage after sign-out').toEqual([
       ...lsOf(B), ...lsOf(C),
@@ -128,5 +141,21 @@ describe('sign-out clears every per-child key on the device, except a child with
     expect(world.kv.get('milo-lesson-sync-queue'), 'the lesson queue changed').toBe(queue)
     expect(JSON.parse(localStorage.getItem('exercise-results-pending')!), 'the pending class-exercise answers changed').toEqual(PENDING)
     expect(world.kv.get(`milo-newflow-run-${B}-g3m1-t1`), 'B\'s practice run changed').toBe(JSON.stringify(run))
+  })
+})
+
+describe('doc 08 (published): the per-child local-storage rows it says go at sign-out do go', () => {
+  const doc = readFileSync(resolve(__dirname, '../../docs/legal/08-cookie-and-tracking-notice.md'), 'utf8')
+  const rows = doc.split('\n').filter(l => /^\| `[^`]*<child id>/.test(l)).map(l => l.split('|').map(c => c.trim()))
+
+  it('every row naming a <child id> key says it lasts until sign-out, and sign-out removes that key', async () => {
+    expect(rows.map(r => r[1]), 'control: the rows this reads').toEqual(['`exercise-done:<child id>:<exercise id>`', '`milo_active_plan_<child id>`'])
+    for (const r of rows) {
+      expect(r[4], `${r[1]}: the page no longer says it goes at sign-out`).toMatch(/^Until you sign out/)
+      localStorage.setItem(r[1].replace(/`/g, '').replace('<child id>', A).replace('<exercise id>', 'ex-9'), '1')
+    }
+    expect(lsKeys(), 'control: the keys were written').toHaveLength(2)
+    await signOut()
+    expect(lsKeys(), 'the page says these go at sign-out; they stayed').toEqual([])
   })
 })
