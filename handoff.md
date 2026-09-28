@@ -86,6 +86,11 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
+- `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
+  it missed the successful `migrate-prod` at `774ac5170`, named `78dee7be1` instead, and offered `production-db` with
+  nothing to apply (the same script run locally a minute later said `changed=false`). The run was cancelled. Its
+  blind-read guard only catches a run with no jobs; a job list missing one job passes it. Cross-check with a second
+  source (e.g. the `production-db` deployments list) before trusting a `true`.
 - No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
   `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
   (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
