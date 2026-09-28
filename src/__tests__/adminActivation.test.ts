@@ -92,6 +92,9 @@ beforeAll(async () => {
   await child(P(10), L(10), `(now() - interval '1 day')`); await progress(L(10), `now()`)
 
   await db.exec(`select set_config('test.uid', '${ADMIN}', false)`)
+  // Every caller here is past two-step verification: admin_assert() refuses any token below aal2 (20260928200000;
+  // that rule is tested in adminRequiresAal2.test.ts). The non-admin in "who may call it" is refused as a non-admin.
+  await db.exec(`select set_config('test.jwt', '{"aal":"aal2"}', false)`)
 }, 120_000)
 
 describe('admin_activation — values worked out by hand', () => {

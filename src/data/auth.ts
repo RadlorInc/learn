@@ -97,6 +97,34 @@ export function signInWithEmail(email: string, password: string) {
   return createClient().auth.signInWithPassword({ email, password })
 }
 
+// ── Admin two-step verification: an authenticator app (TOTP). Only /admin uses these; nothing else in the app
+//    enrols a factor, so no parent or child account ever meets them.
+
+/** True when the session signed in with a password, has a verified authenticator, and has not given its code yet. */
+export async function needsSecondStep(): Promise<boolean> {
+  const { data } = await createClient().auth.mfa.getAuthenticatorAssuranceLevel()
+  return data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2'
+}
+
+/** The account's verified authenticator (its factor id), or null when it has none. */
+export async function verifiedTotpFactor(): Promise<string | null> {
+  const { data } = await createClient().auth.mfa.listFactors()
+  return data?.totp[0]?.id ?? null
+}
+
+/** Starts a new authenticator. Its QR code and secret come back; it counts only once `verifyTotp` accepts a code. */
+export function enrolTotp() {
+  return createClient().auth.mfa.enroll({ factorType: 'totp', issuer: 'Radlic admin' })
+}
+
+/** One code from the authenticator: a challenge, then the code against it. On success the session is aal2. */
+export async function verifyTotp(factorId: string, code: string) {
+  const mfa = createClient().auth.mfa
+  const { data, error } = await mfa.challenge({ factorId })
+  if (error) return { error }
+  return mfa.verify({ factorId, challengeId: data.id, code })
+}
+
 /**
  * Google OAuth — the browser navigates away to Google on success.
  *

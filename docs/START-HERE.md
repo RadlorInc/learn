@@ -26,6 +26,7 @@ Step-by-step, and each step says whether the founder or the agent does it.
 | [audio-upload](runbooks/audio-upload.md) | put new or re-recorded lesson voice clips into the audio bucket |
 | [support](runbooks/support.md) | answer a parent who writes in, and log it |
 | [data-requests](runbooks/data-requests.md) | handle a request to see or delete someone's data |
+| [admin-access](runbooks/admin-access.md) | turn on two-step verification for `/admin`, or recover from a lost authenticator |
 
 ## The product — `docs/product/`
 
