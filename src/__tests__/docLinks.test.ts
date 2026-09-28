@@ -71,9 +71,12 @@ export function missingDocPaths(file: string, text: string, roots: string[], exi
   return { missing, checked }
 }
 
-const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean)
-// Untracked (not ignored) files are in scope too, so a new doc is checked before its first commit, not only in CI.
 const onDisk = (p: string) => existsSync(join(ROOT, p))
+// Untracked (not ignored) files are in scope too, so a new doc is checked before its first commit, not only in CI.
+// A file deleted from disk but still in git's index is dropped, so the pointers to it are REPORTED rather than the
+// read crashing (found by break-check.sh, 2026-09-28: an `rm` of a doc made both checks die on ENOENT).
+const files = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], { cwd: ROOT, encoding: 'utf8' })
+  .split('\n').filter(f => f && onDisk(f))
 // Floors, not targets. Measured 2026-09-28 on the fresh doc set: 121 links in 48 docs, 191 doc paths in 1,237 files.
 // About half of each, so ordinary edits never trip them — but a parser that stops matching reads 0 and fails.
 const LINK_FLOOR = 60, PATH_FLOOR = 90
