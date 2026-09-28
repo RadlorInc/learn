@@ -1,6 +1,6 @@
 /**
  * Grade 8 · Module 4 — Congruence, similarity and the Pythagorean theorem.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Topics 1–8 draw with `poly` (1–4 on a hand-built plane: grid + axes + numbered ticks); topic 9 with `coord`.
  */
 import type { Lesson, Picture } from '../script'

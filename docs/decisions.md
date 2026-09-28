@@ -1,0 +1,114 @@
+# Decisions
+
+One line per big decision: **date · what · why · pull request**. Oldest first; add new ones at the bottom.
+A decision that is later reversed stays here, and the reversal gets its own line. The detail behind a line lives in
+its pull request, or in git history (`git log -S "<words>"`).
+
+## July–August 2026
+
+- 2026-07-04 · Day streaks removed from every surface and from the database · a streak is a guilt mechanic · —
+- 2026-07-04 · An adult account is a parent or a teacher (the role is picked on the sign-up form since #228) · the two need different homes · #228
+- 2026-07-27 · Crashes are recorded first-party (`/api/report-error` → our own table), no monitoring vendor · keep children's data in our own database · —
+- 2026-07-27 · Support is one address, a reply within 2 working days, no ticketing tool · the smallest process that keeps a promise · —
+- 2026-07 → 09 · Dead code is deleted, never gated or kept "in case" · the next correct fix arms it · #144–#147
+- 2026-08-16 · Security headers and an enforced CSP; inline scripts allowed instead of per-request nonces, with a test that fails on any DOM-injection sink · nonces would make every page dynamic · —
+- 2026-08-17 · A child's exact birthdate is never collected; crash rows and events are pruned nightly after 90 days · data minimisation · —
+- 2026-08-18 · Everything moves onto company accounts; prove the new owner works before removing the old one · a transfer locked the founder out mid-move · —
+- 2026-08-19 · The launch audience is the US: US English, USD, US units · every launch user is in the US · —
+- 2026-08-19 · The company site (radlor.com) is its own repo and Vercel project; both describe one app with a shared `@id` · a marketing edit cannot touch the app · —
+- 2026-08-20 · The GitHub org is RadlorInc; nothing may name the old org · GitHub redirects an old name only until someone claims it · —
+- 2026-08-24 · The row-level-security regression suite runs in CI on a real Postgres · it had never run once (a skip path) · —
+- 2026-08-24 · Billing shape: graduated seats (max 4 paid), entitlement follows the adult who created the child, no trial, USD; the paywall guards writes, never reads, and ships switched off · founder; a paywall must fail open while consent fails closed · #55
+- 2026-08-24 · Production migrations get their own `production-db` environment with a required reviewer · a rule on Vercel's Production environment would gate every deploy · —
+- 2026-08-24 · The schema baseline stays outside the migration path (known debt) · promoting it would make a push re-create live policies · —
+- 2026-08-25 · Stripe stays in test mode until a fixed go-live sequence; the code refuses a live key · checkout could charge before the paywall has a say · #59, #64
+- 2026-08-25 · A child never sees a price; plans and locks are adult-only · no sales pressure on a child · #64
+- 2026-08-31 · A new CI job must go green on the commit that adds it, and a red scheduled job files an issue · a nightly job was red from birth and hid a real defect · #71
+
+## September 2026
+
+- 2026-09-03 · The database moves from Sydney to us-east-1 by dump and restore · every user is in the US · —
+- 2026-09-03 · Supabase on the Pro plan; a nightly encrypted off-site dump is kept as well · a restorable copy the founder holds · —
+- 2026-09-05 · Production deploys only from `release`, which `deploy.yml` promotes after green CI; a red `main` files an issue · red commits had reached production · —
+- 2026-09-05 · Admin rights live in their own table with no client policies, never in a column a user can write · a draft let any parent make themselves admin · —
+- 2026-09-05 · /admin shows aggregates only; small groups are suppressed · children's privacy · —
+- 2026-09-06 · Account deletion is one transaction, needs a fresh sign-in, and offers the export first · the Terms promised deletion with nothing behind it · —
+- 2026-09-06 · Legal pages stay unpublished until deliberately switched on; open placeholders block publication by test · the Terms claimed things the product did not do · —
+- 2026-09-07 · Voice clips are rendered with open-source Chatterbox on free GPUs, not a paid API · the corpus was too large for per-character pricing · —
+- 2026-09-08 · Paywall off (`PAYWALL_ENABLED = false`); turning it on needs the flag and `billing_config.enforced` · nothing is charged until billing ships · —
+- 2026-09-09 · Nothing is charged at launch · founder's scope call · —
+- 2026-09-09 · Dependabot alerts and security updates on; react and react-dom always move together · a critical advisory had no PR; a split pair cannot install · #89
+- 2026-09-10 · Rollback is the founder's Vercel instant rollback, or revert and push; `release` never moves backwards; the service-worker version only goes up · a backwards push built nothing · —
+- 2026-09-13 · Vercel builds only PR previews and `release`, not `main` · three builds per merge, storage over the limit · #95
+- 2026-09-13 · The pivot: every old chapter hidden (`LEGACY_CHAPTERS_HIDDEN`), lessons rebuilt in the founder's 9-screen "Step By Step Script" format · the founder's format documents · #97, #98
+- 2026-09-13 · Grade 3 split into single-skill topics; Module 1's scripts approved word for word and never reworded · one idea per lesson · #97
+- 2026-09-13 · Lesson screens use the founder's SampleUI template; no red banners, locks, emoji, confetti or scores · maths without fear · #101
+- 2026-09-14 · Grade 3 Modules 2–6 and Grades 4–8 built without founder review of the scripts · speed ("build all") · #104
+- 2026-09-14 · Every answer key is written by a separate solver who sees only the questions · the writers' own checks missed real errors · #104
+- 2026-09-14 · Parents choose topics per child (none chosen = every topic) · the parent decides · #104
+- 2026-09-14 · Dashboard menus follow the account's role; unbuilt options say "Coming soon" · access per role · #107
+- 2026-09-14 · The first classroom build is parked on `classroom-parked`, never shipped · it needed a security-model change · —
+- 2026-09-15 · Grade 5 Module 1 follows a textbook's contents page (lesson names only; every story and number is ours) · the founder's choice of sequence · #109
+- 2026-09-16 · A teaching screen is a teacher: she says one line, then writes or draws it on the board ("beats") · the whole-page version read like someone reading a page · #110, #112
+- 2026-09-17 · Practice is adaptive: a harder question is a different kind of question, on a ladder the child never sees · the adaptive system is the product · #112
+- 2026-09-17 · Points replace XP, coins and stars; points buy game time the parent turns on and limits (default 20 minutes a day); old XP deleted · reward practice, parent in control · #121
+- 2026-09-17 · Lesson progress follows the account, not the device · a second device lost everything · #121
+- 2026-09-17 · Children sign in with a username and password an adult sets (no child email); the parent dashboard asks a PIN every time · children need their own sign-in · #115–#118
+- 2026-09-17 · Assigned lessons carry due dates; Performance shows mastered, finished, first-try and "needs help with" — no time-on-app figure · honest numbers · #122
+- 2026-09-18 · Teachers get classes (username lists, temporary passwords, modules per class, class exercises locked until opened); a free teacher gets exercises only · school use · #123–#128
+- 2026-09-19 · The lesson voice runs itself: no "Read it to me", a progress bar, screens move on after her last line · the voice sounded flat · #136–#143
+- 2026-09-19 · The block-building game is violence-free: animals and villagers only (not shipped) · a children's product · —
+- 2026-09-20 · One system: the 9–18 bands, AR hand tracking, the placement check and the XP economy deleted; the 23 story chapters kept, recording like lessons · the placement accuracy was only ever simulated · #144–#147
+- 2026-09-21 · The dashboard is child-first and class-first; reminders never say "late" or "behind" · adults got lost in the old one · #152
+- 2026-09-21 · "Didn't get it?" on every lesson screen, tap-only reasons, no free text · learn what confuses without collecting a child's words · #150
+- 2026-09-22 · Every explanation rewritten to the founder's two documents, with a chalkboard on every teaching screen and one recorded voice (Josh) · the founder's documents · #165–#179
+- 2026-09-22 · The parent dashboard and sign-in are available in Spanish; Spanish legal text stays unpublished until a reviewer signs · Spanish-speaking US parents; no unreviewed legal text · #164, #190
+- 2026-09-23 · Verifiable parental consent by email-plus (a consent email, then a follow-up a day later), enforced by a database gate on every child table, with zero exemptions · COPPA · #181, #184
+- 2026-09-23 · Withdrawal deletes that child's data; the account stays open; the consent record is kept as evidence · the copy must match the build · #181, #195
+- 2026-09-23 · Teacher rosters are paused until a school consent route exists · no consent route fits a school yet · #181
+- 2026-09-23 · Production changes only through workflows behind the `production-db` approval; never the Supabase CLI against a remote from a laptop · an accidental push from a local checkout · #182, #183
+- 2026-09-23 · The service worker serves pages network-first · returning parents ran old bundles · #185
+- 2026-09-23 · We store a grade band, never an exact grade, age or birthdate, and the notice says exactly that · the notice must match what is stored · #186
+- 2026-09-23 · The follow-up consent email is cancelled on every path that ends a consent · one reached a parent about a deleted child · #192
+- 2026-09-23 · Every email is declared transactional or commercial; a suppression list and one-click unsubscribe exist; no commercial email is sent · CAN-SPAM · #197
+- 2026-09-23 · Unconfirmed accounts with no child are pruned after 3 days; a profile exists only after confirmation · data minimisation · #194
+- 2026-09-23 · Our emails go through Resend over plain HTTP; an email link acts only on a press, never on arrival · mail scanners open links · #181
+- 2026-09-24 · One email-plus consent per account, a tick for each later child; withdraw one child or all · fewer emails, the same standard · #202
+- 2026-09-24 · Re-ask for consent only when what we collect changes; teachers sign up without the parent tick · no re-asking without cause; a teacher cannot tick it honestly · #202
+- 2026-09-24 · The product is Radlic at radlic.com, with no mascot; the company stays Radlor Inc.; old identifiers stay in code · rename · #205
+- 2026-09-24 · A private beta for families the founder knows, from 25 September; legal pages published as beta versions on the founder's decisions, pending the attorney; free, billing off · launch · #208
+- 2026-09-24 · Every PR opens as a Draft; only the founder marks it Ready · a PR merged against its own "do not merge" title · CLAUDE.md
+- 2026-09-24 · The agent never queries production, not even read-only; it writes SQL for the founder · a read is still access to children's data · CLAUDE.md
+- 2026-09-24 · Practice has no fixed end: a checkpoint every 5 answers, the spot saved; done = mastered or 12 answers; a soft nudge when the previous topic is under halfway · short sessions · #209, #210
+- 2026-09-24 · A topic is "assigned" only when it has a due date · a ticked list is not an assignment · #211
+- 2026-09-24 · Review 1: five dots per set, a miss is yellow "Try again" (never red), a text-size setting, a module summary, pad Undo and colours · an external review · #213–#219
+- 2026-09-24 · The next problem comes by itself 1.4 s after a right answer; US spelling in every shown string · the founder's screenshot round · #212
+- 2026-09-25 · Recoloured from the Radlic logo: soft blue, deep-blue text, no black; the chalkboard and the green/yellow answers unchanged · new brand · #227
+- 2026-09-25 · The landing page is radlor.com/radlic; radlic.com sends signed-out visitors there from the browser · the session lives in the browser; a shared origin would expose sign-in to site scripts · #226, website#1
+- 2026-09-25 · One sign-up email confirms the address and asks consent; the follow-up a day later stays · one email instead of two, still email-plus · #228
+- 2026-09-25 · The 23 story chapters become the KG, Grade 1 and Grade 2 tabs, without a mascot, 5 questions a sitting · founder · #233 → #305
+- 2026-09-26 · The Terms are published as a beta version: liability floor US$100, a plain contact, no designated DMCA agent · sign-up had asked agreement to a draft · #267
+- 2026-09-26 · Deep review: one child home (`/modules`); sign-out clears the device's progress copies except unsent work; one mastery rule (the ladder); the consent record kept when an account closes; consent needs a confirmed address; a repeat sign-up cannot take over an account · 127 review findings · #268–#278 via #279, #280
+- 2026-09-26 · Activation is measured from lesson progress, with no new events about a child · no new collection · #275
+- 2026-09-26 · The deletion log is kept as long as the consent records · evidence of who deleted what · #260
+- 2026-09-26 · Offline: the answer queue stays; nothing more is promised · honest promises · #277
+- 2026-09-26 · Both sites claim only what the app does · honesty · #278, website#4
+- 2026-09-26 · A child's name is never spoken by a network voice · privacy · #237
+- 2026-09-26 · Production is backed up before every migration; every GitHub action pinned to a SHA; a daily counts-only ops digest · deep-review ops fixes · #246, #247, #263
+- 2026-09-26 · `/play` spends no points until a real game is attached · a child lost points to an empty placeholder · —
+- 2026-09-26 · Fonts are committed files; the build downloads nothing · builds failed fetching fonts · #295
+- 2026-09-26 · Several low-severity review findings accepted at today's size, each with a point to revisit · no measured cost yet · —
+- 2026-09-26 · Approved PRs land in merge trains (code, then migrations in timestamp order, then docs) · one approval, less waiting · #279–#282
+- 2026-09-27 · Vercel moves to the Pro plan · commercial use, no daily build cap · —
+- 2026-09-27 · Lesson audio lives in one public Storage bucket with no policies, objects named by content hash and cached for good; Josh is the only recorded voice; the audio base is one config value · hundreds of MB of clips rode in every deployment · #300, #301, #306
+- 2026-09-27 · Audio is uploaded with short-lived Storage keys created before the run and revoked after, never the service-role key · least reach · #300
+- 2026-09-27 · The legal pages say that which clips a device asks for can reflect how a question went; the notice stays v6 · honest without a re-consent · #301
+- 2026-09-27 · A KG–2 question fetches the clips it can lead to when it opens, so requests do not reveal the answer · privacy · #305
+- 2026-09-27 · Git history is not rewritten; old audio stays in history · founder's rule · —
+- 2026-09-27 · KG, Grade 1 and Grade 2 go live · founder: "in production now" · #305, #306
+- 2026-09-28 · Notice-v7: re-consent only for KG–2 children and new children; a blocked child's answers wait on the device; both sites say "Grades K–8" · KG–2 made honest · #307, website#5
+- 2026-09-28 · Sign-up asks "I'm 18 or older"; checkout needs a separate auto-renewal tick (billing still off) · consumer-app legal traps · #309
+- 2026-09-28 · CI and backups pull their database images signed in; backup logs show per-schema counts only · registry rate limits; the logs are public · #308, #310, #311
+- 2026-09-28 · The opening line of the consent email for existing parents waits for the next legal round · founder: "leave for now" · docs/legal/NEXT-ROUND.md
+- 2026-09-28 · The docs start again from a small fixed structure (docs/START-HERE.md); older docs deleted, kept in git history; no loop-state files in the repo · 3.4 MB of docs had stopped being findable · this PR
+- standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —

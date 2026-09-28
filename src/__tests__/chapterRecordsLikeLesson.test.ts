@@ -55,7 +55,7 @@ describe('① the chapter reaches the SAME record a topic does', () => {
     const [fn, args] = rpc.mock.calls[0]
     expect(fn, 'a chapter is writing somewhere a topic does not').toBe('record_lesson_progress')
     expect(args.p_lesson, 'the chapter id is not namespaced — it would read as a topic').toBe('c:counting')
-    // 'first' is what earns 2 points rather than 1 (docs/new-flow/points.md).
+    // 'first' is what earns 2 points rather than 1 (docs/product/points.md).
     expect(args.p_outcome, 'the answer was sent with no outcome, so it earns nothing').toBe('first')
     expect(args.p_event, 'no event id — the database cannot make the points once-only').toBeTruthy()
     expect(pendingLessonUploads(), 'the upload landed but stayed in the queue').toBe(0)

@@ -3,7 +3,7 @@
  * SEC-01 / Rafi's N2 — a password chosen at sign-up never survives a SECOND sign-up of the same unconfirmed address,
  * and the first sign-up's role and first name are kept.
  *
- * The attack (docs/review/SECURITY-AUDIT.md SEC-01): an attacker signs up a parent's address first; the parent signs up
+ * The attack (fbf193280:docs/review/SECURITY-AUDIT.md SEC-01): an attacker signs up a parent's address first; the parent signs up
  * later and confirms from their inbox; `generate_link` had kept the ATTACKER's password, so the attacker signed in.
  *
  * The real route and `features/consent/server.ts` run; only the network is faked, and the fake does what a local

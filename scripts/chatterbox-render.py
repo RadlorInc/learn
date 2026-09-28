@@ -13,9 +13,9 @@ import imageio_ffmpeg
 from chatterbox.tts_turbo import ChatterboxTurboTTS
 from chatterbox.tts import ChatterboxTTS
 
-# A corpus row's `style` (src/features/lessons/content/voice/styles.ts, docs/new-flow/voice.md): which model reads it, and how.
+# A corpus row's `style` (src/features/lessons/content/voice/styles.ts, docs/product/voice.md): which model reads it, and how.
 # Turbo ignores exaggeration and cfg. The original model's two dials carry the expression, not tags in the text
-# (docs/new-flow/voice.md: 0.5/0.5 everyday, 0.7/0.3 more punch). A row with no style is A, which is how every clip before 2026-09-19 was made.
+# (docs/product/voice.md: 0.5/0.5 everyday, 0.7/0.3 more punch). A row with no style is A, which is how every clip before 2026-09-19 was made.
 STYLES = {'A': ('turbo', {}), 'B': ('original', dict(exaggeration=0.5, cfg_weight=0.5)),
           'B+': ('original', dict(exaggeration=0.7, cfg_weight=0.3))}
 

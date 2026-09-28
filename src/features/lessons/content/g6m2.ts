@@ -1,6 +1,6 @@
 /**
  * Grade 6 · Module 2 — Operations with fractions and mixed numbers.
- * Written to docs/new-flow/AUTHORING.md. Continues Grade 5 Module 3 (dividing by a unit fraction).
+ * Written to docs/product/building-lessons.md. Continues Grade 5 Module 3 (dividing by a unit fraction).
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

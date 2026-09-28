@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════
 --  ROLLBACK for 20260825030558_seat_materialiser.sql
 --  Captured from PRODUCTION 2026-08-25, BEFORE it was applied. Step 1 of the apply sequence in
---  docs/runbooks/applying-migrations.md.
+--  docs/runbooks/migrations.md.
 --
 --  ⚠️ THIS IS NOT A BACKUP. It undoes exactly what that migration creates and nothing else. There is
 --  still no backup of the children's data and no PITR — launch blocker B12.

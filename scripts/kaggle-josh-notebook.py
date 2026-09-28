@@ -27,7 +27,7 @@ assert n > 0, f'nothing queued for {module}'
 md = f"""# Milo voice — {module} in Josh
 
 Clones branch `{branch}` and renders every Josh line of **{module}** that has no clip yet — **{n} lines** (a few fewer if lines shared with another module were rendered first).
-Styles: B (0.5/0.5) and B+ (0.7/0.3) with the original Chatterbox, A with Turbo. Rules: `docs/new-flow/voice.md`.
+Styles: B (0.5/0.5) and B+ (0.7/0.3) with the original Chatterbox, A with Turbo. Rules: `docs/product/voice.md`.
 
 **Before Run All:** Settings → Accelerator → **GPU T4 x2** (or P100), Internet **On**. At the end, download
 `milo-voice-josh-{module}.zip` from the Output panel and hand it back."""

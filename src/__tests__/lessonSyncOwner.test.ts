@@ -1,5 +1,5 @@
 /**
- * BUG-01 + BUG-04 (docs/review/LATENT-BUGS.md): the lesson upload queue is ONE per device, so it can hold a child's
+ * BUG-01 + BUG-04 (fbf193280:docs/review/LATENT-BUGS.md): the lesson upload queue is ONE per device, so it can hold a child's
  * answers while nobody, or another account, is signed in — and one refused item must not hold the rest.
  *
  * The stub answers the way production does (20260917112109 lines 8-9 and 98-99): the anon key gets 42501 on every

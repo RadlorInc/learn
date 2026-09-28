@@ -1,7 +1,7 @@
 /**
- * How Grade 5 · Module 1's re-voiced lines are RENDERED (docs/new-flow/voice.md). Keyed by the line EXACTLY as the lesson
+ * How Grade 5 · Module 1's re-voiced lines are RENDERED (docs/product/voice.md). Keyed by the line EXACTLY as the lesson
  * says it — that is what the clip is looked up by. `say` is what the voice model reads: the same words with
- * symbols spelt out (no tags, no ellipses — docs/new-flow/voice.md). A line with no row here renders as style A from its own text.
+ * symbols spelt out (no tags, no ellipses — docs/product/voice.md). A line with no row here renders as style A from its own text.
  */
 import type { VoiceLine } from './styles'
 

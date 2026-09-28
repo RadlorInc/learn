@@ -1,6 +1,6 @@
 /**
  * Grade 8 · Module 3 — Functions.
- * Written to docs/new-flow/AUTHORING.md.
+ * Written to docs/product/building-lessons.md.
  * Teaching pictures: `table` (t1, t2, t4, t5), `coord` points + `table` (t3), `coord` path (t6).
  * Rules are always answered as choices; nothing asks the child to type an equation.
  */

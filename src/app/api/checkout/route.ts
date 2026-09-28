@@ -7,7 +7,7 @@ import { sinkError } from '@/infra/errorSink'
 
 /**
  * Start a Stripe Checkout Session for N seats. **TEST MODE ONLY** — `stripeClient()` refuses a live
- * key outright, which is the whole of the stage's hard constraint (docs/billing-stage-2.md §0).
+ * key outright, which is the whole of the stage's hard constraint (fbf193280:docs/billing-stage-2.md §0).
  *
  * ⚠️ THE ACCOUNT COMES FROM THE TOKEN, NEVER FROM THE BODY. This is the trust boundary of the whole
  * billing surface: a caller who can name the account they are buying for can seat a child on

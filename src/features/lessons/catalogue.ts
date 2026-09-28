@@ -1,5 +1,5 @@
 /**
- * The CHILD'S screens' view of the lessons (PERF-01, docs/review/PERFORMANCE.md). Two halves:
+ * The CHILD'S screens' view of the lessons (PERF-01, fbf193280:docs/review/PERFORMANCE.md). Two halves:
  *   - `CATALOGUE`: every module's id, grade, number, title and each topic's id, title and first picture object — small
  *     enough to ship eagerly, and all /modules needs. Generated from the real lessons into ./catalogue.json by
  *     `npx tsx scripts/lesson-catalogue.mts > src/features/lessons/catalogue.json`; lessonCatalogueSplit.test.ts fails

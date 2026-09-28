@@ -1,5 +1,5 @@
 /**
- * How g4m6's lines are RENDERED (docs/new-flow/voice.md). Keyed by the line EXACTLY as the lesson says it; `say` is what
+ * How g4m6's lines are RENDERED (docs/product/voice.md). Keyed by the line EXACTLY as the lesson says it; `say` is what
  * the voice model reads (symbols spelt out, no tags, no ellipses). A line with no row renders as style A from its own text.
  *
  * DECIMALS: speakable() does not spell them, so every line with one has a `say`. Topics 1–3 teach the WRITTEN form (a

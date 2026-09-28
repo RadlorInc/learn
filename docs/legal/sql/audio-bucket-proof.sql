@@ -1,5 +1,5 @@
 -- AUDIO BUCKET — PROOF, after the migration is applied (P1–P4) and after the real upload run (P5–P6).
--- Read-only: run in the Supabase SQL editor. Written 2026-09-26 for docs/legal/AUDIO-ROUND2.md.
+-- Read-only: run in the Supabase SQL editor. Written 2026-09-26 for the audio bucket (docs/runbooks/audio-upload.md).
 -- Expected values are written by hand from scripts/audio/manifest.json at commit time: 16,985 objects, 261,998,056 bytes.
 begin transaction read only;
 

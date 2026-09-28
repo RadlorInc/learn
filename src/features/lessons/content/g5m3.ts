@@ -1,6 +1,6 @@
 /**
  * Grade 5 · Module 3 — Multiplication and division with fractions.
- * Written to docs/new-flow/AUTHORING.md. Topics 3 and 6 are the founder's own Grade 5 examples
+ * Written to docs/product/building-lessons.md. Topics 3 and 6 are the founder's own Grade 5 examples
  * (a fraction of a fraction: 1/3 × 1/2; how many small pieces fit: 2 ÷ 1/4).
  */
 import type { Lesson, Picture } from '../script'

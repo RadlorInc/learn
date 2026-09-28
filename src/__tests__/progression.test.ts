@@ -6,7 +6,7 @@
  * `calcDifficulty` was a private function and the hint and mastery rules were inline inside a
  * `useCallback`. The only thing describing them was PROSE, in three separate files' comments.
  *
- * The last block is the one that matters most. `docs/chapter-craft.md` builds its whole "a tier is
+ * The last block is the one that matters most. `a18c2ba54^:docs/chapter-craft.md` builds its whole "a tier is
  * not a difficulty knob, it is a ROUND BUDGET" argument on a specific claim — a child who answers
  * well gets about three questions at L1, exactly ONE at L2 and TWO at L3, and then the chapter ends.
  * That budget is a CONSEQUENCE of the constants here, not an independent fact, and it is what the

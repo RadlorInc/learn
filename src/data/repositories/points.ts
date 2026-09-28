@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Lesson progress on the account, points, and game time (migration 20260917112109; rules in docs/new-flow/points.md).
+ * Lesson progress on the account, points, and game time (migration 20260917112109; rules in docs/product/points.md).
  * Points are computed by the database from what changed — nothing here sends a number of points.
  */
 import { db, classifySyncError, type SyncOutcome } from '@/data/repositories/_shared'

@@ -1,5 +1,5 @@
 /**
- * Every grade's modules, in teaching order (docs/new-flow/curriculum.md). A module with no lessons is not built
+ * Every grade's modules, in teaching order (docs/product/curriculum.md). A module with no lessons is not built
  * yet; it is shown as "coming soon", never as a lock.
  */
 import type { Lesson } from './script'

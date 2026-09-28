@@ -1,6 +1,6 @@
 /**
  * Grade 8 · Module 1 — Integer exponents, scientific notation and roots.
- * Written to docs/new-flow/AUTHORING.md. Continues Grade 6 · Module 5 (exponents, g6m5.ts).
+ * Written to docs/product/building-lessons.md. Continues Grade 6 · Module 5 (exponents, g6m5.ts).
  * Teaching pictures: `tape` of factors (t1–t3), `table` (t4–t7), `cubes` (t8), `numline` (t9).
  * The child cannot type an exponent, so every problem asks for ONE number: the new exponent, a value,
  * the front number, a root — or a pick.

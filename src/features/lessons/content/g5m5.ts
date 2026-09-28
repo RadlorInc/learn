@@ -1,6 +1,6 @@
 /**
  * Grade 5 · Module 5 — Addition and multiplication with area and volume.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Topic 2 follows the founder's own Grade 5 example (a box 4 long, 3 wide, 2 layers high).
  */
 import type { Lesson, Picture } from '../script'

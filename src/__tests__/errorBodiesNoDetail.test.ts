@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * SEC-17 (docs/review/SECURITY-AUDIT.md) — an error response to an anonymous caller carries ONLY its code.
+ * SEC-17 (fbf193280:docs/review/SECURITY-AUDIT.md) — an error response to an anonymous caller carries ONLY its code.
  *
  * Property checked: on these error paths the JSON body is EXACTLY `{ error: '<code>' }` with the status the
  * client already relies on. It used to also carry the name of the missing env var (`missing: …`), the Stripe

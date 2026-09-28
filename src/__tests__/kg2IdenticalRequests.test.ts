@@ -1,5 +1,5 @@
 /**
- * THE FOUNDER'S TEST (2026-09-27, docs/legal/AUDIO-ROUND2.md §1.5): the audio requests are IDENTICAL whichever option
+ * THE FOUNDER'S TEST (2026-09-27; docs/decisions.md): the audio requests are IDENTICAL whichever option
  * the child taps. Driven end to end — the real SkillBeat, the real Nest Tree round, the real speaker, the real player and
  * the chapter's REAL clip index — so what is compared is what the storage bucket would see from this device.
  *

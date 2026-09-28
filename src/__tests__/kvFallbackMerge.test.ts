@@ -1,5 +1,5 @@
 /**
- * BUG-08 (docs/review/LATENT-BUGS.md) — a boot where indexedDB.open() HANGS (the Safari case kv.ts's 2.5 s timer
+ * BUG-08 (fbf193280:docs/review/LATENT-BUGS.md) — a boot where indexedDB.open() HANGS (the Safari case kv.ts's 2.5 s timer
  * exists for) writes to localStorage; the next boot where IndexedDB works used to read IndexedDB only, so what that
  * session wrote — including queued, not-yet-uploaded answers — was stranded and never read again.
  *

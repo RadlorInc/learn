@@ -3,7 +3,7 @@
  * The diagrams Grades 3–8 draw: every Picture kind that is not one of Module 1's object pictures (./Pictures.tsx).
  * All SVG, all driven by the data in a lesson, all in the SampleUI look (thick ink outlines, flat teal / yellow / mint).
  * A diagram on Screen 8 or in practice is a static picture of the QUESTION — it must never show the answer; that is the
- * lesson author's job (docs/new-flow/AUTHORING.md), checked by the answer-key review, not by this file.
+ * lesson author's job (docs/product/building-lessons.md), checked by the answer-key review, not by this file.
  *
  * `motion` reveals the parts one after another (bars shading, jumps, points, cubes), the "picture that moves" of Screens 4–6.
  */

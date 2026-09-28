@@ -1,6 +1,6 @@
 /**
  * Grade 6 · Module 1 — Ratios, rates and proportions.
- * Written to docs/new-flow/AUTHORING.md.
+ * Written to docs/product/building-lessons.md.
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

@@ -260,7 +260,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       const moved = advance(run, lesson.id, ladderOf, outcome, r)
       for (const [id, st] of moved.saved) { saveStanding(learnerId, id, st); syncLesson(learnerId, id, outcome) }
       keep(moved.run)
-      // The points this answer earns, by docs/new-flow/points.md, for the break screen. The database decides the real
+      // The points this answer earns, by docs/product/points.md, for the break screen. The database decides the real
       // ones. ponytail: the +15/+10 bonuses are counted only when the topic was not done before, so a re-mastery is
       // never over-counted; a first mastery after "done by 12 answers" is under-counted by 15.
       const was = lessonDone(learnerId, lesson.id)

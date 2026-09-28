@@ -1,6 +1,6 @@
 /**
  * Grade 5 · Module 6 — Foundations to geometry in the coordinate plane.
- * Written to docs/new-flow/AUTHORING.md. Every teaching picture is the first-quadrant `coord` grid (plus `table`).
+ * Written to docs/product/building-lessons.md. Every teaching picture is the first-quadrant `coord` grid (plus `table`).
  * Question pictures label points with LETTERS or place names, never with their pairs.
  */
 import type { Lesson, Picture } from '../script'

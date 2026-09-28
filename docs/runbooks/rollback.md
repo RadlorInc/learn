@@ -1,109 +1,84 @@
-# Runbook: rollback & incident response
+# Runbook: rollback
 
-Short enough to follow at 3 a.m. **Code** and **data** roll back separately, and on this stack they
-roll back very differently: code in minutes, data only forwards.
+**Use this when:** production is broken after a deploy, or a migration made the data or the access rules wrong.
 
-⛔ **Nothing in this runbook writes to production by hand.** No `psql`, no Supabase MCP, no Supabase
-CLI against the live project (CLAUDE.md's hard rules); `src/__tests__/runbookNoProdWrites.test.ts`
-fails the build if any runbook instructs one. Production's schema changes only through `deploy.yml` →
-`migrate-prod` behind the `production-db` environment (required reviewer). Production is read only
-through SQL Rafi runs himself in the Supabase SQL editor.
+Code and data roll back separately.
+- **Code** rolls back in minutes.
+- **Data** only moves forward: a fixing migration, or, for real data loss, a restore.
 
-## Quick reference
+Nothing in this runbook writes to production by hand. Never use `psql`, the Supabase MCP or the Supabase CLI against the live project.
 
-| Symptom | Action |
-|---------|--------|
-| Bad deploy (app broken, errors spiking) | **Roll back code**: revert and push (route B), or Instant Rollback (route A) **and later Undo Rollback** |
-| Bad migration (data wrong / RLS hole / broken query) | **Forward-fix migration** through `migrate-prod`; whole-project restore only for real data loss |
-| Site down / 5xx | `/api/health`, https://www.vercel-status.com, https://status.supabase.com |
-| Auth broken | Supabase Auth status + recent Auth config changes (dashboard, Rafi) |
-| Suspected breach / RLS-denial spike | "Security incident" below |
+## Which one
 
-## Roll back code
+| What you see | Do |
+|---|---|
+| The app is broken, errors are spiking, a screen is wrong | **Code rollback**, route A or B below |
+| A migration broke a query, a policy or a grant | Code rollback first if the app is failing. Then a **forward-fix migration** |
+| Rows were lost or corrupted | Stop writes if you can, then read **Restore** below. The founder decides |
+| Site down or 5xx everywhere | Check `/api/health`, then the Vercel and Supabase status pages, **before** rolling anything back |
 
-Full commands: [`launch-day.md`](launch-day.md) → *"The two routes that do work"*.
+Migrations here are expand/contract, and the app tolerates both shapes. So a code rollback alone fixes most incidents.
 
-⚠️ **Pointing `release` at an older commit deploys nothing.** Vercel already built that commit, so no
-new deployment appears (measured 2026-09-09, recorded in launch-day.md). Do not do it.
+## Code rollback
 
-### B — revert and push forward (proven, ~5 min, needs no approval): the default
+**Agent, first.** Hand the founder the target in chat: the last good commit and its Vercel deployment. Read them from GitHub's deployment records, the same way as [deploy.md](deploy.md) step 5.
 
-1. `git revert <bad-sha>` on `main`; **move `public/sw.js` VERSION forward**, never back.
-2. Push. `deploy.yml` runs CI, `promote` moves `release`, Vercel builds and serves it.
-3. Confirm: `curl -sI https://radlic.com/api/health` → 200, then spot-check the broken flow.
+### A — Vercel Instant Rollback (founder only, fastest, no build)
 
-### A — Vercel Instant Rollback (faster; read all three limits first)
+1. **Founder.** Vercel dashboard → the project → the target deployment → **Instant Rollback**.
+2. **Founder.** Know the consequence (from Vercel's Instant Rollback docs, read 2026-09-26; re-read them before relying on this): after a rollback, Vercel **stops assigning new builds to production** until you press **Undo Rollback**. So the full sequence is:
+   - roll back;
+   - fix on `main` (route B);
+   - wait for that build;
+   - **Undo Rollback** onto it.
 
-Vercel dashboard → project → Production Deployment tile → **Instant Rollback**. The limits, from
-Vercel's docs (https://vercel.com/docs/instant-rollback — page dated 2026-07-07, read 2026-09-26):
+   Skip the last step and every later deploy silently stays off production.
+3. Crons revert to the rolled-back deployment's `vercel.json`, and env vars are not re-read. Check that the `/api/consent/cancel-second-notice` cron exists in the version you rolled back to.
+4. On Hobby only the previous deployment was eligible. The project moved to Pro on 2026-09-27 (founder), where earlier deployments are eligible too.
 
-1. **Hobby goes back ONE deployment only** ("Hobby users can roll back to the immediately previous
-   deployment"). If the previous one is also bad, use route B.
-2. **After a rollback, Vercel turns off auto-assignment of production domains.** Later pushes to
-   `release` build but **do not go live** until the rollback is undone: Production Deployment tile →
-   **Undo Rollback** → choose the deployment → Confirm. So the whole sequence is: roll back → fix on
-   `main` (route B) → wait for that production build → **Undo Rollback onto it**. Skip the last step
-   and every later deploy silently stays off production.
-3. **Cron jobs revert to the rolled-back deployment's `vercel.json`**, and env vars are not re-read.
-   Check that the consent B3-cancel cron (`/api/consent/cancel-second-notice`) exists in the version
-   you rolled back to.
+### B — revert and ship forward (needs no Vercel access)
 
-These limits are for Vercel **Hobby**, the plan the project was on as recorded by the 2026-09-26
-review (`docs/review/DEVOPS.md` §5). Pro lifts limit 1. If the plan changes, re-read Vercel's page rather than this paragraph.
+1. **Agent.** `git revert <bad sha>` on a branch from `main`. Move `VERSION` in `public/sw.js` **forward**, never back: a browser that already cached a version keeps its old shell.
+2. **Agent.** Open a Draft PR. **Founder** marks it Ready and merges.
+3. CI gates it like any deploy. Measured 2026-09-09: 280 s from push to production serving it. If CI is red, route B cannot ship, and A is the only way.
+4. **Agent.** Follow [deploy.md](deploy.md) steps 7–9: that SHA's Deploy run, READY on it, `npm run smoke:live`.
 
-## Roll back data (migrations)
+## Data rollback
 
-Migrations are expand/contract and the client tolerates both shapes (CLAUDE.md, "the schema and the
-code must never be apart"), so **a code rollback alone fixes most incidents**. Touch the database only
-if a migration itself corrupted or exposed something.
+### Forward-fix (the normal route)
 
-1. **Forward-fix: the routine route.** Write a new corrective migration in `supabase/migrations/`, open
-   it as a Draft PR, get it reviewed, merge. `deploy.yml`'s `migrate-prod` starts on that push (it runs
-   only when the push changed a migration file), waits on the `production-db` approval, and Rafi
-   approves it. To undo one object (a policy, a function), the migration re-creates its previous
-   definition, copied from the migration that last defined it with only named lines changed — never
-   retyped. A `SECURITY DEFINER` / `search_path` / owner / grant change is a security change and the PR
-   says so.
-2. **Only when the pipeline itself cannot run** (GitHub down, the job broken): **Rafi** pastes the
-   reviewed migration into the Supabase SQL editor himself, and it is committed to `main` straight
-   afterwards so git and production agree. An agent never does this step.
-3. **Whole-project restore — real data loss only.** There is **no point-in-time recovery**: PITR is a
-   paid Supabase add-on and nothing in the repo records it being bought (as of 2026-09-26). What exists:
-   - Supabase's daily backups (Pro; kept 7 days per Supabase's pricing page). A restore replaces the
-     **whole project** and loses everything written since. Rafi, in the dashboard.
-   - Our nightly encrypted dump, `.github/workflows/backup.yml`; restore steps in
-     [`docs/backup-restore-runbook.md`](../backup-restore-runbook.md). Restore into a **throwaway**
-     database, verify, then decide. Announce downtime before any restore that touches production.
+1. **Agent.** Write a new migration that puts the previous state back. For a function or policy:
+   - copy the definition from the migration that last defined it, or from `pg_get_functiondef` output the founder ran;
+   - change only named lines;
+   - never retype it.
 
-## Restore drill (quarterly)
+   Adding or removing `SECURITY DEFINER`, changing `search_path`, an owner or a grant is a security change. The PR says so.
+2. Then follow [migrations.md](migrations.md) in full: before-SQL, backup, merge, `production-db` approval, proof-SQL.
+3. `supabase/schema/rollback_20260824_billing.sql` and `rollback_20260825_seat_materialiser.sql` are exercised by CI on every run. If one is ever needed on production, it goes in as a migration through the same path.
 
-Follow [`docs/backup-restore-runbook.md`](../backup-restore-runbook.md): restore the latest nightly dump
-into a throwaway local database, run `supabase/tests/rls_regression.sql` against that copy, compare row
-counts with the counts Rafi reads in the SQL editor, and record the wall-clock restore time (the data
-RTO). Nothing in the drill touches the live project.
+### Restore (real data loss only; founder)
 
-## Security incident (RLS-denial spike / suspected cross-tenant access)
+There is no point-in-time recovery. PITR is not recorded as bought; the founder can confirm in the dashboard. Two copies exist:
+- **Supabase's daily backups** (Pro, kept 7 days). A restore replaces the **whole project** in place and loses everything written since. Founder only, in the dashboard, with downtime announced.
+- **Our encrypted dumps.** They come from the nightly `backup.yml`, plus `milo-db-backup-premigrate-<run id>`, which every `migrate-prod` run takes just before it applies anything. Restore them into a **throwaway local** database first ([backup-restore.md](backup-restore.md)), then decide.
 
-1. Recent `42501` errors and auth failures: Vercel logs (Hobby keeps about an hour), Supabase logs in
-   the dashboard, and `error_events` through SQL Rafi runs in the SQL editor.
-2. The boundary **as written in the repo**: `ci / rls-tests` rebuilds the schema from every migration
-   on a throwaway Postgres and runs `supabase/tests/rls_regression.sql` — re-run it on the latest `main`.
-   The boundary **as live in production**: put the catalog queries from
-   [`docs/security.md`](../security.md) → *Schema drift check* into `docs/legal/sql/`, ask Rafi to run
-   them, and diff his output against `supabase/schema/security_baseline.sql`.
-3. A policy regressed: corrective migration through `migrate-prod` (above), then refresh the baseline
-   from Rafi's output and review the diff.
-4. Credentials leaked: rotating the anon key is NOT enough (it is public; the gate is RLS + JWT). Rafi
-   rotates the leaked secret at its source, force-expires sessions in Supabase Auth if needed, updates
-   the GitHub secret / Vercel env var, and redeploys (Vercel env vars bind at deploy time).
+No rehearsed path exists for putting selected rows back into production. Write one and rehearse it on a local stack before using it. A dump holds children's data, so no part of it ever goes into a migration file, a PR or git.
 
-## Contacts / escalation
+Never restore a deleted child's record from a backup. See [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 
-- Vercel status: https://www.vercel-status.com
-- Supabase status: https://status.supabase.com
-- Production project ref: read the literal in `scripts/assert-prod-ref.sh`, not a copy in prose (a
-  stale copy in this file named the decommissioned Sydney project for four days in September 2026).
-- Rafi holds the Vercel, Supabase, GitHub and Stripe accounts, is the only `production-db` reviewer,
-  and is the only person who runs SQL on production. As of 2026-09-26 there is no second on-call: if
-  Rafi cannot be reached, route B (revert and push, no approval needed) still works; every database
-  step waits for him.
+## Security incident (a spike of `42501` denials, a suspected cross-family read, a leaked secret)
+
+1. **Founder.** Read the Supabase and Vercel logs in the dashboards.
+2. **Agent.** Write the catalog queries for the founder, from `supabase/tests/security_posture.sql`. Diff the founder's output against `supabase/schema/security_baseline.sql`.
+3. **Agent.** Re-run `ci / rls-tests` on the latest `main`.
+4. **Agent, then founder.** A regressed policy gets a forward-fix migration (above).
+5. **Founder.** A leaked secret is rotated at its source, then updated in the GitHub secret or Vercel env var, then redeployed (env vars bind at deploy time).
+
+## Who holds what
+
+The founder:
+- holds the Vercel, Supabase, GitHub and Stripe accounts;
+- is the only `production-db` reviewer;
+- is the only person who runs SQL on production.
+
+If the founder cannot be reached, route B still needs the founder to merge. Every database step waits for the founder.

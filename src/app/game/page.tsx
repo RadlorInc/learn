@@ -42,7 +42,7 @@ function Game() {
    * for a re-render to flip, which is why a child who has started always finishes.
    * ⚠️ It fails OPEN (a lost network or an unknown session → allowed): this is a UX gate over a
    * database that already refuses the write, and locking a paying child out because their wifi
-   * dropped is the worse failure. See docs/billing-stage-3.md §2.
+   * dropped is the worse failure. See fbf193280:docs/billing-stage-3.md §2.
    */
   const gate = useChapterGate(playingChapter)
   const [ready,          setReady]          = useState(false)

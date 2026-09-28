@@ -1,7 +1,7 @@
 /**
  * Shared machinery for the questionLines*.test.ts files. Not a test file: it drives, it asserts nothing.
  *
- * WHAT THOSE TESTS HOLD (founder, 2026-09-27, docs/legal/AUDIO-ROUND2.md §1.5): every line a KG–2 question can say once
+ * WHAT THOSE TESTS HOLD (founder, 2026-09-27; docs/decisions.md): every line a KG–2 question can say once
  * it has loaded is a line it DECLARED (`questionLines`), because the player fetches exactly those when the question
  * loads and, while it is open, asks for nothing else. A line a chapter forgot is not a request — the lock makes that
  * impossible (questionLock.test.ts) — it is Josh replaced by the device voice. So this measures the CHAPTERS:

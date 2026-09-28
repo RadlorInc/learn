@@ -28,9 +28,9 @@ const grep = p => {
   } catch (e) { if (e.status === 1) return []; throw e }
 }
 
-const HISTORICAL = [/^handoff\.md$/, /^docs\/handoff-archive\.md$/, /^docs\/legal\/LOOP-STATE\.md$/, /^docs\/legal\/sql\//,
-  /^supabase\/migrations\//, /^supabase\/held\//, /^docs\/recovered-/, /^docs\/legal\/ROUND-2\.md$/, /^docs\/legal\/CONSENT-ONCE-ROUND2\.md$/]
-const MASCOT_PATHS = [/^src\/features\/chapters\//, /^scripts\/\.voice-corpus/, /^public\/assets\/characters\//, /^docs\/storyboards\//,
+const HISTORICAL = [/^handoff\.md$/, /^docs\/legal\/sql\//,
+  /^supabase\/migrations\//, /^supabase\/held\//, /^docs\/recovered-/]
+const MASCOT_PATHS = [/^src\/features\/chapters\//, /^scripts\/\.voice-corpus/, /^public\/assets\/characters\//,
   /Milo(Sprite|Pointer|Mark|Avatar|Bubble|Bead|Painter|Chef|Builder)/, /miloPointer/]
 // Tests and design docs whose "Milo" is the CHARACTER inside the hidden legacy chapters (bands 3–8, hidden since
 // 2026-09-13), or in teen/lab designs whose code was deleted 2026-09-20: mascot, not product name.

@@ -1,6 +1,6 @@
 /**
  * Grade 4 · Module 4 — Foundations for fraction operations.
- * Written to docs/new-flow/AUTHORING.md. Every teaching picture is the `bars` fraction bar.
+ * Written to docs/product/building-lessons.md. Every teaching picture is the `bars` fraction bar.
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

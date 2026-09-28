@@ -50,7 +50,7 @@
 --
 --  ⚠️ KEEPING IT HONEST. This file drifts the moment someone changes the schema in the dashboard
 --  again — and a stale baseline means the RLS suite passes against a database that is not the one
---  we ship. Regenerate it the same way `security_baseline.sql` is regenerated (docs/security.md),
+--  we ship. Regenerate it the same way `security_baseline.sql` is regenerated (supabase/tests/security_posture.sql),
 --  and treat a non-empty diff as a schema change that needs review.
 --
 --  Applied as the `postgres` superuser against a local stack. Order matters: enums → tables →

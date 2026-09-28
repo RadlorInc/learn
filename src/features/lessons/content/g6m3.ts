@@ -1,6 +1,6 @@
 /**
  * Grade 6 · Module 3 — Operations with decimals.
- * Written to docs/new-flow/AUTHORING.md. Continues Grade 5 · Module 4 (decimal operations) and Module 1 (long division).
+ * Written to docs/product/building-lessons.md. Continues Grade 5 · Module 4 (decimal operations) and Module 1 (long division).
  * Teaching pictures: `columns` (t1, t2), `longdiv` (t3, t4, t5), `table` (t6).
  */
 import type { Lesson, Picture } from '../script'

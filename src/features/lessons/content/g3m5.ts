@@ -1,4 +1,4 @@
-/** Grade 3 · Module 5 — Fractions as numbers. Written to docs/new-flow/AUTHORING.md. */
+/** Grade 3 · Module 5 — Fractions as numbers. Written to docs/product/building-lessons.md. */
 import type { Lesson } from '../script'
 import { attachChalk } from '../chalk'
 import { G3M5_CHALK } from './chalk/g3m5'

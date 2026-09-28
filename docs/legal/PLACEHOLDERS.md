@@ -14,11 +14,11 @@ English counts and are held by `legalSpanish.test.ts`, not here.
 | repo | 0 | a fact measurable from the repository — resolve with evidence (none left) |
 | rafi | 13 | a founder decision or a fact only the founder has |
 | attorney | 3 | a legal judgement — see `ATTORNEY-PACKET.md` |
-| provider | 1 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — ROUND-2.md §4 |
+| provider | 1 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — `READINESS.md`, Providers |
 | date | 4 | set on the day of publication or adoption |
 | marker | 1 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker |
 
-## Resolved in Round 1 (each listed in ROUND-2.md §6 for approval)
+## Resolved in Round 1 (awaiting the founder's approval — `READINESS.md` §2, R11)
 
 | where (before) | by | evidence |
 |---|---|---|

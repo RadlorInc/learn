@@ -1,11 +1,11 @@
 /**
  * /help — the parent-facing FAQ.
  *
- * ⚠️ NOT A DUPLICATE OF `docs/support.md`. That file is the INTERNAL triage process — priority
+ * ⚠️ NOT A DUPLICATE OF `docs/runbooks/support.md`. That file is the INTERNAL triage process — priority
  * levels, reply templates, how to read a diagnostic block. This is what a parent reads at 9pm
  * instead of emailing, and every answer here is one of the questions §"what arrives" predicts.
  *
- * The three at the top are the three most likely day-one emails (see runbooks/launch-day.md), in
+ * The three at the top are the three most likely day-one emails (see fbf193280:docs/runbooks/launch-day.md), in
  * that order, because a FAQ nobody scrolls is a FAQ that answers nothing.
  *
  * A Server Component — it is text and links.

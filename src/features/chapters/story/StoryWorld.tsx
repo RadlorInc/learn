@@ -4,7 +4,7 @@
  *
  * A world is an ordered list of scenes, walked as a path with a goal; between
  * scenes a short walk transition plays; friends collected accumulate in the party.
- * See docs/story-mode-3-5.md.
+ * See a18c2ba54^:docs/story-mode-3-5.md.
  *
  * The pedagogy is NOT in the story — it's in <SkillBeat>, which every skill scene
  * uses. SkillBeat owns the non-negotiables (adaptive difficulty + in-story

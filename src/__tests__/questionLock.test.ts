@@ -1,6 +1,6 @@
 /**
  * A question's clips are all asked for when it LOADS, and nothing is asked for after the child answers (founder,
- * 2026-09-27, docs/legal/AUDIO-ROUND2.md §1.5 — KG–2 lines like "That makes seventeen. I asked for twenty-one." are
+ * 2026-09-27 (docs/decisions.md) — KG–2 lines like "That makes seventeen. I asked for twenty-one." are
  * built from what was tapped, and a clip request lands in the storage provider's logs).
  *
  * This is the player half, and it is structural: while a question is open, a line plays only from the memory the

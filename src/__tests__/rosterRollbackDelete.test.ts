@@ -1,5 +1,5 @@
 /**
- * SEC-07 (docs/review/SECURITY-AUDIT.md): the class roster's "no half-made student" rollback must remove the
+ * SEC-07 (fbf193280:docs/review/SECURITY-AUDIT.md): the class roster's "no half-made student" rollback must remove the
  * student the way the dashboard's "Delete" does — the `delete_learner` RPC (→ delete_child_data: consent
  * withdrawn, B3 cancelled) — and never with a REST `DELETE` on `learners`, which skips all of that.
  *

@@ -2,7 +2,7 @@
  * The URL a crash report is allowed to keep: origin + path + a short ALLOWLIST of query params.
  * The fragment is always dropped, and so is every param not named below.
  *
- * ⚠️ WHY AN ALLOWLIST (SEC-06, docs/review/SECURITY-AUDIT.md). Several pages carry a credential
+ * ⚠️ WHY AN ALLOWLIST (SEC-06, fbf193280:docs/review/SECURITY-AUDIT.md). Several pages carry a credential
  * in the URL: the consent token in `/consent/respond#t=…` (it can withdraw consent and delete
  * every child), `/email/unsubscribe#t=…`, `/auth/confirm?th=…`, `/auth/set-password?token_hash=…`,
  * and supabase-js's implicit-flow `#access_token=…&refresh_token=…`. A crash on any of them used

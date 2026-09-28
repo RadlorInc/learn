@@ -1,6 +1,6 @@
 /**
  * Grade 6 · Module 5 — Algebraic expressions and one-step equations.
- * Written to docs/new-flow/AUTHORING.md.
+ * Written to docs/product/building-lessons.md.
  * Teaching pictures: `tape` (t1–t3, t8), `eq` + `table` (t4, t5), `area` (t6), `balance` + `table` (t7), `numline` (t9).
  * Expressions are always answered as choices; nothing asks the child to type a letter.
  */

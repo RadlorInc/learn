@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-# The one place in the repo that names production. Keep in step with docs/devops.md.
+# The one place in the repo that names production. Keep in step with docs/runbooks/deploy.md.
 EXPECTED_PROD_REF="wrnjqjhrbnqxornmfisf"
 
 ACTUAL="${PROD_PROJECT_REF:-}"

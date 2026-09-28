@@ -1,6 +1,6 @@
 /**
  * Grade 5 · Module 4 — Place value for decimal operations.
- * Written to docs/new-flow/AUTHORING.md. Continues Grade 4 · Module 6 (tenths and hundredths).
+ * Written to docs/product/building-lessons.md. Continues Grade 4 · Module 6 (tenths and hundredths).
  * Teaching pictures: `table` (t1, t2, t7, t9), `numline` (t3), `columns` (t4, t5), `area` (t6), `tape` (t8).
  */
 import type { Lesson, Picture } from '../script'

@@ -1,6 +1,6 @@
 /**
  * Grade 7 · Module 2 — Operations with rational numbers.
- * Written to docs/new-flow/AUTHORING.md. Negative numbers were not taught in Grade 6 of this curriculum, so t1 starts
+ * Written to docs/product/building-lessons.md. Negative numbers were not taught in Grade 6 of this curriculum, so t1 starts
  * from "left of 0" and every later topic leans on the number line from t1–t2.
  * Teaching pictures: `numline` (t1, t2, t4, t7), `chips` (t3), `table` (t5, t6), `measure` thermometer (t8).
  * ⚠️ A negative FRACTION answer is shown by the app as "-1/4" with an ASCII hyphen, so t7 keeps its fraction answers

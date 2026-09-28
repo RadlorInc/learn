@@ -1,6 +1,6 @@
 /**
  * Grade 8 · Module 5 — Volume of cylinders, cones and spheres.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Every topic teaches with `solid` (it cannot animate, so the moving picture is a `table`). π ≈ 3.14 throughout.
  * ⚠️ `solid` draws its r label on a radius line, so a problem that gives a DIAMETER leaves r unlabelled
  * rather than write "across" on a radius.

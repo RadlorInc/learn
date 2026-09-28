@@ -13,7 +13,7 @@ import Stripe from 'stripe'
  *      paywall flag gates ACCESS, not PAYMENT — `billing_config.enforced = false` is NOT a safety
  *      net for this stage and must not be sold as one.
  *
- * Going live is steps 4 and 5 of the ordered sequence in docs/billing-stage-2.md, and removing this
+ * Going live is steps 4 and 5 of the ordered sequence in fbf193280:docs/billing-stage-2.md, and removing this
  * guard is part of step 4 — deliberately, so that it cannot happen as a side effect of a deploy.
  */
 
@@ -34,7 +34,7 @@ export function stripeClient(): Stripe | null {
   if (!key) return null
   if (!TEST_KEY.test(key)) {
     throw new Error(
-      'STRIPE_SECRET_KEY is not a test key. Stage 2 is test mode only — see docs/billing-stage-2.md §0.',
+      'STRIPE_SECRET_KEY is not a test key. Stage 2 is test mode only — see docs/architecture.md §8.',
     )
   }
   if (_stripe) return _stripe

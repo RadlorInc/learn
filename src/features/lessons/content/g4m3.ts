@@ -1,6 +1,6 @@
 /**
  * Grade 4 · Module 3 — Multiplication and division of multi-digit numbers.
- * Written to docs/new-flow/AUTHORING.md. Topic 1 follows the founder's own Grade 4 example (16 × 3).
+ * Written to docs/product/building-lessons.md. Topic 1 follows the founder's own Grade 4 example (16 × 3).
  * Teaching pictures: `area` (t1, t2, t4, t5), `columns` (t3), `longdiv` (t6), `tape` (t7, t8).
  */
 import type { Lesson, Picture } from '../script'

@@ -8,7 +8,7 @@
  * ⚠️ THE PAYLOAD OF THIS CHAPTER IS THAT A CLOCK FACE CARRIES **TWO SCALES ON ONE SET OF NUMBERS.**
  * The 6 means six hours and also thirty minutes. That is the actual reason a six-year-old cannot read
  * a clock, and tapping "half past six" out of four pills never touches it — which is why the verb is
- * SET IT (docs/story-6-8-rethink.md §8) and why `ringMinuteFor` is a named, tested function rather
+ * SET IT (a18c2ba54^:docs/story-6-8-rethink.md §8) and why `ringMinuteFor` is a named, tested function rather
  * than an inline `n * 5`.
  *
  * ⚠️ AND THE SECOND HARD BIT IS "TO": at quarter to eight the words say EIGHT and the hour hand is

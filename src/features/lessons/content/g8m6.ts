@@ -1,6 +1,6 @@
 /**
  * Grade 8 · Module 6 — Bivariate data and scatter plots.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Question pictures show the DATA (that is the question); a computed slope, prediction, count or share is never printed.
  */
 import type { Lesson, Picture } from '../script'

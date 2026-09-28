@@ -37,7 +37,7 @@ export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>
 
 /**
  * ⚠️⚠️ A QUESTION'S CLIPS ARE ALL ASKED FOR WHEN IT LOADS, AND NONE AFTER THE CHILD ANSWERS (founder, 2026-09-27,
- * docs/legal/AUDIO-ROUND2.md §1.5). Some KG–2 lines are built from what the child tapped ("That makes seventeen. I asked
+ * docs/decisions.md, 2026-09-27). Some KG–2 lines are built from what the child tapped ("That makes seventeen. I asked
  * for twenty-one."), and a clip is a request to the bucket, so asking for it at the moment of the tap would put "this
  * device chose 17" in the storage provider's logs. So:
  *   · `openQuestion(lines)` — called as a question loads, with EVERY line it can lead to (each option's, right and wrong)

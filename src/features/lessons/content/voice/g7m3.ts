@@ -1,5 +1,5 @@
 /**
- * How g7m3's lines are RENDERED (docs/new-flow/voice.md). Keyed by the line EXACTLY as the lesson says it; `say` is what
+ * How g7m3's lines are RENDERED (docs/product/voice.md). Keyed by the line EXACTLY as the lesson says it; `say` is what
  * the voice model reads (symbols spelt out, no tags, no ellipses). A line with no row renders as style A from its own text.
  * Algebra: a number next to a letter ("3x") is said "3 x"; "3(x + 2)" is said "3 times x plus 2, all together".
  */

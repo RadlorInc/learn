@@ -29,7 +29,7 @@ jobs:
         run: npx next build
       - name: Dependency audit (fail on high/critical)
         # Moderate transitive advisories (e.g. postcss via next) don't gate — but a new
-        # HIGH or CRITICAL CVE fails the build instead of sitting unnoticed. See docs/security.md.
+        # HIGH or CRITICAL CVE fails the build instead of sitting unnoticed. See docs/architecture.md §10.
         run: npm audit --audit-level=high
 
   # ─────────────────────────────────────────────────────────────────────────────

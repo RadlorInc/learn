@@ -56,7 +56,7 @@ jobs:
 
   migrate-staging:
     needs: ci
-    # Inert until the staging project is configured (see docs/devops.md) — skips cleanly
+    # Inert until the staging project is configured (see docs/runbooks/deploy.md, Staging) — skips cleanly
     # (green), so the pipeline never shows a false failure before the dashboard setup is done.
     if: ${{ vars.STAGING_PROJECT_REF != '' }}
     runs-on: ubuntu-latest
@@ -91,7 +91,7 @@ jobs:
           STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
         run: |
           if [ -z "$STAGING_DB_URL" ]; then
-            echo "::warning::STAGING_DB_URL not set — skipping RLS suite. See docs/devops.md."
+            echo "::warning::STAGING_DB_URL not set — skipping RLS suite. See docs/runbooks/deploy.md."
             exit 0
           fi
           sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -133,7 +133,7 @@ jobs:
     #     back automatically — a skipped or failed staging job skips this one);
     #   · no migration file changed in the push → skipped, so nothing waits for a human.
     # The approval is the gate either way: `production-db` has a required reviewer, admin bypass off.
-    # A staging project is OWED before the first real family (docs/legal/LOOP-STATE.md).
+    # A staging project is OWED before the first real family (docs/legal/READINESS.md).
     needs: [ci, migrate-staging, migrations-changed]
     if: ${{ !cancelled() && needs.ci.result == 'success' && needs.migrations-changed.outputs.changed == 'true' && vars.PROD_PROJECT_REF != '' && (needs.migrate-staging.result == 'success' || (needs.migrate-staging.result == 'skipped' && vars.STAGING_PROJECT_REF == '')) }}
     runs-on: ubuntu-latest
@@ -143,7 +143,7 @@ jobs:
     permissions:
       contents: read
       packages: read # prod-backup pulls the image pg_dump runs in from ghcr.io, signed in with this run's GITHUB_TOKEN
-    environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
+    environment: production-db   # NOT Vercel's `Production` — see docs/runbooks/migrations.md. Create it WITH its required-reviewer rule when enabling this job, not before.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0

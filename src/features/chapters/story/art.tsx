@@ -2,7 +2,7 @@
 /**
  * Hand-built SVG art for Story Mode — scenery backdrops + illustrated objects.
  * Zero dependencies, tiny, scales crisply, and animates with CSS. A big step up
- * from emoji while the premium Rive/Lottie pipeline is sorted. See docs/story-mode-3-5.md.
+ * from emoji while the premium Rive/Lottie pipeline is sorted. See a18c2ba54^:docs/story-mode-3-5.md.
  */
 import React, { useState } from 'react'
 import { SHEETS } from './canvas/sheets'

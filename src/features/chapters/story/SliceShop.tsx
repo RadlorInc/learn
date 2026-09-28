@@ -1,7 +1,7 @@
 'use client'
 /**
  * Chapter (6–8) — FRACTIONS (skill `fractions`) as STORY MODE. The verb is **FIT IT**, per
- * docs/story-6-8-rethink.md §6.
+ * a18c2ba54^:docs/story-6-8-rethink.md §6.
  *
  * ⚠️ WHAT THIS REPLACED, AND WHY IT LOOKED FINE: the whole arrived already cut into equal parts with
  * one shaded, and the answer was one of three chips. *Equal* is the entire idea and it was the thing

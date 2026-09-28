@@ -38,7 +38,7 @@ export async function isChapterEntitled(learnerId: string, chapter: string): Pro
 
 /** The same question for a handful of chapters at once — the parent dashboard's scoped list, which
  *  is about a dozen. Still one definition, asked N times; deriving the set locally is the thing
- *  §1 of docs/billing-stage-3.md forbids. */
+ *  §1 of fbf193280:docs/billing-stage-3.md forbids. */
 export async function entitledChapters(
   learnerId: string, chapters: string[],
 ): Promise<Record<string, boolean | null>> {

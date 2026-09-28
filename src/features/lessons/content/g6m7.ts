@@ -1,6 +1,6 @@
 /**
  * Grade 6 · Module 7 — Data analysis and probability.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Question pictures show the DATA (that is the question); a computed mean, median, range or count is never printed.
  */
 import type { Lesson, Picture } from '../script'

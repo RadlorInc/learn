@@ -1,6 +1,6 @@
 /**
  * Grade 7 · Module 4 — Geometry.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Topics 1, 2, 3, 5, 6, 7 draw with `poly`; topic 4 with `angle`; topic 8 with `solid` (a box) — its triangle-end
  * problems use a `poly` wedge, because `solid` only draws a box.
  */

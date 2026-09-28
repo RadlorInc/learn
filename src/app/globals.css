@@ -817,7 +817,7 @@ p, .p {
    visible) and transitions SNAP to their target value, rather than being cut.
    `animation: none` is deliberately NOT used here: it would leave opacity:0 entrance
    elements permanently invisible. This is the end-state-preserving pattern the design
-   doc calls for (docs/ux-design.md §7, docs/ux-invariants.md #22).
+   doc calls for (fbf193280:docs/ux-design.md §7, fbf193280:docs/ux-invariants.md #22).
 
    JS-timer-driven staged reveals (the 3–5 counting parade, count-ups, the walkthrough
    narration timeline) are unaffected — they convey through discrete steps, not smooth

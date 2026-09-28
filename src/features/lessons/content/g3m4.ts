@@ -1,6 +1,6 @@
 /**
  * Grade 3 · Module 4 — Multiplication and area.
- * Written to docs/new-flow/AUTHORING.md. Every teaching picture is the `grid` of square tiles.
+ * Written to docs/product/building-lessons.md. Every teaching picture is the `grid` of square tiles.
  */
 import type { Lesson } from '../script'
 import { attachChalk } from '../chalk'

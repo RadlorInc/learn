@@ -1,6 +1,6 @@
 /**
  * Grade 4 · Module 1 — Place value for addition and subtraction.
- * Written to docs/new-flow/AUTHORING.md.
+ * Written to docs/product/building-lessons.md.
  * Teaching pictures: t1 place chart (table) · t2 blocks · t3 place chart · t4 numline · t5/t6 columns ·
  * t7 table of rounded numbers · t8 tape.
  */

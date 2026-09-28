@@ -10,7 +10,7 @@
  *   🐛 Long Trail   — blocks lay ALONG under the thing   (fish · engine · caterpillar · train car · bus · snake)
  *
  * WHY IT IS NOT "TAP THE BIGGER ONE" (the chapter this replaces was exactly that, and so is
- * chapter 5 — one surface with a different adjective on it, the fault §0a of docs/chapter-craft.md
+ * chapter 5 — one surface with a different adjective on it, the fault §0a of a18c2ba54^:docs/chapter-craft.md
  * names). Three things follow from making the laying the answer:
  *   • The eyeball shortcut is gone by construction. You cannot guess "6 blocks".
  *   • It is playable with the sound OFF — the question is a picture, which matters because the

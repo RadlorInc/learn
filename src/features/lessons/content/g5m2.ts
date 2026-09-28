@@ -1,6 +1,6 @@
 /**
  * Grade 5 · Module 2 — Addition and subtraction with fractions.
- * Written to docs/new-flow/AUTHORING.md. Topic 1 follows the founder's own "Step By Step Script" (1/2 + 1/4).
+ * Written to docs/product/building-lessons.md. Topic 1 follows the founder's own "Step By Step Script" (1/2 + 1/4).
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

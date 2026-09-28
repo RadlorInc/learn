@@ -14,7 +14,7 @@
 # publish how many children and accounts exist; a schema total does not, and still names where a size change came from.
 #
 # Exit 0 = counted. Exit 2 = could NOT count — the file is empty, or has text but no COPY block this reads (a dump
-# format change). "0 rows" and "could not see" must never print the same (docs/checks.md), and the backup's caller
+# format change). "0 rows" and "could not see" must never print the same (CLAUDE.md), and the backup's caller
 # turns 2 into a warning: the dump itself is still good.
 set -euo pipefail
 f="${1:?usage: scripts/backup-row-counts.sh <data.sql>}"

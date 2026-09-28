@@ -13,7 +13,7 @@
  * `src/__tests__/adaptiveDeepSweep.test.ts` §②, which derives its chapter list from the
  * `STORY_CHAPTERS` table so it only ever sees live chapters.
  *
- * Illustrated with hand-built SVG art (./art). See docs/story-mode-3-5.md.
+ * Illustrated with hand-built SVG art (./art). See a18c2ba54^:docs/story-mode-3-5.md.
  */
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { speak, speakSeq, speakAfterCurrent, useIsSpeaking } from '@/infra/useMiloSpeaker'

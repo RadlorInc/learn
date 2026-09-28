@@ -1,6 +1,6 @@
 /**
  * THE QUESTION, SWEPT ACROSS EVERY CHAPTER THAT HAS A PURE MODULE — one file applying
- * `docs/chapter-craft.md` §0a/§0b uniformly, rather than nine files each applying it to one chapter.
+ * `a18c2ba54^:docs/chapter-craft.md` §0a/§0b uniformly, rather than nine files each applying it to one chapter.
  *
  * ⚠️ WHY THIS EXISTS WHEN EVERY 9–11 CHAPTER ALREADY HAS A 50-TEST GATE OF ITS OWN. Those gates are
  * excellent and they are all VERTICAL: each knows its own chapter's rules deeply and knows nothing

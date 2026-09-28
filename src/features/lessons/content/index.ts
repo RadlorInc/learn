@@ -1,4 +1,4 @@
-/** Module id → its lessons. Add a module's file here once it is written (see docs/new-flow/AUTHORING.md). */
+/** Module id → its lessons. Add a module's file here once it is written (see docs/product/building-lessons.md). */
 // Every module, eagerly: for the dashboard and the tests (through ../modules). The child's screens load ONE module
 // through ../catalogue's loadModule (PERF-01) — never import this file from /lesson, /practice or /modules. A new
 // module also needs its line in catalogue.ts's LOADERS and a re-run of scripts/lesson-catalogue.mts.

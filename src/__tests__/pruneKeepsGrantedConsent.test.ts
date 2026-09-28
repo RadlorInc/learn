@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * BUG-09 (docs/review/LATENT-BUGS.md) — the nightly prune of unconfirmed accounts must never destroy a consent
+ * BUG-09 (fbf193280:docs/review/LATENT-BUGS.md) — the nightly prune of unconfirmed accounts must never destroy a consent
  * record that is, or ever was, GRANTED.
  *
  * A consent can be granted on an account whose address is still unconfirmed (the one-email sign-up's B0 opened
