@@ -66,6 +66,9 @@ combined tree). A migration PR runs its before-SQL first and its proof-SQL after
   production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
+- Admin two-step verification in the database (`20260928200000`): approve `production-db`, then run
+  `docs/legal/sql/admin-mfa-proof.sql` and sign in to `/admin` with the code
+  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
@@ -142,8 +145,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist; the comments in
   `content/voice/styles.ts` name a test that does not exist; `scripts/lesson-questions.mjs` now needs `npx tsx`.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
-  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comments: `/api/health`
-  mentions tools we do not use; `admin/login/page.tsx` says "the admin role" (the gate is the `admin_users` table).
+  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
+  mentions tools we do not use.
 - Points, measured 28 Sep (PGlite, the real functions): a first upload at level 1 pays the +3 level-up as well as the
   answer's 2, because a new row starts at level 0. Chapters start at tier 1, so their first answer always does. Keep
   or change — a product call.
