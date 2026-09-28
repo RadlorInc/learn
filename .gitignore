@@ -82,3 +82,8 @@ supabase/.branches/
 # read; public/audio/*.mp3 is where clips USED to live, ignored so a manual unzip cannot put them back into git or Vercel.
 audio-src/
 public/audio/**/*.mp3
+
+# Tool output, never committed (deleted from docs/ on 2026-09-28): the e2e specs write screenshots here and
+# scripts/rename-inventory.mjs writes its inventory here.
+/docs/legal/screenshots/
+/docs/rename/

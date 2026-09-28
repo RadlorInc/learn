@@ -19,9 +19,8 @@
  *     2026-09-28), so their comments keep the doc paths of their day;
  *   - `<rev>:<path>` (e.g. `fbf193280:docs/review/LATENT-BUGS.md`): git's own syntax for a file in history,
  *     which is how a comment points at a deleted doc on purpose. `git show <rev>:<path>` prints it.
- * And two generated snapshots that record the tree as it was on their date: `docs/rename/inventory.tsv`
- * (2026-09-24) and `supabase/schema/ledger_snapshot_20260824.tsv`, plus the recovered patch
- * `docs/recovered-menu-rpc-work.patch`, whose text is a diff of files as they were.
+ * And a generated snapshot that records the tree as it was on its date, `supabase/schema/ledger_snapshot_20260824.tsv`,
+ * plus the recovered patch `docs/recovered-menu-rpc-work.patch`, whose text is a diff of files as they were.
  */
 import { describe, it, expect } from 'vitest'
 import { execFileSync } from 'node:child_process'
@@ -32,7 +31,7 @@ const ROOT = join(__dirname, '..', '..')
 
 const SKIP = (f: string) =>
   f.startsWith('supabase/migrations/')
-  || ['docs/rename/inventory.tsv', 'supabase/schema/ledger_snapshot_20260824.tsv', 'docs/recovered-menu-rpc-work.patch',
+  || ['supabase/schema/ledger_snapshot_20260824.tsv', 'docs/recovered-menu-rpc-work.patch',
     'src/__tests__/docLinks.test.ts'].includes(f)   // this file: its control strings name made-up docs on purpose
 
 const TEXT = /\.(md|tsx?|jsx?|mjs|cjs|sh|py|ya?ml|sql|css|html|json|txt|toml|patch|tsv)$/

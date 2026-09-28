@@ -15,7 +15,7 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const DIR = 'docs/legal'
-const CATEGORIES = ['built', 'repo', 'rafi', 'attorney', 'provider', 'date', 'marker'] as const
+const CATEGORIES = ['built', 'repo', 'founder', 'attorney', 'provider', 'date', 'marker'] as const
 
 type Row = { file: string; line: number; text: string; category: string }
 const key = (r: { file: string; line: number; text: string }) => `${r.file}:${r.line}: ${r.text}`

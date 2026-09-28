@@ -111,4 +111,5 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-28 · CI and backups pull their database images signed in; backup logs show per-schema counts only · registry rate limits; the logs are public · #308, #310, #311
 - 2026-09-28 · The opening line of the consent email for existing parents waits for the next legal round · founder: "leave for now" · docs/legal/NEXT-ROUND.md
 - 2026-09-28 · The docs start again from a small fixed structure (docs/START-HERE.md); older docs deleted, kept in git history; no loop-state files in the repo · 3.4 MB of docs had stopped being findable · this PR
+- 2026-09-28 · The docs' leftover non-Markdown folders are deleted (screenshots, art, verification, rename; tool output there is now git-ignored); PLACEHOLDERS names roles, not people; `docs/review/sql/` goes once its proof SQL has run · founder · this PR
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —
