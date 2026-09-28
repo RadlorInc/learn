@@ -40,7 +40,7 @@ const PARENT_B = 'b0b0b0b0-bbbb-4bbb-8bbb-bbbbbbbbbbbb', KIDLOGIN_B = 'b1b1b1b1-
 const MARK_A = 'MARK-FAMILY-A-7f3c', MARK_B = 'MARK-FAMILY-B-91e2'
 
 /** Document 06, "See the data" and "Delete" — written out from the document, not derived. */
-const DOC06 = ['learners', 'learner_access', 'lesson_progress', 'point_events', 'learner_stats',
+const DOC06 = ['learners', 'learner_access', 'lesson_progress', 'point_events',
   'learner_events', 'lesson_feedback', 'game_settings', 'error_events']
 
 let db: PGlite
@@ -157,9 +157,6 @@ async function seedRows(f: Omit<Family, 'sessions' | 'plans'>, mark: string): Pr
   await db.exec(`
     insert into auth.users (id, email, email_confirmed_at) values ('${f.login}', '${f.login}@learner.adaptivelearn.invalid', now());
     insert into public.learner_access (learner_id, parent_id, access_role) values ('${k}', '${f.login}', 'self');
-    insert into public.learner_stats (learner_id) values ('${k}') on conflict do nothing;
-    insert into public.learner_state (learner_id, owned_items) values ('${k}', array['${mark}']) on conflict do nothing;
-    insert into public.learner_progress (learner_id, chapter) values ('${k}', '${chapter}');
     insert into public.sessions (learner_id, chapter, client_id, completed_at) values ('${k}', '${chapter}', '${mark}', now());
     insert into public.lesson_progress (learner_id, lesson_id, done, run) values ('${k}', 'g3m1-t1', true,
       '{"asked": 7, "recent": ["RUN-${mark}"], "current": {"from": "g3m1-t1", "problem": {"text": "RUN-${mark}"}}, "review": null}');
@@ -279,9 +276,8 @@ describe('"Download a copy" — the real export, as the owning parent', () => {
 
   /** Each catalog table → the section that carries it, and how a row is recognised in both places. */
   const SECTION: Record<string, [key: string, dbCol: string, fileCol: string]> = {
-    learners: ['learner', 'id', 'id'], learner_stats: ['stats', 'learner_id', 'learner_id'],
-    learner_progress: ['chapterProgress', 'id', 'id'], sessions: ['sessions', 'id', 'id'],
-    learner_state: ['shopState', 'learner_id', 'learner_id'], learner_events: ['activityEvents', 'id', 'id'],
+    learners: ['learner', 'id', 'id'], sessions: ['sessions', 'id', 'id'],
+    learner_events: ['activityEvents', 'id', 'id'],
     diagnostic_sessions: ['placementChecks', 'id', 'id'], diagnostic_items: ['placementCheckAnswers', 'id', 'id'],
     diagnostic_plans: ['learningPlans', 'id', 'id'], diagnostic_plan_progress: ['learningPlanProgress', 'id', 'id'],
     diagnostic_rechecks: ['gapRechecks', 'id', 'id'], lesson_progress: ['lessonProgress', 'lesson_id', 'lesson_id'],
@@ -306,7 +302,7 @@ describe('"Download a copy" — the real export, as the owning parent', () => {
     // Exactly what the button does: the bundle the dashboard loaded, plus the extras fetched at click time.
     const d = (await getParentDashboard())!.find(e => e.learner.id === A.kid)!
     expect(d, 'the dashboard did not return the parent\'s own child').toBeDefined()
-    file = buildExport(d.learner.display_name, { learner: d.learner, stats: d.stats, progress: d.progress, sessions: d.sessions },
+    file = buildExport(d.learner.display_name, { learner: d.learner, sessions: d.sessions },
       await getLearnerExportExtras(A.kid)) as Record<string, unknown>
     text = JSON.stringify(file)
   }, 60_000)

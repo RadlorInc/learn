@@ -30,7 +30,7 @@ declare
   v_cnt      int;
   v_blocked  boolean;
   v_direct   boolean;                     -- did the DIRECT (policy) write path allow it?
-  v_rpc      boolean;                     -- did the sync_session RPC allow it?
+  v_rpc      boolean;                     -- (unused since 20260928170000: sync_session is gone)
   v_learner2 uuid := gen_random_uuid();   -- a second learner the OWNER created (a seat to move to)
   v_learner3 uuid := gen_random_uuid();   -- a third, for the second reassignment in one period
   v_subid    uuid := gen_random_uuid();
@@ -81,7 +81,7 @@ begin
   returning id into v_owner_consent;
 
   -- Owner creates a learner. The grant_owner_access trigger gives the owner a
-  -- learner_access row; init_learner_stats seeds learner_stats.
+  -- learner_access row.
   insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
     values (v_learner, 'RLS Test Kid', v_owner, v_owner_consent, 'notice-v7');
 
@@ -266,13 +266,10 @@ begin
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A9b: a non-email was accepted as a lead'; end if;
 
-  -- A4/A5: attacker cannot read the learner's sessions or stats.
+  -- A4: attacker cannot read the learner's sessions. (A5, their stats, went with learner_stats: 20260928170000.)
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
   v_asserts := v_asserts + 1;
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;
-  select count(*) into v_cnt from public.learner_stats where learner_id = v_learner;
-  v_asserts := v_asserts + 1;
-  if v_cnt <> 0 then raise exception 'RLS FAIL A5: attacker read another learner''s stats (% rows)', v_cnt; end if;
 
 
   -- ═══ BILLING (Stage 1) — the attacker's half ═══════════════════════════════
@@ -365,93 +362,44 @@ begin
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL B10: a seat was reassigned by direct UPDATE, bypassing the period limit'; end if;
 
-  -- B11: the entitlement guard on the DIRECT write paths, both directions.
-  -- B11a: a FREE chapter records for a learner with no subscription at all (positive control — the
-  -- guard must be scoped, not deny-all, or the free tier does not exist).
-  insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
-                               stars_earned, xp_earned, coins_earned, client_id)
-    values (v_alearner, v_free, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
-  get diagnostics v_cnt = row_count;
-  v_asserts := v_asserts + 1;
-  if v_cnt <> 1 then raise exception 'RLS FAIL B11a: a FREE chapter could not be recorded without a subscription'; end if;
-
-  -- B11b: a PAID chapter does not.
+  -- B11 (20260928170000): the legacy `sessions` table takes no client write at all — not a free chapter, not a
+  -- paid one, not by its own child's owner (the attacker owns v_alearner). Before, a policy let any learner_access
+  -- holder insert, guarded only by is_chapter_entitled; the table and the RPC that wrote it are retired.
   v_blocked := false;
-  begin
-    insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
-                                 stars_earned, xp_earned, coins_earned, client_id)
-      values (v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
-  exception when insufficient_privilege or check_violation then v_blocked := true;
-  end;
-  v_asserts := v_asserts + 1;
-  if not v_blocked then raise exception 'RLS FAIL B11b: an unentitled chapter was recorded to sessions'; end if;
-
-  -- B11c: learner_progress carries the same guard — it is a second write path to the same record,
-  -- and the app writes it directly on the local-first merge, not only through the RPC.
-  v_blocked := false;
-  begin
-    insert into public.learner_progress (learner_id, chapter, best_stars, total_xp, total_sessions)
-      values (v_alearner, v_paid, 1, 10, 1);
-  exception when insufficient_privilege or check_violation then v_blocked := true;
-  end;
-  v_asserts := v_asserts + 1;
-  if not v_blocked then raise exception 'RLS FAIL B11c: an unentitled chapter was recorded to learner_progress'; end if;
-
-  -- B11d: reading is NOT gated. A lapsed subscriber keeps their child's history; the product
-  -- refuses to hold a record hostage to a card failure. This asserts the guard did not creep into
-  -- USING, which is the easy mistake when adding it to a `for all` policy.
-  select count(*) into v_cnt from public.sessions where learner_id = v_alearner and chapter = v_free;
-  v_asserts := v_asserts + 1;
-  if v_cnt <> 1 then raise exception 'RLS FAIL B11d: the entitlement guard leaked into the READ path (% rows)', v_cnt; end if;
-
-  -- ═══ B12 — THE TWO WRITE PATHS CANNOT DIVERGE ══════════════════════════════
-  -- `sync_session` is SECURITY DEFINER: it runs as the table owner, so RLS does not apply to it.
-  -- The policy alone leaves the RPC open; the RPC alone leaves direct writes open. This does not
-  -- inspect the source of either — it DRIVES both and asserts the verdicts are EQUAL, so editing
-  -- one path and not the other fails here whatever the edit looks like.
-  -- B12a: the unentitled chapter — both must refuse.
-  v_direct := true;
-  begin
-    insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
-                                 stars_earned, xp_earned, coins_earned, client_id)
-      values (v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
-  exception when insufficient_privilege or check_violation then v_direct := false;
-  end;
-  v_rpc := true;
-  begin
-    perform public.sync_session(v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5,
-                                gen_random_uuid()::text, now(), 1);
-  exception when insufficient_privilege or check_violation then v_rpc := false;
-  end;
-  v_asserts := v_asserts + 1;
-  if v_direct <> v_rpc then
-    raise exception 'RLS FAIL B12a: the two write paths DIVERGED on an unentitled chapter (direct=%, rpc=%) — one of them lost the is_chapter_entitled guard', v_direct, v_rpc;
-  end if;
-  -- ⚠️ Equality alone is a tautology if both are broken open, so the VALUE is asserted too.
-  v_asserts := v_asserts + 1;
-  if v_direct then raise exception 'RLS FAIL B12a: both write paths accepted an unentitled chapter'; end if;
-
-  -- B12b: the free chapter — both must allow. Same shape, other direction, so a guard that has
-  -- become deny-all cannot pass B12a and hide.
-  v_direct := true;
   begin
     insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
                                  stars_earned, xp_earned, coins_earned, client_id)
       values (v_alearner, v_free, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
-  exception when insufficient_privilege or check_violation then v_direct := false;
+  exception when insufficient_privilege then v_blocked := true;
   end;
-  v_rpc := true;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL B11a: a client wrote a sessions row (free chapter)'; end if;
+  v_blocked := false;
   begin
-    perform public.sync_session(v_alearner, v_free, 'practice', 1, 0, 1, 10, 5,
-                                gen_random_uuid()::text, now(), 1);
-  exception when insufficient_privilege or check_violation then v_rpc := false;
+    insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
+                                 stars_earned, xp_earned, coins_earned, client_id)
+      values (v_alearner, v_paid, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
+  exception when insufficient_privilege then v_blocked := true;
   end;
   v_asserts := v_asserts + 1;
-  if v_direct <> v_rpc then
-    raise exception 'RLS FAIL B12b: the two write paths DIVERGED on a FREE chapter (direct=%, rpc=%)', v_direct, v_rpc;
-  end if;
+  if not v_blocked then raise exception 'RLS FAIL B11b: a client wrote a sessions row (paid chapter)'; end if;
+
+  -- B11d (the paired half): READING is unchanged — the owner still sees their child's history. The row is seeded by
+  -- the database role, the only writer left.
+  reset role;
+  insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
+                               stars_earned, xp_earned, coins_earned, client_id)
+    values (v_alearner, v_free, 'practice', 1, 0, 1, 10, 5, gen_random_uuid()::text);
+  set local role authenticated;
+  select count(*) into v_cnt from public.sessions where learner_id = v_alearner and chapter = v_free;
   v_asserts := v_asserts + 1;
-  if not v_direct then raise exception 'RLS FAIL B12b: both write paths refused a FREE chapter — the free tier is dead'; end if;
+  if v_cnt <> 1 then raise exception 'RLS FAIL B11d: the owner can no longer read their child''s sessions (% rows)', v_cnt; end if;
+
+  -- B12 (20260928170000): the second write path, sync_session, is gone rather than guarded.
+  select count(*) into v_cnt from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname in ('sync_session', 'sync_diagnostic');
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 0 then raise exception 'RLS FAIL B12: % legacy write function(s) still exist', v_cnt; end if;
 
   -- B13a: a stranger cannot reassign somebody else's seat.
   v_blocked := false;
@@ -580,9 +528,15 @@ begin
     raise exception 'RLS FAIL C0: need four non-free chapters for the plan fixture (got %)', coalesce(array_length(v_paids,1),0);
   end if;
 
-  -- Issue a plan through the REAL path — the RPC a finished check calls — not by writing rows.
-  v_sess := public.sync_diagnostic(v_learner3, '9-11', 'i.multFacts', null, '{}', '{}',
-              'one gap', '{}', array[v_paids[1], v_paids[2], v_paids[3]], null, gen_random_uuid());
+  -- The plan, in the shape sync_diagnostic wrote it: a session, then an active plan whose free set is its first two
+  -- steps. ⚠️ Seeded as rows since 20260928170000 dropped sync_diagnostic (the placement check that called it was
+  -- deleted on 2026-09-20); is_chapter_entitled still reads plans, so its plan branch is still asserted here.
+  reset role;
+  insert into public.diagnostic_sessions (learner_id, band, root_gap_skill)
+    values (v_learner3, '9-11', 'i.multFacts') returning id into v_sess;
+  insert into public.diagnostic_plans (learner_id, session_id, chapter_sequence, free_chapters)
+    values (v_learner3, v_sess, array[v_paids[1], v_paids[2], v_paids[3]], array[v_paids[1], v_paids[2]]);
+  set local role authenticated;
 
   -- C1: the plan's two recorded chapters are entitled with no subscription at all.
   v_asserts := v_asserts + 1;
@@ -597,18 +551,8 @@ begin
     raise exception 'RLS FAIL C2: step three of the plan is free — the whole plan is unlocked';
   end if;
 
-  -- C3: completing step one must NOT promote step three. This is the difference between a RECORDED
-  -- pair and a computed "first two unmet", and a computed one walks the entire plan free, one
-  -- chapter at a time, for nothing.
-  insert into public.learner_progress (learner_id, chapter, best_stars, total_xp, total_sessions)
-    values (v_learner3, v_paids[1], 3, 100, 1);
-  get diagnostics v_cnt = row_count;
-  v_asserts := v_asserts + 1;
-  if v_cnt <> 1 then raise exception 'RLS FAIL C3: an entitled plan step could not be recorded'; end if;
-  v_asserts := v_asserts + 1;
-  if public.is_chapter_entitled(v_learner3, v_paids[3]) then
-    raise exception 'RLS FAIL C3: finishing step one promoted step three — the free set is being recomputed, not recorded';
-  end if;
+  -- (C3, "finishing step one does not promote step three", recorded completion in learner_progress; that table
+  -- and the recomputation it guarded against are gone — 20260928170000.)
 
   -- C7: ONE extra chapter for a struggling child, and exactly one. `revisePlanDeeper` prepends a
   -- deeper chapter when the child struggles in the plan's root; without this the product's own
@@ -631,30 +575,13 @@ begin
     raise exception 'RLS FAIL C7: the refused second revision entitled a chapter anyway';
   end if;
 
-  -- C4: re-running the check REPLACES the free set rather than adding to it. Otherwise every retake
-  -- is two more free chapters, for ever.
-  v_sess := public.sync_diagnostic(v_learner3, '9-11', 'i.division', null, '{}', '{}',
-              'one gap', '{}', array[v_paids[4], v_paids[3]], null, gen_random_uuid());
-  v_asserts := v_asserts + 1;
-  if public.is_chapter_entitled(v_learner3, v_paids[2]) then
-    raise exception 'RLS FAIL C4: the OLD plan''s free chapters still entitle after a new plan was issued';
-  end if;
-  v_asserts := v_asserts + 1;
-  if not (public.is_chapter_entitled(v_learner3, v_paids[4])
-          and public.is_chapter_entitled(v_learner3, v_paids[3])) then
-    raise exception 'RLS FAIL C4: the NEW plan''s first two steps are not free';
-  end if;
+  -- (C4, re-running the check, needed sync_diagnostic — dropped in 20260928170000 with no caller left.)
 
   -- C5: exactly one active plan per learner. Enforced by a partial unique index, so it is not
   -- merely what the RPC happens to do — asserted from outside the RPC all the same.
   select count(*) into v_cnt from public.diagnostic_plans where learner_id = v_learner3 and active;
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL C5: % active plans for one learner', v_cnt; end if;
-
-  -- C6: and the revision allowance is per PLAN, so the new plan gets its own one.
-  v_ok := public.entitle_revised_step(v_learner3, v_paids[1]);
-  v_asserts := v_asserts + 1;
-  if not v_ok then raise exception 'RLS FAIL C6: the new plan did not get its own revision allowance'; end if;
 
   -- C8: PER LEARNER, not per account — and not per anybody else's account either. v_alearner is the
   -- ATTACKER's child: no seat, no plan, a different owner. ⚠️ The owner's own other children are

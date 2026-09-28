@@ -237,8 +237,10 @@ jobs:
           # never present. A scan that finds nothing proves nothing until it has been shown it can
           # find something.
           before_tables=$(psql "$PGURL" -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')")
-          before_guard=$(psql "$PGURL" -Atc "select count(*) from pg_policies where schemaname='public' and policyname='sessions: parent can insert' and with_check like '%is_chapter_entitled%'")
-          echo "before rollback: billing tables=$before_tables, sessions policy carries the guard=$before_guard"
+          # (The second control was the guard on the "sessions: parent can insert" policy; that policy went with the
+          # legacy progress tables in 20260928170000. is_chapter_entitled is the guard's one remaining home.)
+          before_guard=$(psql "$PGURL" -Atc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'")
+          echo "before rollback: billing tables=$before_tables, is_chapter_entitled present=$before_guard"
           if [ "$before_tables" -ne 4 ] || [ "$before_guard" -ne 1 ]; then
             echo "::error::the billing migrations are not applied, so rolling them back proves nothing"
             exit 1
@@ -252,14 +254,11 @@ jobs:
           # guard is correctly wired: a check that cannot fail in the interesting direction.
           #
           # So the proof that production got the guard is EQUALITY WITH THIS ARTEFACT, not the live
-          # write. These three hashes are what an apply must reproduce; the live write is only the
-          # smoke test that nothing else broke.
+          # write. This hash is what an apply must reproduce; the live write is only the smoke test that
+          # nothing else broke. (The sessions / learner_progress policies and sync_session / sync_diagnostic
+          # were fingerprinted here too until 20260928170000 removed them.)
           echo "── fingerprints of the applied (enforcing-capable) schema ──"
-          psql "$PGURL" -Atc "select 'sessions policy      ' || md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='sessions: parent can insert'"
-          psql "$PGURL" -Atc "select 'learner_progress pol ' || md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='learner_progress: parent access'"
           psql "$PGURL" -Atc "select 'is_chapter_entitled  ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'"
-          psql "$PGURL" -Atc "select 'sync_session(11)     ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=11"
-          psql "$PGURL" -Atc "select 'sync_diagnostic      ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_diagnostic'"
 
           psql "$PGURL" -v ON_ERROR_STOP=1 -f supabase/schema/rollback_20260824_billing.sql
 
@@ -272,21 +271,14 @@ jobs:
             fi
             echo "  ok  $1"
           }
-          expect "sync_diagnostic body" \
-            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_diagnostic'" \
-            "cf46a74591aa0bbf809f69726e483e5f"
-          expect "sync_session(11) body" \
-            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=11" \
-            "d1c9cab3c6a5afa869958a4ef2345cef"
-          expect "sync_session(10) body" \
-            "select md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='sync_session' and pronargs=10" \
-            "ab108f90b7f9823ae7ededdce89ca444"
-          expect "sessions insert policy predicate" \
-            "select md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='sessions: parent can insert'" \
-            "816720e8c4ec7fb39fa1cf0c2d751da5"
-          expect "learner_progress policy predicate" \
-            "select md5(lower(regexp_replace(coalesce(qual,'')||'|'||coalesce(with_check,''),'\s+','','g'))) from pg_policies where schemaname='public' and policyname='learner_progress: parent access'" \
-            "942404d3f338ba61b62938215fc2872c"
+          # A billing rollback must not bring back what 20260928170000 retired: no legacy write function, no client
+          # write policy on sessions.
+          expect "no legacy write function came back" \
+            "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('sync_session','sync_diagnostic')" \
+            "0"
+          expect "no client write policy on sessions came back" \
+            "select count(*) from pg_policies where schemaname='public' and tablename='sessions' and cmd in ('INSERT','UPDATE','DELETE','ALL')" \
+            "0"
           expect "billing tables are gone" \
             "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')" \
             "0"

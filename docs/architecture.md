@@ -138,7 +138,7 @@ every table in `public`.
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
 | Billing (off) | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config` |
-| Legacy | `sessions`, `learner_progress`, `learner_stats`, `learner_state`, `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; still read by the dashboard's fallback RPC and the export |
+| Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928170000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.
 
@@ -169,7 +169,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
   functions).
 - **Policy helpers and triggers:** `is_learner_creator`, `can_self_grant_access`, and the triggers for new users, new
   learners, caps, the consent gate (§5) and B3 cancellation.
-- Legacy `sync_session`, `sync_diagnostic`, `sync_recheck`, `start_diagnostic` are defined; the app calls none.
+- Legacy `sync_recheck` and `start_diagnostic` are defined; the app calls neither. `sync_session` and `sync_diagnostic` were dropped with the legacy progress tables (2026-09-28).
 
 ### Scheduled jobs (pg_cron, UTC, as defined in the migrations)
 
@@ -255,7 +255,7 @@ deletion, and the daily cron drain it.
 |---|---|---|---|
 | Sign-up | `auth.users`, `profiles`, `parental_consents` | `/api/auth/signup` → `/auth/confirm` → `/consent/respond` | `signupEmailCooldown`, `signupRepeatPassword`, `signupConfirmPage` |
 | Consent | `parental_consents` | `/api/consent/respond` → `consent_grant` | `consentFlow`, `consentRoutes`, `consentNeedsConfirmedEmail` |
-| Add a child | `learners` (+ owner `learner_access`, `learner_stats` by trigger) | `createLearner` in the browser | `consentOnceScreens`, `consentOnceGate`, `attestationVersion` |
+| Add a child | `learners` (+ owner `learner_access` by trigger) | `createLearner` in the browser | `consentOnceScreens`, `consentOnceGate`, `attestationVersion` |
 | Child login | `auth.users`, `learner_access`, `profiles` | `/api/child-login` | `childLogin`, `rosterRollbackDelete` |
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |

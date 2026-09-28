@@ -112,4 +112,5 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-28 · The opening line of the consent email for existing parents waits for the next legal round · founder: "leave for now" · docs/legal/NEXT-ROUND.md
 - 2026-09-28 · The docs start again from a small fixed structure (docs/START-HERE.md); older docs deleted, kept in git history; no loop-state files in the repo · 3.4 MB of docs had stopped being findable · this PR
 - 2026-09-28 · The docs' leftover non-Markdown folders are deleted (screenshots, art, verification, rename; tool output there is now git-ignored); PLACEHOLDERS names roles, not people; `docs/review/sql/` goes once its proof SQL has run · founder · this PR
+- 2026-09-28 · The legacy progress tables (learner_progress, learner_stats, learner_state) and the functions that wrote them are dropped; `sessions` stays, read-only, for /admin's metrics · they were writable by any adult with access or the child's own login, and nothing had read them since 2026-09-20 · this PR
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —
