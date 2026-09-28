@@ -283,7 +283,7 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
             onChange={async e => { const f = e.target.files?.[0]; if (f) setText(await f.text()); e.target.value = '' }} />
         </label>
         <textarea value={text} onChange={e => setText(e.target.value)} rows={7} placeholder={'Aarav Shah, aarav7\nMaya Khan, maya.k\nzoya_2'}
-          style={{ ...input, fontFamily: 'ui-monospace, monospace', fontSize: 14, minHeight: 140, resize: 'vertical' }} aria-label="Student list" />
+          style={{ ...input, fontFamily: 'ui-monospace, monospace', fontSize: 16, minHeight: 140, resize: 'vertical' }} aria-label="Student list" />
       </>) : (
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <input value={oneName} onChange={e => setOneName(e.target.value)} placeholder="Name (optional)" maxLength={30} style={{ ...input, flex: '1 1 180px' }} aria-label="Student name" />
