@@ -55,6 +55,10 @@ runs:
         # the artifact list and is worthless on the day it is needed.
         test -s schema.sql || { echo "::error::schema.sql is empty"; exit 1; }
         test -s data.sql   || { echo "::error::data.sql is empty";   exit 1; }
+        # Rows per SCHEMA — counts only, never a row, and not per table (this repo's logs are public). So the next
+        # change in backup size is explained in this log instead of guessed (2026-09-28: ~64 KB → 1.8 MB). Not a gate:
+        # "could not count" (exit 2) is a warning and the dump carries on.
+        scripts/backup-row-counts.sh data.sql || echo "::warning::backup row counts unavailable (exit $?) — the dump itself is fine"
         tar czf milo-backup.tar.gz schema.sql data.sql
         rm -f schema.sql data.sql
 
