@@ -8,8 +8,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (28 September 2026)
 
-- **Production** was on `fbf193280` (#311) when this file was written. A private beta with families the founder knows
-  has run since 25 September; it is free and billing is off.
+- **Production** is on `c5d5561b5` (#320), measured 28 Sep evening; `smoke:live` passed on it. A private beta with
+  families the founder knows has run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
@@ -22,6 +22,22 @@ fixed yet are tracked outside this public repo; ask the founder.
   Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
+
+## Open — Draft PRs waiting for the founder, in this order
+
+All CI-green; every one merges cleanly on `main` and on top of the ones before it (measured 28 Sep, full suite on the
+combined tree). A migration PR runs its before-SQL first and its proof-SQL after (`docs/runbooks/migrations.md`).
+1. #318 — the pending-migration check reads a tag `migrate-prod` leaves. After merging, create the tag once (the
+   command is in the PR).
+2. #319 — the backup job runs in the `prod-backup` environment (safe before or after the environment exists).
+3. #315 — learner deletion (migration `20260928160000`; `learner-delete-before/proof.sql`).
+4. #323 — the legacy progress tables dropped (migration `20260928170000`; `legacy-progress-drop-before/proof.sql`).
+5. #326 — points: 300 a day, real lessons only (migration `20260928180000`; `points-cap-before/proof.sql`). From then
+   on, a new lesson needs its `lesson_catalog` row (`docs/product/building-lessons.md`).
+6. #321 — sign-out clears a child's keys from the device (published doc 08 changes with it).
+7. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
+8. #324, then enrol the admin account at `/admin/mfa`, then #325 (migration; its SQL is in the PR).
+9. website#6 — radlor.com response headers; afterwards `npm run check:headers` there should exit 0.
 
 ## Open — the founder decides
 
@@ -91,11 +107,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
-- `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
-  it missed the successful `migrate-prod` at `774ac5170`, named `78dee7be1` instead, and offered `production-db` with
-  nothing to apply (the same script run locally a minute later said `changed=false`). The run was cancelled. Its
-  blind-read guard only catches a run with no jobs; a job list missing one job passes it. Cross-check with a second
-  source (e.g. the `production-db` deployments list) before trusting a `true`.
 - No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
   `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
   (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
@@ -103,8 +114,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   sign-in): write one and rehearse it locally before the first such request.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
-- Delete the legacy code KG–2 does not use (the founder approves the list); drop the emptied legacy tables in the same
-  change that stops the export and the dashboard RPC reading them.
+- Delete the legacy code KG–2 does not use (the founder approves the list). The legacy progress tables go in #323;
+  `sessions` and the `diagnostic_*` tables stay (read by /admin's funnel and the export).
+- `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
+  alone — twice on 28 Sep. A timing assumption in the test, not yet found.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's
@@ -131,12 +144,13 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
   (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comments: `/api/health`
   mentions tools we do not use; `admin/login/page.tsx` says "the admin role" (the gate is the `admin_users` table).
-- Points, read from the code and not measured: a chapter's (or a topic's) first uploaded answer may also pay the +3
-  level-up, because tiers start at 1 and a new row starts at 0. Measure on a local stack before changing anything.
+- Points, measured 28 Sep (PGlite, the real functions): a first upload at level 1 pays the +3 level-up as well as the
+  answer's 2, because a new row starts at level 0. Chapters start at tier 1, so their first answer always does. Keep
+  or change — a product call.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
-- Never recorded, so check or drop: the console 404 on every page; whether Vercel firewall rules exist; whether an
+- Never recorded, so check or drop: whether Vercel firewall rules exist; whether an
   Instant Rollback has ever been timed; the classroom AR demo
   (labs) track; the id-free event rollup decided on 5 September and never built.
