@@ -32,6 +32,7 @@ export interface ExportExtras {
   points:            unknown[]
   gameSettings:      unknown
   classExerciseResults: unknown[]
+  gameSave:          unknown
   /** Empty when everything came back whole. Anything in here is printed IN the file. */
   notes:             string[]
 }
@@ -59,7 +60,7 @@ const EVENTS_CAP = 5000
 const EMPTY: ExportExtras = {
   learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
   diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
-  lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [],
+  lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], gameSave: null,
   notes: ['We could not read part of this data. Nothing has been deleted — please try again, or write to us and we will send it.'],
 }
 
@@ -73,7 +74,7 @@ const EMPTY: ExportExtras = {
 export async function getLearnerExportExtras(learnerId: string): Promise<ExportExtras> {
   const supabase = db()
   try {
-    const [state, events, sessions, plans, rechecks, lessons, points, game, exercises] = await Promise.all([
+    const [state, events, sessions, plans, rechecks, lessons, points, game, exercises, save] = await Promise.all([
       supabase.from('learner_state').select('*').eq('learner_id', learnerId).maybeSingle(),
       supabase.from('learner_events').select('*').eq('learner_id', learnerId).order('created_at').limit(EVENTS_CAP),
       supabase.from('diagnostic_sessions').select('*').eq('learner_id', learnerId).order('started_at'),
@@ -83,6 +84,7 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       supabase.from('point_events').select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.from('game_settings').select('*').eq('learner_id', learnerId).maybeSingle(),
       supabase.from('exercise_results' as never).select('*').eq('learner_id', learnerId).order('created_at'),
+      supabase.from('game_saves' as never).select('*').eq('learner_id', learnerId).maybeSingle(),
     ])
 
     const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
@@ -118,6 +120,7 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       points:                 points.data ?? [],
       gameSettings:           game.data ?? null,
       classExerciseResults:   (exercises.data as unknown[] | null) ?? [],
+      gameSave:               save.data ?? null,
     }
   } catch {
     // A parent exercising a data right must still get a file. An empty section is visibly

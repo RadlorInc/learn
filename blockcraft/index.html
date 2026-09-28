@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>BlockCraft</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud" class="hidden">
+    <div id="crosshair">+</div>
+    <div id="xp"><div class="xpbar"><i id="xpfill"></i></div><span id="xplevel"></span></div>
+    <div id="hotbar"></div>
+    <div id="itemname"></div>
+    <img id="hand" alt="" />
+    <div id="debug" class="hidden"></div>
+    <div id="waterOverlay"></div>
+    <div id="fireOverlay"></div>
+    <div id="portalOverlay"></div>
+    <div id="toast"></div>
+    <canvas id="mapview" class="hidden" width="128" height="128"></canvas>
+    <div id="compass" class="hidden"><div id="needle"></div></div>
+    <div id="effectsHud"></div>
+  </div>
+
+  <div id="touch" class="hidden">
+    <div id="stick"><div id="knob"></div></div>
+    <div class="tbtn" id="tJump">⤒</div>
+    <div class="tbtn" id="tDown">⤓</div>
+    <div class="tbtn small" id="tFly">✈</div>
+    <div class="tbtn small" id="tInv">🎒</div>
+    <div class="tbtn small" id="tPause">⏸</div>
+    <div class="tbtn small" id="tDrop">⇩</div>
+  </div>
+
+  <div id="inventory" class="screen hidden"></div>
+
+  <div id="title" class="screen menu">
+    <h1>Block<span>Craft</span></h1>
+    <p class="tag">Build, mine, explore.</p>
+    <button id="bContinue" class="hidden">Continue world</button>
+    <button id="bNew">New world</button>
+    <button id="bHelp">How to play</button>
+    <div id="newWorld" class="card hidden">
+      <label>World seed <input id="seed" placeholder="random" maxlength="20" /></label>
+      <div class="row">
+        <label><input type="radio" name="mode" value="survival" checked /> Survival</label>
+        <label><input type="radio" name="mode" value="creative" /> Creative</label>
+      </div>
+      <button id="bCreate">Create world</button>
+      <p class="warn hidden" id="overwriteWarn">This replaces your saved world.</p>
+    </div>
+    <div id="help" class="card hidden">
+      <p><b>Move</b> W A S D · <b>Jump</b> Space · <b>Sprint</b> Ctrl or double-tap W · <b>Sneak / fly down</b> Shift</p>
+      <p><b>Break</b> hold left mouse · <b>Place / use</b> right mouse · <b>Pick block</b> middle mouse</p>
+      <p><b>Hotbar</b> 1–9 or scroll · <b>Inventory</b> E · <b>Drop</b> Q · <b>Fly</b> (creative) double-tap Space · <b>Debug</b> F3</p>
+      <p><b>Crafting:</b> logs → planks → sticks & crafting table → wooden pickaxe → stone tools → furnace → iron.</p>
+      <p><b>Adventure:</b> build an obsidian ring and light it with flint and steel to reach the Nether. Blaze rods + ender pearls make Eyes of Ender — throw one to find the stronghold, fill the portal frames, and beat the Ender Dragon.</p>
+      <p><b>Touch:</b> left stick moves, drag to look, tap to place/use, hold to break.</p>
+    </div>
+  </div>
+
+  <div id="pause" class="screen menu hidden">
+    <h2>Game paused</h2>
+    <button id="bResume">Back to game</button>
+    <button id="bMode">Game mode: Survival</button>
+    <label class="slider">Render distance <input id="rd" type="range" min="2" max="12" /> <span id="rdv"></span></label>
+    <label class="slider">Field of view <input id="fov" type="range" min="50" max="110" /> <span id="fovv"></span></label>
+    <label class="slider">Sound <input id="vol" type="range" min="0" max="100" /> <span id="volv"></span></label>
+    <button id="bQuit">Save and quit to title</button>
+  </div>
+
+  <div id="loading" class="screen menu hidden"><h2>Generating world…</h2><div class="bar"><i id="loadbar"></i></div></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

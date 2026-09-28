@@ -17,6 +17,7 @@ const eslintConfig = defineConfig([
     // (`labs-demo/dist`), a Python virtualenv, and recovered scratch files. A gate nobody can read
     // is a gate nobody runs — which is how a real error hides in the noise.
     "labs-demo/**",        // a separate Vite project with its own toolchain
+    "blockcraft/**",       // a separate Vite project (the game) with its own toolchain
     "python script/**",    // a virtualenv, not source
     "docs/recovered/**",   // scratch, and git-ignored
     "scratch/**",

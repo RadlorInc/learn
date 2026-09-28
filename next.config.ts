@@ -51,6 +51,45 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
+    const CSP = [
+      "default-src 'self'",
+      /** ⚠️ jsDelivr, storage.googleapis.com, 'wasm-unsafe-eval' and blob: workers were all here
+       *  for the MediaPipe hand tracker, which went with the AR chapters (2026-09-20). Removed
+       *  rather than left: an unused grant is reach nobody re-examines. Put them back WITH the
+       *  code that needs them, never ahead of it — and update /privacy, which names both origins.
+       *  ⚠️ 'unsafe-eval' IN DEV ONLY, and it is not cosmetic: React's dev build calls
+       *  `eval()` for its debugging features, so with it blocked EVERY page logs a console
+       *  error — which made `npm run test:chapters` (the C7 gate, whose contract is "zero
+       *  console errors") fail 210 of 211 against the dev server it is documented to drive.
+       *  It went unnoticed because the gate was last run against production. Never shipped:
+       *  this whole branch is dropped from the production header. */
+      `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
+      "font-src 'self' data:",
+      /** ⚠️ WITHOUT THIS THE RECORDED VOICE IS SILENTLY DEAD ON MOBILE, and nothing in the
+       *  app reports it. `media-src` was unset, so `default-src 'self'` was the fallback and
+       *  it blocked the `data:` WAV that `unlockVoiceClips()` plays inside the intro tap —
+       *  the mobile-autoplay unlock. Blocked, the element is never unlocked, so every
+       *  ElevenLabs clip in bands 12–18 falls back to browser speech, which most Chrome
+       *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing;
+       *  the clips themselves are 'self' (/audio/<voice>/*.mp3). */
+      "media-src 'self' data:",
+      // Supabase (REST + realtime).
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      "worker-src 'self'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://accounts.google.com",
+      "object-src 'none'",
+      /**
+       * ⚠️ PRODUCTION ONLY. Safari (unlike Chrome) applies this even on http://localhost,
+       * rewriting EVERY subresource to https:// — the plain-HTTP dev server cannot answer,
+       * so no JS/CSS loads and the app never hydrates (blank splash).
+       */
+      ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
+    ].join('; ')
     return [
       {
         // Baseline hardening on every route.
@@ -103,46 +142,7 @@ const nextConfig: NextConfig = {
            *  Enforcing WITH them is still a large win: it blocks every script, frame, form target
            *  and connection origin that is not on this list.
            */
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              /** 'wasm-unsafe-eval' + jsDelivr: the MediaPipe hand-tracking WASM loader.
-               *  ⚠️ 'unsafe-eval' IN DEV ONLY, and it is not cosmetic: React's dev build calls
-               *  `eval()` for its debugging features, so with it blocked EVERY page logs a console
-               *  error — which made `npm run test:chapters` (the C7 gate, whose contract is "zero
-               *  console errors") fail 210 of 211 against the dev server it is documented to drive.
-               *  It went unnoticed because the gate was last run against production. Never shipped:
-               *  this whole branch is dropped from the production header. */
-              `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"} https://cdn.jsdelivr.net`,
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob:",
-              // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
-              "font-src 'self' data:",
-              /** ⚠️ WITHOUT THIS THE RECORDED VOICE IS SILENTLY DEAD ON MOBILE, and nothing in the
-               *  app reports it. `media-src` was unset, so `default-src 'self'` was the fallback and
-               *  it blocked the `data:` WAV that `unlockVoiceClips()` plays inside the intro tap —
-               *  the mobile-autoplay unlock. Blocked, the element is never unlocked, so every
-               *  ElevenLabs clip in bands 12–18 falls back to browser speech, which most Chrome
-               *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing;
-               *  the clips themselves are 'self' (/audio/<voice>/*.mp3). */
-              "media-src 'self' data:",
-              // Supabase (REST + realtime), and the two origins MediaPipe pulls its model from.
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://storage.googleapis.com",
-              // MediaPipe runs its detector in a blob: worker; our own service worker is 'self'.
-              "worker-src 'self' blob:",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self' https://accounts.google.com",
-              "object-src 'none'",
-              /**
-               * ⚠️ PRODUCTION ONLY. Safari (unlike Chrome) applies this even on http://localhost,
-               * rewriting EVERY subresource to https:// — the plain-HTTP dev server cannot answer,
-               * so no JS/CSS loads and the app never hydrates (blank splash).
-               */
-              ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
-            ].join('; '),
-          },
+          { key: 'Content-Security-Policy', value: CSP },
         ],
       },
       {
@@ -207,6 +207,20 @@ const nextConfig: NextConfig = {
         source: '/manifest.json',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        /**
+         * ⚠️ SECURITY CHANGE, ON ONE PATH ONLY (2026-09-19): the game (public/blockcraft, built from blockcraft/) runs
+         * in a frame on /play, so ITS pages may be framed by THIS origin — `frame-ancestors 'self'` + SAMEORIGIN.
+         * Every other page keeps `'none'` / DENY from the rule above. This rule must stay LAST: when two rules set
+         * the same header, the later one wins. The game holds no account data and no session of its own — the
+         * /play page saves for it — so a same-origin frame of it can do nothing a visit to it could not.
+         */
+        source: '/blockcraft/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: CSP.replace("frame-ancestors 'none'", "frame-ancestors 'self'") },
         ],
       },
     ]

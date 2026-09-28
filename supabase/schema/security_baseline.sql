@@ -71,6 +71,11 @@
 --                                                  learner_access row; INSERT (4 data columns only) for the child's
 --                                                  OWN 'self' login, into their class, for an exercise that is OPEN.
 --                                                  No update/delete for anyone.
+--   game_saves                 rls=t  policies=3   2026-09-19 (20260919100000): the /play game's save, one row per
+--                                                  child. SELECT/INSERT/UPDATE for any learner_access row (owner,
+--                                                  viewer, the child's 'self' login); INSERT/UPDATE on
+--                                                  (learner_id, data) only; no DELETE (cascade with the learner).
+--                                                  Not read by anything privileged. No SECURITY DEFINER.
 --   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
 --                                                  or the row of the adult who created my learner. Every write
 --                                                  privilege revoked from public/anon/authenticated and no write

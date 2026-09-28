@@ -1,4 +1,4 @@
-const VERSION      = 'v205'
+const VERSION      = 'v206'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -113,6 +113,13 @@ self.addEventListener('fetch', event => {
         ? networkFirst(request, ASSETS_CACHE)
         : cacheFirst(request, ASSETS_CACHE)
     )
+    return
+  }
+
+  // The game (built into public/blockcraft). Its page names its code by content hash, so the page must come from the
+  // network (a stale page would ask for code the new deploy no longer has) and the hashed files can be cached for ever.
+  if (url.pathname.startsWith('/blockcraft/')) {
+    event.respondWith(url.pathname.endsWith('.html') ? networkFirst(request, ASSETS_CACHE) : cacheFirst(request, ASSETS_CACHE))
     return
   }
 

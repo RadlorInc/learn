@@ -76,3 +76,6 @@ scripts/.voice-fragments.json
 # committing it would let `supabase db push` apply a backdated migration to PRODUCTION.
 supabase/migrations/00000000000000_baseline.sql
 supabase/.temp/
+
+# The game (blockcraft/) is built into here by `npm run build:game`, which `npm run build` runs first.
+/public/blockcraft/

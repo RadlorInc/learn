@@ -10,6 +10,7 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getWallet, startGameTime, type Wallet } from '@/data/repositories/points'
 import { INK, PAGE_BG, pill, shell, topBar } from '@/features/lessons/Pictures'
 import { bubble, idea, primary } from '@/features/lessons/Frame'
+import GameFrame from './GameFrame'
 
 const CHOICES = [5, 10, 15]
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
@@ -30,7 +31,13 @@ export default function PlayPage() {
   const [note, setNote] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
 
-  const load = useCallback((id: string) => getWallet(id).then(setWallet), [])
+  // The game stays on screen from the moment time starts until it has saved after time ran out (0 = not shown).
+  const [gameFor, setGameFor] = useState(0)
+  const load = useCallback((id: string) => getWallet(id).then((w) => {
+    setWallet(w)
+    const ends = w && w !== 'unavailable' && w.playing_until ? new Date(w.playing_until).getTime() : 0
+    if (ends > Date.now()) setGameFor(ends)
+  }), [])
   useEffect(() => { if (learnerId) load(learnerId) }, [learnerId, load])
 
   const until = wallet && wallet !== 'unavailable' && wallet.playing_until ? new Date(wallet.playing_until).getTime() : 0
@@ -56,14 +63,13 @@ export default function PlayPage() {
   else if (wallet === 'unavailable') body = <p style={bubble}>Game time is coming soon!</p>
   else if (!wallet) body = <><p style={bubble}>We couldn&apos;t load your points. Check the internet and try again.</p>
     <button type="button" style={primary} onClick={() => load(learnerId)}>Try again</button></>
-  else if (playing) {
-    const left = Math.ceil((until - now) / 1000)
+  else if (gameFor) {
+    const left = Math.max(0, Math.ceil((until - now) / 1000))
     body = <>
-      <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left</p>
-      {/* The game mounts here once its files are added (founder is sending them, 2026-09-17). */}
-      <div style={{ flex: 1, minHeight: 320, border: `4px dashed ${INK}`, borderRadius: 20, display: 'grid', placeItems: 'center', background: '#fff', fontSize: 22, fontWeight: 800, color: INK }}>
-        🎮 Your game goes here
-      </div>
+      <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>
+        {playing ? `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')} left` : "Time's up! Saving your world…"}
+      </p>
+      <GameFrame learnerId={learnerId} running={playing} onClosed={() => setGameFor(0)} />
     </>
   } else {
     const perMin = wallet.points_per_minute
