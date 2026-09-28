@@ -30,7 +30,7 @@ const C = {
 } as const
 
 const field: React.CSSProperties = {
-  padding: '12px 14px', fontSize: 15, minHeight: 44,
+  padding: '12px 14px', fontSize: 16, minHeight: 44,
   border: `2px solid ${C.edge}`, borderRadius: 12,
   outline: 'none', width: '100%', boxSizing: 'border-box',
   fontWeight: 500, color: C.ink, background: C.card,

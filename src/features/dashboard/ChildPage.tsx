@@ -100,7 +100,7 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
   const [band, setBand] = useState<'' | Band>('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
-  const field: CSSProperties = { minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 15, width: '100%', boxSizing: 'border-box' }
+  const field: CSSProperties = { minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 16, width: '100%', boxSizing: 'border-box' }
   async function save() {
     const trimmed = value.trim()
     if (!trimmed) return

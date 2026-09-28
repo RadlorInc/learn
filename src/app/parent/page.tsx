@@ -989,6 +989,8 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
         <button data-tour="add-submit" onClick={handleAdd} disabled={loading || !attest || !attested} style={{ width:'100%', padding:'16px', minHeight:44, marginTop:12, background:loading||!attest||!attested?P.edge:'var(--accent-fill)', color:loading||!attest||!attested?P.ink3:'var(--on-accent-fill)', border:'none', borderRadius:50, fontSize:17, fontWeight:800, cursor:loading?'wait':!attest||!attested?'not-allowed':'pointer', boxShadow:loading||!attest||!attested?'none':'0 4px 14px rgba(76,180,248,0.28)' }}>
           {loading ? t('Adding…') : pick.size ? t(pick.size === 1 ? 'Add learner with 1 module' : 'Add learner with {n} modules', { n: pick.size }) : t('Add learner')}
         </button>
+        {/* The backdrop tap was the only way out, and a keyboard cannot tap a backdrop. */}
+        <button type="button" onClick={onClose} disabled={loading} style={{ width:'100%', minHeight:44, marginTop:8, background:'none', border:'none', color:P.ink2, fontSize:15, fontWeight:700, cursor:'pointer' }}>{t('Cancel')}</button>
       </div>
     </div>
   )
