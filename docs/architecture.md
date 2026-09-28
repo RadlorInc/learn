@@ -132,7 +132,9 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 ### Tables
 
 The base comes from `supabase/schema/baseline_schema.sql`, the rest from `supabase/migrations/*.sql`. RLS is on for
-every table in `public`.
+every table in `public`. An event trigger (`ensure_rls`, in the baseline) turns it on for each new table, so a migration
+that forgets `enable row level security` is harmless; `rlsEveryTable` fails if one turns RLS off, drops the trigger
+and adds a table, or adds a view a client can read that runs as its owner.
 
 | Purpose | Tables |
 |---|---|
@@ -335,6 +337,9 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `parentalConsent`, `consentReconsent` | Every child table carries the gate, on DEFINER paths too; notice-v7 refuses and upgrades as in §5. |
 | `accountDeletion`, `consentDeletion`, `deletionAuditTrail`, `exportCompleteness` | Only declared survivors outlive an account; no table keeps a deleted child; each deletion is logged; the export covers every child table or says why not. |
 | `securityDefinerDrift` | DEFINER and `search_path` never change silently. |
+| `countParadeStrictMode` | The KG counting demo, guided count and practice round finish under React StrictMode (a dev-only freeze, 2026-09-28). |
+| `rlsEveryTable` | Every `public` table has RLS on and no client-readable view reads past it (production: `docs/legal/sql/rls-everywhere.sql`). |
+| `accessibility`, `e2e/a11y.spec.ts` (local) | Pinch-zoom allowed; a lesson's tap-picture works from the keyboard. The e2e half: axe WCAG 2.1 AA on the signed-out pages, text fields ≥ 16px, a 3px focus ring, Rainbow Town painted by keyboard. |
 | `security`, `cspHeader`, `adminNoServiceRole` | No raw-HTML sink in `src/`; server writes check `res.ok`; no `unsafe-eval` in production; the service-role key never reaches the browser. |
 | `layering` | `core/` stays pure. |
 | `renameGate` | Old names, the old domain and the mascot stay off every visible surface. |

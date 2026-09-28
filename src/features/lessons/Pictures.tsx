@@ -6,7 +6,7 @@
  * `scratch` turns a picture into the Screen 8 scratch pad: every tap adds one (fills the next slot,
  * deals to the next plate, rings the next object, makes the next jump). It never grades anything.
  */
-import type { CSSProperties } from 'react'
+import type { CSSProperties, KeyboardEvent } from 'react'
 import { scratchLineMax, type Obj, type Picture } from './script'
 import { Diagram, Ink, wrap, useTextWidth, type InkRow } from './Diagrams'
 
@@ -81,7 +81,9 @@ export const tapCue = (p: Picture) => (p.kind === 'array' && p.turn ? null : TAP
 export interface Scratch { taps: number; onTap: () => void }
 
 export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
-  const tap = scratch ? { onClick: scratch.onTap, role: 'button' as const, 'aria-label': 'Tap to use the picture', style: { cursor: 'pointer' } } : {}
+  // A role="button" must also take focus and Enter/Space, or it is announced as a button a keyboard cannot press.
+  const tap = scratch ? { onClick: scratch.onTap, role: 'button' as const, tabIndex: 0, 'aria-label': 'Tap to use the picture', style: { cursor: 'pointer' },
+    onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); scratch.onTap() } } } : {}
   const taps = scratch?.taps ?? 0
 
   switch (p.kind) {

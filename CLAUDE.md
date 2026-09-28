@@ -64,7 +64,7 @@ Green is not evidence. Present is not enforcing. Found-nothing is not clean.
   test; a finding never measured, then amplified by whoever repeated it; the wrong mechanism; a measurement one
   click too early; a job that was never green; a check derived from the code it tests; an inert job nobody was told
   about; a byte window standing in for a boundary; both sides of a comparison sharing one omission; an order the
-  real app hides; a file standing in for a screen. When a check fools you in a new way, add it here in a few words.
+  real app hides; a file standing in for a screen; a dev server's StrictMode freeze read as a production fault. When a check fools you in a new way, add it here in a few words.
 - **Bind the check to the intent.** Write the expected value out by hand. Never import it from the code under test,
   grep it from the file it lives in, or filter a query on the property you assert. Measure at the state where the
   defect lives — for anything behind a click, after the click.
