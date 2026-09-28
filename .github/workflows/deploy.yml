@@ -186,10 +186,13 @@ jobs:
   # Its own job, so the job holding the production secrets never gets write access to the repo, and this one holds
   # nothing but the run's token. If it fails the tag stays behind, which errs the safe way: the next push is offered
   # a migrate-prod that applies nothing.
-  # No `if:` on purpose: a job whose need did not succeed is skipped unless its condition calls a status function
-  # (always(), !cancelled(), failure()), so `needs` alone runs it only after a successful migrate-prod.
+  # ⚠️ THE `if:` IS REQUIRED. Without one, GitHub applies an implicit success(), which is false when ANY ancestor
+  # was skipped, not just the direct need: on Deploy run 36469923680 migrate-prod succeeded and this job was
+  # skipped, because migrate-staging (always skipped while no staging project exists) is migrate-prod's need.
+  # `!cancelled()` stops that; the result check keeps it from running after a failed or skipped apply.
   record-migrated:
     needs: migrate-prod
+    if: ${{ !cancelled() && needs.migrate-prod.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5 # two API calls
     permissions:
