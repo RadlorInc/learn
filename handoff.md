@@ -54,6 +54,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 ## Open — the founder sets (dashboards and accounts)
 
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
+- Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
+  still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
@@ -126,5 +128,5 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
 - Never recorded, so check or drop: the console 404 on every page; whether Vercel firewall rules exist; whether an
-  Instant Rollback has ever been timed; whether the daily health-check routine still runs; the classroom AR demo
+  Instant Rollback has ever been timed; the classroom AR demo
   (labs) track; the id-free event rollup decided on 5 September and never built.
