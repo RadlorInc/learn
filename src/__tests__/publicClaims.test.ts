@@ -1,18 +1,16 @@
 /**
- * What the public surfaces PROMISE — founder's decision N21, 2026-09-26.
+ * What the public surfaces PROMISE — founder's decision N21, 2026-09-26, and the KG flip of 2026-09-28.
  *
- * Only grades 3–8 were live when N21 was decided; `/play` says games are "coming soon" and spends no points;
- * teachers adding students is paused until a school-consent route exists. So the titles, descriptions, share card,
- * JSON-LD, manifest, llms.txt, /help and /auth must say "grades 3 to 8" and must not sell KG, game time or class
- * rosters. Flip this gate in the SAME change that ships any of them.
+ * `/play` says games are "coming soon" and spends no points; teachers adding students is paused until a
+ * school-consent route exists. So the titles, descriptions, share card, JSON-LD, manifest, llms.txt, /help and /auth
+ * must not sell game time or class rosters. Flip this gate in the SAME change that ships either of them.
  *
- * ⚠️ KG–2 (#233, rebuilt 2026-09-27) puts the KG story chapters INSIDE the app — the child's home and the parent's
- * dashboard label a grade "KG" ("Kínder" in Spanish, in the dashboard's dictionary, i18n.tsx). That is not a public
- * claim, so it does not flip this gate; whether the public surfaces start saying "KG to 8" is the founder's call.
- * What changed here is the instrument for /auth's Spanish: it used to read ALL of i18n.tsx — the whole dashboard's
- * dictionary — as a stand-in for the sign-in screen, and the dashboard's own "KG" label turned it red. It now reads
- * the Spanish of exactly the literal keys /auth passes to `t()` (plus /auth's own source, as before). NOT covered:
- * keys /auth reaches through `errorWording()` rather than a literal.
+ * ⚠️ THE GRADES FLIPPED ON 2026-09-28 (founder): KG, Grade 1 and Grade 2 are live (#305), so every surface says
+ * "grades K–8" (short places) or "kindergarten through grade 8" (prose), and none still says the old "3 to 8" —
+ * N21's "grades 3 to 8, never KG" is what this gate enforced until then. radlor.com's own gate
+ * (`check-site-claims.mjs`) and `smoke:live` flipped in the same change.
+ * The instrument for /auth's Spanish reads exactly the literal keys /auth passes to `t()` (plus /auth's own source).
+ * NOT covered: keys /auth reaches through `errorWording()` rather than a literal.
  *
  * ⚠️ The forbidden phrases and the required phrase are written out here by hand, not read from the code —
  * a gate that derived them from the files would pass through any rewording. llms.txt is checked on what
@@ -42,7 +40,10 @@ const AUTH = 'src/app/auth/page.tsx'
 const authKeys = () => [...src(AUTH).matchAll(/\bt\('((?:[^'\\]|\\.)*)'/g)].map(m => m[1])
 const authSpanish = (): [string, string] => [`${AUTH} in Spanish`, authKeys().map(k => ES[k] ?? '').join('\n')]
 
-const KG = /\bKG\b|kindergarten|k[ií]nder/i
+// The grades, both ways. OLD catches every form the 3-to-8 claim took ("grades 3 to 8", "from 3 to 8", the Spanish
+// "de 3.º a 8.º grado"); a breakdown that must name the lesson grades says "grade 3 through grade 8" (llms.txt).
+const K8 = /\bK–8\b|kindergarten through grade 8/i
+const OLD_RANGE = /\b3 to 8\b|3\.º a 8\.º/i
 const GAME_TIME = /game[ -]?time|minutes of (a |the )?(building )?game|spend (them|points|it) on (game|minutes)/i
 // One sentence (`[^.]*` cannot cross a full stop): a teacher doing something with classes/students, or any roster.
 const ROSTER = /\bteachers?\b[^.]*\b(class(es)?|students?)\b|\brosters?\b/i
@@ -53,21 +54,21 @@ async function surfaces(): Promise<[string, string][]> {
 }
 
 describe('public claims match what ships (N21)', () => {
-  it('positive control: the scan reads the real text, and each surface says grades 3 to 8', async () => {
+  it('positive control: the scan reads the real text, and each surface says grades K–8', async () => {
     for (const [name, text] of await surfaces()) {
       expect(text.length, `${name} read as empty`).toBeGreaterThan(200)
-      expect(text, `${name} no longer states the grades`).toMatch(/3 to 8/)
+      expect(text, `${name} does not state the grades as K–8`).toMatch(K8)
     }
-    expect(src('src/app/auth/page.tsx')).toMatch(/grades 3 to 8/)
+    expect(src(AUTH)).toMatch(/grades K–8/)
     // …and the Spanish half reads the screen's real strings: the keys it asks for, translated.
     expect(authKeys().length, 'no t() key read out of /auth').toBeGreaterThan(30)
     expect(authSpanish()[1]).toContain('Continuar con Google')
-    expect(authSpanish()[1]).toContain('de 3.º a 8.º grado')
+    expect(authSpanish()[1]).toContain('de kínder a 8.º grado')
   })
 
-  it('no surface claims KG / kindergarten', async () => {
+  it('no surface still claims the old 3-to-8 range', async () => {
     const all: [string, string][] = [...(await surfaces()), [AUTH, src(AUTH)], authSpanish()]
-    for (const [name, text] of all) expect(text, `${name} claims KG`).not.toMatch(KG)
+    for (const [name, text] of all) expect(text, `${name} still says 3 to 8`).not.toMatch(OLD_RANGE)
   })
 
   it('no marketing surface sells game time', async () => {

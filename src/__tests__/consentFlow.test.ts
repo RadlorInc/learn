@@ -11,14 +11,14 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, applyFrom, legacyChild, CONSENT_ONCE } from './_schema'
+import { loadSchema, applyFrom, legacyChild, CONSENT_ONCE, FIXTURE_NOTICE, NOTICE_V7 } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const STRANGER = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
 const KIDLOGIN = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 let db: PGlite
 let n = 0
-const NOTICE = 'notice-v1'
+const NOTICE = FIXTURE_NOTICE
 const NO_ACCOUNT_CONSENT = 'no granted parental consent for this account — refusing to create a child'
 
 type R = { rows?: Record<string, unknown>[]; err?: string; code?: string }
@@ -345,7 +345,7 @@ describe('withdraw — a per-child link from before consent-once', () => {
     await old.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${PARENT}', 'parent@x.test', now())`)
     a = await legacyChild(old, PARENT, 'Legacy A')
     b = await legacyChild(old, PARENT, 'Legacy B')
-    await applyFrom(old, CONSENT_ONCE)
+    await applyFrom(old, CONSENT_ONCE, NOTICE_V7)   // a consent-once-era sibling: v7 would stop its data regardless
   }, 120_000)
 
   it('deletes just its child and withdraws just its consent', async () => {

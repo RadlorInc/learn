@@ -2,7 +2,9 @@
  * The direct notice (docs/legal/02) must say what a new child's row ACTUALLY stores — not what we
  * meant to store. Until notice-v4 it said "Grade level", and no grade was ever stored: the add-a-child
  * sheet keeps the lessons the parent picks and `age_group`, a band worked out by `bandOf` from the
- * first module's grade, written as the age range '9-11' or '12-14'.
+ * first module's grade, written as an age range: '3-5' (KG), '6-8' (Grades 1–2), '9-11' or '12-14'.
+ * ⚠️ Until notice-v7 the band test below looped grades 3–8 only, so it stayed green while KG–2 (#305)
+ * stored two ranges the notice did not name. It loops every grade a parent can pick now.
  *
  * ⚠️ The expectations below are written out BY HAND on purpose (CLAUDE.md: a check that imports the
  * value it asserts is tautological). Two things are driven from the code — the fields `createLearner`
@@ -28,6 +30,7 @@ vi.mock('@/data/repositories/_shared', () => ({
 
 import { createLearner } from '@/data/repositories/learners'
 import { bandOf } from '@/features/classes/Classes'
+import { GRADES } from '@/features/lessons/modules'
 import { NOTICE, B1, B3 } from '@/features/consent/copy'
 
 describe('the notice names what a new child row stores', () => {
@@ -40,10 +43,11 @@ describe('the notice names what a new child row stores', () => {
     expect(inserted, 'no exact grade or age is stored').not.toHaveProperty('grade')
   })
 
-  it('the only bands a grade can become are 9-11 (grades 3–5) and 12-14 (grades 6–8)', () => {
+  it('the only bands a grade can become are 3-5 (KG), 6-8 (Grades 1–2), 9-11 (Grades 3–5) and 12-14 (Grades 6–8)', () => {
+    expect(GRADES, 'the grades a parent can pick changed — name the new ones in the notice').toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8])
     const byBand: Record<string, number[]> = {}
-    for (const g of [3, 4, 5, 6, 7, 8]) (byBand[bandOf(g)] ??= []).push(g)
-    expect(byBand).toEqual({ '9-11': [3, 4, 5], '12-14': [6, 7, 8] })
+    for (const g of GRADES) (byBand[bandOf(g)] ??= []).push(g)
+    expect(byBand).toEqual({ '3-5': [0], '6-8': [1, 2], '9-11': [3, 4, 5], '12-14': [6, 7, 8] })
   })
 
   it('the notice row says a grade band and the lessons chosen — and names both stored bands', () => {
@@ -52,13 +56,14 @@ describe('the notice names what a new child row stores', () => {
     expect(row).not.toMatch(/^Grade level$/)
     expect(row).toMatch(/lessons you choose/)
     expect(row).toMatch(/grade band/)
-    for (const s of ['grades 3–5', 'grades 6–8', '9–11', '12–14']) expect(row).toContain(s)
+    expect(row).toContain('Kindergarten, Grades 1–2, 3–5 or 6–8')
+    expect(row).toContain('stored as the age range 3–5, 6–8, 9–11 or 12–14')
     expect(row).toMatch(/do not store your child's exact grade or age/)
   })
 
   it('B1 and B3 say "grade band", never "grade level"', () => {
     const b1 = B1.list.map(x => x.en).join('\n')
-    expect(b1).toContain('grade band (grades 3–5 or 6–8)')
+    expect(b1).toContain('grade band (Kindergarten, Grades 1–2, 3–5 or 6–8)')
     expect(b1).not.toMatch(/grade level/i)
     expect(B3.yesterday.en).toContain('grade band')
     expect(B3.yesterday.en).not.toMatch(/grade level/i)

@@ -18,7 +18,7 @@ REVIEWED-BY:
 
 **Fecha de entrada en vigor:** 25 de septiembre de 2026
 
-**Última actualización:** 25 de septiembre de 2026
+**Última actualización:** 28 de septiembre de 2026
 
 ---
 
@@ -56,7 +56,7 @@ El servicio está dirigido a niños, por lo que se le aplica la Ley de Protecci�
 | Qué | Por qué | ¿Es obligatorio? |
 |---|---|---|
 | El nombre de pila o un apodo que usted elija | Para que la aplicación pueda dirigirse a su hijo y para que usted pueda distinguir los perfiles | Obligatorio — un apodo es suficiente |
-| Las lecciones que usted elija, y una franja de grados calculada a partir de ellas — grados 3 a 5 o 6 a 8, guardada como la franja de edad 9–11 o 12–14. No es el grado ni la edad exactos del niño | Para dar trabajo del nivel adecuado | Obligatorio |
+| Las lecciones que usted elija, y una franja de grados calculada a partir de ellas — kínder, grados 1 y 2, 3 a 5 o 6 a 8 — guardada como la franja de edad 3–5, 6–8, 9–11 o 12–14. No es el grado ni la edad exactos del niño | Para dar trabajo del nivel adecuado | Obligatorio |
 | El trabajo del niño: respuestas, puntuaciones, progreso y los temas que usted haya elegido para él | Esto es el servicio. Así decide la aplicación qué enseñar a continuación y cómo le muestra a usted el progreso | Obligatorio |
 | Información técnica del dispositivo — un token de inicio de sesión guardado en el dispositivo; una marca por pestaña que indica qué perfil de niño está en uso; un identificador interno del niño, que aparece en cada registro de progreso y de eventos; un identificador aleatorio por evento, usado para evitar duplicados; la dirección IP y el tipo de navegador del dispositivo, y una ubicación aproximada — ciudad, región y país — derivada de la dirección IP por nuestros proveedores de alojamiento y de base de datos, que la registran en cada solicitud; y, si la aplicación falla, la página que se estaba viendo y el tipo de navegador. No usamos cookies | Para que la aplicación funcione, mantener la cuenta segura y mantener a su hijo con la sesión iniciada | Obligatorio para que la aplicación funcione |
 | Un pequeño número de eventos del producto, como el inicio de una sesión de lección | Para ver qué partes de la aplicación se usan, y así poder mejorarlas. Se guardan en nuestros propios sistemas, vinculados al identificador interno de su hijo y no a su nombre, **se eliminan automáticamente a los 90 días**, nunca se comparten y nunca se usan para publicidad | Obligatorio |

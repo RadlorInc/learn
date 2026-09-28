@@ -46,6 +46,9 @@ export async function POST(req: Request) {
       // PostgREST resolves an RPC by its parameter NAMES: a database without consent-once (20260924100000)
       // has no consent_request(…, p_scope, p_ack_at) and answers PGRST202. Nothing was written; say so.
       if ((e as RpcError).code === 'PGRST202') return NextResponse.json({ error: 'not_ready' }, { status: 503 })
+      // P0C04 here is "unknown notice version": this app's notice is newer than the database's list — the app went
+      // live before its notice migration was applied (e.g. 20260928100000, notice-v7). Nothing was written; say so.
+      if ((e as RpcError).code === 'P0C04') return NextResponse.json({ error: 'not_ready' }, { status: 503 })
       throw e
     }
 

@@ -32,7 +32,7 @@ beforeAll(async () => {
   await db.exec(`insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at)
                  values ('${PARENT}', 'n5@x.test', '{"role":"parent"}', null)`)
   const [c] = await asService<{ consent_id: string }>(
-    `select * from public.consent_request_at_signup('${PARENT}', 'notice-v6', 'privacy@x', 'terms@x', 'en', 'tokN5', '7 days')`)
+    `select * from public.consent_request_at_signup('${PARENT}', 'notice-v7', 'privacy@x', 'terms@x', 'en', 'tokN5', '7 days')`)
   await asService(`select public.consent_record_request_sent('${c.consent_id}', 're_b0')`)
 }, 180_000)
 

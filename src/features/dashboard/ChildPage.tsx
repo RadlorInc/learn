@@ -12,11 +12,12 @@ import { errorWording } from '@/shared/ui/errorWording'
 import { LessonsTab, type SaveResult } from './LessonsTab'
 import { dbtn, dghost, dcard } from './Helpers'
 import { useT } from './i18n'
+import { bandOf } from '@/features/classes/Classes'
 
 /** The four avatars a parent picks from (add-a-child and the correction card) — pictures we provide, never a photo. */
 export const AVATAR_SRCS = ['/assets/objects/fox.png', '/assets/objects/bunny.png', '/assets/objects/bear.png', '/assets/objects/cat.png']
-/** What the database stores for a grade: a band, written as the age range (docs/legal/02, notice-v4). */
-export type Band = '9-11' | '12-14'
+/** What the database stores for a grade: a band, written as the age range (docs/legal/02, notice-v7). */
+export type Band = '3-5' | '6-8' | '9-11' | '12-14'
 
 export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['login', 'Login & data']] as const
 export type ChildTab = typeof CHILD_TABS[number][0]
@@ -86,8 +87,9 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
 const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' }
 
 /** Correct a child's name, avatar or grade band — the parent right the documents promise (docs/legal/06, 11).
- *  ⚠️ The grade is offered as the two bands the database stores, not as grades 3–8: a "Grade 4 → 5" choice
- *  would change nothing stored and still say "Saved." */
+ *  ⚠️ The grade is offered as the four bands the database stores, not as grades KG–8: a "Grade 4 → 5" choice
+ *  would change nothing stored and still say "Saved." Each band's value is `bandOf` of a grade in it — the same
+ *  function add-a-child and class sign-up store with — so a correction cannot store a band they would not. */
 function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarIndex: number; onCorrect: (name: string, band: Band | null, avatarIndex: number) => Promise<'ok' | ErrorKind> }) {
   const t = useT()
   const [value, setValue] = useState(name)
@@ -121,8 +123,10 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
     <label style={{ display: 'block', margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{t('Grade band')}
       <select value={band} onChange={e => setBand(e.target.value as '' | Band)} style={{ ...field, marginTop: 4 }}>
         <option value="">{t('Keep it as it is')}</option>
-        <option value="9-11">{t('Grades 3–5')}</option>
-        <option value="12-14">{t('Grades 6–8')}</option>
+        <option value={bandOf(0)}>{t('Kindergarten')}</option>
+        <option value={bandOf(1)}>{t('Grades 1–2')}</option>
+        <option value={bandOf(3)}>{t('Grades 3–5')}</option>
+        <option value={bandOf(6)}>{t('Grades 6–8')}</option>
       </select></label>
     <button type="button" disabled={busy || !value.trim()} onClick={save} style={dbtn}>{t('Save')}</button>
     {msg && <p role="status" style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-soft)', fontWeight: 700 }}>{msg}</p>}

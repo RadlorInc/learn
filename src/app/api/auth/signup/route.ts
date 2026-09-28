@@ -84,9 +84,11 @@ export async function POST(req: Request) {
           p_terms_version: TERMS_VERSION, p_lang: lang, p_token_hash: hashToken(token), p_ttl: `${PENDING_TTL_DAYS} days`,
         })
       } catch (e) {
-        // A database without 20260926090000 has no such function (PGRST202): fall back to a confirmation-only email,
-        // and the parent is asked from the dashboard as before. Anything else is a real failure.
-        if ((e as RpcError).code !== 'PGRST202') throw e
+        // A database without 20260926090000 has no such function (PGRST202), or does not know this app's notice version
+        // yet (P0C04 — the app went live before its notice migration, e.g. 20260928100000): fall back to a
+        // confirmation-only email, and the parent is asked from the dashboard as before. Anything else is a real failure.
+        const code = (e as RpcError).code
+        if (code !== 'PGRST202' && code !== 'P0C04') throw e
       }
       if (row) {
         const id = await sendEmail('transactional', email, renderSignup(lang, `${confirm}#t=${token}`, firstName), key)

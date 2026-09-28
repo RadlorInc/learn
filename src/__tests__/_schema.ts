@@ -134,8 +134,13 @@ export async function foreignKeys(db: PGlite): Promise<Fk[]> {
  * is what the application will do.
  */
 /** The notice version fixtures consent to and attest against (consent-once: a child's
- *  `attested_notice_version` must equal its account consent's `notice_version`). */
-export const FIXTURE_NOTICE = 'notice-v1'
+ *  `attested_notice_version` must equal its account consent's `notice_version`). It must be the CURRENT one:
+ *  notice-v7 (`NOTICE_V7`) made every earlier consent non-current, as a production parent's is until they answer. */
+export const FIXTURE_NOTICE = 'notice-v7'
+
+/** notice-v7 (2026-09-28): every consent to v1–v6 stops being current. A suite about an earlier migration whose child
+ *  must still accept data stops `applyFrom` short of it — that child lived before v7 — or writes first, then applies it. */
+export const NOTICE_V7 = '20260928100000_notice_v7_kg2.sql'
 
 /**
  * Consent-once (2026-09-24): the parent's ACCOUNT consent — one, covering every child they add. A child is then
@@ -143,14 +148,14 @@ export const FIXTURE_NOTICE = 'notice-v1'
  * database stamps who and when. `scope = 'child'` gives the pre-consent-once per-child record, which can no
  * longer create a child and exists only so suites can build the legacy shape the migration must carry over.
  */
-export async function grantedConsent(db: PGlite, parentId: string, scope: 'account' | 'child' = 'account'): Promise<string> {
+export async function grantedConsent(db: PGlite, parentId: string, scope: 'account' | 'child' = 'account', notice = FIXTURE_NOTICE): Promise<string> {
   const { rows } = await db.query<{ id: string }>(`
     insert into public.parental_consents
       (parent_id, method, state, notice_version, privacy_version, terms_version,
        email_address, confirmed_at, token_hash, expires_at,
        request_email_provider_id, request_email_sent_at,
        second_email_provider_id, second_notice_scheduled_for, scope)
-    values ('${parentId}', 'email_plus', 'granted', '${FIXTURE_NOTICE}', 'privacy-v1', 'terms-v1',
+    values ('${parentId}', 'email_plus', 'granted', '${notice}', 'privacy-v1', 'terms-v1',
             'fixture@x.test', now(), md5(random()::text), now() + interval '7 days',
             're_fixture_b1', now(), 're_fixture_b3_' || md5(random()::text), now() + interval '1 day', '${scope}')
     returning id`)
@@ -160,9 +165,10 @@ export async function grantedConsent(db: PGlite, parentId: string, scope: 'accou
 /** The consent-once migration: a child created before it is the "legacy" shape (one per-child consent each). */
 export const CONSENT_ONCE = '20260924100000_consent_once.sql'
 
-/** The second half of `loadSchema({ before: file })`: applies `file` and every migration after it, in order. */
-export async function applyFrom(db: PGlite, file: string): Promise<void> {
-  for (const f of readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql') && f >= file && !STORAGE_ONLY_MIGRATIONS.has(f)).sort())
+/** The second half of `loadSchema({ before: file })`: applies `file` and every migration after it, in order —
+ *  stopping short of `until` when given. */
+export async function applyFrom(db: PGlite, file: string, until?: string): Promise<void> {
+  for (const f of readdirSync(resolve(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql') && f >= file && (!until || f < until) && !STORAGE_ONLY_MIGRATIONS.has(f)).sort())
     await applyFile(db, f)
 }
 
