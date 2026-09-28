@@ -33,9 +33,11 @@ export function reportCrash(
   // 2. The network report — forwards to the monitoring sink when one is configured, else lands in
   //    Vercel logs. `keepalive` so it survives the navigation a crash usually triggers.
   try {
+    const token = safeAccessToken()
     void fetch('/api/report-error', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // The server keeps `learnerId` only when this session can read that learner.
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       keepalive: true,
       body: JSON.stringify({
         message: err?.message,
@@ -59,4 +61,12 @@ export function reportCrash(
 /** The session lookup is the one part most likely to throw during a root-layout crash. */
 function safeLearnerId(): string | undefined {
   try { return getActiveLearner()?.id } catch { return undefined }
+}
+
+/** Read synchronously for the same reason: the stored session (client.ts `storageKey`). */
+function safeAccessToken(): string | undefined {
+  try {
+    const t = JSON.parse(localStorage.getItem('milo-auth') ?? 'null')?.access_token
+    return typeof t === 'string' ? t : undefined
+  } catch { return undefined }
 }
