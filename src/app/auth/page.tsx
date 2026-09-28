@@ -76,6 +76,7 @@ export default function AuthPage() {
   const [confirm,  setConfirm]  = useState('')     // signup only: typed twice, compared before anything is sent
   // signup only: a parent's sign-up email also asks for consent, a teacher's only confirms (founder, 2026-09-25)
   const [role,     setRole]     = useState<'parent' | 'teacher' | null>(null)
+  const [adult,    setAdult]    = useState(false)   // signup only: "I'm 18 or older", unticked until they tick it
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
@@ -102,6 +103,10 @@ export default function AuthPage() {
       setError(t('Please choose Parent or Teacher'))
       return
     }
+    if (mode === 'signup' && !adult) {
+      setError(t('Please confirm you are 18 or older'))
+      return
+    }
 
     setLoading(true); reset()
 
@@ -109,11 +114,13 @@ export default function AuthPage() {
       if (mode === 'signup') {
         // ONE email (founder, 2026-09-25): the server creates the account and sends it — for a parent, the email that
         // confirms the address also asks for permission. Supabase sends nothing of its own for this sign-up.
-        const r = await signUpOneEmail({ email: email.trim(), password, firstName: firstNameOf({ first_name: firstName }), role: role!, lang })
+        const r = await signUpOneEmail({ email: email.trim(), password, firstName: firstNameOf({ first_name: firstName }), role: role!, lang, adult })
         // V10 REVERSED (founder's call, 2026-09-22): say plainly that the email already has an account.
         if (r === 'exists') {
           setMode('login'); setConfirm('')
           setError(t('This email already has an account. Sign in below, or tap “Forgot password?”'))
+        } else if (r === 'adult_required') {
+          setError(t('Please confirm you are 18 or older'))
         } else if (r === 'weak_password' || r === 'invalid') {
           setError(t('Password must be at least 6 characters'))
         } else if (r !== 'ok') {
@@ -402,6 +409,17 @@ export default function AuthPage() {
                   onBlur={e => { e.target.style.borderColor = C.edge }}
                 />
               </div>
+            )}
+
+            {/* COPPA: only an adult makes an account (Terms: "You must be 18 or older"); children get a login from the
+                adult who adds them. Unticked by default, and /api/auth/signup refuses a sign-up without it. A Google
+                account says it on the Parent/Teacher picker instead (RolePicker, parent/page.tsx). */}
+            {mode === 'signup' && (
+              <label data-auth="adult" style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44, cursor: 'pointer', fontSize: 14, fontWeight: 700, color: C.ink }}>
+                <input type="checkbox" checked={adult} onChange={e => { setAdult(e.target.checked); reset() }}
+                  style={{ width: 22, height: 22, margin: 0, accentColor: 'var(--accent-fill)', flexShrink: 0 }} />
+                {t('I’m 18 or older')}
+              </label>
             )}
 
             {/* COPPA/ToS: the documents are linked ABOVE the button, so they are on screen before the

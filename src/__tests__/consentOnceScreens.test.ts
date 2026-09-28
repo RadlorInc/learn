@@ -119,14 +119,18 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     return { ...m, email, google }
   }
 
-  it('no consent block at all (founder, 2026-09-25): no summary, no checkbox — and both buttons work straight away', async () => {
+  it('no consent block at all (founder, 2026-09-25): no summary, one checkbox (18+, unticked) — and both buttons work straight away', async () => {
     const s = await signup()
     expect(s.host.querySelector('#auth-confirm'), 'control: this is the signup form').toBeTruthy()
     expect(s.host.textContent, 'control: Terms + Privacy are still linked above the button').toMatch(/By continuing you agree to our Terms and Privacy Policy/)
     expect(s.host.querySelector('[data-consent="signup"]')).toBeNull()
     expect(s.host.textContent).not.toContain('What we collect')
     expect(s.host.textContent).not.toContain('Read the full notice')
-    expect(s.host.querySelectorAll('input[type="checkbox"]')).toHaveLength(0)
+    // The one checkbox is the adult's "I'm 18 or older" (2026-09-28), not a consent tick; Google says it on the picker.
+    const boxes = [...s.host.querySelectorAll('input[type="checkbox"]')] as HTMLInputElement[]
+    expect(boxes).toHaveLength(1)
+    expect(boxes[0].closest('[data-auth="adult"]')?.textContent).toBe('I’m 18 or older')
+    expect(boxes[0].checked, 'the 18+ box starts ticked').toBe(false)
     expect(s.host.textContent).not.toContain("I've read what we collect")
     expect(s.host.textContent).not.toContain('Continue as a teacher')
     expect(s.email().disabled).toBe(false)
@@ -150,8 +154,12 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     expect(s.host.textContent).toContain('Please choose Parent or Teacher')
     await click([...s.host.querySelectorAll('[role="radio"]')].find(b => b.textContent === 'Parent') ?? null)
     await click(s.email())
+    expect(signUp, 'signed up without saying 18 or older').not.toHaveBeenCalled()
+    expect(s.host.textContent).toContain('Please confirm you are 18 or older')
+    await click(s.host.querySelector('[data-auth="adult"] input[type="checkbox"]'))
+    await click(s.email())
     expect(signUp).toHaveBeenCalledTimes(1)
-    expect(signUp.mock.calls[0][0]).toMatchObject({ email: 'p@x.test', firstName: 'Maya', role: 'parent', lang: 'en' })
+    expect(signUp.mock.calls[0][0]).toMatchObject({ email: 'p@x.test', firstName: 'Maya', role: 'parent', lang: 'en', adult: true })
     await s.done()
   })
 
@@ -161,6 +169,23 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     expect(m.host.querySelector('[data-consent="signup"]')).toBeNull()
     expect((m.host.querySelector('[data-auth="email"]') as HTMLButtonElement).disabled).toBe(false)
     expect((m.host.querySelector('[data-auth="google"]') as HTMLButtonElement).disabled).toBe(false)
+    expect(m.host.querySelector('[data-auth="adult"]'), 'sign-in asks for 18+ — that is sign-up only').toBeNull()
+    await m.done()
+  })
+
+  it('a new Google account says "I\'m 18 or older" on the Parent/Teacher picker before it gets a role', async () => {
+    const { RolePicker } = await import('@/app/parent/page')
+    const onPick = vi.fn()
+    const m = await mount(createElement(RolePicker, { name: 'Maya', onPick }))
+    const go = () => button(m.host, /^Continue →$/) as HTMLButtonElement
+    await click(button(m.host, /I'm a Parent/))
+    expect(go().disabled, 'a role alone is enough to continue').toBe(true)
+    await click(go())
+    expect(onPick).not.toHaveBeenCalled()
+    await click(m.host.querySelector('[data-role="adult"] input[type="checkbox"]'))
+    expect(go().disabled, 'control: role + 18+ does not open Continue').toBe(false)
+    await click(go())
+    expect(onPick).toHaveBeenCalledWith('parent')
     await m.done()
   })
 })

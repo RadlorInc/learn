@@ -436,10 +436,11 @@ describe('POST /api/checkout', () => {
   })
   afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
 
-  const checkout = async (body: unknown, auth = 'Bearer token-abc') => {
+  // Every request carries the auto-renewal tick unless a test takes it away (`renewalConsent: undefined` drops the key).
+  const checkout = async (body: Record<string, unknown>, auth = 'Bearer token-abc') => {
     const { POST } = await import('@/app/api/checkout/route')
     return POST(new Request('https://x/api/checkout', {
-      method: 'POST', body: JSON.stringify(body),
+      method: 'POST', body: JSON.stringify({ renewalConsent: true, ...body }),
       headers: auth ? { authorization: auth } : {},
     }))
   }
@@ -491,6 +492,24 @@ describe('POST /api/checkout', () => {
     stubCheckout()
     expect((await checkout({ seats: 0 })).status).toBe(400)
     expect((await checkout({})).status).toBe(400)
+  })
+
+  it('refuses without the auto-renewal tick — missing, false or the string "true" — and never reaches Stripe', async () => {
+    const calls = stubCheckout()
+    for (const renewalConsent of [undefined, false, 'true']) {
+      const res = await checkout({ seats: 1, renewalConsent })
+      expect(res.status, JSON.stringify(renewalConsent)).toBe(400)
+      expect(await res.json()).toEqual({ error: 'renewal_consent_required' })
+    }
+    expect(calls.some(c => c.url.includes('/v1/checkout/sessions')), 'a session was opened without the tick').toBe(false)
+  })
+
+  it('positive control: WITH the tick the session opens, and the subscription carries when they agreed', async () => {
+    const calls = stubCheckout()
+    const res = await checkout({ seats: 1, renewalConsent: true })
+    expect(res.status).toBe(200)
+    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    expect(form.get('subscription_data[metadata][renewal_consent_at]')).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/)
   })
 
   it('takes the account from the TOKEN, never from the body', async () => {

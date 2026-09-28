@@ -483,6 +483,8 @@ export const ES: Record<string, string> = {
   'Check your email for a confirmation link!': '¡Revise su correo: le enviamos un enlace de confirmación!',
   'Check your email: one message confirms your address and asks for your permission.': 'Revise su correo: un solo mensaje confirma su dirección y le pide su permiso.',
   'Please choose Parent or Teacher': 'Elija Padre/Madre o Docente',
+  'I’m 18 or older': 'Tengo 18 años o más',
+  'Please confirm you are 18 or older': 'Confirme que tiene 18 años o más',
   'I am a…': 'Soy…',
   'Parent': 'Padre o madre',
   'Teacher': 'Docente',

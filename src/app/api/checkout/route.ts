@@ -45,6 +45,10 @@ export async function POST(req: Request) {
   // 4 of. `seats` is the one number in this request that costs money, so it is bounded twice.
   const seats = clampSeats(body.seats)
   if (seats < 1) return NextResponse.json({ error: 'seats must be 1..' + MAX_SEATS }, { status: 400 })
+  // The parent ticked "I agree to the automatic renewal terms shown above" next to the button (plan/page.tsx). No
+  // tick, no session: an auto-renewing charge needs affirmative consent first (California's ARL; ATTORNEY-PACKET C1).
+  if (body.renewalConsent !== true) return NextResponse.json({ error: 'renewal_consent_required' }, { status: 400 })
+  const renewalConsentAt = new Date().toISOString()
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -89,7 +93,8 @@ export async function POST(req: Request) {
     mode: 'subscription' as const,
     line_items: [{ price, quantity: seats }],
     client_reference_id: user.id,
-    subscription_data: { metadata: { account_id: user.id } },
+    // The consent's time travels with the subscription, so Stripe holds the record of when they agreed.
+    subscription_data: { metadata: { account_id: user.id, renewal_consent_at: renewalConsentAt } },
     // No trial — founder's call, Stage 1 §1.
     success_url: `${SITE_URL}/parent?billing=success`,
     cancel_url: `${SITE_URL}/parent?billing=cancelled`,

@@ -788,7 +788,10 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
 export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRole) => void }) {
   const [picked, setPicked] = useState<UserRole | null>(null)
   const [busy,   setBusy]   = useState(false)
-  function commit() { if (busy || !picked) return; setBusy(true); onPick(picked) }
+  // A Google account never saw the sign-up form's "I'm 18 or older", so it says it here, before it gets a role.
+  const [adult,  setAdult]  = useState(false)
+  const ready = !!picked && adult && !busy
+  function commit() { if (!ready) return; setBusy(true); onPick(picked!) }
 
   const cards: { role: UserRole; emoji: string; title: string; sub: string }[] = [
     { role: 'parent',  emoji: '👪', title: "I'm a Parent",  sub: 'One or two children at home.' },
@@ -844,16 +847,22 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
         You can change this later — it just tailors your home screen.
       </p>
 
+      <label data-role="adult" style={{ display:'flex', alignItems:'center', gap:10, minHeight:44, cursor:'pointer', fontSize:15, fontWeight:700, color:P.ink }}>
+        <input type="checkbox" checked={adult} disabled={busy} onChange={e => setAdult(e.target.checked)}
+          style={{ width:22, height:22, margin:0, accentColor:'var(--accent-fill)', flexShrink:0 }} />
+        I’m 18 or older
+      </label>
+
       <button
         onClick={commit}
-        disabled={!picked || busy}
+        disabled={!ready}
         style={{
           width:'100%', maxWidth:340, padding:'15px', minHeight:44,
-          background: !picked || busy ? P.edge : 'var(--accent-fill)',
-          color: !picked || busy ? P.ink3 : 'var(--on-accent-fill)',
+          background: ready ? 'var(--accent-fill)' : P.edge,
+          color: ready ? 'var(--on-accent-fill)' : P.ink3,
           border:'none', borderRadius:50, fontSize:16, fontWeight:800,
-          cursor: busy ? 'wait' : picked ? 'pointer' : 'default',
-          boxShadow: !picked || busy ? 'none' : '0 4px 14px rgba(76,180,248,0.28)',
+          cursor: busy ? 'wait' : ready ? 'pointer' : 'default',
+          boxShadow: ready ? '0 4px 14px rgba(76,180,248,0.28)' : 'none',
           transition:'all 200ms ease',
         }}
       >{busy ? 'Setting up…' : 'Continue →'}</button>

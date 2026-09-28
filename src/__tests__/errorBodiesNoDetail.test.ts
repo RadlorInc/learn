@@ -36,7 +36,7 @@ describe('a server with no consent configuration says only not_configured', () =
     ['consent/request', async () => (await import('@/app/api/consent/request/route')).POST(req('http://x/api/consent/request', { noticeVersion: NOTICE_VERSION }))],
     ['consent/respond', async () => (await import('@/app/api/consent/respond/route')).POST(req('http://x/api/consent/respond', { t: 'A'.repeat(43), action: 'grant' }))],
     ['consent/cancel-second-notice', async () => (await import('@/app/api/consent/cancel-second-notice/route')).POST(req('http://x/api/consent/cancel-second-notice', {}))],
-    ['auth/signup', async () => (await import('@/app/api/auth/signup/route')).POST(req('http://x/api/auth/signup', { email: 'p@x.test', password: 'long-enough-1', role: 'parent', firstName: 'Maya' }))],
+    ['auth/signup', async () => (await import('@/app/api/auth/signup/route')).POST(req('http://x/api/auth/signup', { email: 'p@x.test', password: 'long-enough-1', role: 'parent', firstName: 'Maya', adult: true }))],
   ]
   for (const [name, call] of cases) {
     it(`${name}: 503 { error: 'not_configured' } and no variable name`, async () => {
@@ -53,7 +53,7 @@ describe('auth/signup does not echo the auth server\'s message', () => {
     for (const k of CONFIG) process.env[k] = 'set'
     signupLink = { ok: false, reason: 'weak_password', message: 'UPSTREAM-SENTINEL: password is known to be weak' }
     const { POST } = await import('@/app/api/auth/signup/route')
-    const { status, body } = await read(await POST(req('http://x/api/auth/signup', { email: 'p@x.test', password: 'long-enough-1', role: 'parent', firstName: 'Maya' })))
+    const { status, body } = await read(await POST(req('http://x/api/auth/signup', { email: 'p@x.test', password: 'long-enough-1', role: 'parent', firstName: 'Maya', adult: true })))
     expect(status).toBe(400)
     expect(body).toEqual({ error: 'weak_password' })
   })
