@@ -65,6 +65,15 @@ describe('the child\'s screen when their answers wait on the device', () => {
     expect(host.querySelector('[role="dialog"]')).toBeNull()
   })
 
+  it('every line has a Spanish draft that is not just the English (shown once the child screens have a language switch)', async () => {
+    const { PAUSE_COPY } = await import('@/features/consent/ConsentPause')
+    for (const [k, en] of Object.entries(PAUSE_COPY.en)) {
+      const es = (PAUSE_COPY.es as Record<string, string>)[k]
+      expect(es, `no Spanish for "${k}"`).toBeTruthy()
+      expect(es, `"${k}" in Spanish is the English`).not.toBe(en)
+    }
+  })
+
   it('control: the forbidden-word check SEES an error word', () => {
     expect('Something failed: consent error').toMatch(FORBIDDEN)
   })
