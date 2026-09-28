@@ -94,7 +94,7 @@ describe('at most 300 points a day', () => {
   })
   it('a client cannot call the room function or read the catalogue', async () => {
     for (const sql of [`select public.points_room_today('${kid}') as v`, `select count(*) as v from public.lesson_catalog`]) {
-      expect((await asChild(sql)).error?.message, sql).toMatch(/permission denied/)
+      expect(String((await asChild(sql)).error?.message), sql).toMatch(/permission denied/)
     }
   })
 })
