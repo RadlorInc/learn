@@ -47,6 +47,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 ## Open — the founder sets (dashboards and accounts)
 
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
+- Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
+  still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
@@ -78,6 +80,11 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
+- `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
+  it missed the successful `migrate-prod` at `774ac5170`, named `78dee7be1` instead, and offered `production-db` with
+  nothing to apply (the same script run locally a minute later said `changed=false`). The run was cancelled. Its
+  blind-read guard only catches a run with no jobs; a job list missing one job passes it. Cross-check with a second
+  source (e.g. the `production-db` deployments list) before trusting a `true`.
 - No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
   `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
   (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
@@ -120,5 +127,5 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
 - Never recorded, so check or drop: the console 404 on every page; whether Vercel firewall rules exist; whether an
-  Instant Rollback has ever been timed; whether the daily health-check routine still runs; the classroom AR demo
+  Instant Rollback has ever been timed; the classroom AR demo
   (labs) track; the id-free event rollup decided on 5 September and never built.
