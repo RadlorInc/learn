@@ -60,8 +60,9 @@ export async function createLearner(
   /** What the child starts with: a class (its lessons), or just the modules chosen when adding them. */
   inClass?: { classId?: string; lessonIds: string[] | null },
   /** The parent's granted ACCOUNT consent, and the notice version the attestation checkbox showed —
-   *  that consent's own `notice_version`. trg_enforce_learner_consent refuses a child without both
-   *  (consent-once); it stamps who/when/how itself, so nothing else about the attestation is sent. */
+   *  `attestationVersion()`: the current notice (v7) once the database lists it, else that consent's own version.
+   *  trg_enforce_learner_consent refuses a child without both (consent-once) and an attestation older than the
+   *  consent; it stamps who/when/how itself, so nothing else about the attestation is sent. */
   consent?: { id: string; noticeVersion: string },
 ): Promise<Learner | null> {
   const supabase = db()

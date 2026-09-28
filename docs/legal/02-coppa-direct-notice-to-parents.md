@@ -28,7 +28,7 @@ You are creating a Radlic account for your children. United States law — the C
 |---|---|---|
 | Your child's first name (or a nickname you choose) | So the app can address your child and so you can tell your children's profiles apart | Required — you may use a nickname instead of a real name |
 | The avatar you pick for your child | So your child recognises their own profile | Required — chosen from a set we provide; it is not a photograph |
-| The lessons you choose for your child, and a grade band worked out from them — grades 3–5 or grades 6–8, stored as the age range 9–11 or 12–14. We do not store your child's exact grade or age | To give your child work at the right level | Required |
+| The lessons you choose for your child, and a grade band worked out from them — Kindergarten, Grades 1–2, 3–5 or 6–8 — stored as the age range 3–5, 6–8, 9–11 or 12–14. We do not store your child's exact grade or age | To give your child work at the right level | Required |
 | The username your child signs in with | So your child can sign in without needing an email address of their own | Required |
 | Answers to maths questions, scores, points, progress, and anything saved in a game | This is the product: it is how the app decides what to teach next and how it shows you progress | Required |
 | Any feedback your child sends us about a lesson | So we can fix what is not working | Only if they send it |

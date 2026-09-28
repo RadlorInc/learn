@@ -28,7 +28,7 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v6'
+export const NOTICE_VERSION = 'notice-v7'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
@@ -49,7 +49,7 @@ export const NOTICE = {
     [{ en: 'The avatar you pick for your child', es: 'El avatar que usted elija para su hijo' },
      { en: 'So your child recognises their own profile', es: 'Para que su hijo reconozca su propio perfil' },
      { en: 'Required — chosen from a set we provide; it is not a photograph', es: 'Obligatorio — se elige de un conjunto que ofrecemos; no es una fotografía' }],
-    [{ en: "The lessons you choose for your child, and a grade band worked out from them — grades 3–5 or grades 6–8, stored as the age range 9–11 or 12–14. We do not store your child's exact grade or age", es: 'Las lecciones que usted elija para su hijo y una franja de grados deducida de ellas — grados 3 a 5 o grados 6 a 8, guardada como la franja de edad 9–11 o 12–14. No guardamos el grado exacto ni la edad de su hijo' },
+    [{ en: "The lessons you choose for your child, and a grade band worked out from them — Kindergarten, Grades 1–2, 3–5 or 6–8 — stored as the age range 3–5, 6–8, 9–11 or 12–14. We do not store your child's exact grade or age", es: 'Las lecciones que usted elija para su hijo y una franja de grados deducida de ellas — kínder, grados 1 y 2, 3 a 5 o 6 a 8 — guardada como la franja de edad 3–5, 6–8, 9–11 o 12–14. No guardamos el grado exacto ni la edad de su hijo' },
      { en: 'To give your child work at the right level', es: 'Para darle a su hijo trabajo del nivel adecuado' },
      { en: 'Required', es: 'Obligatorio' }],
     [{ en: 'The username your child signs in with', es: 'El nombre de usuario con el que su hijo inicia sesión' },
@@ -129,7 +129,7 @@ export const B1 = {
   store: { en: 'For each child you add, we store:', es: 'Por cada niño que añada, guardamos:' },
   list: [
     { en: 'their first name or nickname, the avatar you pick and their username', es: 'su nombre de pila o apodo, el avatar que usted elija y su nombre de usuario' },
-    { en: 'the lessons you choose, and a grade band (grades 3–5 or 6–8) worked out from them', es: 'las lecciones que usted elija y una franja de grados (grados 3 a 5 o 6 a 8) deducida de ellas' },
+    { en: 'the lessons you choose, and a grade band (Kindergarten, Grades 1–2, 3–5 or 6–8) worked out from them', es: 'las lecciones que usted elija y una franja de grados (kínder, grados 1 y 2, 3 a 5 o 6 a 8) deducida de ellas' },
     { en: 'their answers, points and progress', es: 'sus respuestas, puntos y progreso' },
     { en: 'any feedback they send, a few product events and basic device information', es: 'los comentarios que envíe, algunos eventos del producto e información básica del dispositivo' },
   ] as L[],

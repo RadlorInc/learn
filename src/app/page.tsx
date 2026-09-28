@@ -36,7 +36,7 @@ function AppJsonLd() {
         applicationCategory: 'EducationalApplication',
         operatingSystem: 'Web browser',
         description:
-          'Math for grades 3 to 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents choose the lessons.',
+          'Math for kindergarten through grade 8. Each lesson explains one idea step by step, then practice adapts to what the child gets right and wrong. Parents choose the lessons.',
         publisher: { '@id': COMPANY_ID },
         brand: { '@id': COMPANY_ID },
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },

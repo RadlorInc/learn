@@ -109,7 +109,7 @@ console.log('\n── E. a Google-style parent (confirmed, no confirmation email
   const u = await j(`${API}/auth/v1/admin/users`, { method: 'POST', headers: svcH, body: JSON.stringify({ email, password, email_confirm: true, user_metadata: { full_name: 'Sam Lee' } }) })
   await j(`${API}/rest/v1/profiles?id=eq.${u.body.id}`, { method: 'PATCH', headers: { ...svcH, Prefer: 'return=minimal' }, body: JSON.stringify({ role: 'parent' }) })
   const tok = (await j(`${API}/auth/v1/token?grant_type=password`, { method: 'POST', headers: { apikey: ANON, ...json }, body: JSON.stringify({ email, password }) })).body.access_token
-  const r = await j(`${APP}/api/consent/request`, { method: 'POST', headers: { ...json, Authorization: `Bearer ${tok}` }, body: JSON.stringify({ noticeVersion: 'notice-v6', lang: 'en' }) })
+  const r = await j(`${APP}/api/consent/request`, { method: 'POST', headers: { ...json, Authorization: `Bearer ${tok}` }, body: JSON.stringify({ noticeVersion: 'notice-v7', lang: 'en' }) })
   ok(r.status === 200, `B1 requested (${r.status})`)
   const [b1] = await ours(email)
   const t = /respond#t=([A-Za-z0-9_-]{43})/.exec(b1?.text ?? '')?.[1]

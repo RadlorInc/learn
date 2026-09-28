@@ -33,9 +33,12 @@ describe('correct a child\'s details', () => {
       Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(el, v)
       el.dispatchEvent(new Event(el instanceof HTMLInputElement ? 'input' : 'change', { bubbles: true }))
     }
-    // The grade is offered as the two bands the database stores — never grades 3–8 (a change within a band
-    // would store nothing and still say "Saved.").
-    expect([...select.options].map(o => o.value)).toEqual(['', '9-11', '12-14'])
+    // The grade is offered as the four bands the database stores — never grades KG–8 (a change within a band
+    // would store nothing and still say "Saved."). Each label and the age range it stores, written out by hand
+    // (docs/legal/02, notice-v7): the same ranges add-a-child stores (noticeStoredFields.test.ts drives bandOf).
+    expect([...select.options].map(o => [o.textContent, o.value])).toEqual([
+      ['Keep it as it is', ''], ['Kindergarten', '3-5'], ['Grades 1–2', '6-8'], ['Grades 3–5', '9-11'], ['Grades 6–8', '12-14'],
+    ])
     const avatars = [...card!.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')]
     expect(avatars.length, 'the avatar picker did not render').toBe(4)
     await act(async () => { set(input, 'Bea'); set(select, '12-14'); avatars[2].click() })
@@ -43,6 +46,29 @@ describe('correct a child\'s details', () => {
     expect(onCorrect).toHaveBeenCalledWith('Bea', '12-14', 2)
     expect(card!.textContent).toContain('Saved.')
   })
+  it.each([['Kindergarten', '3-5'], ['Grades 1–2', '6-8'], ['Grades 3–5', '9-11'], ['Grades 6–8', '12-14']])(
+    'picking %s saves the age range %s', async (label, range) => {
+      const onCorrect = vi.fn(async () => 'ok' as const)
+      const { host, act } = await mount(true, onCorrect)
+      const card = host.querySelector('[data-tour="correct-card"]')!
+      const select = card.querySelector('select')!
+      const option = [...select.options].find(o => o.textContent === label)
+      expect(option, `no "${label}" choice`).toBeDefined()
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')!.set!.call(select, option!.value)
+        select.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+      await act(async () => { [...card.querySelectorAll('button')].find(b => b.textContent === 'Save')!.click() })
+      expect(onCorrect).toHaveBeenCalledWith('Ana', range, 0)
+    })
+  it.each([['notice_sent', 'We’ve emailed you a link to agree to it'], ['notice_unsent', 'We could not send the email']])(
+    'a move into KG refused for an older notice (%s) says why, and whether the email went', async (result, words) => {
+      const { host, act } = await mount(true, vi.fn(async () => result as never))
+      const card = host.querySelector('[data-tour="correct-card"]')!
+      await act(async () => { [...card.querySelectorAll('button')].find(b => b.textContent === 'Save')!.click() })
+      expect(card.textContent).toContain('Kindergarten and Grades 1–2')
+      expect(card.textContent).toContain(words)
+    })
   it('no avatar is picked to start with, and saving without a pick keeps the current one', async () => {
     const onCorrect = vi.fn(async () => 'ok' as const)
     const { host, act } = await mount(true, onCorrect)

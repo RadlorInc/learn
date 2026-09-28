@@ -26,7 +26,7 @@ async function svc<T>(sql: string): Promise<T[]> {
 }
 async function request(uid: string, tok: string) {
   const [c] = await svc<{ consent_id: string }>(
-    `select * from public.consent_request_at_signup('${uid}', 'notice-v6', 'privacy@x', 'terms@x', 'en', '${tok}', '7 days')`)
+    `select * from public.consent_request_at_signup('${uid}', 'notice-v7', 'privacy@x', 'terms@x', 'en', '${tok}', '7 days')`)
   await svc(`select public.consent_record_request_sent('${c.consent_id}', 're_b0_${tok}')`)
   return c.consent_id
 }

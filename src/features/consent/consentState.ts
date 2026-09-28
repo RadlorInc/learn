@@ -63,6 +63,18 @@ export async function requestAccountConsent(lang: Lang): Promise<AskResult> {
   return { ok: false, error: r?.status === 409 ? 'stale' : j?.error === 'not_ready' ? 'not_ready' : 'failed' }
 }
 
+/**
+ * The notice a NEW child is attested against (notice-v7, founder 2026-09-28): the one the add-a-child sheet shows —
+ * NOTICE_VERSION — once the database lists it; until its migration is applied (the app deploys first here), the account
+ * consent's own version, which is exactly what the app sent before (20260928100000 accepts either, never an older one).
+ */
+export async function attestationVersion(consentVersion: string): Promise<string> {
+  try {
+    const { data, error } = await createClient().from('consent_notice_versions').select('version').eq('version', NOTICE_VERSION)
+    return !error && (data ?? []).length ? NOTICE_VERSION : consentVersion
+  } catch { return consentVersion }
+}
+
 /** "{date}" in ATTEST.tick: the day the account consent was confirmed, as a long date in the parent's language. */
 export const longDate = (iso: string, lang: Lang) =>
   new Date(iso).toLocaleDateString(lang === 'es' ? 'es' : 'en-US', { dateStyle: 'long' })

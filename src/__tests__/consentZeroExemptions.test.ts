@@ -14,7 +14,7 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, applyFile, applyFrom } from './_schema'
+import { loadSchema, applyFile, applyFrom, FIXTURE_NOTICE } from './_schema'
 
 const D6 = '20260923170000_consent_zero_exemptions.sql'
 const OWNER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -148,10 +148,10 @@ describe('after consent-once: D6 holds, and the gate is the account gate', () =>
     const account = (await one<string>(`insert into public.parental_consents (parent_id, method, state, notice_version, privacy_version, terms_version,
         email_address, confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
         second_email_provider_id, second_notice_scheduled_for, scope)
-      values ('${OWNER}', 'email_plus', 'granted', 'notice-v3', 'p', 't', 'o@x.test', now(), md5('account'),
+      values ('${OWNER}', 'email_plus', 'granted', '${FIXTURE_NOTICE}', 'p', 't', 'o@x.test', now(), md5('account'),
               now() + interval '7 days', 're_b1', now(), 're_b3_account', now() + interval '1 day', 'account') returning id::text`)).id
     const made = await tryq(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
-      values ('Fresh', 0, '6-8', '${OWNER}', '${account}', 'notice-v3')`)
+      values ('Fresh', 0, '6-8', '${OWNER}', '${account}', '${FIXTURE_NOTICE}')`)
     expect(made.ok ? 'CREATED' : made.err).toBe('CREATED')
   })
 })

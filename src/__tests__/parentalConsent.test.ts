@@ -15,11 +15,11 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, applyFrom, legacyChild, CONSENT_ONCE } from './_schema'
+import { loadSchema, applyFrom, legacyChild, CONSENT_ONCE, FIXTURE_NOTICE, NOTICE_V7 } from './_schema'
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const OTHER = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
-const V = { notice: 'notice-v1', privacy: 'privacy-2026-09-06', terms: 'terms-2026-09-06' }
+const V = { notice: FIXTURE_NOTICE, privacy: 'privacy-2026-09-06', terms: 'terms-2026-09-06' }
 
 let db: PGlite
 
@@ -257,7 +257,7 @@ describe('a child created under a per-child consent, carried over by the migrati
     ({ db: old } = await loadSchema({ before: CONSENT_ONCE }))
     await old.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${PARENT}', 'p@x.test', now())`)
     legacy = await legacyChild(old, PARENT, 'Before')
-    await applyFrom(old, CONSENT_ONCE)
+    await applyFrom(old, CONSENT_ONCE, NOTICE_V7)   // consent-once's carry-over; v7's re-ask is consentReconsent.test.ts
   }, 120_000)
 
   it('gets its attestation from its own consent — nothing invented', async () => {

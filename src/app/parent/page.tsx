@@ -47,7 +47,8 @@ import { LangContext, loadLang, saveLang, makeT, useT, useLang, type Lang } from
 import { TextSizeCard } from '@/features/dashboard/TextSizeCard'
 import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
 import { AccountConsentCard } from '@/features/consent/AccountConsent'
-import { longDate } from '@/features/consent/consentState'
+import { longDate, attestationVersion } from '@/features/consent/consentState'
+import { askForConsent } from '@/features/consent/childPause'
 import { firstNameOf } from '@/features/consent/firstName'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
@@ -469,6 +470,9 @@ function Dashboard() {
         onCorrect={async (display_name, band, avatar_index) => {
           const r = await correctLearner(d.learner.id, band === null ? { display_name, avatar_index } : { display_name, avatar_index, age_group: band })
           if (r === 'ok') await loadAll()
+          // Refused because the parent agreed only to a notice that does not name KG / Grades 1–2 (notice-v7): send them
+          // the consent email for the current notice, and say so.
+          if (r === 'consent' && (band === '3-5' || band === '6-8')) return (await askForConsent(d.learner.id)) === 'sent' ? 'notice_sent' : 'notice_unsent'
           return r
         }}
         onSaveLessons={async (ids, due) => {
@@ -894,7 +898,8 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion: attest.noticeVersion })
+    const noticeVersion = await attestationVersion(attest.noticeVersion)
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     onAdded()
   }

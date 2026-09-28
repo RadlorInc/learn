@@ -151,6 +151,9 @@ describe('the consent copy is the documents, verbatim', () => {
       // v6, 2026-09-24 (the Radlic rename): the product's name and web address (Milo → Radlic, adaptivelearn.radlor.com
       // → radlic.com), and "Withdraw permission for all YOUR children" (was "my"), matching the button and doc 03.
       'notice-v6': 'b24962a84278',
+      // v7, 2026-09-28 (KG–2 live, #305): the grade band row names Kindergarten and Grades 1–2, stored as the age
+      // ranges 3–5 and 6–8. Registered with reconsent_required = true (20260928100000): every parent is asked again.
+      'notice-v7': '2d4b510f469a',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()

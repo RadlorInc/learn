@@ -42,7 +42,10 @@ const checks = {
       ? ok(`/ 200, canonical → ${LANDING}`) : bad(`/ answered ${r.status} or its canonical is not ${LANDING}`)
     const l = await get(`${LANDING}?${cb()}`); if (!l) return
     const t = await l.text()
-    l.status === 200 && /grades 3 to 8/i.test(t) ? ok(`${LANDING} 200, says "grades 3 to 8"`) : bad(`${LANDING} answered ${l.status} or lost "grades 3 to 8"`)
+    // Grades flipped to K–8 on 2026-09-28 (learn + website in the same change): the landing page states the new range
+    // and no longer the old one. Red between the two merges, by design — it names the page that is still stale.
+    l.status === 200 && /K–8|kindergarten through grade 8/i.test(t) ? ok(`${LANDING} 200, says "K–8"`) : bad(`${LANDING} answered ${l.status} or does not say "K–8"`)
+    !/\b3 to 8\b/.test(t) ? ok(`${LANDING} no longer says "3 to 8"`) : bad(`${LANDING} still says "3 to 8"`)
   },
   async waitlist() {
     const r = await get('https://radlor.com/waitlist'); if (!r) return

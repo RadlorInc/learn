@@ -8,7 +8,9 @@
  *
  * Properties checked: an item is never deleted because the wrong session (or none) flushed it, and it goes up once its
  * owner flushes; a learner whose item is refused or must be retried does not stop other learners' items; for the
- * OWNER, a genuine refusal (learner gone, consent refused) removes that one item and only that one.
+ * OWNER, a genuine refusal (learner gone) removes that one item and only that one. ⚠️ A CONSENT refusal (P0C01) is NOT
+ * one since 2026-09-28 (founder): the child's answers wait on the device, the adult is asked once, and they go up when
+ * the adult agrees. Until then this file asserted the item was deleted.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -31,6 +33,7 @@ vi.mock('@/data/repositories/_shared', async (orig) => {
   return { ...actual, db: () => ({ rpc, auth }) }
 })
 const { syncLesson, flushLessonSync } = await import('@/infra/storage/lessonSync')
+const { consentPause } = await import('@/features/consent/childPause')
 const { saveStanding } = await import('@/infra/storage/lessonStanding')
 const { kv } = await import('@/infra/storage/kv')
 
@@ -106,14 +109,28 @@ describe('BUG-01 a queued answer is not deleted because the wrong session flushe
 })
 
 describe('BUG-04 one learner\'s refused or retried item does not hold the other learners on the device', () => {
-  it('a consent refusal (P0C01) on kidA\'s item: kidB\'s answer goes up, and only kidA\'s refused item leaves the queue', async () => {
+  it('a consent refusal (P0C01) on kidA: kidB\'s answer goes up, kidA\'s answers WAIT on the device, the adult is asked once, and they go up after', async () => {
+    const asked: unknown[] = []
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init: RequestInit) => {
+      asked.push([url, JSON.parse(String(init.body))]); return new Response(JSON.stringify({ ok: true, sent: true }))
+    }))
     world.owns = { family: ['kidA', 'kidB'] }; world.session = 'family'
     world.consentBlocked.add('kidA')
     syncLesson('kidA', 'g3m1-t1', 'first'); await flushLessonSync()
+    syncLesson('kidA', 'g3m1-t2', 'first'); await flushLessonSync()
     syncLesson('kidB', 'g4m1-t1', 'first'); await flushLessonSync()
     await flushLessonSync()
     expect(world.delivered, 'kidB was never sent: the queue stops at kidA\'s refusal').toEqual(['kidB:g4m1-t1'])
+    expect(queued().map(x => x.learnerId), 'kidA\'s refused answers were deleted').toEqual(['kidA', 'kidA'])
+    await vi.waitFor(() => expect(consentPause()).toEqual({ learnerId: 'kidA', told: 'sent' }))
+    expect(asked, 'the adult is asked once per child, not once per refused answer').toEqual([['/api/consent/child-blocked', { learnerId: 'kidA' }]])
+
+    world.consentBlocked.clear()                                      // the adult agreed
+    await flushLessonSync()
+    expect(world.delivered).toEqual(['kidB:g4m1-t1', 'kidA:g3m1-t1', 'kidA:g3m1-t2'])
     expect(queued()).toHaveLength(0)
+    expect(consentPause(), 'the child\'s screen outlives the consent').toBeNull()
+    vi.unstubAllGlobals()
   })
 
   it('a retry on kidA\'s item keeps kidA\'s items (in order) and still sends kidB\'s', async () => {

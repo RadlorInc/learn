@@ -136,9 +136,10 @@ describe('the founder\'s before/proof SQL, rehearsed on the production-shaped sc
     await d.exec(ledger)
     // A child with progress, so the row count the proof compares is not the 0 every empty table shares.
     await d.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${PARENT}', 'p@x.test', now())`)
-    const c = await grantedConsent(d, PARENT)
+    // The schema stops before 25 Sep, so the current notice is the newest one it knows: v6 (FIXTURE_NOTICE is v7, 28 Sep).
+    const c = await grantedConsent(d, PARENT, 'account', 'notice-v6')
     await d.exec(`insert into public.learners (id, display_name, created_by, age_group, consent_id, attested_notice_version)
-                    values ('${KID}', 'Kid', '${PARENT}', '3-5', '${c}', '${FIXTURE_NOTICE}');
+                    values ('${KID}', 'Kid', '${PARENT}', '3-5', '${c}', 'notice-v6');
                   insert into public.lesson_progress (learner_id, lesson_id, level) values ('${KID}', 'g3m2-t1', 2), ('${KID}', 'g3m2-t2', 1);`)
     const before = await run(d, 'ss-before.sql')
     expect(fails(before)).toEqual([])
