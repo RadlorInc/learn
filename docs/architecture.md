@@ -145,7 +145,8 @@ Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3
 ### RLS model
 
 - Access to a child is a `learner_access` row with `parent_id = auth.uid()` (owner, viewer, or the child's login);
-  child-table policies read it. Only the creator writes a `learners` row.
+  child-table policies read it. Only the creator writes a `learners` row, and nobody deletes one directly: a
+  child is deleted only by `delete_learner` → `delete_child_data` (logged, consent withdrawn, the child's login removed).
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
 - No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
