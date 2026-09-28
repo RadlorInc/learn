@@ -6,10 +6,11 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (28 September 2026)
+## Where things stand (29 September 2026)
 
-- **Production** is on `c5d5561b5` (#320), measured 28 Sep evening; `smoke:live` passed on it. A private beta with
-  families the founder knows has run since 25 September; it is free and billing is off.
+- **Production** is on `c5d5561b5` (#320); `smoke:live` passed on it (28 Sep). The repo `learn` is public again (see
+  the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
+  billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
@@ -25,8 +26,9 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — Draft PRs waiting for the founder, in this order
 
-All CI-green; every one merges cleanly on `main` and on top of the ones before it (measured 28 Sep, full suite on the
-combined tree). A migration PR runs its before-SQL first and its proof-SQL after (`docs/runbooks/migrations.md`).
+All CI-green. Measured 28 Sep: all nine merge cleanly in this order on `main`, and the full suite passes on the
+combined tree (tsc 0; 214 files, 4,302 passed). A migration PR runs its before-SQL first and its proof-SQL after
+(`docs/runbooks/migrations.md`).
 1. #318 — the pending-migration check reads a tag `migrate-prod` leaves. After merging, create the tag once (the
    command is in the PR).
 2. #319 — the backup job runs in the `prod-backup` environment (safe before or after the environment exists).
@@ -36,8 +38,11 @@ combined tree). A migration PR runs its before-SQL first and its proof-SQL after
    on, a new lesson needs its `lesson_catalog` row (`docs/product/building-lessons.md`).
 6. #321 — sign-out clears a child's keys from the device (published doc 08 changes with it).
 7. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
-8. #324, then enrol the admin account at `/admin/mfa`, then #325 (migration; its SQL is in the PR).
+8. #324 (admin two-step verification, with its runbook `admin-access.md`), then enrol the admin account at
+   `/admin/mfa`, then #325 (migration; its SQL is in the PR). The founder decides how a lost authenticator is
+   recovered (#325 as built needs two migrations; the alternative is in its description).
 9. website#6 — radlor.com response headers; afterwards `npm run check:headers` there should exit 0.
+10. The PR carrying this file, last.
 
 ## Open — the founder decides
 
@@ -68,9 +73,13 @@ combined tree). A migration PR runs its before-SQL first and its proof-SQL after
   production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
-- Admin two-step verification in the database (`20260928200000`): approve `production-db`, then run
-  `docs/legal/sql/admin-mfa-proof.sql` and sign in to `/admin` with the code
-  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)).
+  ⚠️ Whether Vercel checks the commit's author (the founder, who merges) or the pusher (GitHub Actions) was not
+  measured: the blocked deployment's message names the GitHub user. The author → link the founder's GitHub login to
+  their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote` (the agent builds it).
+- **If `learn` goes private, Actions minutes cost money**: measured 28 Sep, about 5,400 minutes in 30 days (CI on PR
+  pushes ~2,300, Deploy ~2,700) against 2,000 included on the free org plan — roughly US$20 a month over. Without a
+  payment method or budget, Actions stops when the 2,000 are used, and deploys stop with it. Set an Actions budget
+  before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
@@ -147,8 +156,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist; the comments in
   `content/voice/styles.ts` name a test that does not exist; `scripts/lesson-questions.mjs` now needs `npx tsx`.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
-  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
-  mentions tools we do not use.
+  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comments: `/api/health`
+  mentions tools we do not use; `admin/login/page.tsx` says "the admin role" (the gate is the `admin_users` table).
 - Points, read from the code and not measured: a chapter's (or a topic's) first uploaded answer may also pay the +3
   level-up, because tiers start at 1 and a new row starts at 0. Measure on a local stack before changing anything.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
