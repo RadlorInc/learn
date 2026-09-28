@@ -50,6 +50,8 @@ fixed yet are tracked outside this public repo; ask the founder.
   production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
+- Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
+  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
@@ -129,8 +131,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist; the comments in
   `content/voice/styles.ts` name a test that does not exist; `scripts/lesson-questions.mjs` now needs `npx tsx`.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
-  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comments: `/api/health`
-  mentions tools we do not use; `admin/login/page.tsx` says "the admin role" (the gate is the `admin_users` table).
+  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
+  mentions tools we do not use.
 - Points, read from the code and not measured: a chapter's (or a topic's) first uploaded answer may also pay the +3
   level-up, because tiers start at 1 and a new row starts at 0. Measure on a local stack before changing anything.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
