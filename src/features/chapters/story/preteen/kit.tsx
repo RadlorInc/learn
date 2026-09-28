@@ -17,10 +17,10 @@ export const PT = {
   line: 'rgba(120,150,220,0.30)', lineStrong: 'rgba(150,180,240,0.55)',
   ok: '#2ee6a6', okDeep: '#12b384', warn: '#ff5d7a', warnDeep: '#e03a5c',
   /**
-   * ⚠️ THE FAMILY COMES FROM THE VARIABLE, NOT ITS NAME. The fonts are self-hosted by
-   * `next/font/google`, which generates a hashed family (`__IBM_Plex_Sans_<hash>`) — so a literal
-   * `'IBM Plex Sans'` here matches nothing and falls back to a system font, silently, on the one
-   * band whose whole look is the mono numerals. The system stack stays as the fallback.
+   * ⚠️ THE FAMILY COMES FROM THE VARIABLE, NOT ITS NAME. `src/app/fonts.css` (the fonts are files in
+   * this repo since 2026-09-26; `next/font/google` used to hash the family name) owns the name, so a
+   * literal here would drift from it silently on the one band whose whole look is the mono numerals.
+   * The system stack stays as the fallback.
    */
   mono: "var(--f-plex-mono),ui-monospace,'SF Mono',Menlo,monospace",
   sans: "var(--f-plex-sans),system-ui,-apple-system,'Segoe UI',sans-serif",

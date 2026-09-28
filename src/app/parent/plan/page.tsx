@@ -60,8 +60,10 @@ export function PlanCheckout() {
   const [seats, setSeats] = useState(1)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [agreed, setAgreed] = useState(false)   // the auto-renewal tick: unticked until the parent ticks it
 
   async function checkout() {
+    if (!agreed) return
     setBusy(true); setError(null)
     try {
       // ⚠️ The account comes from the TOKEN at the route, never from this body — see
@@ -72,7 +74,7 @@ export function PlanCheckout() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ seats, cadence }),
+        body: JSON.stringify({ seats, cadence, renewalConsent: agreed }),
       })
       const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
       if (!res.ok || !body.url) {
@@ -146,25 +148,33 @@ export function PlanCheckout() {
           </div>
         </div>
 
-        {/* ⚠️ NEXT TO THE PRICE AND BEFORE PAYMENT, not in a footer. Section 8 of the Terms is what
-            says the subscription renews automatically and how to cancel; a parent has to be able to
-            read that on the screen where they decide, not after they have been charged. */}
-        <p style={{ fontSize: 12, color: '#3d6fb8', margin: '0 0 14px', lineHeight: 1.5, textAlign: 'center' }}>
-          {usd(totalCents(seats, cadence))} {cadence === 'monthly' ? 'per month' : 'per year'}, renewing
-          until you cancel. See the{' '}
-          <Link href="/legal/terms" style={{ color: '#0B4FA8', fontWeight: 700 }}>Terms of Service</Link>
-          ,{' '}
-          <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>
-          {' '}and{' '}
-          <Link href="/legal/refunds" style={{ color: '#0B4FA8', fontWeight: 700 }}>Refund and Cancellation Policy</Link>.
-        </p>
+        {/* ⚠️ THE AUTO-RENEWAL TERMS SIT NEXT TO THE BUTTON, IN THE SAME SIZE AND COLOUR AS THE TEXT AROUND THEM — not in a
+            footer, a tooltip or behind a link — and the button stays off until the parent ticks that they agree. Doc 03 A1
+            (docs/legal/03-consent-and-checkout-screen-copy.md) is the spec; /api/checkout refuses a session without the
+            tick. The tick's wording is the attorney's to confirm (ATTORNEY-PACKET C1). */}
+        <div data-plan="renewal" style={{ background: '#fff', borderRadius: 20, padding: '18px 16px', marginBottom: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.05)', fontSize: 14, lineHeight: 1.55, color: '#083d85' }}>
+          <strong>Your subscription renews automatically.</strong>
+          <ul style={{ margin: '8px 0 12px', paddingLeft: 20 }}>
+            <li>You will be charged <strong>{usd(totalCents(seats, cadence))} today</strong>.</li>
+            <li>After that, you will be charged <strong>{usd(totalCents(seats, cadence))} every {cadence === 'monthly' ? 'month' : 'year'}</strong> until you cancel.</li>
+            <li>You can cancel any time at <strong>Account → Plan &amp; billing</strong>, or by emailing support@radlor.com. Cancelling stops all future charges.</li>
+            <li>Full terms: <Link href="/legal/refunds" style={{ color: '#0B4FA8', fontWeight: 700 }}>Refund and Cancellation Policy</Link>,{' '}
+              <Link href="/legal/terms" style={{ color: '#0B4FA8', fontWeight: 700 }}>Terms of Service</Link> and{' '}
+              <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>.</li>
+          </ul>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minHeight: 44, cursor: 'pointer', fontWeight: 700 }}>
+            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)}
+              style={{ width: 22, height: 22, margin: '1px 0 0', accentColor: 'var(--accent-fill)', flexShrink: 0 }} />
+            I agree to the automatic renewal terms shown above.
+          </label>
+        </div>
 
         {error && <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 700, margin: '0 0 12px' }}>{error}</p>}
 
-        <button onClick={checkout} disabled={busy} style={{
-          width: '100%', background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', fontWeight: 800, fontSize: 16,
-          border: 'none', borderRadius: 50, padding: '14px 26px', cursor: busy ? 'default' : 'pointer',
-          opacity: busy ? 0.6 : 1,
+        <button onClick={checkout} disabled={busy || !agreed} style={{
+          width: '100%', background: agreed ? 'var(--accent-fill)' : P.edge, color: agreed ? 'var(--on-accent-fill)' : P.ink3,
+          fontWeight: 800, fontSize: 16, border: 'none', borderRadius: 50, padding: '14px 26px',
+          cursor: busy ? 'default' : agreed ? 'pointer' : 'not-allowed', opacity: busy ? 0.6 : 1,
         }}>{busy ? 'Opening checkout…' : `Continue — ${usd(totalCents(seats, cadence))}`}</button>
 
         <p style={{ fontSize: 12, color: '#3d6fb8', margin: '14px 0 0', lineHeight: 1.5, textAlign: 'center' }}>

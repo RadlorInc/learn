@@ -65,7 +65,7 @@ its Round-2 *proof step* on production; a box is ticked only when that proof is 
 - [ ] 👪 **Rakif's full name** (docs 04, 05, 07) (3.16)
 - [ ] 💳 **Prices** (monthly, annual; must equal `LADDER`), plan names, the receipt-email design (3.17)
 - [ ] 💳 **Subscription consequence of withdrawal** (3.1, with the attorney)
-- [ ] 💳 **An affirmative auto-renewal consent control at checkout**; none is built (3.7, with the attorney)
+- [ ] 💳 **An affirmative auto-renewal consent control at checkout** — BUILT 2026-09-28 (a separate unticked tick; the route refuses without it); **the attorney confirms its words** (3.7, packet C1)
 - [ ] 💳 Hide checkout for a parent who already subscribes (3.8)
 - [ ] 👪 **The live Spanish consent text**: show English until reviewed? (3.2)
 - [ ] 👪 Close the `learners: delete` REST bypass (3.9)
