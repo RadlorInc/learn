@@ -1,6 +1,6 @@
 /**
  * Grade 7 · Module 1 — Proportional relationships and percent applications.
- * Written to docs/new-flow/AUTHORING.md.
+ * Written to docs/product/building-lessons.md.
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

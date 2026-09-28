@@ -1,5 +1,5 @@
 /**
- * BUG-05 (docs/review/LATENT-BUGS.md): one failed clip-index load must not silence the recorded voice for the rest of
+ * BUG-05 (fbf193280:docs/review/LATENT-BUGS.md): one failed clip-index load must not silence the recorded voice for the rest of
  * the session. The index promise was memoised INCLUDING its failure, so after one blip every line was "not in the
  * manifest" until a reload. (2026-09-26: the index is now a module chunk loaded with import(), not /audio/…/manifest.json
  * — an offline device fails that import exactly as it failed the fetch, so the property is the same.)

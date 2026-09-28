@@ -1,6 +1,6 @@
 /**
  * Grade 7 · Module 5 — Statistics and probability.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Question pictures show the DATA (that is the question); a computed mean, prediction, count or chance is never printed.
  */
 import type { Lesson, Picture } from '../script'

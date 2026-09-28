@@ -5,7 +5,7 @@ name: Upload audio
 #
 # ⚠️ RUN BY HAND, NEVER ON A PUSH, AND ONLY WITH APPROVAL: `production-db` has a required reviewer. The job holds
 # Storage S3 keys, which reach EVERY bucket and bypass RLS (Supabase's own warning), so the founder creates them just
-# before a run and revokes them right after (docs/legal/AUDIO-ROUND2.md). Nothing here prints a key, a URL list or
+# before a run and revokes them right after (docs/runbooks/audio-upload.md). Nothing here prints a key, a URL list or
 # an object name — counts only.
 #
 # Where the audio comes from: not this checkout (clips are not in git any more) but `source_ref`, a git ref that still
@@ -13,7 +13,7 @@ name: Upload audio
 # the manifest's, so a wrong ref cannot upload the wrong audio.
 #
 # Moving to Cloudflare R2 later: same workflow with s3_endpoint / region / public_base set and R2 keys in the two secrets,
-# then change NEXT_PUBLIC_AUDIO_BASE_URL (src/core/audioBase.ts). docs/legal/AUDIO-ROUND2.md §6 has the whole list.
+# then change NEXT_PUBLIC_AUDIO_BASE_URL (src/core/audioBase.ts). docs/runbooks/audio-upload.md has the whole list.
 
 on:
   workflow_dispatch:

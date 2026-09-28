@@ -1,6 +1,6 @@
 'use client'
 /**
- * CONSENT-ONCE, THE CLIENT HALF (docs/legal/LOOP-STATE.md → Consent-once → C0).
+ * CONSENT-ONCE, THE CLIENT HALF (fbf193280:docs/legal/LOOP-STATE.md → Consent-once → C0).
  *
  * One verifiable (email-plus) consent per parent ACCOUNT; each child then carries a parental
  * attestation. This file answers three questions for the screens: where does this account stand,

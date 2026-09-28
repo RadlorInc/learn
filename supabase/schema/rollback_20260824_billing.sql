@@ -1,7 +1,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════
 --  ROLLBACK for 20260824133906_billing_schema.sql + 20260824134125_plan_entitlement.sql
 --  Captured from PRODUCTION 2026-08-24, BEFORE either was applied. Step 1 of the apply sequence in
---  docs/runbooks/applying-migrations.md.
+--  docs/runbooks/migrations.md.
 --
 --  ⚠️ THIS IS NOT A BACKUP. It restores what these two migrations replace and nothing else. There is
 --  still no backup of the children's data and no PITR — launch blocker B12.

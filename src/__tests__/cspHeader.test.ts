@@ -73,7 +73,7 @@ describe('Content-Security-Policy', () => {
   })
 
   /**
-   * SEC-11 (docs/review/SECURITY-AUDIT.md). The app talks to ONE Supabase project; a
+   * SEC-11 (fbf193280:docs/review/SECURITY-AUDIT.md). The app talks to ONE Supabase project; a
    * `*.supabase.co` wildcard also lets injected script post to an attacker's project. The project
    * URL below is written out by hand, as production's shape (measured on radlic.com's bundle).
    */

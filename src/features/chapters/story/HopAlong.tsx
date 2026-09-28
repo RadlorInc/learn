@@ -27,7 +27,7 @@
  * button that turned green on the target and it quietly replaced the chapter with a colour-matching
  * game.)
  *
- * Design doc: docs/hopalong-design.md. Craft rules: docs/chapter-craft.md.
+ * Design doc: a18c2ba54^:docs/hopalong-design.md. Craft rules: a18c2ba54^:docs/chapter-craft.md.
  */
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { speak, speakAfterCurrent, stopSpeech, speakSteps, unlockSpeech } from '@/infra/useMiloSpeaker'

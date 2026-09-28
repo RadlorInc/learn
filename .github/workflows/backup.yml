@@ -2,10 +2,10 @@ name: Backup (prod database)
 
 # WHY THIS EXISTS: it was written (2026-09-03) when the Supabase org was on the FREE plan, which has no
 # downloadable backup. The org has since moved to Pro (founder read it from the dashboard 2026-09-24,
-# recorded in docs/legal/LOOP-STATE.md), whose daily
+# recorded in fbf193280:docs/legal/LOOP-STATE.md), whose daily
 # backups are kept 7 days but restore only as a WHOLE-PROJECT, in-place replacement in the dashboard.
 # This dump is the only copy the founder holds himself, restorable into a throwaway database
-# (docs/backup-restore-runbook.md; restore proven 2026-09-23). KEEP IT even if PITR is ever bought —
+# (docs/runbooks/backup-restore.md; restore proven 2026-09-23). KEEP IT even if PITR is ever bought —
 # PITR is another in-place restore, not an off-site copy. PITR is NOT bought as far as the repo
 # records (2026-09-26); see docs/runbooks/rollback.md for what a data rollback can and cannot do.
 #
@@ -25,7 +25,7 @@ name: Backup (prod database)
 #   # (invite repointing → self-grant on a stranger's child) is a COLUMN-level grant of UPDATE(status)
 #   # and nothing else, and the V19/touch_grades fixes are EXECUTE revokes. Restore onto a database
 #   # with default privileges and those are handed straight back, with every RLS policy still looking
-#   # correct. Verify with the four queries in docs/security.md § Schema drift AFTER any restore.
+#   # correct. Verify with the four schema-drift queries in supabase/tests/security_posture.sql AFTER any restore.
 #   psql "$TARGET_DB_URL" -c 'ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM anon, authenticated;'
 #   psql "$TARGET_DB_URL" --single-transaction -v ON_ERROR_STOP=1 -f schema.sql \
 #     -c 'SET session_replication_role = replica' -f data.sql
@@ -110,7 +110,7 @@ jobs:
           if [ -z "${DB_PASSWORD}" ]; then missing="${missing} secrets.PROD_DB_PASSWORD"; fi
           if [ -z "${REF}" ];         then missing="${missing} vars.PROD_PROJECT_REF"; fi
           if [ -n "${missing}" ]; then
-            echo "::error title=Backup did not run::No dump was taken. Missing:${missing}. There is NO restorable copy of production from this run. Configure these in repo Settings -> Secrets and variables -> Actions, then re-run. See docs/devops.md."
+            echo "::error title=Backup did not run::No dump was taken. Missing:${missing}. There is NO restorable copy of production from this run. Configure these in repo Settings -> Secrets and variables -> Actions, then re-run. See docs/runbooks/backup-restore.md."
             echo "--- missing:${missing}"
             exit 1
           fi

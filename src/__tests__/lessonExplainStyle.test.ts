@@ -1,5 +1,5 @@
 /**
- * The founder's two documents (2026-09-22, "Topic_Explanation" and "Chatterbox_Audio_Fix"; rules in docs/new-flow/voice.md)
+ * The founder's two documents (2026-09-22, "Topic_Explanation" and "Chatterbox_Audio_Fix"; rules in docs/product/voice.md)
  * as a gate, one describe per module: `npx vitest run src/__tests__/lessonExplainStyle.test.ts -t g4m2`.
  *
  * WHAT IT HOLDS EVERY TOPIC TO

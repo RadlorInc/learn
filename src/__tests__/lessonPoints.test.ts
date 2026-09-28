@@ -2,7 +2,7 @@
 /**
  * Lesson progress on the account, points, and game time (migration 20260917112109), driven in the repo's real schema
  * as the roles a browser has: the parent who owns the child, the child's own 'self' login, and another family.
- * Rules: docs/new-flow/points.md. Every refusal is paired with the same caller succeeding at something, so a function
+ * Rules: docs/product/points.md. Every refusal is paired with the same caller succeeding at something, so a function
  * nobody can call cannot pass.
  */
 import { describe, it, expect, beforeAll } from 'vitest'

@@ -137,7 +137,7 @@ describe('⚠️ a CHILD never sees a price', () => {
     const t = text('money')
     expect(t).toMatch(/ask a grown-up/i)
     expect(t).toContain('Money')
-    // "Locked" is the word that does no work — §3 of docs/billing-stage-3.md.
+    // "Locked" is the word that does no work — §3 of fbf193280:docs/billing-stage-3.md.
     expect(/locked/i.test(t), 'the card announces itself as "locked" instead of explaining').toBe(false)
   })
 })
@@ -229,7 +229,7 @@ describe('⚠️ the hook, DRIVEN — a verdict nothing reads is not a gate', ()
    * (`/menu` → `/game` → a real RPC). The e2e harness signs in with an unsigned JWT, so
    * `getLearnerBootstrap` 401s and the menu never finishes loading — driving the gate there would be
    * driving it in a world where it cannot be reached, which is a class this repo has already paid
-   * for. The real coverage for that chain is the watched test-mode purchase (billing-stage-3.md §0).
+   * for. The real coverage for that chain is the watched test-mode purchase (fbf193280:docs/billing-stage-3.md §0).
    */
   async function driveHook(entitled: boolean | null, learner: { id: string } | null) {
     vi.resetModules()

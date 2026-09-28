@@ -1,10 +1,10 @@
 /**
- * Grade 3 · Module 1 lessons (docs/new-flow/grade3-module1-scripts.md).
+ * Grade 3 · Module 1 lessons (the founder-approved scripts of 2026-09-13; wording held in ./_g3m1Approved.ts).
  * ⚠️ The expected answers are WRITTEN OUT here from the approved document, never derived from the
  * lesson data — a check that computes its expectation from the thing under test cannot fail.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { G3M1_APPROVED } from './_g3m1Approved'
 import { GRADE3_MODULE1 } from '@/features/lessons/grade3Module1'
 import {
   answerOf, START, next, back, check, afterWorked, nextPractice, replayLesson, hintsFor, wonFor, scratchLineMax, type Op, type FlowState, type Picture,
@@ -101,22 +101,19 @@ describe('Grade 3 · Module 1 scripts', () => {
     }
   })
 
-  it('every Title, Text, Prompt, Hint and Sticker in the approved document is in the app word for word', () => {
-    const doc = readFileSync('docs/new-flow/grade3-module1-scripts.md', 'utf8')
-    const topics = doc.split(/\n## Topic /).slice(1)
-    expect(topics).toHaveLength(GRADE3_MODULE1.length)
+  it('every Title, Text, Prompt, Hint and Sticker in the approved scripts is in the app word for word', () => {
+    expect(G3M1_APPROVED).toHaveLength(GRADE3_MODULE1.length)
     const missing: string[] = []
     let checked = 0
-    topics.forEach((t, i) => {
+    G3M1_APPROVED.forEach((fields, i) => {
       const data = JSON.stringify(GRADE3_MODULE1[i])
-      for (const [, field, raw] of t.matchAll(/- \*\*(Title|Text|Prompt|Hint after 1 miss|Hint after 2 misses|Math word sticker|Text after the twin|Math word sticker after the twin):\*\* (.+)/g)) {
-        const want = raw.trim().replace(/^"(.*)"$/, '$1')
+      for (const [field, want] of fields) {
         if (want === 'Now you try' || want === 'You got it') continue   // Screen 8/9 titles live in LessonPlayer
         checked++
         if (!data.includes(JSON.stringify(want).slice(1, -1))) missing.push(`${GRADE3_MODULE1[i].id} ${field}: ${want}`)
       }
     })
-    expect(checked).toBeGreaterThan(140)   // positive control: the parser really read the document
+    expect(checked).toBeGreaterThan(140)   // positive control: the fixture really holds the approved lines (168 on 2026-09-28)
     expect(missing).toEqual([])
   })
 

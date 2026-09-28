@@ -1,7 +1,7 @@
 'use client'
 /**
  * Chapter (6–8) — TIME (skill `time`) as STORY MODE. The verb is **SET IT** (and READ IT), per
- * docs/story-6-8-rethink.md §8.
+ * a18c2ba54^:docs/story-6-8-rethink.md §8.
  *
  * ⚠️ WHAT THIS REPLACED, AND WHY, BECAUSE THE OLD VERSION LOOKED FINE: it showed an exact clock and
  * took the answer as one of four pills. Four labels is **winnable by elimination** — a child who

@@ -1,5 +1,5 @@
 /**
- * The new teaching flow: one lesson = the 9-screen "Step By Step Script" (docs/new-flow/).
+ * The new teaching flow: one lesson = the 9-screen "Step By Step Script" (docs/product/).
  *
  *   Screens 1–7  teach, Next only, nothing to answer
  *   Screen 8     your turn: hint after 1 miss, hint after 2, then worked steps + a twin problem
@@ -24,7 +24,7 @@ export type Picture =
   | { kind: 'triangle'; total: number; a: number; b: number | null; facts?: boolean }
   | { kind: 'cards'; wrong: string; right: string }
   | { kind: 'eq'; text: string; lines?: string[] }
-  // ── Grades 3–8 diagrams (drawn in ./Diagrams.tsx; every field is documented in docs/new-flow/AUTHORING.md) ──
+  // ── Grades 3–8 diagrams (drawn in ./Diagrams.tsx; every field is documented in docs/product/building-lessons.md) ──
   | { kind: 'bars'; bars: { parts: number; shaded: number; shade2?: number; split?: number; label?: string }[]; motion?: boolean }
   | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean }[]; brace?: string }[]; motion?: boolean }
   | { kind: 'numline'; min: number; max: number; ticks: number; labels?: (string | null)[] | 'ends' | 'none';

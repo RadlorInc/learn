@@ -110,7 +110,7 @@ export interface Database {
           chapter:       ChapterType
           phase:         'lesson' | 'practice'
           /** ⚠️ NULLABLE since 2026-09-05, and NULL means "unknown", not "now".
-           *  It is NOT the session's activity time — use `completed_at`. See docs/data-inventory.md. */
+           *  It is NOT the session's activity time — use `completed_at`. See fbf193280:docs/data-inventory.md. */
           started_at:    string | null
           completed_at:  string | null
           correct_count: number

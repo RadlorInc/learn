@@ -3,7 +3,7 @@
  *
  * ⚠️ Three things here are deliberately NOT derived from the lesson data, because a check that reads its expectation
  * out of the thing under test passes on any mistake:
- *   - topic titles come from docs/new-flow/curriculum.md;
+ *   - topic titles come from docs/product/curriculum.md;
  *   - the answers come from an ANSWER KEY (./answerKeys/<module>.ts) written by someone who saw only the questions;
  *   - the 9-screen structure is written out below.
  */
@@ -23,7 +23,7 @@ const built = MODULES.filter(m => m.id !== 'g3m1' && m.lessons.length > 0)
 
 /** Topic titles per module, read from the curriculum document ("1 Title · 2 Title · …" lines under each module heading). */
 function curriculumTopics(): Record<string, string[]> {
-  const doc = readFileSync('docs/new-flow/curriculum.md', 'utf8')
+  const doc = readFileSync('docs/product/curriculum.md', 'utf8')
   const out: Record<string, string[]> = {}
   let grade = 0
   for (const block of doc.split('\n\n')) {

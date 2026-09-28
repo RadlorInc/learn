@@ -1,5 +1,5 @@
 /**
- * PERF-05 (docs/review/PERFORMANCE.md). The sign-in page's LCP element is the Radlic logo, drawn
+ * PERF-05 (fbf193280:docs/review/PERFORMANCE.md). The sign-in page's LCP element is the Radlic logo, drawn
  * 56 px tall (`/auth`; the dashboard draws it 30 and 24 px). It shipped as a 105,620-byte truecolor
  * PNG — ~77 KB more than it needs on the critical path of a 1.44 Mbit/s phone.
  *

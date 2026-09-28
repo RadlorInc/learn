@@ -1,5 +1,5 @@
 /**
- * Grade 5 · Module 1 — Place value concepts for multiplication and division with whole numbers. Written to docs/new-flow/AUTHORING.md.
+ * Grade 5 · Module 1 — Place value concepts for multiplication and division with whole numbers. Written to docs/product/building-lessons.md.
  * 20 topics in four parts (A 1–6 place value · B 7–11 multiplication · C 12–16 division · D 17–20 multi-step problems), named
  * after the textbook contents page the founder sent on 2026-09-15 — the names only; every story, screen and number is ours.
  * Written by four writers in parallel, so every helper name ends in its part letter.

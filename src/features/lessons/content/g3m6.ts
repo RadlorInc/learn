@@ -1,6 +1,6 @@
 /**
  * Grade 3 · Module 6 — Shapes, measuring and graphs.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

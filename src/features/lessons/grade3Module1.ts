@@ -1,6 +1,6 @@
 /**
  * Grade 3 · Module 1 — Multiplication and Division with Units of 2, 3, 4, 5 and 10.
- * Source of truth for the wording: docs/new-flow/grade3-module1-scripts.md (approved 2026-09-13).
+ * Source of truth for the wording: the founder-approved scripts (2026-09-13), held word for word by src/__tests__/_g3m1Approved.ts.
  * Change a sentence there first, then here.
  */
 import type { Lesson } from './script'

@@ -139,7 +139,7 @@ describe('service worker: a deploy takes over, offline still works', () => {
 })
 
 /**
- * Two review findings, one of them turned down by measurement (docs/review/PERFORMANCE.md PERF-07/PERF-12,
+ * Two review findings, one of them turned down by measurement (fbf193280:docs/review/PERFORMANCE.md PERF-07/PERF-12,
  * LATENT-BUGS.md BUG-11, DEVOPS.md OPS-19).
  *
  * ⚠️ WHY THE BUMP STILL DROPS THE VERSIONED ASSET CACHE. /assets/ art is rewritten in place under its existing name (the

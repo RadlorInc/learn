@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * BUG-03 (docs/review/LATENT-BUGS.md) — /api/consent/respond 'grant' when something fails AFTER B3 was scheduled.
+ * BUG-03 (fbf193280:docs/review/LATENT-BUGS.md) — /api/consent/respond 'grant' when something fails AFTER B3 was scheduled.
  *
  * Property: after any sequence of grant clicks, EXACTLY ONE B3 is live if the consent ended granted — and it is
  * the one the consent row records — and NONE is live if it did not. A click that follows a failed one grants.

@@ -1,6 +1,6 @@
 /**
  * Grade 8 · Module 2 — Linear relationships, slope and systems.
- * Written to docs/new-flow/AUTHORING.md.
+ * Written to docs/product/building-lessons.md.
  * Teaching pictures: `coord` (t1, t3, t4, t7), `table` (t2, t9), `balance` + `table` (t5, t6), `eq` + `table` (t8).
  * Nothing asks the child to type an equation: answers are one number, or a pick.
  */

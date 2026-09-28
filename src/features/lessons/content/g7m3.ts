@@ -1,6 +1,6 @@
 /**
  * Grade 7 · Module 3 — Equivalent expressions, equations and inequalities.
- * Written to docs/new-flow/AUTHORING.md. Continues Grade 6 · Module 5 (g6m5.ts).
+ * Written to docs/product/building-lessons.md. Continues Grade 6 · Module 5 (g6m5.ts).
  * Teaching pictures: `tape` (t1, t5, t8), `area` (t2, t3), `balance` + `table` (t4), `numline` (t6, t7).
  * Expressions and inequalities are answered as choices; nothing asks the child to type a letter.
  */

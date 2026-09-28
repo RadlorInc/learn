@@ -1,58 +1,44 @@
 # Radlic
 
-Adaptive maths from KG to grade 8, made by Radlor Inc. A lesson explains one idea step by step, the
-way a teacher would at a board; then practice adapts — two right in a row bring a harder *kind* of
-question, a miss brings worked steps. The product rule is *maths without fear*: no timers, no red
-crosses, no visible level. A parent or teacher chooses what each child sees.
+Adaptive maths from KG to grade 8, made by Radlor Inc., at https://radlic.com.
 
-**Live:** https://radlic.com (until the domain switch, https://adaptivelearn.radlor.com — it becomes a
-permanent redirect; see [docs/RENAME-MANUAL.md](docs/RENAME-MANUAL.md)).
+A Grade 3–8 lesson explains one idea step by step, the way a teacher would at a board; then practice
+adapts — two right in a row bring a harder *kind* of question, a miss brings worked steps. KG, Grade 1
+and Grade 2 learn through short voiced story chapters. Maths without fear: no timers, no red crosses,
+no visible level. A parent or teacher chooses what each child sees, and a parent gives verifiable
+consent before a child's data is kept.
 
-The product was called **Milo** until August 2026 and **AdaptiveLearn** until September 2026. Code
-identifiers kept the old name (`useMiloSpeaker`, `--milo-orange`, `milo_active_learner` …) on purpose:
-they are what stored data and running devices depend on. Anything a person sees says Radlic, and
-`src/__tests__/renameGate.test.ts` fails if that stops being true.
+The product was called **Milo** until August 2026 and **AdaptiveLearn** until September 2026. Code identifiers keep the old name on purpose; anything a person sees says Radlic.
 
-## Running it
+## Run it
 
 ```bash
 npm install
 npm run dev
 ```
 
-Supabase backs sign-in and progress sync; without `NEXT_PUBLIC_SUPABASE_URL` and
-`NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` the app still runs, storing progress locally.
+Without `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` the app still runs
+and keeps progress on the device.
 
-| | |
+## Tests
+
+| command | what it does |
 |---|---|
-| `npm test` | vitest — the invariant gates |
-| `npm run build` | production build |
-| `npm run lint` | eslint |
-| `npm run test:e2e` | playwright |
+| `npm test` | vitest: the unit, database (pglite) and doc gates |
+| `npm run build` | the production build |
+| `npm run test:e2e` | Playwright against a running dev server (`E2E_BASE_URL` to point elsewhere). Signed-in specs fake the Supabase calls — `e2e/short-sessions.spec.ts` shows how |
+| `npm run break -- <test> "<break>"` | runs one test against a deliberately broken tree and proves it goes red |
+| `npm run smoke:live` | read-only checks against the live site after a deploy |
 
-## Reading the code
+CI (`.github/workflows/ci.yml`) runs the typecheck, vitest, the build, a dependency audit and the
+row-level-security suite on every push.
 
-Next.js 16 · React 19 · TypeScript · Supabase.
+## Where things are
 
-- `src/features/lessons/` — the lessons (content as data in `content/g<grade>m<module>.ts`), the lesson
-  player and adaptive practice.
-- `src/features/consent/`, `src/app/consent/` — verifiable parental consent (email plus); read
-  [docs/legal/](docs/legal/README.md) first.
-- `src/features/dashboard/`, `src/app/parent/` — the parent and teacher dashboard.
-- `src/features/chapters/` — the 23 story chapters: the **KG, Grade 1 and Grade 2** tabs of the child's home
-  (`chaptersForGrade` in `src/core/chapters.ts`), rewritten without a mascot on 2026-09-25. Their old surfaces
-  (age-band menu, demo, `/story`) stay off behind `LEGACY_CHAPTERS_HIDDEN`.
+Start with [docs/START-HERE.md](docs/START-HERE.md) — a one-page map of every doc.
+[handoff.md](handoff.md) is the current state and the open items. [CLAUDE.md](CLAUDE.md) holds the rules
+for anyone (person or agent) changing this repo.
 
-## Before you change a lesson
-
-Read **[docs/new-flow/README.md](docs/new-flow/README.md)** — how a lesson is scripted, approved,
-built and verified. The old chapters are hidden while lessons are rebuilt in this format.
-
-[handoff.md](handoff.md) is the current state of the work; older sessions are in
-[docs/handoff-archive.md](docs/handoff-archive.md), which is not loaded by default — grep it.
-[docs/lessons.md](docs/lessons.md) lists the defect classes that have reached `main` and the gate
-that now catches each.
-
-[docs/legal/](docs/legal/README.md) holds the US legal document set — **every one of them is an
-unpublished DRAFT full of `[PLACEHOLDER — …]` markers, and none of it is wired to a route**; a gate
-in `src/__tests__/legalDocs.test.ts` fails the build if any of it reaches published content.
+Code: Next.js 16 · React 19 · TypeScript · Supabase. Lessons in `src/features/lessons/`, story chapters
+in `src/features/chapters/`, consent in `src/features/consent/`, the parent and teacher dashboard in
+`src/features/dashboard/`, the database in `supabase/migrations/`.

@@ -1,5 +1,5 @@
 /**
- * PERF-03 (docs/review/PERFORMANCE.md): one /parent load reads each child's `lesson_progress` ONCE.
+ * PERF-03 (fbf193280:docs/review/PERFORMANCE.md): one /parent load reads each child's `lesson_progress` ONCE.
  * The pull that brings the account's topics onto the device already reads the rows; the parent's report
  * (the "finding it hard" reminder) must reuse them, not read the table a second time per child.
  *

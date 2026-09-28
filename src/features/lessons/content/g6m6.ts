@@ -1,6 +1,6 @@
 /**
  * Grade 6 · Module 6 — Area, surface area, volume, shapes and angles.
- * Written to docs/new-flow/AUTHORING.md. Not yet reviewed by the founder.
+ * Written to docs/product/building-lessons.md. Not yet reviewed by the founder.
  * Topics 1–4 draw with `poly` (topic 4 opens on a `solid` box, then unfolds it), topic 5 with `solid`, topic 6 with `angle`.
  */
 import type { Lesson, Picture } from '../script'

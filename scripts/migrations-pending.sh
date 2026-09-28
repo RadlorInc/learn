@@ -6,7 +6,7 @@
 #
 #   scripts/migrations-pending.sh <head sha>      env: GH_TOKEN, GITHUB_REPOSITORY, GITHUB_RUN_ID
 #
-# ⚠️ WHY NOT `git diff <event.before> <sha>` (OPS-02, docs/review/DEVOPS.md). That diffs only THIS push.
+# ⚠️ WHY NOT `git diff <event.before> <sha>` (OPS-02, fbf193280:docs/review/DEVOPS.md). That diffs only THIS push.
 # A migration whose migrate-prod was rejected, failed, or cancelled while pending (12 Deploy runs were
 # cancelled that way by 2026-09-25) is invisible to every later push that does not itself touch
 # supabase/migrations — so it is never retried while the app half keeps deploying.

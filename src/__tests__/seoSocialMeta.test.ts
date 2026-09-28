@@ -1,5 +1,5 @@
 /**
- * SEO-04 / SEO-05 (docs/review/SEO.md): what a crawler and a link-preview scraper are told about `/` and `/help`. (`/demo`'s noindex half went with the route, 2026-09-26, N17.)
+ * SEO-04 / SEO-05 (fbf193280:docs/review/SEO.md): what a crawler and a link-preview scraper are told about `/` and `/help`. (`/demo`'s noindex half went with the route, 2026-09-26, N17.)
  *
  * ⚠️ THE ASSERTIONS ARE ON THE RESOLVED METADATA, NOT ON ANY ONE FILE'S EXPORT. Each route's metadata is run through
  * Next's OWN `accumulateMetadata` — the function the build uses to merge segments into the `<head>` — with the real

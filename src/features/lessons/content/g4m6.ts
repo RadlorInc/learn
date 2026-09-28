@@ -1,6 +1,6 @@
 /**
  * Grade 4 · Module 6 — Place value for decimal fractions.
- * Written to docs/new-flow/AUTHORING.md. Topic 1 is the founder's own Grade 4 example (tenths as decimals).
+ * Written to docs/product/building-lessons.md. Topic 1 is the founder's own Grade 4 example (tenths as decimals).
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

@@ -12,7 +12,7 @@ import { Page } from '@playwright/test'
 //  - Correctness personas (aceKid / strugglerKid / comebackKid): need to answer right or
 //    wrong ON PURPOSE, which the app deliberately hides. They require a dev-only test hook
 //    exposing the current task's answer (e.g. data-test-answer in preview mode). See
-//    e2e/README.md — that's the next slice, an app change, not implemented here.
+//    README.md (Tests) — that's the next slice, an app change, not implemented here.
 
 export interface Persona {
   name: string
@@ -48,7 +48,7 @@ export const quitterKid: Persona = {
 
 // ── Correctness personas ──────────────────────────────────────────────────────
 // These answer right/wrong ON PURPOSE, which the app hides from real users. They
-// read the dev-only test hook the frontend added (2026-07-18, see docs/agent-log.md):
+// read the dev-only test hook the frontend added (2026-07-18, see 9e68ba26a^:docs/agent-log.md):
 //   [data-test-answer] — on the QuestionBoard root; canonical ASCII answer (e.g. "-5")
 //                        while a question is live, "" once solved/revealed.
 //   [data-test-phase]  — "guided" | "practice" | "solved".

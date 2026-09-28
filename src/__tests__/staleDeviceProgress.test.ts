@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * BUG-02 (docs/review/LATENT-BUGS.md): a stale device must not roll a child's standing back on the account, and must
+ * BUG-02 (fbf193280:docs/review/LATENT-BUGS.md): a stale device must not roll a child's standing back on the account, and must
  * not make the database pay `level_up` again for a climb already paid. Migration 20260926100200.
  *
  * Driven in the repo's REAL schema (baseline + every migration, _schema.ts) as the parent's `authenticated` role — the

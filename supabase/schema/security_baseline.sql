@@ -7,7 +7,7 @@
 -- committed, diffable snapshot of the security-relevant surface — RLS, policies,
 -- function security posture, grants, triggers — so drift is caught in review.
 --
--- REGENERATE + DIFF: run the query in docs/security.md against prod and overwrite
+-- REGENERATE + DIFF: the founder runs supabase/tests/security_posture.sql against prod (SQL editor) and overwrites
 -- this file; a non-empty `git diff` means the live security posture changed.
 -- Last FULLY generated: 2026-08-17 (post V13–V19 audit). ⚠️ PARTIALLY HAND-UPDATED 2026-08-24 for
 -- the leads lockdown and the four new retention/data-rights functions below — a full regeneration is

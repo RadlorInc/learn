@@ -31,8 +31,7 @@ const inScope = (f: string) => TEXT.test(f) && (
   || ['README.md', 'CLAUDE.md', 'AGENTS.md', 'next.config.ts', 'vercel.json'].includes(f)
 )
 /** Records of what was. They keep the old names by design (rule 3 of the rename brief). */
-const HISTORICAL = [/^docs\/legal\/LOOP-STATE\.md$/, /^docs\/legal\/ROUND-2\.md$/, /^docs\/legal\/CONSENT-ONCE-ROUND2\.md$/, /^docs\/legal\/sql\//,
-  /^docs\/legal\/14-supabase-findings-and-ai-content\.md$/]   // 14: dated findings, 2026-09-22
+const HISTORICAL = [/^docs\/legal\/sql\//, /^docs\/legal\/14-supabase-findings-and-ai-content\.md$/]   // 14: dated findings, 2026-09-22
 
 /** Each exception: the file, the lines it covers, which greps it may silence, and why. */
 const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] = [

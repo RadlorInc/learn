@@ -7,7 +7,7 @@
 //   node scripts/seed-staging.mjs
 //
 // For a local stack (`supabase start`), STAGING_PROJECT_REF=local and a 127.0.0.1 URL.
-// Full instructions: docs/staging.md.
+// Full instructions: docs/runbooks/deploy.md (Staging).
 //
 // ⚠️ THE ENV NAMES ARE DELIBERATELY NOT THE APP'S. `.env.local` on this machine points at PRODUCTION
 // and defines NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY; this script reads neither, so a

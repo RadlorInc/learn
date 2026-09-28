@@ -35,7 +35,7 @@ export async function getRecentSessions(learnerId: string, limit = 5): Promise<S
     .select('*')
     .eq('learner_id', learnerId)
     // ⚠️ completed_at, not started_at: the latter is nullable and a NULL sorts a brand-new
-    // session to the wrong end. It was never an activity time. See docs/data-inventory.md.
+    // session to the wrong end. It was never an activity time. See fbf193280:docs/data-inventory.md.
     .order('completed_at', { ascending: false })
     .limit(limit)
   return (data ?? []) as Session[]

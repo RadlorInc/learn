@@ -5,7 +5,7 @@
  * The device stays the fast copy the screens read synchronously ([[lessonProgress]], [[lessonStanding]]); every change
  * is also queued for the server, and a queue that cannot send (offline, or the migration not applied yet) keeps its
  * items and sends them later. On opening the child's home, what the account holds is pulled back into the device.
- * Points ride on the uploads: the database decides them from what changed (docs/new-flow/points.md).
+ * Points ride on the uploads: the database decides them from what changed (docs/product/points.md).
  */
 import { kv } from '@/infra/storage/kv'
 import { lessonDone, markLessonDone } from '@/infra/storage/lessonProgress'

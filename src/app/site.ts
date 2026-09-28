@@ -8,7 +8,7 @@
  * ⚠️ ORDER MATTERS AND IT IS DELIBERATE: `NEXT_PUBLIC_SITE_URL` first. It is set in Vercel Production, and it is THE
  * SWITCH for the move to radlic.com (2026-09-24): while it names the old domain, the old domain serves the app exactly
  * as before and nothing redirects; set it to https://radlic.com and redeploy, and canonical URLs, email links and the
- * old-domain 308 all move together. See docs/RENAME-MANUAL.md §A.5.
+ * old-domain 308 all move together. See fbf193280:docs/RENAME-MANUAL.md §A.5.
  */
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
@@ -70,7 +70,7 @@ export const COMPANY_URL = 'https://radlor.com'
 export const COMPANY_ID = `${COMPANY_URL}/#organization`
 export const APP_NAME = 'Radlic'
 /** The app's own entity id. radlor.com's product page references this exact string — change both together
- *  (RENAME-MANUAL.md §D: radlor.com still names the pre-rename id until it is updated). */
+ *  (fbf193280:docs/RENAME-MANUAL.md §D: radlor.com still names the pre-rename id until it is updated). */
 export const APP_ID = 'https://radlic.com/#app'
 
 /**

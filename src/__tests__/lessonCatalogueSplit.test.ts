@@ -1,5 +1,5 @@
 /**
- * PERF-01 (docs/review/PERFORMANCE.md): a child's screen must not download all 36 modules of lessons before it can paint.
+ * PERF-01 (fbf193280:docs/review/PERFORMANCE.md): a child's screen must not download all 36 modules of lessons before it can paint.
  * On 2026-09-26 /lesson, /practice and /modules each carried ~800 KB gzip of lesson content and ladders in their
  * first-load JS (lesson LCP ~10.8 s on a mid-range phone on Slow 4G). Now they eagerly load only the light catalogue
  * (./catalogue.json) and fetch ONE module with import() (features/lessons/catalogue.ts).

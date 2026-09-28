@@ -88,7 +88,7 @@ export function Brackets({ color, gap = -6 }: { color: string; gap?: number }) {
 // is the focus). Regular chapters leave it off and keep the compact HUD pill.
 /**
  * The question card. Pass `text` alone for the original one-line form, or add `instruction` to get
- * the QUESTION-CLARITY three zones the 12–14 band settled on (docs/teen-12-14-math-audit.md §1):
+ * the QUESTION-CLARITY three zones the 12–14 band settled on (fbf193280:docs/teen-12-14-math-audit.md §1):
  *
  *   1. CONTEXT     what the numbers ARE, plus the rule that applies. Plain language, no UI verbs.
  *   2. THE MATH    the hero — usually the instrument itself, not text.

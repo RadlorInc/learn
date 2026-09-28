@@ -1,6 +1,6 @@
--- R0 / ARCHITECTURE.md — facts the migrations imply but only production can confirm.
+-- R0 / deep review 2026-09-26 (fbf193280:docs/review/ARCHITECTURE.md) — facts the migrations imply but only production can confirm.
 -- NEEDS RAFI TO RUN (read-only; SELECTs only). Run each block separately in the Supabase SQL editor.
--- Nothing here writes. Paste the outputs back into docs/review/ARCHITECTURE.md §9 "Production confirmation".
+-- Nothing here writes. Paste the outputs back into the review map (§9) "Production confirmation".
 
 -- ── 1. Tables in public: RLS on/forced, policy count, and whether the consent gate trigger is present.
 --    Expect: every table carrying learner_id (except learner_access, learner_invites, subscription_seats,

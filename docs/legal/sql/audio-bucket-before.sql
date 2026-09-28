@@ -1,5 +1,5 @@
 -- AUDIO BUCKET — BEFORE merging part 1 (migration 20260927100000). Read-only: run in the Supabase SQL editor.
--- Written 2026-09-26 for docs/legal/AUDIO-ROUND2.md. Every query reads catalog/storage metadata only; nothing about a
+-- Written 2026-09-26 for the audio bucket (docs/runbooks/audio-upload.md). Every query reads catalog/storage metadata only; nothing about a
 -- child. Expected results are written next to each query, and the last query is the control.
 begin transaction read only;
 

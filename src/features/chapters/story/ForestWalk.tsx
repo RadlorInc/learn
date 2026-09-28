@@ -4,7 +4,7 @@
  * The scene scrolls past as if we walk through a parallax forest built from real PNG art
  * (tree.png, fireflies, ground objects), and stops at
  * "stations" to demonstrate counting, to talk, and to practice (SkillBeat:
- * adaptive + re-teach + voice). One chapter = one ForestWalk. See docs/story-mode-3-5.md.
+ * adaptive + re-teach + voice). One chapter = one ForestWalk. See a18c2ba54^:docs/story-mode-3-5.md.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'

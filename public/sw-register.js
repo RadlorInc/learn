@@ -1,6 +1,6 @@
 // Service-worker registration. Externalized from an inline <script> in layout.tsx so the app
 // ships ZERO inline scripts of its own — a prerequisite for a strict Content-Security-Policy
-// (script-src 'self', no 'unsafe-inline'). See next.config.ts headers + docs/security.md.
+// (script-src 'self', no 'unsafe-inline'). See next.config.ts headers + docs/architecture.md.
 (function () {
   var isLocalDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
 

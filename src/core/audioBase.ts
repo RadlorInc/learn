@@ -10,7 +10,7 @@
  * the browser is allowed to reach exactly the host the player asks. Object names are content hashes and the manifest
  * holds NAMES, never URLs: a move is `upload.py` against the new host, then this value — nothing else.
  * ⚠️ A move to a DIFFERENT COMPANY changes who receives a child's IP/user agent: docs/legal/07-subprocessors.md and the
- * cookie notice must change with it (docs/legal/AUDIO-ROUND2.md §5).
+ * cookie notice must change with it (docs/decisions.md, 2026-09-27).
  * Unset/invalid → null: the player asks for no clip at all and every line is spoken by the device (never a broken URL).
  */
 export function audioBaseFrom(explicit: string | undefined, supabaseUrl: string | undefined): string | null {

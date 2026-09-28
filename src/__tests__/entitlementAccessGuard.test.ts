@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * SEC-16 (docs/review/SECURITY-AUDIT.md) — `is_chapter_entitled` / `entitled_chapters` answer only a caller who has
+ * SEC-16 (fbf193280:docs/review/SECURITY-AUDIT.md) — `is_chapter_entitled` / `entitled_chapters` answer only a caller who has
  * access to that learner.
  *
  * Property checked: a signed-in account with NO `learner_access` row for a learner is refused (42501) by both

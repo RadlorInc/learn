@@ -6,7 +6,7 @@ the product to. Edit a table and the test follows; delete a row and the test sto
 
 `state` is honest in both directions: `present` means the test must find it, `GAP` means the test
 must find it MISSING (so a gap that quietly closes, or a `present` that quietly opens, both go red).
-Loop state lives in [LOOP-STATE.md](LOOP-STATE.md); publishability in [READINESS.md](READINESS.md).
+Loop notes live in each pull request; publishability in [READINESS.md](READINESS.md).
 
 ## Pages
 

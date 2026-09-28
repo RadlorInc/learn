@@ -114,7 +114,7 @@ export const SHEETS: Record<string, Sheet> = {
   // ── The 9–11 WORKING CAST (generated 2026-07-31) ──────────────────────────────────────────────
   // The band's whole problem was never the engine, it was the CAST: all 24 cycles above are cozy
   // animals, and a ten-year-old's goods yard with a duckling in it is the "reads too young" fault
-  // arriving by another door (docs/story-9-11-rethink.md, "The art, honestly"). These three are the
+  // arriving by another door (a18c2ba54^:docs/story-9-11-rethink.md, "The art, honestly"). These three are the
   // same painted style — the register comes from the JOB and the work clothes, not from a palette.
   // They are band-wide, not one chapter's: any 9–11 world that needs someone to arrive, want
   // something and leave with it can cast them.

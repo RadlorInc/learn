@@ -1,4 +1,4 @@
--- The four schema-drift queries from docs/security.md § Schema drift check, as a runnable file.
+-- The four schema-drift queries (the security-posture proof in docs/runbooks/migrations.md), as a runnable file.
 -- Run against TWO databases and diff the outputs: same query, two instruments, must agree.
 -- (The doc carried these as prose for six weeks, during which the baseline went stale.)
 \pset footer off

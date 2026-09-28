@@ -8,7 +8,7 @@ name: Migrate region (dump Sydney → restore into a new project)
 #   NEW_DB_URL   the fresh us-east-1 project, still empty
 # No access token: `db dump --db-url` bypasses platform auth (measured: it fails on Docker, not auth).
 #
-# Order is load-bearing (docs/supabase-region-migration.md §3–4):
+# Order is load-bearing (fbf193280:docs/supabase-region-migration.md §3–4):
 #   revoke default privileges → extensions → schema → ledger → data (auth then public) → cron → verify.
 # Restoring onto default privileges silently re-opens V12/V19 with every RLS policy reading correct.
 

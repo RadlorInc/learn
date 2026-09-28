@@ -19,7 +19,7 @@ nothing to render gets no notebook; with nothing at all to render the script say
 import json, pathlib, re, sys
 
 PART = 1500
-# The renderer READS `text`: `speakable` lets an ellipsis and a few emoji through (voice.md forbids both in a line), and
+# The renderer READS `text`: `speakable` lets an ellipsis and a few emoji through (docs/product/voice.md forbids both in a line), and
 # Chatterbox would pause oddly or say nothing sensible for them. The key stays the runtime string's, so clips still match.
 clean = lambda t: re.sub(r'\s+', ' ', re.sub(r'[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u200D]', '', t.replace('…', '.'))).strip()
 
@@ -50,7 +50,7 @@ for grade, name, label, todo in jobs:
     md = f"""# Radlic voice — {label} story chapters in Josh
 
 Renders every line the {label} story chapters can say that has no clip yet — **{n} lines, {chars:,} characters** (the lines are
-written into this notebook). Style A (Chatterbox Turbo) for all of them. Rules: `docs/new-flow/voice.md`.
+written into this notebook). Style A (Chatterbox Turbo) for all of them. Rules: `docs/product/voice.md`.
 
 **Before Run All:** Settings → Accelerator → **GPU T4 x2** (or P100), Internet **On**. At the end, download
 `radlic-voice-josh-chapters-{name}.zip` from the Output panel and hand it back. If the session stops early, Run All

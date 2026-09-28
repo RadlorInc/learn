@@ -20,7 +20,7 @@ export type GateVerdict = 'checking' | 'allowed' | 'locked'
  * @param learnerId  null = nobody is signed in. a pre-signup visitor has no learner and no rows.
  * @param entitled   the database's answer, or **null for "we could not find out"**.
  *
- * ⚠️ NULL IS ALLOWED, NOT LOCKED. See docs/billing-stage-3.md §2: this is a UX gate over a database
+ * ⚠️ NULL IS ALLOWED, NOT LOCKED. See fbf193280:docs/billing-stage-3.md §2: this is a UX gate over a database
  * that already refuses the write, so a dropped connection must not cost a paying child their
  * evening. Fails OPEN — the opposite of the camera guard, for the opposite stakes.
  */

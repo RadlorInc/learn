@@ -1,6 +1,6 @@
 /**
  * Grade 3 · Module 2 — Place value through metric measurement.
- * Written to docs/new-flow/AUTHORING.md. Not yet founder-reviewed.
+ * Written to docs/product/building-lessons.md. Not yet founder-reviewed.
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * BUG-07 (docs/review/LATENT-BUGS.md): "could not read your role" must never read as "you have no role yet".
+ * BUG-07 (fbf193280:docs/review/LATENT-BUGS.md): "could not read your role" must never read as "you have no role yet".
  * A null role is what shows the one-time Teacher/Parent picker, and a pick there WRITES the role — so a network blip on
  * the profile read used to let a parent become a teacher (or a child's login become a parent).
  *

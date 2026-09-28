@@ -1,6 +1,6 @@
 /**
  * Grade 4 · Module 5 — Angle measurements and plane figures.
- * Written to docs/new-flow/AUTHORING.md. Topics 1 and 5–8 draw with `poly`; topics 2–4 with `angle`.
+ * Written to docs/product/building-lessons.md. Topics 1 and 5–8 draw with `poly`; topics 2–4 with `angle`.
  */
 import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'
