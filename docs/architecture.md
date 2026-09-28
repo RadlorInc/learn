@@ -120,9 +120,9 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   with `admin_assert()`; `/admin` shows aggregates and writes nothing. **Two-step verification:** an admin sets up
   an authenticator app (TOTP, Supabase Auth MFA) at `/admin/mfa`; from then on `/admin/login` asks for its 6-digit
   code after the password, and the `/admin` layout sends a password-only (`aal1`) session back to that step. An
-  account without an authenticator signs in as before and is shown nothing about it. The database does not require
-  the code until `admin_assert()` also checks the token's `aal`, a separate migration merged only after the founder
-  has enrolled ([runbooks/admin-access.md](runbooks/admin-access.md)).
+  account without an authenticator signs in as before and is shown nothing about it. The database requires it:
+  `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20260928200000, applied only once every admin
+  has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
   data.
@@ -167,7 +167,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 - **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run`, `game_wallet`,
   `set_game_settings`, `start_game_time` (unused while `/play` spends nothing); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
-  `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
+  `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`: listed in `admin_users` and an `aal2` token).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
   `consent_lookup`, `consent_grant`, `consent_decline`, `consent_withdraw`, `consent_ok`, `consent_expire_stale`,
   `materialize_seats`, `ops_digest`. **No role:** `delete_child_data`, `consent_withdraw_account` (called by other

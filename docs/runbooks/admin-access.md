@@ -3,7 +3,8 @@
 **Use this when:** an admin turns on two-step verification for `/admin`, or has lost the phone that gives the codes.
 
 `/admin` shows aggregates only and writes nothing. Who may see it is decided in the database: `admin_assert()`, the
-first statement of every `admin_*` function, refuses any account not listed in `admin_users`
+first statement of every `admin_*` function, refuses any account not listed in `admin_users`, and — once
+`20260928200000` is applied — any token that has not given the authenticator code (`aal` below `aal2`)
 ([architecture §3](../architecture.md#3-accounts-and-roles)).
 
 ## Admin two-step verification
@@ -21,9 +22,10 @@ signs in exactly as before and is shown nothing about it.
    Enter the 6-digit code the app shows and press *Turn on*. The page then says **On**.
 4. **Founder.** Check it in a private window: sign in at `/admin/login`. After the password it must ask for the code,
    and `/admin` must open only after the right code.
-5. **Only then** merge the migration that makes the database require the code (`admin_assert()` also checks the
-   token's `aal`). It follows [migrations.md](migrations.md). Merged before step 3, it locks every admin out of
-   `/admin`; its header says how to undo it.
+5. **Only then** merge the migration that makes the database require the code (`20260928200000`: `admin_assert()`
+   also checks the token's `aal`). It follows [migrations.md](migrations.md); its before-SQL
+   (`docs/legal/sql/admin-mfa-before.sql`) says FAIL while any admin lacks a verified authenticator. Merged before
+   step 3, it locks every admin out of `/admin`; its header carries the rollback.
 
 There are no recovery codes. Use an authenticator app that keeps a backup (most can sync or export).
 
