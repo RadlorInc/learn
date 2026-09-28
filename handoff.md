@@ -56,6 +56,8 @@ combined tree). A migration PR runs its before-SQL first and its proof-SQL after
 - Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
 - A maintenance switch: none exists, so stopping the app means removing the domain.
 - Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
+- Points: a first upload at level 1 also pays the +3 level-up (a new row starts at level 0), so every chapter's first
+  answer does — measured 28 Sep in PGlite. Keep or change.
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
 - After the beta: Search Console, then one public page per grade.
@@ -147,9 +149,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
   (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
   mentions tools we do not use.
-- Points, measured 28 Sep (PGlite, the real functions): a first upload at level 1 pays the +3 level-up as well as the
-  answer's 2, because a new row starts at level 0. Chapters start at tier 1, so their first answer always does. Keep
-  or change — a product call.
+- Points, read from the code and not measured: a chapter's (or a topic's) first uploaded answer may also pay the +3
+  level-up, because tiers start at 1 and a new row starts at 0. Measure on a local stack before changing anything.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
