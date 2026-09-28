@@ -25,7 +25,7 @@ const ROOT = resolve(__dirname, '../..')
 const yaml = createRequire(import.meta.url)('js-yaml') as { load(s: string): unknown }
 type Step = { id?: string; run?: string; env?: Record<string, string> }
 const WF = yaml.load(readFileSync(resolve(ROOT, '.github/workflows/deploy.yml'), 'utf8')) as {
-  jobs: Record<string, { steps: Step[] }>
+  jobs: Record<string, { steps: Step[]; needs?: string | string[]; if?: string; permissions?: Record<string, string> }>
 }
 const STEP = WF.jobs['migrations-changed'].steps.find((s) => s.id === 'diff')!
 
@@ -73,9 +73,11 @@ type Run = { id: number; head: string; conclusion: string | null; migrateProd?: 
 /** Deploy runs, newest first, as the GitHub API returns them. `migrateProd` = that run's job conclusion;
  *  absent = the run has no such job (e.g. cancelled while pending: zero jobs). */
 function step(before: string, head: string, runs: Run[] | 'api-down', runId = 999,
-  once: Record<string, unknown> = {}) {
+  once: Record<string, unknown> = {}, marker?: { file: string; sha: string }) {
   const gh = mkdtempSync(join(dir, 'gh-'))
   for (const [ep, body] of Object.entries(once)) writeFileSync(join(gh, `${ep}.once.json`), JSON.stringify(body))
+  // The tag record-migrated keeps, served where the fake gh looks for `gh api repos/o/r/git/ref/<ref>`.
+  if (marker) writeFileSync(join(gh, `${marker.file}.json`), JSON.stringify({ ref: 'x', object: { sha: marker.sha, type: 'commit' } }))
   if (runs !== 'api-down') {
     writeFileSync(join(gh, 'repos_o_r_actions_workflows_deploy.yml_runs.json'), JSON.stringify({
       workflow_runs: runs.map((r) => ({ id: r.id, head_sha: r.head, conclusion: r.conclusion, head_branch: 'main' })),
@@ -195,5 +197,71 @@ describe('migrations-changed (the real step from deploy.yml)', () => {
     const r = step(sha.P1, sha.P2, runs, 999, { 'repos_o_r_actions_workflows_deploy.yml_runs': { workflow_runs: [] } })
     expect(r.code, r.log).toBe(0)
     expect(r.changed, r.log).toBe('false')
+  })
+})
+
+// ⚠️ 2026-09-28: the Actions API twice answered without a successful migrate-prod that was there (Deploy runs
+// 36438372718 — base shifted back to a day-old run — and 36448074687 — "no successful migrate-prod in the last 100
+// finished Deploy runs"), and both times a docs-only merge waited for a production-db approval with nothing to apply.
+// The fix is a record that does not come from that API: deploy.yml's record-migrated job moves a tag after every
+// successful migrate-prod, and the script reads it first. These drive the writer and the reader together.
+describe('the prod-db-migrated tag (the record migrate-prod leaves)', () => {
+  const REC = WF.jobs['record-migrated']
+
+  /** Runs record-migrated's own step with a fake gh that answers "no such tag" and records the write. */
+  function recordOn(commit: string): { ref: string; sha: string } {
+    const gh = mkdtempSync(join(dir, 'rec-'))
+    const log = join(gh, 'calls')
+    writeFileSync(join(gh, 'gh'), `#!/usr/bin/env bash\nprintf '%s\\n' "$*" >> "${log}"\n[ "$1" = api ] && [ "$2" = "\${2#-}" ] && [[ "$2" == */git/ref/* ]] && exit 1\nexit 0\n`)
+    chmodSync(join(gh, 'gh'), 0o755)
+    const st = REC.steps.find((x) => x.run)!
+    const ctx: Record<string, string> = { 'github.token': 't', 'github.repository': 'o/r', 'github.sha': commit }
+    const sub = (v: string) => v.replace(/\$\{\{\s*([^}]+?)\s*\}\}/g, (_, k: string) => ctx[k] ?? `<unknown ${k}>`)
+    const env: Record<string, string> = { PATH: `${gh}:${process.env.PATH}` }
+    for (const [k, v] of Object.entries(st.env ?? {})) env[k] = sub(String(v))
+    const r = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', sub(st.run!)], { encoding: 'utf8', env: env as unknown as NodeJS.ProcessEnv })
+    expect(r.status, r.stdout + r.stderr).toBe(0)
+    const create = readFileSync(log, 'utf8').split('\n').find((l) => l.includes('-X POST'))
+    expect(create, 'record-migrated made no create call').toBeTruthy()
+    return { ref: /ref=(\S+)/.exec(create!)![1], sha: /sha=(\S+)/.exec(create!)![1] }
+  }
+  /** Where the fake gh serves `gh api repos/o/r/git/ref/<ref minus refs/>`. */
+  const served = (w: { ref: string; sha: string }) => ({ file: `repos_o_r_git_ref_${w.ref.replace(/^refs\//, '').replace(/\//g, '_')}`, sha: w.sha })
+
+  it('record-migrated runs only after a successful migrate-prod, and writes nothing else', () => {
+    expect([REC.needs].flat()).toEqual(['migrate-prod'])
+    expect(REC.if).toMatch(/needs\.migrate-prod\.result == 'success'/)
+    expect(REC.permissions).toEqual({ contents: 'write' })
+  })
+
+  it("THE 28 SEP CASE: the API omits P1's successful run; the tag record-migrated wrote at P1 → changed=false", () => {
+    const written = recordOn(sha.P1)
+    expect(written.sha).toBe(sha.P1)
+    // What the CI read returned: only an older success. Without the tag this answers true (the defect).
+    const r = step(sha.P1, sha.P2, [{ id: 1, head: sha.BASE, conclusion: 'success', migrateProd: 'success' }], 999, {}, served(written))
+    expect(r.code, r.log).toBe(0)
+    expect(r.changed, r.log).toBe('false')
+    expect(r.log).toMatch(/from the prod-db-migrated tag/)
+  })
+
+  it('a tag left behind cannot hide a pending migration: tag at BASE, P1 added one → changed=true, naming it', () => {
+    const r = step(sha.P1, sha.P2, [{ id: 3, head: sha.P1, conclusion: 'success', migrateProd: 'success' }], 999, {}, served(recordOn(sha.BASE)))
+    expect(r.changed, r.log).toBe('true')
+    expect(r.log).toContain('20260101000000_x.sql')
+  })
+
+  it('a tag that is not a commit before this push is not trusted → the Deploy-run scan decides', () => {
+    const r = step(sha.P1, sha.P2, [{ id: 3, head: sha.P1, conclusion: 'success', migrateProd: 'success' }], 999, {},
+      { file: 'repos_o_r_git_ref_tags_prod-db-migrated', sha: 'f'.repeat(40) })
+    expect(r.changed, r.log).toBe('false')
+    expect(r.log).toMatch(/is not a commit before/)
+    expect(r.log).toMatch(/from Deploy run 3/)
+  })
+
+  it('no tag → the scan, and when the scan finds no success it lists what it read', () => {
+    const r = step(sha.P1, sha.P2, [{ id: 2, head: sha.P1, conclusion: 'success' }])
+    expect(r.changed, r.log).toBe('true')
+    expect(r.log).toMatch(/no prod-db-migrated tag/)
+    expect(r.log).toContain(`2@${sha.P1.slice(0, 7)}:1jobs:`)
   })
 })
