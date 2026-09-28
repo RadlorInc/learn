@@ -3,7 +3,8 @@ description: >-
   Dump production's schema + data, encrypt it, and upload it as a workflow artifact. Used by BOTH
   backup.yml (nightly) and deploy.yml's migrate-prod (right before `supabase db push`), so there is
   one copy of the backup logic. `supabase db dump` is pg_dump: read-only against production.
-  The caller must have checked out the repo and run supabase/setup-cli first.
+  The caller must have checked out the repo, run supabase/setup-cli first, and grant `packages: read`
+  (the image pg_dump runs in is pulled from ghcr.io signed in with the run's GITHUB_TOKEN).
 
 # Secrets come in as inputs because a composite action cannot read `secrets.*` itself. The caller
 # passes exactly the secrets it already had; nothing new is exposed by this file.
@@ -36,21 +37,90 @@ runs:
         PROD_PROJECT_REF: ${{ inputs.project-ref }}
       run: scripts/assert-prod-ref.sh
 
+    # ⚠️ `supabase db dump` RUNS pg_dump INSIDE A CONTAINER, SO A BACKUP NEEDS AN IMAGE PULL — AND IT IS PULLED SIGNED
+    # IN, NEVER ANONYMOUSLY. Anonymous pulls from GitHub's shared runner IPs have been refused by ghcr.io (2026-09-23)
+    # and public.ecr.aws (2026-09-28: two deploy runs red). ci.yml's rls-tests was fixed the same way in #310.
+    # So: log in to ghcr.io with the run's own GITHUB_TOKEN (no stored secret), pull with backoff, and only if ghcr.io
+    # keeps refusing fall back to public.ecr.aws (Supabase publishes the same image to both — same digest, measured
+    # 2026-09-28) with a warning. A backup is worth more than purity here: the fallback keeps the dump alive.
+    #
+    # ⚠️ THE TAG IS PRODUCTION'S POSTGRES VERSION, NOT config.toml's. Once linked, the CLI reads it from
+    # supabase/.temp/postgres-version (pkg/config, CLI v2.117.0) — measured 2026-09-28: the nightly backup pulled
+    # 17.6.1.166 while `db start` in CI pulled 17.6.1.167. Only one image is pulled (measured: `db dump` pulls
+    # supabase/postgres and nothing else, schema or data).
+    - name: Link, then pull the image pg_dump runs in (ghcr.io, signed in)
+      shell: bash
+      env:
+        SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
+        SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
+        PROJECT_REF: ${{ inputs.project-ref }}
+        GHCR_TOKEN: ${{ github.token }}
+        GHCR_USER: ${{ github.actor }}
+      run: |
+        set -uo pipefail
+        supabase link --project-ref "$PROJECT_REF" || exit 1
+        tag=$(tr -d '[:space:]' < supabase/.temp/postgres-version 2>/dev/null || true)
+        if [ -z "$tag" ]; then
+          # Not linked to a version: the CLI falls back to config.toml's image, which `supabase services` names.
+          tag=$(supabase services -o json | jq -r '(.services? // .)[] | select(.name == "supabase/postgres") | .local')
+        fi
+        if [ -z "$tag" ] || [ "$tag" = null ]; then
+          echo "::error::cannot tell which supabase/postgres tag the dump will use — no dump taken"
+          exit 1
+        fi
+        img="ghcr.io/supabase/postgres:$tag"
+        echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin \
+          || echo "::warning::docker login ghcr.io failed — the pull below is anonymous"
+        source=""
+        for wait in 0 10 30 60; do
+          sleep "$wait"
+          if docker pull -q "$img"; then source=ghcr.io; break; fi
+          echo "pull of $img failed; trying again"
+        done
+        if [ -z "$source" ]; then
+          ecr="public.ecr.aws/supabase/postgres:$tag"
+          echo "::warning::ghcr.io refused $img four times — falling back to anonymous $ecr (the same image)"
+          for wait in 0 10 30; do
+            sleep "$wait"
+            if docker pull -q "$ecr"; then docker tag "$ecr" "$img"; source=public.ecr.aws; break; fi
+            echo "pull of $ecr failed; trying again"
+          done
+        fi
+        if [ -z "$source" ]; then
+          echo "::error::could not pull supabase/postgres:$tag from ghcr.io or public.ecr.aws — no dump taken"
+          exit 1
+        fi
+        # `source` is the registry whose pull succeeded; print ITS digest for the image. (Not RepoDigests[0]: Docker keeps
+        # every registry it has seen the image under, so index 0 can name a registry these bytes did not come from —
+        # measured 2026-09-28 in the fallback rehearsal.)
+        digest=$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$img" | grep -m1 "^$source/")
+        echo "$img <- $digest"
+        echo "### 🐘 pg_dump image \`$img\` from **$source** ← \`$digest\`" >> "$GITHUB_STEP_SUMMARY"
+
     - name: Dump schema + data
       shell: bash
       env:
         SUPABASE_ACCESS_TOKEN: ${{ inputs.access-token }}
         SUPABASE_DB_PASSWORD: ${{ inputs.db-password }}
         PROJECT_REF: ${{ inputs.project-ref }}
+        SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io # the name pulled above; not left to setup-cli's export
       run: |
         set -euo pipefail
-        supabase link --project-ref "$PROJECT_REF"
         # Schema and data separately: a schema-only restore is what you want when recovering from
         # a bad migration, and it is useless if it is welded to 40 MB of rows.
-        supabase db dump -f schema.sql
+        supabase db dump -f schema.sql 2>&1 | tee "$RUNNER_TEMP/dump.log"
         # --use-copy is what Supabase's own restore procedure uses: COPY rather than a wall of
         # INSERTs, which restores faster and survives quoting edge cases in learner names.
-        supabase db dump -f data.sql --use-copy --data-only
+        supabase db dump -f data.sql --use-copy --data-only 2>&1 | tee -a "$RUNNER_TEMP/dump.log"
+        # Say whether the CLI had to pull anything itself (measured: a pull prints "Pulling from" / "Downloaded newer
+        # image"; with the step above done it printed none). A line here means the tag above was not the one the dump
+        # wanted — still a good dump, pulled with this run's login, so a warning rather than a failed backup.
+        pulled=$(grep -E 'Pulling from|Downloaded newer image' "$RUNNER_TEMP/dump.log" || true)
+        if [ -n "$pulled" ]; then
+          echo "::warning::supabase db dump pulled an image itself; the pull step above missed it: $(echo "$pulled" | tr '\n' ' ')"
+        else
+          echo "supabase db dump pulled nothing: the image came from the pull step above."
+        fi
         # Fail loudly on an empty dump rather than uploading a 0-byte "backup" that looks fine in
         # the artifact list and is worthless on the day it is needed.
         test -s schema.sql || { echo "::error::schema.sql is empty"; exit 1; }

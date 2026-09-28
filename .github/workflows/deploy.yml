@@ -140,6 +140,9 @@ jobs:
     timeout-minutes: 10 # p95 0.6 min over 5 runs. approval wait is not run time (separate 30-day gate limit, GitHub limits doc) (ARC-07; GitHub default 360)
     # A required-reviewer protection rule on this GitHub Environment means a human approves every
     # production schema change.
+    permissions:
+      contents: read
+      packages: read # prod-backup pulls the image pg_dump runs in from ghcr.io, signed in with this run's GITHUB_TOKEN
     environment: production-db   # NOT Vercel's `Production` — see docs/migrate-prod-proposal.md. Create it WITH its required-reviewer rule when enabling this job, not before.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
