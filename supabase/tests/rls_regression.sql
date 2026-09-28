@@ -69,11 +69,13 @@ begin
   -- CONSENT-ONCE (20260924100000): one ACCOUNT consent per parent covers every child they add, and each
   -- child carries the parent's attestation (`attested_notice_version` = the consent's notice_version; the
   -- trigger stamps who/when/how).
+  -- notice-v7 (20260928100000) made every earlier consent non-current, so the fixture consents to the CURRENT
+  -- notice, as `_schema.ts: FIXTURE_NOTICE` does. (It said notice-v3 until then, and every child here was refused.)
   insert into public.parental_consents
     (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
      confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
      second_email_provider_id, second_notice_scheduled_for, scope)
-  values (v_owner, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
+  values (v_owner, 'email_plus', 'granted', 'notice-v7', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
           now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3_' || md5(random()::text),
           now() + interval '1 day', 'account')
   returning id into v_owner_consent;
@@ -81,7 +83,7 @@ begin
   -- Owner creates a learner. The grant_owner_access trigger gives the owner a
   -- learner_access row; init_learner_stats seeds learner_stats.
   insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
-    values (v_learner, 'RLS Test Kid', v_owner, v_owner_consent, 'notice-v3');
+    values (v_learner, 'RLS Test Kid', v_owner, v_owner_consent, 'notice-v7');
 
   insert into public.sessions (learner_id, chapter, phase, correct_count, wrong_count,
                                stars_earned, xp_earned, coins_earned, client_id)
@@ -93,12 +95,12 @@ begin
     (parent_id, method, state, notice_version, privacy_version, terms_version, email_address,
      confirmed_at, token_hash, expires_at, request_email_provider_id, request_email_sent_at,
      second_email_provider_id, second_notice_scheduled_for, scope)
-  values (v_attacker, 'email_plus', 'granted', 'notice-v3', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
+  values (v_attacker, 'email_plus', 'granted', 'notice-v7', 'privacy-v1', 'terms-v1', 'rlstest@milo.invalid',
           now(), md5(random()::text), now() + interval '7 days', 're_rlstest_b1', now(), 're_rlstest_b3_' || md5(random()::text),
           now() + interval '1 day', 'account')
   returning id into v_consent;
   insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
-    values (v_alearner, 'Attacker Kid', v_attacker, v_consent, 'notice-v3');
+    values (v_alearner, 'Attacker Kid', v_attacker, v_consent, 'notice-v7');
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
@@ -131,9 +133,9 @@ begin
   end if;
 
   insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
-    values (v_learner2, 'RLS Test Kid 2', v_owner, v_owner_consent, 'notice-v3');
+    values (v_learner2, 'RLS Test Kid 2', v_owner, v_owner_consent, 'notice-v7');
   insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
-    values (v_learner3, 'RLS Test Kid 3', v_owner, v_owner_consent, 'notice-v3');
+    values (v_learner3, 'RLS Test Kid 3', v_owner, v_owner_consent, 'notice-v7');
 
   insert into public.subscriptions (id, account_id, status, seats_paid,
                                     current_period_start, current_period_end)
