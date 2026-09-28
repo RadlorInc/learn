@@ -23,17 +23,23 @@ const sql = [
   ...readdirSync(join(ROOT, 'supabase/migrations')).filter(f => f.endsWith('.sql')).sort()
     .map(f => readFileSync(join(ROOT, 'supabase/migrations', f), 'utf8')),
 ].join('\n')
-  // Comments out first: a migration's "-- Rollback: drop table public.x;" note is not a drop.
-  .replace(/--[^\n]*/g, '')
 
-/** Tables whose rows describe one child: they carry learner_id, or hang off one that does — replayed in
- *  migration order, so a table a later migration drops (20260928170000) is no longer one. */
-const CHILD_DATA_TABLES = (() => {
+/** Tables whose rows describe one child in `sqlText` (baseline + migrations, in order): created with learner_id, and
+ *  not dropped later (20260928170000 dropped three). Comments are removed first — a migration's
+ *  "-- Rollback: drop table public.x;" note is not a drop. Exported so the replay can be driven with made-up SQL. */
+export function childDataTables(sqlText: string): Set<string> {
   const found = new Set<string>()
-  for (const m of sql.matchAll(/create table (?:if not exists )?public\.([a-z_]+)\s*\(([\s\S]*?)\n\);|drop table (?:if exists )?public\.([a-z_]+)\s*;/g)) {
+  const code = sqlText.replace(/--[^\n]*/g, '')
+  for (const m of code.matchAll(/create table (?:if not exists )?public\.([a-z_]+)\s*\(([\s\S]*?)\n\);|drop table (?:if exists )?public\.([a-z_]+)\s*;/g)) {
     if (m[3]) found.delete(m[3])
     else if (/\blearner_id\b/.test(m[2])) found.add(m[1])
   }
+  return found
+}
+
+/** …plus the two reached through a parent key rather than learner_id — the RLS policies join the same way. */
+const CHILD_DATA_TABLES = (() => {
+  const found = childDataTables(sql)
   // Reached through a parent key rather than learner_id — the RLS policies join the same way.
   found.add('diagnostic_items')          // → diagnostic_sessions.session_id
   found.add('diagnostic_plan_progress')  // → diagnostic_plans.plan_id
@@ -85,10 +91,15 @@ describe('the data export covers every child-data table', () => {
     expect(CHILD_DATA_TABLES.size).toBeGreaterThan(5)
   })
 
-  it('replays drops: a dropped table is gone, a table whose migration only MENTIONS a drop in a comment is not', () => {
+  it('replays drops: the three dropped tables are gone, the live ones are not', () => {
     for (const t of ['learner_progress', 'learner_stats', 'learner_state']) expect(CHILD_DATA_TABLES.has(t), t).toBe(false)
-    // 20260921053233_lesson_feedback.sql carries "-- Rollback: drop table public.lesson_feedback;".
     for (const t of ['lesson_feedback', 'lesson_progress', 'sessions', 'error_events']) expect(CHILD_DATA_TABLES.has(t), t).toBe(true)
+  })
+
+  it('a drop only MENTIONED in a comment, after the create, is not a drop; a real one is', () => {
+    const made = (tail: string) => childDataTables(`create table public.kids (\n  id uuid,\n  learner_id uuid\n);\n${tail}\n`)
+    expect([...made('-- Rollback: drop table public.kids;')]).toEqual(['kids'])
+    expect([...made('drop table public.kids;')]).toEqual([])
   })
 
   it('exports or explicitly excludes every child-data table', () => {
