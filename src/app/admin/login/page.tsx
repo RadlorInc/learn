@@ -60,7 +60,7 @@ export default function AdminLogin() {
           <h1 style={{ fontSize: 16, margin: '0 0 6px' }}>Enter your code</h1>
           <p style={{ fontSize: 12, color: '#3d6fb8', margin: '0 0 12px' }}>The 6-digit code from your authenticator app.</p>
           <input id="admin-code" required value={code} onChange={e => setCode(e.target.value)} placeholder="123456"
-                 inputMode="numeric" autoComplete="one-time-code" style={inp} />
+                 aria-label="6-digit code" inputMode="numeric" autoComplete="one-time-code" style={inp} />
           <button disabled={busy} style={{ ...inp, background: '#0b4fa8', color: '#fff', border: 0, cursor: 'pointer', marginBottom: 0 }}>
             {busy ? '…' : 'Continue'}
           </button>
@@ -76,4 +76,4 @@ export default function AdminLogin() {
   )
 }
 const card: React.CSSProperties = { background: '#fff', border: '1px solid #d3e9f9', borderRadius: 10, padding: 24, width: 'min(320px, calc(100vw - 32px))', boxSizing: 'border-box' }
-const inp: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', padding: '9px 10px', marginBottom: 10, border: '1px solid #d3e9f9', borderRadius: 6, fontSize: 14 }
+const inp: React.CSSProperties = { display: 'block', width: '100%', boxSizing: 'border-box', padding: '9px 10px', marginBottom: 10, border: '1px solid #d3e9f9', borderRadius: 6, fontSize: 16 }

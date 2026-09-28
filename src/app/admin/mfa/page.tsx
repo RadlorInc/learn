@@ -73,8 +73,8 @@ export default function AdminMfa() {
             <p style={S.sub}>Or type this key into it: <code data-mfa="secret" style={{ wordBreak: 'break-all' }}>{factor.secret}</code></p>
             <p style={S.sub}>2. Enter the 6-digit code it shows.</p>
             <input id="mfa-code" required value={code} onChange={e => setCode(e.target.value)} placeholder="123456"
-                   inputMode="numeric" autoComplete="one-time-code"
-                   style={{ display: 'block', padding: '9px 10px', marginBottom: 10, border: '1px solid #d3e9f9', borderRadius: 6, fontSize: 14 }} />
+                   aria-label="6-digit code" inputMode="numeric" autoComplete="one-time-code"
+                   style={{ display: 'block', padding: '9px 10px', marginBottom: 10, border: '1px solid #d3e9f9', borderRadius: 6, fontSize: 16 }} />
             <button disabled={busy} style={btn}>{busy ? '…' : 'Turn on'}</button>
           </form>
         )}

@@ -42,11 +42,16 @@ const FONT_PRELOADS = [
   'a7e15459c1805da0', // IBM Plex Mono latin 700
 ]
 
+/**
+ * ⚠️ NO `maximumScale` / `userScalable: false`. They stopped pinch-zoom, which fails WCAG 1.4.4
+ * (resize text) and is a staple of ADA demand letters; they came in with the first commit, not as a
+ * decision. What they were quietly doing instead is done properly: every text field is ≥ 16px, so
+ * iOS does not zoom into a focused one, and `touch-action: manipulation` on controls (globals.css)
+ * stops a fast double tap on an answer zooming the page. `accessibility.test.ts` holds both.
+ */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: '#EFF8FF',
   viewportFit: 'cover',
 }
