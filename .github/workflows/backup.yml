@@ -65,6 +65,10 @@ name: Backup (prod database)
 on:
   schedule:
     - cron: '30 2 * * *' # 02:30 UTC daily, off the 03:17 error_events prune
+    # ⚠️ GitHub starts it ~5–6 h LATE here: 23–27 Sep 2026 every scheduled run began 07:41–08:24 UTC (and nightly-e2e's
+    # 03:15 at 08:30–09:18, weekly-layout's Mon 04:40 at ~10:05) — measured 2026-09-28 from `gh run list --event
+    # schedule`. So "no scheduled backup yet" before ~08:30 UTC is normal, not a failure. Scheduled events are best-effort
+    # (GitHub delays them under load); `workflow_dispatch` runs at once.
   workflow_dispatch: # so a restore rehearsal can grab a fresh dump on demand
 
 jobs:
