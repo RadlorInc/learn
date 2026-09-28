@@ -13,6 +13,7 @@ import { loadStanding, saveStanding, standingAt } from '@/infra/storage/lessonSt
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { FRESH, type Outcome, type SavedRun } from '@/features/lessons/adaptive'
 import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows, sessionUserId, type LessonRow } from '@/data/repositories/points'
+import { markConsentBlocked, clearConsentBlocked } from '@/features/consent/childPause'
 
 // `owner` = the account that queued it (stamped by the first flush after it was queued, which is the flush the enqueue
 // itself starts). The queue is one per DEVICE, so it can hold items of an account that is not signed in right now.
@@ -92,8 +93,11 @@ async function send(): Promise<void> {
           { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH),
             at: standingAt(item.learnerId, item.lessonId) },
           item.outcome, item.event)
-    if (r === 'retry') { held.add(item.learnerId); continue }
+    // 'blocked' (no consent the gate accepts yet) is held like a retry — the answer waits on this device, never deleted —
+    // and the child's screen is told, which asks the adult who added them for consent (features/consent/childPause).
+    if (r === 'retry' || r === 'blocked') { held.add(item.learnerId); if (r === 'blocked') markConsentBlocked(item.learnerId); continue }
     write(read().filter(x => x.id !== item.id))
+    if (r === 'ok') clearConsentBlocked(item.learnerId)
   }
 }
 

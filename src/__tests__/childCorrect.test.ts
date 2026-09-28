@@ -61,6 +61,14 @@ describe('correct a child\'s details', () => {
       await act(async () => { [...card.querySelectorAll('button')].find(b => b.textContent === 'Save')!.click() })
       expect(onCorrect).toHaveBeenCalledWith('Ana', range, 0)
     })
+  it.each([['notice_sent', 'We’ve emailed you a link to agree to it'], ['notice_unsent', 'We could not send the email']])(
+    'a move into KG refused for an older notice (%s) says why, and whether the email went', async (result, words) => {
+      const { host, act } = await mount(true, vi.fn(async () => result as never))
+      const card = host.querySelector('[data-tour="correct-card"]')!
+      await act(async () => { [...card.querySelectorAll('button')].find(b => b.textContent === 'Save')!.click() })
+      expect(card.textContent).toContain('Kindergarten and Grades 1–2')
+      expect(card.textContent).toContain(words)
+    })
   it('no avatar is picked to start with, and saving without a pick keeps the current one', async () => {
     const onCorrect = vi.fn(async () => 'ok' as const)
     const { host, act } = await mount(true, onCorrect)

@@ -252,6 +252,8 @@ export const ES: Record<string, string> = {
   'Keep it as it is': 'Dejarlo como está',
   'Grade band': 'Franja de grados',
   'Kindergarten': 'Kínder',
+  'Kindergarten and Grades 1–2 are in our updated notice. We’ve emailed you a link to agree to it; then save again.': 'Kínder y los grados 1 y 2 están en nuestro aviso actualizado. Le enviamos un enlace para aceptarlo; después, guarde de nuevo.',
+  'Kindergarten and Grades 1–2 need your agreement to our updated notice first. We could not send the email; please try again.': 'Kínder y los grados 1 y 2 necesitan primero que acepte nuestro aviso actualizado. No pudimos enviar el correo; inténtelo de nuevo.',
   'Grades 1–2': 'Grados 1 y 2',
   'Grades 3–5': 'Grados 3 a 5',
   'Grades 6–8': 'Grados 6 a 8',

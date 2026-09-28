@@ -29,8 +29,10 @@ export async function cancelQueuedSecondNotices(): Promise<void> {
  *  - 'drop'  — permanent failure (the row can never be accepted, e.g. the learner
  *              no longer exists or isn't owned by this account); discard the item
  *              so it doesn't loop forever in the offline queue
+ *  - 'blocked' — P0C01: this child has no consent the gate accepts YET. Keep the item (founder, 2026-09-28: a
+ *              child's answers wait on the device, never lost) and let the child's screen say so.
  */
-export type SyncOutcome = 'ok' | 'retry' | 'drop'
+export type SyncOutcome = 'ok' | 'retry' | 'drop' | 'blocked'
 
 // SQLSTATE codes that a retry can never fix — the payload is fundamentally
 // rejected (missing FK target, RLS denial, bad data), not a transient hiccup.
@@ -42,14 +44,15 @@ const NON_RETRYABLE_CODES = new Set([
   '23502', // not_null_violation
   '23514', // check_violation
   '22P02', // invalid_text_representation — malformed uuid
-  // No granted parental consent for this child (the consent gate). Kept as 'retry' it stalled every later upload on the
-  // device behind it (BUG-04); dropped, as analytics.ts drops it, the device keeps its own copy of the progress.
-  CONSENT_SQLSTATE,
 ])
 
 export function classifySyncError(error: { code?: string; message?: string }): SyncOutcome {
   const code = error?.code ?? ''
   if (code === '23505') return 'ok'               // unique_violation → already recorded
+  // ⚠️ WAS 'drop' UNTIL 2026-09-28, which DELETED the child's queued answers — the founder's rule is that they wait on the
+  // device until the parent agrees. (It was 'drop' because 'retry' once stalled every other child's uploads, BUG-04;
+  // lessonSync now holds only the refused child's items.) analytics.ts still drops refused EVENTS, deliberately.
+  if (code === CONSENT_SQLSTATE) return 'blocked'
   if (NON_RETRYABLE_CODES.has(code)) return 'drop'
   // Fallback for drivers that don't surface a SQLSTATE on the error object.
   const msg = (error?.message ?? '').toLowerCase()

@@ -163,10 +163,10 @@ know, both recorded by the 2026-09-26 review (`docs/review/DEVOPS.md`, OPS-02/OP
 - It backs production up first (the `prod-backup` step in `deploy.yml`, OPS-08) and applies nothing if
   that fails. (Until OPS-08 it took none, and this line said to run `backup.yml` by hand.)
 - ⚠️ **`promote` does not wait for this approval**, so the app normally goes live first. Read the top
-  of the migration file for its deploy order before approving. A consent-notice version is the case
-  where the order matters both ways: **`20260928100000` (notice-v7) is approved only AFTER production
-  is READY on its merge commit** — approved earlier, every parent is re-asked by an app that still
-  sends notice-v6, and their answers are refused (`consentReconsent.test.ts` measures this).
+  of the migration file for its deploy order before approving. **`20260928100000` (notice-v7) is
+  approved only AFTER production is READY on its merge commit**: approved earlier, the old app would
+  DELETE the queued answers of every newly-refused Kindergarten / Grade 1–2 child (it classed the
+  consent refusal as "drop"; the new app keeps them on the device), and could not email their parents.
 
 ## After applying
 
