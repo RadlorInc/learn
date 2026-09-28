@@ -19,11 +19,19 @@ fixed yet are tracked outside this public repo; ask the founder.
   and three test files (`adaptiveEngine`, `adaptiveWiring`, `lessonFlowAllModules`). Branch `classroom-parked`
   (on GitHub) holds the first classroom build — never ship it as is. Local branch `learner-grade` defines its own
   "notice-v7", which now clashes with the one that shipped.
+- **Docs rebuilt** in #312 (a Draft, waiting for the founder's OK to merge): the structure is in
+  [docs/START-HERE.md](docs/START-HERE.md); 109 old docs became 48, and the deleted ones are in git history. Whoever
+  merges it deletes this line. Until then the main checkout (on `game-in-play`) still loads its own old, uncommitted
+  `handoff.md`, which points here.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
 
 ## Open — the founder decides
 
+- Merge #312 after reading START-HERE and the before/after counts in the PR. Then, in a follow-up: take the two
+  personal names out of `docs/legal/PLACEHOLDERS.md` (from before #312; the file is test-read), and keep or delete the
+  non-Markdown folders the old docs left behind (`docs/legal/screenshots/`, `docs/art/`, `docs/verification/`,
+  `docs/rename/`). `docs/review/sql/` stays while it holds pending proof SQL.
 - Commit the uncommitted work above (`blockcraft/` and its `/play` framing, the three test files) or drop it;
   blockcraft multiplayer later (needs a server decision; a children's app means no chat); try it on a real tablet.
 - `learner-grade`: rework on top of notice-v7, or drop.
@@ -38,7 +46,7 @@ fixed yet are tracked outside this public repo; ask the founder.
 - A way to mute the lesson voice (classrooms).
 - Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
 - A maintenance switch: none exists, so stopping the app means removing the domain.
-- Points: do unspent points carry over; the 8-points-a-minute rate is a guess to measure.
+- Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
 - After the beta: Search Console, then one public page per grade.
@@ -117,3 +125,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
+- Never recorded, so check or drop: the console 404 on every page; whether Vercel firewall rules exist; whether an
+  Instant Rollback has ever been timed; whether the daily health-check routine still runs; the classroom AR demo
+  (labs) track; the id-free event rollup decided on 5 September and never built.
