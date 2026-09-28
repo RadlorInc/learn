@@ -46,10 +46,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder sets (dashboards and accounts)
 
-- **Vercel has blocked every production deploy since about 16:00 UTC on 28 Sep** ("Deployment was blocked" on
-  #313 and #314; production stays on `90dbe9604`). The repo became private in the same window, and on Pro a private
-  repo deploys only commits whose author is a Vercel team member — likely, not measured. Fix in Vercel (link the
-  GitHub account that authors the merges to a team member, or make the repo public again), then redeploy `release`.
+- **Before the repo goes private again, fix Vercel.** Measured 28 Sep: while `learn` was private, Vercel refused both
+  production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
+  On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
+  (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
