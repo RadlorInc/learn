@@ -101,6 +101,6 @@ describe('admin_* functions: an admin must be at aal2', () => {
     // (a function replacer: in a replacement STRING, `$$` means a literal `$`)
     const planted = MIG_SQL.replace('\ndo $$\ndeclare b record', () => '\ngrant execute on function public.admin_assert() to anon;\ndo $$\ndeclare b record')
     expect(planted, 'the plant did not land').not.toBe(MIG_SQL)
-    expect(await outcome(d.exec(planted))).toMatch(/owner, grants, search_path or DEFINER changed/)
+    expect(await outcome(d.exec(planted))).toMatch(/^admin_assert\(\): .* — rolled back$/)
   }, 180_000)
 })
