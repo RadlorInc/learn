@@ -36,6 +36,8 @@ A migration reaches production only one way: `deploy.yml` → `migrate-prod`, be
    - applies every migration the ledger lacks.
 
    `scripts/migrations-pending.sh` offers the job whenever any migration changed since the last **successful** `migrate-prod`. So a rejected or failed run is offered again on the next push. When it cannot tell, it says pending.
+
+   It learns that commit from the tag `prod-db-migrated`, which the Deploy job `record-migrated` moves after every successful `migrate-prod`. Without the tag it falls back to scanning past Deploy runs through the Actions API, which has answered without data that was there (2026-09-28). If a Deploy run for a push with no migration asks for `production-db`, the tag is missing or behind: approving applies nothing, and the approval's success moves the tag.
 10. **Founder — run the proof-SQL.** Every row should read `PASS`, and each `INFO` should match what the before-SQL predicted.
 11. **Agent — record it.** Put the before, backup, approval and proof results in the PR, as counts and `PASS`/`FAIL` only. If a grant, policy or `SECURITY DEFINER` changed, regenerate the security baseline (below).
 

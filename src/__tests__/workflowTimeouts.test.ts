@@ -22,7 +22,7 @@ const EXPECTED: Record<string, string[]> = {
   // `ci` calls ci.yml as a reusable workflow; GitHub rejects `timeout-minutes` on such a job
   // (only name/uses/with/secrets/strategy/needs/if/concurrency/permissions are allowed). The
   // called jobs carry their own, checked under ci.yml above.
-  'deploy.yml': ['promote', 'migrate-staging', 'migrations-changed', 'migrate-prod'],
+  'deploy.yml': ['promote', 'migrate-staging', 'migrations-changed', 'migrate-prod', 'record-migrated'],
   'migrate-region.yml': ['migrate'],
   'nightly-e2e.yml': ['legacy-gate', 'chapters'],
   'red-main.yml': ['notify'],

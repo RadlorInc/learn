@@ -109,7 +109,7 @@ describe('deploy.yml: migrate-prod falls back only while there is no staging pro
   it('STAGING_PROJECT_REF unset: staging skipped, prod runs after a green CI', () => {
     expect(result({ vars: PROD_SET, changed: true })).toEqual({
       ci: 'success', promote: 'success', 'migrate-staging': 'skipped',
-      'migrations-changed': 'success', 'migrate-prod': 'success',
+      'migrations-changed': 'success', 'migrate-prod': 'success', 'record-migrated': 'success',
     })
   })
 
@@ -117,7 +117,7 @@ describe('deploy.yml: migrate-prod falls back only while there is no staging pro
     const order = run({ vars: STAGING_SET, changed: true })
     expect(Object.fromEntries(order)).toEqual({
       ci: 'success', promote: 'success', 'migrate-staging': 'success',
-      'migrations-changed': 'success', 'migrate-prod': 'success',
+      'migrations-changed': 'success', 'migrate-prod': 'success', 'record-migrated': 'success',
     })
     const at = (n: string) => order.findIndex(([j]) => j === n)
     expect(at('migrate-prod')).toBeGreaterThan(at('migrate-staging'))
@@ -125,6 +125,12 @@ describe('deploy.yml: migrate-prod falls back only while there is no staging pro
 
   it('STAGING_PROJECT_REF set and staging FAILS: prod does not run', () => {
     expect(result({ vars: STAGING_SET, changed: true, fail: ['migrate-staging'] })['migrate-prod']).toBe('skipped')
+    expect(result({ vars: STAGING_SET, changed: true, fail: ['migrate-staging'] })['record-migrated']).toBe('skipped')
+  })
+
+  it('the prod-db-migrated tag moves only after migrate-prod succeeds (a failed or skipped apply leaves it behind)', () => {
+    expect(result({ vars: PROD_SET, changed: true, fail: ['migrate-prod'] })['record-migrated']).toBe('skipped')
+    expect(result({ vars: PROD_SET, changed: false })['record-migrated']).toBe('skipped')
   })
 
   it('no migration file changed: prod does not run (nothing waits for an approval)', () => {
