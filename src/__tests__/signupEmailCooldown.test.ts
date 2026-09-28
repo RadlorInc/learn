@@ -53,12 +53,12 @@ function fakeNetwork(input: unknown, init: RequestInit = {}): Response {
 }
 
 let ip = 0
-const signUp = async (email: string, role = 'parent') => {
+const signUp = async (email: string, role = 'parent', extra: Record<string, unknown> = { adult: true }) => {
   const { POST } = await import('@/app/api/auth/signup/route')
   const r = await POST(new Request('http://x/api/auth/signup', {
     method: 'POST',
     headers: { 'x-forwarded-for': `10.44.${++ip >> 8 & 255}.${ip & 255}` },
-    body: JSON.stringify({ email, password: 'correct-horse-1', role, firstName: 'Pat', lang: 'en' }),
+    body: JSON.stringify({ email, password: 'correct-horse-1', role, firstName: 'Pat', lang: 'en', ...extra }),
   }))
   return { status: r.status, body: await r.json() }
 }
@@ -76,6 +76,23 @@ beforeEach(() => {
   vi.stubGlobal('fetch', vi.fn(async (i: unknown, init?: RequestInit) => fakeNetwork(i, init)))
 })
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals() })
+
+describe('only an adult makes an account: the sign-up must say "I\'m 18 or older"', () => {
+  it('without it — missing, false, or the string "true" — nothing is created and nothing is sent', async () => {
+    for (const extra of [{}, { adult: false }, { adult: 'true' }, { adult: 1 }]) {
+      expect(await signUp('kid@example.test', 'parent', extra), JSON.stringify(extra))
+        .toEqual({ status: 400, body: { error: 'adult_required' } })
+    }
+    expect(generateLinkCalls, 'an account was created without the 18+ statement').toBe(0)
+    expect(emails).toHaveLength(0)
+  })
+
+  it('positive control: the same request WITH it creates the account and sends its one email', async () => {
+    expect(await signUp('kid@example.test', 'parent', { adult: true })).toEqual({ status: 200, body: { ok: true } })
+    expect(generateLinkCalls).toBe(1)
+    expect(sentTo('kid@example.test')).toBe(1)
+  })
+})
 
 describe('SEC-04: one sign-up email per address per 2 minutes', () => {
   it('positive control: a first sign-up sends exactly one email', async () => {

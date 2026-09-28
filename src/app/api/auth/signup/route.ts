@@ -41,6 +41,10 @@ export async function POST(req: Request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254 || password.length < 6 || !role || !firstName) {
     return NextResponse.json({ error: 'invalid' }, { status: 400 })
   }
+  // The adult ticks "I'm 18 or older" on the form (Terms: "You must be 18 or older"). Refused here too, so every account
+  // this route creates carries that statement — a request built by hand does not skip it. Its own code, so the form
+  // can say what is missing instead of "Password must be at least 6 characters".
+  if (body.adult !== true) return NextResponse.json({ error: 'adult_required' }, { status: 400 })
 
   try {
     requireConfig()

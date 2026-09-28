@@ -51,7 +51,7 @@ const xff = () => `10.77.${++ip >> 8 & 255}.${ip & 255}`
 async function signUp() {
   const { POST } = await import('@/app/api/auth/signup/route')
   const r = await POST(new Request('http://x/api/auth/signup', { method: 'POST', headers: { 'x-forwarded-for': xff() },
-    body: JSON.stringify({ email: `p${++seq}@x.test`, password: 'correct-horse-1', role: 'parent', firstName: 'Pat', lang: 'en' }) }))
+    body: JSON.stringify({ email: `p${++seq}@x.test`, password: 'correct-horse-1', role: 'parent', firstName: 'Pat', lang: 'en', adult: true }) }))
   return { status: r.status, body: await r.json() }
 }
 async function ask() {

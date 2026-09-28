@@ -70,7 +70,7 @@ const signUp = async (email: string, password: string, role: string, firstName: 
   const { POST } = await import('@/app/api/auth/signup/route')
   const r = await POST(new Request('http://x/api/auth/signup', {
     method: 'POST', headers: { 'x-forwarded-for': `10.45.${++ip >> 8 & 255}.${ip & 255}` },
-    body: JSON.stringify({ email, password, role, firstName, lang: 'en' }),
+    body: JSON.stringify({ email, password, role, firstName, lang: 'en', adult: true }),
   }))
   return r.status
 }
