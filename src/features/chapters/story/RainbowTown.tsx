@@ -542,7 +542,9 @@ export default function RainbowTown({ onFinish, onExit }: {
    * is the difference between a colouring game and a quiz with a paint bucket, and it costs nothing:
    * the named areas are still graded, so the lesson is intact.
    */
-  const tapPage = useCallback((e: React.MouseEvent) => {
+  // `{ at }` is the keyboard's tap (Enter/Space on the picture): it lands on the glowing part, which the
+  // glow already shows, so the paint on the brush is still the whole question.
+  const tapPage = useCallback((e: React.MouseEvent | { at: [number, number] }) => {
     const p = bmp.current, cv = canvas.current
     if (!p || !cv || tapLock.current) return
     if (phaseRef.current !== 'teach' && phaseRef.current !== 'test') return
@@ -550,8 +552,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     window.setTimeout(() => { tapLock.current = false }, TAP_LOCK_MS)
 
     const box = cv.getBoundingClientRect()
-    const ix = (e.clientX - box.left) / box.width * p.w
-    const iy = (e.clientY - box.top) / box.height * p.h
+    const [ix, iy] = 'at' in e ? e.at : [(e.clientX - box.left) / box.width * p.w, (e.clientY - box.top) / box.height * p.h]
     const targets = pageRef.current.targets
     const step = targets[stepRef.current]
     const brush = loadedRef.current
@@ -724,7 +725,9 @@ export default function RainbowTown({ onFinish, onExit }: {
       {/* KEYED ON THE PAGE, and only on the page. Turning to a new page really does want a fresh
           sheet, so remounting the canvases is the correct thing here — the opposite of the wrong-tap
           nudge, which must never remount because it would wipe a picture mid-run. */}
-      <div key={page.id} ref={pageEl} onClick={tapPage} style={{ position: 'absolute', ...pageStyle, zIndex: 20 }}>
+      <div key={page.id} ref={pageEl} onClick={tapPage} role="button" tabIndex={0} aria-label="Paint the glowing part"
+        onKeyDown={e => { const s = pageRef.current.targets[stepRef.current]; if (s && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tapPage({ at: s.at }) } }}
+        style={{ position: 'absolute', ...pageStyle, zIndex: 20 }}>
         <canvas ref={canvas} width={page.w} height={page.h}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
         {/* The glow. Its own canvas, ABOVE the fills and BELOW the ink, so it pulses on and off with
