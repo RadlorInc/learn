@@ -7,7 +7,7 @@
  * or write it down. It is never stored or shown again — only the username is.
  */
 import { useState, type CSSProperties } from 'react'
-import { CHILD_MIN_PASSWORD, normalizeUsername } from '@/core/childLogin'
+import { MIN_PASSWORD, normalizeUsername } from '@/core/childLogin'
 import { setChildLogin, removeChildLogin, type ChildLoginError } from '@/data/repositories'
 import { useT } from '@/features/dashboard/i18n'
 
@@ -29,7 +29,7 @@ export function ChildLoginSheet({ learnerId, name, current, onClose, onChanged }
   onClose: () => void; onChanged: (username: string | null) => void
 }) {
   const t = useT()
-  const say = (e: ChildLoginError) => t(SAYS[e], { n: CHILD_MIN_PASSWORD })
+  const say = (e: ChildLoginError) => t(SAYS[e], { n: MIN_PASSWORD })
   const [username, setUsername] = useState(current ?? '')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -40,7 +40,7 @@ export function ChildLoginSheet({ learnerId, name, current, onClose, onChanged }
     setError(null)
     const u = normalizeUsername(username)
     if (!u) { setError(say('bad_username')); return }
-    if (password.length < CHILD_MIN_PASSWORD) { setError(say('weak_password')); return }
+    if (password.length < MIN_PASSWORD) { setError(say('weak_password')); return }
     setBusy(true)
     const r = await setChildLogin(learnerId, u, password)
     setBusy(false)
@@ -76,7 +76,7 @@ export function ChildLoginSheet({ learnerId, name, current, onClose, onChanged }
             <input value={username} onChange={e => { setUsername(e.target.value); setError(null) }} autoCapitalize="none" spellCheck={false} autoComplete="off" placeholder={t('e.g. aarav7')} style={field} />
           </label>
           <label style={label}>{current ? t('New password') : t('Password')}
-            <input value={password} onChange={e => { setPassword(e.target.value); setError(null) }} autoComplete="off" spellCheck={false} placeholder={t('At least {n} characters', { n: CHILD_MIN_PASSWORD })} style={field} />
+            <input value={password} onChange={e => { setPassword(e.target.value); setError(null) }} autoComplete="off" spellCheck={false} placeholder={t('At least {n} characters', { n: MIN_PASSWORD })} style={field} />
           </label>
           {error && <div role="alert" style={{ fontSize: 14, fontWeight: 700, color: '#B42318' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

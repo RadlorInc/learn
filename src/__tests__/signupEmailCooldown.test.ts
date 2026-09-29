@@ -163,3 +163,12 @@ describe('SEC-04: one sign-up email per address per 2 minutes', () => {
     err.mockRestore()
   })
 })
+
+describe('an adult\'s password: at least 8 characters, as Supabase Auth\'s minimum (2026-09-28)', () => {
+  it('7 characters is refused with the same 400 as any short password, before any account or email; 8 goes through', async () => {
+    expect(await signUp('seven@example.test', 'parent', { adult: true, password: 'abcdefg' })).toEqual({ status: 400, body: { error: 'invalid' } })
+    expect([generateLinkCalls, emails.length], 'a 7-character sign-up reached Supabase or sent an email').toEqual([0, 0])
+    expect(await signUp('eight@example.test', 'parent', { adult: true, password: 'abcdefgh' })).toEqual({ status: 200, body: { ok: true } })
+    expect(generateLinkCalls, 'POSITIVE TWIN: the 8-character sign-up made its account').toBe(1)
+  })
+})

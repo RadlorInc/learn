@@ -114,6 +114,9 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   user at a reserved `.invalid` address (`src/core/childLogin.ts`) plus a `learner_access` row with
   `access_role = 'self'`. The child signs in on `/auth` with the username and reaches only their own record. A
   temporary password sends them to `/auth/new-password` first.
+- **Passwords** are at least `MIN_PASSWORD` (8, `src/core/childLogin.ts`) wherever one is set — a child's, a
+  temporary one, an adult's sign-up, reset or invite — matching Supabase Auth's minimum. Sign-in checks no length, so
+  a 6- or 7-character password set before 28 September 2026 still works.
 - **Other adults** see a child through an invite (`learner_invites` → a `viewer` row), removable by the creator or the
   viewer.
 - **Admin** is an account listed in `admin_users` (no client access; rows added by hand). Every `admin_*` RPC starts

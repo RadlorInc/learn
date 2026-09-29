@@ -22,8 +22,8 @@ import { getCurrentSession, verifyEmailToken, setPassword } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 import { APP_NAME } from '@/app/site'
 import { makeT, useSavedLang } from '@/features/dashboard/i18n'
+import { MIN_PASSWORD } from '@/core/childLogin'
 
-const MIN = 6
 
 const C = {
   page:   'var(--paper)',
@@ -156,7 +156,7 @@ function SetPasswordForm() {
   }, [params])
 
   async function submit() {
-    if (password.length < MIN)  { setError(t('Password must be at least {n} characters', { n: MIN })); return }
+    if (password.length < MIN_PASSWORD)  { setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD })); return }
     if (password !== confirm)   { setError(t('The two passwords do not match')); return }
 
     setLoading(true); setError(null)
@@ -172,7 +172,7 @@ function SetPasswordForm() {
   }
 
   const disabled  = loading || !ready
-  const longEnough = password.length >= MIN
+  const longEnough = password.length >= MIN_PASSWORD
   const matches    = password.length > 0 && password === confirm
 
   /**
@@ -232,7 +232,7 @@ function SetPasswordForm() {
       )}
 
       {[
-        { id: 'sp-new',     label: t('New password'),     value: password, set: setPasswordV, ph: t('At least {n} characters', { n: MIN }) },
+        { id: 'sp-new',     label: t('New password'),     value: password, set: setPasswordV, ph: t('At least {n} characters', { n: MIN_PASSWORD }) },
         { id: 'sp-confirm', label: t('Confirm password'), value: confirm,  set: setConfirm,   ph: t('Type it again') },
       ].map(f => (
         <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -256,7 +256,7 @@ function SetPasswordForm() {
       {/* The two rules, live. They are the SAME two conditions `submit` enforces — stated where
           they can be read before the button is pressed rather than only after it is. */}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
-        <Rule met={longEnough}>{t('{n} or more characters', { n: MIN })}</Rule>
+        <Rule met={longEnough}>{t('{n} or more characters', { n: MIN_PASSWORD })}</Rule>
         <Rule met={matches}>{t('Both passwords match')}</Rule>
       </ul>
 

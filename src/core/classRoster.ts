@@ -46,10 +46,11 @@ export function parseRoster(text: string): { rows: RosterRow[]; errors: RosterEr
   return { rows, errors }
 }
 
-/** Easy to read out to a child and type: an animal and three digits, e.g. "otter482". Temporary by design. */
+/** Easy to read out to a child and type: an animal and three digits, e.g. "otter482". Temporary by design.
+ *  Every word has 5+ letters, so every password is at least 8 characters (MIN_PASSWORD) and the server accepts it. */
 const WORDS = ['tiger', 'otter', 'panda', 'koala', 'eagle', 'zebra', 'camel', 'lemur', 'moose', 'robin', 'shark', 'whale',
   'bison', 'gecko', 'hippo', 'llama', 'mango', 'maple', 'cedar', 'comet', 'pluto', 'orbit', 'lotus', 'coral', 'pearl',
-  'river', 'cloud', 'storm', 'amber', 'ruby', 'jade', 'onyx', 'falcon', 'badger', 'beaver', 'parrot', 'turtle', 'rabbit']
+  'river', 'cloud', 'storm', 'amber', 'falcon', 'badger', 'beaver', 'parrot', 'turtle', 'rabbit']
 
 export function tempPassword(random: () => number = secureRandom): string {
   const word = WORDS[Math.floor(random() * WORDS.length)]

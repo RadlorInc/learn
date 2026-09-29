@@ -3,7 +3,6 @@
  */
 import { describe, it, expect } from 'vitest'
 import { parseRoster, tempPassword, rosterCsv } from '@/core/classRoster'
-import { CHILD_MIN_PASSWORD } from '@/core/childLogin'
 
 describe('parseRoster', () => {
   it('one username per line; the name defaults to the username', () => {
@@ -51,8 +50,18 @@ describe('tempPassword', () => {
     for (let i = 0; i < 200; i++) {
       const p = tempPassword()
       expect(p).toMatch(/^[a-z]+\d{3}$/)
-      expect(p.length).toBeGreaterThanOrEqual(CHILD_MIN_PASSWORD)
     }
+  })
+
+  it('every word makes a password of at least 8 characters, the shortest the server accepts', () => {
+    const seen = new Set<string>()
+    for (let k = 0; k < 1000; k++) {
+      const draws = [k / 1000, 0]
+      const p = tempPassword(() => draws.shift()!)
+      seen.add(p)
+      expect(p.length, `${p} is shorter than 8`).toBeGreaterThanOrEqual(8)
+    }
+    expect(seen.size, 'control: the sweep reached every word, not one').toBeGreaterThan(30)
   })
 })
 

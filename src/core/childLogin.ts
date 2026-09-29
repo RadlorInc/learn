@@ -7,7 +7,13 @@
  * ⚠️ CHANGING CHILD_EMAIL_DOMAIN LOCKS OUT EVERY EXISTING CHILD — their accounts keep the old address.
  */
 export const CHILD_EMAIL_DOMAIN = 'learner.adaptivelearn.invalid'
-export const CHILD_MIN_PASSWORD = 6
+/**
+ * The shortest password the app lets anyone set: a child's (set by their adult, or their own at first sign-in), a
+ * teacher's temporary one (core/classRoster), and an adult's own. It matches Supabase Auth's minimum password length,
+ * which applies only when a password is SET — a 6- or 7-character password set before the minimum rose still signs in,
+ * so nothing checks this at sign-in.
+ */
+export const MIN_PASSWORD = 8
 
 /** 3–20 characters: lowercase letters, digits, dot, underscore; starts with a letter or digit. */
 const USERNAME = /^[a-z0-9][a-z0-9._]{2,19}$/
