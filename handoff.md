@@ -23,13 +23,13 @@ fixed yet are tracked outside this public repo; ask the founder.
   Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
+- **Marketing and reels** live in the private repo `RadlorInc/radlor-internal`: the marketing index, reel scripts,
+  claim bank, and `content/motion/` (reels as code, with 3D and sound). `~/milo_react` has no remote.
 
 ## Open — Draft PRs waiting for the founder
 
-Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323, #322, website#9 (each migration's
-before- and proof-SQL all PASS; #322 after Supabase Auth's minimum became 8, with leaked-password protection on). #323
-was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️), so the
-repo's migration chain still builds a body one comment different from production's.
+The repo's migration chain builds a `get_parent_dashboard()` body one comment different from production's (found
+rebuilding #323; no ⚠️).
 1. #329 — KG–2 art: 33 own backgrounds, 18 new animated animals (and a bear cub replacing the 9–11 foreman as the
    walker), 23 Play-card pictures instead of emoji. CI is red until the voice is in:
    - the founder runs `scripts/kaggle/josh-chapters-g2-1.ipynb` (123 Multiplication lines; sent in chat, not committed)
@@ -95,7 +95,8 @@ repo's migration chain still builds a body one comment different from production
   deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
   Vercel connector does not show it.
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
-  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
+  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches, the
+  old reel folder `~/video_reviewer/content/` (now in `radlor-internal`).
 
 ## Open — live checks on production (the founder)
 
