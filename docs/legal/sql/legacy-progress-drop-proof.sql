@@ -19,7 +19,7 @@ union all select 'anon and authenticated hold no INSERT/UPDATE/DELETE on session
              and not has_table_privilege('authenticated', 'public.sessions', 'DELETE') and not has_table_privilege('anon', 'public.sessions', 'INSERT')
              and has_table_privilege('authenticated', 'public.sessions', 'SELECT') then 'PASS' else 'FAIL' end
 union all select 'get_parent_dashboard() is the new body',
-       case when (select md5(prosrc) from pg_proc where oid = 'public.get_parent_dashboard()'::regprocedure) = '3d9b363b90c0ed52579e9cf15c8e2219' then 'PASS' else 'FAIL' end
+       case when (select md5(prosrc) from pg_proc where oid = 'public.get_parent_dashboard()'::regprocedure) = '85b525bdabaf177862d42180f970f107' then 'PASS' else 'FAIL' end
 union all select 'delete_my_account(text) is the new body, still SECURITY DEFINER with search_path=public',
        case when (select md5(prosrc) = 'da235db87dc8e11c18bbf4f4b714ded2' and prosecdef and proconfig = array['search_path=public']
                   from pg_proc where oid = 'public.delete_my_account(text)'::regprocedure) then 'PASS' else 'FAIL' end

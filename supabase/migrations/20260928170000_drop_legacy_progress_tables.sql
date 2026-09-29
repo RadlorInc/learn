@@ -50,7 +50,7 @@ AS $function$
         'sessions', (select coalesce(json_agg(x), '[]'::json)
                      from (select se.* from public.sessions se
                            where se.learner_id = l.id
-                           -- ⚠️ CHANGED: was `se.started_at desc nulls last`.
+                           -- CHANGED: was `se.started_at desc nulls last`.
                            order by coalesce(se.completed_at, se.started_at) desc nulls last
                            limit 3) x)
       ) as obj

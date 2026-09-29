@@ -2,11 +2,14 @@
 -- editor BEFORE approving the production-db run, and keep the output. Every row without INFO should say PASS.
 -- A FAIL in a STOP-CHECK means production's function is not the body this migration was written against: do NOT
 -- approve; send the output back.
+-- The get_parent_dashboard() hash is production's, measured 2026-09-29 (1021 characters). The repo's migration chain
+-- builds a body that differs by one comment ("-- ⚠️ CHANGED" where production has "-- CHANGED"), so the repo's own
+-- body FAILS this check on purpose; legacyProgressDropped.test.ts proves both halves.
 -- What the INFO rows mean, decided before they are read: the three tables hold the retired chapter/XP economy (emptied
 -- or zeroed on 2026-09-17). "rows with a value" should be 0; any other number is data the pre-migration backup keeps
 -- and nothing in the app has read since 2026-09-20. It does not by itself stop the migration — send it back and decide.
-select 'STOP-CHECK get_parent_dashboard() is the repo''s body' as check,
-       case when (select md5(prosrc) from pg_proc where oid = 'public.get_parent_dashboard()'::regprocedure) = '98a2bfa3804d5a74b6928d24dbf91c54' then 'PASS' else 'FAIL' end as result
+select 'STOP-CHECK get_parent_dashboard() is production''s measured body' as check,
+       case when (select md5(prosrc) from pg_proc where oid = 'public.get_parent_dashboard()'::regprocedure) = '59242e2e635a4186f7f29cecd579da2f' then 'PASS' else 'FAIL' end as result
 union all select 'STOP-CHECK delete_my_account(text) is the repo''s body',
        case when (select md5(prosrc) from pg_proc where oid = 'public.delete_my_account(text)'::regprocedure) = '10b6fa96e86a85e7cd4a1b8ec0d2e879' then 'PASS' else 'FAIL' end
 union all select 'STOP-CHECK exactly 7 functions in public name the three tables (the migration drops or redefines all 7)',

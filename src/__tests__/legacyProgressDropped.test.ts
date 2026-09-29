@@ -8,7 +8,9 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
-import { loadSchema, grantedConsent, FIXTURE_NOTICE } from './_schema'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { loadSchema, applyFile, grantedConsent, FIXTURE_NOTICE } from './_schema'
 
 const OWNER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 let db: PGlite
@@ -49,6 +51,47 @@ describe('gone', () => {
     const r = await asOwner(`insert into public.sessions (learner_id, chapter, phase, client_id)
       select '${kid}', id, 'practice', 'x' from public.chapters order by id limit 1`)
     expect(String(r.error), 'the write was not refused').toMatch(/permission denied/)
+  })
+})
+
+const DROP = '20260928170000_drop_legacy_progress_tables.sql'
+const sqlChecks = async (d: PGlite, file: string) =>
+  Object.fromEntries((await d.query<{ check: string; result: string }>(readFileSync(resolve(__dirname, '../../docs/legal/sql', file), 'utf8'))).rows
+    .map(r => [r.check, r.result]))
+const LEDGER = `create schema if not exists supabase_migrations;
+  create table if not exists supabase_migrations.schema_migrations (version text primary key);`
+
+describe('the before-SQL STOP-CHECK binds to production’s body, not the repo’s', () => {
+  // Production's md5(prosrc), measured 2026-09-29 by the founder (1021 characters). Written here by hand.
+  const PROD_MD5 = '59242e2e635a4186f7f29cecd579da2f'
+  const STOP = 'STOP-CHECK get_parent_dashboard() is production\'s measured body'
+  let pre: PGlite
+  beforeAll(async () => {
+    ({ db: pre } = await loadSchema({ before: DROP }))
+    await pre.exec(LEDGER)
+  }, 120_000)
+  const bodyMd5 = async () => (await pre.query<{ h: string }>(`select md5(prosrc) as h from pg_proc where oid = 'public.get_parent_dashboard()'::regprocedure`)).rows[0].h
+
+  it("the repo's chain builds the ⚠️ body, and the STOP-CHECK refuses it", async () => {
+    expect(await bodyMd5()).toBe('98a2bfa3804d5a74b6928d24dbf91c54')
+    expect((await sqlChecks(pre, 'legacy-progress-drop-before.sql'))[STOP]).toBe('FAIL')
+  })
+  it("with production's body (the one comment without ⚠️) the STOP-CHECK passes", async () => {
+    const [{ def }] = (await pre.query<{ def: string }>(`select pg_get_functiondef('public.get_parent_dashboard()'::regprocedure) as def`)).rows
+    const prod = def.replace('-- ⚠️ CHANGED: was', '-- CHANGED: was')
+    expect(prod).not.toBe(def)
+    await pre.exec(prod)
+    expect(await bodyMd5()).toBe(PROD_MD5)
+    const checks = await sqlChecks(pre, 'legacy-progress-drop-before.sql')
+    expect(checks[STOP]).toBe('PASS')
+    expect(Object.entries(checks).filter(([k, v]) => !k.startsWith('INFO') && v !== 'PASS')).toEqual([])
+  })
+  it('the migration applied on production\'s body leaves exactly the body the proof-SQL expects; every proof row passes', async () => {
+    await applyFile(pre, DROP)
+    await pre.exec(`insert into supabase_migrations.schema_migrations values ('20260928170000')`)
+    const checks = await sqlChecks(pre, 'legacy-progress-drop-proof.sql')
+    expect(Object.keys(checks)).toHaveLength(10)
+    expect(Object.entries(checks).filter(([, v]) => v !== 'PASS')).toEqual([])
   })
 })
 
