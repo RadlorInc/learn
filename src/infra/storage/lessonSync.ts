@@ -131,19 +131,40 @@ export async function pullLessonProgress(learnerId: string, lessonIds: readonly 
   return rows
 }
 
+/** Class-exercise answers that could not be sent yet (features/classes/ExerciseHome), in localStorage — the device's
+ *  second upload queue. Named here because sign-out must know who is still waiting in it. */
+export const EXERCISE_PENDING = 'exercise-results-pending'
+
 /**
- * Sign-out (N16 / ARC-02): removes the children's progress copies — done, standing, practice run — from this device, so
- * a shared or school computer does not keep every child the dashboard ever showed. The account holds them and the next
- * sign-in pulls them back.
- * ⚠️ A learner with ANY item still in the queue keeps its copies: an upload re-reads the device's copy when it sends
- * (`send` above), so clearing them would upload an empty topic, or nothing. The queue itself is never touched here.
- * Signed-out keys (`…-device-…`, doc 08) are not a learner's and are left alone.
+ * EVERY key on this device that belongs to one child; group 1 is the child. The one place that knows these shapes — a
+ * new per-child key that is not added here stays on the device after sign-out.
+ *  kv: topic done / standing / practice run (lessonProgress, lessonStanding, lessonRun), a chapter's lesson seen
+ *  (lessonSeen), the nudge day (nudgeSeen), a chapter's unfinished run (chapterResume), the last chapter (lastPlayed).
+ *  localStorage: the older plan record (activePlan), a class exercise marked done (ExerciseHome).
+ *  No longer written, still on devices used before 20 September 2026: kv `milo-profile-` (the old profile store, the
+ *  child's name included), `milo-chlvl-` (chapter level), `milo-diag-resume-` (placement check); localStorage
+ *  `milo_checkup_done_` / `milo_checkup_skips_` (placement check).
+ * Not here, on purpose: the two queues; the signed-out `…-device-…` and `exercise-done:none:…` keys (doc 08); and
+ * `al-dash-prefs:<account id>`, which is the ADULT's own dashboard choices, not a child's.
  */
-export function clearSyncedProgress(): void {
-  const waiting = new Set(read().map(x => x.learnerId))
-  const mirror = /^milo-newflow-(?:done|standing|run)-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-/i
-  for (const k of kv.keys()) {
-    const m = mirror.exec(k)
-    if (m && !waiting.has(m[1])) kv.remove(k)
+const CHILD_KEY = /^(?:milo-newflow-(?:done|standing|run)-|milo-lesson-|milo-nudge-|milo-chres-|milo-last-played-|milo-profile-|milo-chlvl-|milo-diag-resume-|milo_active_plan_|milo_checkup_(?:done|skips)_|exercise-done:)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:[-:]|$)/i
+
+/**
+ * Sign-out (N16 / ARC-02; founder, 2026-09-28): removes every child's keys from this device, so a shared or school
+ * computer does not keep every child the dashboard ever showed. The account holds what matters and the next sign-in
+ * pulls it back.
+ * ⚠️ A child with ANY upload still waiting — in the lesson queue or in the pending class-exercise answers — keeps all
+ * of its keys: an upload re-reads the device's copy when it sends (`send` above), so clearing them would upload an
+ * empty topic, or nothing. The queues themselves are never touched here.
+ */
+export function clearChildrenFromDevice(): void {
+  let pending: unknown = []
+  try { pending = JSON.parse(localStorage.getItem(EXERCISE_PENDING) ?? '[]') } catch { /* unreadable: it cannot be sent either */ }
+  const waiting = new Set([...read(), ...(Array.isArray(pending) ? pending : [])].map(x => x?.learnerId))
+  const sweep = (keys: string[], remove: (k: string) => void) => {
+    for (const k of keys) { const m = CHILD_KEY.exec(k); if (m && !waiting.has(m[1])) remove(k) }
   }
+  sweep(kv.keys(), k => kv.remove(k))
+  // kv is IndexedDB on most devices, so the localStorage keys are a second sweep, not the same one.
+  try { sweep(Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!), k => localStorage.removeItem(k)) } catch { /* no localStorage */ }
 }

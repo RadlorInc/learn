@@ -272,7 +272,9 @@ Tests are `src/__tests__/<name>.test.ts`; parent requests follow [runbooks/data-
 **The upload queue** (`infra/storage/lessonSync.ts`, IndexedDB `milo`/`kv`) holds each answer with the account that
 queued it, sends it only while that account is signed in, in order per learner, and flushes on each new item, page
 load and reconnect. The database keeps the most recently answered standing, so a stale device cannot roll progress
-back. Sign-out removes the children's progress copies unless an upload is waiting.
+back. Sign-out (`clearChildrenFromDevice`) removes every per-child key from the device, in kv and in localStorage,
+except for a child with an upload waiting in either queue (lessons, or `exercise-results-pending` for class
+exercises); the queues themselves, signed-out `…-device-…` keys and the adult's `al-dash-prefs:<account>` stay.
 
 **Every place child data is written**
 
