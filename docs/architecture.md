@@ -152,7 +152,7 @@ Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
 - No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
-  `error_events`. A parent reads only their own `parental_consents` rows and writes none.
+  `error_events`, `lesson_catalog` (the ids that may earn progress and points; read only by the two point functions). A parent reads only their own `parental_consents` rows and writes none.
 - Privilege is never read from a column its owner can write (admin is `admin_users`, not `profiles.role`). Some rules
   are column grants (invite status, `lesson_feedback`).
 

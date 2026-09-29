@@ -143,6 +143,9 @@
 --   subscription_seats         rls=t  policies=1   SELECT only, via subscriptions.account_id. Seats
 --                                                  are created by Stripe (service role) and moved
 --                                                  only by reassign_learner_seat().
+--   lesson_catalog             rls=t  policies=0   2026-09-28 (20260928180000): INTENTIONAL, every client privilege
+--                                                  revoked. The ids that may earn progress and points; read only
+--                                                  inside record_lesson_progress / record_module_practice.
 
 -- ==== RLS POLICIES (every access predicate is scoped by auth.uid()/jwt email) ====
 --   chapters: select        SELECT  using(true)                          [public catalog]
