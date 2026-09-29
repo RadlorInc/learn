@@ -26,10 +26,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — Draft PRs waiting for the founder
 
-Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323, #322 (each migration's before- and
-proof-SQL all PASS; #322 after Supabase Auth's minimum became 8, with leaked-password protection on). #323 was rebuilt
-first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️), so the repo's migration
-chain still builds a body one comment different from production's.
+Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323, #322, website#9 (each migration's
+before- and proof-SQL all PASS; #322 after Supabase Auth's minimum became 8, with leaked-password protection on). #323
+was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️), so the
+repo's migration chain still builds a body one comment different from production's.
 1. #329 — KG–2 art: 33 own backgrounds, 18 new animated animals (and a bear cub replacing the 9–11 foreman as the
    walker), 23 Play-card pictures instead of emoji. CI is red until the voice is in:
    - the founder runs `scripts/kaggle/josh-chapters-g2-1.ipynb` (123 Multiplication lines; sent in chat, not committed)
@@ -84,7 +84,8 @@ chain still builds a body one comment different from production's.
 - An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
 - Higgsfield: the account is shared — on 29 Sep someone else's jobs spent from the same balance while the KG–2 art was
-  made. 1.76 credits left.
+  made. Topped up 29 Sep; 227.25 left after website#9. Send at most 6 jobs at once: 3 of a 12-job batch were refused
+  as "out of credits" (not charged).
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
