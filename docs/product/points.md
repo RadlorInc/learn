@@ -21,13 +21,17 @@ The database awards points from what changed on the child's account. The app nev
   uploaded; the next right one carries the new standing.
 - **Nothing is ever taken away** for a miss or a hint (math without fear): a right answer after either earns 1
   instead of 2.
-- **No daily earning cap** (the founder's call). Farming easy questions is held back by the ladder: two first-try
-  answers move the child up a level.
+- **At most 300 points a day** (the founder, 2026-09-28; it replaced "no daily cap" from 2026-09-17). The day is the
+  child's game-time day (the adult's time zone, UTC until they save the settings). An award that does not fit in what
+  is left of today is not made, and never split; the progress is still recorded, and tomorrow pays again.
+- **Only real lessons pay.** Progress and points are accepted only for ids in `lesson_catalog`: every Grade 3–8 topic,
+  every KG–2 chapter (`c:<chapter>`) and every Grade 3–8 module. Any other id is refused (`P0L01`), and the app keeps
+  that answer on the device and tries again later.
 - The break screen after a practice session shows an estimate of the points earned, counted on the device
   (`LessonPlayer.tsx`). The database's figure is the real one.
 
 Held by `src/__tests__/lessonPoints.test.ts`, which drives the real functions as the parent, the child's own login and
-another family.
+another family, and by `src/__tests__/pointsCapAndCatalog.test.ts` (the cap and the catalogue).
 
 ## Game time
 
@@ -59,6 +63,8 @@ child's data is deleted (the child's profile or the account deleted, or the pare
 | an answer pays once, even when its upload is retried | the database (each answer carries its own event id) |
 | an older device cannot roll a topic back or pay a level again | the database keeps the newest answered standing |
 | points can only be written by those functions | the database: the tables are read-only to the app |
+| at most 300 points a day | the database (`points_room_today`, used by both functions) |
+| only real lessons, chapters and modules pay | the database (`lesson_catalog`, `P0L01` for anything else) |
 | only the owning adult changes game time | the database (`set_game_settings`) |
 | the daily limit, the on/off switch, the balance, one game at a time | the database (`start_game_time`, unused today) |
 | answers wait when offline, and upload later with the same event id | the app (`src/infra/storage/lessonSync.ts`) |

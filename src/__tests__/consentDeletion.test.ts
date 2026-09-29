@@ -15,7 +15,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { loadSchema, applyFile, applyFrom, legacyChild, grantedConsent, CONSENT_ONCE, FIXTURE_NOTICE } from './_schema'
 
-const DOC06 = ['learners', 'learner_access', 'lesson_progress', 'point_events', 'learner_stats',
+const DOC06 = ['learners', 'learner_access', 'lesson_progress', 'point_events',
   'learner_events', 'lesson_feedback', 'game_settings', 'error_events'] as const
 
 const PARENT = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
@@ -49,7 +49,6 @@ async function seedRows(id: string, parent: string, login: string | null) {
     insert into public.learner_access (learner_id, parent_id, access_role) values ('${id}', '${parent}', 'owner') on conflict do nothing;
     insert into public.lesson_progress (learner_id, lesson_id, done) values ('${id}', 'g3m1-t1', true);
     insert into public.point_events (learner_id, reason, points) values ('${id}', 'problem', 5);
-    insert into public.learner_stats (learner_id) values ('${id}') on conflict do nothing;
     insert into public.learner_events (learner_id, event) values ('${id}', 'session_start');
     insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${id}', 'g3m1-t1', '2', array['picture']);
     insert into public.game_settings (learner_id) values ('${id}') on conflict do nothing;

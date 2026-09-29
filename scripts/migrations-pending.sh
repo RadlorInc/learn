@@ -33,8 +33,24 @@ decide() { echo "changed=$1" >> "$out"; echo "$2"; exit 0; }
 # the data. Two answers here cannot be true, so they count as blind, not as a negative: a FINISHED Deploy
 # run with NO jobs (every run has at least migrations-changed), and a list with NO finished run (main has
 # plenty). Blind → look once more; still blind → say so. Either way the verdict stays the safe `true`.
-base=""
+# ⚠️ THE MARKER FIRST (2026-09-28). deploy.yml's `record-migrated` job moves the tag `prod-db-migrated` to the commit
+# every successful migrate-prod applied. One read of a git ref, not a reconstruction from the Actions API: that API
+# answered without the data twice on 2026-09-28 (Deploy runs 36438372718 and 36448074687: a finished run's successful
+# migrate-prod was simply missing, once shifting the base back a day and once to "none in 100 runs"), and each time a
+# docs-only merge waited for a production-db approval that had nothing to apply. The scan below is only the fallback
+# for when there is no usable marker (before the first successful migrate-prod that records one, or after a rewrite).
+base="" src=""
+marker=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/prod-db-migrated" --jq '.object.sha' 2>/dev/null) || marker=""
+if [[ "$marker" =~ ^[0-9a-f]{40}$ ]] && git merge-base --is-ancestor "$marker" "$head" 2>/dev/null; then
+  base=$marker src="the prod-db-migrated tag"
+elif [ -n "$marker" ]; then
+  echo "prod-db-migrated ($marker) is not a commit before $head — scanning Deploy runs instead"
+else
+  echo "no prod-db-migrated tag — scanning Deploy runs instead"
+fi
+seenlog="" seen=0 blind=0
 for look in 1 2; do
+  [ -n "$base" ] && break
   runs=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/deploy.yml/runs?branch=main&per_page=100" \
     --jq '.workflow_runs[] | select(.conclusion == "success" or .conclusion == "failure") | "\(.id) \(.head_sha)"') \
     || decide true "could not list Deploy runs — treating migrations as pending"
@@ -45,8 +61,9 @@ for look in 1 2; do
     c=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/jobs?per_page=100" \
       --jq '"\(.jobs | length) \([.jobs[] | select(.name == "migrate-prod") | .conclusion] | join(","))"') \
       || decide true "could not read jobs of Deploy run $id — treating migrations as pending"
+    [ "$seen" -le 12 ] && seenlog="$seenlog ${id}@${sha:0:7}:${c%% *}jobs:${c#* }"
     [ "${c%% *}" = 0 ] && { blind=$((blind + 1)); continue; }
-    if [ "${c#* }" = success ]; then base=$sha; break; fi
+    if [ "${c#* }" = success ]; then base=$sha src="Deploy run $id"; break; fi
   done <<< "$runs"
   [ -n "$base" ] && break
   [ "$seen" -gt 0 ] && [ "$blind" = 0 ] && break # a real negative: every run read, none succeeded
@@ -58,12 +75,12 @@ done
   || decide true "could not see: the run list held no finished Deploy run, twice — treating migrations as pending"
 [ -n "$base" ] || [ "$blind" = 0 ] \
   || decide true "could not see: $blind of $seen finished Deploy runs answered with no jobs, twice — treating migrations as pending"
-[ -n "$base" ] || decide true "no successful migrate-prod in the last $seen finished Deploy runs — treating migrations as pending"
+[ -n "$base" ] || decide true "no successful migrate-prod in the last $seen finished Deploy runs — treating migrations as pending (runs read, newest first, id@sha:jobs:migrate-prod —$seenlog)"
 git merge-base --is-ancestor "$base" "$head" 2>/dev/null \
   || decide true "last successful migrate-prod ($base) is not an ancestor of $head — treating migrations as pending"
 
 # --quiet exits 0 = same, 1 = different, anything else = error; only 0 reports false.
 git diff --quiet "$base" "$head" -- supabase/migrations \
-  && decide false "no migration file changed since $base (last successful migrate-prod)"
+  && decide false "no migration file changed since $base (last successful migrate-prod, from $src)"
 git diff --name-only "$base" "$head" -- supabase/migrations
-decide true "migration files changed since $base (last successful migrate-prod)"
+decide true "migration files changed since $base (last successful migrate-prod, from $src)"

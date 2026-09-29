@@ -15,6 +15,7 @@ import { findModule } from '@/features/lessons/modules'
 import { INK, TEAL, ON_TEAL, PAGE_BG, shell, topBar, pill } from '@/features/lessons/Pictures'
 import { bubble } from '@/features/lessons/Frame'
 import { exerciseItems, isOpen, type Exercise } from './exercise'
+import { EXERCISE_PENDING } from '@/infra/storage/lessonSync'
 
 const doneKey = (learnerId: string | null, id: string) => `exercise-done:${learnerId ?? 'none'}:${id}`
 const isDone = (learnerId: string | null, id: string) => { try { return localStorage.getItem(doneKey(learnerId, id)) === '1' } catch { return false } }
@@ -22,7 +23,7 @@ const markDone = (learnerId: string | null, id: string) => { try { localStorage.
 
 /** Results that could not be sent yet, oldest first. */
 type Pending = { learnerId: string; classId: string; exerciseId: string; outcomes: ExerciseOutcome[] }
-const PENDING = 'exercise-results-pending'
+const PENDING = EXERCISE_PENDING   // sign-out keeps a child's keys while answers wait here (infra/storage/lessonSync)
 const readPending = (): Pending[] => { try { return JSON.parse(localStorage.getItem(PENDING) ?? '[]') } catch { return [] } }
 const writePending = (p: Pending[]) => { try { localStorage.setItem(PENDING, JSON.stringify(p)) } catch { /* private mode */ } }
 async function flushPending(): Promise<number> {

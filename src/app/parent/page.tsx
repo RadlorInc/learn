@@ -16,18 +16,18 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
+  getMyLearners, getParentDashboard,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
-  deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, correctLearner, removeMyselfFromLearner,
-  getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
+  deleteLearnerPermanently, correctLearner, removeMyselfFromLearner,
+  getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
   getRecentPoints, getExerciseResults,
 } from '@/data/repositories'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
-import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
+import type { Learner, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules, ALL_MODULES as MODULES, GRADES, findLesson } from '@/features/lessons/modules'
@@ -71,8 +71,6 @@ const P = {
 
 interface LearnerData {
   learner:     Learner
-  stats:       LearnerStats | null
-  progress:    LearnerProgress[]
   sessions:    Session[]
   accessRole:  'owner' | 'viewer' | 'self' | null
 }
@@ -171,16 +169,10 @@ function Dashboard() {
       if (dash !== null) {
         data = dash.map(d => ({ ...d, accessRole: d.learner.accessRole }))
       } else {
-        // Fallback: role rides along on getMyLearners(); the 3 per-learner reads run in parallel.
+        // Fallback: role rides along on getMyLearners().
         const list = await getMyLearners()
-        data = await Promise.all(list.map(async learner => {
-          const [stats, progress, sessions] = await Promise.all([
-            getLearnerStats(learner.id),
-            getLearnerProgress(learner.id),
-            getRecentSessions(learner.id, 3),
-          ])
-          return { learner, stats, progress, sessions, accessRole: learner.accessRole }
-        }))
+        data = await Promise.all(list.map(async learner =>
+          ({ learner, sessions: await getRecentSessions(learner.id, 3), accessRole: learner.accessRole })))
       }
 
       setLearners(data)
@@ -237,17 +229,7 @@ function Dashboard() {
 
   async function handleDelete(learnerId: string) {
     // One call deletes the child, their login and every record about them (delete_learner).
-    let result = await deleteLearnerPermanently(learnerId)
-    if (result.error === LEGACY_DELETE) {
-      // Before 20260923140000: the child's own account first — deleting the learner removes its access
-      // row but NOT the auth user, which would outlive the child as a login that signs in to nothing.
-      if (childLogins === null || childLogins[learnerId]) {
-        const r = await removeChildLogin(learnerId)
-        // not_configured = this server cannot have made a login, so there is none to outlive the learner.
-        if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
-      }
-      result = await deleteLearnerRowLegacy(learnerId)
-    }
+    const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
       setActionMsg(t('Learner deleted.'))
       setConfirming(null)
@@ -495,7 +477,7 @@ function Dashboard() {
         dataRights={
           /* COPPA: a parent may SEE what is stored and have it DELETED — both under one heading so they are findable. */
           <DataRights name={d.learner.display_name} learnerId={d.learner.id}
-            bundle={{ learner: d.learner, stats: d.stats, progress: d.progress, sessions: d.sessions }}>
+            bundle={{ learner: d.learner, sessions: d.sessions }}>
             {confirming === d.learner.id ? (
               <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:16, padding:'16px', marginBottom:16 }}>
                 <p style={{ fontSize:14, fontWeight:700, color:'#991B1B', margin:'0 0 12px' }}>

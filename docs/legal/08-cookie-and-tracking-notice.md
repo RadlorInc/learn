@@ -3,6 +3,7 @@
 > **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > The table below was read off a real session driven on production on 22 September 2026, not written from memory. One gap remains, marked in the table: a signed-in child's session could not be observed, because that needs a real account.
 > The `milo-assets-audio` row (27 September 2026) describes the service worker shipped that day with the lesson audio's move to Supabase Storage; it was measured on a local build, and the founder's live check confirms it on a device.
+> What sign-out removes (the `milo` database row and the two per-child local-storage rows, 28 September 2026) was read from the code, not re-measured on a device: sign-out clears every per-child key unless that child still has work waiting to sync. `signOutClearsChildKeys.test.ts` holds the code to those rows.
 
 **Effective:** 25 September 2026
 
@@ -18,14 +19,14 @@
 |---|---|---|---|---|
 | — | Cookies | **We set none.** | — | — |
 | `milo-kv-migrated` | Local storage | Remembers that your saved data has already been moved to the newer storage format | Until you clear it | Strictly necessary |
-| `milo` database, `kv` store | On-device database | Your child's profile, what they last played and where they are in each topic's practice, work waiting to sync if you go offline, the day a "practise the topic before first" suggestion was last shown, voice and speed preferences, and the chosen language | Until you clear it — except where each child is in each topic (lessons finished, practice level, the practice in progress), which is removed from the device when you sign out unless it is still waiting to sync | Functional |
+| `milo` database, `kv` store | On-device database | Your child's profile, what they last played and where they are in each topic's practice, work waiting to sync if you go offline, the day a "practise the topic before first" suggestion was last shown, voice and speed preferences, and the chosen language | Until you clear it — except everything kept about a particular child (their profile, where they are in each topic, what they last played, and the day that suggestion was last shown), which is removed from the device when you sign out unless some of that child's work is still waiting to sync | Functional |
 | `milo-shell`, `milo-static`, `milo-assets-<version>` | Cache storage | The app itself and its images, so lessons work offline and use less data | Until the app updates to a new version | Strictly necessary |
 | `milo-assets-audio` | Cache storage | Recorded lesson audio — the same clips for every child, nothing about your child — so lessons work offline and use less data. At most 2,000 clips (about 40 MB); the oldest are removed first | Kept across app updates until removed by the browser, or when you clear this site's data | Strictly necessary |
 | `al-lang` | Local storage | The language you chose for the parent dashboard and the consent screens (English or Spanish) *(read from the code, 24 Sep 2026)* | Until you clear it | Functional |
 | `al-dash-prefs:<account id>` | Local storage | Your dashboard choices: reminders snoozed or hidden, kinds of reminder switched off, when you last visited, which guided tours you have seen. Nothing about a child *(read from the code)* | Until you clear it | Functional |
-| `exercise-done:<child id>:<exercise id>` | Local storage | That a child has finished a class exercise, so it shows as done on this device *(read from the code)* | Until you clear it | Functional |
+| `exercise-done:<child id>:<exercise id>` | Local storage | That a child has finished a class exercise, so it shows as done on this device *(read from the code)* | Until you sign out — kept while that child still has work waiting to sync | Functional |
 | `exercise-results-pending` | Local storage | A child's class-exercise answers that could not be sent yet (for example, offline), kept until they are sent *(read from the code)* | Until they are sent | Strictly necessary |
-| `milo_active_plan_<child id>` | Local storage | An older per-child learning-plan record, still written by some screens *(read from the code)* | Until you clear it | Functional |
+| `milo_active_plan_<child id>` | Local storage | An older per-child learning-plan record, still written by some screens *(read from the code)* | Until you sign out — kept while that child still has work waiting to sync | Functional |
 | `al-text-size` | Local storage | The text size chosen on this device (Large or Extra large; nothing is kept for Normal) *(read from the code, 24 Sep 2026)* | Until you clear it | Functional |
 | `milo-pwa-dismissed` | Local storage | That you dismissed the "install the app" banner *(read from the code)* | Until you clear it | Functional |
 | `milo-auth` | Local storage | Keeps you signed in | Until sign-out or expiry | Strictly necessary |

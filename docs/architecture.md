@@ -140,18 +140,19 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
 | Billing (off) | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config` |
-| Legacy | `sessions`, `learner_progress`, `learner_stats`, `learner_state`, `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; still read by the dashboard's fallback RPC and the export |
+| Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.
 
 ### RLS model
 
 - Access to a child is a `learner_access` row with `parent_id = auth.uid()` (owner, viewer, or the child's login);
-  child-table policies read it. Only the creator writes a `learners` row.
+  child-table policies read it. Only the creator writes a `learners` row, and nobody deletes one directly: a
+  child is deleted only by `delete_learner` → `delete_child_data` (logged, consent withdrawn, the child's login removed).
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
 - No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
-  `error_events`. A parent reads only their own `parental_consents` rows and writes none.
+  `error_events`, `lesson_catalog` (the ids that may earn progress and points; read only by the two point functions). A parent reads only their own `parental_consents` rows and writes none.
 - Privilege is never read from a column its owner can write (admin is `admin_users`, not `profiles.role`). Some rules
   are column grants (invite status, `lesson_feedback`).
 
@@ -171,7 +172,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
   functions).
 - **Policy helpers and triggers:** `is_learner_creator`, `can_self_grant_access`, and the triggers for new users, new
   learners, caps, the consent gate (§5) and B3 cancellation.
-- Legacy `sync_session`, `sync_diagnostic`, `sync_recheck`, `start_diagnostic` are defined; the app calls none.
+- Legacy `sync_recheck` and `start_diagnostic` are defined; the app calls neither. `sync_session` and `sync_diagnostic` were dropped with the legacy progress tables (2026-09-28).
 
 ### Scheduled jobs (pg_cron, UTC, as defined in the migrations)
 
@@ -257,7 +258,7 @@ deletion, and the daily cron drain it.
 |---|---|---|---|
 | Sign-up | `auth.users`, `profiles`, `parental_consents` | `/api/auth/signup` → `/auth/confirm` → `/consent/respond` | `signupEmailCooldown`, `signupRepeatPassword`, `signupConfirmPage` |
 | Consent | `parental_consents` | `/api/consent/respond` → `consent_grant` | `consentFlow`, `consentRoutes`, `consentNeedsConfirmedEmail` |
-| Add a child | `learners` (+ owner `learner_access`, `learner_stats` by trigger) | `createLearner` in the browser | `consentOnceScreens`, `consentOnceGate`, `attestationVersion` |
+| Add a child | `learners` (+ owner `learner_access` by trigger) | `createLearner` in the browser | `consentOnceScreens`, `consentOnceGate`, `attestationVersion` |
 | Child login | `auth.users`, `learner_access`, `profiles` | `/api/child-login` | `childLogin`, `rosterRollbackDelete` |
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |
@@ -271,7 +272,9 @@ Tests are `src/__tests__/<name>.test.ts`; parent requests follow [runbooks/data-
 **The upload queue** (`infra/storage/lessonSync.ts`, IndexedDB `milo`/`kv`) holds each answer with the account that
 queued it, sends it only while that account is signed in, in order per learner, and flushes on each new item, page
 load and reconnect. The database keeps the most recently answered standing, so a stale device cannot roll progress
-back. Sign-out removes the children's progress copies unless an upload is waiting.
+back. Sign-out (`clearChildrenFromDevice`) removes every per-child key from the device, in kv and in localStorage,
+except for a child with an upload waiting in either queue (lessons, or `exercise-results-pending` for class
+exercises); the queues themselves, signed-out `…-device-…` keys and the adult's `al-dash-prefs:<account>` stay.
 
 **Every place child data is written**
 

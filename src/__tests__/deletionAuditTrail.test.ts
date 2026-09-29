@@ -19,7 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
 import { loadSchema, applyFrom, legacyChild, grantedConsent, CONSENT_ONCE, FIXTURE_NOTICE } from './_schema'
 
-const DOC06 = ['learners', 'learner_access', 'lesson_progress', 'point_events', 'learner_stats',
+const DOC06 = ['learners', 'learner_access', 'lesson_progress', 'point_events',
   'learner_events', 'lesson_feedback', 'game_settings', 'error_events'] as const
 
 const P = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'        // deletes one child from the dashboard
@@ -60,7 +60,6 @@ async function seedRows(id: string, parent: string, login: string | null) {
     insert into public.learner_access (learner_id, parent_id, access_role) values ('${id}', '${parent}', 'owner') on conflict do nothing;
     insert into public.lesson_progress (learner_id, lesson_id, done) values ('${id}', 'g3m1-t1', true);
     insert into public.point_events (learner_id, reason, points) values ('${id}', 'problem', 5);
-    insert into public.learner_stats (learner_id) values ('${id}') on conflict do nothing;
     insert into public.learner_events (learner_id, event) values ('${id}', 'session_start');
     insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${id}', 'g3m1-t1', '2', array['picture']);
     insert into public.game_settings (learner_id) values ('${id}') on conflict do nothing;
@@ -74,7 +73,7 @@ const countsFor = async (learner: string) => Object.fromEntries(await Promise.al
 const ZERO = Object.fromEntries(DOC06.map(t => [t, 0]))
 /** Hand-written: what one seeded child's deletion must count (learner_access = owner row, + the 'self' row if a login). */
 const SEEDED = (login: boolean) => ({ learners: 1, learner_access: login ? 2 : 1, lesson_progress: 1, point_events: 1,
-  learner_stats: 1, learner_events: 1, lesson_feedback: 1, game_settings: 1, error_events: 1, child_logins: login ? 1 : 0 })
+  learner_events: 1, lesson_feedback: 1, game_settings: 1, error_events: 1, child_logins: login ? 1 : 0 })
 
 let legacy: { id: string; token: string }
 beforeAll(async () => {
@@ -172,7 +171,7 @@ describe('each deletion path writes exactly one row, and still deletes what it d
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ path: 'close_account', actor_kind: 'user', actor_id: C, account_id: C })
     expect([...rows[0].learner_ids].sort()).toEqual([a, b].sort())
-    expect(rows[0].row_counts).toMatchObject({ learners: 2, learner_events: 2, error_events: 2, learner_stats: 2, child_logins: 0 })
+    expect(rows[0].row_counts).toMatchObject({ learners: 2, learner_events: 2, error_events: 2, child_logins: 0 })
   })
 
   it('the unconfirmed-user prune → one prune_unconfirmed row per run that deleted something, none when it deleted nothing', async () => {
