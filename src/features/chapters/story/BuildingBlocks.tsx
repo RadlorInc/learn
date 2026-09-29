@@ -75,9 +75,9 @@ import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
-/** The one who carries each finished ten to its shelf — the yard's foreman bear, a real walk cycle
+/** The one who carries each finished ten to its shelf — the bear cub (the foreman bear until 2026-09-29), a real walk cycle
  *  (cellAspect 0.578, near enough the old walker's 0.586 that the shelves did not have to move). */
-const WALKER = '/assets/objects/foreman_bear_side.png'
+const WALKER = '/assets/objects/bearcub_side.png'
 
 // ─── Material ─────────────────────────────────────────────────────────────────────────
 /**

@@ -131,6 +131,13 @@ export const SHEETS: Record<string, Sheet> = {
   '/assets/objects/penguin_side.png': { url: '/assets/objects/penguin_walk.png', cellAspect: 0.758, frames: 12, fps: 12 },
   '/assets/objects/seal_side.png': { url: '/assets/objects/seal_walk.png', cellAspect: 1.852, frames: 12, fps: 9 },
   '/assets/objects/dolphin_side.png': { url: '/assets/objects/dolphin_walk.png', cellAspect: 1.516, frames: 12, fps: 9 },
+  // The KG–2 walker and shopper (Money, Tens & Ones, Add/Subtract to 100). Replaces the 9–11 band's foreman bear, whose
+  // hard hat and overalls read as a work site, not a KG–2 story. Nothing spoken names him, so no clip changed.
+  '/assets/objects/bearcub_side.png': { url: '/assets/objects/bearcub_walk.png', cellAspect: 0.641, frames: 12, fps: 10 },
+  // Multiplication's garden. The snail is PING-PONGED (22 cells): its clip had no clean cycle, and a body that only ripples
+  // loops seamlessly played forward then back — the turtle's recipe.
+  '/assets/objects/snail_side.png': { url: '/assets/objects/snail_walk.png', cellAspect: 1.285, frames: 22, fps: 10 },
+  '/assets/objects/grasshopper_side.png': { url: '/assets/objects/grasshopper_walk.png', cellAspect: 1.348, frames: 12, fps: 14 },
   '/assets/objects/seahorse_side.png': { url: '/assets/objects/seahorse_walk.png', cellAspect: 0.598, frames: 12, fps: 8 },
 
   // ── The 9–11 WORKING CAST (generated 2026-07-31) ──────────────────────────────────────────────

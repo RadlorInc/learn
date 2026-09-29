@@ -80,13 +80,16 @@ it('every drawn walk cycle in sheets.ts is actually used by a chapter', () => {
     // unusable — just not yet cast in a chapter. HopAlong is its natural home if it ever wants a
     // hopping creature alongside Milo.
     '/assets/objects/frog_side.png',
-    // Order Desk's two cast members, orphaned when the 9–11 chapters were deleted (2026-09-20).
+    // Order Desk's two cast members, orphaned when the 9–11 chapters were deleted (2026-09-20). The foreman bear
+    // walked in three KG–2 chapters until the bear cub replaced him (2026-09-29).
     // The art is kept (founder's call); these are the sheets nothing casts any more.
     '/assets/objects/foreman_bear_side.png',
     '/assets/objects/driver_badger_side.png',
     '/assets/objects/alien_side.png',       // orphaned when the moon base was dropped
     '/assets/objects/astronaut_side.png',   // ditto
     '/assets/objects/nest_side.png',        // NestTree's chick-in-a-nest, a prop rather than a mover
+    // The walker/shopper of Money, Tens & Ones and Add/Subtract to 100 — a character, never a countable item (2026-09-29).
+    '/assets/objects/bearcub_side.png',
     // Milo's own sprites. Not cast entries at all — this sweep only covers the creatures a chapter
     // lays out as countable items, and he is never one of those. (milo_hop IS in use, by HopAlong.)
     '/assets/characters/milo_side.png',

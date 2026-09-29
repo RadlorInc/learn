@@ -76,11 +76,11 @@ export {
 }
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
-/** The shopper the child pays for — the foreman bear, a real walk cycle. Chosen over the badger
+/** The shopper the child pays for — the bear cub (the foreman bear until 2026-09-29), a real walk cycle. Chosen over the badger
  *  because his dominant colour is the old walker's (a 15–30° brown, measured 23.6° against 23.3°), so
  *  the ground-contrast gate in coinShopPay.test.ts still describes the sprite on screen; the badger's
  *  green jacket would stand on green grass. */
-const BUYER = '/assets/objects/foreman_bear_side.png'
+const BUYER = '/assets/objects/bearcub_side.png'
 
 // ─── The coins ────────────────────────────────────────────────────────────────────────
 /**

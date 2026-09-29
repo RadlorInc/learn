@@ -12,7 +12,7 @@
  * makes a child choose before they know what they are choosing, and then gives them ten rounds of
  * one backdrop. Same call chapter 2 took when its three biomes were merged.
  *   🐔 The Farm   — PENS of chicks · ducklings · lambs
- *   🌸 The Garden — PATCHES of bees · ladybugs · ants
+ *   🌸 The Garden — PATCHES of bees · ladybugs · snails · grasshoppers
  *   🌲 The Woods  — NESTS of birds · squirrels · eagles
  * EVERY item is a drawn walk cycle, so a group is made of living creatures rather than stickers.
  * The plan is 9 item+setting pairs, interleaved, so consecutive rounds change setting.
@@ -83,8 +83,8 @@ const SETTINGS: MultWorld[] = [
       { grad: 'linear-gradient(#d3e9f6 0%, #dfeedb 60%, #c8e2b8 100%)', img: '/assets/backgrounds/garden_greenhouse.jpeg' },
       { grad: 'linear-gradient(#cfe8f5 0%, #dcecda 60%, #c4dfb4 100%)', img: '/assets/backgrounds/garden_hives.jpeg' },
     ],
-    items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('ant', 'ant', 'ants'),
-      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')] },
+    items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('snail', 'snail', 'snails'),
+      IT('grasshopper', 'grasshopper', 'grasshoppers'), IT('dragonfly', 'dragonfly', 'dragonflies')] },
   { id: 'woods', ground: 62, group: 'nest', groupPlural: 'nests',
     bgs: [
       { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/woods_mushroom.jpeg' },
