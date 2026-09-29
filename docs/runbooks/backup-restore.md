@@ -7,6 +7,10 @@
 - **When.**
   - 02:30 UTC daily. GitHub started scheduled runs 5–6 h late (07:41–08:49 UTC on 23–28 Sep, measured 2026-09-28), so "no run yet" before ~09:00 UTC is normal.
   - Manual at any time: Actions → *Backup (prod database)* → Run workflow, or `gh workflow run backup.yml`.
+  - The job runs in the GitHub environment `prod-backup` (only `main` may use it). Its three secrets live there and in
+    `production-db`, never as repository secrets: `secretsInEnvironments.test.ts` fails on a job that reads one outside an
+    environment. Keep every old `BACKUP_PASSPHRASE` in the password manager with its dates: a dump opens only with the
+    passphrase it was made with.
   - `migrate-prod` runs the same `.github/actions/prod-backup` steps before applying a migration (artifact `milo-db-backup-premigrate-<run id>`).
 - **Steps, stopping at the first failure:**
   1. Fail and name what is missing if any of these is empty: `SUPABASE_ACCESS_TOKEN`, `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF`.

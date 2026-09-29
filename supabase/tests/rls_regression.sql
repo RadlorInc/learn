@@ -788,6 +788,39 @@ begin
     if v_cnt <> 1 then raise exception 'RLS FAIL V6: a viewer could not remove themselves (% rows)', v_cnt; end if;
   end;
 
+  -- ── 20260928160000: a learner row is deleted only through delete_learner ───────────────────────
+  -- L1: the OWNER's direct delete of their own child is refused, and the row survives it.
+  -- L2 (positive twin, same caller): delete_learner deletes that child.
+  declare
+    v_del uuid := gen_random_uuid();
+    v_refused boolean := false;
+  begin
+    insert into public.learners (id, display_name, created_by, consent_id, attested_notice_version)
+      values (v_del, 'RLS Delete Kid', v_owner, v_owner_consent, 'notice-v7');
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_owner, 'email', 'owner.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    begin
+      delete from public.learners where id = v_del;
+    exception when insufficient_privilege then v_refused := true;
+    end;
+    reset role;
+    select count(*) into v_cnt from public.learners where id = v_del;
+    v_asserts := v_asserts + 1;
+    if not v_refused or v_cnt <> 1 then
+      raise exception 'RLS FAIL L1: the owner deleted a learners row directly (refused=%, rows left=%)', v_refused, v_cnt;
+    end if;
+
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_owner, 'email', 'owner.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    perform public.delete_learner(v_del);
+    reset role;
+    select count(*) into v_cnt from public.learners where id = v_del;
+    v_asserts := v_asserts + 1;
+    if v_cnt <> 0 then raise exception 'RLS FAIL L2: delete_learner did not delete the owner''s child'; end if;
+  end;
+
   -- ── CONSENT-ONCE (20260924100000): withdrawing a whole account, and nobody else's ─────────────
   -- Last, because C3 deletes the attacker's child that the assertions above use.
   select count(*) into v_cnt from public.learners where created_by = v_owner;

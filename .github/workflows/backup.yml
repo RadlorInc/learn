@@ -74,6 +74,9 @@ on:
 jobs:
   dump:
     runs-on: ubuntu-latest
+    # The production database password, the account-wide Supabase token and the backup passphrase live in this
+    # environment, which only `main` may use (2026-09-28): a workflow on any other branch cannot read them.
+    environment: prod-backup
     permissions:
       contents: read
       packages: read # prod-backup pulls the image pg_dump runs in from ghcr.io, signed in with this run's GITHUB_TOKEN

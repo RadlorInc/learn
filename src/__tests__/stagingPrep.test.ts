@@ -66,12 +66,16 @@ type Job = { needs?: string | string[]; if?: string }
 const yaml = createRequire(import.meta.url)('js-yaml') as { load(s: string): unknown }
 const JOBS = (yaml.load(readFileSync(resolve(ROOT, '.github/workflows/deploy.yml'), 'utf8')) as { jobs: Record<string, Job> }).jobs
 const needsOf = (j: Job) => (j.needs === undefined ? [] : ([] as string[]).concat(j.needs))
+const ancestorsOf = (n: string): string[] => needsOf(JOBS[n]).flatMap((d) => [d, ...ancestorsOf(d)])
 
 type Result = 'success' | 'failure' | 'skipped'
 type Scenario = { vars: Record<string, string>; changed: boolean; fail?: string[] }
 
 /** GitHub Actions semantics for the subset deploy.yml uses: an unset var is '', and an `if` without a
- *  status function gets an implicit `success()` (every need succeeded). Jobs are assumed to succeed
+ *  status function gets an implicit `success()`. success() is TRANSITIVE: false when any ancestor, not
+ *  just a direct need, did not succeed — measured on Deploy run 36469923680, where `record-migrated`
+ *  (needs migrate-prod: success, no `if:`) was skipped because migrate-staging, two levels up, was
+ *  skipped. Jobs are assumed to succeed
  *  unless listed in `fail`. Returns each job's result, in the order they could run. */
 function run(s: Scenario): [string, Result][] {
   const done = new Map<string, { result: Result; outputs: Record<string, string> }>()
@@ -82,7 +86,7 @@ function run(s: Scenario): [string, Result][] {
     for (const name of ready) {
       const job = JOBS[name]
       const needs = Object.fromEntries(needsOf(job).map((d) => [d, done.get(d)!]))
-      const success = () => Object.values(needs).every((n) => n.result === 'success')
+      const success = () => ancestorsOf(name).every((a) => done.get(a)!.result === 'success')
       let expr = (job.if ?? 'success()').trim().replace(/^\$\{\{\s*([\s\S]*?)\s*\}\}$/, '$1')
       if (!/\b(success|failure|always|cancelled)\(\)/.test(expr)) expr = `success() && (${expr})`
       const js = expr.replace(/needs\.([\w-]+)/g, 'needs["$1"]').replace(/([!=])=/g, '$1==')
@@ -109,7 +113,7 @@ describe('deploy.yml: migrate-prod falls back only while there is no staging pro
   it('STAGING_PROJECT_REF unset: staging skipped, prod runs after a green CI', () => {
     expect(result({ vars: PROD_SET, changed: true })).toEqual({
       ci: 'success', promote: 'success', 'migrate-staging': 'skipped',
-      'migrations-changed': 'success', 'migrate-prod': 'success',
+      'migrations-changed': 'success', 'migrate-prod': 'success', 'record-migrated': 'success',
     })
   })
 
@@ -117,7 +121,7 @@ describe('deploy.yml: migrate-prod falls back only while there is no staging pro
     const order = run({ vars: STAGING_SET, changed: true })
     expect(Object.fromEntries(order)).toEqual({
       ci: 'success', promote: 'success', 'migrate-staging': 'success',
-      'migrations-changed': 'success', 'migrate-prod': 'success',
+      'migrations-changed': 'success', 'migrate-prod': 'success', 'record-migrated': 'success',
     })
     const at = (n: string) => order.findIndex(([j]) => j === n)
     expect(at('migrate-prod')).toBeGreaterThan(at('migrate-staging'))
@@ -125,6 +129,17 @@ describe('deploy.yml: migrate-prod falls back only while there is no staging pro
 
   it('STAGING_PROJECT_REF set and staging FAILS: prod does not run', () => {
     expect(result({ vars: STAGING_SET, changed: true, fail: ['migrate-staging'] })['migrate-prod']).toBe('skipped')
+    expect(result({ vars: STAGING_SET, changed: true, fail: ['migrate-staging'] })['record-migrated']).toBe('skipped')
+  })
+
+  it('the prod-db-migrated tag moves only after migrate-prod succeeds (a failed or skipped apply leaves it behind)', () => {
+    expect(result({ vars: PROD_SET, changed: true, fail: ['migrate-prod'] })['record-migrated']).toBe('skipped')
+    expect(result({ vars: PROD_SET, changed: false })['record-migrated']).toBe('skipped')
+  })
+
+  it('DEPLOY RUN 36469923680: staging skipped, migrate-prod succeeded → record-migrated RUNS', () => {
+    const r = result({ vars: PROD_SET, changed: true })
+    expect([r['migrate-staging'], r['migrate-prod'], r['record-migrated']]).toEqual(['skipped', 'success', 'success'])
   })
 
   it('no migration file changed: prod does not run (nothing waits for an approval)', () => {
