@@ -1,7 +1,7 @@
--- LEGACY PROGRESS TABLES — PROOF after the migration 20260928170000 (read-only; counts and booleans only). Every row
+-- LEGACY PROGRESS TABLES — PROOF after the migration 20260928190000 (read-only; counts and booleans only). Every row
 -- should say PASS.
-select 'ledger has 20260928170000' as check,
-       case when exists (select 1 from supabase_migrations.schema_migrations where version = '20260928170000') then 'PASS' else 'FAIL' end as result
+select 'ledger has 20260928190000' as check,
+       case when exists (select 1 from supabase_migrations.schema_migrations where version = '20260928190000') then 'PASS' else 'FAIL' end as result
 union all select 'learner_progress, learner_stats and learner_state are gone',
        case when not exists (select 1 from information_schema.tables where table_schema = 'public'
                              and table_name in ('learner_progress', 'learner_stats', 'learner_state')) then 'PASS' else 'FAIL' end

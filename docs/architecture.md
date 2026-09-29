@@ -140,7 +140,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
 | Billing (off) | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config` |
-| Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928170000`) |
+| Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.
 

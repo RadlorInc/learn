@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 20260928170000 — the legacy progress tables are gone, nothing a client can reach still names them, and what the
+ * 20260928190000 — the legacy progress tables are gone, nothing a client can reach still names them, and what the
  * app still uses works as the real caller (`authenticated`, the owner's uid).
  *
  * Refusals and their paired halves, on the real schema (baseline + every migration) in PGlite. Expected values
@@ -54,7 +54,7 @@ describe('gone', () => {
   })
 })
 
-const DROP = '20260928170000_drop_legacy_progress_tables.sql'
+const DROP = '20260928190000_drop_legacy_progress_tables.sql'
 const sqlChecks = async (d: PGlite, file: string) =>
   Object.fromEntries((await d.query<{ check: string; result: string }>(readFileSync(resolve(__dirname, '../../docs/legal/sql', file), 'utf8'))).rows
     .map(r => [r.check, r.result]))
@@ -88,7 +88,7 @@ describe('the before-SQL STOP-CHECK binds to production’s body, not the repo�
   })
   it('the migration applied on production\'s body leaves exactly the body the proof-SQL expects; every proof row passes', async () => {
     await applyFile(pre, DROP)
-    await pre.exec(`insert into supabase_migrations.schema_migrations values ('20260928170000')`)
+    await pre.exec(`insert into supabase_migrations.schema_migrations values ('20260928190000')`)
     const checks = await sqlChecks(pre, 'legacy-progress-drop-proof.sql')
     expect(Object.keys(checks)).toHaveLength(10)
     expect(Object.entries(checks).filter(([, v]) => v !== 'PASS')).toEqual([])

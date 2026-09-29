@@ -30,7 +30,7 @@ declare
   v_cnt      int;
   v_blocked  boolean;
   v_direct   boolean;                     -- did the DIRECT (policy) write path allow it?
-  v_rpc      boolean;                     -- (unused since 20260928170000: sync_session is gone)
+  v_rpc      boolean;                     -- (unused since 20260928190000: sync_session is gone)
   v_learner2 uuid := gen_random_uuid();   -- a second learner the OWNER created (a seat to move to)
   v_learner3 uuid := gen_random_uuid();   -- a third, for the second reassignment in one period
   v_subid    uuid := gen_random_uuid();
@@ -266,7 +266,7 @@ begin
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL A9b: a non-email was accepted as a lead'; end if;
 
-  -- A4: attacker cannot read the learner's sessions. (A5, their stats, went with learner_stats: 20260928170000.)
+  -- A4: attacker cannot read the learner's sessions. (A5, their stats, went with learner_stats: 20260928190000.)
   select count(*) into v_cnt from public.sessions where learner_id = v_learner;
   v_asserts := v_asserts + 1;
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;
@@ -362,7 +362,7 @@ begin
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL B10: a seat was reassigned by direct UPDATE, bypassing the period limit'; end if;
 
-  -- B11 (20260928170000): the legacy `sessions` table takes no client write at all — not a free chapter, not a
+  -- B11 (20260928190000): the legacy `sessions` table takes no client write at all — not a free chapter, not a
   -- paid one, not by its own child's owner (the attacker owns v_alearner). Before, a policy let any learner_access
   -- holder insert, guarded only by is_chapter_entitled; the table and the RPC that wrote it are retired.
   v_blocked := false;
@@ -395,7 +395,7 @@ begin
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL B11d: the owner can no longer read their child''s sessions (% rows)', v_cnt; end if;
 
-  -- B12 (20260928170000): the second write path, sync_session, is gone rather than guarded.
+  -- B12 (20260928190000): the second write path, sync_session, is gone rather than guarded.
   select count(*) into v_cnt from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public' and p.proname in ('sync_session', 'sync_diagnostic');
   v_asserts := v_asserts + 1;
@@ -529,7 +529,7 @@ begin
   end if;
 
   -- The plan, in the shape sync_diagnostic wrote it: a session, then an active plan whose free set is its first two
-  -- steps. ⚠️ Seeded as rows since 20260928170000 dropped sync_diagnostic (the placement check that called it was
+  -- steps. ⚠️ Seeded as rows since 20260928190000 dropped sync_diagnostic (the placement check that called it was
   -- deleted on 2026-09-20); is_chapter_entitled still reads plans, so its plan branch is still asserted here.
   reset role;
   insert into public.diagnostic_sessions (learner_id, band, root_gap_skill)
@@ -552,7 +552,7 @@ begin
   end if;
 
   -- (C3, "finishing step one does not promote step three", recorded completion in learner_progress; that table
-  -- and the recomputation it guarded against are gone — 20260928170000.)
+  -- and the recomputation it guarded against are gone — 20260928190000.)
 
   -- C7: ONE extra chapter for a struggling child, and exactly one. `revisePlanDeeper` prepends a
   -- deeper chapter when the child struggles in the plan's root; without this the product's own
@@ -575,7 +575,7 @@ begin
     raise exception 'RLS FAIL C7: the refused second revision entitled a chapter anyway';
   end if;
 
-  -- (C4, re-running the check, needed sync_diagnostic — dropped in 20260928170000 with no caller left.)
+  -- (C4, re-running the check, needed sync_diagnostic — dropped in 20260928190000 with no caller left.)
 
   -- C5: exactly one active plan per learner. Enforced by a partial unique index, so it is not
   -- merely what the RPC happens to do — asserted from outside the RPC all the same.

@@ -25,7 +25,7 @@ const sql = [
 ].join('\n')
 
 /** Tables whose rows describe one child in `sqlText` (baseline + migrations, in order): created with learner_id, and
- *  not dropped later (20260928170000 dropped three). Comments are removed first — a migration's
+ *  not dropped later (20260928190000 dropped three). Comments are removed first — a migration's
  *  "-- Rollback: drop table public.x;" note is not a drop. Exported so the replay can be driven with made-up SQL. */
 export function childDataTables(sqlText: string): Set<string> {
   const found = new Set<string>()
@@ -150,7 +150,7 @@ describe('the data export covers every child-data table', () => {
   })
 
   it('still emits the original sections whose tables remain (a rewrite must not lose them)', () => {
-    // `stats` and `chapterProgress` left with learner_stats / learner_progress on 2026-09-28 (20260928170000).
+    // `stats` and `chapterProgress` left with learner_stats / learner_progress on 2026-09-28 (20260928190000).
     const out = buildExport('Test', { learner: { id: 'x' }, sessions: [] })
     for (const k of ['learner', 'sessions']) expect(out).toHaveProperty(k)
     for (const k of ['stats', 'chapterProgress', 'shopState']) expect(out).not.toHaveProperty(k)

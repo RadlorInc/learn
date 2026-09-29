@@ -14,9 +14,9 @@
 --  `CREATE OR REPLACE FUNCTION` in capitals. Reading production is what found it.
 -- ═══════════════════════════════════════════════════════════════════════════════════════════════
 
--- ── 1–2. REMOVED 2026-09-28 (20260928170000) ───────────────────────────────
+-- ── 1–2. REMOVED 2026-09-28 (20260928190000) ───────────────────────────────
 -- These sections restored the pre-billing "sessions: parent can insert" and "learner_progress: parent access"
--- policies and the pre-billing sync_session / sync_diagnostic bodies. Migration 20260928170000 dropped
+-- policies and the pre-billing sync_session / sync_diagnostic bodies. Migration 20260928190000 dropped
 -- learner_progress, learner_stats and learner_state, dropped those functions and made sessions read-only to every
 -- client. Restoring them now would recreate functions that write tables that no longer exist and REOPEN client write
 -- paths that were closed on purpose, so a billing rollback no longer touches them. They are in git history

@@ -1,4 +1,4 @@
--- LEGACY PROGRESS TABLES — BEFORE the migration 20260928170000 (read-only; counts and booleans only). Run it in the SQL
+-- LEGACY PROGRESS TABLES — BEFORE the migration 20260928190000 (read-only; counts and booleans only). Run it in the SQL
 -- editor BEFORE approving the production-db run, and keep the output. Every row without INFO should say PASS.
 -- A FAIL in a STOP-CHECK means production's function is not the body this migration was written against: do NOT
 -- approve; send the output back.
@@ -15,8 +15,8 @@ union all select 'STOP-CHECK delete_my_account(text) is the repo''s body',
 union all select 'STOP-CHECK exactly 7 functions in public name the three tables (the migration drops or redefines all 7)',
        case when (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                   where n.nspname = 'public' and p.prosrc ~ '\mlearner_(progress|stats|state)\M') = 7 then 'PASS' else 'FAIL' end
-union all select 'ledger does NOT yet have 20260928170000',
-       case when not exists (select 1 from supabase_migrations.schema_migrations where version = '20260928170000') then 'PASS' else 'FAIL' end
+union all select 'ledger does NOT yet have 20260928190000',
+       case when not exists (select 1 from supabase_migrations.schema_migrations where version = '20260928190000') then 'PASS' else 'FAIL' end
 union all select 'INFO rows in learner_progress', (select count(*)::text from public.learner_progress)
 union all select 'INFO rows in learner_state', (select count(*)::text from public.learner_state)
 union all select 'INFO rows in learner_stats', (select count(*)::text from public.learner_stats)

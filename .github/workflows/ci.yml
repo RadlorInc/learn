@@ -238,7 +238,7 @@ jobs:
           # find something.
           before_tables=$(psql "$PGURL" -Atc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('subscriptions','subscription_seats','billing_events','billing_config')")
           # (The second control was the guard on the "sessions: parent can insert" policy; that policy went with the
-          # legacy progress tables in 20260928170000. is_chapter_entitled is the guard's one remaining home.)
+          # legacy progress tables in 20260928190000. is_chapter_entitled is the guard's one remaining home.)
           before_guard=$(psql "$PGURL" -Atc "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'")
           echo "before rollback: billing tables=$before_tables, is_chapter_entitled present=$before_guard"
           if [ "$before_tables" -ne 4 ] || [ "$before_guard" -ne 1 ]; then
@@ -256,7 +256,7 @@ jobs:
           # So the proof that production got the guard is EQUALITY WITH THIS ARTEFACT, not the live
           # write. This hash is what an apply must reproduce; the live write is only the smoke test that
           # nothing else broke. (The sessions / learner_progress policies and sync_session / sync_diagnostic
-          # were fingerprinted here too until 20260928170000 removed them.)
+          # were fingerprinted here too until 20260928190000 removed them.)
           echo "── fingerprints of the applied (enforcing-capable) schema ──"
           psql "$PGURL" -Atc "select 'is_chapter_entitled  ' || md5(lower(regexp_replace(regexp_replace(prosrc,'--[^\n]*','','g'),'\s+','','g'))) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='is_chapter_entitled'"
 
@@ -271,7 +271,7 @@ jobs:
             fi
             echo "  ok  $1"
           }
-          # A billing rollback must not bring back what 20260928170000 retired: no legacy write function, no client
+          # A billing rollback must not bring back what 20260928190000 retired: no legacy write function, no client
           # write policy on sessions.
           expect "no legacy write function came back" \
             "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('sync_session','sync_diagnostic')" \
