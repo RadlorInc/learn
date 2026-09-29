@@ -134,8 +134,11 @@ data because the gates and the answer key check them.
 | `src/__tests__/lessonLadders.test.ts` | the module in `LADDERED`, written out by hand |
 | `src/__tests__/answerKeys/<module>.ts`, `ladderKeys/<module>.ts` | the blind keys |
 
-A new grade, or a module or topic number past two digits, also needs a migration: the database accepts only
-`g3`–`g8` topic ids.
+**Every new topic, chapter or module needs its row in `lesson_catalog`, in a migration in the same pull request.**
+The database pays progress and points only for ids in that table (2026-09-28); `pointsCapAndCatalog.test.ts` fails
+until the app's list and the table agree. Until the migration is applied, answers for the new id wait on the child's
+device and upload afterwards. A new grade, or a module or topic number past two digits, also needs the column checks
+widened: the database accepts only `g3`–`g8` topic ids.
 
 ### The blind keys
 
