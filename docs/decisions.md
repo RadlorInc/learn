@@ -107,6 +107,7 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-27 · Git history is not rewritten; old audio stays in history · founder's rule · —
 - 2026-09-27 · KG, Grade 1 and Grade 2 go live · founder: "in production now" · #305, #306
 - 2026-09-28 · Notice-v7: re-consent only for KG–2 children and new children; a blocked child's answers wait on the device; both sites say "Grades K–8" · KG–2 made honest · #307, website#5
+- 2026-09-28 · The legacy progress tables (learner_progress, learner_stats, learner_state) and the functions that wrote them are dropped; `sessions` stays, read-only, for /admin's metrics · they were writable by any adult with access or the child's own login, and nothing had read them since 2026-09-20 · this PR
 - 2026-09-28 · Sign-up asks "I'm 18 or older"; checkout needs a separate auto-renewal tick (billing still off) · consumer-app legal traps · #309
 - 2026-09-28 · CI and backups pull their database images signed in; backup logs show per-schema counts only · registry rate limits; the logs are public · #308, #310, #311
 - 2026-09-28 · At most 300 points a day, and only for lessons, chapters and modules in `lesson_catalog` · points should only ever follow real practice in real lessons · founder · this PR

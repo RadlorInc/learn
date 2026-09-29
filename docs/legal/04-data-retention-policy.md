@@ -24,7 +24,7 @@ We keep children's personal information only for as long as it is reasonably nec
 | Crash records | `error_events` | **90 days** | Yes. Job `prune-error-events`, 03:27. Not yet exercised on a real row |
 | Adult email addresses captured before sign-up | `diagnostic_leads` | **24 months** | Yes. Job `prune-diagnostic-leads`, 03:32. First deletion falls due in 2028 |
 | Child profile — first name, avatar, age band, grade | `learners`, `learner_access` | Until the account or the profile is deleted | **No scheduled job.** Deletion is by parent request only |
-| Lesson progress, points, statistics, feedback | `lesson_progress`, `point_events`, `learner_stats`, `lesson_feedback`, `game_settings` | Until the account or the profile is deleted | **No scheduled job** |
+| Lesson progress, points, feedback | `lesson_progress`, `point_events`, `lesson_feedback`, `game_settings` | Until the account or the profile is deleted | **No scheduled job** |
 | Parent account | `auth.users`, `profiles`, `parent_pins` | Until the account is deleted | **No scheduled job** |
 | Account whose email address was never confirmed, with no child | `auth.users` (from migration `20260923180000`, a profile is created only once the address is confirmed) | **3 days** from sign-up | **Yes, once migrations `20260923180000` and `20260923180100` are applied to production.** Nightly job `prune-unconfirmed-users`, 03:37, plus a one-time sweep when applied. Tested on a local copy of the schema; not yet exercised on production |
 | Sign-in events | `auth_events` | Currently kept indefinitely | **No scheduled job** |
