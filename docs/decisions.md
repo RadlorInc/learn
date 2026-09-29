@@ -116,4 +116,6 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-28 · Sign-out clears every per-child key on the device except queued uploads · founder · this PR
 - 2026-09-28 · The docs' leftover non-Markdown folders are deleted (screenshots, art, verification, rename; tool output there is now git-ignored); PLACEHOLDERS names roles, not people; `docs/review/sql/` goes once its proof SQL has run · founder · this PR
 - 2026-09-28 · Pinch-zoom allowed everywhere, every text field at least 16px, a 3px keyboard focus ring, every tap-only control also works from the keyboard · WCAG 1.4.4 / 2.4.7 / 2.1.1 (ADA); the zoom lock came with the first commit, not as a choice · this PR
+- 2026-09-29 · Points: a chapter's or topic's first uploaded answer keeps its +3 level-up (a new row starts at level 0) · founder · —
+- 2026-09-29 · Admin two-step verification ships as built in #325; the founder enrols two authenticators, so a lost one is not a lock-out · founder · #325
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —
