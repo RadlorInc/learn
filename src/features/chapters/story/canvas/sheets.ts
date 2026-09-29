@@ -111,6 +111,28 @@ export const SHEETS: Record<string, Sheet> = {
   // brisker stops reading as weightless.
   '/assets/objects/astronaut_side.png': { url: '/assets/objects/astronaut_walk.png', cellAspect: 0.523, frames: 12, fps: 8 },
 
+  // ── The KG–2 widening (generated 2026-09-29) ──────────────────────────────────────────────────
+  // Same recipe as the parade: a green-screen still made against the ORIGINAL rabbit and duck, then
+  // image-to-video (Kling 3.0, 5s). Each strip is cut from the pair of frames that match best one
+  // stride apart (seam measured, not guessed), so the loop does not hitch. All face RIGHT.
+  // cellAspect is measured off the delivered strip. ⚠️ fps is PROPOSED BY EAR and unverified on
+  // screen — for a grounded creature it also sets ground speed, so check it before trusting it.
+  '/assets/objects/calf_side.png': { url: '/assets/objects/calf_walk.png', cellAspect: 1.277, frames: 12, fps: 10 },
+  '/assets/objects/goat_side.png': { url: '/assets/objects/goat_walk.png', cellAspect: 0.992, frames: 12, fps: 12 },
+  '/assets/objects/hen_side.png': { url: '/assets/objects/hen_walk.png', cellAspect: 0.859, frames: 12, fps: 14 },
+  '/assets/objects/puppy_side.png': { url: '/assets/objects/puppy_walk.png', cellAspect: 1.105, frames: 12, fps: 13 },
+  '/assets/objects/kitten_side.png': { url: '/assets/objects/kitten_walk.png', cellAspect: 1.211, frames: 12, fps: 12 },
+  '/assets/objects/fawn_side.png': { url: '/assets/objects/fawn_walk.png', cellAspect: 0.797, frames: 12, fps: 10 },
+  '/assets/objects/hedgehog_side.png': { url: '/assets/objects/hedgehog_walk.png', cellAspect: 1.195, frames: 12, fps: 14 },
+  '/assets/objects/mouse_side.png': { url: '/assets/objects/mouse_walk.png', cellAspect: 1.004, frames: 12, fps: 16 },
+  '/assets/objects/otter_side.png': { url: '/assets/objects/otter_walk.png', cellAspect: 1.793, frames: 12, fps: 12 },
+  '/assets/objects/beaver_side.png': { url: '/assets/objects/beaver_walk.png', cellAspect: 1.746, frames: 12, fps: 10 },
+  '/assets/objects/owl_side.png': { url: '/assets/objects/owl_walk.png', cellAspect: 1.266, frames: 12, fps: 9 },
+  '/assets/objects/penguin_side.png': { url: '/assets/objects/penguin_walk.png', cellAspect: 0.758, frames: 12, fps: 12 },
+  '/assets/objects/seal_side.png': { url: '/assets/objects/seal_walk.png', cellAspect: 1.852, frames: 12, fps: 9 },
+  '/assets/objects/dolphin_side.png': { url: '/assets/objects/dolphin_walk.png', cellAspect: 1.516, frames: 12, fps: 9 },
+  '/assets/objects/seahorse_side.png': { url: '/assets/objects/seahorse_walk.png', cellAspect: 0.598, frames: 12, fps: 8 },
+
   // ── The 9–11 WORKING CAST (generated 2026-07-31) ──────────────────────────────────────────────
   // The band's whole problem was never the engine, it was the CAST: all 24 cycles above are cozy
   // animals, and a ten-year-old's goods yard with a duckling in it is the "reads too young" fault

@@ -11,8 +11,8 @@
  * CHANGES EVERY ROUND, so consecutive questions differ in place as well as in number — a picker
  * makes a child choose before they know what they are choosing, and then gives them ten rounds of
  * one backdrop. Same call chapter 2 took when its three biomes were merged.
- *   🐠 Coral Reef  — fish · crab · shark · turtle                  (swim over/away · who has more)
- *   🌳 Green Park  — duck · rabbit · squirrel · lamb · chick · duckling  (wander · who has more)
+ *   🐠 Coral Reef  — seal · crab · dolphin · seahorse              (swim over/away · who has more)
+ *   🌳 Green Park  — calf · goat · hen · lamb · puppy · kitten      (wander · who has more)
  *   🌼 Flower Beds — dragonfly · butterfly · bee · ladybug          (flutter · who has more)
  * EVERY item is a drawn walk cycle, so the things that join and leave do it on their own legs — and
  * the cast is 14 deep against 14 questions (3 demo + guided + 10 scored), so NO CREATURE IS EVER
@@ -77,20 +77,21 @@ interface SpWorld {
 const SETTINGS: SpWorld[] = [
   { id: 'reef',
     bgs: [
-      { grad: 'linear-gradient(#aee3f2 0%, #7fcbe8 55%, #4ea7cf 100%)', img: '/assets/backgrounds/reef_open.png' },
-      { grad: 'linear-gradient(#bfe9f4 0%, #8fd2ea 55%, #5bb0d4 100%)', img: '/assets/backgrounds/reef_sand.png' },
-      { grad: 'linear-gradient(#a9dff0 0%, #79c6e4 55%, #469fc8 100%)', img: '/assets/backgrounds/reef_deep.png' },
+      { grad: 'linear-gradient(#aee3f2 0%, #7fcbe8 55%, #4ea7cf 100%)', img: '/assets/backgrounds/reef_lagoon.jpeg' },
+      { grad: 'linear-gradient(#bfe9f4 0%, #8fd2ea 55%, #5bb0d4 100%)', img: '/assets/backgrounds/reef_kelp.jpeg' },
+      { grad: 'linear-gradient(#a9dff0 0%, #79c6e4 55%, #469fc8 100%)', img: '/assets/backgrounds/reef_treasure.jpeg' },
     ],
     ground: 57,
-    items: [IT('fish', 'fish', 'fish'), IT('crab', 'crab', 'crabs'), IT('shark', 'shark', 'sharks', true),
-      IT('turtle', 'turtle', 'turtles')],
+    items: [IT('seal', 'seal', 'seals'), IT('crab', 'crab', 'crabs'), IT('dolphin', 'dolphin', 'dolphins'),
+      IT('seahorse', 'seahorse', 'seahorses')],
     friend: 'Finn', join: 'meet', leave: 'swim away' },
   /**
    * A WALKING cast needs a scene with real painted GROUND under it. The beach scenes this replaces
    * are a flat plane of water below the horizon, so ducks standing on them read as hovering however
    * carefully the ground line is placed — there is nothing there to stand on. These three are open
    * grass from ABOVE the ground line, so the feet land on painted grass rather than on the pale
-   * band just under the horizon: garden_park 48% · town_garden 48% · farm_barnyard 52%, all clear
+   * band just under the horizon: meadow_lane · meadow_village · orchard_edge (2026-09-29) all paint their
+ * horizon at ~48%, all clear
    * of the 62% the group stands at.
    *
    * ⚠️ `town_park` was tried here and pulled: its grass does not start until ~65%, BELOW the ground
@@ -98,20 +99,21 @@ const SETTINGS: SpWorld[] = [
    * only counts as ground if its horizon is ABOVE where the feet will be — the number to check is
    * the horizon against the ground line, not whether the picture "has grass in it".
    *
-   * `farm_barnyard` is also MarketDay's, deliberately: pens of chicks in a fenced yard and a row of
+   * (Before 2026-09-29 these were garden_park / town_garden / farm_barnyard, shared with MarketDay.)
+   * `farm_barnyard` was also MarketDay's, deliberately: pens of chicks in a fenced yard and a row of
    * ducks walking across it cannot be mistaken for one another, and it is the same call already
    * made for the forest scenes SeesawPark and MarketDay share. Only two other scenes in the library
    * have grass this high.
    */
   { id: 'park',
     bgs: [
-      { grad: 'linear-gradient(#cfe9f7 0%, #dcecc8 52%, #b9d894 100%)', img: '/assets/backgrounds/garden_park.png' },
-      { grad: 'linear-gradient(#d6edf7 0%, #dfeeca 52%, #bcda98 100%)', img: '/assets/backgrounds/town_garden.jpeg' },
-      { grad: 'linear-gradient(#cfe6f7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/farm_barnyard.png' },
+      { grad: 'linear-gradient(#cfe9f7 0%, #dcecc8 52%, #b9d894 100%)', img: '/assets/backgrounds/meadow_lane.jpeg' },
+      { grad: 'linear-gradient(#d6edf7 0%, #dfeeca 52%, #bcda98 100%)', img: '/assets/backgrounds/meadow_village.jpeg' },
+      { grad: 'linear-gradient(#cfe6f7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/orchard_edge.jpeg' },
     ],
     ground: 62,
-    items: [IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits', true), IT('squirrel', 'squirrel', 'squirrels'),
-      IT('lamb', 'lamb', 'lambs'), IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings')],
+    items: [IT('calf', 'calf', 'calves'), IT('goat', 'goat', 'goats'), IT('hen', 'hen', 'hens'),
+      IT('lamb', 'lamb', 'lambs'), IT('puppy', 'puppy', 'puppies'), IT('kitten', 'kitten', 'kittens')],
     friend: 'Pat', join: 'spot', leave: 'wander off' },
   /**
    * Replaces the moon base (its astronaut and alien were the only cast here that could not belong
@@ -128,16 +130,17 @@ const SETTINGS: SpWorld[] = [
    * `flies`) — a flier touches nothing. A flower garden is where a dragonfly and a butterfly
    * actually are, which the pond only half was.
    *
-   * The three scenes are MarketDay's Garden, shared deliberately — founder's call, and the same
+   * The three scenes are this setting's own since 2026-09-29 (garden_roses / garden_tulips /
+   * garden_herbs). They used to be MarketDay's Garden, shared deliberately — founder's call, and the same
    * trade already made for the forests SeesawPark and MarketDay share and the barnyard this
    * chapter shares with MarketDay's farm. Those are the only painted flower scenes in the library,
    * and a row of butterflies drifting across a lawn cannot be mistaken for a grid of bee patches.
    */
   { id: 'garden',
     bgs: [
-      { grad: 'linear-gradient(#cfe9f7 0%, #dcecc8 52%, #b9d894 100%)', img: '/assets/backgrounds/garden.png' },
-      { grad: 'linear-gradient(#d3ecf6 0%, #dfeeca 52%, #bcda98 100%)', img: '/assets/backgrounds/garden_meadow.png' },
-      { grad: 'linear-gradient(#d6edf7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/garden_fence.png' },
+      { grad: 'linear-gradient(#cfe9f7 0%, #dcecc8 52%, #b9d894 100%)', img: '/assets/backgrounds/garden_roses.jpeg' },
+      { grad: 'linear-gradient(#d3ecf6 0%, #dfeeca 52%, #bcda98 100%)', img: '/assets/backgrounds/garden_tulips.jpeg' },
+      { grad: 'linear-gradient(#d6edf7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/garden_herbs.jpeg' },
     ],
     ground: 64,
     // `flies` is per CREATURE, not per setting: a dragonfly, a butterfly and a bee hover and so carry

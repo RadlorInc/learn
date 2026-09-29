@@ -21,6 +21,7 @@ import { SHEETS } from '@/features/chapters/story/canvas/sheets'
 import * as StoryTime from '@/features/chapters/story/StoryTime'
 import * as MarketDay from '@/features/chapters/story/MarketDay'
 import * as SeesawPark from '@/features/chapters/story/SeesawPark'
+import { CAST } from '@/features/chapters/story/critters'
 
 const CHAPTERS = [
   { name: 'StoryTime (story problems)', m: StoryTime },
@@ -91,7 +92,9 @@ it('every drawn walk cycle in sheets.ts is actually used by a chapter', () => {
     '/assets/characters/milo_side.png',
     '/assets/characters/milo_hop_side.png',
   ])
-  const used = new Set(CHAPTERS.flatMap(c => c.m.RUN.map(p => p.item.img)))
+  // The creature chapters (Number Order, Home Time, Play Time, Bigger or Smaller) cast from `CAST`, not
+  // from a RUN — a sheet only they use still reaches a child (fish, shark and turtle, since 2026-09-29).
+  const used = new Set([...CHAPTERS.flatMap(c => c.m.RUN.map(p => p.item.img)), ...CAST.map(k => k.src)])
   const idle = Object.keys(SHEETS).filter(k => !used.has(k) && !UNUSED_ON_PURPOSE.has(k))
   expect(idle).toEqual([])
 })
