@@ -23,8 +23,8 @@ We offer two subscription plans:
 
 | Plan | Price | Billing period | Renews |
 |---|---|---|---|
-| Monthly | [PLACEHOLDER — monthly price, USD] | Every month | Automatically, every month |
-| Annual | [PLACEHOLDER — annual price, USD] | Every 12 months | Automatically, every 12 months |
+| Monthly | $7.99 for the first child, $4.99 for each additional child (up to 4 children) | Every month | Automatically, every month |
+| Annual | $75.99 for the first child, $48.00 for each additional child (up to 4 children) | Every 12 months | Automatically, every 12 months |
 
 Prices are in US dollars and exclude any applicable sales tax. Sales tax, where it applies, is calculated at checkout.
 

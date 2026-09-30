@@ -63,9 +63,12 @@ describe('every legal page has a Spanish draft, wired in and marked unreviewed',
     expect(holes(read(file)), `${file} dropped or added a placeholder`).toBe(en)
   })
 
-  it('positive control: the count is live — some page still carries placeholders in both languages', () => {
-    const counts = Object.entries(SPANISH).map(([slug, file]) => [holes(publicBody(LEGAL_PAGES.find(p => p.slug === slug)!, read(LEGAL_PAGES.find(p => p.slug === slug)!.source))), holes(read(file))])
-    expect(counts.some(([en, es]) => en > 0 && es > 0), 'every page reads zero in both languages — the count may be blind').toBe(true)
+  it('positive control: the count is live — it sees placeholders where they are, and none where there are none', () => {
+    // Since 2026-10-01 every page's public text reads zero in both languages (the refund prices were filled), so a real
+    // page can no longer show the counter working. A planted text does: two markers count two, a clean text counts zero.
+    const planted = `A ${'[' + 'PLACEHOLDER'} — one] and a ${'[' + 'PLACEHOLDER'} — two].`
+    expect(holes(planted), 'the counter is blind to a marker it must see').toBe(2)
+    expect(holes(CLEAN_MD)).toBe(0)
   })
 })
 

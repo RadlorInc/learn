@@ -46,8 +46,9 @@ describe('PLACEHOLDERS.md is every placeholder, and nothing else', () => {
   const docs = measure(), rows = table()
 
   it('sees placeholders at all (control — a blind grep and a clean corpus look the same)', () => {
-    expect(docs.length, 'the grep found no placeholders — the corpus moved, or the pattern is blind').toBeGreaterThan(20)
-    expect(rows.length, 'the table parsed to no rows').toBeGreaterThan(20)
+    // 20 remain after the refund policy's prices were filled (2026-10-01); the floor is "clearly not blind", not a quota.
+    expect(docs.length, 'the grep found no placeholders — the corpus moved, or the pattern is blind').toBeGreaterThan(10)
+    expect(rows.length, 'the table parsed to no rows').toBeGreaterThan(10)
   })
 
   it('the table count is the grep count', () => {
