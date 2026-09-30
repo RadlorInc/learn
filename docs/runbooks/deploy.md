@@ -89,7 +89,6 @@ Stripe return URL come back to that preview. Staging's Supabase Auth allows `htt
 as a redirect URL. Sign-up also needs `RESEND_API_KEY` in Preview (a separate Resend key, sending access only); without it `/api/auth/signup` answers 503
 `not_configured`.
 
-<<<<<<< HEAD
 **The `staging` branch and the Stripe test webhook** (2026-10-01). `staging` is a long-lived branch, so its preview
 has one stable address, `https://adaptivelearn-git-staging-radlor1.vercel.app`. To try something against staging,
 merge or push it to `staging` (and merge `main` into `staging` now and then, so it does not drift).
@@ -107,7 +106,7 @@ merge or push it to `staging` (and merge `main` into `staging` now and then, so 
 - Verified 2026-10-01 on a preview: 2 seats monthly ($12.98) → both events processed in `billing_events`,
   `subscriptions` `active` with `seats_paid = 2`, two `subscription_seats` rows, all in staging.
 - Rotating the bypass secret breaks the webhook until the Stripe URL carries the new one.
-=======
+
 **Before a merge: the `staging` branch runs staging's migrations too** (`.github/workflows/staging.yml`, 2026-10-01).
 A push to `staging` applies the migrations on it to staging (`db push`), runs the RLS suite there, then seeds the fake
 data below, so a migration meets rows and not only empty tables. The `staging` preview runs the same code against it.
@@ -130,7 +129,6 @@ set on 2026-09-23: from 2026-09-30 the nightly backup and `migrate-prod`'s pre-m
 The `staging` environment has its own token (it overrides the repo one there). When either expires: a new token from the
 account that owns that project, then Settings → Secrets → update it, then run `backup.yml` by hand to confirm. The
 founder keeps a calendar reminder before each expiry.
->>>>>>> origin/main
 
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
