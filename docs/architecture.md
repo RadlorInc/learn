@@ -307,6 +307,11 @@ Built and switched off; nothing has been charged.
 - **`/api/stripe/webhook`:** verifies Stripe's signature on the raw body first; idempotent (`stripe_event_id` unique,
   done only once `processed_at` is set); re-reads the subscription from Stripe and reconciles seats to a target
   (`materialize_seats`), so delivery order does not matter.
+- **Emails a subscription owes** (`features/billing/subscriptionNotices.ts`, sent by the webhook; docs/legal/01 §3):
+  the acknowledgement on `checkout.session.completed` (terms, renewal, how to cancel), and a reminder on
+  `invoice.upcoming` for ANNUAL plans that will renew (Stripe sends it 30 days ahead — a dashboard setting). Each has a
+  fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
+  `RESEND_API_KEY` is logged and the event still closes.
 - **`/api/billing/cancel`:** cancels the caller's own subscription at period end. **Entitlement**
   (`is_chapter_entitled`) answers only for a learner the caller can reach; `/game` asks it once the paywall is on.
 - **Off:** `src/infra/stripe.ts` refuses non-test keys; `BILLING_LIVE = false` (`src/app/legal/registry.ts`) shows
