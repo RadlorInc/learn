@@ -1,7 +1,9 @@
 /**
  * THE PRICE LADDER, AND THE ONLY PLACE IT IS WRITTEN DOWN.
  *
- * Founder's amounts, 2026-08-25. **Development values** — they may move before live keys go in,
+ * Founder's amounts, 2026-08-25; annual moved to radlor.com's published figures on 2026-09-30 (founder).
+ * ⚠️ radlor.com prints these too (`PRICING` in the website repo's `site.ts`) — change both together.
+ * **Development values** — they may move before live keys go in,
  * which is safe precisely because they are here and nowhere else and there are no customers yet.
  * The SHAPE does not move: graduated tiering, never volume · 4 paid seats · USD · no trial.
  *
@@ -31,7 +33,7 @@ export const CURRENCY = 'usd'
 /** All amounts in CENTS — Stripe's unit, and the only one that cannot lose a half-penny. */
 export const LADDER: Record<Cadence, { first: number; extra: number; interval: 'month' | 'year' }> = {
   monthly: { first: 799, extra: 499, interval: 'month' },
-  annual: { first: 6399, extra: 3999, interval: 'year' },
+  annual: { first: 7599, extra: 4800, interval: 'year' },
 }
 
 /** The tier list handed to Stripe. `up_to: 1` is the FIRST seat; everything after it is `extra`. */
