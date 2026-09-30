@@ -120,4 +120,6 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-29 · Admin two-step verification ships as built in #325; the founder enrols two authenticators, so a lost one is not a lock-out · founder · #325
 - 2026-09-30 · Annual price = radlor.com's published one ($75.99 first child, $48 each more; was $63.99/$39.99); Stripe product shown as "Radlic — family plan" · families were already sent the site's figures · —
 - 2026-09-30 · Staging exists: Supabase `radlic-staging` in its own organization, baseline applied, `STAGING_PROJECT_REF` set, so staging-first is back on · tests and trials never touch production · —
+- 2026-10-01 · A push to `staging` runs staging's migrations, RLS suite and fake-data seed before a merge (`staging.yml`); a schema fingerprint compares staging with production · test before production, not at merge time · —
+- 2026-10-01 · Production had no `ensure_rls` event trigger (found by the staging/production fingerprint); restored by migration, keeping production's `rls_auto_enable()` (same behaviour, more logging) · the net under every future migration · —
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —

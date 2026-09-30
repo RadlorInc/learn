@@ -89,14 +89,16 @@ Stripe return URL come back to that preview. Staging's Supabase Auth allows `htt
 as a redirect URL. Sign-up also needs `RESEND_API_KEY` in Preview (a separate Resend key, sending access only); without it `/api/auth/signup` answers 503
 `not_configured`.
 
+<<<<<<< HEAD
 **The `staging` branch and the Stripe test webhook** (2026-10-01). `staging` is a long-lived branch, so its preview
 has one stable address, `https://adaptivelearn-git-staging-radlor1.vercel.app`. To try something against staging,
 merge or push it to `staging` (and merge `main` into `staging` now and then, so it does not drift).
 - Previews are behind Vercel Authentication, so Stripe reaches `staging` through **Protection Bypass for Automation**
   (Vercel → adaptivelearn → Settings → Deployment Protection). The secret lives only there and in the Stripe URL.
 - Stripe **sandbox** → Workbench → Webhooks has one destination, "preview staging", at
-  `…git-staging…/api/stripe/webhook?x-vercel-protection-bypass=<secret>`, for `checkout.session.completed` and
-  `customer.subscription.created/updated/deleted`. Its signing secret is Preview's `STRIPE_WEBHOOK_SECRET`.
+  `…git-staging…/api/stripe/webhook?x-vercel-protection-bypass=<secret>`, for `checkout.session.completed`,
+  `customer.subscription.created/updated/deleted` and `invoice.upcoming` (the annual renewal reminder; Stripe →
+  Settings → Billing → Subscriptions → upcoming renewal events: 30 days). Its signing secret is Preview's `STRIPE_WEBHOOK_SECRET`.
 - A Preview variable reaches a preview only on its next build: after changing one, push to `staging`.
 - While `BILLING_LIVE` is false, `/parent/plan` shows "free during the beta" and no checkout. To test checkout on
   `staging`, sign in and call `/api/checkout` from the browser console with the session's access token (key
@@ -105,6 +107,30 @@ merge or push it to `staging` (and merge `main` into `staging` now and then, so 
 - Verified 2026-10-01 on a preview: 2 seats monthly ($12.98) → both events processed in `billing_events`,
   `subscriptions` `active` with `seats_paid = 2`, two `subscription_seats` rows, all in staging.
 - Rotating the bypass secret breaks the webhook until the Stripe URL carries the new one.
+=======
+**Before a merge: the `staging` branch runs staging's migrations too** (`.github/workflows/staging.yml`, 2026-10-01).
+A push to `staging` applies the migrations on it to staging (`db push`), runs the RLS suite there, then seeds the fake
+data below, so a migration meets rows and not only empty tables. The `staging` preview runs the same code against it.
+So: merge or push a PR's branch into `staging`, check the Staging run and the preview, and only then merge the PR to
+`main`. The job refuses production's ref before it links (`stagingWorkflow` test) and holds no production secret.
+- The seed needs the `staging` environment secrets `STAGING_SERVICE_ROLE_KEY` (radlic-staging's secret key) and
+  `SEED_PASSWORD` (any 12+ characters; the password of every fake account). Without them the step warns and skips.
+- ⚠️ **A migration tried on `staging` that never reaches `main`** leaves its version in staging's ledger, and the next
+  `main` deploy's `migrate-staging` fails, which holds every production migration behind it. Undo it in two steps:
+  1. Actions → Staging → Run workflow, with `revert_version` = that migration's 14-digit version. This marks it
+     reverted in **staging's** ledger only.
+  2. In **staging's** SQL editor, drop what that migration created.
+  Then `main`'s next run goes through. Keep `staging` close to `main` (merge `main` into it) so this stays rare.
+- The seed data is five fake children. A migration that fails only on production-sized or production-shaped data can
+  still pass here; `docs/legal/sql/staging-prod-fingerprint.sql` checks that the two schemas match, not the data.
+
+**The Supabase access tokens expire.** The repo secret `SUPABASE_ACCESS_TOKEN` (production) expired 7 days after it was
+set on 2026-09-23: from 2026-09-30 the nightly backup and `migrate-prod`'s pre-migration backup both failed with
+`Unauthorized`, so no backup was taken and no migration could apply. It was replaced on 2026-09-30 with a longer expiry.
+The `staging` environment has its own token (it overrides the repo one there). When either expires: a new token from the
+account that owns that project, then Settings → Secrets → update it, then run `backup.yml` by hand to confirm. The
+founder keeps a calendar reminder before each expiry.
+>>>>>>> origin/main
 
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
