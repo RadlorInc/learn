@@ -63,7 +63,7 @@ recorded in a pull request.
 ## 3. Waiting on the founder, the attorney, a provider, or a reviewer
 
 ### The founder (placeholders in `PLACEHOLDERS.md`: the founder's category and *date*)
-- [ ] 👪 **Staging database** before the first real family
+- [x] 👪 **Staging database** before the first real family (`radlic-staging`, 2026-09-30; `docs/runbooks/deploy.md`, Staging)
 - [ ] 👪 **A second GitHub owner**, so production migrations do not depend on one account
 - [ ] 👪 **Open security items** — tracked privately, outside this public repo
 - [ ] 💳 **Prices** (monthly, annual; must equal `LADDER`), plan names, the receipt-email design

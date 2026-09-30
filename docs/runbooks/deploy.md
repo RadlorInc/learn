@@ -70,15 +70,16 @@ What was done on 2026-09-30:
 - The `staging` environment secrets `STAGING_DB_PASSWORD` and `STAGING_DB_URL` (the **session pooler** URI; the
   direct host is IPv6-only and GitHub runners cannot reach it) were set by the founder.
 - Staging lives in a different Supabase organization, so the repo secret `SUPABASE_ACCESS_TOKEN` (production's) is
-  refused there: the first `migrate-staging` run failed at `supabase link` with `Unauthorized`. The `staging`
+  refused there: the first `migrate-staging` run failed at its link step with `Unauthorized`. The `staging`
   environment therefore has its **own** `SUPABASE_ACCESS_TOKEN`, a token from the account that can see
   `radlic-staging`. An environment secret overrides the repo secret of the same name, so `deploy.yml` is unchanged.
 - The repo variable `STAGING_PROJECT_REF` was set. From then on `deploy.yml`'s `migrate-staging` runs on every push
   to `main` (`db push`, then the RLS suite), and `migrate-prod` runs only after it succeeds.
 
-⚠️ The first push to `main` after 2026-09-30 is the first time the migrations meet this project. Until a
-`migrate-staging` run is green, staging-first is unproven. If that run fails, production migrations wait behind it.
-Fix staging, or delete `STAGING_PROJECT_REF` to fall back to straight-to-production.
+The first `migrate-staging` run went green on 2026-09-30 (Deploy run 36753051181, re-run after the token fix). It
+applied all 126 migrations (the staging ledger has 126, the same as `supabase/migrations/`), and the RLS suite
+reported `ALL ASSERTIONS PASSED` with `RLS_ASSERTIONS=91`. A production migration arriving behind a green staging
+run has not happened yet. If a staging run fails, production migrations wait behind it; fix staging, or delete `STAGING_PROJECT_REF` to fall back to straight-to-production.
 
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
