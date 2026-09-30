@@ -42,7 +42,10 @@ with items(kind, obj, def) as (
     from pg_policies where schemaname = 'public'
   union all
   select 'function', p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')',
-         md5(pg_get_functiondef(p.oid)) || ' definer=' || p.prosecdef || ' acl=' || coalesce(p.proacl::text, '')
+         -- code only: comments and whitespace stripped. Production's functions were created without the migrations'
+         -- comments, so a raw hash reported 10 "different" functions whose code was identical (2026-10-01).
+         md5(regexp_replace(regexp_replace(regexp_replace(pg_get_functiondef(p.oid), '/\*.*?\*/', '', 'g'), '--[^\n]*', '', 'g'), '\s+', '', 'g'))
+           || ' definer=' || p.prosecdef || ' acl=' || coalesce(p.proacl::text, '')
     from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
   union all
   select 'trigger', c.relname || '.' || t.tgname, pg_get_triggerdef(t.oid) || ' enabled=' || t.tgenabled::text
@@ -64,14 +67,19 @@ with items(kind, obj, def) as (
 select kind, count(*) as n, md5(string_agg(obj || '=' || def, E'\n' order by obj)) as md5
 from items group by kind order by kind;
 
--- STAGING's answer to QUERY 1, 2026-10-01 (after all 126 migrations on main, before the seed):
+-- History (2026-10-01): the first production run found no `ensure_rls` event trigger, and 11 functions whose hash
+-- differed. 10 of those were comments/whitespace only; `rls_auto_enable` really differed (more logging, same behaviour).
+-- Migration 20261001090000 restored the trigger with production's function; after it, production's `event_trigger`
+-- row matched staging's. The function hash below is code-only, so comment-only differences no longer show.
+--
+-- STAGING's answer to QUERY 1, 2026-10-01, after 20261001090000 (compare production's against these):
 --   column 265 900c2c6107e2230714d44ad49a8e2c79 · constraint 148 0b50ec473bfe93ad6043146e0ff7959a
 --   enum 2 a79c409445470f12058763476116d452 · event_trigger 1 e3e0f6d8dcd113d328df555ff73d7c8f
---   function 67 36fac380959a38497c32177f4c5024e0 · grant 37 3ed82747a7f2ffa537a647c394668b51
+--   function 67 6798566f9f4422252fea74bd0453c320 · grant 37 3ed82747a7f2ffa537a647c394668b51
 --   index 90 6a6a9cf26e5be81b4b067847fd34d7a9 · policy 40 4cca39090c671c8945fb3a163fd4fc44
 --   table 35 d985ee0bed6b34ab900257545fd1bc00 · trigger 27 1809c2aad8b276d7e6787557b363fede
 --   view 2 0291c2db815fb741bda4b840809cec16
--- Production's answer is compared against these. A later migration changes both sides; re-run on both then.
+-- A later migration changes both sides; re-run on both then.
 
 -- ═══ QUERY 2 (only if QUERY 1 differs): one row per object ══════════════════════════════════════════════════════
 -- Same `items` as above, then: select kind, obj, md5(def) from items order by kind, obj;

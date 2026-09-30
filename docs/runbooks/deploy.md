@@ -105,6 +105,13 @@ So: merge or push a PR's branch into `staging`, check the Staging run and the pr
 - The seed data is five fake children. A migration that fails only on production-sized or production-shaped data can
   still pass here; `docs/legal/sql/staging-prod-fingerprint.sql` checks that the two schemas match, not the data.
 
+**The Supabase access tokens expire.** The repo secret `SUPABASE_ACCESS_TOKEN` (production) expired 7 days after it was
+set on 2026-09-23: from 2026-09-30 the nightly backup and `migrate-prod`'s pre-migration backup both failed with
+`Unauthorized`, so no backup was taken and no migration could apply. It was replaced on 2026-09-30 with a longer expiry.
+The `staging` environment has its own token (it overrides the repo one there). When either expires: a new token from the
+account that owns that project, then Settings → Secrets → update it, then run `backup.yml` by hand to confirm. The
+founder keeps a calendar reminder before each expiry.
+
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
 - 0: seeded;

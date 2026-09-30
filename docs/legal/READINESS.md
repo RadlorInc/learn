@@ -58,7 +58,7 @@ recorded in a pull request.
 | [x] | One-shot ledger repair removed (R10) | #196 | merged |
 | [ ] 👪 | Every placeholder tracked and guarded (R11) | #199 | the founder approves the placeholders replaced in Round 1 (`PLACEHOLDERS.md`, "Resolved in Round 1") |
 | [x] 👪 | Spanish drafts, unrenderable until signed (R13) | #190 | merged; the review itself is in §3 |
-| [ ] 👪 | Staging prepared: seed, runbook, `deploy.yml` staging-first tested (R14) | #193 | **create staging** (`docs/runbooks/deploy.md`, Staging) |
+| [x] 👪 | Staging prepared: seed, runbook, `deploy.yml` staging-first tested (R14) | #193, #337, #338 | done 2026-10-01: 20261001090000 ran on staging (branch), then production after the approval |
 
 ## 3. Waiting on the founder, the attorney, a provider, or a reviewer
 
