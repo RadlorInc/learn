@@ -89,6 +89,22 @@ Stripe return URL come back to that preview. Staging's Supabase Auth allows `htt
 as a redirect URL. Sign-up also needs `RESEND_API_KEY` in Preview; without it `/api/auth/signup` answers 503
 `not_configured`.
 
+**Before a merge: the `staging` branch runs staging's migrations too** (`.github/workflows/staging.yml`, 2026-10-01).
+A push to `staging` applies the migrations on it to staging (`db push`), runs the RLS suite there, then seeds the fake
+data below, so a migration meets rows and not only empty tables. The `staging` preview runs the same code against it.
+So: merge or push a PR's branch into `staging`, check the Staging run and the preview, and only then merge the PR to
+`main`. The job refuses production's ref before it links (`stagingWorkflow` test) and holds no production secret.
+- The seed needs the `staging` environment secrets `STAGING_SERVICE_ROLE_KEY` (radlic-staging's secret key) and
+  `SEED_PASSWORD` (any 12+ characters; the password of every fake account). Without them the step warns and skips.
+- ⚠️ **A migration tried on `staging` that never reaches `main`** leaves its version in staging's ledger, and the next
+  `main` deploy's `migrate-staging` fails, which holds every production migration behind it. Undo it in two steps:
+  1. Actions → Staging → Run workflow, with `revert_version` = that migration's 14-digit version. This marks it
+     reverted in **staging's** ledger only.
+  2. In **staging's** SQL editor, drop what that migration created.
+  Then `main`'s next run goes through. Keep `staging` close to `main` (merge `main` into it) so this stays rare.
+- The seed data is five fake children. A migration that fails only on production-sized or production-shaped data can
+  still pass here; `docs/legal/sql/staging-prod-fingerprint.sql` checks that the two schemas match, not the data.
+
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
 - 0: seeded;

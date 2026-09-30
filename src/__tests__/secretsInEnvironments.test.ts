@@ -37,8 +37,8 @@ const DIR = join(ROOT, '.github/workflows')
 const hits = readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f)).flatMap((f) => jobsReadingSecrets(f, readFileSync(join(DIR, f), 'utf8')))
 
 describe('production secrets are read only inside an environment', () => {
-  it('positive control: the scan finds the jobs that use them (backup, migrate-prod, migrate-staging)', () => {
-    expect(hits.map((h) => h.where).sort()).toEqual(['backup.yml/dump', 'deploy.yml/migrate-prod', 'deploy.yml/migrate-staging'])
+  it('positive control: the scan finds the jobs that use them (backup, migrate-prod, migrate-staging, staging.yml apply/repair)', () => {
+    expect(hits.map((h) => h.where).sort()).toEqual(['backup.yml/dump', 'deploy.yml/migrate-prod', 'deploy.yml/migrate-staging', 'staging.yml/apply', 'staging.yml/repair'])
   })
 
   it('positive control: a job reading one without an environment is caught by the same predicate', () => {
