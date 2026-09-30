@@ -6,11 +6,16 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (29 September 2026)
+## Where things stand (1 October 2026)
 
-- **Production** is on `132c38297` (#323); `smoke:live` passed on it (29 Sep). The repo `learn` is public again (see
-  the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
-  billing is off.
+- **Production** is on `1df6c865c` (#340); #342 is merged and its Deploy run was queued when this was written. The repo
+  `learn` is public (see the Vercel item below). A private beta with families the founder knows has run since
+  25 September; it is free and billing is off (`BILLING_LIVE`, `PAYWALL_ENABLED` false; the code refuses a live key).
+- **Staging exists** (1 Oct): Supabase `radlic-staging`, the `staging` branch (a push runs migrations, the RLS suite
+  and a fake-data seed) and its preview on the Stripe sandbox — [docs/runbooks/deploy.md](docs/runbooks/deploy.md),
+  Staging. Its schema matches production's. Staging-first is proven by `20261001090000` (restored `ensure_rls`).
+- **Stripe test mode is verified end to end on staging:** checkout, the acknowledgement email, a seat change, cancel,
+  a failed renewal (past_due → 7-day grace → cancelled) and the annual renewal reminder (#342).
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
@@ -26,10 +31,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — Draft PRs waiting for the founder
 
-Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323 (each migration's before- and proof-SQL
-all PASS). #323 was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️),
-so the repo's migration chain still builds a body one comment different from production's.
-1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
+1. #322 (passwords at least 8) is merged: confirm Supabase Auth's minimum password length is 8, on production and
+   on staging.
 2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
 
@@ -53,6 +56,10 @@ so the repo's migration chain still builds a body one comment different from pro
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
 - After the beta: Search Console, then one public page per grade.
+- **Billing go-live**, in order: the refund policy's effective date and an attorney review or a beta decision (its
+  prices are filled, #341); `BILLING_LIVE` and the paywall; then live mode (live product and prices, a live webhook
+  that also carries `invoice.upcoming`, upcoming renewal events at 30 days, the statement descriptor, and removing
+  the test-key guard in `src/infra/stripe.ts`). See docs/architecture.md §8.
 
 ## Open — the founder sets (dashboards and accounts)
 
@@ -61,6 +68,9 @@ so the repo's migration chain still builds a body one comment different from pro
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
+- Stripe → Billing → Revenue recovery: retries within 7 days, then **mark unpaid**. The refund policy (§7) promises
+  that; today Stripe retries for about 35 days and then cancels (seen on a test clock, 1 Oct).
+- Supabase access tokens expire (the repo one did on 30 Sep, silently stopping backups): keep a reminder for both.
 - Vercel, before `learn` goes private: whether the block checks the commit's author (the founder, who merges) or
   the pusher (GitHub Actions) was not measured; the blocked deployment's message names the GitHub user. The author →
   link the founder's GitHub login to their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote`
@@ -102,6 +112,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
+
+- Staging preview: one request on `/parent` answers 503 (URL not captured; likely a Preview env var); lesson audio
+  reads staging's storage, which has no `lesson-audio` bucket (set Preview's `NEXT_PUBLIC_AUDIO_BASE_URL`); Google
+  sign-in is not set up there. The staging/production fingerprint does not compare pg_cron jobs or extensions.
 
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
