@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import type Stripe from 'stripe'
 import { stripeClient } from '@/infra/stripe'
-import { subscriptionRow } from '@/core/billing'
+import { HOLDS_SEATS, subscriptionRow, totalCents } from '@/core/billing'
 import { sinkError } from '@/infra/errorSink'
+import { ConfigMissing, sendEmail } from '@/features/consent/server'
+import { renderRenewalReminder, renderSubscribed } from '@/features/billing/subscriptionNotices'
 
 /**
  * The Stripe webhook. Signature-verified, idempotent, and ORDER-INDEPENDENT.
@@ -139,15 +141,25 @@ export async function POST(req: Request) {
   // be: a failed renewal moves the subscription to `past_due`, which emits
   // `customer.subscription.updated`, and the grace window is DERIVED from the period rather than
   // stamped when the failure arrives. One code path, no second source of truth.
-  const object = event.data.object as { id?: string; subscription?: string | { id: string } | null }
+  //
+  // `invoice.upcoming` is the third family, for ONE purpose: the annual renewal reminder (docs/legal/01 §3). Stripe
+  // sends it N days before a renewal (30, set in the dashboard). ⚠️ From API 2025-03-31.basil the invoice names its
+  // subscription under `parent.subscription_details`, not `subscription`; both are read.
+  const object = event.data.object as {
+    id?: string; subscription?: string | { id: string } | null
+    parent?: { subscription_details?: { subscription?: string | { id: string } | null } | null } | null
+    customer_details?: { email?: string | null } | null; customer_email?: string | null
+    amount_total?: number | null; amount_due?: number | null
+  }
+  const ref = (v: string | { id: string } | null | undefined) => (typeof v === 'string' ? v : (v?.id ?? null))
   const subId =
     event.type === 'checkout.session.completed'
-      ? typeof object.subscription === 'string'
-        ? object.subscription
-        : (object.subscription?.id ?? null)
+      ? ref(object.subscription)
       : event.type.startsWith('customer.subscription.')
         ? (object.id ?? null)
-        : null
+        : event.type === 'invoice.upcoming'
+          ? (ref(object.parent?.subscription_details?.subscription) ?? ref(object.subscription))
+          : null
   if (!subId) return done({ ignored: event.type })
 
   // ── 3. Stripe's CURRENT truth, not the event's copy of it ──────────────────
@@ -189,6 +201,46 @@ export async function POST(req: Request) {
     body: JSON.stringify({ p_subscription_id: saved.id, p_seats: row.seats_paid }),
   }).catch(() => null)
   if (!seats || !seats.ok) return fail('materialize_seats', seats ? await seats.text() : 'network')
+
+  // ── 5. The emails a subscription owes (docs/legal/01 §3) ───────────────────
+  // ⚠️ IDEMPOTENT BY KEY, SO A FAILED SEND IS RETRIED, NOT SKIPPED. Each email's Resend key is fixed per subscription
+  // (and per period for the reminder) and its payload is derived from this event and Stripe's current state, so a
+  // redelivery re-sends the SAME message and Resend answers with the first one. A send failure therefore returns 5xx
+  // like any other step and Stripe delivers again. A missing RESEND_API_KEY is configuration, not a moment: it is
+  // logged loudly and the event is closed, because billing must never wait on email.
+  const item = sub.items?.data?.[0]
+  const interval = item?.price?.recurring?.interval
+  let mail: { to: string; key: string; m: ReturnType<typeof renderSubscribed> } | null = null
+  if (event.type === 'checkout.session.completed' && object.customer_details?.email && (interval === 'month' || interval === 'year')) {
+    mail = {
+      to: object.customer_details.email,
+      key: `billing-ack-${sub.id}`,
+      m: renderSubscribed({
+        chargedCents: object.amount_total ?? 0,
+        renewalCents: totalCents(row.seats_paid, interval === 'year' ? 'annual' : 'monthly'),
+        interval: interval === 'year' ? 'year' : 'month', renewsIso: row.current_period_end, seats: row.seats_paid,
+      }),
+    }
+  } else if (event.type === 'invoice.upcoming' && interval === 'year' && HOLDS_SEATS.has(sub.status) &&
+             !sub.cancel_at_period_end && object.customer_email) {
+    mail = {
+      to: object.customer_email,
+      key: `billing-renewal-${sub.id}-${row.current_period_end}`,
+      m: renderRenewalReminder({ amountCents: object.amount_due ?? 0, renewsIso: row.current_period_end, seats: row.seats_paid }),
+    }
+  }
+  if (mail) {
+    try {
+      await sendEmail('transactional', mail.to, mail.m, mail.key)
+    } catch (e) {
+      if (!(e instanceof ConfigMissing)) return fail('email', e instanceof Error ? e.message : String(e))
+      await sinkError({
+        at: new Date().toISOString(), source: 'server',
+        message: `stripe webhook: ${event.type} for ${sub.id} owed an email but ${e.message} is not set — not sent`,
+        routePath: '/api/stripe/webhook',
+      }).catch(() => {})
+    }
+  }
 
   return done({ ok: true, status: row.status, seats: row.seats_paid }, row.account_id)
 }

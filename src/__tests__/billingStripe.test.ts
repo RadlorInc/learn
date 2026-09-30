@@ -95,6 +95,7 @@ const SUB = (over: Record<string, unknown> = {}, item: Record<string, unknown> =
     data: [{
       id: 'si_1', quantity: 2,
       current_period_start: PERIOD_START, current_period_end: PERIOD_END,
+      price: { recurring: { interval: 'month' } },
       ...item,
     }],
   },
@@ -178,6 +179,7 @@ function stubNetwork(opts: {
   sub?: Record<string, unknown>
   inserted?: unknown[]          // what the billing_events insert returns ([] = duplicate)
   processedAt?: string | null   // what the duplicate look-up finds
+  resendStatus?: number         // what Resend answers a send with
 } = {}) {
   const calls: Call[] = []
   const json = (body: unknown, status = 200) =>
@@ -189,6 +191,7 @@ function stubNetwork(opts: {
                  headers: (init.headers ?? {}) as Record<string, string> })
 
     if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) return json(opts.sub ?? SUB())
+    if (url === 'https://api.resend.com/emails') return json({ id: 'em_1' }, opts.resendStatus ?? 200)
     if (url.includes('/rest/v1/billing_events')) {
       if ((init.method ?? 'GET').toUpperCase() === 'POST') return json(opts.inserted ?? [{ id: 'be_1' }], 201)
       // 204 must carry a null body — `new Response('null', {status:204})` is a TypeError.
@@ -226,6 +229,7 @@ describe('the Stripe webhook', () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
     process.env.STRIPE_SECRET_KEY = 'sk_test_stage2b'
     process.env.STRIPE_WEBHOOK_SECRET = SECRET
+    process.env.RESEND_API_KEY = 're_test'
   })
   afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
 
@@ -424,6 +428,111 @@ describe('the Stripe webhook', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 //  4. CHECKOUT.
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  THE EMAILS A SUBSCRIPTION OWES (docs/legal/01 §3). Every sentence, date and amount below is typed out by hand.
+//  PERIOD_END is 2026-02-01T00:00:00Z.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('the Stripe webhook sends the acknowledgement and the annual renewal reminder', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    __resetStripe()
+    process.env.NEXT_PUBLIC_SUPABASE_URL = SUPA
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+    process.env.STRIPE_SECRET_KEY = 'sk_test_stage2b'
+    process.env.STRIPE_WEBHOOK_SECRET = SECRET
+    process.env.RESEND_API_KEY = 're_test'
+  })
+  afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
+
+  const sent = (calls: Call[]) => calls.filter(c => c.url === 'https://api.resend.com/emails' && c.method === 'POST')
+  const closed = (calls: Call[]) => calls.some(c => c.method === 'PATCH' && c.url.includes('billing_events'))
+  const CHECKOUT = { id: 'cs_1', subscription: 'sub_123', amount_total: 1298, customer_details: { email: 'parent@example.com' } }
+  const UPCOMING = { object: 'invoice', parent: { subscription_details: { subscription: 'sub_123' } },
+                     customer_email: 'parent@example.com', amount_due: 12399 }
+  const ANNUAL = (over: Record<string, unknown> = {}) => SUB(over, { price: { recurring: { interval: 'year' } } })
+
+  it('a completed checkout sends ONE acknowledgement: terms, renewal and how to cancel', async () => {
+    const calls = stubNetwork()
+    const res = await deliver('checkout.session.completed', CHECKOUT)
+    expect(res.status).toBe(200)
+    const mails = sent(calls)
+    expect(mails).toHaveLength(1)
+    const body = JSON.parse(mails[0].body)
+    expect(body.to).toEqual(['parent@example.com'])
+    expect(body.subject).toBe('Your Radlic subscription — confirmation and how to cancel')
+    expect(body.text).toContain('Plan: Radlic Family, for 2 children.')
+    expect(body.text).toContain('Charged today: $12.98.')
+    expect(body.text).toContain('Renews: automatically, every month, next on February 1, 2026. Renewal amount: $12.98, plus any sales tax.')
+    expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, or email support@radlor.com')
+    expect(body.text).toContain('https://radlic.com/legal/refunds')
+    expect(body.text).not.toContain('permission')   // consent is the email-plus flow, not checkout
+    expect(mails[0].headers['Idempotency-Key']).toBe('billing-ack-sub_123')
+    expect(closed(calls)).toBe(true)
+  })
+
+  it('an annual plan: the acknowledgement says every 12 months and the annual renewal amount', async () => {
+    const calls = stubNetwork({ sub: ANNUAL() })
+    await deliver('checkout.session.completed', { ...CHECKOUT, amount_total: 12399 })
+    const body = JSON.parse(sent(calls)[0].body)
+    expect(body.text).toContain('Renews: automatically, every 12 months, next on February 1, 2026. Renewal amount: $123.99, plus any sales tax.')
+  })
+
+  it('an annual renewal coming up sends the reminder, with the amount Stripe will charge and the date', async () => {
+    const calls = stubNetwork({ sub: ANNUAL() })
+    const res = await deliver('invoice.upcoming', UPCOMING)
+    expect(res.status).toBe(200)
+    const mails = sent(calls)
+    expect(mails).toHaveLength(1)
+    const body = JSON.parse(mails[0].body)
+    expect(body.to).toEqual(['parent@example.com'])
+    expect(body.subject).toBe('Your Radlic annual subscription renews soon')
+    expect(body.text).toContain('Your Radlic annual subscription for 2 children renews automatically on February 1, 2026.')
+    expect(body.text).toContain('You will be charged $123.99 for the next 12 months.')
+    expect(body.text).toContain('Cancel subscription, or email support@radlor.com')
+    // One reminder per renewal: the key carries the period, so next year's is a new message.
+    expect(mails[0].headers['Idempotency-Key']).toBe('billing-renewal-sub_123-2026-02-01T00:00:00.000Z')
+  })
+
+  it('no reminder for a MONTHLY renewal — the policy promises it for annual plans only', async () => {
+    const calls = stubNetwork()
+    const res = await deliver('invoice.upcoming', UPCOMING)
+    expect(res.status).toBe(200)
+    expect(sent(calls)).toEqual([])
+    expect(closed(calls)).toBe(true)
+  })
+
+  it('no reminder for an annual plan already cancelled — it will not renew', async () => {
+    const calls = stubNetwork({ sub: ANNUAL({ cancel_at_period_end: true }) })
+    await deliver('invoice.upcoming', UPCOMING)
+    expect(sent(calls)).toEqual([])
+  })
+
+  it('no email for any other subscription event', async () => {
+    const calls = stubNetwork()
+    await deliver('customer.subscription.updated', { id: 'sub_123' })
+    expect(sent(calls)).toEqual([])
+  })
+
+  it('a failed send answers 5xx and leaves the event OPEN, so Stripe redelivers (the key stops a double send)', async () => {
+    const calls = stubNetwork({ resendStatus: 500 })
+    const res = await deliver('checkout.session.completed', CHECKOUT)
+    expect(res.status).toBe(500)
+    expect(sent(calls)).toHaveLength(1)
+    expect(closed(calls)).toBe(false)
+  })
+
+  it('no RESEND_API_KEY: billing still completes and the event closes; nothing is sent', async () => {
+    delete process.env.RESEND_API_KEY
+    const calls = stubNetwork()
+    const res = await deliver('checkout.session.completed', CHECKOUT)
+    expect(res.status).toBe(200)
+    expect(sent(calls)).toEqual([])
+    expect(post(calls, 'rpc/materialize_seats')).toHaveLength(1)
+    expect(closed(calls)).toBe(true)
+  })
+})
+
 describe('POST /api/checkout', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
