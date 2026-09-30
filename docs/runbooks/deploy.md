@@ -86,8 +86,25 @@ run has not happened yet. If a staging run fails, production migrations wait beh
 Stripe **test** key and the two test price ids. Production's variables are separate and unchanged. On a preview,
 `SITE_URL` is the branch's own URL (`src/app/site.ts`, `siteUrlPreview` test), so sign-up and consent links and the
 Stripe return URL come back to that preview. Staging's Supabase Auth allows `https://adaptivelearn-*-radlor1.vercel.app/**`
-as a redirect URL. Sign-up also needs `RESEND_API_KEY` in Preview; without it `/api/auth/signup` answers 503
+as a redirect URL. Sign-up also needs `RESEND_API_KEY` in Preview (a separate Resend key, sending access only); without it `/api/auth/signup` answers 503
 `not_configured`.
+
+**The `staging` branch and the Stripe test webhook** (2026-10-01). `staging` is a long-lived branch, so its preview
+has one stable address, `https://adaptivelearn-git-staging-radlor1.vercel.app`. To try something against staging,
+merge or push it to `staging` (and merge `main` into `staging` now and then, so it does not drift).
+- Previews are behind Vercel Authentication, so Stripe reaches `staging` through **Protection Bypass for Automation**
+  (Vercel → adaptivelearn → Settings → Deployment Protection). The secret lives only there and in the Stripe URL.
+- Stripe **sandbox** → Workbench → Webhooks has one destination, "preview staging", at
+  `…git-staging…/api/stripe/webhook?x-vercel-protection-bypass=<secret>`, for `checkout.session.completed` and
+  `customer.subscription.created/updated/deleted`. Its signing secret is Preview's `STRIPE_WEBHOOK_SECRET`.
+- A Preview variable reaches a preview only on its next build: after changing one, push to `staging`.
+- While `BILLING_LIVE` is false, `/parent/plan` shows "free during the beta" and no checkout. To test checkout on
+  `staging`, sign in and call `/api/checkout` from the browser console with the session's access token (key
+  `milo-auth` in localStorage) and `{ seats, cadence, renewalConsent: true }`, then open the returned URL and pay with
+  `4242 4242 4242 4242`.
+- Verified 2026-10-01 on a preview: 2 seats monthly ($12.98) → both events processed in `billing_events`,
+  `subscriptions` `active` with `seats_paid = 2`, two `subscription_seats` rows, all in staging.
+- Rotating the bypass secret breaks the webhook until the Stripe URL carries the new one.
 
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
