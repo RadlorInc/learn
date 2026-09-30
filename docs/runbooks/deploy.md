@@ -69,6 +69,10 @@ What was done on 2026-09-30:
   RLS; 31 policies; 11 triggers; the `ensure_rls` event trigger; no migration ledger yet.
 - The `staging` environment secrets `STAGING_DB_PASSWORD` and `STAGING_DB_URL` (the **session pooler** URI; the
   direct host is IPv6-only and GitHub runners cannot reach it) were set by the founder.
+- Staging lives in a different Supabase organization, so the repo secret `SUPABASE_ACCESS_TOKEN` (production's) is
+  refused there: the first `migrate-staging` run failed at `supabase link` with `Unauthorized`. The `staging`
+  environment therefore has its **own** `SUPABASE_ACCESS_TOKEN`, a token from the account that can see
+  `radlic-staging`. An environment secret overrides the repo secret of the same name, so `deploy.yml` is unchanged.
 - The repo variable `STAGING_PROJECT_REF` was set. From then on `deploy.yml`'s `migrate-staging` runs on every push
   to `main` (`db push`, then the RLS suite), and `migrate-prod` runs only after it succeeds.
 
