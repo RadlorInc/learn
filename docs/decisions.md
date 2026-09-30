@@ -118,5 +118,6 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-28 · Pinch-zoom allowed everywhere, every text field at least 16px, a 3px keyboard focus ring, every tap-only control also works from the keyboard · WCAG 1.4.4 / 2.4.7 / 2.1.1 (ADA); the zoom lock came with the first commit, not as a choice · this PR
 - 2026-09-29 · Points: a chapter's or topic's first uploaded answer keeps its +3 level-up (a new row starts at level 0) · founder · —
 - 2026-09-29 · Admin two-step verification ships as built in #325; the founder enrols two authenticators, so a lost one is not a lock-out · founder · #325
+- 2026-09-30 · Annual price = radlor.com's published one ($75.99 first child, $48 each more; was $63.99/$39.99); Stripe product shown as "Radlic — family plan" · families were already sent the site's figures · —
 - 2026-09-30 · Staging exists: Supabase `radlic-staging` in its own organization, baseline applied, `STAGING_PROJECT_REF` set, so staging-first is back on · tests and trials never touch production · —
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —

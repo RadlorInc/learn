@@ -35,7 +35,7 @@ describe('the price ladder', () => {
    */
   const EXPECTED: Record<Cadence, Record<number, number>> = {
     monthly: { 1: 799, 2: 1298, 3: 1797, 4: 2296 },
-    annual: { 1: 6399, 2: 10398, 3: 14397, 4: 18396 },
+    annual: { 1: 7599, 2: 12399, 3: 17199, 4: 21999 },
   }
 
   for (const cadence of ['monthly', 'annual'] as Cadence[]) {
