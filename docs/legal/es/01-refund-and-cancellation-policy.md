@@ -22,8 +22,8 @@ Ofrecemos dos planes de suscripción:
 
 | Plan | Precio | Periodo de facturación | Renovación |
 |---|---|---|---|
-| Mensual | [PLACEHOLDER — monthly price, USD] | Cada mes | Automática, cada mes |
-| Anual | [PLACEHOLDER — annual price, USD] | Cada 12 meses | Automática, cada 12 meses |
+| Mensual | $7.99 por el primer hijo, $4.99 por cada hijo adicional (hasta 4 hijos) | Cada mes | Automática, cada mes |
+| Anual | $75.99 por el primer hijo, $48.00 por cada hijo adicional (hasta 4 hijos) | Cada 12 meses | Automática, cada 12 meses |
 
 Los precios están en dólares estadounidenses y no incluyen el impuesto sobre las ventas que corresponda. El impuesto sobre las ventas, cuando se aplica, se calcula al pagar.
 
