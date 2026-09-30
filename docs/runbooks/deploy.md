@@ -81,6 +81,14 @@ applied all 126 migrations (the staging ledger has 126, the same as `supabase/mi
 reported `ALL ASSERTIONS PASSED` with `RLS_ASSERTIONS=91`. A production migration arriving behind a green staging
 run has not happened yet. If a staging run fails, production migrations wait behind it; fix staging, or delete `STAGING_PROJECT_REF` to fall back to straight-to-production.
 
+**Preview deployments run against staging** (2026-09-30). Vercel's Preview environment has its own
+`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` (all `radlic-staging`), the
+Stripe **test** key and the two test price ids. Production's variables are separate and unchanged. On a preview,
+`SITE_URL` is the branch's own URL (`src/app/site.ts`, `siteUrlPreview` test), so sign-up and consent links and the
+Stripe return URL come back to that preview. Staging's Supabase Auth allows `https://adaptivelearn-*-radlor1.vercel.app/**`
+as a redirect URL. Sign-up also needs `RESEND_API_KEY` in Preview; without it `/api/auth/signup` answers 503
+`not_configured`.
+
 `scripts/seed-staging.mjs` fills a staging database, or a local stack with `STAGING_PROJECT_REF=local`, with fake
 accounts and children. It refuses production's ref before it connects. Exit codes:
 - 0: seeded;
