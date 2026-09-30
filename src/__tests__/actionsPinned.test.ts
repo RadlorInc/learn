@@ -51,9 +51,9 @@ const isPinned = (u: string) => /^[^@\s]+@[0-9a-f]{40}$/.test(u)
 describe('OPS-13: external actions are pinned to a commit SHA', () => {
   const all = FILES.flatMap((f) => usesOf(load(f)).map((u) => ({ f, u })))
 
-  it('positive control: the parser sees every uses: key (29, counted by hand; = raw line count; +1 upload-audio.yml 2026-09-26; +2 daily-smoke.yml 2026-09-28)', () => {
+  it('positive control: the parser sees every uses: key (29, counted by hand; = raw line count; +1 upload-audio.yml 2026-09-26; +2 daily-smoke.yml 2026-09-28; +4 staging.yml 2026-10-01)', () => {
     const raw = FILES.reduce((n, f) => n + (read(f).match(/^\s*(-\s+)?uses:\s/gm) ?? []).length, 0)
-    expect(all.length).toBe(29)
+    expect(all.length).toBe(33)
     expect(all.length).toBe(raw)
     expect(all.filter(({ u }) => isLocal(u)).length).toBe(3)
   })

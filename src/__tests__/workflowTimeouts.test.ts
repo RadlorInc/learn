@@ -26,6 +26,7 @@ const EXPECTED: Record<string, string[]> = {
   'migrate-region.yml': ['migrate'],
   'nightly-e2e.yml': ['legacy-gate', 'chapters'],
   'red-main.yml': ['notify'],
+  'staging.yml': ['apply', 'repair'],
   'upload-audio.yml': ['upload'],
   'weekly-layout.yml': ['legacy-gate', 'layout'],
 }
