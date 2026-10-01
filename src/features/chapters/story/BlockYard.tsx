@@ -46,7 +46,7 @@
  * ten, L3 always.
  *
  * ⚠️ **THE HONEST COST OF GOING BACK TO BLOCKS, STATED RATHER THAN HIDDEN: a block has no legs.**
- * "Something arrives on its own legs" is now carried by THE WALKER alone — the foreman bear is the only living thing in
+ * "Something arrives on its own legs" is now carried by THE WALKER alone — the bear cub is the only living thing in
  * the yard. The blocks travel, which is correct for an object with no gait (`CARRY_SPEED` exists for
  * exactly this and the engine already handles it), but nothing here walks except him. That was the
  * thing the creatures bought, and it is what this pass trades away.
@@ -95,9 +95,9 @@ export type { Material }
 // rounds differ, not that all thirteen are unique.
 interface Slot { scene: string; mat: number }
 const BG = (n: string) => `/assets/backgrounds/${n}`
-/** The one who walks rods up the yard and fetches them back — the yard's foreman bear, a real walk
+/** The one who walks rods up the yard and fetches them back — the bear cub (the foreman bear until 2026-09-29), a real walk
  *  cycle (cellAspect 0.578, near enough the old walker's 0.586 that the yard did not have to move). */
-const WALKER = '/assets/objects/foreman_bear_side.png'
+const WALKER = '/assets/objects/bearcub_side.png'
 
 // A DIFFERENT SET OF BLOCKS EVERY ROUND — clay · slate · teal · plum · rose · indigo. Round 10 must
 // not look like round 1, and until now only the backdrop changed. See MATERIALS for why the hue is

@@ -232,7 +232,7 @@ function StoryChapters({ modules, learnerId }: { modules: ModuleMeta[]; learnerI
             <strong style={cardTitle}>Story</strong>
             {isDone(c.id) ? 'Done! Play it again any time.' : 'Watch first, then it is your turn.'}
           </div>
-          <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{c.emoji}</span>
+          <CardArt src={c.asset} emoji={c.emoji} />
           <Link href={`/game?c=${c.id}`} style={primary}>{isDone(c.id) ? 'Play again' : 'Play'}</Link>
         </div>
       </section>
@@ -269,3 +269,12 @@ const num: CSSProperties = { width: 34, height: 34, borderRadius: '50%', flexShr
 const card: CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', border: `4px solid ${INK}`, borderRadius: 20, padding: '14px 16px',
   fontSize: 18, fontWeight: 600, color: INK }
 const cardTitle: CSSProperties = { display: 'block', fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 900 }
+
+/** A chapter's picture on its Play card. Decorative (the title is beside it), so alt="" — and if the file fails to load
+ *  the chapter's emoji stands in, so the card is never left with an empty gap. */
+function CardArt({ src, emoji }: { src: string; emoji: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{emoji}</span>
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" width={72} height={72} decoding="async" onError={() => setFailed(true)} style={{ width: 72, height: 72, objectFit: 'contain', flexShrink: 0 }} />
+}
