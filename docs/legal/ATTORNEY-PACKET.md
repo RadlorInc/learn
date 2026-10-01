@@ -186,6 +186,7 @@ provider back; the **subprocessor list** (07) with Stripe's real row. New, and n
   Is that a "free trial" under state ARLs or ROSCA? (01 §2, 12 §5)
 - **Adding a seat mid-period:** a prorated charge on the card on file, shown before confirmation; a bank's 3-D
   Secure approval on Stripe's page when asked. Enough disclosure and consent? (01 §2, 12 §5)
+- **No sales tax collected** (founder, 1 October 2026): prices are what the parent pays; we are below every state's economic-nexus threshold today and registered in none. 01 §2 and 12 §5 promise 30 days' notice before tax would ever apply. Please confirm the wording, and whether any state treats this product as taxable at our size.
 - Withdrawal of consent now leads to cancellation and a pro-rata refund **on request by email** (01 §5), not
   automatically; please confirm that is enough.
 
