@@ -52,14 +52,23 @@ describe('the game keeps its half of the wire', () => {
   const game = readFileSync(resolve(__dirname, '../../blockcraft/src/main.js'), 'utf8')
   it('reads the key and end time from the URL, saves under that key, and goes back to /play', () => {
     expect(game).toMatch(/Q\.has\('key'\) && Q\.has\('until'\)/)
-    expect(game).toMatch(/localStorage\.setItem\(PLAY \? PLAY\.key : SAVE_KEY/)
+    expect(game).toMatch(/localStorage\.setItem\(saveKey\(\), JSON\.stringify\(data\)\)/)
     expect(game).toContain("const BACK = '/play'")
   })
   it('"Stop and keep my minutes" saves, then asks /play to stop the time (/play?stop=1 calls end_game_time)', () => {
-    expect(game).toMatch(/\$\('bQuit'\)\.onclick = \(\) => \{ save\(\); location\.replace\(STOP\); \}/)
+    // ONE handler: a second assignment further down the file silently replaced the first (2026-10-01, the button
+    // saved and showed the title screen instead of stopping the time).
+    const handlers = game.match(/\$\('bQuit'\)\.onclick = [^\n]*/g) ?? []
+    expect(handlers).toHaveLength(1)
+    expect(handlers[0]).toMatch(/save\(\); if \(PLAY\) return location\.replace\(STOP\);/)
     expect(game).toContain("const STOP = '/play?stop=1'")
     const play = readFileSync(resolve(__dirname, '../app/play/page.tsx'), 'utf8')
     expect(play).toMatch(/has\('stop'\)[\s\S]{0,120}endGameTime\(learnerId\)/)
+  })
+  it('the title screen offers "Continue world" from the child\'s own save, not the standalone one', () => {
+    expect(game).toContain('const saveKey = () => (PLAY ? PLAY.key : SAVE_KEY)')
+    expect(game).toMatch(/const hasSave = \(\) => !!localStorage\.getItem\(saveKey\(\)\)/)
+    expect(game).toMatch(/\$\('bContinue'\)\.onclick = [^\n]*getItem\(saveKey\(\)\)/)
   })
   it('when the time is up it saves before leaving', () => {
     expect(game).toMatch(/left === 0 && G\.world\) \{\s*clearInterval\(tick\); save\(\);/)
