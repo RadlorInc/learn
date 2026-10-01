@@ -143,8 +143,10 @@ begin
   insert into public.subscription_seats (id, subscription_id, seat_index, learner_id, assigned_at)
     values (v_seat1, v_subid, 1, v_learner, now()),
            (v_seat2, v_subid, 2, null,      null);
-  -- S0 (20261001150000): an empty paid seat is filled at once with the family's oldest unseated child (v_learner2).
-  select count(*) into v_cnt from public.subscription_seats where id = v_seat2 and learner_id = v_learner2;
+  -- S0 (20261001150000): an empty paid seat is filled at once with one of the family's unseated children. (Which one is
+  -- "oldest" cannot be asserted here: every child of this fixture is created in one transaction, with one now().)
+  select count(*) into v_cnt from public.subscription_seats st join public.learners l on l.id = st.learner_id
+   where st.id = v_seat2 and l.created_by = v_owner and l.id <> v_learner;
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL S0: a paid seat was left empty while the family had an unseated child'; end if;
   -- …and B13 below needs an EMPTY seat to move, so the fixture empties it again (as the database role).
