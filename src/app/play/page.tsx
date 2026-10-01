@@ -27,7 +27,7 @@ const NOT_STARTED: Record<string, string> = {
 // Said every time, refund or not: a stop that gives nothing back looked like a stop that did nothing (2026-10-01).
 const stopped = (back: number | null) => back === null ? NOT_STARTED.notStopped
   : back > 0 ? `Game stopped. ${back} points are back!`
-  : 'Game stopped. You used the minutes you started, so no points came back.'
+  : 'Game stopped. You played all the time you paid for.'
 
 const noSubscribe = () => () => {}
 

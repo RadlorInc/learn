@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Stopping a game early gives the unused minutes back (migration 20261001180000), in the repo's real schema as the
+ * Stopping a game early charges only the time played (migrations 20261001180000, 20261001190000), in the repo's real schema as the
  * roles a browser has. Each refusal has its positive twin: "a stranger cannot stop it" and "nobody can" are the same
  * green otherwise.
  */
@@ -37,22 +37,29 @@ const wallet = () => rpc(CHILD, `game_wallet('${KID}')`)
 const elapse = (m: number, s = 0) => db.exec(`update public.point_events set ends_at = ends_at - interval '${m} minutes ${s} seconds' where reason = 'game' and ends_at > now()`)
 
 describe('stopping a game early', () => {
-  it('gives back the minutes not played; a started minute counts as played', async () => {
+  it('charges the seconds played (1 point per 7.5 s, up to a whole point); the daily limit counts a started minute', async () => {
     expect((await rpc(CHILD, `start_game_time('${KID}', 5)`)).balance).toBe(60)
-    await elapse(1, 30)                                                   // 1½ minutes in: 2 played, 3 back
-    expect(await rpc(CHILD, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 24 })
+    await elapse(1, 28)                                                   // 88 s (+ the test's own ms) = 11.7 → 12 of 40: 28 back
+    expect(await rpc(CHILD, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 28 })
     const w = await wallet()
-    expect([w.balance, w.minutes_used_today, w.playing_until]).toEqual([84, 2, null])
+    expect([w.balance, w.minutes_used_today, w.playing_until]).toEqual([88, 2, null])
+  })
+
+  it('the founder\'s case: 2 minutes bought, stopped at 1:17 — 11 points paid, 5 back (it was 0)', async () => {
+    await rpc(CHILD, `start_game_time('${KID}', 2)`)
+    await elapse(1, 17)                                                   // 77 s × 8/60 = 10.3 → 11
+    expect(await rpc(CHILD, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 5 })
+    expect((await wallet()).balance).toBe(77)
   })
 
   it('stopping when nothing is running gives nothing back', async () => {
     expect(await rpc(CHILD, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 0 })
-    expect((await wallet()).balance).toBe(84)
+    expect((await wallet()).balance).toBe(77)
   })
 
-  it('stopped at once still costs the first minute — never a free game, never more back than was paid', async () => {
+  it('stopped at once still costs 1 point — never a free game, never more back than was paid', async () => {
     await rpc(CHILD, `start_game_time('${KID}', 3)`)
-    expect(await rpc(PARENT, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 16 })   // the parent may stop it too
+    expect(await rpc(PARENT, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 23 })   // the parent may stop it too
     expect((await wallet()).balance).toBe(76)
     expect(await rpc(CHILD, `end_game_time('${KID}')`)).toEqual({ ok: true, refunded: 0 })     // a second stop: nothing
   })

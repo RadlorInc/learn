@@ -51,8 +51,9 @@ mode only, built from `blockcraft/` into `public/blockcraft` — as a full page 
 
 **Stopping early gives the unused minutes back.** The clock is the database's and keeps running while the child is off
 the game, so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the
-purchase to the minutes played (a started minute counts; at least 1) and ends it, so the rest of the points come back
-and stop counting against the daily limit.
+purchase to the time played and ends it. Points follow the seconds (1 point per 7.5 s, rounded up, at least 1 point),
+so the rest come back; the daily limit counts minutes, a started one in full (at least 1). Stopping at 1:17 of 2 minutes
+pays 11 points and gives 5 back.
 
 ## Points never reset
 
