@@ -42,11 +42,12 @@ another family, and by `src/__tests__/pointsCapAndCatalog.test.ts` (the cap and 
 - The day is counted in the adult's time zone, taken from their browser when they save the settings (UTC until then).
 - The tab also shows the balance and the minutes played today.
 
-⚠️ **As of 2026-09-28 nothing spends points.** No game is attached, so `/play` says "Games are coming soon!", shows the
-balance, and never calls the spending function (`start_game_time`). That followed a child buying minutes, getting
-"Time's up!" over an empty placeholder and losing the points (2026-09-26). `src/__tests__/gameTimeNotSpent.test.ts`
-fails if any app code calls it; delete that test in the pull request that attaches a game and brings the spending
-screen back.
+**Spending (2026-10-01): the game is attached.** On `/play` the child picks 5, 10 or 15 minutes; `start_game_time`
+decides (balance, daily minutes, on/off) and returns the end time. `/play` then opens the game — BlockCraft, creative
+mode only, built from `blockcraft/` into `public/blockcraft` — as a full page (not a frame: every page keeps
+`frame-ancestors 'none'`). The game shows the clock, saves on the device, and returns to `/play` when the time is up;
+`/play` uploads that save to `game_saves`, so the next game starts where this one stopped. (From 2026-09-26 to
+2026-10-01 nothing spent points: a child had bought minutes over an empty placeholder and lost them.)
 
 ## Points never reset
 

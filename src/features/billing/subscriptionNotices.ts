@@ -39,7 +39,7 @@ export function renderSubscribed(a: {
     'Your Radlic subscription is active. Here are the details, for your records.',
     `Plan: Radlic Family, for ${children(a.seats)}.`,
     `Charged today: ${usd(a.chargedCents)}.`,
-    `Renews: automatically, ${every}${on ? `, next on ${on}` : ''}. Renewal amount: ${usd(a.renewalCents)}, plus any sales tax.`,
+    `Renews: automatically, ${every}${on ? `, next on ${on}` : ''}. Renewal amount: ${usd(a.renewalCents)} (we do not charge sales tax).`,
     HOW_TO_CANCEL,
     POLICY,
   ])
