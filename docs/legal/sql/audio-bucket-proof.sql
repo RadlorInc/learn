@@ -20,10 +20,11 @@ select count(*) from supabase_migrations.schema_migrations where version = '2026
 select count(*) as badly_named from storage.objects
 where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> 'anon-probe-canary.mp3';
 
--- P5. After the upload run: every manifest object is there.     expected: 17761 | 271459925
---     (2026-09-29, #329: the manifest names 16985 objects / 261964516 bytes; the bucket ALSO keeps the 776 objects of
---     the Story Problems lines that left the corpus, 9495409 bytes, because the upload never deletes. Before this upload
---     the same query read 16985 | 261998056.)
+-- P5. After the upload run: every manifest object is there.     expected: 17884 | 273065412
+--     (2026-10-02, #329: the manifest names 16985 objects / 262060131 bytes; the bucket ALSO keeps the 899 objects of
+--     the lines that left the corpus (Story Problems' fish, shark, duck …, and the 123 lines the new Grade 2 ones replaced),
+--     11005281 bytes, because the upload never deletes. Before this upload the same query read 16985 | 261998056;
+--     the run adds 899 objects, 11067356 bytes: the 776 Story Problems clips and the 123 snail/grasshopper clips.)
 --     (before the upload run this is 0 | null — that is the "before" half of the same query)
 select count(*) as objects, sum((metadata->>'size')::bigint) as bytes
 from storage.objects where bucket_id = 'lesson-audio' and name <> 'anon-probe-canary.mp3';
