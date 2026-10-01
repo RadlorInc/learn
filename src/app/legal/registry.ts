@@ -46,22 +46,24 @@ export interface LegalPage {
 }
 
 const BETA = { decidedBy: 'Rafi (founder)', decided: '2026-09-24', effective: '25 September 2026' }
-// The Terms' last two decisions (§12 floor US$100, §14 a plain contact) were made on 26 September 2026.
-const TERMS_BETA = { decidedBy: 'Rafi (founder)', decided: '2026-09-26', effective: '26 September 2026' }
+// The paid launch (founder, 2026-10-01: "beta versions ke saath launch karo"): billing on, the Refund policy published as a
+// beta version, and the Terms, Privacy Policy and subprocessor list carry the paid-plan text again. Attorney review pending.
+// (The Terms' earlier beta, 26 September 2026, decided §12's US$100 floor and §14's plain contact; both stand.)
+const BILLING_BETA = { decidedBy: 'Rafi (founder)', decided: '2026-10-01', effective: '1 October 2026' }
 
 export const LEGAL_PAGES: LegalPage[] = [
   { slug: 'privacy', title: 'Privacy Policy', source: '11-privacy-policy.md',
     after: '> One dependency survives', until: '### Where this policy must appear',
-    published: true, signoff: null, beta: BETA, spanish: { source: 'es/11-privacy-policy.md' } },
+    published: true, signoff: null, beta: BILLING_BETA, spanish: { source: 'es/11-privacy-policy.md' } },
   { slug: 'terms', title: 'Terms of Service', source: '12-terms-of-service.md',
-    until: '### Notes for the attorney', published: true, signoff: null, beta: TERMS_BETA, spanish: { source: 'es/12-terms-of-service.md' } },
+    until: '### Notes for the attorney', published: true, signoff: null, beta: BILLING_BETA, spanish: { source: 'es/12-terms-of-service.md' } },
   { slug: 'refunds', title: 'Refund and Cancellation Policy', source: '01-refund-and-cancellation-policy.md',
-    until: '### Notes for the attorney', published: false, signoff: null, spanish: { source: 'es/01-refund-and-cancellation-policy.md' }, needs: 'billing' },
+    until: '### Notes for the attorney', published: true, signoff: null, beta: BILLING_BETA, spanish: { source: 'es/01-refund-and-cancellation-policy.md' }, needs: 'billing' },
   { slug: 'parent-rights', title: 'Your rights as a parent', source: '06-parent-rights-procedure.md',
     after: '# Part A — Public page', until: '# Part B — Internal procedure',
     published: true, signoff: null, beta: BETA, spanish: { source: 'es/06-parent-rights-procedure.md' }, needs: 'deletion' },
   { slug: 'subprocessors', title: 'Service Providers and Subprocessors', source: '07-subprocessors.md',
-    until: '## Two questions still open', published: true, signoff: null, beta: BETA, spanish: { source: 'es/07-subprocessors.md' } },
+    until: '## Two questions still open', published: true, signoff: null, beta: BILLING_BETA, spanish: { source: 'es/07-subprocessors.md' } },
   { slug: 'cookies', title: 'Cookie and Tracking Notice', source: '08-cookie-and-tracking-notice.md',
     until: '### Notes for the attorney', published: true, signoff: null, beta: BETA, spanish: { source: 'es/08-cookie-and-tracking-notice.md' } },
   { slug: 'retention', title: 'Data Retention and Deletion Policy', source: '04-data-retention-policy.md',
@@ -123,7 +125,9 @@ export function spanishReviewer(es: string): { by: string; date: string } | null
  *   · WITHDRAWAL_DELETES — the parent-rights page promises that withdrawing deletes. Set true only
  *     with the proof `consentDeletion.test.ts` provides (item 6), which asserts it back.
  */
-export const BILLING_LIVE = false
+// ⚠️ TRUE since the paid launch (founder, 2026-10-01). Production charges only once its Vercel env has live Stripe keys,
+// NEXT_PUBLIC_PAYWALL=on and billing_config.enforced = true (docs/architecture.md §8).
+export const BILLING_LIVE = true
 // ⚠️ TRUE since the private-beta PR (2026-09-24): withdrawing deletes, proven by `consentDeletion.test.ts` (which asserts
 // this flag back) and on production (deploy loop D5, 2026-09-23). If that test ever stops proving it, this goes false.
 export const WITHDRAWAL_DELETES = true

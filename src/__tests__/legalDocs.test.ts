@@ -39,13 +39,16 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
   // The private beta (founder, 2026-09-24): exactly these five are published. Terms waits on two founder decisions
   // (§11's liability floor, §14's contact); refunds waits on billing. Written out by hand, never read from the registry.
   // terms joined the beta pages on 2026-09-26 (founder: §12 floor US$100, §14 a plain contact).
-  const BETA = ['privacy', 'terms', 'parent-rights', 'subprocessors', 'cookies', 'retention']
-  const DARK = ['refunds']
-  const EFFECTIVE: Record<string, string> = { terms: '26 September 2026' }   // the rest: 25 September 2026
+  // refunds joined 2026-10-01 with the paid launch; it and the three pages that took the paid-plan text back are in
+  // effect from that day.
+  const BETA = ['privacy', 'terms', 'parent-rights', 'subprocessors', 'cookies', 'retention', 'refunds']
+  const DARK: string[] = []
+  const EFFECTIVE: Record<string, string> = { privacy: '1 October 2026', terms: '1 October 2026', subprocessors: '1 October 2026', refunds: '1 October 2026' }   // the rest: 25 September 2026
   it('exactly the beta pages are published, and nothing else', () => {
     expect(LEGAL_PAGES.filter(p => p.published).map(p => p.slug).sort()).toEqual([...BETA].sort())
     expect([...PUBLISHED_LEGAL_ROUTES].sort()).toEqual(BETA.map(s => `/legal/${s}`).sort())
     expect(LEGAL_PAGES.map(p => p.slug).sort(), 'control: every page is either published or dark').toEqual([...BETA, ...DARK].sort())
+    expect(DARK, 'no page is dark since 2026-10-01; the dark-page checks below come back with the next one').toEqual([])
   })
 
   it.each(BETA.map(s => [s] as const))('/legal/%s renders its document, the beta label, and no placeholder', async slug => {
@@ -70,7 +73,7 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
     expect(m.robots, `/legal/${slug} is published but marked noindex`).toBeUndefined()
   })
 
-  it.each(DARK.map(s => [s] as const))('/legal/%s renders the banner and none of the document', async slug => {
+  it.skipIf(DARK.length === 0).each(DARK.map(s => [s] as const))('/legal/%s renders the banner and none of the document', async slug => {
     const { renderToStaticMarkup } = await import('react-dom/server')
     const { default: LegalPageView, generateMetadata } = await import('@/app/legal/[slug]/page')
     const html = renderToStaticMarkup(await LegalPageView({ params: Promise.resolve({ slug }) }))
@@ -302,8 +305,9 @@ describe('a draft legal document never reaches published content', () => {
      */
     expect(files.length, 'the walk found no published files — this gate is blind, not clean')
       .toBeGreaterThan(100)
-    // (The Privacy Policy was the control until the beta cleared it, 2026-09-24; the refund policy still carries some.)
-    expect(read('docs/legal/01-refund-and-cancellation-policy.md'),
+    // (The Privacy Policy was the control until the beta cleared it, 2026-09-24; the refund policy until the paid launch,
+    // 2026-10-01. The COPPA direct notice draft still carries some.)
+    expect(read('docs/legal/02-coppa-direct-notice-to-parents.md'),
       `positive control: "${MARKER}" was not found in a draft that is known to carry them, ` +
       `so this search could not have found one in src/ either`).toContain(MARKER)
 

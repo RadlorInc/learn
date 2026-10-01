@@ -79,7 +79,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
           { url: `/parent?child=${c}&tab=login`, target: 'data-card', title: t('Their data'), text: t('Download a copy of everything stored about them, or delete their profile for good.') }] } },
       ] },
     ] : []),
-    // No plan step while the beta is free: the card it points at is not shown (founder, 2026-09-24).
+    // The plan step only while billing is live: with BILLING_LIVE false the card it points at is not shown (2026-09-24).
     { h: t('Your account'), items: BILLING_LIVE ? [reminders, plan, close] : [reminders, close] },
   ]
 }

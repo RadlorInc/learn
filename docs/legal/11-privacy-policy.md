@@ -1,10 +1,10 @@
 # Privacy Policy
 
-> **STATUS: BETA — published 25 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
+> **STATUS: BETA — published 1 October 2026 on the founder's decisions for the paid launch (billing switched on); attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 >
 > **This draft assumes Path A**: the product collects a limited amount of information about each child, discloses it honestly, and obtains verifiable parental consent. Every statement below is written to be true of the product as described on 22 September 2026 — a child's first name or nickname, grade level, and learning progress. **Before publication, each factual statement must be checked against the running application.** Where the application does something this policy does not describe, the policy is wrong, not the application.
 
-> **Beta (decided 24 September 2026): the Service is free during the beta and billing is switched off.** The paid-plan text was taken out; it comes back, with the Refund and Cancellation Policy, before billing goes live.
+> **Paid launch (decided 1 October 2026):** billing is switched on; the subscription and billing row, the purpose and the payment provider are back.
 >
 > One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
 
@@ -14,7 +14,7 @@
 
 **Effective date:** 25 September 2026
 
-**Last updated:** 28 September 2026
+**Last updated:** 1 October 2026
 
 ---
 
@@ -66,7 +66,7 @@ We ask a child for no more information than is reasonably necessary to take part
 | What | Why |
 |---|---|
 | Name and email address | To create the account, to contact you about it, and to verify your identity when you make a request about your child's data |
-| Subscription and billing details | None during the beta: the Service is free, billing is switched off, and we collect no payment details. |
+| Subscription and billing details | To take payment and manage the subscription. **Payments are processed by Stripe, our payment provider. We never receive or store your full card number or security code** — we keep Stripe's references for your customer record and subscription, its status, the number of seats and the billing period dates, and a log of Stripe's billing events (their type, references and amounts). Stripe holds your email address and the billing details you enter on its pages. Nothing about a child is sent to Stripe. |
 | Your record of consent — the method, the date, your email address, and the version of each document you were shown — and, for each child you add, when you confirmed that you are that child's parent or legal guardian and which version of the notice that confirmation referred to | Because the law requires us to be able to show that consent was given, and to show exactly what was agreed to. If you close your account this record is kept, marked as withdrawn and no longer linked to your account; everything else is deleted |
 | Messages you send us | To answer you |
 
@@ -94,6 +94,7 @@ We use what we collect only to:
 - run the service for your child — teach, adapt, track progress;
 - show you your child's progress;
 - keep the service secure, detect abuse, and fix faults;
+- take payment and manage your subscription;
 - contact you about your account;
 - meet our legal obligations.
 
@@ -110,7 +111,7 @@ We use what we collect only to:
 
 We do not sell information and we do not disclose a child's information to anyone for their own purposes.
 
-We do use service providers who process information on our instructions and for no purpose of their own — hosting, database and email delivery. The current list, and exactly what each one receives, is published at https://radlic.com/legal/subprocessors.
+We do use service providers who process information on our instructions and for no purpose of their own — hosting, database, email delivery and payment processing. The current list, and exactly what each one receives, is published at https://radlic.com/legal/subprocessors.
 
 We may also disclose information where we are legally required to — for example, in response to a valid legal process — or to protect the safety of a person. If we are ever required to do so in relation to a child, we will tell the parent unless the law forbids it.
 
