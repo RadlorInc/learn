@@ -42,15 +42,17 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
     })
   }, [most])
 
-  // The bank wanted the parent's approval (an OTP / 3-D Secure): Stripe's page is open in another tab, and the seat
-  // exists only once it is paid. "I have paid" asks again for the plan's seats.
+  // The bank wanted the parent's approval (an OTP / 3-D Secure): the seat exists only once Stripe's page is paid.
+  // ⚠️ NOT window.open: by the time the server answers, the click that started this is over, so browsers block it as a
+  // popup (watched in the local run, 2026-10-01). "Approve payment" is a plain link the parent taps themselves.
+  // "I have paid" asks again for the plan's seats.
   const [payUrl, setPayUrl] = useState<string | null>(null)
   async function buy() {
     setBusy(true); setNote(null)
     const r = await addSeat(true)
     setBusy(false)
     if (r.ok && r.seats) onAdded(r.seats)
-    else if (r.ok && r.payUrl) { setPayUrl(r.payUrl); window.open(r.payUrl, '_blank', 'noopener') }
+    else if (r.ok && r.payUrl) setPayUrl(r.payUrl)
     else setNote(!r.ok && WHY[r.error] ? WHY[r.error] : 'Something went wrong and nothing has changed. Try again.')
   }
   async function paid() {
@@ -64,10 +66,10 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
   const per = preview?.cadence === 'annual' ? 'year' : 'month'
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="seats-title" onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(8,61,133,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 95 /* above the dashboard tour: .dash-spot 90, .dash-coach 91 */, background: 'rgba(8,61,133,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--paper-soft)', borderRadius: 18, padding: 24, maxWidth: 460, width: '100%', boxSizing: 'border-box' }}>
         <h3 id="seats-title" style={{ margin: '0 0 8px', fontSize: 20, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>
-          You have used all {seats} {seats === 1 ? 'seat' : 'seats'}
+          {seats === 1 ? 'You have used your 1 seat' : `You have used all ${seats} seats`}
         </h3>
         <p style={{ margin: '0 0 12px', lineHeight: 1.5, color: 'var(--ink)' }}>
           {most
@@ -82,15 +84,16 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
         )}
         {payUrl && (
           <p style={{ margin: '0 0 12px', lineHeight: 1.5, color: 'var(--ink)' }}>
-            Your bank wants you to approve this payment. Finish it on the Stripe page (it opened in a new tab
-            — <a href={payUrl} target="_blank" rel="noopener noreferrer">open it again</a>), then come back here.
+            Your bank wants you to approve this payment. Tap <b>Approve payment</b>, finish on Stripe&apos;s page, then come
+            back here and tap <b>I have paid</b>. Nothing is charged and no seat is added until you approve.
           </p>
         )}
         {note && <p role="alert" style={{ margin: '0 0 12px', fontWeight: 800, color: '#B42318' }}>{note}</p>}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <button type="button" style={dghost} onClick={onClose}>Not now</button>
           {!most && !payUrl && <button type="button" style={dbtn} disabled={!preview || busy} onClick={buy}>{busy ? 'Adding…' : 'Add a seat'}</button>}
-          {payUrl && <button type="button" style={dbtn} disabled={busy} onClick={paid}>{busy ? 'Checking…' : 'I have paid'}</button>}
+          {payUrl && <a href={payUrl} target="_blank" rel="noopener noreferrer" style={dbtn}>Approve payment</a>}
+          {payUrl && <button type="button" style={dghost} disabled={busy} onClick={paid}>{busy ? 'Checking…' : 'I have paid'}</button>}
         </div>
       </div>
     </div>
