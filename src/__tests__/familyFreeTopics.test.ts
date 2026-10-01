@@ -1,11 +1,12 @@
 // @vitest-environment node
 /**
- * The free trial (20261001120000): a family gets ANY two topics — lessons or KG–2 chapters — then pays.
+ * The free trial (20261001120000, reshaped by 20261001140000): the PARENT picks two topics — two lessons of one module,
+ * or two KG–2 story chapters — once; opening a topic never picks one.
  *
- * Built on the real schema (baseline + every migration) in PGlite, with the paywall ON, as the owner and as the
- * child's own login. Checked: two different children of one family share the two; a claimed topic re-opens free;
- * the third is refused; a claimed chapter entitles in is_chapter_entitled; a seated child never uses a slot; a
- * stranger is refused; with the paywall OFF everything opens and nothing is recorded.
+ * Built on the real schema (baseline + every migration) in PGlite, with the paywall ON, as the owner, as the child's
+ * own login and as a stranger. Checked: the choice rules and that it is final; a child's login cannot choose; opening
+ * a topic claims nothing; only the chosen topics open, for every child of the family; trial_topics is what the child's
+ * home shows; a seated child plays anything and has no trial; with the paywall OFF everything opens.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
 import type { PGlite } from '@electric-sql/pglite'
@@ -24,8 +25,10 @@ async function as(uid: string | null, sql: string): Promise<{ v?: unknown; code?
   catch (e) { return { code: (e as { code?: string }).code ?? (e as Error).message } }
   finally { await db.exec('reset role') }
 }
-const claim = (uid: string | null, learner: string, topic: string) => as(uid, `select public.claim_topic('${learner}', '${topic}') as v`)
-const used = async () => Number((await db.query<{ n: number }>(`select count(*)::int as n from public.free_topics where account_id = '${OWNER}'`)).rows[0].n)
+const open = (uid: string | null, learner: string, topic: string) => as(uid, `select public.claim_topic('${learner}', '${topic}') as v`)
+const choose = (uid: string, topics: string[]) => as(uid, `select public.choose_free_topics(array[${topics.map(t => `'${t}'`).join(',')}]::text[]) as v`)
+const trial = (uid: string, learner: string) => as(uid, `select public.trial_topics('${learner}') as v`)
+const chosen = async () => (await db.query<{ topic: string }>(`select topic from public.free_topics where account_id = '${OWNER}' order by topic`)).rows.map(r => r.topic)
 const enforce = (on: boolean) => db.exec(`update public.billing_config set enforced = ${on}`)
 
 beforeAll(async () => {
@@ -44,60 +47,69 @@ beforeAll(async () => {
 }, 120_000)
 
 describe('paywall OFF (today)', () => {
-  it('opens every topic and records nothing', async () => {
+  it('opens every topic, and the child has no trial (null)', async () => {
     await enforce(false)
-    for (const t of ['g3m1-t1', 'g3m1-t2', 'g3m1-t3']) expect(await claim(OWNER, kid1, t)).toEqual({ v: true })
-    expect(await used()).toBe(0)
+    expect(await open(OWNER, kid1, 'g3m1-t1')).toEqual({ v: true })
+    expect(await trial(OWNER, kid1)).toEqual({ v: null })
   })
 })
 
-describe('paywall ON: two per family', () => {
+describe('paywall ON: the parent picks two, once', () => {
   beforeAll(() => enforce(true))
 
-  it('a seated child plays anything and uses no slot', async () => {
-    expect(await claim(OWNER, paidKid, 'g8m4-t1')).toEqual({ v: true })
-    expect(await used()).toBe(0)
+  it('before the parent chooses: nothing opens and the child home is empty', async () => {
+    expect(await open(CHILD, kid1, 'g3m1-t1')).toEqual({ v: false })
+    expect(await trial(CHILD, kid1)).toEqual({ v: [] })
+    expect(await chosen()).toEqual([])   // opening a topic never chooses one
   })
-  it('first topic, from the child\'s own login', async () => {
-    expect(await claim(CHILD, kid1, 'g3m5-t1')).toEqual({ v: true })
-    expect(await used()).toBe(1)
+  it('a seated child plays anything and has no trial', async () => {
+    expect(await open(OWNER, paidKid, 'g8m4-t1')).toEqual({ v: true })
+    expect(await open(OWNER, paidKid, 'g3m1')).toEqual({ v: true })
+    expect(await trial(OWNER, paidKid)).toEqual({ v: null })
   })
-  it('second topic, a KG–2 chapter, from a SIBLING — same family pool', async () => {
-    expect(await claim(OWNER, kid2, 'c:counting')).toEqual({ v: true })
-    expect(await used()).toBe(2)
+  it('refuses: two modules, a lesson and a chapter, three topics, a duplicate, an unknown id', async () => {
+    for (const bad of [['g3m1-t1', 'g4m2-t1'], ['g3m1-t1', 'c:counting'], ['g3m1-t1', 'g3m1-t2', 'g3m1-t3'], ['g3m1-t1', 'g3m1-t1'], ['nope']]) {
+      expect(await choose(OWNER, bad), bad.join(' + ')).toEqual({ code: 'P0F01' })
+    }
+    expect(await chosen()).toEqual([])
   })
-  it('the third is refused, for either child', async () => {
-    expect(await claim(OWNER, kid1, 'g3m5-t2')).toEqual({ v: false })
-    expect(await claim(OWNER, kid2, 'c:shapes')).toEqual({ v: false })
-    expect(await used()).toBe(2)
+  it('a child\'s own login cannot choose for the family', async () => {
+    expect(await choose(CHILD, ['g3m1-t1', 'g3m1-t2'])).toEqual({ code: '42501' })
   })
-  it('a claimed topic re-opens free, for every child of the family', async () => {
-    expect(await claim(OWNER, kid2, 'g3m5-t1')).toEqual({ v: true })
-    expect(await claim(CHILD, kid1, 'c:counting')).toEqual({ v: true })
+  it('two topics of one module are accepted', async () => {
+    expect(await choose(OWNER, ['g3m5-t1', 'g3m5-t2'])).toEqual({ v: ['g3m5-t1', 'g3m5-t2'] })
+    expect(await chosen()).toEqual(['g3m5-t1', 'g3m5-t2'])
   })
-  it('is_chapter_entitled follows the claims', async () => {
-    expect(await as(OWNER, `select public.is_chapter_entitled('${kid1}', 'counting') as v`)).toEqual({ v: true })
-    expect(await as(OWNER, `select public.is_chapter_entitled('${kid1}', 'shapes') as v`)).toEqual({ v: false })
+  it('and the choice is final', async () => {
+    expect(await choose(OWNER, ['c:counting', 'c:shapes'])).toEqual({ code: 'P0F01' })
+    expect(await chosen()).toEqual(['g3m5-t1', 'g3m5-t2'])
   })
-  it('a stranger is refused (42501) and claims nothing', async () => {
-    expect(await claim(STRANGER, kid1, 'g3m1-t1')).toEqual({ code: '42501' })
+  it('the chosen two open, for every child of the family; nothing else does', async () => {
+    expect(await open(CHILD, kid1, 'g3m5-t1')).toEqual({ v: true })
+    expect(await open(OWNER, kid2, 'g3m5-t2')).toEqual({ v: true })
+    expect(await open(OWNER, kid1, 'g3m5-t3')).toEqual({ v: false })
+    expect(await open(OWNER, kid2, 'c:counting')).toEqual({ v: false })
+    expect(await open(OWNER, kid1, 'g3m5')).toEqual({ v: false })   // mixed practice: paid only
   })
-  it('a module\'s mixed practice is paid only: refused without a seat, open with one, never a free slot', async () => {
-    await db.exec(`delete from public.free_topics where account_id = '${OWNER}' and topic = 'g3m5-t1'`)   // a slot free again
-    expect(await claim(OWNER, kid1, 'g3m1')).toEqual({ v: false })
-    expect(await claim(OWNER, paidKid, 'g3m1')).toEqual({ v: true })
-    expect(await used()).toBe(1)
-    await db.exec(`insert into public.free_topics (account_id, topic) values ('${OWNER}', 'g3m5-t1')`)
+  it('the child home shows exactly the two', async () => {
+    expect(await trial(CHILD, kid1)).toEqual({ v: ['g3m5-t1', 'g3m5-t2'] })
   })
-  it('an id the app does not have is refused', async () => {
-    expect(await claim(OWNER, kid1, 'nope')).toEqual({ code: 'P0L01' })
+  it('a stranger is refused (42501)', async () => {
+    expect(await open(STRANGER, kid1, 'g3m5-t1')).toEqual({ code: '42501' })
+    expect(await trial(STRANGER, kid1)).toEqual({ code: '42501' })
   })
-  it('a client cannot write free_topics directly', async () => {
+  it('a client cannot write free_topics directly; the owner reads their own two', async () => {
     expect((await as(OWNER, `insert into public.free_topics (account_id, topic) values ('${OWNER}', 'g3m1-t4') returning 1 as v`)).code).toBe('42501')
-    expect((await as(OWNER, `delete from public.free_topics returning 1 as v`)).code).toBe('42501')
-  })
-  it('the owner reads their own two', async () => {
     expect(await as(OWNER, `select count(*)::int as v from public.free_topics`)).toEqual({ v: 2 })
     expect(await as(STRANGER, `select count(*)::int as v from public.free_topics`)).toEqual({ v: 0 })
+  })
+})
+
+describe('KG–2: any two story chapters', () => {
+  it('are accepted for a family that has not chosen', async () => {
+    await db.exec(`delete from public.free_topics where account_id = '${OWNER}'`)
+    expect(await choose(OWNER, ['c:counting', 'c:money'])).toEqual({ v: ['c:counting', 'c:money'] })
+    expect(await as(OWNER, `select public.is_chapter_entitled('${kid1}', 'counting') as v`)).toEqual({ v: true })
+    expect(await as(OWNER, `select public.is_chapter_entitled('${kid1}', 'shapes') as v`)).toEqual({ v: false })
   })
 })
