@@ -49,6 +49,11 @@ mode only, built from `blockcraft/` into `public/blockcraft` — as a full page 
 `/play` uploads that save to `game_saves`, so the next game starts where this one stopped. (From 2026-09-26 to
 2026-10-01 nothing spent points: a child had bought minutes over an empty placeholder and lost them.)
 
+**Stopping early gives the unused minutes back.** The clock is the database's and keeps running while the child is off
+the game, so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the
+purchase to the minutes played (a started minute counts; at least 1) and ends it, so the rest of the points come back
+and stop counting against the daily limit.
+
 ## Points never reset
 
 The balance is the sum of a ledger (`point_events`: earning rows positive, a game-time row negative). Nothing expires,
@@ -67,7 +72,7 @@ child's data is deleted (the child's profile or the account deleted, or the pare
 | at most 300 points a day | the database (`points_room_today`, used by both functions) |
 | only real lessons, chapters and modules pay | the database (`lesson_catalog`, `P0L01` for anything else) |
 | only the owning adult changes game time | the database (`set_game_settings`) |
-| the daily limit, the on/off switch, the balance, one game at a time | the database (`start_game_time`, unused today) |
+| the daily limit, the on/off switch, the balance, one game at a time | the database (`start_game_time`; `end_game_time` stops early) |
 | answers wait when offline, and upload later with the same event id | the app (`src/infra/storage/lessonSync.ts`) |
 | a child whose consent is not on record: answers wait on the device, never deleted | the database refuses the write; the app holds it |
 

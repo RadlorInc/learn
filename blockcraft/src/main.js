@@ -19,6 +19,7 @@ const SAVE_KEY = 'blockcraft.save.v2';
 const Q = new URLSearchParams(location.search);
 const PLAY = Q.has('key') && Q.has('until') ? { key: Q.get('key'), until: +Q.get('until') } : null;
 const BACK = '/play';
+const STOP = '/play?stop=1'; // /play stops the game time there and gives back the minutes not played
 const SETTINGS_KEY = 'blockcraft.settings';
 const DAY = 1200; // seconds per full day
 const REACH = 5;
@@ -207,9 +208,8 @@ function show(name) {
   if (name === 'title') $('bContinue').classList.toggle('hidden', !hasSave());
 }
 if (PLAY) {
-  const goBack = () => { save(); location.replace(BACK); };
-  $('bQuit').textContent = 'Save and go back';
-  $('bQuit').onclick = goBack;
+  $('bQuit').textContent = 'Stop and keep my minutes';
+  $('bQuit').onclick = () => { save(); location.replace(STOP); };
   if (Date.now() >= PLAY.until) location.replace(BACK);
   // after the rest of this module has run, as the old message-driven start was
   else { show('loading'); setTimeout(() => startWorld(safeParse(localStorage.getItem(PLAY.key)) || { seed: (Math.random() * 2 ** 31) | 0 })); }

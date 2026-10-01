@@ -55,6 +55,12 @@ describe('the game keeps its half of the wire', () => {
     expect(game).toMatch(/localStorage\.setItem\(PLAY \? PLAY\.key : SAVE_KEY/)
     expect(game).toContain("const BACK = '/play'")
   })
+  it('"Stop and keep my minutes" saves, then asks /play to stop the time (/play?stop=1 calls end_game_time)', () => {
+    expect(game).toMatch(/\$\('bQuit'\)\.onclick = \(\) => \{ save\(\); location\.replace\(STOP\); \}/)
+    expect(game).toContain("const STOP = '/play?stop=1'")
+    const play = readFileSync(resolve(__dirname, '../app/play/page.tsx'), 'utf8')
+    expect(play).toMatch(/has\('stop'\)[\s\S]{0,120}endGameTime\(learnerId\)/)
+  })
   it('when the time is up it saves before leaving', () => {
     expect(game).toMatch(/left === 0 && G\.world\) \{\s*clearInterval\(tick\); save\(\);/)
   })

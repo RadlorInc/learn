@@ -127,6 +127,14 @@ export async function startGameTime(learnerId: string, minutes: number): Promise
   } catch { return { ok: false, error: 'failed' } }
 }
 
+/** Stops a running game early; the minutes not played come back (migration 20261001180000). */
+export async function endGameTime(learnerId: string): Promise<boolean> {
+  try {
+    const { data, error } = await db().rpc('end_game_time', { p_learner: learnerId })
+    return !error && (data as { ok: boolean }).ok
+  } catch { return false }
+}
+
 export async function setGameSettings(learnerId: string, enabled: boolean, minutesPerDay: number): Promise<boolean> {
   try {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
