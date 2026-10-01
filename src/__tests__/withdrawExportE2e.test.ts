@@ -164,6 +164,7 @@ async function seedRows(f: Omit<Family, 'sessions' | 'plans'>, mark: string): Pr
     insert into public.learner_events (learner_id, event, props) values ('${k}', 'session_start', '{"m":"${mark}"}');
     insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${k}', '${mark}', '2', array['picture']);
     insert into public.game_settings (learner_id, time_zone) values ('${k}', 'UTC') on conflict do nothing;
+    insert into public.game_saves (learner_id, data) values ('${k}', '{"world": "${mark}"}');
     insert into public.error_events (source, message, learner_id) values ('client', 'crash ${mark}', '${k}');
     insert into public.exercise_results (learner_id, class_id, exercise_id, outcomes) values ('${k}', '${grade}', '${mark}', array['first']);
     insert into public.learner_invites (learner_id, invited_by, invited_email) values ('${k}', '${f.parent}', 'grandma@x.test');
@@ -284,6 +285,7 @@ describe('"Download a copy" — the real export, as the owning parent', () => {
     point_events: ['points', 'id', 'id'], game_settings: ['gameSettings', 'learner_id', 'learner_id'],
     exercise_results: ['classExerciseResults', 'id', 'id'], lesson_feedback: ['lessonFeedback', 'id', 'id'],
     error_events: ['crashRecords', 'id', 'id'], learner_access: ['adultsWithAccess', 'parent_id', 'adult_id'],
+    game_saves: ['gameSave', 'learner_id', 'learner_id'],
   }
   /** Out of the file on purpose — the same three decisions `exportCompleteness.test.ts` records, with the reasons there. */
   const EXCLUDED = {
