@@ -52,7 +52,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 
 | Who | Routes |
 |---|---|
-| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points; games "coming soon") |
+| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then BlockCraft opens full page at `/blockcraft/`; [product/points.md](product/points.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login` |
 | Auth | `/auth` · `/auth/confirm` (sign-up link) · `/auth/callback` (Google) · `/auth/set-password` (invite, reset) · `/auth/new-password` (child's temporary password) |
@@ -138,7 +138,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 |---|---|
 | Accounts | `profiles`, `auth_events`, `admin_users`, `parent_pins` |
 | Children | `learners` (name, avatar, age band, class, chosen lessons, consent, attestation), `learner_access` (owner, viewer, self), `learner_invites` |
-| Learning | `lesson_progress` (per topic, or `c:<chapter>`: done, level, streak, mastered, practice position), `point_events`, `game_settings` |
+| Learning | `lesson_progress` (per topic, or `c:<chapter>`: done, level, streak, mastered, practice position), `point_events`, `game_settings`, `game_saves` (the game's world, one row per child) |
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
@@ -166,7 +166,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 (`securityDefinerDrift.test.ts` fails on an undeclared change).
 
 - **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run`, `game_wallet`,
-  `set_game_settings`, `start_game_time` (unused while `/play` spends nothing); `delete_learner`, `delete_my_account`,
+  `set_game_settings`, `start_game_time`, `end_game_time` (stop early, unused time back); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
   `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
@@ -285,8 +285,9 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 |---|---|---|
 | `learners` | the creating adult; `delete_child_data` | the child's adults and login; consent routes (name) |
 | `learner_access` | new-learner trigger, `/api/child-login`, invite acceptance | RLS policies, `/api/child-login` |
-| `lesson_progress`, `point_events` | the three progress RPCs | device, dashboard, `game_wallet`, export, `admin_activation` |
+| `lesson_progress`, `point_events` | the three progress RPCs; game time: `start_game_time`, `end_game_time` | device, dashboard, `game_wallet`, export, `admin_activation` |
 | `game_settings` | `set_game_settings` | `game_wallet`, export |
+| `game_saves` | `/play` (the child's adults and login, RLS) | `/play`, export |
 | `learner_events` | `track()` in a story chapter | export, admin aggregates |
 | `exercise_results` | the child's login | teacher, child, export |
 | `lesson_feedback` | "Didn't get it?" | export |

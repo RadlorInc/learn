@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "blockcraft/**",       // a separate Vite project (the game) with its own toolchain
+    "public/blockcraft/**", // the game's build output (npm run build:game)
     // ⚠️ NOT OURS TO LINT, and leaving them in made `npx eslint` useless as a gate: it reported
     // 3,991 problems, of which ~129 errors came from a separate project's BUILD OUTPUT
     // (`labs-demo/dist`), a Python virtualenv, and recovered scratch files. A gate nobody can read
