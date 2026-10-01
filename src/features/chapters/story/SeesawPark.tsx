@@ -37,7 +37,7 @@ import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 import { DirectionsInline } from '@/features/chapters/directions'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
@@ -326,7 +326,7 @@ export const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (co
   }, [])
 
 
-  /** A tap only CHOOSES; nothing is graded until Ready. Re-tapping the choice unchooses it, so
+  /** A tap only CHOOSES; nothing is graded until it is submitted (at once: SubmitOnPick). Re-tapping the choice unchooses it, so
    *  the bar is never a trap. The grading path below is untouched — it simply runs later. */
   function pick(ch: string) {
     if (done.current || picked !== null) return
@@ -375,7 +375,7 @@ export const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (co
         <Scale a={a} b={b} item={item} tilt={tilt} short={short} />
         <SignRow picked={picked} answer={answer} onPick={pick} short={short} pending={pending} />
       </div>
-      <ReadyBar show={pending !== null} onCommit={commit} />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }

@@ -39,7 +39,7 @@ import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 /**
  * The ONLY thing a tap waits for. Deliberately not `useIsSpeaking()`: a wrong tap speaks a line,
@@ -351,7 +351,7 @@ export const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onCo
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** A tap only CHOOSES; the piece does not move and nothing is graded until Ready. The flight
+  /** A tap only CHOOSES; the piece does not move and nothing is graded until it is submitted (at once: SubmitOnPick). The flight
    *  needs the element it starts from, so the chosen button is held alongside the index. */
   function pick(i: number, el: HTMLElement) {
     if (done.current) return
@@ -388,7 +388,7 @@ export const ShapesPlay: React.FC<{ data: ShapeRound; mode: Mode; fit: Fit; onCo
   return <>
     <PiecePile options={options} aspect={BUILDS[SEQUENCE[data.seq].bi].aspect}
       stateFor={i => (taken === i ? 'taken' : wrongIdx === i ? 'wrong' : pending === i ? 'picked' : 'idle')} onTap={pick} />
-    <ReadyBar show={pending !== null} onCommit={commit} />
+    <SubmitOnPick show={pending !== null} onCommit={commit} />
   </>
 }
 

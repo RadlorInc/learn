@@ -23,7 +23,7 @@ import { CountItem, type CountKind, COUNT_PLURAL } from './art'
 import { BIOMES, type Band, type Biome, type BiomeId, type Storytelling } from './biomes'
 import { useViewport } from '@/shared/hooks/useViewport'
 import { rint, shuffle } from '@/core/rand'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 // Fisher-Yates — an unbiased shuffle. (The old `sort(() => Math.random() - 0.5)` left
 // small arrays mostly in place, so the practice nearly always opened on the pool's first
@@ -590,10 +590,10 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
   const gone = (key: number) => setCrowd(prev => prev.filter(c => c.key !== key))
   function choose(v: number) { if (locked) return; setPicked(v); window.setTimeout(() => onSubmit(v === data.n), 450) }
   /**
-   * A tap only CHOOSES; nothing is submitted until Ready.
+   * A tap only CHOOSES; nothing is submitted until it is submitted (at once: SubmitOnPick).
    *
    * ⚠️ THIS IS THE ONE CHAPTER IN THE BAND WHERE READY REALLY DECIDES THE SCORE. Everywhere else a
-   * wrong answer is retried in place and only the SLIP is recorded, so Ready adds deliberation but
+   * wrong answer is retried in place and only the SLIP is recorded, so a separate submit added deliberation but
    * cannot change the outcome; here `onSubmit(v === data.n)` ends the round either way, so an
    * accidental tap used to be the answer. That is precisely the case the student was describing.
    */
@@ -640,7 +640,7 @@ const ParadeCountPlay: React.FC<{ data: HowManyData; onSubmit: (c: boolean) => v
           from the column's own box instead. NumberTown shipped exactly that for the length of one
           drive and put the bar across an answer door. To the RIGHT, because the chips and the
           collect tray own the middle of that strip. */}
-      <ReadyBar show={pending !== null} onCommit={commit} align="right" />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }
