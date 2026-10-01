@@ -544,20 +544,38 @@ begin
     raise exception 'RLS FAIL C1: a diagnostic plan still entitles a chapter — the free trial is not the only free source';
   end if;
 
-  -- T: THE FREE TRIAL — any two topics per FAMILY, then pay. v_learner3 holds no seat (B13g), so only claims count.
-  -- T1/T2: two claims succeed (src/__tests__/familyFreeTopics.test.ts covers siblings sharing the two).
+  -- T: THE FREE TRIAL — the PARENT picks two topics once (20261001140000); opening a topic never picks one.
+  -- v_learner3 holds no seat (B13g), so only the family's choice counts.
+  -- T0: before the parent chooses, opening a topic is refused and records nothing.
   v_asserts := v_asserts + 1;
-  if not public.claim_topic(v_learner3, 'c:counting') then raise exception 'RLS FAIL T1: the first free topic was refused'; end if;
+  if public.claim_topic(v_learner3, 'c:counting') then raise exception 'RLS FAIL T0: a topic opened before the parent chose any'; end if;
+  -- T1: a mix of a chapter and a lesson is refused.
+  v_blocked := false;
+  begin
+    perform public.choose_free_topics(array['c:counting', 'g3m1-t1']);
+  exception when sqlstate 'P0F01' then v_blocked := true;
+  end;
   v_asserts := v_asserts + 1;
-  if not public.claim_topic(v_learner3, 'g3m1-t1') then raise exception 'RLS FAIL T2: the second free topic was refused'; end if;
-  -- T3: the third is refused.
+  if not v_blocked then raise exception 'RLS FAIL T1: a lesson and a chapter were chosen together'; end if;
+  -- T2: two KG–2 chapters are accepted…
+  perform public.choose_free_topics(array['c:counting', 'c:money']);
   v_asserts := v_asserts + 1;
-  if public.claim_topic(v_learner3, 'c:shapes') then raise exception 'RLS FAIL T3: a third free topic was given'; end if;
-  -- T4: a claimed chapter entitles; an unclaimed one does not (the positive and negative twins).
+  if not public.claim_topic(v_learner3, 'c:counting') then raise exception 'RLS FAIL T2: a chosen topic does not open'; end if;
+  -- T3: …and the choice is final.
+  v_blocked := false;
+  begin
+    perform public.choose_free_topics(array['c:shapes']);
+  exception when sqlstate 'P0F01' then v_blocked := true;
+  end;
   v_asserts := v_asserts + 1;
-  if not public.is_chapter_entitled(v_learner3, 'counting') then raise exception 'RLS FAIL T4: a claimed chapter is not entitled'; end if;
+  if not v_blocked then raise exception 'RLS FAIL T3: the free topics were chosen a second time'; end if;
   v_asserts := v_asserts + 1;
-  if public.is_chapter_entitled(v_learner3, 'shapes') then raise exception 'RLS FAIL T4: a refused chapter is entitled'; end if;
+  if public.claim_topic(v_learner3, 'c:shapes') then raise exception 'RLS FAIL T3: a topic the parent did not choose opens'; end if;
+  -- T4: a chosen chapter entitles; one not chosen does not (the positive and negative twins).
+  v_asserts := v_asserts + 1;
+  if not public.is_chapter_entitled(v_learner3, 'counting') then raise exception 'RLS FAIL T4: a chosen chapter is not entitled'; end if;
+  v_asserts := v_asserts + 1;
+  if public.is_chapter_entitled(v_learner3, 'shapes') then raise exception 'RLS FAIL T4: a chapter the parent did not choose is entitled'; end if;
   -- T5: the client cannot write the claims table.
   v_blocked := false;
   begin

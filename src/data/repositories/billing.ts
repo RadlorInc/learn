@@ -36,6 +36,30 @@ export async function claimTopic(learnerId: string, topic: string): Promise<bool
   }
 }
 
+/** The parent's one-time choice of the family's two free topics (`choose_free_topics`). `error` is the database's own
+ *  words for a refusal (already chosen, two modules, …) or `null` when the request itself failed. */
+export async function chooseFreeTopics(topics: string[]): Promise<{ ok: true } | { ok: false; error: string | null }> {
+  try {
+    const { error } = await db().rpc('choose_free_topics' as never, { p_topics: topics } as never)
+    if (!error) return { ok: true }
+    return { ok: false, error: (error as { code?: string }).code === 'P0F01' ? error.message : null }
+  } catch {
+    return { ok: false, error: null }
+  }
+}
+
+/** What the child's home shows during the trial (`trial_topics`): `null` = no restriction (paywall off, or a paid seat),
+ *  an array = only these (empty until the parent chooses), `undefined` = could not find out. */
+export async function trialTopics(learnerId: string): Promise<string[] | null | undefined> {
+  try {
+    const { data, error } = await db().rpc('trial_topics' as never, { p_learner_id: learnerId } as never)
+    if (error) return undefined
+    return data === null ? null : Array.isArray(data) ? (data as string[]) : undefined
+  } catch {
+    return undefined
+  }
+}
+
 /** The family's free topics so far (owner reads own rows), or `null` when we could not find out. */
 export async function myFreeTopics(): Promise<string[] | null> {
   try {

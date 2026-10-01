@@ -313,12 +313,13 @@ Built and switched off; nothing has been charged.
   fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
   `RESEND_API_KEY` is logged and the event still closes.
 - **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
-- **Free trial and entitlement** (20261001120000): a family gets any two topics free — a lesson or a KG–2 chapter,
-  from any module — then pays. `claim_topic(learner, topic)` is asked once when a child opens a topic (`/lesson`,
-  `/game`, and `/practice`, which is paid only): a paid seat plays anything, otherwise the topic is recorded in
-  `free_topics` while the family has fewer than two, a recorded topic re-opens free, the third is refused.
-  `is_chapter_entitled` reads the same claims plus the paid seat. Both answer only for a learner the caller can reach.
-  The child sees a price-free card; the parent dashboard shows the trial and "Pay and continue".
+- **Free trial and entitlement** (20261001120000, reshaped by 20261001140000): the PARENT picks the family's two free
+  topics once on `/parent` (`FreeTrialCard` → `choose_free_topics`): two topics of one Grade 3–8 module, or two KG–2
+  stories; final. The child's home (`ModuleHome`, via `trial_topics`) shows only those two — no lock, trial or price on
+  the child's side — and "your grown-up is picking" before the choice; Practice is hidden (paid only). Opening a topic
+  asks `claim_topic`, which never picks: a paid seat, the paywall off, or a chosen topic. `is_chapter_entitled` reads
+  the same choice plus the paid seat. All answer only for a learner the caller can reach. After choosing, the parent's
+  card offers Purchase.
 - **Off:** `src/infra/stripe.ts` refuses non-test keys; `BILLING_LIVE = false` (`src/app/legal/registry.ts`) shows
   "free during the beta"; `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
   topic through while off (`betaFree`, `chapterGateOff`).
