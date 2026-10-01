@@ -8,7 +8,7 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (29 September 2026)
 
-- **Production** is on `132c38297` (#323); `smoke:live` passed on it (29 Sep). The repo `learn` is public again (see
+- **Production** is on `4955f191b` (#322); `smoke:live` passed on it (29 Sep). The repo `learn` is public again (see
   the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
   billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
@@ -23,13 +23,21 @@ fixed yet are tracked outside this public repo; ask the founder.
   Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
+- **Marketing and reels** live in the private repo `RadlorInc/radlor-internal`: the marketing index, reel scripts,
+  claim bank, and `content/motion/` (reels as code, with 3D and sound). `~/milo_react` has no remote.
 
 ## Open — Draft PRs waiting for the founder
 
-Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323 (each migration's before- and proof-SQL
-all PASS). #323 was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️),
-so the repo's migration chain still builds a body one comment different from production's.
-1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
+The repo's migration chain builds a `get_parent_dashboard()` body one comment different from production's (found
+rebuilding #323; no ⚠️).
+1. #329 — KG–2 art: 33 own backgrounds, 18 new animated animals (and a bear cub replacing the 9–11 foreman as the
+   walker), 23 Play-card pictures instead of emoji. CI is red until the voice is in:
+   - the founder runs `scripts/kaggle/josh-chapters-g2-1.ipynb` (123 Multiplication lines; sent in chat, not committed)
+     and hands back the zip; the 776 Story Problems clips are already merged and on tag `audio-src-josh-2026-09-29`;
+   - the agent merges the new clips, rebuilds the manifest and makes ONE combined `audio-src-…` tag (899 clips);
+   - the founder: short-lived S3 keys in `production-db` + the region, approve the dry run (must report every new clip
+     missing) and the upload from `kg2-art`, revoke the keys, run `audio-bucket-proof.sql` (P5's expected numbers in
+     the PR grow with the second batch), then mark #329 Ready.
 2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
 
@@ -53,6 +61,8 @@ so the repo's migration chain still builds a body one comment different from pro
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
 - After the beta: Search Console, then one public page per grade.
+- Money's stall keeper is a fox painted into an existing scene image (`CoinShop`): keep or repaint. `renameGate` reads
+  code, not pictures, so it cannot see it.
 
 ## Open — the founder sets (dashboards and accounts)
 
@@ -73,6 +83,9 @@ so the repo's migration chain still builds a body one comment different from pro
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
+- Higgsfield: the account is shared — on 29 Sep someone else's jobs spent from the same balance while the KG–2 art was
+  made. Topped up 29 Sep; 227.25 left after website#9. Send at most 6 jobs at once: 3 of a 12-job batch were refused
+  as "out of credits" (not charged).
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
@@ -82,7 +95,8 @@ so the repo's migration chain still builds a body one comment different from pro
   deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
   Vercel connector does not show it.
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
-  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
+  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches, the
+  old reel folder `~/video_reviewer/content/` (now in `radlor-internal`).
 
 ## Open — live checks on production (the founder)
 
@@ -120,6 +134,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
   alone — twice on 28 Sep. A timing assumption in the test, not yet found.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
+- Local only, green in CI: `rlsEveryTable` cannot start PGlite on this machine's Node 26 (`r.arrayBuffer is not a
+  function`), and `tsc` trips on stale `.next/types` left by a dev server for pages that no longer exist.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's
   refusal has never been watched firing. Three lint errors (`Diagrams.tsx`, `LessonPlayer.tsx`,
