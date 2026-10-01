@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { CATALOGUE, chooseFrom, useModule } from '@/features/lessons/catalogue'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { ModulePractice } from '@/features/lessons/ModulePractice'
+import { useTopicGate } from '@/features/billing/useTopicGate'
+import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 
 export default function PracticePage() {
   // useSearchParams needs a Suspense boundary on a static page (next docs: use-search-params → Prerendering).
@@ -21,8 +23,13 @@ function Practice() {
   const has = chooseFrom(CATALOGUE, ids).some(m => m.id === id && m.lessons.length > 0)
   useEffect(() => { if (!has) router.replace('/modules') }, [has, router])
   const whole = useModule(has ? id! : undefined)
+  // Mixed practice draws on every topic of the module, so it is paid only (claim_topic never makes it a free one).
+  const gate = useTopicGate(has ? id : null)
 
-  if (!has || !whole) return null
+  if (!has || !whole || gate === 'checking') return null
+  if (gate === 'locked') return (
+    <LockedChapterCard copy={{ emoji: '🧩', title: `${whole.title} practice`, what: 'Mixed questions from every topic in this module.' }} onBack={() => router.push(`/lesson?module=${whole.id}`)} />
+  )
   const picked = chooseFrom([whole], ids)[0]
   return <ModulePractice module={picked} learnerId={getActiveLearner()?.id ?? null} onExit={() => router.push(`/modules?grade=${picked.grade}`)} />
 }

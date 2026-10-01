@@ -1,6 +1,6 @@
 'use client'
 /**
- * What a CHILD sees when they open a chapter their family is not entitled to.
+ * What a CHILD sees when they open a topic their family has not paid for, after the two free ones.
  *
  * ⚠️⚠️ NO PRICE, NO CHECKOUT LINK, NO UPGRADE BUTTON. A child is reading this. Pricing exists on
  * the parent side and nowhere else — `src/__tests__/chapterGate.test.ts` sweeps this module for
@@ -14,10 +14,11 @@
  * what they are missing, which is also the only honest thing to hand the grown-up they go and ask.
  */
 import Link from 'next/link'
-import { lockCopy } from '@/features/billing/chapterGate'
+import { lockCopy, type LockCopy } from '@/features/billing/chapterGate'
 
-export function LockedChapterCard({ chapterId, onBack }: { chapterId: string; onBack?: () => void }) {
-  const copy = lockCopy(chapterId)
+/** A KG–2 chapter names itself from the catalogue (`chapterId`); a lesson or a module's practice passes its own `copy`. */
+export function LockedChapterCard({ chapterId, copy: given, onBack }: { chapterId?: string; copy?: LockCopy; onBack?: () => void }) {
+  const copy = given ?? lockCopy(chapterId ?? '')
   return (
     <main style={{
       minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
