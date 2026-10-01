@@ -48,7 +48,7 @@ import {
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 export type Op = '+' | '-'
 
@@ -360,7 +360,7 @@ export const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** A tap only CHOOSES; nothing marches and nothing is graded until Ready. */
+  /** A tap only CHOOSES; nothing marches and nothing is graded until it is submitted (at once: SubmitOnPick). */
   function pickMarker(v: number) {
     if (mode === 'demo' || done.current || !asking) return
     setPending(p => (p === v ? null : v))
@@ -450,7 +450,7 @@ export const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct
           ))}
           {/* Beside the markers, for the same measured reason as MarketDay: this row already owns
               the bottom strip, and above it is the sum the child is reading. */}
-          <ReadyBar show={pending !== null} onCommit={commit} align="right" bottom={8} />
+          <SubmitOnPick show={pending !== null} onCommit={commit} />
         </div>
       )}
     </>

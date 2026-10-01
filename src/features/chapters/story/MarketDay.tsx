@@ -35,7 +35,7 @@ import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -427,7 +427,7 @@ export const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (corr
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** A tap only CHOOSES; nothing is graded and nothing counts out until Ready. */
+  /** A tap only CHOOSES; nothing is graded and nothing counts out until it is submitted (at once: SubmitOnPick). */
   function pick(n: number) {
     if (done.current || picked !== null || !asking) return
     setPending(p => (p === n ? null : n))
@@ -500,8 +500,7 @@ export const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (corr
           readout and the chips is 14px against a 47px bar — there is no room in that column. The
           chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
           them, which is empty in every chapter here. */}
-      <ReadyBar show={pending !== null} onCommit={commit} align="right"
-        bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }

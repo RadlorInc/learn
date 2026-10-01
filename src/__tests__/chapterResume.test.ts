@@ -118,39 +118,23 @@ describe('spoken praise on a correct answer', () => {
 })
 
 /**
- * ⚠️ THE READY BAR MUST NOT BE AN ORACLE. This band is retry-in-place — a wrong answer does not end
- * the round — so a Ready that appeared only for a correct selection would announce the answer
- * before the commit, which is the craft doc's oldest rule. It is gated on "something is selected"
- * and on nothing else, and it must look identical either way.
+ * ⚠️ THE SUBMIT MUST NOT BE AN ORACLE (2026-10-01: a tap is the answer, no Ready button). This band is
+ * retry-in-place, so a submit that fired only for a correct choice would leave a wrong tap silent and announce the
+ * right one. `SubmitOnPick` is gated on "something is chosen" and on nothing else, and draws nothing.
  */
-describe('Ready bar', () => {
-  const BAR = 'src/features/chapters/story/ReadyBar.tsx'
-  // ⚠️ STRIPPED OF COMMENTS FIRST. Both of the assertions below went red on their first run against
-  // the file's own header, which EXPLAINS that the bar must not know which answer is correct and
-  // must never be disabled — the gate's-own-prose trap, arriving from the source side. A rule about
-  // what the CODE does is checked against the code.
+describe('SubmitOnPick', () => {
+  const SUB = 'src/features/chapters/story/SubmitOnPick.tsx'
+  // ⚠️ STRIPPED OF COMMENTS FIRST: the header explains what it must not know, and a rule about the CODE is
+  // checked against the code.
   it('branches on whether a choice exists, never on whether it is right', () => {
-    const s = strip(read(BAR))
-    // Positive control first: a search that finds nothing is indistinguishable from a broken one.
-    expect(s, 'the positive control is gone — this search proves nothing').toContain('show')
-    expect(s, 'the bar knows which answer is correct').not.toMatch(/\bcorrect\b|\banswer\b|\bgrade\b/)
+    const s = strip(read(SUB))
+    expect(s, 'the positive control is gone — this search proves nothing').toContain('if (show) onCommit()')
+    expect(s, 'it knows which answer is correct').not.toMatch(/\bcorrect\b|\banswer\b|\bgrade\b/)
   })
 
-  it('is absent rather than disabled, because a dead button is the worst outcome', () => {
-    const s = strip(read(BAR))
-    expect(s).toContain('if (!show) return null')
-    expect(s, 'the bar can render in a state where tapping it does nothing').not.toContain('disabled')
-  })
-
-  it('clears the tap floor', () => {
-    expect(read(BAR)).toContain('minHeight: 44')
-  })
-
-  /** A tap must be undoable before it is submitted, or "submit when ready" is a trap. */
-  it('the chapter it was proven on lets the child change their mind', () => {
-    const nt = read('src/features/chapters/story/NestTree.tsx')
-    expect(nt, 're-tapping a chosen nest no longer unchooses it').toContain('setPickedIdx(p => (p === i ? null : i))')
-    expect(nt, 'the pick is drawn in the colour that means CORRECT in this palette')
-      .not.toMatch(/state === 'picked' \? 'drop-shadow\(0 0 \d+px var\(--garden-green\)/)
+  it('draws nothing — there is no button to press', () => {
+    const s = strip(read(SUB))
+    expect(s).toContain('return null')
+    expect(s, 'a button is back').not.toMatch(/<button\b/)
   })
 })
