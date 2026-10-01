@@ -320,6 +320,8 @@ Built and switched off; nothing has been charged.
   asks `claim_topic`, which never picks: a paid seat, the paywall off, or a chosen topic. `is_chapter_entitled` reads
   the same choice plus the paid seat. All answer only for a learner the caller can reach. After choosing, the parent's
   card offers Purchase.
+- **Seats fill themselves** (20261001150000): a new paid seat goes to the family's oldest child without one, and a
+  child added later takes an empty seat; `reassign_learner_seat` (once per period) is still the only way to MOVE one.
 - **Off:** `src/infra/stripe.ts` refuses non-test keys; `BILLING_LIVE = false` (`src/app/legal/registry.ts`) shows
   "free during the beta"; `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
   topic through while off (`betaFree`, `chapterGateOff`).

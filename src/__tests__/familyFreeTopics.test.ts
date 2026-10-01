@@ -113,3 +113,25 @@ describe('KG–2: any two story chapters', () => {
     expect(await as(OWNER, `select public.is_chapter_entitled('${kid1}', 'shapes') as v`)).toEqual({ v: false })
   })
 })
+
+describe('a purchase seats the family\'s children (20261001150000)', () => {
+  it('a new empty seat is filled with the oldest unseated child, who then has no trial', async () => {
+    expect(await trial(OWNER, kid1)).not.toEqual({ v: null })        // on the trial before
+    const sub = (await db.query<{ id: string }>(`select id from public.subscriptions where account_id = '${OWNER}'`)).rows[0].id
+    await db.exec(`insert into public.subscription_seats (subscription_id, seat_index) values ('${sub}', 2)`)   // as materialize_seats does
+    const seated = (await db.query<{ n: string }>(`select l.display_name as n from public.subscription_seats st join public.learners l on l.id = st.learner_id where st.seat_index = 2`)).rows
+    expect(seated).toEqual([{ n: 'One' }])                               // kid1 was added first
+    expect(await trial(OWNER, kid1)).toEqual({ v: null })
+    expect(await open(OWNER, kid1, 'g5m1-t1')).toEqual({ v: true })
+    expect(await trial(OWNER, kid2)).not.toEqual({ v: null })            // no seat left for kid2
+  })
+  it('a child added later takes an empty seat', async () => {
+    const sub = (await db.query<{ id: string }>(`select id from public.subscriptions where account_id = '${OWNER}'`)).rows[0].id
+    await db.exec(`insert into public.subscription_seats (subscription_id, seat_index) values ('${sub}', 3)`)   // kid2 takes it
+    await db.exec(`insert into public.subscription_seats (subscription_id, seat_index) values ('${sub}', 4)`)   // nobody left: stays empty
+    const consent = (await db.query<{ c: string }>(`select consent_id as c from public.learners where id = '${kid1}'`)).rows[0].c
+    const late = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+      values ('Late', 0, '6-8', '${OWNER}', '${consent}', '${FIXTURE_NOTICE}') returning id`)).rows[0].id
+    expect((await db.query(`select 1 from public.subscription_seats where learner_id = '${late}' and seat_index = 4`)).rows.length).toBe(1)
+  })
+})
