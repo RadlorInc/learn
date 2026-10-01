@@ -54,6 +54,8 @@ import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
 import { BILLING_LIVE } from '@/app/legal/registry'
 import { FreeTrialCard } from '@/features/billing/FreeTrialCard'
+import { TrialTopicPicker, useFamilyTrial, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
+import { chooseFreeTopics } from '@/data/repositories/billing'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -880,19 +882,28 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
   const [pick,        setPick]        = useState<Set<string>>(() => new Set())
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
+  // The free trial (TrialTopicPicker): two topics instead of whole modules, chosen once for the family.
+  const trial = useFamilyTrial()
+  const [trialPick,   setTrialPick]   = useState<string[]>([])
+  const trialIds = trial?.state === 'chosen' ? trial.topics : trial?.state === 'choose' ? trialPick : null
 
   async function handleAdd() {
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError(t('Please enter a name (at least 2 characters)')); return }
-    if (pick.size === 0) { setError(t('Choose at least one module for this learner.')); return }
+    if (!trial) return
+    if (trialIds ? trialIds.length < FREE_TOPICS : pick.size === 0) { setError(trialIds ? 'Choose two topics for the free trial.' : t('Choose at least one module for this learner.')); return }
     if (!attest || !attested) return
-    const chosen = MODULES.filter(m => pick.has(m.id))
+    const chosen = trialIds ? MODULES.filter(m => m.lessons.some(l => trialIds.includes(l.id))) : MODULES.filter(m => pick.has(m.id))
     // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19).
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
+    if (trial.state === 'choose') {
+      const out = await chooseFreeTopics(trialPick)
+      if (!out.ok) { setError(out.error ?? t('Something went wrong. Please try again.')); setLoading(false); return }
+    }
     const noticeVersion = await attestationVersion(attest.noticeVersion)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: trialIds ?? chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     onAdded()
   }
@@ -924,9 +935,10 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
         <div data-tour="add-modules">
-        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{t('Which modules can they see?')}</p>
+        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{trialIds ? 'Which topics can they see?' : t('Which modules can they see?')}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
+          {trialIds ? <TrialTopicPicker value={trialIds} onChange={trial?.state === 'choose' ? setTrialPick : undefined} />
+            : <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />}
         </div>
         </div>
 

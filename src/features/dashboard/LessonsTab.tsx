@@ -16,6 +16,8 @@ import { ALL_MODULES as MODULES, GRADES, findLesson, searchModule } from '@/feat
 import { assignmentStatus, localDay, showDay } from '@/features/lessons/progressReport'
 import { dbtn, dghost, dcard, dlink } from './Helpers'
 import { useT, useLang, en, gradeText, type T } from './i18n'
+import { TrialTopicPicker, useFamilyTrial, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
+import { chooseFreeTopics } from '@/data/repositories/billing'
 
 export type SaveResult = 'ok' | 'not_ready' | 'error'
 
@@ -50,6 +52,7 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [adding, setAdding] = useState<{ id: string; day: string } | null>(null)
   const today = localDay(new Date())
+  const trial = useFamilyTrial()
 
   async function save(nextIds: string[] | null, nextDue: Record<string, string>, ok: string) {
     setMsg(null)
@@ -73,7 +76,9 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           <div><h2 style={h2}>{t('What {name} sees', { name })}</h2>{!canEdit && <p style={{ margin: '2px 0 0', color: 'var(--ink-soft)' }}>{describe(ids, name, t)}</p>}</div>
         </div>
-        {canEdit && <Chooser key={`${(ids ?? []).join()}#${draftKey}`} name={name} initial={ids} onClose={() => { setMsg(null); setDraftKey(k => k + 1) }}
+        {canEdit && trial && trial.state !== 'off' && <TrialChooser name={name} chosen={trial.state === 'chosen' ? trial.topics : null}
+          onSave={async next => { await save(next, {}, `${t('Saved.')} ${describe(next, name, t)}`) }} />}
+        {canEdit && trial?.state === 'off' && <Chooser key={`${(ids ?? []).join()}#${draftKey}`} name={name} initial={ids} onClose={() => { setMsg(null); setDraftKey(k => k + 1) }}
           onSave={async next => {
             const kept = Object.fromEntries(Object.entries(due).filter(([id]) => next?.includes(id)))
             if (await save(next, kept, `${t('Saved.')} ${describe(next, name, t)}`)) setDraftKey(k => k + 1)
@@ -142,6 +147,30 @@ export function LessonsTab({ name, ids, due, canEdit, isDone, onSave }: {
         </>}
       </section>
 
+    </div>
+  )
+}
+
+/** During the free trial: the family's two topics — chosen here once (then saved as this child's lessons), or shown. */
+function TrialChooser({ name, chosen, onSave }: { name: string; chosen: string[] | null; onSave: (ids: string[]) => Promise<void> }) {
+  const [picked, setPicked] = useState<string[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  if (chosen) return <TrialTopicPicker value={chosen} />
+  return (
+    <div>
+      <TrialTopicPicker value={picked} onChange={setPicked} />
+      {error && <p role="alert" style={{ margin: '10px 0 0', fontWeight: 800, color: '#B42318' }}>{error}</p>}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
+        <button type="button" style={dbtn} disabled={busy || picked.length < FREE_TOPICS} onClick={async () => {
+          if (!window.confirm(`Give ${name} these two free topics? They cannot be changed later.`)) return
+          setBusy(true); setError(null)
+          const out = await chooseFreeTopics(picked)
+          if (out.ok) await onSave(picked)
+          else setError(out.error ?? 'Something went wrong and nothing was saved. Try again.')
+          setBusy(false)
+        }}>{busy ? 'Saving…' : 'Save these two'}</button>
+      </div>
     </div>
   )
 }
