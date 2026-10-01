@@ -6,9 +6,10 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (1 October 2026, evening)
+## Where things stand (2 October 2026)
 
-- **Production** is on `d688aa17f` (#349), deployed. The repo `learn` is public (see the Vercel item below).
+- **Production** is on `19ef8a94c` (#329), deployed, `smoke:live` green. Since #349: the game (#352, migrations
+  applied), #355, #356 (KG–2: a tap is the answer). The repo `learn` is public (see the Vercel item below).
 - **Production accounts were wiped on 1 Oct** before the paid launch (only the founder's test accounts existed); the
   founder ran and checked it: `docs/legal/sql/launch-wipe-all-accounts.sql`,
   `launch-wipe-check.sql`. App data (chapters, catalogue, notices, `billing_config`, the lesson audio) was kept. The
@@ -30,11 +31,15 @@ fixed yet are tracked outside this public repo; ask the founder.
   `billing_config.enforced = true`. The whole trial → purchase → seats → add a seat → delete/refill flow, and the 3-D
   Secure path (card 4000 0027 6000 3184), were driven in a browser on a local stack with the Stripe sandbox, 1 Oct.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
-  KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
-  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
-  spends nothing until a game is attached); seven legal pages as beta versions; nightly backups green.
-- **Not on `main`:** `wip/game-in-play` (18 Sep snapshot: `blockcraft/` on `/play`, migration `20260919100000` not
-  applied, three test files); `classroom-parked` (first classroom build — never ship as is); local `learner-grade`
+  KG, Grade 1 and Grade 2 (23 voiced story chapters, own scenes and animals since #329); lesson audio from the
+  `lesson-audio` bucket; email-plus consent on notice-v7 with the database gate; parent and teacher dashboards
+  (teacher rosters paused); points that buy BlockCraft time on `/play` (#352); seven legal pages as beta versions;
+  nightly backups green.
+- **Audio bucket** (2 Oct, #329): 899 new Josh clips (tag `audio-src-josh-2026-10-02`) uploaded and read back; P5
+  read `17884 | 273065412`; S3 keys revoked.
+- **"Adaptive Learn review"** (18 points): Ops Feature backlog FEA-043–054 shipped, FEA-055–060 open; its mascot
+  voiceover left out (no mascot).
+- **Not on `main`:** `classroom-parked` (first classroom build — never ship as is); local `learner-grade`
   (its own "notice-v7" clashes with the shipped one). The pre-rewrite handoff is saved outside the repo (owner only).
 
 ## Open — Draft PRs waiting for the founder
@@ -46,12 +51,11 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder decides
 
-- `wip/game-in-play`: rebase onto `main` and ship it, or drop it; blockcraft multiplayer later (needs a server
-  decision; a children's app means no chat); try it on a real tablet.
+- BlockCraft: multiplayer later (needs a server decision; a children's app means no chat); try it on a real tablet.
 - `learner-grade`: rework on top of notice-v7, or drop.
 - Whether both repos stay public now that Vercel is on Pro (the original reason has gone), and where backups are kept.
 - A "not this month" list and one deciding metric (7-day activation); a paid pilot before new surfaces.
-- Hide the child page's Game time tab while `/play` says "coming soon"; bring back the install banner on `/modules`.
+- Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
 - Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
@@ -77,8 +81,9 @@ fixed yet are tracked outside this public repo; ask the founder.
    INR on the sandbox); customer emails for successful payments, refunds and failed payments **on**; Revenue recovery:
    retry within 7 days, then **mark unpaid** (Refund policy §7; today Stripe retries ~35 days then cancels); upcoming
    renewal events 30 days; Stripe Tax **threshold monitoring** on (no tax collected, #349).
-2. **`src/infra/stripe.ts` must accept a live key on Production** — a deliberate, reviewed change that is the
-   founder's: the agent's permissions refused it on 1 Oct. Until then a live key throws and checkout cannot charge.
+2. **`src/infra/stripe.ts` must accept a live key on Production** — built in Draft PR #351 (`sk_live_` only on
+   Vercel Production, `sk_test_` everywhere else; safe to merge before step 1). The founder reviews and merges it.
+   It also carries the `smoke:live` fix (expects `public/sw.js`'s version, not `v242`).
 3. **Vercel → Production env:** `STRIPE_SECRET_KEY` (live), `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`,
    `STRIPE_PRICE_ANNUAL`; never `NEXT_PUBLIC_STRIPE_TEST_CHECKOUT`. Redeploy. The agent can confirm the four exist
    without reading them.
@@ -93,7 +98,7 @@ fixed yet are tracked outside this public repo; ask the founder.
   the new one in `.env.local` and Vercel Preview.
 - GitHub → environment `staging` → `SEED_PASSWORD` is under 12 characters: the staging seed step refuses ("SEED_PASSWORD
   must be set, 12+ characters") on every staging run since 1 Oct.
-- Draft PR #343 (this morning's handoff) is superseded by this file: close it.
+- Close superseded handoff PRs #343, #330; delete the branch `wip/game-in-play` (shipped as #352).
 
 - **Before `learn` goes private again:** Vercel blocked production deploys while it was private (#313, #314, 28 Sep);
   on Pro it deploys only what a team member pushed, and `release` is pushed by GitHub Actions.
@@ -109,7 +114,8 @@ fixed yet are tracked outside this public repo; ask the founder.
   the Google consent screen says Radlic and who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Hard spend caps, not alerts: Vercel Spend Management "pause production deployment"; Supabase Spend Cap; Resend quota.
-- Local leftovers that can go: the audio copies and runner rehearsal folder, the local `part-*` branches.
+- Local leftovers that can go: the audio copies and runner rehearsal folder, the local `part-*` branches, the
+  untracked `scripts/kaggle/` notebooks (clips are on the audio tags).
 
 ## Open — live checks on production (the founder)
 
@@ -144,7 +150,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   specs. Point them at the KG–2 tabs.
 - No operator path closes an account for a parent who cannot use the app (`delete_my_account` needs their own recent
   sign-in): write one and rehearse it locally before the first such request.
-- `smoke-live.mjs` hard-codes the service-worker version; the ops digest reports the previous day's backup.
+- The ops digest reports the previous day's backup.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
 - `noChildDataInAudioUrl.test.ts` fails under load and passes alone (a timing assumption); the local vitest `int` hang.
