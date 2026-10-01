@@ -9,7 +9,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { getWallet, startGameTime, type Wallet } from '@/data/repositories/points'
+import { endGameTime, getWallet, startGameTime, type Wallet } from '@/data/repositories/points'
 import { loadGameSave, openGame } from '@/data/repositories/gameSave'
 import { INK, PAGE_BG, pill, shell, topBar } from '@/features/lessons/Pictures'
 import { bubble, idea, primary } from '@/features/lessons/Frame'
@@ -22,6 +22,7 @@ const NOT_STARTED: Record<string, string> = {
   not_enough_points: 'You need a few more points. Practice a topic to earn them!',
   failed: "The game couldn't start. Try again.",
   unreachable: "We couldn't load your game. Check the internet and try again.",
+  notStopped: "We couldn't stop the game. Check the internet and try again.",
 }
 
 const noSubscribe = () => () => {}
@@ -35,8 +36,22 @@ export default function PlayPage() {
   const [now, setNow] = useState(() => Date.now())
 
   const load = useCallback((id: string) => getWallet(id).then(setWallet), [])
-  // Back from the game: its save is on this device and newer than the account's, so this uploads it.
-  useEffect(() => { if (learnerId) { load(learnerId); void loadGameSave(learnerId) } }, [learnerId, load])
+  // Back from the game: its save is on this device and newer than the account's, so this uploads it. The game's
+  // "Stop and keep my minutes" lands here as ?stop=1: the time is stopped first, so the wallet shows what came back.
+  useEffect(() => {
+    if (!learnerId) return
+    void loadGameSave(learnerId)
+    if (new URLSearchParams(location.search).has('stop')) {
+      history.replaceState(null, '', '/play')
+      endGameTime(learnerId).then(() => load(learnerId))
+    } else load(learnerId)
+  }, [learnerId, load])
+
+  async function stop() {
+    if (!learnerId) return
+    if (!await endGameTime(learnerId)) setNote(NOT_STARTED.notStopped)
+    await load(learnerId)
+  }
 
   const until = wallet && wallet !== 'unavailable' && wallet.playing_until ? new Date(wallet.playing_until).getTime() : 0
   const playing = until > now
@@ -69,6 +84,7 @@ export default function PlayPage() {
     body = <>
       <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left</p>
       <button type="button" style={primary} onClick={() => play(until)}>Back to my game</button>
+      <button type="button" style={{ ...primary, background: '#fff' }} onClick={stop}>Stop and keep my minutes</button>
       {note && <p style={bubble}>{note}</p>}
     </>
   } else {
