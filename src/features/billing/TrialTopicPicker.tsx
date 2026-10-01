@@ -108,7 +108,7 @@ function Row({ id, title, value, locked, onTap }: { id: string; title: string; v
 export function PurchaseOffer({ onClose }: { onClose: () => void }) {
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="offer-title" onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(8,61,133,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 95 /* above the dashboard tour: .dash-spot 90, .dash-coach 91 */, background: 'rgba(8,61,133,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div onClick={e => e.stopPropagation()} style={{ background: 'var(--paper-soft)', borderRadius: 18, padding: 24, maxWidth: 420, width: '100%', boxSizing: 'border-box' }}>
         <h3 id="offer-title" style={{ margin: '0 0 8px', fontSize: 20, color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>Unlock every module</h3>
         <p style={{ margin: '0 0 18px', lineHeight: 1.5, color: 'var(--ink)' }}>
