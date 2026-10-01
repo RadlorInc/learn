@@ -41,6 +41,18 @@ alter table public.diagnostic_plans drop column if exists revised_chapter;
 -- All of it is new and empty at rollback time: three billing tables created empty and one config
 -- row. No child data is touched by either migration, which is the only reason this is a
 -- proportionate safety net while B12 is open.
+-- The free trial and seat filling (20261001120000, 20261001140000, 20261001150000) read the billing tables: they go first.
+-- ⚠️ The learners trigger especially — left behind, every new child would fail on the dropped subscription tables.
+drop trigger if exists fill_seats_on_learner_insert on public.learners;
+drop trigger if exists fill_seats_on_learner_delete on public.learners;
+drop function if exists public.fill_seats_after_learner_delete();
+drop function if exists public.fill_seats_after_learner_insert();
+drop function if exists public.fill_seats_after_seat_insert() cascade;
+drop function if exists public.fill_empty_seats(uuid);
+drop function if exists public.claim_topic(uuid, text);
+drop function if exists public.trial_topics(uuid);
+drop function if exists public.choose_free_topics(text[]);
+drop table if exists public.free_topics;
 drop function if exists public.entitle_revised_step(uuid, text);
 drop function if exists public.reassign_learner_seat(uuid, uuid);
 drop function if exists public.is_chapter_entitled(uuid, text);

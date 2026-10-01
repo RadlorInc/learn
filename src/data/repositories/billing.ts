@@ -94,6 +94,29 @@ export type CancelResult =
   | { ok: false; error: 'no_subscription' | 'billing_not_configured' | 'unauthenticated' | 'failed' }
 
 /** Asks /api/billing/cancel. Sends no subscription id: the server finds it from the token. */
+export type SeatPreview = { seats: number; cadence: 'monthly' | 'annual'; renewalCents: number; newRenewalCents: number }
+export type AddSeatResult =
+  | { ok: true; preview?: SeatPreview; seats?: number; payUrl?: string }
+  | { ok: false; error: 'no_subscription' | 'not_active' | 'at_most' | 'payment_failed' | 'billing_not_configured' | 'unauthenticated' | 'failed' }
+
+/** Asks /api/billing/seats: `confirm: false` = what one more seat costs (changes nothing); `true` = buy it — `seats`
+ *  when it was paid at once, `payUrl` when the bank wants the parent's approval first (Stripe's page). */
+export async function addSeat(confirm: boolean): Promise<AddSeatResult> {
+  const { data: { session } } = await db().auth.getSession()
+  if (!session) return { ok: false, error: 'unauthenticated' }
+  try {
+    const r = await fetch('/api/billing/seats', {
+      method: 'POST', headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm }),
+    })
+    const j = (await r.json().catch(() => null)) as { ok?: boolean; error?: string; preview?: SeatPreview; seats?: number; pay_url?: string } | null
+    if (r.ok && j?.ok) return { ok: true, preview: j.preview, seats: j.seats, payUrl: j.pay_url }
+    const known = ['no_subscription', 'not_active', 'at_most', 'payment_failed', 'billing_not_configured', 'unauthenticated'] as const
+    const e = known.find(k => k === j?.error)
+    return { ok: false, error: e ?? 'failed' }
+  } catch { return { ok: false, error: 'failed' } }
+}
+
 export async function cancelMySubscription(): Promise<CancelResult> {
   const { data: { session } } = await db().auth.getSession()
   if (!session) return { ok: false, error: 'unauthenticated' }

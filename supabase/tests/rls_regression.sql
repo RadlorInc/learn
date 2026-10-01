@@ -143,6 +143,14 @@ begin
   insert into public.subscription_seats (id, subscription_id, seat_index, learner_id, assigned_at)
     values (v_seat1, v_subid, 1, v_learner, now()),
            (v_seat2, v_subid, 2, null,      null);
+  -- S0 (20261001150000): an empty paid seat is filled at once with one of the family's unseated children. (Which one is
+  -- "oldest" cannot be asserted here: every child of this fixture is created in one transaction, with one now().)
+  select count(*) into v_cnt from public.subscription_seats st join public.learners l on l.id = st.learner_id
+   where st.id = v_seat2 and l.created_by = v_owner and l.id <> v_learner;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL S0: a paid seat was left empty while the family had an unseated child'; end if;
+  -- …and B13 below needs an EMPTY seat to move, so the fixture empties it again (as the database role).
+  update public.subscription_seats set learner_id = null, assigned_at = null where id = v_seat2;
 
   -- ── Impersonate the ATTACKER ──────────────────────────────────────────────
   set local role authenticated;
@@ -660,9 +668,13 @@ begin
 
     -- M3: a downgrade with a CHILD IN A SEAT takes the empty ones first. Seat 1 is occupied; 3 → 1
     -- must leave that child seated rather than evicting them while empty seats sit beside them.
-    select id into v_seat_learner from public.learners where created_by = v_owner limit 1;
-    update public.subscription_seats set learner_id = v_seat_learner, assigned_at = now()
-      where subscription_id = v_sub_m and seat_index = 1;
+    -- Since 20261001150000 the new seats were filled with the owner's children; seat 1 keeps its child, and seats 2 and
+    -- 3 are emptied again here (as the database role) so the downgrade has empty seats beside a seated one.
+    select learner_id into v_seat_learner from public.subscription_seats where subscription_id = v_sub_m and seat_index = 1;
+    v_asserts := v_asserts + 1;
+    if v_seat_learner is null then raise exception 'RLS FAIL M3a: new paid seats were not filled with the family''s children'; end if;
+    update public.subscription_seats set learner_id = null, assigned_at = null
+      where subscription_id = v_sub_m and seat_index in (2, 3);
     perform public.materialize_seats(v_sub_m, 1);
     select array_agg(seat_index order by seat_index) into v_idx
       from public.subscription_seats where subscription_id = v_sub_m;
