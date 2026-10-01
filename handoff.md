@@ -14,12 +14,16 @@ fixed yet are tracked outside this public repo; ask the founder.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
-  spends nothing until a game is attached); six legal pages as beta versions; nightly backups green.
-- **The game is on GitHub, not on `main`:** branch `wip/game-in-play` (a snapshot based on 18 September, not rebased
-  or re-tested on `main`) holds `blockcraft/` (a violence-free block-building game framed on `/play`), migration
-  `20260919100000_game_saves.sql` (not applied) and the test files `adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules`. The founder's main checkout is back on `main`; its other uncommitted leftovers are in a local
-  `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
+  spends nothing on production until the game PR below is merged); six legal pages as beta versions; nightly
+  backups green.
+- **The game (BlockCraft) is in a Draft PR from `game-on-play`**, tried on staging 1 Oct: points buy time on `/play`,
+  the game opens full page, creative only, saved to the child's account, stop early = the seconds played are charged.
+  On merge the code goes live first and its three migrations wait for the founder's `migrate-prod` approval; until
+  then saves stay on the device and "Stop and keep my minutes" says it could not stop (no points back), so approve it
+  promptly.
+  Branch `wip/game-in-play` is superseded, except its three test files `adaptiveEngine`, `adaptiveWiring`,
+  `lessonFlowAllModules` (never ported). The founder's main checkout is back on `main`; its other uncommitted
+  leftovers are in a local `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
   Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
@@ -35,12 +39,16 @@ so the repo's migration chain still builds a body one comment different from pro
 
 ## Open — the founder decides
 
-- `wip/game-in-play`: rebase onto `main` and ship it, or drop it; blockcraft multiplayer later (needs a server
-  decision; a children's app means no chat); try it on a real tablet.
+- The game: whether /help and `llms.txt` stop saying games are "coming soon" (`publicClaims.test.ts` gates game-time
+  claims; flip it in the same change); multiplayer later (needs a server decision; a children's app means no chat);
+  try it on a real tablet; the end time is in the game's URL, so a child who edits it plays past it (points already
+  paid; a `ponytail:` note in `blockcraft/src/main.js`).
+- GitHub `staging` environment: `SEED_PASSWORD` is missing or under 12 characters, so the staging workflow's seed
+  step fails on every push (migrations and the RLS suite still run).
 - `learner-grade`: rework on top of notice-v7, or drop.
 - Whether both repos stay public now that Vercel is on Pro (the original reason has gone), and where backups are kept.
 - A "not this month" list and one deciding metric (7-day activation); a paid pilot before new surfaces.
-- Hide the child page's Game time tab while `/play` says "coming soon"; bring back the install banner on `/modules`.
+- Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
 - Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
