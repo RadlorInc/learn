@@ -56,6 +56,7 @@ import { BILLING_LIVE } from '@/app/legal/registry'
 import { FreeTrialCard } from '@/features/billing/FreeTrialCard'
 import { TrialTopicPicker, useFamilyTrial, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
 import { chooseFreeTopics } from '@/data/repositories/billing'
+import { usePaidSeats, SeatsFullDialog } from '@/features/billing/SeatsFull'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -99,6 +100,9 @@ function Dashboard() {
   // ?add=1 opens the add-a-child flow — where B2 ("permission recorded") sends the parent, so the consent they just
   // gave is used straight away instead of waiting behind a second press of "Add a child".
   const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
+  // A paying family with every seat taken gets "you have used all N seats" instead of the add sheet (features/billing/SeatsFull).
+  const paidSeats = usePaidSeats()
+  const [seatsFull, setSeatsFull] = useState(false)
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
   const [acceptingId,  setAcceptingId]  = useState<string | null>(null)
   const [inviteMsg,    setInviteMsg]    = useState<string | null>(null)
@@ -633,7 +637,7 @@ function Dashboard() {
                 lastPlayed={lastAt[d.learner.id] ? new Date(lastAt[d.learner.id]!).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
                 next={next?.title ?? null} done={done} total={lessons.length} onStart={() => launchGame(d)} />
             })}
-            <button type="button" data-tour="add-child" onClick={() => setShowAddModal(true)}
+            <button type="button" data-tour="add-child" onClick={() => paidSeats !== null && learners.filter(d => d.accessRole === 'owner').length >= paidSeats ? setSeatsFull(true) : setShowAddModal(true)}
               style={{ border:`2px dashed ${P.edge}`, background:'transparent', borderRadius:16, minHeight:180, fontWeight:900, fontSize:15, color:P.ink2, cursor:'pointer' }}>{t('+ Add a child')}</button>
           </div>
         </div>
@@ -718,6 +722,7 @@ function Dashboard() {
 
       {/* Add learner modal */}
       {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
+      {seatsFull && paidSeats !== null && <SeatsFullDialog seats={paidSeats} onClose={() => setSeatsFull(false)} />}
       {showAddModal && (
         <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
           <>
