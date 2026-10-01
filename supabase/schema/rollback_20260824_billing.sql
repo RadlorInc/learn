@@ -44,6 +44,8 @@ alter table public.diagnostic_plans drop column if exists revised_chapter;
 -- The free trial and seat filling (20261001120000, 20261001140000, 20261001150000) read the billing tables: they go first.
 -- ⚠️ The learners trigger especially — left behind, every new child would fail on the dropped subscription tables.
 drop trigger if exists fill_seats_on_learner_insert on public.learners;
+drop trigger if exists fill_seats_on_learner_delete on public.learners;
+drop function if exists public.fill_seats_after_learner_delete();
 drop function if exists public.fill_seats_after_learner_insert();
 drop function if exists public.fill_seats_after_seat_insert() cascade;
 drop function if exists public.fill_empty_seats(uuid);

@@ -134,4 +134,15 @@ describe('a purchase seats the family\'s children (20261001150000)', () => {
       values ('Late', 0, '6-8', '${OWNER}', '${consent}', '${FIXTURE_NOTICE}') returning id`)).rows[0].id
     expect((await db.query(`select 1 from public.subscription_seats where learner_id = '${late}' and seat_index = 4`)).rows.length).toBe(1)
   })
+  it('deleting a seated child gives the freed seat to an unseated sibling (20261001160000)', async () => {
+    const consent = (await db.query<{ c: string }>(`select consent_id as c from public.learners where id = '${kid1}'`)).rows[0].c
+    const waiting = (await db.query<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
+      values ('Waiting', 0, '6-8', '${OWNER}', '${consent}', '${FIXTURE_NOTICE}') returning id`)).rows[0].id
+    expect(await trial(OWNER, waiting)).not.toEqual({ v: null })                  // every seat is taken: on the trial
+    const seatOf = async (id: string) => (await db.query<{ i: number }>(`select seat_index as i from public.subscription_seats where learner_id = '${id}'`)).rows[0]?.i
+    const freed = await seatOf(kid2)
+    await db.exec(`delete from public.learners where id = '${kid2}'`)
+    expect(await seatOf(waiting)).toBe(freed)
+    expect(await trial(OWNER, waiting)).toEqual({ v: null })
+  })
 })
