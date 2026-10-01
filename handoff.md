@@ -51,7 +51,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder decides
 
-- BlockCraft: multiplayer later (needs a server decision; a children's app means no chat); try it on a real tablet.
+- BlockCraft: multiplayer later (needs a server decision; no chat in a children's app); try it on a tablet;
+  editing the game URL's end time plays past it (paid anyway).
 - `learner-grade`: rework on top of notice-v7, or drop.
 - Whether both repos stay public now that Vercel is on Pro (the original reason has gone), and where backups are kept.
 - A "not this month" list and one deciding metric (7-day activation); a paid pilot before new surfaces.
@@ -96,9 +97,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 - Roll the **Stripe sandbox** secret key (it was printed in an agent's tool output on 1 Oct; test mode only), then put
   the new one in `.env.local` and Vercel Preview.
-- GitHub → environment `staging` → `SEED_PASSWORD` is under 12 characters: the staging seed step refuses ("SEED_PASSWORD
-  must be set, 12+ characters") on every staging run since 1 Oct.
-- Close superseded handoff PRs #343, #330; delete the branch `wip/game-in-play` (shipped as #352).
+- Close superseded handoff PRs #343, #330; delete the merged branches `wip/game-in-play`,
+  `game-on-play`, `games-not-coming-soon`, `no-ready-button`.
 
 - **Before `learn` goes private again:** Vercel blocked production deploys while it was private (#313, #314, 28 Sep);
   on Pro it deploys only what a team member pushed, and `release` is pushed by GitHub Actions.
@@ -114,8 +114,8 @@ fixed yet are tracked outside this public repo; ask the founder.
   the Google consent screen says Radlic and who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Hard spend caps, not alerts: Vercel Spend Management "pause production deployment"; Supabase Spend Cap; Resend quota.
-- Local leftovers that can go: the audio copies and runner rehearsal folder, the local `part-*` branches, the
-  untracked `scripts/kaggle/` notebooks (clips are on the audio tags).
+- Local leftovers that can go: the `w-blockcraft` worktree, the audio copies and runner rehearsal folder, the local
+  `part-*` branches, the untracked `scripts/kaggle/` notebooks (clips are on the audio tags).
 
 ## Open — live checks on production (the founder)
 
@@ -125,7 +125,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Short sessions, 14 rows (re-check 4b on the same child) — `fbf193280:docs/legal/SHORT-SESSIONS-ROUND2.md` §3.
 - Review 1, 14 rows, including the Apple Pencil on a real iPad — `fbf193280:docs/legal/REVIEW1-ROUND2.md` §4.
 - Audio on an iPhone (Josh, replay, airplane fallback, clips from the bucket) — `fbf193280:docs/legal/AUDIO-ROUND2.md` §3.
-- Play one KG–2 chapter signed in and read its `c:` row back.
+- Play one KG–2 chapter signed in and read its `c:` row back; no Ready button (#356, tried locally).
+- BlockCraft as a child: buy, build, stop early (points back), reopen the same world; also on a 2nd device.
 - Use the new dashboard signed in: the Help walkthroughs, a class CSV upload → temporary password → first-login
   change, the parent PIN's "Forgot PIN" and its lock after 5 wrong tries.
 - Crash forwarding: send a test error to `/api/report-error`, then read it back in `error_events`.
