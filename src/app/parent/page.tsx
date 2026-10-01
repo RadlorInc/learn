@@ -628,6 +628,8 @@ function Dashboard() {
       {learners.length === 0 ? <EmptyDashboard onAdd={() => setShowAddModal(true)} /> : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {upNext}
+          {/* The family's free trial and the way to purchase, on the home the parent lands on (also under Account). */}
+          <FreeTrialCard />
           <div className="card-grid">
             {learners.map(d => {
               const lessons = chosenModules(d.learner.lesson_ids).flatMap(m => m.lessons)
