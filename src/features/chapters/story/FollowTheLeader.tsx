@@ -46,7 +46,7 @@ import {
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar from './ReadyBar'
+import SubmitOnPick from './SubmitOnPick'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to the voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
@@ -449,9 +449,9 @@ export const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct
   }, [])
 
   /**
-   * A tap only CHOOSES which little one goes next; nobody walks until Ready.
+   * A tap only CHOOSES which little one goes next; nobody walks until it is submitted (at once: SubmitOnPick).
    *
-   * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so Ready happens ONCE PER PLACE IN THE LINE rather than once
+   * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so a submit happens ONCE PER PLACE IN THE LINE rather than once
    * per round — the child chooses who is next, sends them, then chooses again. That keeps the
    * per-step feedback the chapter teaches with (a wrong pick wiggles and the voice says which to look
    * for) instead of holding a whole ordering back to be graded at the end, which would be a
@@ -551,7 +551,7 @@ export const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct
           </React.Fragment>
         )
       })}
-      <ReadyBar show={pending !== null} onCommit={commit} label="Send ▶" />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }

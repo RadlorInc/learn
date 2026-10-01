@@ -45,7 +45,7 @@ import { shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()`: a wrong tap speaks a line and
@@ -366,7 +366,7 @@ export const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; t
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** A tap only CHOOSES; the bead stays in the tray until Ready. The thread animation needs the
+  /** A tap only CHOOSES; the bead stays in the tray until it is submitted (at once: SubmitOnPick). The thread animation needs the
    *  element it leaves from, so the chosen button is held alongside the index. */
   function pick(i: number, el: HTMLElement) {
     if (done.current) return
@@ -405,7 +405,7 @@ export const BeadsPlay: React.FC<{ data: PatternRound; make: Make; mode: Mode; t
     {/* ⚠️ BESIDE THE TRAY, NOT UNDER IT. Measured at 640×320 the tray of beads runs to y 294 on a
         320-tall frame, so the centred bar at 263–310 was drawn straight across the MIDDLE bead —
         one of the three answers. There is no room below the tray; the room is to the right. */}
-    <ReadyBar show={pending !== null} onCommit={commit} align="right" />
+    <SubmitOnPick show={pending !== null} onCommit={commit} />
   </>
 }
 

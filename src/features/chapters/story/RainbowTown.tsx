@@ -52,7 +52,7 @@ import { shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar from './ReadyBar'
+import SubmitOnPick from './SubmitOnPick'
 
 /**
  * The only thing a tap waits for. Deliberately NOT `useIsSpeaking()` — a wrong tap speaks a line and
@@ -271,7 +271,7 @@ const strayLine = (step: Target) => `Now, where is the ${step.noun}? Look for th
 /** The lesson's wrong pot — refused before it touches the page, pointing at the pot that is jumping. */
 const wrongPotLine = (brush: ColorName, step: Target) =>
   `That one is ${COLORS[brush].label}. We want ${COLORS[step.color].label} — the paint that is jumping!`
-/** The test's wrong paint, judged on Ready. */
+/** The test's wrong paint, judged on submit. */
 const wrongPaintLine = (brush: ColorName, step: Target) => `That's ${COLORS[brush].label} paint. We need ${COLORS[step.color].label}!`
 const namedLine = (step: Target) => {
   const c = COLORS[step.color].label
@@ -294,7 +294,7 @@ function explainLines(page: Page, seq: number): string[] {
 /**
  * Every line a toy-room round can say once it has loaded — all of it from the orchestrator's tap handlers, since the
  * round's Play renders nothing: no paint on the brush, a tap on any OTHER named part of the page (the glow says which is
- * wanted, but a finger can land on any of them), wandering off the question, and Ready with each wrong paint on the tray.
+ * wanted, but a finger can land on any of them), wandering off the question, and each wrong paint on the tray.
  */
 function testLines(page: Page, d: ColorRound): string[] {
   const step = page.targets[d.seq]
@@ -452,7 +452,7 @@ export default function RainbowTown({ onFinish, onExit }: {
    * chapters do and is right here: this is a colouring page, and a tap that refuses to colour
    * anything is a tap that appears to do nothing. So in the TEST the child's choice lands, they can
    * see it, they can pick up another pot and paint straight over it as often as they like, and
-   * nothing is graded until Ready.
+   * nothing is graded until it is submitted (at once: SubmitOnPick).
    * ⚠️ THE LESSON IS DELIBERATELY UNCHANGED — there the wrong pot is still refused before it touches
    * the page and the voice points at the one that is jumping, because that half of the chapter is
    * teaching the word rather than measuring it.
@@ -613,7 +613,7 @@ export default function RainbowTown({ onFinish, onExit }: {
     // In the LESSON it is not wrong either — the right pot is bouncing, so a wrong one is a child
     // who has not yet joined the word to the swatch, which is the entire thing being taught. Say the
     // name of what they picked, say the name we want, and point again. Nothing is recorded.
-    // TEST: whatever is on the brush goes on, and waits. Judged on Ready, in `commitPaint`.
+    // TEST: whatever is on the brush goes on, and waits. Judged on submit, in `commitPaint`.
     if (phaseRef.current === 'test') {
       fill(area, COLORS[brush].hex)
       setPendingPaint(brush)
@@ -645,7 +645,7 @@ export default function RainbowTown({ onFinish, onExit }: {
   }, [fill, clearHint, nudge, learnerId])
 
   /**
-   * Ready. Only now is the colour on the glowing part judged — and a wrong one is still retried in
+   * Submitted (at once: SubmitOnPick). Only now is the colour on the glowing part judged — and a wrong one is still retried in
    * place, exactly as a wrong pot used to be: the voice names what they used and what is wanted, and the
    * child paints over it. The ring, the fill and the bar say nothing about which paint is right.
    */
@@ -770,7 +770,7 @@ export default function RainbowTown({ onFinish, onExit }: {
           centred bar (253–387 × 263–310) was drawn straight across them, i.e. across the paints
           that ARE the answer. Third collision of this kind in this session, and the only reason it
           was found is that the frame was looked at rather than the code. */}
-      <ReadyBar show={phase === 'test' && pendingPaint !== null} onCommit={commitPaint} label="Done ✓" align="right" />
+      <SubmitOnPick show={phase === 'test' && pendingPaint !== null} onCommit={commitPaint} />
 
       {phase === 'teach' && target && Banner(`${stepIdx + 1} of ${TEACH_STEPS} · This is ${COLORS[target.color].label.toUpperCase()}`)}
       {phase === 'teach' && target && <TeachQuestion key={stepIdx} lines={() => teachLines(stepIdx, pots)} />}
