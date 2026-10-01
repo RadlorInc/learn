@@ -79,7 +79,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `GET /api/admin/metrics` | admin (own token forwarded) | One `admin_*` aggregate RPC; non-admins get 404; small buckets suppressed (`ADMIN_MIN_COHORT`) |
 | `POST /api/report-error` | anyone; capped | Crash reports: log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
-| `/api/checkout`, `/api/billing/cancel`, `/api/stripe/webhook` | parent, parent, Stripe | §8 |
+| `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
 
 ### Layers (`src`)
@@ -313,6 +313,8 @@ Built and switched off; nothing has been charged.
   fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
   `RESEND_API_KEY` is logged and the event still closes.
 - **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
+- **`/api/billing/seats`:** one more seat on the caller's own active plan (max 4): a preview of the renewal total, then
+  Stripe invoices the prorated difference now; the row and seats are written at once. Shown when every seat is in use.
 - **Free trial and entitlement** (20261001120000, reshaped by 20261001140000): the PARENT picks the family's two free
   topics once on `/parent` (`FreeTrialCard` → `choose_free_topics`): two topics of one Grade 3–8 module, or two KG–2
   stories; final. The child's home (`ModuleHome`, via `trial_topics`) shows only those two — no lock, trial or price on

@@ -101,7 +101,7 @@ function Dashboard() {
   // gave is used straight away instead of waiting behind a second press of "Add a child".
   const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
   // A paying family with every seat taken gets "you have used all N seats" instead of the add sheet (features/billing/SeatsFull).
-  const paidSeats = usePaidSeats()
+  const [paidSeats, setPaidSeats] = usePaidSeats()
   const [seatsFull, setSeatsFull] = useState(false)
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
   const [acceptingId,  setAcceptingId]  = useState<string | null>(null)
@@ -722,7 +722,8 @@ function Dashboard() {
 
       {/* Add learner modal */}
       {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
-      {seatsFull && paidSeats !== null && <SeatsFullDialog seats={paidSeats} onClose={() => setSeatsFull(false)} />}
+      {seatsFull && paidSeats !== null && <SeatsFullDialog seats={paidSeats} onClose={() => setSeatsFull(false)}
+        onAdded={n => { setPaidSeats(n); setSeatsFull(false); setShowAddModal(true) }} />}
       {showAddModal && (
         <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
           <>
