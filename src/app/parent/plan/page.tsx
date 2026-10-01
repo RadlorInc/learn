@@ -38,8 +38,13 @@ const SEATS = Array.from({ length: MAX_SEATS }, (_, i) => i + 1)
 
 // The private beta is free (founder, 2026-09-24). A parent who arrives here from an old link or a bookmark is told so,
 // and sees no prices, no checkout and no link to the refund policy (which is not published while billing is off).
+// ⚠️ STAGING ONLY: `NEXT_PUBLIC_STRIPE_TEST_CHECKOUT=on` (set on the `staging` preview, never production) shows the
+// checkout while billing is off, so the free trial's Purchase can be tried end to end with Stripe's TEST card. It cannot
+// take money: src/infra/stripe.ts refuses any key that is not `sk_test_`, and the page says TEST MODE.
+const TEST_CHECKOUT = process.env.NEXT_PUBLIC_STRIPE_TEST_CHECKOUT === 'on'
+
 export default function PlanPage() {
-  return <RoleGate role="parent">{BILLING_LIVE ? <PlanCheckout /> : <BetaFree />}</RoleGate>
+  return <RoleGate role="parent">{BILLING_LIVE || TEST_CHECKOUT ? <PlanCheckout test={!BILLING_LIVE} /> : <BetaFree />}</RoleGate>
 }
 
 function BetaFree() {
@@ -55,7 +60,7 @@ function BetaFree() {
 }
 
 /** The checkout screen. Unreachable while the beta is free, and still held to its legal links (legalSurface, legalLinksOnCollection). */
-export function PlanCheckout() {
+export function PlanCheckout({ test = false }: { test?: boolean }) {
   const [cadence, setCadence] = useState<Cadence>('monthly')
   const [seats, setSeats] = useState(1)
   const [busy, setBusy] = useState(false)
@@ -93,6 +98,8 @@ export function PlanCheckout() {
     <main style={{ minHeight: '100dvh', background: P.page, fontFamily: 'var(--font-body)' }}>
       <div className="adult-doc">
         <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: P.ink2, textDecoration: 'none' }}>← Back</Link>
+        {test && <p role="note" style={{ margin: '12px 0 0', padding: '10px 12px', borderRadius: 12, background: '#FFF4D6', color: '#7A4B00', fontWeight: 800, fontSize: 14 }}>
+          TEST MODE: no real money. Pay with Stripe&apos;s test card 4242 4242 4242 4242, any future date, any CVC.</p>}
         <h1 style={{ fontSize: 26, margin: '12px 0 6px', color: P.ink, fontFamily: 'var(--font-display)', fontWeight: 900 }}>Radlic for your family</h1>
         <p style={{ fontSize: 14, lineHeight: 1.55, color: P.ink2, margin: '0 0 20px' }}>
           {/* ⚠️ THIS PARAGRAPH ONCE SOLD A FEATURE THAT NO LONGER EXISTS. It read "The check that
