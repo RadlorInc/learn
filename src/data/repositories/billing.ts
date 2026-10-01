@@ -2,12 +2,9 @@
 /**
  * Billing reads. The data layer is the only place that talks to Supabase.
  *
- * ⚠️⚠️ THERE IS EXACTLY ONE DEFINITION OF "MAY THIS BE RECORDED", AND IT IS IN THE DATABASE.
- * `is_chapter_entitled` is already called from three places — the `sessions` INSERT policy, the
- * `learner_progress` WITH CHECK and inside `sync_session` — precisely so that two guards cannot
- * diverge. A TypeScript copy of the same rules would be a FOURTH guard, and it would disagree
- * silently in the worst direction: letting a child into a chapter the database will then refuse to
- * save, which is a run of work thrown away with nothing on screen saying why.
+ * ⚠️⚠️ THERE IS EXACTLY ONE DEFINITION OF "MAY THIS CHILD OPEN THIS", AND IT IS IN THE DATABASE
+ * (`claim_topic`, which also counts the family's two free topics). A TypeScript copy of the rules would disagree
+ * silently — and the count of two must be taken in one place, under one lock, or two siblings both get "the last" slot.
  *
  * So this asks. It does not decide.
  */
@@ -23,12 +20,15 @@ import { db } from '@/data/repositories/_shared'
  * anyway. `billing_config` fails open for the same reason and the camera guard fails closed for the
  * opposite one — different failure costs, different defaults.
  */
-export async function isChapterEntitled(learnerId: string, chapter: string): Promise<boolean | null> {
+
+/**
+ * The free trial's entry question (20261001120000 `claim_topic`): may this child open this topic — a lesson id, a
+ * `c:<chapter>` or a module id (its mixed practice)? The database records it as one of the family's two free topics
+ * when a slot is left. Same answer shape as above: `null` = could not find out (→ the gate lets them in).
+ */
+export async function claimTopic(learnerId: string, topic: string): Promise<boolean | null> {
   try {
-    const { data, error } = await db().rpc('is_chapter_entitled', {
-      p_learner_id: learnerId,
-      p_chapter: chapter,
-    })
+    const { data, error } = await db().rpc('claim_topic' as never, { p_learner_id: learnerId, p_topic: topic } as never)
     if (error) return null
     return typeof data === 'boolean' ? data : null
   } catch {
@@ -36,15 +36,17 @@ export async function isChapterEntitled(learnerId: string, chapter: string): Pro
   }
 }
 
-/** The same question for a handful of chapters at once — the parent dashboard's scoped list, which
- *  is about a dozen. Still one definition, asked N times; deriving the set locally is the thing
- *  §1 of fbf193280:docs/billing-stage-3.md forbids. */
-export async function entitledChapters(
-  learnerId: string, chapters: string[],
-): Promise<Record<string, boolean | null>> {
-  const verdicts = await Promise.all(chapters.map(c => isChapterEntitled(learnerId, c)))
-  return Object.fromEntries(chapters.map((c, i) => [c, verdicts[i]]))
+/** The family's free topics so far (owner reads own rows), or `null` when we could not find out. */
+export async function myFreeTopics(): Promise<string[] | null> {
+  try {
+    const { data, error } = await db().from('free_topics' as never).select('topic')
+    if (error || !Array.isArray(data)) return null
+    return (data as { topic: string }[]).map(r => r.topic)
+  } catch {
+    return null
+  }
 }
+
 
 export interface MySubscription {
   status: string

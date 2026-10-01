@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client'
 import { readdirSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { gateVerdict, lockCopy } from '@/features/billing/chapterGate'
-import { PAYWALL_ENABLED } from '@/features/billing/useChapterGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 import { CHAPTERS } from '@/core/chapters'
 
@@ -161,12 +160,12 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
       .toMatch(/^\s*if \(playingChapter && gate === 'locked'\) \{$/m)
   })
 
-  it('the verdict is taken ONCE — the hook keys on the chapter, not on a render', () => {
-    const hook = decomment(read('src/features/billing/useChapterGate.ts'))
+  it('the verdict is taken ONCE — the hook keys on the topic, not on a render', () => {
+    const hook = decomment(read('src/features/billing/useTopicGate.ts'))
     // ⚠️ The dependency array is what makes "never mid-chapter" structural rather than a promise:
     // nothing re-asks while a chapter is open, so there is no answer that could change under a
     // child mid-question.
-    expect(hook).toMatch(/\}, \[chapterId, learnerId\]\)/)
+    expect(hook).toMatch(/\}, \[topic, learnerId\]\)/)
   })
 
   it('⚠️ THE DIAGNOSTIC IS NEVER GATED — counted, not eyeballed', () => {
@@ -174,12 +173,13 @@ describe('⚠️ the gate is at chapter entry, and nowhere else', () => {
     // diagnostic "does not import it" passes just as happily when a third route starts to.
     // The parent dashboard left this list on 2026-09-17: the founder removed the old chapter history from it (and
     // with it the per-chapter lock), and the new lessons have no paywall.
-    const callers = ['src/app/game/page.tsx']
+    // The free trial (2026-10-01) gates a lesson and a module's mixed practice too: any two topics, then pay.
+    const callers = ['src/app/game/page.tsx', 'src/app/lesson/page.tsx', 'src/app/practice/page.tsx']
     const all = [
       'src/app/game/page.tsx', 'src/app/parent/page.tsx',
-      'src/app/modules/page.tsx',
+      'src/app/modules/page.tsx', 'src/app/lesson/page.tsx', 'src/app/practice/page.tsx',
     ]
-    const uses = all.filter(f => /useChapterGate|entitledChapters|isChapterEntitled/.test(decomment(read(f))))
+    const uses = all.filter(f => /useTopicGate|entitledChapters|isChapterEntitled|claimTopic/.test(decomment(read(f))))
     expect(uses.sort(), 'a route started gating that should not, or one stopped').toEqual(callers.sort())
   })
 })
@@ -233,11 +233,15 @@ describe('⚠️ the hook, DRIVEN — a verdict nothing reads is not a gate', ()
    */
   async function driveHook(entitled: boolean | null, learner: { id: string } | null) {
     vi.resetModules()
-    vi.doMock('@/data/repositories', () => ({ isChapterEntitled: vi.fn(async () => entitled) }))
+    vi.doMock('@/data/repositories', () => ({ claimTopic: vi.fn(async () => entitled) }))
     vi.doMock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => learner }))
-    const { useChapterGate } = await import('@/features/billing/useChapterGate')
+    // The deployment switch, ON for this drive: read at import, so set before the fresh import above.
+    vi.stubEnv('NEXT_PUBLIC_PAYWALL', 'on')
+    const { useTopicGate, PAYWALL_ENABLED } = await import('@/features/billing/useTopicGate')
+    vi.unstubAllEnvs()
+    expect(PAYWALL_ENABLED, 'the drive is not running with the paywall on').toBe(true)
     const seen: string[] = []
-    function Probe() { seen.push(useChapterGate('money')); return null }
+    function Probe() { seen.push(useTopicGate('c:money')); return null }
     const el = document.createElement('div')
     document.body.appendChild(el)
     const root = createRoot(el)
@@ -247,10 +251,7 @@ describe('⚠️ the hook, DRIVEN — a verdict nothing reads is not a gate', ()
     return seen
   }
 
-  // ⚠️ PAYWALL OFF (2026-09-08): the hook short-circuits to 'allowed', so the locked WIRING cannot
-  // be exercised now. Kept, not deleted — it runs again the day PAYWALL_ENABLED flips back on and
-  // guards that the hook still refuses. The pure locked path stays covered above via gateVerdict(false).
-  it.skipIf(!PAYWALL_ENABLED)('a refused chapter goes checking → locked, and never shows allowed on the way', async () => {
+  it('a refused chapter goes checking → locked, and never shows allowed on the way', async () => {
     const seen = await driveHook(false, { id: 'L1' })
     expect(seen[0], 'the first paint must render nothing, not the chapter').toBe('checking')
     expect(seen[seen.length - 1]).toBe('locked')
@@ -287,16 +288,16 @@ describe('⚠️ the repository asks the function the database actually has', ()
     let signature: string | null = null
     for (const f of files) {
       const m = [...readFileSync(join(MIG, f), 'utf8')
-        .matchAll(/create\s+(?:or\s+replace\s+)?function\s+public\.is_chapter_entitled\s*\(([^)]*)\)/gi)]
+        .matchAll(/create\s+(?:or\s+replace\s+)?function\s+public\.claim_topic\s*\(([^)]*)\)/gi)]
       if (m.length) signature = m[m.length - 1][1]      // the LAST definition wins, as in Postgres
     }
-    expect(signature, 'no definition of is_chapter_entitled found — the regex has rotted').toBeTruthy()
+    expect(signature, 'no definition of claim_topic found — the regex has rotted').toBeTruthy()
 
     const params = signature!.split(',').map(p => p.trim().split(/\s+/)[0])
-    expect(params, 'the function signature changed').toEqual(['p_learner_id', 'p_chapter'])
+    expect(params, 'the function signature changed').toEqual(['p_learner_id', 'p_topic'])
 
     const repo = decomment(read('src/data/repositories/billing.ts'))
-    expect(repo).toContain("rpc('is_chapter_entitled'")
+    expect(repo).toContain("rpc('claim_topic'")
     for (const p of params) expect(repo, `the repository does not pass ${p}`).toContain(`${p}:`)
   })
 })
@@ -312,8 +313,8 @@ describe('⚠️ the repository fails OPEN — the direction that silently locks
   async function ask(rpc: () => Promise<unknown>) {
     vi.resetModules()
     vi.doMock('@/data/supabase/client', () => ({ createClient: () => ({ rpc }) }))
-    const { isChapterEntitled } = await import('@/data/repositories/billing')
-    return isChapterEntitled('L1', 'money')
+    const { claimTopic } = await import('@/data/repositories/billing')
+    return claimTopic('L1', 'c:money')
   }
 
   it('passes a true through', async () => {
@@ -338,9 +339,9 @@ describe('⚠️ the repository fails OPEN — the direction that silently locks
     expect(await ask(async () => ({ data: null, error: null }))).toBeNull()
   })
 
-  it('asks with the learner and chapter it was given', async () => {
+  it('asks with the learner and topic it was given', async () => {
     let seen: unknown = null
     await ask(async (...args: unknown[]) => { seen = args; return { data: true, error: null } })
-    expect(seen).toEqual(['is_chapter_entitled', { p_learner_id: 'L1', p_chapter: 'money' }])
+    expect(seen).toEqual(['claim_topic', { p_learner_id: 'L1', p_topic: 'c:money' }])
   })
 })

@@ -14,6 +14,8 @@ import { loadStanding } from '@/infra/storage/lessonStanding'
 import { loadRun } from '@/infra/storage/lessonRun'
 import { nudgeShownToday } from '@/infra/storage/nudgeSeen'
 import { nudgeFor } from '@/features/lessons/nudge'
+import { useTopicGate } from '@/features/billing/useTopicGate'
+import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 
 const noSubscribe = () => () => {}
 
@@ -41,6 +43,9 @@ function Lesson() {
   const pathModule = chosen.find(x => x.id === moduleId && x.lessons.length > 0) ?? chosen.find(x => x.lessons.length > 0)
   const want = story ? undefined : lessonModule ?? pathModule?.id
   const whole = useModule(mounted ? want : undefined)
+  // The free trial: opening a topic asks the database once (and claims it as one of the family's two free topics).
+  // The topic path and the summary are not gated — a child can always see what is there.
+  const gate = useTopicGate(mounted && !story && lessonModule ? id : null)
   if (!mounted) return null
   if (story) return <GoTo href={`/game?c=${story}`} />
   if (!want) return <GoTo href="/modules" />
@@ -55,6 +60,11 @@ function Lesson() {
     }
     return <LessonList module={path} learnerId={learnerId} due={learner?.lesson_due} back={{ href: `/modules?grade=${path.grade}`, label: '← Modules' }} />
   }
+
+  if (gate === 'checking') return null
+  if (gate === 'locked') return (
+    <LockedChapterCard copy={{ emoji: '📘', title: lesson.title, what: lesson.bigIdea }} onBack={() => router.push(`/lesson?module=${whole.id}`)} />
+  )
 
   return (
     <LessonPlayer

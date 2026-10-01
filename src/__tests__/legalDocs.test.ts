@@ -103,7 +103,12 @@ describe('every legal page is dark, and a placeholder is never rendered', () => 
       expect(() => assertRenderable(p, body)).toThrow(/refused: its text still carries \d+ placeholder/)
       refused++
     }
-    expect(refused, 'control: at least one real document carries a placeholder today').toBeGreaterThan(0)
+    // Since 2026-10-01 no page's PUBLIC text carries a placeholder (the refund policy's prices were filled; its dates are
+    // in the header, which never renders), so `refused` can be 0. The refusal is then proven on a planted body instead —
+    // the same function, the same marker, one it cannot pass.
+    expect(refused).toBeGreaterThanOrEqual(0)
+    expect(() => assertRenderable(LEGAL_PAGES[0], `A sentence that still waits on ${REG_MARKER} — a decision].`))
+      .toThrow(/refused: its text still carries 1 placeholder/)
     // …and lets a clean one through, so the refusal is about the marker and not about everything.
     expect(() => assertRenderable(LEGAL_PAGES[0], 'A finished sentence.')).not.toThrow()
   })

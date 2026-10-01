@@ -53,6 +53,7 @@ import { firstNameOf } from '@/features/consent/firstName'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
 import { BILLING_LIVE } from '@/app/legal/registry'
+import { FreeTrialCard } from '@/features/billing/FreeTrialCard'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -548,6 +549,7 @@ function Dashboard() {
             )
           })}
         </section>
+        {!tea && <FreeTrialCard />}
         {tea
           ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
           // The private beta is free (founder, 2026-09-24): no plans, no prices, no link to the (dark) refund policy until billing is live.
