@@ -463,7 +463,7 @@ describe('the Stripe webhook sends the acknowledgement and the annual renewal re
     expect(body.subject).toBe('Your Radlic subscription — confirmation and how to cancel')
     expect(body.text).toContain('Plan: Radlic Family, for 2 children.')
     expect(body.text).toContain('Charged today: $12.98.')
-    expect(body.text).toContain('Renews: automatically, every month, next on February 1, 2026. Renewal amount: $12.98, plus any sales tax.')
+    expect(body.text).toContain('Renews: automatically, every month, next on February 1, 2026. Renewal amount: $12.98 (we do not charge sales tax).')
     expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, or email support@radlor.com')
     expect(body.text).toContain('https://radlic.com/legal/refunds')
     expect(body.text).not.toContain('permission')   // consent is the email-plus flow, not checkout
@@ -475,7 +475,7 @@ describe('the Stripe webhook sends the acknowledgement and the annual renewal re
     const calls = stubNetwork({ sub: ANNUAL() })
     await deliver('checkout.session.completed', { ...CHECKOUT, amount_total: 12399 })
     const body = JSON.parse(sent(calls)[0].body)
-    expect(body.text).toContain('Renews: automatically, every 12 months, next on February 1, 2026. Renewal amount: $123.99, plus any sales tax.')
+    expect(body.text).toContain('Renews: automatically, every 12 months, next on February 1, 2026. Renewal amount: $123.99 (we do not charge sales tax).')
   })
 
   it('an annual renewal coming up sends the reminder, with the amount Stripe will charge and the date', async () => {

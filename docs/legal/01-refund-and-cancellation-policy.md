@@ -24,7 +24,7 @@ We offer two subscription plans:
 | Monthly | $7.99 for the first child, $4.99 for each additional child (up to 4 children) | Every month | Automatically, every month |
 | Annual | $75.99 for the first child, $48.00 for each additional child (up to 4 children) | Every 12 months | Automatically, every 12 months |
 
-Prices are in US dollars and exclude any applicable sales tax. Sales tax, where it applies, is calculated at checkout.
+Prices are in US dollars. **We do not currently charge sales tax: the price shown is the price you pay.** If the law of your state ever requires us to charge it, we will email you at least 30 days before it applies, and you can cancel before then.
 
 **Starting free.** Before you subscribe, you can choose two topics — two topics from one module, or two stories for kindergarten to grade 2 — and your children can use them free, for as long as you like. We do not ask for payment details for this, and nothing is charged unless you choose to subscribe. Your two free topics are chosen once and cannot be changed. This is not a trial that turns into a paid plan: nothing renews or is charged automatically at the end of it.
 

@@ -56,7 +56,7 @@ Our [Privacy Policy](https://radlic.com/legal/privacy) describes all of this in 
 - **Adding a child.** If every seat is in use, you can add a seat in the app. We show the new price before you confirm, charge the prorated difference for the current period straight away, and the new total from your next renewal.
 - **You can cancel at any time**, online, in the same number of steps it took to subscribe: in the app, under **Account → Plan & billing**. Cancelling stops all future charges; your access continues until the end of the period you have paid for, and we email you a confirmation with that date.
 - Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://radlic.com/legal/refunds), which forms part of these Terms.
-- You are responsible for any applicable taxes.
+- Prices are in US dollars and are what you pay: we do not currently charge sales tax. If we ever must in your state, we will tell you by email at least 30 days before it applies.
 
 ## 6. Acceptable use
 
