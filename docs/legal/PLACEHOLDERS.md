@@ -6,7 +6,7 @@ Round 1, item R11 (24 September 2026). **This table is re-measured on every test
 placeholder and the test goes red until this table says so. The Spanish drafts (`docs/legal/es/`) mirror the
 English counts and are held by `legalSpanish.test.ts`, not here.
 
-**Total: 20**
+**Total: 17**
 
 | category | count | meaning |
 |---|---|---|
@@ -15,8 +15,8 @@ English counts and are held by `legalSpanish.test.ts`, not here.
 | founder | 11 | a founder decision or a fact only the founder has |
 | attorney | 3 | a legal judgement — see `ATTORNEY-PACKET.md` |
 | provider | 1 | a provider must confirm (Supabase, Vercel, Stripe, Resend, GitHub) — `READINESS.md`, Providers |
-| date | 4 | set on the day of publication or adoption |
-| marker | 1 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker |
+| date | 2 | set on the day of publication or adoption |
+| marker | 0 | not a blank: the "must not render while any placeholder remains" rule, which quotes the marker (none left) |
 
 ## Resolved in Round 1 (awaiting the founder's approval — `READINESS.md` §2, R11)
 
@@ -43,8 +43,11 @@ Added in Round 1: 06 §4 and 12 §4 (R8) — the subscription consequence of wit
 | monthly price, USD | 01-refund-and-cancellation-policy.md (+ es/) | $7.99 for the first child, $4.99 for each additional child (up to 4). = `LADDER.monthly` in `src/core/billing.ts`, radlor.com's pricing, and the Stripe test price. |
 | annual price, USD | 01-refund-and-cancellation-policy.md (+ es/) | $75.99 for the first child, $48.00 for each additional child (up to 4). = `LADDER.annual` (changed to radlor.com's figures on 2026-09-30). |
 
-`refundPolicyPrices.test.ts` fails if the policy's prices and `LADDER` ever disagree. The effective and last-updated
-dates stay open: they are the day billing goes live, which is not decided.
+`refundPolicyPrices.test.ts` fails if the policy's prices and `LADDER` ever disagree.
+
+The paid launch (founder, 1 October 2026: launch with beta legal pages): the refund policy's effective and
+last-updated dates are **1 October 2026**, and its "must not render while any placeholder remains" header line went
+with its DRAFT status (it is published as a beta version; attorney review pending, ATTORNEY-PACKET.md).
 
 ## Resolved in the founder interview (24 September 2026)
 
@@ -108,9 +111,6 @@ Published on the founder's decisions, without an attorney; every attorney row de
 
 | # | file | line | text | category | owner | what resolves it |
 |---|---|---|---|---|---|---|
-| 1 | 01-refund-and-cancellation-policy.md | 4 | `[PLACEHOLDER — ...]` | marker | — | Not a blank: the rule itself ("must not render while any [PLACEHOLDER — ...] remains"). Delete this line when publishing. |
-| 2 | 01-refund-and-cancellation-policy.md | 11 | `[PLACEHOLDER — effective date]` | date | Founder | Effective date, set on publication. |
-| 3 | 01-refund-and-cancellation-policy.md | 12 | `[PLACEHOLDER — last updated date]` | date | Founder | Last-updated date, set on publication. |
 | 6 | 02-coppa-direct-notice-to-parents.md | 13 | `[PLACEHOLDER — date, set on the day this is first shown to a parent. Every consent record stores the version the parent actually saw, so this number must change whenever the body below changes.]` | date | Founder | The day the notice is first shown to a real parent. ⚠️ The line says "v1"; the build records `notice-v4` (R2). |
 | 7 | 02-coppa-direct-notice-to-parents.md | 59 | `[PLACEHOLDER — a second method, verification through the payment card at checkout, is specified in document 03 and is not built. Add it here only when it exists; describing a choice a parent cannot make is worse than offering one method plainly.]` | founder | Founder + attorney | Build card verification or not (a product decision; attorney on § 312.5(b)(2)). Stays until it exists. |
 | 9 | 03-consent-and-checkout-screen-copy.md | 70 | `[PLACEHOLDER — amount]` | founder | Founder | First-charge amount. |
