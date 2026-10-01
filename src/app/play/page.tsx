@@ -24,6 +24,10 @@ const NOT_STARTED: Record<string, string> = {
   unreachable: "We couldn't load your game. Check the internet and try again.",
   notStopped: "We couldn't stop the game. Check the internet and try again.",
 }
+// Said every time, refund or not: a stop that gives nothing back looked like a stop that did nothing (2026-10-01).
+const stopped = (back: number | null) => back === null ? NOT_STARTED.notStopped
+  : back > 0 ? `Game stopped. ${back} points are back!`
+  : 'Game stopped. You used the minutes you started, so no points came back.'
 
 const noSubscribe = () => () => {}
 
@@ -43,13 +47,13 @@ export default function PlayPage() {
     void loadGameSave(learnerId)
     if (new URLSearchParams(location.search).has('stop')) {
       history.replaceState(null, '', '/play')
-      endGameTime(learnerId).then(() => load(learnerId))
+      endGameTime(learnerId).then((back) => { setNote(stopped(back)); return load(learnerId) })
     } else load(learnerId)
   }, [learnerId, load])
 
   async function stop() {
     if (!learnerId) return
-    if (!await endGameTime(learnerId)) setNote(NOT_STARTED.notStopped)
+    setNote(stopped(await endGameTime(learnerId)))
     await load(learnerId)
   }
 
