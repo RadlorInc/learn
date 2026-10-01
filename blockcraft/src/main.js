@@ -141,9 +141,10 @@ function save() {
     effects: player.effects,
     savedAt: Date.now(),
   };
-  try { localStorage.setItem(PLAY ? PLAY.key : SAVE_KEY, JSON.stringify(data)); } catch { toast('Could not save — browser storage is full'); }
+  try { localStorage.setItem(saveKey(), JSON.stringify(data)); } catch { toast('Could not save — browser storage is full'); }
 }
-const hasSave = () => !!localStorage.getItem(SAVE_KEY);
+const saveKey = () => (PLAY ? PLAY.key : SAVE_KEY); // opened from /play: the child's own save
+const hasSave = () => !!localStorage.getItem(saveKey());
 
 function clearEntities() {
   for (const list of [G.mobs, G.drops, G.projectiles, G.vehicles]) list.forEach((e) => e.dispose());
@@ -209,7 +210,6 @@ function show(name) {
 }
 if (PLAY) {
   $('bQuit').textContent = 'Stop and keep my minutes';
-  $('bQuit').onclick = () => { save(); location.replace(STOP); };
   if (Date.now() >= PLAY.until) location.replace(BACK);
   // after the rest of this module has run, as the old message-driven start was
   else { show('loading'); setTimeout(() => startWorld(safeParse(localStorage.getItem(PLAY.key)) || { seed: (Math.random() * 2 ** 31) | 0 })); }
@@ -226,7 +226,7 @@ if (PLAY) {
 
 $('bNew').onclick = () => { audio.unlock(); $('newWorld').classList.toggle('hidden'); $('help').classList.add('hidden'); $('overwriteWarn').classList.toggle('hidden', !hasSave()); };
 $('bHelp').onclick = () => { $('help').classList.toggle('hidden'); $('newWorld').classList.add('hidden'); };
-$('bContinue').onclick = () => { audio.unlock(); const d = safeParse(localStorage.getItem(SAVE_KEY)); if (d) startWorld(d); };
+$('bContinue').onclick = () => { audio.unlock(); const d = safeParse(localStorage.getItem(saveKey())); if (d) startWorld(d); };
 $('bCreate').onclick = () => {
   audio.unlock();
   const s = $('seed').value.trim();
@@ -235,7 +235,7 @@ $('bCreate').onclick = () => {
   startWorld({ seed });
 };
 $('bResume').onclick = () => resume();
-$('bQuit').onclick = () => { save(); G.state = 'title'; clearEntities(); show('title'); };
+$('bQuit').onclick = () => { save(); if (PLAY) return location.replace(STOP); G.state = 'title'; clearEntities(); show('title'); };
 for (const [id, k, fmt] of [['rd', 'rd', (v) => v + ' chunks'], ['fov', 'fov', (v) => v + '°'], ['vol', 'vol', (v) => v + '%']]) {
   const el = $(id);
   el.value = settings[k]; $(id + 'v').textContent = fmt(settings[k]);
