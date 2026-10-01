@@ -42,12 +42,23 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
     })
   }, [most])
 
+  // The bank wanted the parent's approval (an OTP / 3-D Secure): Stripe's page is open in another tab, and the seat
+  // exists only once it is paid. "I have paid" asks again for the plan's seats.
+  const [payUrl, setPayUrl] = useState<string | null>(null)
   async function buy() {
     setBusy(true); setNote(null)
     const r = await addSeat(true)
     setBusy(false)
     if (r.ok && r.seats) onAdded(r.seats)
+    else if (r.ok && r.payUrl) { setPayUrl(r.payUrl); window.open(r.payUrl, '_blank', 'noopener') }
     else setNote(!r.ok && WHY[r.error] ? WHY[r.error] : 'Something went wrong and nothing has changed. Try again.')
+  }
+  async function paid() {
+    setBusy(true); setNote(null)
+    const s = await getMySubscription()
+    setBusy(false)
+    if (s && s.seats_paid > seats) onAdded(s.seats_paid)
+    else setNote('We have not received the payment yet. Finish it on the Stripe page, then try again. Nothing is charged until it is approved.')
   }
 
   const per = preview?.cadence === 'annual' ? 'year' : 'month'
@@ -69,10 +80,17 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
             Today you pay only for the rest of this {per}, on the card you already use.
           </p>
         )}
+        {payUrl && (
+          <p style={{ margin: '0 0 12px', lineHeight: 1.5, color: 'var(--ink)' }}>
+            Your bank wants you to approve this payment. Finish it on the Stripe page (it opened in a new tab
+            — <a href={payUrl} target="_blank" rel="noopener noreferrer">open it again</a>), then come back here.
+          </p>
+        )}
         {note && <p role="alert" style={{ margin: '0 0 12px', fontWeight: 800, color: '#B42318' }}>{note}</p>}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <button type="button" style={dghost} onClick={onClose}>Not now</button>
-          {!most && <button type="button" style={dbtn} disabled={!preview || busy} onClick={buy}>{busy ? 'Adding…' : 'Add a seat'}</button>}
+          {!most && !payUrl && <button type="button" style={dbtn} disabled={!preview || busy} onClick={buy}>{busy ? 'Adding…' : 'Add a seat'}</button>}
+          {payUrl && <button type="button" style={dbtn} disabled={busy} onClick={paid}>{busy ? 'Checking…' : 'I have paid'}</button>}
         </div>
       </div>
     </div>

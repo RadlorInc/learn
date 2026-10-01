@@ -9,8 +9,14 @@ import { ConfigMissing, adultFromBearer } from '@/features/consent/server'
  * Add ONE seat to the caller's OWN subscription (founder, 2026-10-01: a family whose seats are all in use adds a child
  * by adding a seat, in the app). Body `{ confirm: false }` (or none) = a preview that changes nothing: the plan's
  * cadence and the renewal total before and after. `{ confirm: true }` = Stripe sets the quantity to one more and
- * invoices the prorated difference now (`always_invoice`), failing rather than leaving an unpaid seat
- * (`error_if_incomplete`).
+ * invoices the prorated difference now (`always_invoice`) on the card on file.
+ *
+ * ⚠️ `pending_if_incomplete`, NOT `error_if_incomplete` (founder, 2026-10-01): when the bank asks the parent to approve
+ * the payment (3-D Secure — an OTP in India, often SCA in the UK/EU, rare in the US), or the card is declined, Stripe
+ * does NOT change the quantity: the update waits as `pending_update` until the invoice is paid, and expires on its own if
+ * it never is. The answer is then `{ pay_url }` (Stripe's hosted invoice page), where the parent approves or pays with
+ * another card; once paid Stripe applies the quantity and the webhook (customer.subscription.updated) seats the child.
+ * So an unpaid seat can never exist.
  *
  * ⚠️ THE SUBSCRIPTION IS FOUND FROM THE TOKEN, NEVER FROM THE BODY — the same rule as /api/billing/cancel.
  * ⚠️ A TARGET, NOT AN INCREMENT, AT STRIPE: the update is keyed `seat-<sub>-<new quantity>`, so a double tap or a
@@ -60,11 +66,21 @@ export async function POST(req: Request) {
     updated = await stripe.subscriptions.update(sub.id, {
       items: [{ id: item.id, quantity: seats + 1 }],
       proration_behavior: 'always_invoice',
-      payment_behavior: 'error_if_incomplete',
+      payment_behavior: 'pending_if_incomplete',
+      expand: ['latest_invoice'],
     }, { idempotencyKey: `seat-${sub.id}-${seats + 1}` })
   } catch (e) {
-    // A declined card lands here: nothing changed at Stripe, so nothing is written here either.
+    // Stripe refused the request outright: nothing changed there, so nothing is written here either.
     return NextResponse.json({ error: 'payment_failed', message: e instanceof Error ? e.message : String(e) }, { status: 402 })
+  }
+
+  // Not paid yet (the bank wants the parent's approval, or the card was declined): the quantity is NOT changed until it
+  // is, so nothing is written here — the parent finishes on Stripe's page and the webhook does the rest.
+  if (updated.pending_update) {
+    const inv = updated.latest_invoice
+    const payUrl = inv && typeof inv !== 'string' ? inv.hosted_invoice_url : null
+    if (!payUrl) return NextResponse.json({ error: 'payment_failed' }, { status: 402 })
+    return NextResponse.json({ ok: true, pay_url: payUrl })
   }
 
   const row = subscriptionRow(updated)

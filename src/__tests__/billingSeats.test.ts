@@ -14,9 +14,12 @@ let table: { id: string; account_id: string; stripe_subscription_id: string; sta
 let sub: { status: string; cancel_at_period_end: boolean; quantity: number }
 let calls: { url: string; method: string; body: string; idem: string | null }[]
 let declines: boolean
+let needsApproval: boolean   // the bank wants 3-D Secure: Stripe keeps the change pending
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } })
-const stripeObj = () => ({
+const stripeObj = (pending = false) => ({
+  pending_update: pending ? { subscription_items: [{ id: 'si_A', quantity: sub.quantity + 1 }], expires_at: 1_790_000_000 } : null,
+  latest_invoice: pending ? { id: 'in_P', object: 'invoice', status: 'open', hosted_invoice_url: 'https://invoice.stripe.com/i/test_pending' } : 'in_paid',
   id: 'sub_A', object: 'subscription', status: sub.status, cancel_at_period_end: sub.cancel_at_period_end, customer: 'cus_A',
   metadata: { account_id: A },
   items: { object: 'list', data: [{ id: 'si_A', quantity: sub.quantity, price: { recurring: { interval: 'month' } }, current_period_start: 1_767_225_600, current_period_end: 1_769_904_000 }] },
@@ -39,7 +42,8 @@ async function network(input: unknown, init: RequestInit = {}): Promise<Response
   if (url.endsWith('/rest/v1/rpc/materialize_seats')) return json(JSON.parse(String(init.body)).p_seats)
   if (url.startsWith('https://api.stripe.com/v1/subscriptions/sub_A')) {
     if (method === 'POST') {
-      if (declines) return json({ error: { type: 'card_error', code: 'card_declined', message: 'Your card was declined.' } }, 402)
+      if (declines) return json({ error: { type: 'invalid_request_error', message: 'Refused.' } }, 400)
+      if (needsApproval) return json(stripeObj(true))   // pending_if_incomplete: the quantity does NOT change yet
       sub.quantity = Number(new URLSearchParams(String(init.body)).get('items[0][quantity]'))
     }
     return json(stripeObj())
@@ -64,7 +68,7 @@ beforeEach(() => {
   })
   table = [{ id: 'row-A', account_id: A, stripe_subscription_id: 'sub_A', status: 'active', seats_paid: 2 }]
   sub = { status: 'active', cancel_at_period_end: false, quantity: 2 }
-  calls = []; declines = false
+  calls = []; declines = false; needsApproval = false
   vi.stubGlobal('fetch', vi.fn(network))
 })
 afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
@@ -85,12 +89,20 @@ describe('POST /api/billing/seats', () => {
     expect(form.get('items[0][id]')).toBe('si_A')
     expect(form.get('items[0][quantity]')).toBe('3')
     expect(form.get('proration_behavior')).toBe('always_invoice')
-    expect(form.get('payment_behavior')).toBe('error_if_incomplete')
+    expect(form.get('payment_behavior')).toBe('pending_if_incomplete')
+    expect(form.get('expand[0]')).toBe('latest_invoice')
     expect(w.idem).toBe('seat-sub_A-3')
     expect(table[0].seats_paid).toBe(3)
     expect(JSON.parse(calls.find(c => c.url.endsWith('/rpc/materialize_seats'))!.body)).toEqual({ p_subscription_id: 'row-A', p_seats: 3 })
   })
-  it('a declined card changes nothing here', async () => {
+  it('the bank wants approval (3-D Secure): Stripe\'s page is handed back and NO seat is written until it is paid', async () => {
+    needsApproval = true
+    const r = await post('tok-A', { confirm: true })
+    expect(r).toEqual({ status: 200, body: { ok: true, pay_url: 'https://invoice.stripe.com/i/test_pending' } })
+    expect(table[0].seats_paid).toBe(2)
+    expect(calls.some(c => c.url.endsWith('/rpc/materialize_seats'))).toBe(false)
+  })
+  it('a request Stripe refuses changes nothing here', async () => {
     declines = true
     const r = await post('tok-A', { confirm: true })
     expect(r.status).toBe(402)

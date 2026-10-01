@@ -96,10 +96,11 @@ export type CancelResult =
 /** Asks /api/billing/cancel. Sends no subscription id: the server finds it from the token. */
 export type SeatPreview = { seats: number; cadence: 'monthly' | 'annual'; renewalCents: number; newRenewalCents: number }
 export type AddSeatResult =
-  | { ok: true; preview?: SeatPreview; seats?: number }
+  | { ok: true; preview?: SeatPreview; seats?: number; payUrl?: string }
   | { ok: false; error: 'no_subscription' | 'not_active' | 'at_most' | 'payment_failed' | 'billing_not_configured' | 'unauthenticated' | 'failed' }
 
-/** Asks /api/billing/seats: `confirm: false` = what one more seat costs (changes nothing); `true` = buy it. */
+/** Asks /api/billing/seats: `confirm: false` = what one more seat costs (changes nothing); `true` = buy it — `seats`
+ *  when it was paid at once, `payUrl` when the bank wants the parent's approval first (Stripe's page). */
 export async function addSeat(confirm: boolean): Promise<AddSeatResult> {
   const { data: { session } } = await db().auth.getSession()
   if (!session) return { ok: false, error: 'unauthenticated' }
@@ -108,8 +109,8 @@ export async function addSeat(confirm: boolean): Promise<AddSeatResult> {
       method: 'POST', headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ confirm }),
     })
-    const j = (await r.json().catch(() => null)) as { ok?: boolean; error?: string; preview?: SeatPreview; seats?: number } | null
-    if (r.ok && j?.ok) return { ok: true, preview: j.preview, seats: j.seats }
+    const j = (await r.json().catch(() => null)) as { ok?: boolean; error?: string; preview?: SeatPreview; seats?: number; pay_url?: string } | null
+    if (r.ok && j?.ok) return { ok: true, preview: j.preview, seats: j.seats, payUrl: j.pay_url }
     const known = ['no_subscription', 'not_active', 'at_most', 'payment_failed', 'billing_not_configured', 'unauthenticated'] as const
     const e = known.find(k => k === j?.error)
     return { ok: false, error: e ?? 'failed' }

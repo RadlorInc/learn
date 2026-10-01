@@ -314,7 +314,9 @@ Built and switched off; nothing has been charged.
   `RESEND_API_KEY` is logged and the event still closes.
 - **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
 - **`/api/billing/seats`:** one more seat on the caller's own active plan (max 4): a preview of the renewal total, then
-  Stripe invoices the prorated difference now; the row and seats are written at once. Shown when every seat is in use.
+  Stripe invoices the prorated difference now on the card on file; the row and seats are written at once. If the bank
+  wants approval (3-D Secure) or the card fails, the change stays `pending_update` (no seat) and the parent finishes on
+  Stripe's hosted invoice page; the webhook seats the child once paid. Shown when every seat is in use.
 - **Free trial and entitlement** (20261001120000, reshaped by 20261001140000): the PARENT picks the family's two free
   topics once on `/parent` (`FreeTrialCard` → `choose_free_topics`): two topics of one Grade 3–8 module, or two KG–2
   stories; final. The child's home (`ModuleHome`, via `trial_topics`) shows only those two — no lock, trial or price on
