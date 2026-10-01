@@ -1,15 +1,13 @@
 # Refund and Cancellation Policy
 
-> **STATUS: DRAFT — NOT LEGAL ADVICE — MUST BE REVIEWED BY A LICENSED US ATTORNEY BEFORE PUBLICATION.**
-> This document must not render as a live page while any `[PLACEHOLDER — ...]` remains unresolved.
-> Placeholders are to be filled by Radlor Inc., not by an AI assistant.
+> **STATUS: BETA — published 1 October 2026 on the founder's decisions for the paid launch (billing switched on); attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 
-> **This policy must be published before the first payment is taken, not after.** A refund and cancellation policy that appears after money has changed hands is too late to have done its job.
+> **This policy must be published before the first payment is taken, not after.** It goes live in the same change that switches billing on (`BILLING_LIVE`).
 
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Radlic
-**Effective date:** [PLACEHOLDER — effective date]
-**Last updated:** [PLACEHOLDER — last updated date]
+**Effective date:** 1 October 2026
+**Last updated:** 1 October 2026
 
 ---
 
@@ -28,14 +26,18 @@ We offer two subscription plans:
 
 Prices are in US dollars and exclude any applicable sales tax. Sales tax, where it applies, is calculated at checkout.
 
-**We do not offer a free trial.** If one is ever introduced, this policy must be amended first, to add the trial length, the date of the first charge and the amount of that charge — all disclosed to the parent before they enrol. Trials are where automatic-renewal law is strictest.
+**Starting free.** Before you subscribe, you can choose two topics — two topics from one module, or two stories for kindergarten to grade 2 — and your children can use them free, for as long as you like. We do not ask for payment details for this, and nothing is charged unless you choose to subscribe. Your two free topics are chosen once and cannot be changed. This is not a trial that turns into a paid plan: nothing renews or is charged automatically at the end of it.
+
+### Adding a child to your plan
+
+Each child on a subscription uses one seat, and a plan covers at most 4 children. If every seat on your plan is in use, you can add a seat in the app when you add a child. Before you confirm, we show your plan's price for each billing period now and with the extra seat. When you confirm, we charge your payment method on file straight away for the rest of the current billing period only — a prorated amount calculated by our payment provider — and from your next renewal the new total applies. If your bank asks you to approve the payment, the seat is added only after you approve it; if you do not, nothing is charged and nothing changes.
 
 ## 3. Automatic renewal
 
 **Your subscription renews automatically.** When you subscribe, you are agreeing to an ongoing subscription that continues until you cancel it.
 
 - Your payment method is charged on the day you subscribe, and then on the same day of each subsequent billing period.
-- The renewal amount is the price shown in the table above, unless we have notified you of a price change in advance as described in Section 6.
+- The renewal amount is the price shown in the table above for the number of children on your plan, unless we have notified you of a price change in advance as described in Section 6.
 - We will send you a reminder email before each annual renewal, at least 30 days before the renewal date.
 - You can cancel at any time before the renewal date to avoid the next charge.
 
@@ -72,7 +74,7 @@ You are also a resident of a state whose law may give you a cancellation or refu
 ### Circumstances in which we will always refund
 
 In every case:
-- **Withdrawal of parental consent.** If you withdraw your permission for us to collect your child's information, we close the account and refund the unused part of your subscription, calculated from the date we action the withdrawal to the end of the period you have paid for. You are never charged for exercising a privacy right.
+- **Withdrawal of parental consent.** If you withdraw your permission for us to collect your children's information, write to support@radlor.com and we will cancel your subscription and refund the unused part of it, calculated from the date we action your request to the end of the period you have paid for. You are never charged for exercising a privacy right.
 - **Duplicate charges** are refunded in full.
 - **Charges after a valid cancellation** are refunded in full.
 - **Unauthorised charges made by a child** — if a child completed a purchase without your permission, contact us at support@radlor.com and we will refund it in full. We will not ask you to justify the request.
@@ -83,7 +85,7 @@ If we change the price of your plan, we will tell you by email at least 30 days 
 
 ## 7. Failed payments
 
-If a renewal payment fails, we will try again over the following 7 days and email you. If payment still fails, your subscription is paused — your account stays open, but lessons are unavailable until payment succeeds or you cancel.
+If a renewal payment fails, we will try again over the following 7 days and email you. If payment still fails, your subscription is paused — your account stays open, but your children can use only your two free topics (if you chose them) until payment succeeds or you cancel.
 
 ## 8. Your child's data after cancellation
 
@@ -104,4 +106,5 @@ We do not currently offer a telephone contact.
 3. **ROSCA.** Please confirm the checkout flow satisfies the Restore Online Shoppers' Confidence Act — clear and conspicuous disclosure before obtaining billing information, express informed consent, and a simple cancellation mechanism.
 4. **Refund stance.** A 14-day satisfaction window has been adopted. Please confirm it against state-specific refund rights.
 5. **In-app cancellation now exists** (Section 4): two taps from the plan page, no reason asked, cancelling at the end of the paid period, with an on-screen end date and a confirmation email. Please confirm that satisfies the online-cancellation and acknowledgement requirements, and what the confirmation email must contain.
-5. **Children and purchases.** Confirm whether any additional protections are needed given that the end users are children and the account holders are parents.
+6. **Starting free and adding a seat (added 1 October 2026, founder's decision for the paid launch).** Section 2 describes free access to two topics with no payment details collected and no automatic conversion, and an in-app seat added mid-period with a prorated charge on the card on file, disclosed before confirmation. Please confirm neither is a "free trial" or "automatic renewal offer" term needing further disclosure under state ARLs or ROSCA.
+7. **Children and purchases.** Confirm whether any additional protections are needed given that the end users are children and the account holders are parents.

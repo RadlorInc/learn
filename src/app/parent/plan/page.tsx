@@ -38,13 +38,13 @@ const SEATS = Array.from({ length: MAX_SEATS }, (_, i) => i + 1)
 
 // The private beta is free (founder, 2026-09-24). A parent who arrives here from an old link or a bookmark is told so,
 // and sees no prices, no checkout and no link to the refund policy (which is not published while billing is off).
-// ⚠️ STAGING ONLY: `NEXT_PUBLIC_STRIPE_TEST_CHECKOUT=on` (set on the `staging` preview, never production) shows the
-// checkout while billing is off, so the free trial's Purchase can be tried end to end with Stripe's TEST card. It cannot
-// take money: src/infra/stripe.ts refuses any key that is not `sk_test_`, and the page says TEST MODE.
+// ⚠️ STAGING ONLY: `NEXT_PUBLIC_STRIPE_TEST_CHECKOUT=on` (set on the `staging` preview, never production) puts the
+// TEST MODE note with Stripe's test card on the checkout (and showed the checkout while billing was off, before
+// 2026-10-01). The staging preview holds only Stripe test keys.
 const TEST_CHECKOUT = process.env.NEXT_PUBLIC_STRIPE_TEST_CHECKOUT === 'on'
 
 export default function PlanPage() {
-  return <RoleGate role="parent">{BILLING_LIVE || TEST_CHECKOUT ? <PlanCheckout test={!BILLING_LIVE} /> : <BetaFree />}</RoleGate>
+  return <RoleGate role="parent">{BILLING_LIVE || TEST_CHECKOUT ? <PlanCheckout test={TEST_CHECKOUT} /> : <BetaFree />}</RoleGate>
 }
 
 function BetaFree() {
