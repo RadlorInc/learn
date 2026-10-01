@@ -96,6 +96,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.admin_users':              `public.admin_users where user_id = '${uid}'`,
     'public.auth_events':              `public.auth_events where user_id = '${uid}'`,
     'public.billing_events':           `public.billing_events where account_id = '${uid}'`,
+    'public.free_topics':              `public.free_topics where account_id = '${uid}'`,
     'public.parent_pins':              `public.parent_pins where account_id = '${uid}'`,
     'public.lesson_progress':          `public.lesson_progress where learner_id in (${ls})`,
     'public.point_events':             `public.point_events where learner_id in (${ls})`,
@@ -138,6 +139,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
     insert into public.subscriptions (account_id, status, seats_paid) values ('${uid}', 'active', 2);
     insert into public.billing_events (account_id, stripe_event_id, type)
       values ('${uid}', 'evt_${uid.slice(0, 8)}', 'checkout.session.completed');
+    insert into public.free_topics (account_id, topic) values ('${uid}', 'g3m2-t1');
   `)
   // Consent-once: ONE account consent covers every child of the family.
   const consent = await grantedConsent(db, uid)

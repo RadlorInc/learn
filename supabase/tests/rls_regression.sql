@@ -530,7 +530,7 @@ begin
 
   -- The plan, in the shape sync_diagnostic wrote it: a session, then an active plan whose free set is its first two
   -- steps. ⚠️ Seeded as rows since 20260928190000 dropped sync_diagnostic (the placement check that called it was
-  -- deleted on 2026-09-20); is_chapter_entitled still reads plans, so its plan branch is still asserted here.
+  -- deleted on 2026-09-20). Since 20261001120000 is_chapter_entitled no longer reads plans: C1 asserts exactly that.
   reset role;
   insert into public.diagnostic_sessions (learner_id, band, root_gap_skill)
     values (v_learner3, '9-11', 'i.multFacts') returning id into v_sess;
@@ -538,42 +538,34 @@ begin
     values (v_learner3, v_sess, array[v_paids[1], v_paids[2], v_paids[3]], array[v_paids[1], v_paids[2]]);
   set local role authenticated;
 
-  -- C1: the plan's two recorded chapters are entitled with no subscription at all.
+  -- C1 (20261001120000): the plan's recorded steps NO LONGER entitle — the family's two free topics replaced them.
   v_asserts := v_asserts + 1;
-  if not (public.is_chapter_entitled(v_learner3, v_paids[1])
-          and public.is_chapter_entitled(v_learner3, v_paids[2])) then
-    raise exception 'RLS FAIL C1: the plan''s first two steps are not free';
+  if public.is_chapter_entitled(v_learner3, v_paids[1]) then
+    raise exception 'RLS FAIL C1: a diagnostic plan still entitles a chapter — the free trial is not the only free source';
   end if;
 
-  -- C2: the THIRD step is not. Without this the plan is simply free.
+  -- T: THE FREE TRIAL — any two topics per FAMILY, then pay. v_learner3 holds no seat (B13g), so only claims count.
+  -- T1/T2: two claims succeed (src/__tests__/familyFreeTopics.test.ts covers siblings sharing the two).
   v_asserts := v_asserts + 1;
-  if public.is_chapter_entitled(v_learner3, v_paids[3]) then
-    raise exception 'RLS FAIL C2: step three of the plan is free — the whole plan is unlocked';
-  end if;
-
-  -- (C3, "finishing step one does not promote step three", recorded completion in learner_progress; that table
-  -- and the recomputation it guarded against are gone — 20260928190000.)
-
-  -- C7: ONE extra chapter for a struggling child, and exactly one. `revisePlanDeeper` prepends a
-  -- deeper chapter when the child struggles in the plan's root; without this the product's own
-  -- correction lands behind the paywall, hitting the child it exists for.
+  if not public.claim_topic(v_learner3, 'c:counting') then raise exception 'RLS FAIL T1: the first free topic was refused'; end if;
   v_asserts := v_asserts + 1;
-  if not public.entitle_revised_step(v_learner3, v_paids[3]) then
-    raise exception 'RLS FAIL C7: the play-data revision could not be entitled';
-  end if;
+  if not public.claim_topic(v_learner3, 'g3m1-t1') then raise exception 'RLS FAIL T2: the second free topic was refused'; end if;
+  -- T3: the third is refused.
   v_asserts := v_asserts + 1;
-  if not public.is_chapter_entitled(v_learner3, v_paids[3]) then
-    raise exception 'RLS FAIL C7: the revised step is still not entitled';
-  end if;
-  -- …and a second one is refused, so the cap is three free chapters on that path and no more.
+  if public.claim_topic(v_learner3, 'c:shapes') then raise exception 'RLS FAIL T3: a third free topic was given'; end if;
+  -- T4: a claimed chapter entitles; an unclaimed one does not (the positive and negative twins).
   v_asserts := v_asserts + 1;
-  if public.entitle_revised_step(v_learner3, v_paids[4]) then
-    raise exception 'RLS FAIL C7: a SECOND revision was entitled — the one-per-plan cap is gone';
-  end if;
+  if not public.is_chapter_entitled(v_learner3, 'counting') then raise exception 'RLS FAIL T4: a claimed chapter is not entitled'; end if;
   v_asserts := v_asserts + 1;
-  if public.is_chapter_entitled(v_learner3, v_paids[4]) then
-    raise exception 'RLS FAIL C7: the refused second revision entitled a chapter anyway';
-  end if;
+  if public.is_chapter_entitled(v_learner3, 'shapes') then raise exception 'RLS FAIL T4: a refused chapter is entitled'; end if;
+  -- T5: the client cannot write the claims table.
+  v_blocked := false;
+  begin
+    insert into public.free_topics (account_id, topic) values (v_owner, 'c:shapes');
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL T5: a client wrote free_topics directly'; end if;
 
   -- (C4, re-running the check, needed sync_diagnostic — dropped in 20260928190000 with no caller left.)
 

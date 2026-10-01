@@ -30,7 +30,7 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(`c=${chapter}`),
 }))
 vi.mock('@/data/supabase/useAuthGuard', () => ({ useAuthGuard: () => 'authed' }))
-vi.mock('@/features/billing/useChapterGate', () => ({ useChapterGate: () => 'allowed' }))
+vi.mock('@/features/billing/useTopicGate', () => ({ useTopicGate: () => 'allowed' }))
 vi.mock('@/data/supabase/useChapterSync', () => ({ useChapterSync: () => ({ flushQueue: () => {}, finishAndSync: () => {} }) }))
 vi.mock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => null }))
 vi.mock('@/infra/analytics', () => ({ track: () => {} }))

@@ -312,13 +312,18 @@ Built and switched off; nothing has been charged.
   `invoice.upcoming` for ANNUAL plans that will renew (Stripe sends it 30 days ahead — a dashboard setting). Each has a
   fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
   `RESEND_API_KEY` is logged and the event still closes.
-- **`/api/billing/cancel`:** cancels the caller's own subscription at period end. **Entitlement**
-  (`is_chapter_entitled`) answers only for a learner the caller can reach; `/game` asks it once the paywall is on.
+- **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
+- **Free trial and entitlement** (20261001120000): a family gets any two topics free — a lesson or a KG–2 chapter,
+  from any module — then pays. `claim_topic(learner, topic)` is asked once when a child opens a topic (`/lesson`,
+  `/game`, and `/practice`, which is paid only): a paid seat plays anything, otherwise the topic is recorded in
+  `free_topics` while the family has fewer than two, a recorded topic re-opens free, the third is refused.
+  `is_chapter_entitled` reads the same claims plus the paid seat. Both answer only for a learner the caller can reach.
+  The child sees a price-free card; the parent dashboard shows the trial and "Pay and continue".
 - **Off:** `src/infra/stripe.ts` refuses non-test keys; `BILLING_LIVE = false` (`src/app/legal/registry.ts`) shows
-  "free during the beta"; `PAYWALL_ENABLED = false` (`useChapterGate.ts`) lets every chapter through (`betaFree`,
-  `chapterGateOff`).
+  "free during the beta"; `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
+  topic through while off (`betaFree`, `chapterGateOff`).
 - **On:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`; flip
-  `BILLING_LIVE`; to gate access, flip `PAYWALL_ENABLED` and `billing_config.enforced`. Real payments also need the
+  `BILLING_LIVE`; to gate access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments also need the
   test-key guard removed, a deliberate code change.
 
 ## 9. External services

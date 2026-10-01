@@ -122,4 +122,5 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-30 · Staging exists: Supabase `radlic-staging` in its own organization, baseline applied, `STAGING_PROJECT_REF` set, so staging-first is back on · tests and trials never touch production · —
 - 2026-10-01 · A push to `staging` runs staging's migrations, RLS suite and fake-data seed before a merge (`staging.yml`); a schema fingerprint compares staging with production · test before production, not at merge time · —
 - 2026-10-01 · Production had no `ensure_rls` event trigger (found by the staging/production fingerprint); restored by migration, keeping production's `rls_auto_enable()` (same behaviour, more logging) · the net under every future migration · —
+- 2026-10-01 · Free trial: any two topics per family (a lesson or a KG–2 chapter, any module), then pay; the fixed free chapters and the plan's free steps no longer entitle; module practice is paid only · let a family experience the product properly before paying, one rule for every grade · —
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —

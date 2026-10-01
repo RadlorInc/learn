@@ -143,6 +143,9 @@
 --   subscription_seats         rls=t  policies=1   SELECT only, via subscriptions.account_id. Seats
 --                                                  are created by Stripe (service role) and moved
 --                                                  only by reassign_learner_seat().
+--   free_topics                rls=t  policies=1   2026-10-01 (20261001120000): SELECT only (account_id = auth.uid()),
+--                                                  every client write revoked; written only by claim_topic(), which
+--                                                  caps a family at two free topics under an advisory lock.
 --   lesson_catalog             rls=t  policies=0   2026-09-28 (20260928180000): INTENTIONAL, every client privilege
 --                                                  revoked. The ids that may earn progress and points; read only
 --                                                  inside record_lesson_progress / record_module_practice.
@@ -153,6 +156,7 @@
 --   grades / grade_chapters SELECT/INSERT/UPDATE/DELETE scoped to grades.created_by = auth.uid() (+ learner_access for read)
 --   subscriptions: owner can read       SELECT  using(account_id = auth.uid())          [no write policy exists]
 --   subscription_seats: owner can read  SELECT  using(exists subscriptions where account_id = auth.uid())
+--   free_topics: owner reads            SELECT  using(account_id = auth.uid())          [no write policy, writes revoked]
 --   sessions: parent can insert         INSERT  check(learner_access AND is_chapter_entitled(learner_id, chapter))
 --   learner_progress: parent access     ALL     using(learner_access) / check(learner_access AND is_chapter_entitled(...))
 --                                               ⚠️ the entitlement is in WITH CHECK only, never USING:
