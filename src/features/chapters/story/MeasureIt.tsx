@@ -497,7 +497,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const shown: Thing = phase === 'practice' ? thing : phase === 'guided' ? guided : demos[demoIdx]
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: pillTop(short), left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: pillTop(short), left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px',
         fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}<DirectionsInline chapter="measurement" /></div>
     </div>

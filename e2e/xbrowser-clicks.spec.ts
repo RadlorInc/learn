@@ -84,6 +84,35 @@ const findCovered = (page: Page, modalOnly: boolean) => page.evaluate((modalOnly
   return out
 }, modalOnly)
 
+/**
+ * Two more ways a tap is "blocked" for a small child, reported per screen:
+ *  - small: an enabled control whose shorter side is under 44px (the app's own minimum) — a finger misses it.
+ *  - dead: controls are on screen but every one of them is disabled (the voice is talking, a round is settling) —
+ *    a child taps and nothing happens. Measured in the loop as a stretch of time.
+ * Chrome controls (Menu, Hear it again) are left out of both: they are always live by design.
+ */
+const tapHealth = (page: Page) => page.evaluate(() => {
+  const small: string[] = []
+  let enabled = 0, disabled = 0
+  for (const el of document.querySelectorAll('button, [role=button], a[href]')) {
+    if (el.closest('nextjs-portal')) continue
+    const r = el.getBoundingClientRect(), cs = getComputedStyle(el)
+    if (!r.width || !r.height || cs.visibility === 'hidden' || Number(cs.opacity) < 0.2) continue
+    if (r.right < 0 || r.bottom < 0 || r.left > innerWidth || r.top > innerHeight) continue
+    const t = ((el as HTMLElement).innerText || el.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30)
+    if (/menu|hear it again|back to modules|play again/i.test(t)) continue
+    const off = (el as HTMLButtonElement).disabled || cs.pointerEvents === 'none'
+    if (off) { disabled++; continue }
+    enabled++
+    if (Math.min(r.width, r.height) < 44) small.push(`"${t || '?'}" ${Math.round(r.width)}x${Math.round(r.height)}`)
+  }
+  const screen = (document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 80)
+  // Input held while the voice speaks is by design (a count must not be skipped), and a headless browser's device voice
+  // is far slower than a real one — so only a SILENT dead stretch is a finding.
+  const speaking = typeof speechSynthesis !== 'undefined' && speechSynthesis.speaking
+  return { small, enabled, disabled, screen, speaking }
+})
+
 /** Tag what a child would tap (enabled controls + anything styled clickable) with data-xb; returns the count. */
 const tagTappables = (page: Page) => page.evaluate(() => {
   document.querySelectorAll('[data-xb]').forEach(e => e.removeAttribute('data-xb'))
@@ -140,6 +169,9 @@ for (const id of CHAPTERS) {
     const touch = !!info.project.use.hasTouch
     const covered = new Map<string, Covered>()
     const suspects = new Set<string>()
+    const small = new Set<string>()
+    let deadSince: number | null = null
+    let worstDead = { ms: 0, screen: '' }
     const errors: string[] = []
     page.on('pageerror', e => errors.push(String(e)))
     page.on('console', m => { if (m.type() === 'error' && !/ERR_UNSAFE_PORT|Failed to load resource|127\.0\.0\.1:9/.test(m.text())) errors.push(m.text().slice(0, 400)) })
@@ -168,6 +200,17 @@ for (const id of CHAPTERS) {
       if (skill && Date.now() - rolled > 60_000) { rolled = Date.now(); await page.reload().catch(() => {}) }
       const atEnd = await page.getByText(END_CARD).first().isVisible().catch(() => false)
       for (const c of await findCovered(page, atEnd)) covered.set(c.label, c)
+      if (!atEnd) {
+        const h = await tapHealth(page).catch(() => null)
+        if (h) {
+          for (const x of h.small) small.add(x)
+          if (h.enabled === 0 && h.disabled > 0 && !h.speaking) {
+            deadSince ??= Date.now()
+            const ms = Date.now() - deadSince
+            if (ms > worstDead.ms) worstDead = { ms, screen: h.screen }
+          } else deadSince = null
+        }
+      }
       if (atEnd) { reachedEnd = true; break }
       if (await page.getByText(CRASH).first().isVisible().catch(() => false)) { crashed = true; break }
       if (await page.getByText('Turn your phone sideways').first().isVisible().catch(() => false)) { rotate = true; break }
@@ -180,11 +223,11 @@ for (const id of CHAPTERS) {
         const el = ++turn % 4 === 0 && await submit.count()
           ? submit.nth(Math.floor(Math.random() * await submit.count()))
           : page.locator(`[data-xb="${Math.floor(Math.random() * n)}"]`)
-        const label = ((await el.textContent({ timeout: 500 }).catch(() => '')) || (await el.getAttribute('aria-label').catch(() => '')) || '?').trim().slice(0, 30)
+        const label = ((await el.textContent({ timeout: 500 }).catch(() => '')) || (await el.getAttribute('aria-label', { timeout: 500 }).catch(() => '')) || '?').trim().slice(0, 30)
         try {
           // A big target (a whole picture whose handler checks WHERE it was hit — paint the glowing part) gets a random
           // point inside it rather than its centre. Playwright still hit-tests that point.
-          const box = await el.boundingBox().catch(() => null)
+          const box = await el.boundingBox({ timeout: 1000 }).catch(() => null)
           const position = box && box.width > 200 && box.height > 200
             ? { x: Math.random() * box.width, y: Math.random() * box.height } : undefined
           if (touch) await el.tap({ timeout: 2500, position }); else await el.click({ timeout: 2500, position })
@@ -193,7 +236,7 @@ for (const id of CHAPTERS) {
           // taps it fine: hit-test its centre ourselves and tap that point with the real pointer.
           if (/not stable|visible, enabled and stable/.test(String(e))) {
             const pt = await el.evaluate(n => { const r = n.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2
-              const h = document.elementFromPoint(x, y); return h && (n === h || n.contains(h)) ? { x, y } : null }).catch(() => null)
+              const h = document.elementFromPoint(x, y); return h && (n === h || n.contains(h)) ? { x, y } : null }, undefined, { timeout: 1000 }).catch(() => null)
             if (pt) { if (touch) await page.touchscreen.tap(pt.x, pt.y); else await page.mouse.click(pt.x, pt.y) }
           }
           // Playwright names the element that would receive the tap instead — the Safari "it does nothing" bug.
@@ -225,7 +268,7 @@ for (const id of CHAPTERS) {
     const press = (name: RegExp) => { const b = page.getByRole('button', { name }); return touch ? b.tap({ timeout: 10_000 }) : b.click({ timeout: 10_000 }) }
     const record = () => {
       mkdirSync('test-results/xbrowser', { recursive: true })
-      appendFileSync('test-results/xbrowser/results.jsonl', JSON.stringify({ project: info.project.name, chapter: id, seeded: !!skill, card, crashed, reachedEnd, playAgainWorks, backWorks, covered: coverList, suspects: [...suspects], errors }) + '\n')
+      appendFileSync('test-results/xbrowser/results.jsonl', JSON.stringify({ project: info.project.name, chapter: id, seeded: !!skill, card, crashed, reachedEnd, playAgainWorks, backWorks, covered: coverList, suspects: [...suspects], small: [...small], deadMs: worstDead.ms, deadScreen: worstDead.screen, errors }) + '\n')
     }
     try {
       if (reachedEnd) {

@@ -1026,3 +1026,9 @@ input[type="range"] { height: 44px; }
    blocks' trade target (e2e/xbrowser-clicks.spec.ts). Its own controls still take taps. */
 .tap-through { pointer-events: none; }
 .tap-through > * { pointer-events: auto; }
+
+/* Every KG–2 chapter (ChapterPortal, CountingStoryChapter): no tap target under 44px, the app's own minimum. Chapters
+   scale their controls to the viewport, and on a phone held sideways that left number pads at 37px, a rod to break at
+   16px wide and ◀ ▶ ↩ at 31–40px — a small finger misses them (e2e/xbrowser-clicks.spec.ts, founder's call 2026-10-02).
+   `min-*` wins over a smaller inline width/height, so this floors every button without touching larger ones. */
+.kg2-chapter button, .kg2-chapter [role="button"] { min-width: 44px; min-height: 44px; }

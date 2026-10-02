@@ -48,7 +48,7 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
 
   if (!body) return null
   return createPortal(
-    <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#bfe6f7' }}>
+    <div className="kg2-chapter" style={{ position: 'fixed', inset: 0, zIndex: 900, background: '#bfe6f7' }}>
       {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={exit} />}
       {story && chapter && (
         <>

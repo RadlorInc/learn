@@ -233,9 +233,9 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
           blend in until the child finds and taps each one (then it pops + glows). */}
 
       {/* Top bar */}
-      {/* ⚠️ Above the station (also z 20, later in the DOM): a flying creature crossing the top strip on a short
+      {/* ⚠️ z 42: above the station (z 20, later in the DOM) and the demo/guided parade (35/36): a creature crossing the top strip on a short
           landscape phone otherwise took the Menu tap (e2e/xbrowser-clicks.spec.ts). The strip itself lets taps through. */}
-      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 10, zIndex: 30, pointerEvents: 'none' }}>
+      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 10, zIndex: 42, pointerEvents: 'none' }}>
         <button onClick={exit} style={{ pointerEvents: 'auto', padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'center' }}>
           {chapter.beats.map((_, i) => (

@@ -107,7 +107,7 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
     if (!body) return null
     const exit = () => props.onExit ? props.onExit() : router.push('/modules')
     return createPortal(
-      <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
+      <div className="kg2-chapter" style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
         <ChapterTakeContext.Provider value={setTake}>
           <Inner key={runKey} onFinish={finish} onExit={exit} />
         </ChapterTakeContext.Provider>
