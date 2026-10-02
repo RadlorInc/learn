@@ -170,7 +170,7 @@ function makeWorld(dim) {
 
 function startWorld(data) {
   clearEntities();
-  G.seed = data.seed; G.mode = 'creative'; // creative only: a calm break for kids, no survival G.time = data.time ?? 0.02; G.enchantSeed = data.enchantSeed || 0;
+  G.seed = data.seed; G.mode = data.mode === 'survival' ? 'survival' : 'creative'; G.time = data.time ?? 0.02; G.enchantSeed = data.enchantSeed || 0;
   G.dims = { overworld: unpackDim(data.dims?.overworld), nether: unpackDim(data.dims?.nether), end: unpackDim(data.dims?.end) };
   G.spawnedVillages = new Set();
   const w = makeWorld(data.dim || 'overworld');
@@ -235,6 +235,9 @@ $('bCreate').onclick = () => {
   startWorld({ seed });
 };
 $('bResume').onclick = () => resume();
+// survival here has no health or damage: blocks must be mined and items run out, nothing more
+const modeLabel = () => ($('bMode').textContent = G.mode === 'creative' ? 'Switch to Survival' : 'Switch to Creative');
+$('bMode').onclick = () => { G.mode = G.mode === 'creative' ? 'survival' : 'creative'; if (G.mode === 'survival') player.flying = false; modeLabel(); updateHUD(true); save(); };
 $('bQuit').onclick = () => { save(); if (PLAY) return location.replace(STOP); G.state = 'title'; clearEntities(); show('title'); };
 for (const [id, k, fmt] of [['rd', 'rd', (v) => v + ' chunks'], ['fov', 'fov', (v) => v + '°'], ['vol', 'vol', (v) => v + '%']]) {
   const el = $(id);
@@ -252,7 +255,7 @@ function pause() {
   if (G.state !== 'playing') return;
   if (invUI.open) invUI.hide();
   G.state = 'paused'; keys.clear(); mouse.left = mouse.right = false;
-  show('pause'); save();
+  show('pause'); modeLabel(); save();
 }
 function resume() {
   audio.unlock();
