@@ -20,9 +20,11 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
 import { ChapterTakeContext } from '@/features/chapters/story/take'
+import { useNudge } from '@/features/chapters/useNudge'
 
 export default function CountingStoryChapter(props: { onComplete: (correct: number, wrong: number) => void; onExit?: () => void; childName: string }) {
   const router = useRouter()
+  useNudge()
   const exit = props.onExit ?? (() => router.push('/modules'))
   const { finishAndSync } = useChapterSync('counting')   // it only ever completes 'counting' (line 38)
   const [body, setBody] = useState<HTMLElement | null>(null)

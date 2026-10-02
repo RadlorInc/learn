@@ -1032,3 +1032,11 @@ input[type="range"] { height: 44px; }
    16px wide and ◀ ▶ ↩ at 31–40px — a small finger misses them (e2e/xbrowser-clicks.spec.ts, founder's call 2026-10-02).
    `min-*` wins over a smaller inline width/height, so this floors every button without touching larger ones. */
 .kg2-chapter button, .kg2-chapter [role="button"] { min-width: 44px; min-height: 44px; }
+
+/* useNudge (src/features/chapters/useNudge.ts): the next thing to tap moves. `scale`, not `transform`, so a control's own
+   positioning transform is untouched. A commit bounces; answer choices wiggle — all alike, never the right one alone. */
+@keyframes kg2-go   { 0%, 100% { scale: 1 } 50% { scale: 1.12 } }
+@keyframes kg2-pick { 0%, 100% { scale: 1 } 50% { scale: 1.06 } }
+.kg2-chapter .kg2-nudge-go   { animation: kg2-go 0.9s ease-in-out infinite; }
+.kg2-chapter .kg2-nudge-pick { animation: kg2-pick 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .kg2-chapter .kg2-nudge-go, .kg2-chapter .kg2-nudge-pick { animation: none; } }

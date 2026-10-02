@@ -299,3 +299,49 @@ for (const id of CHAPTERS) {
     expect(errors, 'uncaught page errors').toEqual([])
   })
 }
+
+/**
+ * The nudge (src/features/chapters/useNudge.ts): the next thing to tap moves. Written against two chapters whose
+ * screens say exactly what is next: Bead Shop asks for one of three beads (choices → all wiggle when idle, never the
+ * chrome; a tap stops it), Home Time asks to send N home then Ready (work done → Ready bounces).
+ */
+test.describe('nudge', () => {
+  const open = async (page: Page, id: string) => {
+    await seedSession(page)
+    await page.addInitScript(({ learner, id }) => {
+      sessionStorage.setItem('milo_active_learner', JSON.stringify({ id: learner, display_name: 'E2E', age_group: '3-5' }))
+      localStorage.setItem(`milo-chres-${learner}-${id}`, JSON.stringify({ round: 3, correct: 2, wrong: 1, seen: [], asked: [], at: Date.now() }))
+    }, { learner: 'e2e-nudge', id })
+    await page.goto(`/game?c=${id}`)
+  }
+  const nudged = (page: Page, cls: string) => page.evaluate(c => [...document.querySelectorAll(`.${c}`)].map(e => e.getAttribute('aria-label') || (e as HTMLElement).innerText.trim()), cls)
+
+  test('choices wiggle when the child is idle, all alike, and stop on a tap', async ({ page }, info) => {
+    test.skip(info.project.use.isMobile === true && (info.project.use.viewport?.height ?? 0) > (info.project.use.viewport?.width ?? 0), 'portrait phone asks to rotate')
+    await open(page, 'patterns')
+    // The make picker comes first (isVisible does not wait — waitFor does).
+    const pick = page.getByRole('button', { name: /A necklace/ })
+    await pick.waitFor({ timeout: 20_000 })
+    if (info.project.use.hasTouch) await pick.tap(); else await pick.click()
+    await expect(page.getByText('What comes next?')).toBeVisible({ timeout: 20_000 })
+    await page.waitForTimeout(6000)   // idle: longer than the hook's 4 s
+    const picks = await nudged(page, 'kg2-nudge-pick')
+    expect(picks.filter(p => / bead$/.test(p)).length, `wiggling: ${picks.join(', ')}`).toBe(3)
+    expect(picks.filter(p => /menu|hear it again/i.test(p)), 'chrome must never be nudged').toEqual([])
+    await page.locator('.kg2-nudge-pick').first().dispatchEvent('pointerdown')
+    expect(await nudged(page, 'kg2-nudge-pick')).toEqual([])
+  })
+
+  test('the commit bounces once the screen\'s work is done', async ({ page }, info) => {
+    test.skip(info.project.use.isMobile === true && (info.project.use.viewport?.height ?? 0) > (info.project.use.viewport?.width ?? 0), 'portrait phone asks to rotate')
+    await open(page, 'matchingQuantities')
+    await expect(page.getByRole('button', { name: /Ready/ })).toBeVisible({ timeout: 20_000 })
+    expect(await nudged(page, 'kg2-nudge-go'), 'no bounce before any work').toEqual([])
+    const send = page.locator('button[aria-label^="send "][aria-label$=" home"]:not([disabled])').first()
+    const box = await send.boundingBox()
+    if (info.project.use.hasTouch) await page.touchscreen.tap(box!.x + box!.width / 2, box!.y + box!.height / 2)
+    else await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2)
+    await page.waitForTimeout(3000)   // a pause after working: longer than the hook's 2 s
+    expect((await nudged(page, 'kg2-nudge-go')).some(t => /Ready/.test(t)), 'Ready should bounce').toBe(true)
+  })
+})
