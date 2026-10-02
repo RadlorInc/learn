@@ -1020,3 +1020,9 @@ input[type="range"] { height: 44px; }
 @media (prefers-reduced-motion: reduce) { .dash-spot { transition: none; } }
 /* Buttons and fields do not inherit the page font by default — they rendered in the system font. */
 .home-app button, .home-app select, .home-app input, .home-app textarea { font-family: inherit; }
+
+/* A full-width fixed row that only CENTRES its controls (answer pads, choice rows in the KG–2 chapters): the empty
+   width around them must not take taps meant for the scene beneath — on a short landscape phone it covered the
+   blocks' trade target (e2e/xbrowser-clicks.spec.ts). Its own controls still take taps. */
+.tap-through { pointer-events: none; }
+.tap-through > * { pointer-events: auto; }

@@ -574,7 +574,7 @@ export const PvRoundView: React.FC<{ slot: Slot; data: PvRound; mode: Mode; onCo
       <Scene r={r} m={m} cube={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh}
         hint={r.bay === 10} onBay={r.bay === 10 && !ok ? trade : undefined} />
 
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
+      <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
         display: 'flex', justifyContent: 'center' }}>
         {isMake
           ? <MakeControls m={m} cube={cube} band={band} vw={vw} live={live && !ok} canUndo={r.rods + r.bay > 0}

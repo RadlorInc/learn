@@ -230,7 +230,7 @@ function Controls({ world, count, onAdd, onUndo, onDone, live }: {
     padding: '11px 20px', fontSize: 17, boxShadow: '0 4px 12px rgba(0,0,0,.22)',
   })
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, bottom: 9, zIndex: 46,
+    <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: 9, zIndex: 46,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '0 10px' }}>
       <button onClick={live ? onAdd : undefined} disabled={!live} aria-label="Add block"
         style={{ ...btn(world.tint), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', opacity: live ? 1 : .5 }}>
