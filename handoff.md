@@ -17,7 +17,7 @@ fixed yet are tracked outside this public repo; ask the founder.
   BlockCraft game time on `/play` (#352, 1 Oct); six legal pages as beta versions; nightly
   backups green.
 - **The game (BlockCraft) is live** (#352, merged 1 Oct; its three migrations applied and proved on production): the
-  game opens full page from `/play`, creative only, saved to the child's account; stopping early charges the seconds
+  game opens full page from `/play` in creative (a pause-menu button switches to survival, which has no damage), saved to the child's account; stopping early charges the seconds
   played. Not yet played signed in by a real child on production. Branch `wip/game-in-play` is superseded, except its three test files `adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules` (never ported). The founder's main checkout is back on `main`; its other uncommitted
   leftovers are in a local `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
