@@ -146,7 +146,10 @@ export function OfflineBanner(): React.ReactElement | null {
 
   return (
     <div ref={bar} data-offline-bar style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
+      // ⚠️ `pointerEvents: 'none'`: the bar is text only and sits over full-screen chapters that do not pad for
+      // `--offline-bar`, so it swallowed taps on answer pads and the end card's "Back to modules" — it shows exactly
+      // when a finished chapter syncs. Found by e2e/xbrowser-clicks.spec.ts.
+      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999, pointerEvents: 'none',
       padding: '12px 20px calc(12px + env(safe-area-inset-bottom))',
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
       fontSize: 14, fontWeight: 600, color: '#fff',

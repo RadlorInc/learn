@@ -56,6 +56,8 @@ Never push to `release` by hand. Pointing it at an older commit deploys nothing,
 | Vercel cron `/api/consent/cancel-second-notice` | 06:23 daily (`vercel.json`) | Cancels queued second consent emails, then emails the ops digest (numbers only). The digest is sent only if `CRON_SECRET` and `OPS_DIGEST_TO` are set in Vercel | Digest lines marked `!!` |
 | Database retention jobs (pg_cron) | 03:17–03:37 daily | The schedule in [../legal/04-data-retention-policy.md](../legal/04-data-retention-policy.md) | Digest line `cron_jobs_failing` |
 
+Before a launch, or after a change to a KG–2 chapter's layout, run the cross-browser tap sweep locally against an offline dev server (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:9 NEXT_PUBLIC_SUPABASE_ANON_KEY=offline npx next dev -p 3055`, which touches no database): `E2E_MATRIX=1 E2E_BASE_URL=http://localhost:3055 npx playwright test e2e/xbrowser-clicks.spec.ts --workers=5` (about 2.5 hours for all 13 profiles; narrow with `--project=mac-safari` and `E2E_ONLY=counting`). Read "could not look" as untested, not as a pass.
+
 Unpausing the sweeps also needs `e2e/start-card.spec.ts` and `e2e/short-landscape.spec.ts` back (absent as of 2026-09-28). `upload-audio.yml` is manual ([audio-upload.md](audio-upload.md)). Never run `migrate-region.yml` again: it was a one-off for the September 2026 region move.
 
 ## Staging

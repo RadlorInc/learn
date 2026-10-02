@@ -230,7 +230,7 @@ function Controls({ world, count, onAdd, onUndo, onDone, live }: {
     padding: '11px 20px', fontSize: 17, boxShadow: '0 4px 12px rgba(0,0,0,.22)',
   })
   return (
-    <div style={{ position: 'fixed', left: 0, right: 0, bottom: 9, zIndex: 46,
+    <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: 9, zIndex: 46,
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '0 10px' }}>
       <button onClick={live ? onAdd : undefined} disabled={!live} aria-label="Add block"
         style={{ ...btn(world.tint), display: 'flex', alignItems: 'center', gap: 8, padding: '9px 20px', opacity: live ? 1 : .5 }}>
@@ -497,7 +497,7 @@ export default function MeasureIt({ world: forcedWorldId, onFinish, onExit }: {
   const shown: Thing = phase === 'practice' ? thing : phase === 'guided' ? guided : demos[demoIdx]
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: pillTop(short), left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: pillTop(short), left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px',
         fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}<DirectionsInline chapter="measurement" /></div>
     </div>

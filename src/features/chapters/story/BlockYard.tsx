@@ -567,7 +567,7 @@ export const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mo
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} hint={y.step === 'stuck'}
         onRun={y.step === 'stuck' && op === '+' ? tradeUp : undefined}
         onRod={y.step === 'stuck' && op === '-' ? tradeDown : undefined} />
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
+      <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
         <AnswerPad digits={digits} band={PAD_BAND(vh)} live={y.step === 'answer' && !ok}
           onDigit={n => setDigits(d => (d.length >= 2 ? d : [...d, n]))}
           onClear={() => setDigits(d => d.slice(0, -1))} onDone={commit} />
@@ -658,7 +658,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
       <Banner text={line || 'Watch how we trade the blocks…'} vh={vh} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} />
       {shown && (
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
+        <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
           <div style={{ background: 'var(--paper)', border: '4px solid var(--milo-orange)', borderRadius: 18, padding: '8px 22px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(cube * 1.5), color: 'var(--ink)', animation: 'by_pop .4s ease' }}>
             {a} {op === '+' ? '+' : '−'} {b} = {answer}
           </div>
