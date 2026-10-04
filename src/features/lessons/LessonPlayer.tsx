@@ -59,6 +59,12 @@ const LESSON_RATE = 0.9
 export interface ReviewGate {
   done: (key: string) => boolean
   bar: (key: string, played: boolean, answer: string) => ReactNode
+  /**
+   * Practice in review mode. `start`: practice reviews this topic already has, so a new sitting numbers its problems on
+   * from there (p6, p7…) instead of reusing keys an earlier sitting saved. `counts[i]`: reviewed problems at level i+1.
+   * `need`: how many each level needs before Finish practice opens.
+   */
+  practice: { start: number; counts: readonly number[]; need: number }
 }
 
 export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit, nudge = null, onPractise, practiceFirst = false, onModuleComplete, review }: {
@@ -222,7 +228,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   // "Didn't get it?" on every screen, for a signed-in child only (the row belongs to a learner). Opening it pauses the
   // lesson: her voice stops and the screen does not move on while the child is choosing.
-  const where = s.mode === 'lesson' ? `${s.screen + 1}` : s.mode === 'turn' || s.mode === 'won' ? '8' : s.mode === 'practice' ? `p${s.practice + 1}` : '9'
+  const where = s.mode === 'lesson' ? `${s.screen + 1}` : s.mode === 'turn' || s.mode === 'won' ? '8' : s.mode === 'practice' ? `p${s.practice + 1 + (review?.practice.start ?? 0)}` : '9'
   const rkey = s.mode === 'turn' || s.mode === 'won' ? (s.twin ? '8-twin' : '8') : where
   const played = s.mode === 'lesson'
     ? (beats ? playedOf === beats : s.screen === 0 ? playedOf === line1 : true)
@@ -320,8 +326,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const setDone = pause === 'checkpoint' ? CHECKPOINT : (run && ladder ? run.asked : s.practice) % CHECKPOINT + (answering ? 0 : 1)
     return (<>{bar}
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
-        exitLabel={ladder ? (review ? 'Finish practice' : C.takeBreak) : undefined}
-        onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
+        exitLabel={review ? '← Topics' : ladder ? C.takeBreak : undefined}
+        onExit={ladder && !review ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
         {review && ladder && run && (
           <div role="group" aria-label="Tester: question level" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
@@ -342,6 +348,24 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
             ))}
           </div>
         )}
+        {review && ladder && run && (() => {
+          // How far this topic's practice is, from the reviews saved (any sitting), and the way out once it is enough.
+          const counts = ladder.map((_, i) => review.practice.counts[i] ?? 0)
+          const enough = counts.every(c => c >= review.practice.need)
+          return (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '8px 12px', borderRadius: 14, border: `3px dashed ${INK}`, background: '#fffbe8' }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>
+                Tester: {review.practice.need} questions per level —{' '}
+                {counts.map((c, i) => <span key={i} style={{ color: c >= review.practice.need ? '#1f7a43' : INK }}>L{i + 1} {Math.min(c, review.practice.need)}/{review.practice.need}{i < counts.length - 1 ? ' · ' : ''}</span>)}
+              </span>
+              <button type="button" style={{ ...primary, minHeight: 44, padding: '8px 18px', fontSize: 17, marginLeft: 'auto', ...(enough && !(locked && !answering) ? {} : { opacity: 0.45, cursor: 'not-allowed' }) }}
+                disabled={!enough || (locked && !answering)} title={enough ? undefined : 'Review the questions above at every level first'}
+                onClick={() => { stopSpeech(); go({ ...s, mode: 'finish', misses: 0, feedback: null }) }}>
+                Finish practice ▶
+              </button>
+            </div>
+          )
+        })()}
         <SetDots n={setDone} />
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
@@ -486,7 +510,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   } else {
     crumb = 'Done!'; at = 8
     // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
-    const topicDone = !ladder || doneHere || lessonDone(learnerId, lesson.id)
+    // A tester reviews the real Screen 9 (the sticker and Screen 8's sentence), not the child's break card.
+    const topicDone = !!review || !ladder || doneHere || lessonDone(learnerId, lesson.id)
     const allDone = topicDone && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
     // Screen 9, once practice is complete: Screen 8's sentence and the math word (README: the math word appears ONLY

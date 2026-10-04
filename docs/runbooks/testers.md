@@ -35,10 +35,14 @@ end). Next stays disabled until that screen is reviewed; Back and ← Topics alw
 
 **Practice levels.** A topic's practice has a ladder of question levels (most have 5). For a tester the ladder does not
 move by itself: a **Level** row (L1, L2, …) above the problem picks the level; tapping one swaps in a new problem at
-that level, and **Next problem** keeps drawing from it. Nothing about levels is saved for anyone, there is no 5-answer
-checkpoint and no end at 12 answers — the tester taps **Finish practice** when done, which leads to `9`. Each practice
-review's answer starts with its level (`L3 · 7 → 12 ✓`), so the ops tab can show which levels of each topic were
-checked. Ask testers for at least two questions at every level of every topic.
+that level, and **Next problem** keeps drawing from it. Nothing about levels is saved for a child's account, there is
+no 5-answer checkpoint and no end at 12 answers. A yellow line counts the tester's reviewed questions per level
+(`L1 2/2 · L2 1/2 …`, from every sitting); **Finish practice ▶** opens only when every level has 2, and leads to the
+real Screen 9. Each practice review's answer starts with its level (`L3 · 7 → 12 ✓`). A later sitting numbers its
+practice on from the last saved one (p6, p7…), so an earlier review is never shown as this question's.
+
+**When a topic is "✓ done":** every practice level has 2 reviewed questions **and** screen `9` is reviewed. Until then
+the list shows `n screens reviewed · practice x/y`. The ops tab counts topics done by the same rule.
 
 **A KG–2 chapter** plays as a child gets it (landscape on a phone). It stops after its intro (`intro`: the demo and
 guided round together), after every answer (`q1`…; the answer column says ✓ or ✗ and the question), after every
