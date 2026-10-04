@@ -21,6 +21,7 @@ import { VOICE_INDEX as CHAPTER_VOICE_INDEX } from '@/features/chapters/voice-in
 import { ChapterReviewContext } from '@/shared/chapterReview'
 import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { JOSH } from '@/infra/storage/voicePref'
+import { TesterGuide } from './TesterGuide'
 
 type Open = { module_id: string; reviewed: string[] }
 /** One call to Radlor Ops, through this app's own /api/tester. */
@@ -109,22 +110,7 @@ export default function TesterPage() {
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: 16, color: INK }}>
       <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <h1 style={{ margin: 0, fontSize: 26 }}>{grade} · {chapter ? 'Chapter' : `Module ${meta?.n}`}: {meta?.title}</h1>
-        <div style={{ ...card, fontSize: 16, lineHeight: 1.5 }}>
-          <b>How to test</b>
-          {chapter
-            ? <ol style={{ margin: '6px 0 0', paddingLeft: 22 }}>
-                <li>Open the chapter. Turn your sound on. Play it like a young child would.</li>
-                <li>After the intro, after every question and after every explanation, the chapter stops and asks if it was right.</li>
-                <li>If not, write what is wrong (the voice, the picture, the question, the answer, a tap that did not work…).</li>
-                <li>Only then does it go on. Play to the end; the last card asks about the chapter as a whole.</li>
-              </ol>
-            : <ol style={{ margin: '6px 0 0', paddingLeft: 22 }}>
-                <li>Open a topic. Turn your sound on.</li>
-                <li>Let each screen play to the end, and answer every question yourself.</li>
-                <li>Then say if the screen is right. If not, write what is wrong (wrong number, spelling, the voice, the picture…).</li>
-                <li>Only then does Next open. Go through every screen to the end of the topic.</li>
-              </ol>}
-        </div>
+        <TesterGuide chapter={!!chapter} />
         {topics.map(l => {
           const n = open.reviewed.filter(x => x.startsWith(`${l.id}/`)).length, finished = reviewed.has(`${l.id}/9`)
           return (
@@ -211,7 +197,6 @@ function Note({ children }: { children: React.ReactNode }) {
   return <div style={{ minHeight: '100dvh', background: PAGE_BG, display: 'grid', placeItems: 'center', padding: 16, color: INK, fontSize: 20 }}>{children}</div>
 }
 
-const card: CSSProperties = { background: '#fff', border: `4px solid ${INK}`, borderRadius: 18, padding: 14 }
 const small: CSSProperties = { ...pill, fontSize: 15, padding: '8px 12px' }
 const bar: CSSProperties = {
   position: 'fixed', left: '50%', bottom: 10, transform: 'translateX(-50%)', zIndex: 1001, width: 'min(760px, calc(100vw - 20px))',
