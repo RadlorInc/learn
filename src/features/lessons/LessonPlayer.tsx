@@ -29,7 +29,7 @@ import { markNudgeShown } from '@/infra/storage/nudgeSeen'
 import { Pic, tapCue, pill, INK, TEAL, ON_TEAL } from './Pictures'
 import { Ink, wrap } from './Diagrams'
 import { Chalkboard } from './Chalkboard'
-import { beatMs } from './chalk'
+import { beatMs, setWordTimes } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
@@ -97,9 +97,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   useEffect(() => {
     setSceneVoice(lessonVoice(lesson.id), VOICE_INDEX[lesson.id.split('-')[0]])
     setClipRate(LESSON_RATE)
+    // The chalk lands on her real words (./word-times, one small chunk per module); until it loads, or for a module with
+    // none, the board keeps chalk.ts's estimate.
+    let live = true
+    import(`./word-times/${lesson.id.split('-')[0]}.json`).then(x => { if (live) setWordTimes(x.default, LESSON_RATE) }, () => {})
     // Download her lines now, so one sentence runs into the next instead of waiting on a download between them.
     prefetchClips([...lesson.screens.flatMap(sc => sc.beats?.map(b => b.say) ?? []), SAY.turn(lesson), lesson.bigIdea])
-    return () => { setSceneVoice(null); setClipRate(1) }
+    return () => { live = false; setSceneVoice(null); setClipRate(1); setWordTimes({}, 1) }
   }, [lesson])
   const ladder = ladderOf(lesson.id)
   const [run, setRun] = useState<Run | null>(null)
