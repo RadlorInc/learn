@@ -1,62 +1,56 @@
 # Paid testers
 
-A tester is paid to go through one module and say, screen by screen, whether it is right. The app makes sure they
-cannot skip: nothing moves on by itself, Next opens only after the screen has played out (her lines finished, the
-question answered) and the tester has tapped **Looks right** or written what is wrong. Every review is saved, so
-`/admin/testers` shows whether the testing really happened before anyone is paid.
+A tester is paid to go through one Grade 3–8 module or one KG–2 chapter and say, screen by screen, whether it is
+right. The app makes sure they cannot skip: nothing moves on by itself, and each step waits until the screen has
+played out (her lines finished, the question answered) and the tester has tapped **Looks right** or written what is
+wrong. Every review is saved, so an admin can see whether the testing really happened before anyone is paid.
 
-Who does what: the founder (or another admin) makes links and pays; the tester needs no account.
+**Where things live.** The links and reviews are in the **Radlor Ops** app (its "Radlic testers" tab, ops admins
+only) and its database — not in Radlic's, which holds nothing about testers. Radlic has the tester's page
+(`/test`) and `POST /api/tester`, which forwards each call from Radlic's server to Ops `/api/radlic-tester`
+(set `TESTER_API` to point elsewhere; unset = `https://ops.radlor.com`). The Ops side is documented in the radlor-ops
+repository (its Radlic testers doc).
 
-## 1. Make a link (admin)
+## 1. Make a link (an ops admin)
 
-1. Sign in at `/admin/login`, open **Testers**.
-2. Type the tester's email, pick a Grade 3–8 module or a KG–2 chapter, add a note if useful (rate, deadline), **Create link**.
-3. Copy the link (`https://radlic.com/test#t=…`) and send it to the tester yourself. The app sends no email.
-
-One link = one email + one module (or one KG–2 chapter). For a second one, make a second link. The token after `#t=` is the only key:
-anyone holding the link can review as that tester, so send it to them alone. **Revoke** closes it at once.
+Radlor Ops → **Radlic testers** → email, module or chapter, an optional note → **Create link**. Copy the
+`https://radlic.com/test#t=…` link and send it to the tester yourself (nothing is emailed). One link = one email +
+one module or chapter. The token after `#t=` is the only key: anyone holding the link can review as that tester, so
+send it to them alone. **Revoke** closes it at once.
 
 ## 2. What the tester does
 
-They open the link, see the module's topics and a short "how to test", open a topic, and go through it in the real
-lesson player (same voice, screens and questions as a child gets; it is the live code, not a copy). Under every
-screen a yellow bar asks "Is this screen right?":
+They open the link, see the module's topics (or the chapter) and a short "how to test", and play the real thing —
+same voice, screens and questions as a child gets; it is the live code, not a copy. A yellow bar asks "Is this
+screen right?":
 
-- before the screen has played (teaching screens) or been answered (Screen 8 and practice) the bar says so and the
-  buttons are not there;
-- **👍 Looks right** saves and opens Next;
+- before a screen has played (teaching) or been answered (Screen 8, practice) the bar says so;
+- **👍 Looks right** saves and lets it go on;
 - **⚠️ Something is wrong** asks for tags (voice, text, picture, answer, speed, confusing, bug) and a note of at least
-  5 letters, then saves and opens Next;
-- **Change my review** replaces the saved one.
+  5 letters, then saves and lets it go on;
+- **Change my review** (lessons) replaces the saved one.
 
-Screens are keyed `1`–`7` (teaching), `8` and `8-twin` (Now you try), `p1`, `p2`… (practice), `9` (the end). A topic
-counts as done when screen `9` is reviewed. Nothing the tester does is saved as a child's progress (no learner).
+**A lesson** keys its screens `1`–`7` (teaching), `8` and `8-twin` (Now you try), `p1`, `p2`… (practice), `9` (the
+end). Next stays disabled until that screen is reviewed; Back and ← Topics always work.
 
-**A KG–2 chapter** plays as a child gets it (landscape on a phone). It stops and shows the bar after the chapter's
-intro (`intro`: its demo and guided round together), after every answer (`q1`, `q2`…; the answer column says ✓ or ✗
-and the question), after every re-teach (`r1`…), and after each spoken line of a walk (`s1`…; the counting
-chapters). While the bar is up a see-through cover stops taps, so the chapter cannot go on. The tester plays the
-whole run — the 5-question break is off for them — and the chapter's end card asks for `9`, the chapter as a whole.
-Nothing is saved to a child, even on a device where a child is chosen (`ChapterReviewContext` turns off the
-standing, the score and the resume point).
+**A KG–2 chapter** plays as a child gets it (landscape on a phone). It stops after its intro (`intro`: the demo and
+guided round together), after every answer (`q1`…; the answer column says ✓ or ✗ and the question), after every
+re-teach (`r1`…) and after each spoken line of a walk (`s1`…, the counting chapters). While the bar is up a
+see-through cover stops taps. The tester plays the whole run (the 5-question break is off for them), and the end card
+asks for `9`, the chapter as a whole.
 
-## 3. Check the work, then pay (admin)
+A topic or chapter counts as finished when `9` is reviewed. Nothing the tester does is saved to a child, even on a
+device where a child is chosen: the lesson player gets no learner, and `ChapterReviewContext` turns off a chapter's
+standing, score and resume point.
 
-On `/admin/testers`, per link: topics done of the module's total, screens reviewed, issues, **Not played** (reviews
-saved before the screen finished — the app blocks this, so anything but 0 needs a look), median time a screen was
-open, last activity. **Reviews** lists every screen: verdict, note, the answers they typed (`7 → 12 ✓` = wrong then
-right; `(steps shown)` = missed twice), time open.
+## 3. Check the work, then pay (an ops admin)
 
-Signs of a genuine test: every topic reaches `9`; times look like someone listening (a teaching screen is open at
-least as long as her lines take); answers vary and are sometimes wrong; issues name something specific. Signs of
-not: topics missing, the same answer typed everywhere, no issue across a whole module.
+On the tab, per link: topics finished of the total, screens reviewed, issues, **Not played** (reviews saved before
+the screen finished — the app blocks this, so anything but 0 needs a look), median time a screen was open, last
+activity. **Reviews** lists every screen: verdict, note, the answers typed (`7 → 12 ✓` = wrong then right; `(steps
+shown)` = missed twice), time open.
 
-Pay outside the app, then **Mark paid** (this also closes the link). Fix issues through the normal lesson workflow
-([building-lessons](../product/building-lessons.md)).
-
-## Data
-
-Tables `tester_assignments` and `tester_reviews` (migration `20261004120000_tester_reviews.sql`): RLS on, no
-policies, reached only through `admin_tester_*` (admin) and `tester_open` / `tester_review` (the token). They hold
-the tester's email and their reviews — an adult's, never a child's. Delete a tester's rows on request
-([data-requests](data-requests.md)): `delete from tester_assignments where email = '…'` (their reviews go with it).
+Signs of a genuine test: every topic reaches `9`; times look like someone listening; answers vary and are sometimes
+wrong; issues name something specific. Signs of not: topics missing, the same answer everywhere, no issue across a
+whole module. Pay outside the app, then **Mark paid** (this also closes the link). Fix issues through the normal
+lesson workflow ([building-lessons](../product/building-lessons.md)).

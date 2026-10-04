@@ -1,8 +1,8 @@
 'use client'
 /**
  * /test#t=<token> — a paid tester reviews one Grade 3–8 module or one KG–2 story chapter (docs/runbooks/testers.md).
- * The token in the hash (never sent to a server log) is the only authorisation: `tester_open` answers with the module,
- * `tester_review` saves one screen.
+ * The token in the hash (never in a URL a server logs) is the only authorisation. The links and reviews live in the
+ * Radlor Ops database: `/api/tester` forwards each call there — 'open' answers with the module, 'review' saves one screen.
  *
  * The tester plays the real thing, with its real voice, screens and questions, in review mode:
  *   - a lesson: LessonPlayer's ReviewGate — nothing moves on by itself, and Next opens only after the screen has
@@ -13,7 +13,6 @@
  * child's data.
  */
 import { useCallback, useEffect, useLayoutEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
-import { db } from '@/data/repositories/_shared'
 import { CATALOGUE, STORY_CATALOGUE, storyOf, useModule } from '@/features/lessons/catalogue'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { pill, INK, TEAL, ON_TEAL, PAGE_BG, BAD } from '@/features/lessons/Pictures'
@@ -24,6 +23,8 @@ import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { JOSH } from '@/infra/storage/voicePref'
 
 type Open = { module_id: string; reviewed: string[] }
+/** One call to Radlor Ops, through this app's own /api/tester. */
+const ops = (body: object) => fetch('/api/tester', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 type Ask = { key: string; answer: string; n: number; resolve: () => void }
 const noSubscribe = () => () => {}
 
@@ -38,8 +39,9 @@ export default function TesterPage() {
   useEffect(() => {
     if (!token) return
     let live = true
-    void db().rpc('tester_open', { p_token: token })
-      .then(({ data, error }: { data: Open | null; error: unknown }) => { if (live) setOpen(error || !data ? 'bad' : data) })
+    void ops({ action: 'open', token })
+      .then(async r => (r.ok ? ((await r.json()) as Open) : null), () => null)
+      .then(data => { if (live) setOpen(data ?? 'bad') })
     return () => { live = false }
   }, [token])
 
@@ -150,11 +152,11 @@ function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved }: 
   const send = async (verdict: 'ok' | 'issue') => {
     setMode('sending'); setErr('')
     const note = verdict === 'issue' ? `${tags.length ? `[${tags.join(', ')}] ` : ''}${text.trim()}` : null
-    const { error } = await db().rpc('tester_review', {
-      p_token: token, p_lesson: lessonId, p_screen: screen, p_verdict: verdict, p_note: note,
-      p_answer: question ? answer : null, p_open_ms: Date.now() - openedAt, p_played: played,
-    })
-    if (error) { setErr('That did not save. Check your connection and try again.'); setMode(verdict === 'issue' ? 'issue' : 'ask'); return }
+    const ok = await ops({
+      action: 'review', token, lesson: lessonId, screen, verdict, note,
+      answer: question ? answer : null, open_ms: Date.now() - openedAt, played,
+    }).then(r => r.ok, () => false)
+    if (!ok) { setErr('That did not save. Check your connection and try again.'); setMode(verdict === 'issue' ? 'issue' : 'ask'); return }
     setEditing(false); setMode('ask'); onSaved()
   }
 

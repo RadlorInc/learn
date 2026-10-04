@@ -22,7 +22,6 @@ const TABS = [
   { href: '/admin',          label: 'Signups & activity' },
   { href: '/admin/learning', label: 'Learning' },
   { href: '/admin/funnel',   label: 'Funnel & retention' },
-  { href: '/admin/testers',  label: 'Testers' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
