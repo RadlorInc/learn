@@ -100,6 +100,8 @@ Screens 2–7 are spoken by a teacher, one line at a time, while she draws on a 
 - **Each mark hangs on a word of its beat** (`[beat, 'word']`) and goes up as she says it. Draw what she says, at that
   word, and nothing before she says it: a result goes up when it is said. Text size 22–40, nothing overlapping, nothing
   near the edge. Screen 7: the wrong move crossed out in coral, the right one in yellow.
+- The mark goes up when her clip actually says that word (`word-times/`, rebuilt as in
+  [the audio runbook](../runbooks/audio-upload.md)); a new line has the length estimate until then.
 - **Look at every board**: `npx tsx scripts/chalk-shot.tsx <topic id> <out.png>`, then open the PNG.
 
 The examples to copy are `g5m1-t1` and `g5m1-t2` (`content/g5m1.ts`, `content/chalk/g5m1/`, `content/voice/g5m1.ts`).
