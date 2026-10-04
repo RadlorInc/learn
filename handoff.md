@@ -33,6 +33,9 @@ so the repo's migration chain still builds a body one comment different from pro
 1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
 2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
+3. #358 — KG–2 taps (a Safari tap report): sync bar, banners and layers no longer take taps; 44px floor; rotate
+   screen has Menu; the nudge. After merge, on a real iPhone/iPad in Safari: Counting and Add to 100 to the end card,
+   press Back to modules, and judge the nudge's size (6% choices, 12% commit — one line each in `globals.css`).
 
 ## Open — the founder decides
 
@@ -44,6 +47,8 @@ so the repo's migration chain still builds a body one comment different from pro
 - A "not this month" list and one deciding metric (7-day activation); a paid pilot before new surfaces.
 - Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
+- Counting's "Let's count together" demo: its creatures cannot be tapped for 9–24 s under "Tap each one to count!" —
+  say "Watch and count along" during the demo, or let them react without counting.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
 - Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
   exercise due dates, teacher billing; confirm "the first attempt is the class-exercise result" (decided without the
@@ -113,6 +118,9 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
   `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
   (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
+  The KG–2 tap sweep (`e2e/xbrowser-clicks.spec.ts`, #358, 13 profiles, runbook `deploy.md`) is local only, ~2.5 h;
+  its monkey cannot win Rainbow Town, Tens & Ones, Add/Subtract to 100, Time or Fractions, so their end cards are
+  unverified by automation — a solver per chapter closes it. Measuring logs React "setState while rendering".
 - No operator path closes an account for a parent who cannot use the app (`delete_my_account` needs their own recent
   sign-in): write one and rehearse it locally before the first such request.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
