@@ -8,36 +8,33 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (4 October 2026)
 
-- **Production** is on `b34235a1b` (#358), deployed; `smoke:live` not re-run since `19ef8a94c`. Since #349: the game
-  (#352, migrations applied), #355, #356, #357 (game survival), #358 (KG–2 taps). The repo `learn` is public (see the Vercel item below).
-- **Production accounts were wiped on 1 Oct** before the paid launch (only the founder's test accounts existed); the
-  founder ran and checked it: `docs/legal/sql/launch-wipe-all-accounts.sql`,
-  `launch-wipe-check.sql`. App data (chapters, catalogue, notices, `billing_config`, the lesson audio) was kept. The
-  founder's own account went too: sign up again and re-add the `admin_users` row.
+- **Production** is on `917e6cd24` (#371, 4 Oct; Vercel READY, Deploy green); `smoke:live` not re-run since
+  `19ef8a94c`. Since #358: paid testers (#365, #367, #368, #369, #370), chalk word times (#371). The repo `learn` is
+  public (see the Vercel item below).
+- **Paid testers are live** (4 Oct, [testers](docs/runbooks/testers.md)): links made on Radlor Ops' **Radlic
+  testers** tab; `radlic.com/test#t=…` plays the real lesson/chapter in review mode (each screen reviewed before it
+  moves on; 2 questions per practice level; ✓ done = that + Screen 9). Links and reviews live in the **ops** database;
+  Radlic's has nothing — `/api/tester` only forwards to Ops.
+- **CI's dependency audit** gates on shipped packages only (`--omit=dev`, #365); dev tools warn, not block.
+- **Production accounts were wiped on 1 Oct** before the paid launch (app data kept). The founder's own account went
+  too: sign up again and re-add the `admin_users` row.
 - **The paid launch is built, and switched off where it would lock or charge** (founder, 1 Oct, beta legal pages):
   `BILLING_LIVE = true` (#348): the plan page is the checkout and the Refund policy is published; Terms, Privacy and
   the subprocessor list carry the paid-plan text; no sales tax (#349). On production (migrations
-  `20261001120000`–`160000`, proof SQL passed): the free trial (the parent picks two topics of one module, or two
-  KG–2 stories, once; the child sees only those, nothing about a trial), seats that fill themselves and refill after a
-  delete, "seats full" → **Add a seat** in the app (prorated, on the card on file; a bank's 3-D Secure approval on
-  Stripe's page). **Still off on production:** `NEXT_PUBLIC_PAYWALL` is unset, `billing_config.enforced = false`,
+  `20261001120000`–`160000`, proof SQL passed): the free trial (two topics of one module, or two KG–2 stories),
+  self-filling seats, **Add a seat** (prorated, card on file, 3-D Secure on Stripe's page). **Still off on production:** `NEXT_PUBLIC_PAYWALL` is unset, `billing_config.enforced = false`,
   and `src/infra/stripe.ts` refuses a live key — nobody can be charged or locked yet.
 - **Staging exists** (1 Oct): Supabase `radlic-staging`, the `staging` branch (a push runs migrations, the RLS suite
   and a fake-data seed) and its preview on the Stripe sandbox — [docs/runbooks/deploy.md](docs/runbooks/deploy.md),
   Staging. Its schema matches production's. Staging-first is proven by `20261001090000` (restored `ensure_rls`).
-- **Stripe test mode is verified end to end on staging:** checkout, the acknowledgement email, a seat change, cancel,
-  a failed renewal (past_due → 7-day grace → cancelled) and the annual renewal reminder (#342). Staging runs the paywall:
-  Preview env (branch `staging` only) `NEXT_PUBLIC_PAYWALL=on` and `NEXT_PUBLIC_STRIPE_TEST_CHECKOUT=on`; staging's
-  `billing_config.enforced = true`. The whole trial → purchase → seats → add a seat → delete/refill flow, and the 3-D
-  Secure path (card 4000 0027 6000 3184), were driven in a browser on a local stack with the Stripe sandbox, 1 Oct.
+- **Stripe test mode is verified end to end on staging** (1 Oct, #342): checkout, emails, seat change, cancel, failed
+  renewal → grace → cancelled, annual reminder, 3-D Secure. Staging runs the paywall (Preview, branch `staging`:
+  `NEXT_PUBLIC_PAYWALL=on`, `NEXT_PUBLIC_STRIPE_TEST_CHECKOUT=on`; `billing_config.enforced = true`).
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters, own scenes and animals since #329); lesson audio from the
   `lesson-audio` bucket; email-plus consent on notice-v7 with the database gate; parent and teacher dashboards
   (teacher rosters paused); points that buy BlockCraft time on `/play` (#352; survival switch #357); seven legal pages as beta versions; nightly backups green.
-- **Audio bucket** (2 Oct, #329): 899 new Josh clips (tag `audio-src-josh-2026-10-02`) uploaded and read back; P5
-  read `17884 | 273065412`; S3 keys revoked.
-- **"Adaptive Learn review"** (18 points): Ops Feature backlog FEA-043–054 shipped, FEA-055–060 open; its mascot
-  voiceover left out (no mascot).
+- **"Adaptive Learn review"**: Ops Feature backlog FEA-055–060 still open.
 - **Not on `main`:** `classroom-parked` (first classroom build — never ship as is); local `learner-grade`
   (its own "notice-v7" clashes with the shipped one). The pre-rewrite handoff is saved outside the repo (owner only).
 
@@ -77,10 +74,9 @@ fixed yet are tracked outside this public repo; ask the founder.
    `RADLIC`, support@radlor.com, radlic.com). Product `Radlic — family plan`; two **graduated** USD prices matching
    `LADDER` (monthly 7.99 + 4.99, yearly 75.99 + 48.00, up to 4), lookup keys `milo_family_monthly_v1` and
    `milo_family_annual_v2`. Webhook `https://radlic.com/api/stripe/webhook` with `checkout.session.completed`,
-   `customer.subscription.created/updated/deleted`, `invoice.upcoming`. Settings: Adaptive Pricing **off** (it showed
-   INR on the sandbox); customer emails for successful payments, refunds and failed payments **on**; Revenue recovery:
-   retry within 7 days, then **mark unpaid** (Refund policy §7; today Stripe retries ~35 days then cancels); upcoming
-   renewal events 30 days; Stripe Tax **threshold monitoring** on (no tax collected, #349).
+   `customer.subscription.created/updated/deleted`, `invoice.upcoming`. Settings: Adaptive Pricing **off**; payment,
+   refund and failed-payment emails **on**; Revenue recovery: retry 7 days, then **mark unpaid** (Refund policy §7);
+   upcoming renewal events 30 days; Stripe Tax threshold monitoring on (no tax collected, #349).
 2. **`src/infra/stripe.ts` must accept a live key on Production** — built in Draft PR #351 (`sk_live_` only on
    Vercel Production, `sk_test_` everywhere else; safe to merge before step 1). The founder reviews and merges it.
    It also carries the `smoke:live` fix (expects `public/sw.js`'s version, not `v242`).
@@ -99,13 +95,11 @@ fixed yet are tracked outside this public repo; ask the founder.
 - Close superseded handoff PRs #343, #330; delete the merged branches `wip/game-in-play`,
   `game-on-play`, `games-not-coming-soon`, `no-ready-button`.
 
-- **Before `learn` goes private again:** Vercel blocked production deploys while it was private (#313, #314, 28 Sep);
-  on Pro it deploys only what a team member pushed, and `release` is pushed by GitHub Actions.
+- **Before `learn` goes private again:** Vercel blocked production deploys while private (#313, #314, 28 Sep) —
+  `release` is pushed by GitHub Actions; link the founder's GitHub to Vercel or add a deploy hook from `promote`.
+  Private also costs Actions minutes (~5,400/30 days vs 2,000 free): set a budget first.
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Supabase access tokens expire (the repo one did on 30 Sep, silently stopping backups): keep a reminder for both.
-  Unmeasured whether the block checks the commit author or the pusher: link the founder's GitHub to Vercel, or a deploy
-  hook from `promote` (agent builds it). Private also costs Actions minutes (~5,400/30 days measured 28 Sep vs 2,000
-  free, ~US$20/month): set a budget first or have the agent cut minutes.
 - Turn off the old claude.ai routine "Milo — daily production health check" (wrong URL; `daily-smoke.yml` replaces it).
 - An uptime checker on `/api/health` and `/auth` that alerts a phone.
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
@@ -117,6 +111,9 @@ fixed yet are tracked outside this public repo; ask the founder.
   `part-*` branches, the untracked `scripts/kaggle/` notebooks (clips are on the audio tags).
 
 ## Open — live checks on production (the founder)
+
+- **Paid testers, once with a real link** (never yet on production): Ops tab → link → radlic.com → 2 per level →
+  Finish → Screen 9 → ✓ done, counted on the Ops tab; then Revoke. Once more with a KG–2 chapter link.
 
 Consent and sign-up checks are in READINESS. The step lists below are in git history; `git show <path>` prints them.
 - Deep-review fixes (#235 #239 #242 #251 #262 #268 #269 #275 #246): steps in `fbf193280:docs/review/ROUND2.md` §3,
@@ -132,6 +129,9 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
+
+- Testers: Ops' `src/lib/radlicModules.json` copies this catalogue and each topic's level count (4 Oct) — regenerate
+  it when a module, chapter or ladder changes. A counting chapter's per-line (`s1`…) stops not seen in a browser.
 
 - Spanish drafts `docs/legal/es/01`, `11`, `12`, `07` do not carry the paid-launch or no-sales-tax text (beta pages
   show English only, so nothing wrong is published; the drafts drift).
