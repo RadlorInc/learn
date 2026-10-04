@@ -54,7 +54,8 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 |---|---|
 | Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then BlockCraft opens full page at `/blockcraft/`; [product/points.md](product/points.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
-| Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login` |
+| Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/testers`, `/admin/login` |
+| Paid testers | `/test#t=<token>` — one module in the lesson player's review mode ([testers](runbooks/testers.md)) |
 | Auth | `/auth` · `/auth/confirm` (sign-up link) · `/auth/callback` (Google) · `/auth/set-password` (invite, reset) · `/auth/new-password` (child's temporary password) |
 | Email links | `/consent/respond`, `/consent/withdraw`, `/email/unsubscribe` (act only on a button press) |
 | Public | `/` (signed in → home, else the company site's landing page) · `/help` · `/legal/<slug>` (renders `docs/legal/*.md` at build; dark until its switch in `src/app/legal/registry.ts`) · `/llms.txt` |
@@ -120,7 +121,8 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Other adults** see a child through an invite (`learner_invites` → a `viewer` row), removable by the creator or the
   viewer.
 - **Admin** is an account listed in `admin_users` (no client access; rows added by hand). Every `admin_*` RPC starts
-  with `admin_assert()`; `/admin` shows aggregates and writes nothing.
+  with `admin_assert()`; `/admin` shows aggregates and writes nothing about a family. `/admin/testers` is the one
+  page that writes: paid-tester links and marks (`tester_assignments`), never a child's data.
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
   data.
@@ -154,7 +156,7 @@ Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3
   child is deleted only by `delete_learner` → `delete_child_data` (logged, consent withdrawn, the child's login removed).
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
-- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
+- No client access: `admin_users`, `tester_assignments`, `tester_reviews`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
   `error_events`, `lesson_catalog` (the ids that may earn progress and points; read only by the two point functions). A parent reads only their own `parental_consents` rows and writes none.
 - Privilege is never read from a column its owner can write (admin is `admin_users`, not `profiles.role`). Some rules
   are column grants (invite status, `lesson_feedback`).
@@ -168,7 +170,8 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 - **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run`, `game_wallet`,
   `set_game_settings`, `start_game_time`, `end_game_time` (stop early, unused time back); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
-  `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
+  `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` and `admin_tester_*` (behind `admin_assert`); `tester_open`, `tester_review`
+  (anon; the link's token is the authorisation).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
   `consent_lookup`, `consent_grant`, `consent_decline`, `consent_withdraw`, `consent_ok`, `consent_expire_stale`,
   `materialize_seats`, `ops_digest`. **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
