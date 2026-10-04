@@ -17,7 +17,7 @@ import {
   START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
-import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, ladderAnswers, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
+import { rng, freshSeed, beginRun, advance, draw, SEEN, startLevel, reviewTopic, toSaved, fromSaved, runDone, ladderAnswers, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
 import { ladderOf, loadedLesson } from './catalogue'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
@@ -26,7 +26,7 @@ import { syncLesson, syncRun } from '@/infra/storage/lessonSync'
 import { C } from './sessionCopy'
 import type { Nudge } from './nudge'
 import { markNudgeShown } from '@/infra/storage/nudgeSeen'
-import { Pic, tapCue, pill, INK } from './Pictures'
+import { Pic, tapCue, pill, INK, TEAL, ON_TEAL } from './Pictures'
 import { Ink, wrap } from './Diagrams'
 import { Chalkboard } from './Chalkboard'
 import { beatMs } from './chalk'
@@ -126,6 +126,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // tester typed on this problem.
   const [playedOf, setPlayedOf] = useState<unknown>(null)
   const [tries, setTries] = useState<string[]>([])
+  // Review mode, laddered practice: the tester picks the level the next problem comes from (0-based), so every level's
+  // questions get checked — the adaptive ladder does not move, nothing is saved, and the run ends when they choose.
+  const [reviewLevel, setReviewLevel] = useState(0)
 
   const say = (text: string, on = audio) => { if (on && text) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
@@ -175,6 +178,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // Screen 8 solved (or the twin's worked steps seen): straight on to practice with the green check. Screen 9 (its sentence
   // and the math-word sticker) comes AFTER practice (founder, 2026-09-24).
   const startPractice = () => {
+    if (ladder && review) {
+      setRun(beginRun(lesson.id, ladder, FRESH, r, null))
+      setReviewLevel(0)
+      return go(toPractice(s))
+    }
     if (ladder) {
       const saved = loadRun(learnerId, lesson.id)
       if (saved) {
@@ -219,7 +227,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const played = s.mode === 'lesson'
     ? (beats ? playedOf === beats : s.screen === 0 ? playedOf === line1 : true)
     : s.mode === 'turn' || s.mode === 'practice' ? s.feedback === 'right' || s.feedback === 'worked' : true
-  const answer = tries.join(' → ') + (s.mode === 'won' || s.feedback === 'right' ? ' ✓' : s.feedback === 'worked' ? ' (steps shown)' : '')
+  const answer = (review && ladder && s.mode === 'practice' ? `L${reviewLevel + 1} · ` : '') + tries.join(' → ') + (s.mode === 'won' || s.feedback === 'right' ? ' ✓' : s.feedback === 'worked' ? ' (steps shown)' : '')
   const locked = !!review && !review.done(rkey)
   const shut: CSSProperties = locked ? { opacity: 0.45, cursor: 'not-allowed' } : {}
   const bar = review?.bar(rkey, played, answer)
@@ -281,6 +289,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const nextProblem = () => {
       if (locked) return
       if (!run || !ladder) return go(nextPractice(s))
+      if (review) {
+        // The tester's level, not the ladder's: no standing moves, no checkpoint, no end at DONE_AFTER.
+        const next = draw(ladder, reviewLevel, r, run.recent)
+        setRun({ ...run, asked: run.asked + 1, recent: [...run.recent, next.text].slice(-SEEN), current: { problem: next, from: lesson.id } })
+        setSession(x => ({ ...x, answered: x.answered + 1 }))
+        return go({ ...s, practice: s.practice + 1, misses: 0, feedback: null })
+      }
       const o = outcomeOf(s), outcome = asked && o === 'first' ? 'second' : o
       const moved = advance(run, lesson.id, ladderOf, outcome, r)
       for (const [id, st] of moved.saved) { saveStanding(learnerId, id, st); syncLesson(learnerId, id, outcome) }
@@ -305,9 +320,28 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const setDone = pause === 'checkpoint' ? CHECKPOINT : (run && ladder ? run.asked : s.practice) % CHECKPOINT + (answering ? 0 : 1)
     return (<>{bar}
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
-        exitLabel={ladder ? C.takeBreak : undefined}
+        exitLabel={ladder ? (review ? 'Finish practice' : C.takeBreak) : undefined}
         onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
+        {review && ladder && run && (
+          <div role="group" aria-label="Tester: question level" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <b style={{ fontSize: 16 }}>Level</b>
+            {ladder.map((_, i) => (
+              <button key={i} type="button" aria-pressed={i === reviewLevel} disabled={!answering}
+                onClick={() => {
+                  // A new problem at that level, in place of the one on screen (not yet answered).
+                  const next = draw(ladder, i, r, run.recent)
+                  setReviewLevel(i)
+                  setRun({ ...run, recent: [...run.recent, next.text].slice(-SEEN), current: { problem: next, from: lesson.id } })
+                  setValue(''); setTries([]); setAsked(false); setTaps(0)
+                  go({ ...s, misses: 0, feedback: null })
+                }}
+                style={{ ...pill, fontSize: 16, padding: '6px 12px', background: i === reviewLevel ? TEAL : '#fff', color: i === reviewLevel ? ON_TEAL : INK }}>
+                L{i + 1}
+              </button>
+            ))}
+          </div>
+        )}
         <SetDots n={setDone} />
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
