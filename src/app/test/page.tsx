@@ -1,19 +1,30 @@
 'use client'
 /**
- * /test#t=<token> — a paid tester reviews one module (docs/runbooks/testers.md). The token in the hash (never sent to
- * a server log) is the only authorisation: `tester_open` answers with the module, `tester_review` saves one screen.
+ * /test#t=<token> — a paid tester reviews one Grade 3–8 module or one KG–2 story chapter (docs/runbooks/testers.md).
+ * The token in the hash (never sent to a server log) is the only authorisation: `tester_open` answers with the module,
+ * `tester_review` saves one screen.
  *
- * The tester sees the real lesson player, with its real voice, screens and questions, in review mode (see ReviewGate
- * in LessonPlayer): nothing moves on by itself, and Next opens only after the screen has played out and the tester
- * has said "Looks right" or written what is wrong. No learner, so nothing here touches a child's data.
+ * The tester plays the real thing, with its real voice, screens and questions, in review mode:
+ *   - a lesson: LessonPlayer's ReviewGate — nothing moves on by itself, and Next opens only after the screen has
+ *     played out and the tester has said "Looks right" or written what is wrong;
+ *   - a chapter: ChapterReviewContext — the chapter waits after its intro, every answer, every re-teach and every
+ *     spoken walk line until the tester has reviewed it; a see-through cover stops taps meanwhile.
+ * No learner, and the chapter records nothing even on a device with a child chosen, so nothing here touches a
+ * child's data.
  */
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import { db } from '@/data/repositories/_shared'
-import { CATALOGUE, useModule } from '@/features/lessons/catalogue'
+import { CATALOGUE, STORY_CATALOGUE, storyOf, useModule } from '@/features/lessons/catalogue'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { pill, INK, TEAL, ON_TEAL, PAGE_BG, BAD } from '@/features/lessons/Pictures'
+import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
+import { VOICE_INDEX as CHAPTER_VOICE_INDEX } from '@/features/chapters/voice-index'
+import { ChapterReviewContext } from '@/shared/chapterReview'
+import { setSceneVoice } from '@/infra/voiceClipPlayer'
+import { JOSH } from '@/infra/storage/voicePref'
 
 type Open = { module_id: string; reviewed: string[] }
+type Ask = { key: string; answer: string; n: number; resolve: () => void }
 const noSubscribe = () => () => {}
 
 export default function TesterPage() {
@@ -22,6 +33,7 @@ export default function TesterPage() {
   const token = mounted ? new URLSearchParams(window.location.hash.slice(1)).get('t') : null
   const [open, setOpen] = useState<Open | 'bad' | null>(null)
   const [topic, setTopic] = useState<string | null>(null)
+  const [ask, setAsk] = useState<Ask | null>(null)
 
   useEffect(() => {
     if (!token) return
@@ -31,17 +43,46 @@ export default function TesterPage() {
     return () => { live = false }
   }, [token])
 
-  const whole = useModule(open && open !== 'bad' ? open.module_id : undefined)
+  const moduleId = open && open !== 'bad' ? open.module_id : undefined
+  const chapter = storyOf(moduleId ?? null)
+  const whole = useModule(chapter ? undefined : moduleId)
+  // The chapter waits on this; one function for the whole sitting, so SkillBeat's callbacks keep their identity.
+  const review = useCallback((key: string, answer: string) =>
+    new Promise<void>(resolve => setAsk(a => ({ key, answer, n: (a?.n ?? 0) + 1, resolve }))), [])
+  // A KG–2 chapter speaks in Josh from its own clip index, exactly as /game sets it (a layout effect: see /game).
+  const playing = chapter && topic ? chapter : null
+  useLayoutEffect(() => {
+    if (!playing) return
+    setSceneVoice(JOSH, CHAPTER_VOICE_INDEX[playing])
+    return () => setSceneVoice(null)
+  }, [playing])
 
   if (!mounted) return null
   if (!token || open === 'bad') return <Note>This tester link is not active. Ask Radlic for a new one.</Note>
-  if (!open || !token || !whole) return <Note>Loading…</Note>
+  if (!open || !token || (!chapter && !whole)) return <Note>Loading…</Note>
 
   const reviewed = new Set(open.reviewed)
   const mark = (k: string) => setOpen({ ...open, reviewed: [...open.reviewed.filter(x => x !== k), k] })
-  const lesson = whole.lessons.find(l => l.id === topic)
 
-  if (lesson) {
+  if (playing) {
+    const Chapter = CHAPTER_COMPONENTS[playing]
+    const id = open.module_id
+    const leave = () => { setAsk(null); setTopic(null) }
+    return (
+      <ChapterReviewContext.Provider value={review}>
+        <Chapter childName="" onExit={leave} onComplete={() => setAsk(a => ({ key: '9', answer: '', n: (a?.n ?? 0) + 1, resolve: () => {} }))} />
+        {ask && <>
+          {/* see-through cover over the chapter (z 900): nothing is tapped while a review is open */}
+          <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: 1000 }} />
+          <ReviewBar key={ask.n} token={token} lessonId={id} screen={ask.key} played answer={ask.answer} saved={false}
+            onSaved={() => { mark(`${id}/${ask.key}`); setAsk(null); ask.resolve() }} />
+        </>}
+      </ChapterReviewContext.Provider>
+    )
+  }
+
+  const lesson = whole?.lessons.find(l => l.id === topic)
+  if (whole && lesson) {
     return <>
       {/* room under the page for the review bar, so Next is never hidden behind it */}
       <style>{'.lp-page { padding-bottom: 190px !important }'}</style>
@@ -55,21 +96,30 @@ export default function TesterPage() {
     </>
   }
 
-  const meta = CATALOGUE.find(m => m.id === whole.id)
+  const meta = chapter ? STORY_CATALOGUE.find(m => m.story === chapter) : CATALOGUE.find(m => m.id === whole?.id)
+  const grade = meta ? (meta.grade === 0 ? 'KG' : `Grade ${meta.grade}`) : ''
+  const topics = meta?.lessons ?? whole?.lessons ?? []
   return (
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: 16, color: INK }}>
       <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <h1 style={{ margin: 0, fontSize: 26 }}>Grade {whole.grade} · Module {whole.n}: {whole.title}</h1>
+        <h1 style={{ margin: 0, fontSize: 26 }}>{grade} · {chapter ? 'Chapter' : `Module ${meta?.n}`}: {meta?.title}</h1>
         <div style={{ ...card, fontSize: 16, lineHeight: 1.5 }}>
           <b>How to test</b>
-          <ol style={{ margin: '6px 0 0', paddingLeft: 22 }}>
-            <li>Open a topic. Turn your sound on.</li>
-            <li>Let each screen play to the end, and answer every question yourself.</li>
-            <li>Then say if the screen is right. If not, write what is wrong (wrong number, spelling, the voice, the picture…).</li>
-            <li>Only then does Next open. Go through every screen to the end of the topic.</li>
-          </ol>
+          {chapter
+            ? <ol style={{ margin: '6px 0 0', paddingLeft: 22 }}>
+                <li>Open the chapter. Turn your sound on. Play it like a young child would.</li>
+                <li>After the intro, after every question and after every explanation, the chapter stops and asks if it was right.</li>
+                <li>If not, write what is wrong (the voice, the picture, the question, the answer, a tap that did not work…).</li>
+                <li>Only then does it go on. Play to the end; the last card asks about the chapter as a whole.</li>
+              </ol>
+            : <ol style={{ margin: '6px 0 0', paddingLeft: 22 }}>
+                <li>Open a topic. Turn your sound on.</li>
+                <li>Let each screen play to the end, and answer every question yourself.</li>
+                <li>Then say if the screen is right. If not, write what is wrong (wrong number, spelling, the voice, the picture…).</li>
+                <li>Only then does Next open. Go through every screen to the end of the topic.</li>
+              </ol>}
         </div>
-        {(meta?.lessons ?? whole.lessons).map(l => {
+        {topics.map(l => {
           const n = open.reviewed.filter(x => x.startsWith(`${l.id}/`)).length, finished = reviewed.has(`${l.id}/9`)
           return (
             <button key={l.id} type="button" onClick={() => setTopic(l.id)}
@@ -95,7 +145,7 @@ function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved }: 
   const [text, setText] = useState('')
   const [err, setErr] = useState('')
   const [editing, setEditing] = useState(false)
-  const question = screen.startsWith('8') || screen.startsWith('p')
+  const question = /^(8|p|q)/.test(screen)
 
   const send = async (verdict: 'ok' | 'issue') => {
     setMode('sending'); setErr('')
@@ -158,7 +208,7 @@ function Note({ children }: { children: React.ReactNode }) {
 const card: CSSProperties = { background: '#fff', border: `4px solid ${INK}`, borderRadius: 18, padding: 14 }
 const small: CSSProperties = { ...pill, fontSize: 15, padding: '8px 12px' }
 const bar: CSSProperties = {
-  position: 'fixed', left: '50%', bottom: 10, transform: 'translateX(-50%)', zIndex: 70, width: 'min(760px, calc(100vw - 20px))',
+  position: 'fixed', left: '50%', bottom: 10, transform: 'translateX(-50%)', zIndex: 1001, width: 'min(760px, calc(100vw - 20px))',
   boxSizing: 'border-box', background: '#fffbe8', border: `4px solid ${INK}`, borderRadius: 18, boxShadow: `4px 4px 0 ${INK}`,
   padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 8, color: INK, fontSize: 17,
 }

@@ -91,10 +91,27 @@ describe('the tester, holding only the token', () => {
   })
 })
 
+describe('a KG–2 chapter link', () => {
+  it('reviews only its own chapter, with question, re-teach and intro keys', async () => {
+    const r = await as<{ j: { token: string } }>('authenticated', ADMIN, `select public.admin_tester_create('k@x.co','c:addition') j`)
+    const t = r.rows[0].j.token
+    expect((await review(t, 'c:addition', 'intro', 'ok', null)).ok).toBe(true)
+    expect((await review(t, 'c:addition', 'q3', 'issue', 'the apples do not match the number')).ok).toBe(true)
+    expect((await review(t, 'c:addition', 'r1', 'ok', null)).ok).toBe(true)
+    expect((await review(t, 'c:subtraction', 'q1', 'ok', null)).err).toMatch(/not in this tester's module/)
+    expect((await review(t, 'g3m1-t1', '3', 'ok', null)).err).toMatch(/not in this tester's module/)
+    // and a lesson link cannot review a chapter
+    expect((await review(token, 'c:addition', 'q1', 'ok', null)).err).toMatch(/not in this tester's module/)
+  })
+  it('a made-up module id cannot be assigned', async () => {
+    expect((await as('authenticated', ADMIN, `select public.admin_tester_create('k@x.co','c:add ition')`)).ok).toBe(false)
+  })
+})
+
 describe('the admin view and marks', () => {
   it('the list counts what the tester did; a parent cannot see it', async () => {
     const r = await as<{ j: { email: string; screens: number; issues: number }[] }>('authenticated', ADMIN, 'select public.admin_tester_list() j')
-    expect(r.rows[0].j[0]).toMatchObject({ email: 't@x.co', screens: 2, issues: 2 })
+    expect(r.rows[0].j.find(x => x.email === 't@x.co')).toMatchObject({ screens: 2, issues: 2 })
     expect((await as('authenticated', PARENT, 'select public.admin_tester_list()')).ok).toBe(false)
   })
   it('a revoked link stops working, and works again when un-revoked', async () => {

@@ -15,13 +15,14 @@
  *     Explore sim can precede the game.
  */
 import { createPortal } from 'react-dom'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useChapterSync } from '@/data/supabase/useChapterSync'
 import { stopSpeech } from '@/infra/useMiloSpeaker'
 import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
 import { ChapterTakeContext } from '@/features/chapters/story/take'
+import { ChapterReviewContext } from '@/shared/chapterReview'
 import type { ChapterType } from '@/core/chapters'
 import { useNudge } from '@/features/chapters/useNudge'
 
@@ -60,6 +61,7 @@ type Finish = (correct: number, wrong: number, mastered?: boolean) => void
 function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
   const router = useRouter()
   const { finishAndSync } = useChapterSync(skill)
+  const reviewing = useContext(ChapterReviewContext) !== null   // a paid tester: nothing is recorded
   const [body, setBody] = useState<HTMLElement | null>(null)
   const [runKey, setRunKey] = useState(0)
   // ⚠️ STATE, not just the ref: the ref stops a double-score, this opens the end card. They were
@@ -81,11 +83,11 @@ function usePortalRun(skill: ChapterType, quiet: boolean, onComplete?: Finish) {
     if (doneRef.current) return
     doneRef.current = true
     setDone(true)
-    finishAndSync(skill, c, w, 'practice', mastered)
+    if (!reviewing) finishAndSync(skill, c, w, 'practice', mastered)
     // After the sync, and guarded: the score is already written and a caller's handler must never
     // be able to undo it. Same reasoning as the plan pointer's own try/catch in `finishAndSync`.
     try { cbRef.current?.(c, w, mastered) } catch { /* a caller's bookkeeping is not the child's score */ }
-  }, [finishAndSync, skill])
+  }, [finishAndSync, skill, reviewing])
 
   const replay = useCallback(() => { doneRef.current = false; setDone(false); setRunKey(k => k + 1) }, [])
   // A sitting that stopped after CHAPTER_TAKE questions, run unfinished: the card says the spot is saved.
@@ -106,11 +108,13 @@ export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInn
   return function StoryChapter(props: ChapterProps) {
     const { router, body, runKey, finish, replay, done, take, setTake } = usePortalRun(skill, false, props.onComplete)
     useNudge()
+    const reviewing = useContext(ChapterReviewContext) !== null
     if (!body) return null
     const exit = () => props.onExit ? props.onExit() : router.push('/modules')
     return createPortal(
       <div className="kg2-chapter" style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
-        <ChapterTakeContext.Provider value={setTake}>
+        {/* A tester plays the whole run: no 5-question take. */}
+        <ChapterTakeContext.Provider value={reviewing ? null : setTake}>
           <Inner key={runKey} onFinish={finish} onExit={exit} />
         </ChapterTakeContext.Provider>
         {/* The typed "what to do" note, in one place for all 24 story chapters rather than 24 copies. */}

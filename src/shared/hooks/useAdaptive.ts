@@ -21,7 +21,8 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-import { useRef, useState, useCallback } from 'react'
+import { useContext, useRef, useState, useCallback } from 'react'
+import { ChapterReviewContext } from '@/shared/chapterReview'
 import { chapterKey, type ChapterType } from '@/core/chapters'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { saveStanding } from '@/infra/storage/lessonStanding'
@@ -93,6 +94,8 @@ function pick<T>(arr: T[]): T {
 type AdaptiveSnapshot = Progress & { praise: string; encouragement: string; mastery: { streak: number; mastered: boolean } }
 
 export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty = 1): AdaptiveState {
+  // A paid tester (/test) plays as nobody: no standing saved, nothing uploaded, even on a device with a child chosen.
+  const reviewing = useContext(ChapterReviewContext) !== null
   // All mutable counters live in ONE snapshot object that is mirrored in a ref.
   // The ref is the synchronous source of truth: when several record() calls land
   // in the same render tick (rapid taps), each one reads the previous call's
@@ -142,7 +145,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
      * question does not queue a row per attempt. Sync every step if per-attempt data is ever wanted.
      */
     if (isCorrect) {
-      const learnerId = getActiveLearner()?.id ?? null
+      const learnerId = reviewing ? null : getActiveLearner()?.id ?? null
       if (learnerId) {
         const key = chapterKey(chapter)
         const mastered = next.mastery.mastered
@@ -158,7 +161,7 @@ export function useAdaptive(chapter: ChapterType, initialDifficulty: Difficulty 
       wrong:      p.wrong,
       mastered:   next.mastery.mastered,
     }
-  }, [chapter])
+  }, [chapter, reviewing])
 
   const difficultyLabel =
     snapshot.difficulty === 1 ? 'Starter ⭐' :

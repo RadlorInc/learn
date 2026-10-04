@@ -1,12 +1,12 @@
 -- ════════════════════════════════════════════════════════════════════════════════════════════════════
--- PAID TESTERS — a tester reviews every screen of one module, and /admin/testers shows what they did
+-- PAID TESTERS — a tester reviews every screen of one module (Grades 3–8) or one story chapter (KG–2), and /admin/testers shows what they did
 -- (founder, 2026-10-04: "we pay a tester, so we need to know they really tested").
 -- ════════════════════════════════════════════════════════════════════════════════════════════════════
 --
 -- WHAT IT ADDS: two tables and six functions. Nothing about a child is read or written: a tester is an adult
 -- who opens a link; their rows hold an email the founder typed, a module id, and one row per screen reviewed.
 --
---   tester_assignments   one link: email, module, a 64-hex token (the link's secret), revoked/paid marks.
+--   tester_assignments   one link: email, module (`g3m1`) or chapter (`c:addition`), a 64-hex token (the link's secret), revoked/paid marks.
 --   tester_reviews       one row per (assignment, topic, screen): verdict, note, the answer typed, how long
 --                        the screen was open and whether her lines had finished playing when it was reviewed.
 --
@@ -30,7 +30,7 @@ create table if not exists public.tester_assignments (
   id          uuid primary key default gen_random_uuid(),
   token       text not null unique default replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
   email       text not null check (length(email) between 3 and 200),
-  module_id   text not null check (module_id ~ '^g[3-8]m[0-9]+$'),
+  module_id   text not null check (module_id ~ '^(g[3-8]m[0-9]+|c:[A-Za-z0-9]+)$'),
   note        text check (length(note) <= 500),
   created_at  timestamptz not null default now(),
   revoked_at  timestamptz,
@@ -41,8 +41,8 @@ revoke all on public.tester_assignments from public, anon, authenticated;
 
 create table if not exists public.tester_reviews (
   assignment_id uuid not null references public.tester_assignments(id) on delete cascade,
-  lesson_id     text not null check (lesson_id ~ '^g[3-8]m[0-9]+-t[0-9]+$'),
-  screen        text not null check (screen ~ '^([1-9]|8-twin|p[0-9]{1,2})$'),
+  lesson_id     text not null check (lesson_id ~ '^(g[3-8]m[0-9]+-t[0-9]+|c:[A-Za-z0-9]+)$'),
+  screen        text not null check (screen ~ '^([1-9]|8-twin|[pqrs][0-9]{1,2}|intro)$'),
   verdict       text not null check (verdict in ('ok', 'issue')),
   note          text check (length(note) <= 2000),
   answer        text check (length(answer) <= 200),
@@ -143,7 +143,8 @@ begin
   select * into a from public.tester_assignments
   where token = p_token and revoked_at is null and paid_at is null;
   if not found then raise exception 'not a live tester link' using errcode = '42501'; end if;
-  if split_part(p_lesson, '-', 1) <> a.module_id then
+  if (a.module_id like 'c:%' and p_lesson <> a.module_id)
+     or (a.module_id not like 'c:%' and split_part(p_lesson, '-', 1) <> a.module_id) then
     raise exception 'topic is not in this tester''s module' using errcode = '22023';
   end if;
   if p_verdict = 'issue' and length(trim(coalesce(p_note, ''))) < 5 then
