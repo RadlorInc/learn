@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/data/supabase/client'
 import { db } from '@/data/repositories/_shared'
-import { CATALOGUE } from '@/features/lessons/catalogue'
+import { CATALOGUE, STORY_CATALOGUE } from '@/features/lessons/catalogue'
 import { S } from '../_parts'
 
 type Row = {
@@ -20,8 +20,12 @@ type Row = {
 }
 type Review = { lesson_id: string; screen: string; verdict: 'ok' | 'issue'; note: string | null; answer: string | null; open_ms: number; played: boolean; at: string }
 
-const MODULES = CATALOGUE.filter(m => m.lessons.length > 0 && !m.story)
-const titleOf = (id: string) => { const m = MODULES.find(x => x.id === id); return m ? `G${m.grade} M${m.n} · ${m.title}` : id }
+// What a link can be for: a Grade 3–8 module (`g3m1`), or a KG–2 story chapter by its lesson id (`c:addition`).
+const MODULES = [
+  ...STORY_CATALOGUE.map(m => ({ id: m.lessons[0].id, label: `${m.grade === 0 ? 'KG' : `G${m.grade}`} chapter · ${m.title}`, topics: 1 })),
+  ...CATALOGUE.filter(m => m.lessons.length > 0 && !m.story).map(m => ({ id: m.id, label: `G${m.grade} M${m.n} · ${m.title}`, topics: m.lessons.length })),
+]
+const titleOf = (id: string) => MODULES.find(x => x.id === id)?.label ?? id
 const linkOf = (token: string) => `${window.location.origin}/test#t=${token}`
 const secs = (ms: number | null) => (ms == null ? '—' : `${Math.round(ms / 1000)}s`)
 const when = (t: string | null) => (t ? new Date(t).toLocaleString() : '—')
@@ -94,7 +98,7 @@ export default function TestersPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead><tr>{['Email', 'Module', 'Topics', 'Screens', 'Issues', 'Not played', 'Median time', 'Last active', 'Status', ''].map(h => <th key={h} style={th}>{h}</th>)}</tr></thead>
             <tbody>{rows.flatMap(r => {
-              const total = MODULES.find(m => m.id === r.module_id)?.lessons.length ?? 0
+              const total = MODULES.find(m => m.id === r.module_id)?.topics ?? 0
               const status = r.paid_at ? `paid ${new Date(r.paid_at).toLocaleDateString()}` : r.revoked_at ? 'revoked' : 'active'
               const out = [
                 <tr key={r.id}>

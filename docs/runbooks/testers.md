@@ -10,10 +10,10 @@ Who does what: the founder (or another admin) makes links and pays; the tester n
 ## 1. Make a link (admin)
 
 1. Sign in at `/admin/login`, open **Testers**.
-2. Type the tester's email, pick the module (Grades 3–8), add a note if useful (rate, deadline), **Create link**.
+2. Type the tester's email, pick a Grade 3–8 module or a KG–2 chapter, add a note if useful (rate, deadline), **Create link**.
 3. Copy the link (`https://radlic.com/test#t=…`) and send it to the tester yourself. The app sends no email.
 
-One link = one email + one module. For a second module, make a second link. The token after `#t=` is the only key:
+One link = one email + one module (or one KG–2 chapter). For a second one, make a second link. The token after `#t=` is the only key:
 anyone holding the link can review as that tester, so send it to them alone. **Revoke** closes it at once.
 
 ## 2. What the tester does
@@ -31,6 +31,14 @@ screen a yellow bar asks "Is this screen right?":
 
 Screens are keyed `1`–`7` (teaching), `8` and `8-twin` (Now you try), `p1`, `p2`… (practice), `9` (the end). A topic
 counts as done when screen `9` is reviewed. Nothing the tester does is saved as a child's progress (no learner).
+
+**A KG–2 chapter** plays as a child gets it (landscape on a phone). It stops and shows the bar after the chapter's
+intro (`intro`: its demo and guided round together), after every answer (`q1`, `q2`…; the answer column says ✓ or ✗
+and the question), after every re-teach (`r1`…), and after each spoken line of a walk (`s1`…; the counting
+chapters). While the bar is up a see-through cover stops taps, so the chapter cannot go on. The tester plays the
+whole run — the 5-question break is off for them — and the chapter's end card asks for `9`, the chapter as a whole.
+Nothing is saved to a child, even on a device where a child is chosen (`ChapterReviewContext` turns off the
+standing, the score and the resume point).
 
 ## 3. Check the work, then pay (admin)
 
