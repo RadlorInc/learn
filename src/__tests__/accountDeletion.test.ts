@@ -104,6 +104,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.teacher_plans':            `public.teacher_plans where teacher_id = '${uid}'`,
     'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
     'public.lesson_feedback':          `public.lesson_feedback where learner_id in (${ls})`,
+    'public.game_saves':               `public.game_saves where learner_id in (${ls})`,
     /**
      * ⚠️ AND THIS ONE IS A DECISION, NOT A MAPPING — flag it to the attorney before it ships.
      * `parental_consents.parent_id` cascades from auth.users, so closing an account destroys the
@@ -153,6 +154,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       insert into public.game_settings (learner_id) values ('${l}');
       insert into public.exercise_results (learner_id, class_id, exercise_id, outcomes) values ('${l}', '${klass}', 'e1', '{first,worked}');
       insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${l}', 'g3m2-t1', '3', '{fast,words}');
+      insert into public.game_saves (learner_id, data) values ('${l}', '{"v":2}');
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');
       insert into public.error_events (learner_id, source, message) values ('${l}', 'client', 'boom');

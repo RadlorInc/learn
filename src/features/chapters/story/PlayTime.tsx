@@ -48,7 +48,7 @@ import {
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 export type Op = '+' | '-'
 
@@ -360,7 +360,7 @@ export const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** A tap only CHOOSES; nothing marches and nothing is graded until Ready. */
+  /** A tap only CHOOSES; nothing marches and nothing is graded until it is submitted (at once: SubmitOnPick). */
   function pickMarker(v: number) {
     if (mode === 'demo' || done.current || !asking) return
     setPending(p => (p === v ? null : v))
@@ -450,7 +450,7 @@ export const PlayScene: React.FC<{ data: PlayRound; mode: Mode; onDone: (correct
           ))}
           {/* Beside the markers, for the same measured reason as MarketDay: this row already owns
               the bottom strip, and above it is the sum the child is reading. */}
-          <ReadyBar show={pending !== null} onCommit={commit} align="right" bottom={8} />
+          <SubmitOnPick show={pending !== null} onCommit={commit} />
         </div>
       )}
     </>
@@ -585,7 +585,7 @@ export default function PlayTime({ op = '+', onFinish, onExit }: {
   if (needsRotate) return <RotateGate line={add ? 'The friends play in landscape! 🐾' : 'The friends wave goodbye in landscape! 🐾'} />
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px',
         fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
     </div>

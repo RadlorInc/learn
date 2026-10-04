@@ -42,11 +42,18 @@ another family, and by `src/__tests__/pointsCapAndCatalog.test.ts` (the cap and 
 - The day is counted in the adult's time zone, taken from their browser when they save the settings (UTC until then).
 - The tab also shows the balance and the minutes played today.
 
-⚠️ **As of 2026-09-28 nothing spends points.** No game is attached, so `/play` says "Games are coming soon!", shows the
-balance, and never calls the spending function (`start_game_time`). That followed a child buying minutes, getting
-"Time's up!" over an empty placeholder and losing the points (2026-09-26). `src/__tests__/gameTimeNotSpent.test.ts`
-fails if any app code calls it; delete that test in the pull request that attaches a game and brings the spending
-screen back.
+**Spending (2026-10-01): the game is attached.** On `/play` the child picks 5, 10 or 15 minutes; `start_game_time`
+decides (balance, daily minutes, on/off) and returns the end time. `/play` then opens the game — BlockCraft, creative
+mode only, built from `blockcraft/` into `public/blockcraft` — as a full page (not a frame: every page keeps
+`frame-ancestors 'none'`). The game shows the clock, saves on the device, and returns to `/play` when the time is up;
+`/play` uploads that save to `game_saves`, so the next game starts where this one stopped. (From 2026-09-26 to
+2026-10-01 nothing spent points: a child had bought minutes over an empty placeholder and lost them.)
+
+**Stopping early gives the unused minutes back.** The clock is the database's and keeps running while the child is off
+the game, so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the
+purchase to the time played and ends it. Points follow the seconds (1 point per 7.5 s, rounded up, at least 1 point),
+so the rest come back; the daily limit counts minutes, a started one in full (at least 1). Stopping at 1:17 of 2 minutes
+pays 11 points and gives 5 back.
 
 ## Points never reset
 
@@ -66,7 +73,7 @@ child's data is deleted (the child's profile or the account deleted, or the pare
 | at most 300 points a day | the database (`points_room_today`, used by both functions) |
 | only real lessons, chapters and modules pay | the database (`lesson_catalog`, `P0L01` for anything else) |
 | only the owning adult changes game time | the database (`set_game_settings`) |
-| the daily limit, the on/off switch, the balance, one game at a time | the database (`start_game_time`, unused today) |
+| the daily limit, the on/off switch, the balance, one game at a time | the database (`start_game_time`; `end_game_time` stops early) |
 | answers wait when offline, and upload later with the same event id | the app (`src/infra/storage/lessonSync.ts`) |
 | a child whose consent is not on record: answers wait on the device, never deleted | the database refuses the write; the app holds it |
 

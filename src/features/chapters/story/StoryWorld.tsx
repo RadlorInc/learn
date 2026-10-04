@@ -381,7 +381,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
           see is an affordance nobody has. */}
       {(phase === 'play' || phase === 'feedback') && beat.prompt(data).trim() && (
         <button onClick={() => speak((beat.say ?? beat.prompt)(data))} aria-label="Hear it again"
-          style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+          // z 40: above the parade (35/36 in this station) — a creature crossing the pill took the tap and was counted
+          // (e2e/xbrowser-clicks.spec.ts, short landscape); below the feedback (60).
+          style={{ position: 'relative', zIndex: 40, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
             fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)',
             background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '8px 20px', textAlign: 'center', boxShadow: '0 4px 0 rgba(242,107,44,.25)' }}>
           <span aria-hidden style={{ fontSize: 22, lineHeight: 1 }}>🔊</span>

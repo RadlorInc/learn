@@ -46,7 +46,7 @@
  * ten, L3 always.
  *
  * ⚠️ **THE HONEST COST OF GOING BACK TO BLOCKS, STATED RATHER THAN HIDDEN: a block has no legs.**
- * "Something arrives on its own legs" is now carried by THE WALKER alone — the foreman bear is the only living thing in
+ * "Something arrives on its own legs" is now carried by THE WALKER alone — the bear cub is the only living thing in
  * the yard. The blocks travel, which is correct for an object with no gait (`CARRY_SPEED` exists for
  * exactly this and the engine already handles it), but nothing here walks except him. That was the
  * thing the creatures bought, and it is what this pass trades away.
@@ -95,9 +95,9 @@ export type { Material }
 // rounds differ, not that all thirteen are unique.
 interface Slot { scene: string; mat: number }
 const BG = (n: string) => `/assets/backgrounds/${n}`
-/** The one who walks rods up the yard and fetches them back — the yard's foreman bear, a real walk
+/** The one who walks rods up the yard and fetches them back — the bear cub (the foreman bear until 2026-09-29), a real walk
  *  cycle (cellAspect 0.578, near enough the old walker's 0.586 that the yard did not have to move). */
-const WALKER = '/assets/objects/foreman_bear_side.png'
+const WALKER = '/assets/objects/bearcub_side.png'
 
 // A DIFFERENT SET OF BLOCKS EVERY ROUND — clay · slate · teal · plum · rose · indigo. Round 10 must
 // not look like round 1, and until now only the backdrop changed. See MATERIALS for why the hue is
@@ -567,7 +567,7 @@ export const ASRoundView: React.FC<{ slot: Slot; op: Op; data: ASRound; mode: Mo
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} hint={y.step === 'stuck'}
         onRun={y.step === 'stuck' && op === '+' ? tradeUp : undefined}
         onRod={y.step === 'stuck' && op === '-' ? tradeDown : undefined} />
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
+      <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
         <AnswerPad digits={digits} band={PAD_BAND(vh)} live={y.step === 'answer' && !ok}
           onDigit={n => setDigits(d => (d.length >= 2 ? d : [...d, n]))}
           onClear={() => setDigits(d => d.slice(0, -1))} onDone={commit} />
@@ -658,7 +658,7 @@ const ASExplain: React.FC<{ slot: Slot; op: Op; data: ASRound; onDone: () => voi
       <Banner text={line || 'Watch how we trade the blocks…'} vh={vh} chapter={op === '+' ? 'additionTo100' : 'subtractionTo100'} />
       <Scene y={y} m={m} ch={cube} rodW={rodW} rodH={rodH} walkerH={walkerH} vw={vw} vh={vh} />
       {shown && (
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
+        <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.05), zIndex: 36, display: 'flex', justifyContent: 'center' }}>
           <div style={{ background: 'var(--paper)', border: '4px solid var(--milo-orange)', borderRadius: 18, padding: '8px 22px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: Math.round(cube * 1.5), color: 'var(--ink)', animation: 'by_pop .4s ease' }}>
             {a} {op === '+' ? '+' : '−'} {b} = {answer}
           </div>

@@ -116,8 +116,9 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'What are points for?',
-    a: <>Your child earns points by practicing. Games to spend them on are coming soon; until then the
-       points are saved and none are taken away.</>,
+    a: <>Your child earns points by practicing and spends them on game time: minutes of BlockCraft, a calm
+       block-building game with no fighting. You choose whether game time is on and how many minutes a day. If your
+       child stops early, only the time played is charged, and points never reset.</>,
   },
   {
     q: 'What do you store about my child, and can I see it?',

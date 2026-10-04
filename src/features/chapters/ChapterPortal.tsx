@@ -23,6 +23,7 @@ import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
 import { ChapterTakeContext } from '@/features/chapters/story/take'
 import type { ChapterType } from '@/core/chapters'
+import { useNudge } from '@/features/chapters/useNudge'
 
 export type ChapterProps = {
   onComplete: (correct: number, wrong: number, mastered?: boolean) => void
@@ -104,10 +105,11 @@ export type StoryInner = React.ComponentType<StoryProps>
 export function makeStoryChapter(skill: ChapterType, bg: string, Inner: StoryInner) {
   return function StoryChapter(props: ChapterProps) {
     const { router, body, runKey, finish, replay, done, take, setTake } = usePortalRun(skill, false, props.onComplete)
+    useNudge()
     if (!body) return null
     const exit = () => props.onExit ? props.onExit() : router.push('/modules')
     return createPortal(
-      <div style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
+      <div className="kg2-chapter" style={{ position: 'fixed', inset: 0, zIndex: 900, background: bg }}>
         <ChapterTakeContext.Provider value={setTake}>
           <Inner key={runKey} onFinish={finish} onExit={exit} />
         </ChapterTakeContext.Provider>

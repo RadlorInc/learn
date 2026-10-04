@@ -101,6 +101,11 @@
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
 --                                                  only) for the learner's creator or a learner_access row. Reasons
 --                                                  are a fixed list (check constraint), no free text. No update/delete.
+--   game_saves                 rls=t  policies=3   2026-10-01 (20261001170000): the /play game's save, one row per
+--                                                  child. SELECT/INSERT/UPDATE for any learner_access row (owner,
+--                                                  viewer, the child's 'self' login); INSERT/UPDATE on
+--                                                  (learner_id, data) only; no DELETE (cascade with the learner).
+--                                                  Not read by anything privileged. No SECURITY DEFINER.
 --   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
 --                                                  or the row of the adult who created my learner. Every write
 --                                                  privilege revoked from public/anon/authenticated and no write

@@ -1020,3 +1020,23 @@ input[type="range"] { height: 44px; }
 @media (prefers-reduced-motion: reduce) { .dash-spot { transition: none; } }
 /* Buttons and fields do not inherit the page font by default — they rendered in the system font. */
 .home-app button, .home-app select, .home-app input, .home-app textarea { font-family: inherit; }
+
+/* A full-width fixed row that only CENTRES its controls (answer pads, choice rows in the KG–2 chapters): the empty
+   width around them must not take taps meant for the scene beneath — on a short landscape phone it covered the
+   blocks' trade target (e2e/xbrowser-clicks.spec.ts). Its own controls still take taps. */
+.tap-through { pointer-events: none; }
+.tap-through > * { pointer-events: auto; }
+
+/* Every KG–2 chapter (ChapterPortal, CountingStoryChapter): no tap target under 44px, the app's own minimum. Chapters
+   scale their controls to the viewport, and on a phone held sideways that left number pads at 37px, a rod to break at
+   16px wide and ◀ ▶ ↩ at 31–40px — a small finger misses them (e2e/xbrowser-clicks.spec.ts, founder's call 2026-10-02).
+   `min-*` wins over a smaller inline width/height, so this floors every button without touching larger ones. */
+.kg2-chapter button, .kg2-chapter [role="button"] { min-width: 44px; min-height: 44px; }
+
+/* useNudge (src/features/chapters/useNudge.ts): the next thing to tap moves. `scale`, not `transform`, so a control's own
+   positioning transform is untouched. A commit bounces; answer choices wiggle — all alike, never the right one alone. */
+@keyframes kg2-go   { 0%, 100% { scale: 1 } 50% { scale: 1.12 } }
+@keyframes kg2-pick { 0%, 100% { scale: 1 } 50% { scale: 1.06 } }
+.kg2-chapter .kg2-nudge-go   { animation: kg2-go 0.9s ease-in-out infinite; }
+.kg2-chapter .kg2-nudge-pick { animation: kg2-pick 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .kg2-chapter .kg2-nudge-go, .kg2-chapter .kg2-nudge-pick { animation: none; } }

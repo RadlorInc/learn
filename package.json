@@ -6,6 +6,8 @@
     "smoke:live": "node scripts/smoke-live.mjs",
     "dev": "next dev",
     "build": "next build",
+    "build:game": "npm --prefix blockcraft ci --no-audit --no-fund && npm --prefix blockcraft run build",
+    "prebuild": "npm run build:game",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
