@@ -87,7 +87,7 @@ const ANSWER: Step = {
 }
 const LEVELS: Step = {
   title: 'Practice: test every level',
-  text: <>Practice questions come in levels, easy (<b>L1</b>) to hard (L5 on most topics). Tap a level to get a question from it. Do <b>at least 2 questions at every level</b>, then tap <b>Finish practice</b>. Is a hard level really harder? Is the answer ever wrong?</>,
+  text: <>Practice questions come in levels, easy (<b>L1</b>) to hard (L5 on most topics) — they never run out by themselves. Tap a level to get a question from it, and review <b>2 questions at every level</b>. The yellow line counts for you (<i>L1 2/2 · L2 1/2…</i>); when every level is done, <b>Finish practice ▶</b> opens. Is a hard level really harder? Is the answer ever wrong?</>,
   pic: <Svg label="The Level row, L1 to L5, with L3 chosen">
     <T x={14} y={30} anchor="start" size={13}>Level</T>
     {[0, 1, 2, 3, 4].map(i => <g key={i}>
@@ -98,17 +98,17 @@ const LEVELS: Step = {
       <T x={73 + i * 36} y={60} size={13} fill={i < 3 ? '#1f7a43' : RED}>{i < 3 ? '✓✓' : '—'}</T>
     </g>)}
     <T x={120} y={82} size={11} w={600}>✓✓ = 2 questions checked at that level</T>
-    <Box x={60} y={98} w={120} h={36} r={12} /><T x={120} y={121} size={13}>Finish practice</T>
+    <Box x={60} y={98} w={120} h={36} r={12} fill={TEAL} /><T x={120} y={121} size={13} fill={ON_TEAL}>Finish practice ▶</T>
   </Svg>,
 }
 const DONE: Step = {
   title: 'Finish the topic',
-  text: <>The last screen (9) gets a review too — then the topic shows <b>✓ done</b> on this list. Go through every topic. Your progress is saved, so you can stop and come back with the same link.</>,
+  text: <>Finish practice leads to the last screen (9); review it too. A topic shows <b>✓ done</b> only when every practice level has its 2 questions <b>and</b> screen 9 is reviewed — until then the list shows how far you are (<i>practice 6/10</i>). Your progress is saved, so you can stop and come back with the same link.</>,
   pic: <Svg label="The topic list with one topic done">
     {['Plates of cookies', 'Rows of chairs', 'Turn the tray'].map((t, i) => <g key={t}>
       <Box x={10} y={10 + i * 44} w={220} h={36} r={12} fill={i === 0 ? TEAL : WHITE} />
       <T x={22} y={33 + i * 44} size={12} anchor="start" fill={i === 0 ? ON_TEAL : INK}>{t}</T>
-      <text x={220} y={33 + i * 44} fontSize={11} fontWeight={700} textAnchor="end" fill={i === 0 ? ON_TEAL : INK}>{i === 0 ? '✓ done' : i === 1 ? '4 screens' : 'not started'}</text>
+      <text x={220} y={33 + i * 44} fontSize={11} fontWeight={700} textAnchor="end" fill={i === 0 ? ON_TEAL : INK}>{i === 0 ? '✓ done' : i === 1 ? 'practice 6/10' : 'not started'}</text>
     </g>)}
   </Svg>,
 }

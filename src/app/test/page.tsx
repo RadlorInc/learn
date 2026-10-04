@@ -13,7 +13,7 @@
  * child's data.
  */
 import { useCallback, useEffect, useLayoutEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
-import { CATALOGUE, STORY_CATALOGUE, storyOf, useModule } from '@/features/lessons/catalogue'
+import { CATALOGUE, STORY_CATALOGUE, storyOf, useModule, ladderOf } from '@/features/lessons/catalogue'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { pill, INK, TEAL, ON_TEAL, PAGE_BG, BAD } from '@/features/lessons/Pictures'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
@@ -23,7 +23,19 @@ import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { JOSH } from '@/infra/storage/voicePref'
 import { TesterGuide } from './TesterGuide'
 
-type Open = { module_id: string; reviewed: string[] }
+/** `levels`: the practice level of each practice review (`'g4m4-t1/p3': 2`), read back from Radlor Ops. */
+type Open = { module_id: string; reviewed: string[]; levels?: Record<string, number> }
+/** Questions a tester reviews at every practice level before the topic's practice can be finished (founder, 4 Oct). */
+const PER_LEVEL = 2
+/** The highest practice number this topic has a review for (p7 → 7), so a new sitting numbers on from it. */
+const lastPractice = (reviewed: readonly string[], id: string) =>
+  Math.max(0, ...reviewed.filter(k => k.startsWith(`${id}/p`)).map(k => Number(k.slice(id.length + 2)) || 0))
+/** Reviewed practice questions per level (index 0 = L1) for one topic. */
+function levelCounts(open: Open, id: string, levels: number): number[] {
+  const c = Array.from({ length: levels }, () => 0)
+  for (const [k, lv] of Object.entries(open.levels ?? {})) if (k.startsWith(`${id}/p`) && lv >= 1 && lv <= levels) c[lv - 1]++
+  return c
+}
 /** One call to Radlor Ops, through this app's own /api/tester. */
 const ops = (body: object) => fetch('/api/tester', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 type Ask = { key: string; answer: string; n: number; resolve: () => void }
@@ -35,6 +47,8 @@ export default function TesterPage() {
   const token = mounted ? new URLSearchParams(window.location.hash.slice(1)).get('t') : null
   const [open, setOpen] = useState<Open | 'bad' | null>(null)
   const [topic, setTopic] = useState<string | null>(null)
+  // Fixed when a topic opens: this sitting's practice keys start after the ones already saved.
+  const [practiceStart, setPracticeStart] = useState(0)
   const [ask, setAsk] = useState<Ask | null>(null)
 
   useEffect(() => {
@@ -65,7 +79,14 @@ export default function TesterPage() {
   if (!open || !token || (!chapter && !whole)) return <Note>Loading…</Note>
 
   const reviewed = new Set(open.reviewed)
-  const mark = (k: string) => setOpen({ ...open, reviewed: [...open.reviewed.filter(x => x !== k), k] })
+  const mark = (k: string, level?: number) => setOpen({
+    ...open, reviewed: [...open.reviewed.filter(x => x !== k), k],
+    levels: level ? { ...open.levels, [k]: level } : open.levels,
+  })
+  // Done = the last screen reviewed AND every practice level reviewed PER_LEVEL times (a chapter: its last card).
+  const practiceDone = (id: string) => levelCounts(open, id, ladderOf(id)?.length ?? 0).every(c => c >= PER_LEVEL)
+  const isDone = (id: string) => reviewed.has(`${id}/9`) && (chapter ? true : practiceDone(id))
+  const openTopic = (id: string) => { setPracticeStart(lastPractice(open.reviewed, id)); setTopic(id) }
 
   if (playing) {
     const Chapter = CHAPTER_COMPONENTS[playing]
@@ -95,10 +116,11 @@ export default function TesterPage() {
         onFinish={() => {}} onExit={() => setTopic(null)}
         review={{
           done: k => reviewed.has(`${lesson.id}/${k}`),
+          practice: { start: practiceStart, counts: levelCounts(open, lesson.id, ladderOf(lesson.id)?.length ?? 0), need: PER_LEVEL },
           bar: (k, played, answer) => <ReviewBar key={`${lesson.id}/${k}`} token={token} lessonId={lesson.id} screen={k}
             played={played} answer={answer} saved={reviewed.has(`${lesson.id}/${k}`)}
             // Bring Next into view above the bar: on a short screen it sits under it until the page is scrolled down.
-            onSaved={() => { mark(`${lesson.id}/${k}`); setTimeout(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }), 50) }} />,
+            onSaved={() => { mark(`${lesson.id}/${k}`, Number(/^L(\d+) ·/.exec(answer)?.[1]) || undefined); setTimeout(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }), 50) }} />,
         }} />
     </>
   }
@@ -112,12 +134,14 @@ export default function TesterPage() {
         <h1 style={{ margin: 0, fontSize: 26 }}>{grade} · {chapter ? 'Chapter' : `Module ${meta?.n}`}: {meta?.title}</h1>
         <TesterGuide chapter={!!chapter} />
         {topics.map(l => {
-          const n = open.reviewed.filter(x => x.startsWith(`${l.id}/`)).length, finished = reviewed.has(`${l.id}/9`)
+          const n = open.reviewed.filter(x => x.startsWith(`${l.id}/`)).length, finished = isDone(l.id)
+          const lv = chapter ? [] : levelCounts(open, l.id, ladderOf(l.id)?.length ?? 0)
+          const practice = lv.length ? ` · practice ${lv.reduce((a, c) => a + Math.min(c, PER_LEVEL), 0)}/${lv.length * PER_LEVEL}` : ''
           return (
-            <button key={l.id} type="button" onClick={() => setTopic(l.id)}
+            <button key={l.id} type="button" onClick={() => openTopic(l.id)}
               style={{ ...pill, justifyContent: 'space-between', display: 'flex', fontSize: 18, padding: '14px 16px', whiteSpace: 'normal', textAlign: 'left',
                 background: finished ? TEAL : '#fff', color: finished ? ON_TEAL : INK }}>
-              <span>{l.title}</span><span style={{ fontSize: 14 }}>{finished ? '✓ done' : n ? `${n} screens reviewed` : 'not started'}</span>
+              <span>{l.title}</span><span style={{ fontSize: 14 }}>{finished ? '✓ done' : n ? `${n} screens reviewed${practice}` : 'not started'}</span>
             </button>
           )
         })}
