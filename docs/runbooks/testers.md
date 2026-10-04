@@ -33,6 +33,13 @@ screen right?":
 **A lesson** keys its screens `1`–`7` (teaching), `8` and `8-twin` (Now you try), `p1`, `p2`… (practice), `9` (the
 end). Next stays disabled until that screen is reviewed; Back and ← Topics always work.
 
+**Practice levels.** A topic's practice has a ladder of question levels (most have 5). For a tester the ladder does not
+move by itself: a **Level** row (L1, L2, …) above the problem picks the level; tapping one swaps in a new problem at
+that level, and **Next problem** keeps drawing from it. Nothing about levels is saved for anyone, there is no 5-answer
+checkpoint and no end at 12 answers — the tester taps **Finish practice** when done, which leads to `9`. Each practice
+review's answer starts with its level (`L3 · 7 → 12 ✓`), so the ops tab can show which levels of each topic were
+checked. Ask testers for at least two questions at every level of every topic.
+
 **A KG–2 chapter** plays as a child gets it (landscape on a phone). It stops after its intro (`intro`: the demo and
 guided round together), after every answer (`q1`…; the answer column says ✓ or ✗ and the question), after every
 re-teach (`r1`…) and after each spoken line of a walk (`s1`…, the counting chapters). While the bar is up a
