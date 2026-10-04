@@ -27,10 +27,15 @@ jobs:
         run: npm test
       - name: Build
         run: npx next build
-      - name: Dependency audit (fail on high/critical)
-        # Moderate transitive advisories (e.g. postcss via next) don't gate — but a new
-        # HIGH or CRITICAL CVE fails the build instead of sitting unnoticed. See docs/architecture.md §10.
-        run: npm audit --audit-level=high
+      - name: Dependency audit (fail on high/critical in what ships)
+        # A new HIGH or CRITICAL advisory in a package the app ships fails the build instead of sitting
+        # unnoticed; moderates (e.g. postcss via next) don't gate. Dev-only tools are not shipped, so
+        # they do not gate: on 2026-10-04 an advisory with no fixed version in `braces` (under
+        # eslint-config-next, lint only) turned every PR red with no possible fix. See docs/architecture.md §10.
+        run: npm audit --omit=dev --audit-level=high
+      - name: Dependency audit, dev tools (report only)
+        # Still printed on every run so a dev-tool advisory is seen; it just cannot block a merge.
+        run: npm audit --audit-level=high || echo "::warning::npm audit found high/critical advisories in dev-only packages (not shipped) — see the log above"
 
   # ─────────────────────────────────────────────────────────────────────────────
   # RLS regression suite — proves the database DENIES a cross-tenant attacker.

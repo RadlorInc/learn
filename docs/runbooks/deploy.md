@@ -13,7 +13,7 @@ Never push to `release` by hand. Pointing it at an older commit deploys nothing,
 1. **Agent.** Branch from `main`. If anything a user downloads changed, move `VERSION` in `public/sw.js` forward. Run `npm run preflight` (tsc, vitest, build, audit, `sw.js` bump check).
 2. **Agent.** Open the PR as a Draft (`gh pr create --draft`), every time. The PR body says what changed, what was tested and whether a migration is included.
 3. **CI on the PR** (`ci.yml`) runs two jobs:
-   - `verify`: tsc, vitest, build, and `npm audit --audit-level=high`.
+   - `verify`: tsc, vitest, build, and `npm audit --omit=dev --audit-level=high` (what ships; dev-only tools are audited too, as a warning that does not block).
    - `rls-tests`: a throwaway Docker Postgres. It loads the baseline plus every migration and runs `supabase/tests/rls_regression.sql`, which must print `RLS_ASSERTIONS=<n>` with n ≥ 1. It also runs the committed rollback scripts. CI never touches production.
 4. **Founder.** Marks the PR Ready and merges it. The agent merges only when the founder says so in chat, for that PR. If there are many approved PRs, the founder merges them as a train in this order: non-migration PRs, then migration PRs in timestamp order, then docs.
 5. **Agent, before a runtime merge.** Hand the founder the rollback target: the commit production serves now and its Vercel deployment. Read it from GitHub's deployment records:
