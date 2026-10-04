@@ -8,9 +8,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (4 October 2026)
 
-- **Production** is on `b34235a1b` (#358), Vercel deploy completed; `smoke:live` last green on `19ef8a94c` (#329), not
-  re-run since. Since #349: the game (#352, migrations applied), #355, #356 (KG–2: a tap is the answer), #357
-  (BlockCraft survival), #358 (KG–2 taps on every browser). The repo `learn` is public (see the Vercel item below).
+- **Production** is on `b34235a1b` (#358), deployed; `smoke:live` not re-run since `19ef8a94c`. Since #349: the game
+  (#352, migrations applied), #355, #356, #357 (game survival), #358 (KG–2 taps). The repo `learn` is public (see the Vercel item below).
 - **Production accounts were wiped on 1 Oct** before the paid launch (only the founder's test accounts existed); the
   founder ran and checked it: `docs/legal/sql/launch-wipe-all-accounts.sql`,
   `launch-wipe-check.sql`. App data (chapters, catalogue, notices, `billing_config`, the lesson audio) was kept. The
@@ -34,8 +33,7 @@ fixed yet are tracked outside this public repo; ask the founder.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters, own scenes and animals since #329); lesson audio from the
   `lesson-audio` bucket; email-plus consent on notice-v7 with the database gate; parent and teacher dashboards
-  (teacher rosters paused); points that buy BlockCraft time on `/play` (#352; creative, with a pause-menu switch
-  to survival — no damage — saved with the world, #357); seven legal pages as beta versions; nightly backups green.
+  (teacher rosters paused); points that buy BlockCraft time on `/play` (#352; survival switch #357); seven legal pages as beta versions; nightly backups green.
 - **Audio bucket** (2 Oct, #329): 899 new Josh clips (tag `audio-src-josh-2026-10-02`) uploaded and read back; P5
   read `17884 | 273065412`; S3 keys revoked.
 - **"Adaptive Learn review"** (18 points): Ops Feature backlog FEA-043–054 shipped, FEA-055–060 open; its mascot
