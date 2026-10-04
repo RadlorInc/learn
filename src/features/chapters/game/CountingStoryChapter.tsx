@@ -10,7 +10,7 @@
  * would unmount the chapter and break the continuity.
  */
 import { createPortal } from 'react-dom'
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { useContext, useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import ForestWalk from '@/features/chapters/story/ForestWalk'
 import WorldSelect from '@/features/chapters/story/WorldSelect'
@@ -20,6 +20,7 @@ import { useChapterSync } from '@/data/supabase/useChapterSync'
 import ChapterDone from '@/shared/ui/ChapterDone'
 import DirectionsCard from '@/features/chapters/DirectionsCard'
 import { ChapterTakeContext } from '@/features/chapters/story/take'
+import { ChapterReviewContext } from '@/shared/chapterReview'
 import { useNudge } from '@/features/chapters/useNudge'
 
 export default function CountingStoryChapter(props: { onComplete: (correct: number, wrong: number) => void; onExit?: () => void; childName: string }) {
@@ -38,12 +39,13 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
   const [take, setTake] = useState<number | undefined>()   // a sitting stopped after 5 questions, run unfinished
   useEffect(() => { setBody(document.body) }, [])
 
+  const reviewing = useContext(ChapterReviewContext) !== null   // a paid tester: nothing is recorded, no take
   const finish = useCallback((correct: number, wrong: number, mastered?: boolean) => {
     if (doneRef.current) return
     doneRef.current = true
     setDone(true)
-    finishAndSync('counting', correct, wrong, 'practice', mastered)   // → lesson_progress + points
-  }, [finishAndSync])
+    if (!reviewing) finishAndSync('counting', correct, wrong, 'practice', mastered)   // → lesson_progress + points
+  }, [finishAndSync, reviewing])
 
   // Play again → back to the world picker so the child can choose a (different) world.
   const restart = useCallback(() => { doneRef.current = false; setDone(false); setStory(null); setRunKey(k => k + 1) }, [])
@@ -54,7 +56,7 @@ export default function CountingStoryChapter(props: { onComplete: (correct: numb
       {!story && <WorldSelect title="Where shall we count today?" worlds={COUNTING_WORLDS} onPick={(id) => setStory(storytellingById(id) ?? null)} onExit={exit} />}
       {story && chapter && (
         <>
-          <ChapterTakeContext.Provider value={setTake}>
+          <ChapterTakeContext.Provider value={reviewing ? null : setTake}>
             <ForestWalk key={runKey} chapter={chapter} onFinish={finish} onExit={exit} />
           </ChapterTakeContext.Provider>
           {/* Chapter 1 keeps its own wrapper, so it needs the directions card wired by hand. */}

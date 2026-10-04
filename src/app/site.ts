@@ -109,4 +109,5 @@ export const PRIVATE_ROUTES = [
   '/api/', '/parent', '/admin', '/play', '/shop', '/game', '/story',
   '/auth', '/practice', '/lesson', '/modules',
   '/consent',   // token-bearing pages reached from a consent email; also noindex in their layout
+  '/test',      // a paid tester's link (token in the hash); also noindex in its layout
 ] as const

@@ -55,6 +55,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 | Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then BlockCraft opens full page at `/blockcraft/`; [product/points.md](product/points.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login` |
+| Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
 | Auth | `/auth` · `/auth/confirm` (sign-up link) · `/auth/callback` (Google) · `/auth/set-password` (invite, reset) · `/auth/new-password` (child's temporary password) |
 | Email links | `/consent/respond`, `/consent/withdraw`, `/email/unsubscribe` (act only on a button press) |
 | Public | `/` (signed in → home, else the company site's landing page) · `/help` · `/legal/<slug>` (renders `docs/legal/*.md` at build; dark until its switch in `src/app/legal/registry.ts`) · `/llms.txt` |
@@ -77,6 +78,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `GET/POST /api/consent/cancel-second-notice` | anyone (rate-limited); daily cron | Cancels queued B3s (reads nothing from the request); with `CRON_SECRET`, the ops digest |
 | `GET/POST/DELETE /api/child-login` | the learner's creator | A child's username and password (service role for Auth admin and the `self` row) |
 | `GET /api/admin/metrics` | admin (own token forwarded) | One `admin_*` aggregate RPC; non-admins get 404; small buckets suppressed (`ADMIN_MIN_COHORT`) |
+| `POST /api/tester` | anyone holding a tester link's token (checked by Radlor Ops) | Forwards a paid tester's open/review to Radlor Ops `/api/radlic-tester`; stores nothing here |
 | `POST /api/report-error` | anyone; capped | Crash reports: log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
@@ -249,6 +251,9 @@ deletion, and the daily cron drain it.
   nothing and requests nothing. A clip URL is the base plus the object name only (`noChildDataInAudioUrl.test.ts`).
 - **Indexes.** One small index per lesson module and per story chapter (`features/*/voice-index/`), loaded when its
   screen mounts.
+- **Chalk timing.** A lesson module also loads `features/lessons/word-times/<module>.json`: when, in her clip, each chalk
+  mark's word is said (from faster-whisper, `scripts/audio/build-word-times.mts`). `wordMs` (`chalk.ts`) uses it at the
+  0.9 playback rate, and the length estimate for a line or word it does not hold (`chalkWordTimes.test.ts`).
 - **KG–2 questions.** Some lines depend on what the child tapped, so `openQuestion()` (`infra/voiceClipPlayer.ts`)
   fetches every line a question can lead to when it loads; while it is open, other lines use the device voice and
   request nothing (`questionLock`, `kg2IdenticalRequests`). The one bounded exception is documented at `_onTap`.
