@@ -86,14 +86,18 @@ export default function TesterPage() {
   const lesson = whole?.lessons.find(l => l.id === topic)
   if (whole && lesson) {
     return <>
-      {/* room under the page for the review bar, so Next is never hidden behind it */}
-      <style>{'.lp-page { padding-bottom: 190px !important }'}</style>
+      {/* Room under the page for the review bar, so Next is never hidden behind it: teaching screens are `.lp-page`
+          (Frame), Screen 8 and practice are `.pr-page` (PracticeLayout). `body` outranks their own short-screen
+          `!important` padding rules, which come later in the page. */}
+      <style>{'body .lp-page, body .pr-page { padding-bottom: 190px !important }'}</style>
       <LessonPlayer key={lesson.id} lesson={lesson} earlier={whole.lessons.slice(0, whole.lessons.indexOf(lesson)).map(l => l.id)}
         onFinish={() => {}} onExit={() => setTopic(null)}
         review={{
           done: k => reviewed.has(`${lesson.id}/${k}`),
           bar: (k, played, answer) => <ReviewBar key={`${lesson.id}/${k}`} token={token} lessonId={lesson.id} screen={k}
-            played={played} answer={answer} saved={reviewed.has(`${lesson.id}/${k}`)} onSaved={() => mark(`${lesson.id}/${k}`)} />,
+            played={played} answer={answer} saved={reviewed.has(`${lesson.id}/${k}`)}
+            // Bring Next into view above the bar: on a short screen it sits under it until the page is scrolled down.
+            onSaved={() => { mark(`${lesson.id}/${k}`); setTimeout(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }), 50) }} />,
         }} />
     </>
   }
