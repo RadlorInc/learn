@@ -31,6 +31,7 @@ import { Backdrop, type BackdropKind } from './art'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { CHAPTER_TAKE, ChapterTakeContext } from './take'
+import { ChapterReviewContext } from '@/shared/chapterReview'
 
 const STORY_CSS = `
 @keyframes s_bobIn { 0%{transform:translateY(18px) scale(.8);opacity:0} 100%{transform:translateY(0) scale(1);opacity:1} }
@@ -219,7 +220,8 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   // still opens with its demo and its unscored guided round, and the engine demotes on two misses
   // in a row, so a tier that no longer fits is given back inside two questions.
   // No learner (the logged-out /story preview) → tier 1, exactly as before.
-  const [learnerId] = useState<string | null>(() => getActiveLearner()?.id ?? null)
+  const review = useContext(ChapterReviewContext)   // a paid tester: wait for their review, record nothing to a child
+  const [learnerId] = useState<string | null>(() => (review ? null : getActiveLearner()?.id ?? null))
   /**
    * Resume at the tier the child left off on. ⚠️ It reads the SAME per-topic standing a new-flow
    * lesson uses (2026-09-20) — `chapterLevel` was a second store of the same fact and went with the
@@ -240,7 +242,9 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
   const ada = useAdaptive(beat.skillId, startDiff)
   const adaRef = useLatestRef(ada)
   const [roundIdx, setRoundIdx] = useState(resume?.round ?? 0)
-  const [phase, setPhase] = useState<'play' | 'feedback' | 'reteach' | 'interlude'>('play')
+  // A tester first reviews the chapter's intro (its demo and guided round): the first question waits for it.
+  const [phase, setPhase] = useState<'play' | 'feedback' | 'reteach' | 'interlude'>(review ? 'interlude' : 'play')
+  useEffect(() => { if (review) void review('intro', '').then(() => setPhase('play')) }, [review])
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [wrongRun, setWrongRun] = useState(0)
   const tally = useRef({ correct: resume?.correct ?? 0, wrong: resume?.wrong ?? 0 })   // reported to onComplete → drives XP
@@ -311,6 +315,11 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
     if (!beat.ownsFeedback && !reteaching) speakAfterCurrent(correct ? PRAISE[roundIdx % PRAISE.length] : ada.encouragement)
     window.setTimeout(() => {
       setFeedback(null)
+      // A tester reviews this question before the run moves on; the question stays on screen ('feedback' refuses taps).
+      if (review) void review(`q${roundIdx + 1}`, `${correct ? '✓' : '✗'} ${beat.prompt(data)}`.slice(0, 190)).then(moveOn)
+      else moveOn()
+    }, 1300)
+    function moveOn() {
       if (!correct && newRun >= RETEACH_AFTER) { setPhase('reteach'); return }
       // Demonstrated mastery (the one rule: two first-try rights at the top tier) → finish early
       // with full stars, skipping the repetitive tail.
@@ -336,10 +345,10 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
         return
       }
       setPhase('play'); setRoundIdx(next)
-    }, 1300)
-  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId, onTakeEnd, takeStart])
+    }
+  }, [phase, ada, wrongRun, roundIdx, beat, onComplete, onInterlude, learnerId, onTakeEnd, takeStart, review, data])
 
-  const finishReteach = useCallback(() => {
+  const afterReteach = () => {
     setWrongRun(0)
     const next = roundIdx + 1
     // The re-teach moves the run on WITHOUT going through onSubmit, so it has to carry the same two
@@ -354,7 +363,12 @@ export function SkillBeat({ beat, onComplete, onInterlude, onRound }: { beat: Be
       if (onTakeEnd && next - takeStart >= CHAPTER_TAKE) { onTakeEnd(next - takeStart); return }
       setPhase('play'); setRoundIdx(next)
     }
-  }, [roundIdx, beat, onComplete, learnerId, onTakeEnd, takeStart])
+  }
+  const afterRef = useLatestRef(afterReteach)
+  const finishReteach = useCallback(() => {
+    if (review) void review(`r${roundIdx + 1}`, '').then(() => afterRef.current())
+    else afterRef.current()
+  }, [roundIdx, review, afterRef])
 
   return (
     <div style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>

@@ -6,10 +6,11 @@
  * "stations" to demonstrate counting, to talk, and to practice (SkillBeat:
  * adaptive + re-teach + voice). One chapter = one ForestWalk. See a18c2ba54^:docs/story-mode-3-5.md.
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react'
 import { useRouter } from 'next/navigation'
 import { speakAfterCurrent, speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
+import { ChapterReviewContext } from '@/shared/chapterReview'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { hasChapterResume } from '@/infra/storage/chapterResume'
 import { RotateGate, useNeedsRotate } from './RotateGate'
@@ -141,6 +142,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
 }) {
   const router = useRouter()
   const needsRotate = useNeedsRotate()
+  const review = useContext(ChapterReviewContext)   // a paid tester reviews each spoken line before the walk goes on
   // ?skip jumps straight to the catch/practice beat (dev shortcut to preview biome changes)
   const skipToPractice = typeof window !== 'undefined' && window.location.search.includes('skip')
   // This chapter has no Phase union — it is a LIST OF BEATS walked in order — so `useChapterPhase`'s
@@ -155,7 +157,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
     if (skipToPractice) return practiceIdx
     const b = chapter.beats[practiceIdx]
     const skill = 'beat' in b ? b.beat.skillId : null
-    return skill && hasChapterResume(getActiveLearner()?.id ?? null, skill) ? practiceIdx : 0
+    return skill && !review && hasChapterResume(getActiveLearner()?.id ?? null, skill) ? practiceIdx : 0
   })
   const [forceWalk, setForceWalk] = useState(false)   // brief walk interlude during practice
   const [biome, setBiome] = useState<BiomeId>(chapter.biomes?.[0] ?? 'forest')   // current place (bg + spawn band)
@@ -211,7 +213,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       // (Chrome with no voice + a wedged clip/manifest fetch). Walk beats already
       // have this guarantee; say beats didn't, so the intro could freeze forever.
       let done = false
-      const go = () => { if (done) return; done = true; advance() }
+      const go = () => { if (done) return; done = true; if (review) void review(`s${idx + 1}`, '').then(advance); else advance() }
       const cancel = speakSeq([beat.text], { onDone: () => window.setTimeout(go, 700) })
       const cap = window.setTimeout(go, Math.max(4500, beat.text.length * 90))
       return () => { cancel(); window.clearTimeout(cap) }
