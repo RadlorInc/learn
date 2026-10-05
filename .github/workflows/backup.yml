@@ -133,3 +133,34 @@ jobs:
           db-password: ${{ secrets.PROD_DB_PASSWORD }}
           passphrase: ${{ secrets.BACKUP_PASSPHRASE }}
           artifact-name: milo-db-backup-${{ github.run_id }}
+
+  # A failed backup used to be a red run nobody was told about (the 30 Sep token expiry went unseen until someone looked).
+  # Its own job, not a step in `dump`: a dump job that never starts (environment refused, runner lost) runs no steps of
+  # its own, but this job still sees `needs.dump.result`. Only on main, where the backup can actually run: a manual run
+  # from a branch fails at the environment gate and would cry wolf. Same issue pattern as daily-smoke.yml.
+  notice:
+    needs: dump
+    if: always() && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: File, update or close the backup notice
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RESULT: ${{ needs.dump.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -uo pipefail
+          TITLE='Nightly backup is red'
+          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number -q '.[0].number' || true)
+          if [ "$RESULT" = success ]; then
+            if [ -n "$EXISTING" ]; then gh issue close "$EXISTING" -R "$REPO" --comment "Green again: $RUN_URL"; fi
+            exit 0
+          fi
+          BODY=$(printf '%s\n\n%s\n' "Backup run ended \`$RESULT\`: $RUN_URL" \
+            "No new restorable copy of production from this run. Read the failed step, fix it, then run backup.yml by hand (docs/runbooks/backup-restore.md). Updated in place while red; closed by the next green run.")
+          if [ -n "$EXISTING" ]; then gh issue comment "$EXISTING" -R "$REPO" --body "$BODY"
+          else gh issue create -R "$REPO" --title "$TITLE" --body "$BODY" --label bug || gh issue create -R "$REPO" --title "$TITLE" --body "$BODY"; fi

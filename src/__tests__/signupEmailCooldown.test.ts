@@ -137,6 +137,21 @@ describe('SEC-04: one sign-up email per address per 2 minutes', () => {
     expect(sentTo('other@example.test')).toBe(1)
   })
 
+  it('a FAILED send does not start the cooldown: a retry 30 s later sends, rather than answering ok with nothing sent', async () => {
+    const real = fakeNetwork
+    let down = true   // Resend refuses the first message, then recovers
+    vi.stubGlobal('fetch', vi.fn(async (i: unknown, init?: RequestInit) =>
+      down && new URL(String(i)).pathname === '/emails' ? new Response('{}', { status: 500 }) : real(i, init)))
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await signUp('pat@example.test')).toEqual({ status: 502, body: { error: 'failed' } })
+    expect(sentTo('pat@example.test')).toBe(0)
+    down = false
+    vi.setSystemTime(T0 + 30_000)
+    expect(await signUp('pat@example.test')).toEqual({ status: 200, body: { ok: true } })
+    expect(sentTo('pat@example.test'), 'the retry answered ok but no email went').toBe(1)
+    err.mockRestore()
+  })
+
   it('a teacher sign-up is held the same way', async () => {
     await signUp('t@example.test', 'teacher')
     vi.setSystemTime(T0 + 30_000)

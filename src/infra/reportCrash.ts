@@ -18,6 +18,29 @@ import { recordError } from '@/infra/storage/lastError'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { safeUrl } from '@/infra/safeUrl'
 
+const SEND_CAP = 10
+const sent = new Set<string>()
+
+let installed = false
+
+/**
+ * Catch the errors the React ErrorBoundary never sees: plain runtime throws outside render,
+ * and unhandled promise rejections. The Safari boot failure this repo already shipped once was
+ * an unhandled rejection from a stale cached chunk — invisible to every other seam we have.
+ * Each goes to the local breadcrumb AND to /api/report-error, like a render crash.
+ * Idempotent; safe to call from a component that may remount.
+ */
+export function installErrorCapture(): void {
+  if (installed || typeof window === 'undefined') return
+  installed = true
+  window.addEventListener('error', (e) => {
+    reportCrash(e.error instanceof Error ? e.error : new Error(e.message || 'script error'), 'window')
+  })
+  window.addEventListener('unhandledrejection', (e) => {
+    reportCrash(e.reason instanceof Error ? e.reason : new Error(String((e.reason as { message?: string })?.message ?? e.reason)), 'promise')
+  })
+}
+
 export function reportCrash(
   error: unknown,
   source: string,
@@ -32,6 +55,11 @@ export function reportCrash(
 
   // 2. The network report — forwards to the monitoring sink when one is configured, else lands in
   //    Vercel logs. `keepalive` so it survives the navigation a crash usually triggers.
+  //    Once per source+message, and at most SEND_CAP a page load: page errors and refused uploads come through here
+  //    too, and one broken page firing in a loop must not spend the route's limit (or a sink's bill) on itself.
+  const seen = `${source}|${err?.message ?? String(error)}`
+  if (sent.has(seen) || sent.size >= SEND_CAP) return
+  sent.add(seen)
   try {
     const token = safeAccessToken()
     void fetch('/api/report-error', {

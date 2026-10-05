@@ -73,7 +73,10 @@ so the repo's migration chain still builds a body one comment different from pro
   before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
+- An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
+  unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
+- Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
+  `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
@@ -110,14 +113,12 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (branch
-  `support-e2e-sweeps`); it has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
+- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); it
+  has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
   `weekly-layout` was deleted with it (its spec and the teen shell were gone; the nightly's 640×320 frame covers short
   phones). `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
   passed — 10 end-card buttons fail Playwright's "stable" wait because the nudge animates them (a harness fault: a
   child taps them fine), 3 chapters "could not look" (the monkey cannot solve them), colors timed out.
-- No operator path closes an account for a parent who cannot use the app (`delete_my_account` needs their own recent
-  sign-in): write one and rehearse it locally before the first such request.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
@@ -135,8 +136,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   service-role helper and one caller-identity helper instead of several; split the parent and teacher dashboards;
   one signed-number formatter (`core/fmt.ts` is imported by nothing).
 - Bugs from the review, all low: the game-time day is counted in UTC for families without a settings row; the
-  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return;
-  nothing retries a failed lesson upload on a timer while online.
+  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
 - Performance: re-measure child-screen first paint and the lesson bundle sizes; the teacher dashboard makes one
