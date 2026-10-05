@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../_rateLimit'
 import { MIN_PASSWORD, childEmail, normalizeUsername, usernameFromEmail } from '@/core/childLogin'
 
@@ -127,10 +128,13 @@ export async function POST(req: Request) {
     const j = (await r.clone().json().catch(() => null)) as { error_code?: string; weak_password?: { reasons?: unknown } } | null
     return j?.error_code === 'weak_password' || !!j?.weak_password
   }
-  // Anything else Supabase refuses is logged with its status and code — never the password — so the next 502 has a cause.
+  // Anything else Supabase refuses is logged with its status and code — never the password — so the next 502 has a cause,
+  // and recorded in error_events (status and code only) so the ops digest counts it.
   const logged = async (what: string, r: Response) => {
     const j = (await r.clone().json().catch(() => null)) as { error_code?: string; code?: string | number } | null
-    console.error(`[child-login] ${what}`, r.status, j?.error_code ?? j?.code ?? '')
+    const code = j?.error_code ?? j?.code ?? ''
+    console.error(`[child-login] ${what}`, r.status, code)
+    await sinkHandled(`[child-login] ${what}`, { status: r.status, code: String(code) })
   }
 
   // Already has a login: change its username and/or password in place.
@@ -162,6 +166,7 @@ export async function POST(req: Request) {
     body: JSON.stringify({ id: created.id, role: 'learner', display_name: learner.display_name }),
   }) : null
   if (!link.ok || !role?.ok) {
+    await logged(link.ok ? 'role failed' : 'link failed', role ?? link)
     // ⚠️ Roll back rather than leave a half-made account: without the link it signs in to nothing, and without the
     // role the child is offered the Teacher/Parent picker. Deleting the user cascades the access row.
     await asService(b.e, `/auth/v1/admin/users/${created.id}`, { method: 'DELETE' })
@@ -178,7 +183,10 @@ export async function DELETE(req: Request) {
   if (rows === null) return json({ ok: false, error: 'lookup_failed' }, 502)
   for (const row of rows) {
     const r = await asService(b.e, `/auth/v1/admin/users/${row.parent_id}`, { method: 'DELETE' })
-    if (!r.ok && r.status !== 404) return json({ ok: false, error: 'delete_failed' }, 502)
+    if (!r.ok && r.status !== 404) {
+      await sinkHandled('[child-login] delete failed', { status: r.status })
+      return json({ ok: false, error: 'delete_failed' }, 502)
+    }
   }
   return json({ ok: true })
 }

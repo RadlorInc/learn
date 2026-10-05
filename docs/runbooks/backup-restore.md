@@ -36,6 +36,9 @@ The run is good when all three hold:
 - an artifact exists and is not expired;
 - the per-schema table is in the log.
 
+A red run on `main` also opens (or comments on) the issue "Nightly backup is red", and the next green run closes it.
+The ops digest flags a backup whose last success is more than 36 h old even when the latest run is green.
+
 That table explains a size change (2026-09-28: tens of KB → ~1.8 MB when the audio bucket's rows landed in `storage`). The ops digest (06:23 UTC) also reports the latest result, which is usually the previous day's run.
 
 ## Rehearse a restore — on a throwaway LOCAL stack only

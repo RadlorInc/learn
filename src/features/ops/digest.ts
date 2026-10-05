@@ -14,6 +14,9 @@ import { rpc, sendEmail, type RpcError } from '@/features/consent/server'
 const REPO = 'RadlorInc/learn'
 const INT_KEYS = ['error_events_24h', 'cron_runs_failed_24h', 'b3_cancel_failing', 'b3_cancel_missed_7d',
   'consent_pending_overdue', 'consent_request_unsent'] as const
+/** A backup older than this is flagged even when the latest run is green. Scheduled runs start 5–6 h late and the
+ *  digest goes at 06:23 UTC, so a healthy night reads about 22 h; one missed night reads over 40. */
+const BACKUP_MAX_AGE_H = 36
 const CONCLUSIONS = new Set(['success', 'failure', 'cancelled', 'skipped', 'timed_out', 'action_required', 'neutral', 'stale', 'startup_failure'])
 
 /** True only for Vercel's cron: it sends `Authorization: Bearer $CRON_SECRET` when that variable is set. */
@@ -25,6 +28,25 @@ export function fromCron(req: Request): boolean {
 }
 
 const num = (v: unknown) => (Number.isInteger(v) ? String(v) : 'unknown')
+
+/**
+ * Stripe events stored but not processed an hour after they arrived: the webhook took the event and then failed (it
+ * answers 5xx and Stripe redelivers, so a count that stays up means the redeliveries are failing too). A COUNT read
+ * as the service role through PostgREST's `Content-Range`; no row, no column of `billing_events` is read.
+ */
+async function billingUnprocessed(): Promise<string> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return 'unknown'
+  try {
+    const before = new Date(Date.now() - 3_600_000).toISOString()
+    const r = await fetch(`${url}/rest/v1/billing_events?select=id&processed_at=is.null&at=lt.${before}`, {
+      method: 'HEAD', headers: { apikey: key, Authorization: `Bearer ${key}`, Prefer: 'count=exact' },
+      signal: AbortSignal.timeout(5000), cache: 'no-store',
+    })
+    const n = r.ok ? r.headers.get('content-range')?.match(/\/(\d+)$/)?.[1] : undefined
+    return n ?? 'unknown'
+  } catch { return 'unknown' }
+}
 
 async function workflow(file: string): Promise<{ latest: string; hoursSinceSuccess: string }> {
   try {
@@ -62,9 +84,13 @@ export async function buildDigest(drain: string): Promise<{ lines: string[]; att
       ? row.cron_jobs_failing.map(j => (typeof j === 'string' && /^[\w.-]{1,64}$/.test(j) ? j : 'unnamed')) : ['unknown']
     flag(jobs.length > 0, `cron_jobs_failing: ${jobs.length ? jobs.join(', ') : 'none'}`)
   }
+  const billing = await billingUnprocessed()
+  flag(billing !== '0', `billing_events_unprocessed_1h: ${billing}`)
   for (const f of ['backup.yml', 'deploy.yml']) {
     const w = await workflow(f)
-    flag(w.latest !== 'success', `${f}: latest ${w.latest}, last success ${w.hoursSinceSuccess} h ago`)
+    // Deploys run only on merges, so only the backup has an age limit. Not a number ("none in last 30 runs") is old.
+    const stale = f === 'backup.yml' && !(Number(w.hoursSinceSuccess) <= BACKUP_MAX_AGE_H)
+    flag(w.latest !== 'success' || stale, `${f}: latest ${w.latest}, last success ${w.hoursSinceSuccess} h ago`)
   }
   return { lines, attention }
 }

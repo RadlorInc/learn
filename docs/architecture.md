@@ -81,8 +81,10 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/tester` | anyone holding a tester link's token (checked by Radlor Ops) | Forwards a paid tester's open/review to Radlor Ops `/api/radlic-tester`; stores nothing here |
 | `POST /api/report-error` | anyone; capped | Crash reports: log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
+| `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
+| `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
 
 ### Layers (`src`)
 
@@ -296,7 +298,7 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 | `learner_events` | `track()` in a story chapter | export, admin aggregates |
 | `exercise_results` | the child's login | teacher, child, export |
 | `lesson_feedback` | "Didn't get it?" | export |
-| `error_events` | `errorSink` (service role) | `export_child_records`, `ops_digest` counts |
+| `error_events` | `errorSink` (service role): crashes; caught 5xx in sign-up, consent, unsubscribe and child-login routes (`sinkHandled`: route, status and code only, no message, no learner id); Resend bounces and complaints (type only) | `export_child_records`, `ops_digest` counts |
 | `parental_consents` | consent RPCs (service role) | the parent, consent routes |
 | `auth.users`, `profiles` (child) | `/api/child-login` | Supabase Auth |
 | `deletion_log` | deletion functions, retention jobs | service role |
@@ -372,6 +374,7 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `legalDocs`, `legalSwitch`, `publicClaims` | Legal pages stay dark until a valid switch-on; retention matches its job; no placeholder ships; public copy promises nothing unbuilt. |
 | `runbookNoProdWrites` | No runbook tells its reader to write to production by hand. |
 | `docLinks` | Every link between docs resolves, and no file names a doc that is not there. |
+| `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h and stuck Stripe events. |
 | `deploySafety`, `migrationsPending`, `actionsPinned`, `ci.yml` | Backup before `db push`; unapplied migrations retried; Actions pinned; `release` moves only after tsc, vitest, build, audit and `rls-tests` pass. |
 
 Restores: [runbooks/backup-restore.md](runbooks/backup-restore.md). Support: [runbooks/support.md](runbooks/support.md).
