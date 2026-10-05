@@ -50,8 +50,7 @@ Never push to `release` by hand. Pointing it at an older commit deploys nothing,
 |---|---|---|---|
 | `backup.yml` | 02:30 daily, plus manual. Scheduled runs started 5–6 h late (measured 2026-09-28, `gh run list --event schedule`) | Encrypted production dump, 30-day artifact ([backup-restore.md](backup-restore.md)) | Its `notice` job (main only) opens or updates the issue "Nightly backup is red" and closes it on the next green run. The ops digest also flags a backup whose last success is over 36 h old, even when the latest run is green |
 | `daily-smoke.yml` | 03:11 daily, plus manual | `npm run smoke:live` against the live site (read-only, no secret), expecting the service-worker version on `release` | Updates the issue "Daily production smoke is red" and closes it on green |
-| `nightly-e2e.yml` | 03:15 daily | Legacy chapter sweep. **Paused** while `LEGACY_CHAPTERS_HIDDEN = true`: green with a warning, tests nothing | Updates the issue "Nightly E2E is red" and closes it on green |
-| `weekly-layout.yml` | Mondays 04:40 | Short-landscape layout sweep. **Paused** the same way | Red run only |
+| `nightly-e2e.yml` | 03:15 daily, plus manual, and once on a PR that changes it | `e2e/all-chapters.spec.ts` against a production build on the runner (placeholder Supabase, never production): the 23 KG–2 chapters at `/game?c=<id>` and the first topic of each of the 36 grade 3–8 modules at `/lesson?id=<topic>` open, fit and throw nothing, on three frames | Updates the issue "Nightly E2E is red" and closes it on green |
 | `red-main.yml` | After every failed Deploy run on `main`, plus a drift check at 06:37 daily | Files one issue per kind: main red · promote failed · app live but database not migrated · `main` more than 2 commits ahead of `release` | — |
 | Vercel cron `/api/consent/cancel-second-notice` | 06:23 daily (`vercel.json`) | Cancels queued second consent emails, then emails the ops digest (numbers only). The digest is sent only if `CRON_SECRET` and `OPS_DIGEST_TO` are set in Vercel | Digest lines marked `!!` (see below) |
 | Database retention jobs (pg_cron) | 03:17–03:37 daily | The schedule in [../legal/04-data-retention-policy.md](../legal/04-data-retention-policy.md) | Digest line `cron_jobs_failing` |
@@ -74,7 +73,7 @@ Never push to `release` by hand. Pointing it at an older commit deploys nothing,
 
 Before a launch, or after a change to a KG–2 chapter's layout, run the cross-browser tap sweep locally against an offline dev server (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:9 NEXT_PUBLIC_SUPABASE_ANON_KEY=offline npx next dev -p 3055`, which touches no database): `E2E_MATRIX=1 E2E_BASE_URL=http://localhost:3055 npx playwright test e2e/xbrowser-clicks.spec.ts --workers=5` (about 2.5 hours for all 13 profiles; narrow with `--project=mac-safari` and `E2E_ONLY=counting`). Read "could not look" as untested, not as a pass.
 
-Unpausing the sweeps also needs `e2e/start-card.spec.ts` and `e2e/short-landscape.spec.ts` back (absent as of 2026-09-28). `upload-audio.yml` is manual ([audio-upload.md](audio-upload.md)). Never run `migrate-region.yml` again: it was a one-off for the September 2026 region move.
+A workflow that names a spec file that does not exist fails `src/__tests__/workflowSpecs.test.ts` in CI. A chapter or module added later is not swept until it is added to the hand-written list in `e2e/all-chapters.spec.ts`. `upload-audio.yml` is manual ([audio-upload.md](audio-upload.md)). Never run `migrate-region.yml` again: it was a one-off for the September 2026 region move.
 
 ## Staging
 

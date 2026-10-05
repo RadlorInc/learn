@@ -24,11 +24,10 @@ const EXPECTED: Record<string, string[]> = {
   // called jobs carry their own, checked under ci.yml above.
   'deploy.yml': ['promote', 'migrate-staging', 'migrations-changed', 'migrate-prod', 'record-migrated'],
   'migrate-region.yml': ['migrate'],
-  'nightly-e2e.yml': ['legacy-gate', 'chapters'],
+  'nightly-e2e.yml': ['chapters'],
   'red-main.yml': ['notify'],
   'staging.yml': ['apply', 'repair'],
   'upload-audio.yml': ['upload'],
-  'weekly-layout.yml': ['legacy-gate', 'layout'],
 }
 const REUSABLE_CALLERS: Record<string, string[]> = { 'deploy.yml': ['ci'] }
 
@@ -51,11 +50,10 @@ const hasOwnKey = (block: string[], key: string) =>
   block.some((l) => new RegExp(`^ {4}${key}:`).test(l))
 
 describe('every CI job has its own timeout-minutes (ARC-07 / OPS-18)', () => {
-  // Positive control: the walker must find the two timeouts that already existed before this fix,
+  // Positive control: the walker must find a timeout that already existed before this fix,
   // or a broken parser would report "no jobs" and every assertion below would be vacuous.
-  it('the parser sees the pre-existing timeouts (nightly chapters, weekly layout)', () => {
+  it('the parser sees a pre-existing timeout (nightly chapters)', () => {
     expect(hasOwnKey(jobs('nightly-e2e.yml').get('chapters') ?? [], 'timeout-minutes')).toBe(true)
-    expect(hasOwnKey(jobs('weekly-layout.yml').get('layout') ?? [], 'timeout-minutes')).toBe(true)
   })
 
   for (const [file, expected] of Object.entries(EXPECTED)) {

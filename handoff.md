@@ -113,9 +113,12 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
-  `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
-  (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
+- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); it
+  has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
+  `weekly-layout` was deleted with it (its spec and the teen shell were gone; the nightly's 640×320 frame covers short
+  phones). `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
+  passed — 10 end-card buttons fail Playwright's "stable" wait because the nudge animates them (a harness fault: a
+  child taps them fine), 3 chapters "could not look" (the monkey cannot solve them), colors timed out.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
