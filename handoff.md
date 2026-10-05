@@ -8,13 +8,13 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (4 October 2026)
 
-- **Production** is on `917e6cd24` (#371, 4 Oct; Vercel READY, Deploy green); `smoke:live` not re-run since
-  `19ef8a94c`. Since #358: paid testers (#365, #367, #368, #369, #370), chalk word times (#371). The repo `learn` is
+- **Production** is on `e5184068a` (#372, 5 Oct; Vercel READY, Deploy green); `smoke:live` not re-run since
+  `19ef8a94c`. Since #358: paid testers (#365, #367–#370, #372), chalk word times (#371). The repo `learn` is
   public (see the Vercel item below).
 - **Paid testers are live** (4 Oct, [testers](docs/runbooks/testers.md)): links made on Radlor Ops' **Radlic
   testers** tab; `radlic.com/test#t=…` plays the real lesson/chapter in review mode (each screen reviewed before it
-  moves on; 2 questions per practice level; ✓ done = that + Screen 9). Links and reviews live in the **ops** database;
-  Radlic's has nothing — `/api/tester` only forwards to Ops.
+  moves on; 2 questions per practice level; ✓ done = that + Screen 9; the lesson sits above the review bar, #372).
+  Links and reviews live in the **ops** database; Radlic's has nothing — `/api/tester` only forwards to Ops.
 - **CI's dependency audit** gates on shipped packages only (`--omit=dev`, #365); dev tools warn, not block.
 - **Production accounts were wiped on 1 Oct** before the paid launch (app data kept). The founder's own account went
   too: sign up again and re-add the `admin_users` row.
