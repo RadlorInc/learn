@@ -25,7 +25,7 @@ flowchart LR
     ST["Storage: lesson-audio"]
   end
   R["Resend"]
-  SP["Stripe (test mode, off)"]
+  SP["Stripe"]
   G["GitHub Actions"]
   B --> P
   B --> A
@@ -79,10 +79,12 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `GET/POST/DELETE /api/child-login` | the learner's creator | A child's username and password (service role for Auth admin and the `self` row) |
 | `GET /api/admin/metrics` | admin (own token forwarded) | One `admin_*` aggregate RPC; non-admins get 404; small buckets suppressed (`ADMIN_MIN_COHORT`) |
 | `POST /api/tester` | anyone holding a tester link's token (checked by Radlor Ops) | Forwards a paid tester's open/review to Radlor Ops `/api/radlic-tester`; stores nothing here |
-| `POST /api/report-error` | anyone; capped | Crash reports: log, `error_events`, `MONITORING_INGEST_URL` if set |
+| `POST /api/report-error` | anyone; capped | Crashes, page errors, unhandled rejections and refused uploads (`infra/reportCrash`: once per message, 10 a page load): log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
+| `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
+| `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
 
 ### Layers (`src`)
 
@@ -115,7 +117,14 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Children** have no real email. The learner's creator sets a username and password via `/api/child-login`: an Auth
   user at a reserved `.invalid` address (`src/core/childLogin.ts`) plus a `learner_access` row with
   `access_role = 'self'`. The child signs in on `/auth` with the username and reaches only their own record. A
-  temporary password sends them to `/auth/new-password` first.
+  temporary password sends them to `/auth/new-password` first. A username `GET /api/child-login` cannot look up is left out of the list
+  and logged to the error sink (status only).
+- **Sign-up email** (`/api/auth/signup`): at most one per address per 2 minutes (SEC-04), counted from a send
+  that went; a failed send clears the cooldown so the retry sends (`signupEmailCooldown.test.ts`). An unconfirmed
+  account gets a fresh link by signing up again with the same address, and `/auth` says so when its sign-in is refused
+  as unconfirmed. A Google sign-in that returns an error lands on `/auth` with a message.
+- **Crash screen**: the root boundary (`MiloErrorBoundary`) and `app/error.tsx` offer *Try again* and the child's
+  `/modules` — never the PIN-gated `/parent` (`crashBoundaryChildHome.test.ts`).
 - **Passwords** are at least `MIN_PASSWORD` (8, `src/core/childLogin.ts`) wherever one is set — a child's, a
   temporary one, an adult's sign-up, reset or invite — matching Supabase Auth's minimum. Sign-in checks no length, so
   a 6- or 7-character password set before 28 September 2026 still works.
@@ -258,6 +267,8 @@ deletion, and the daily cron drain it.
   fetches every line a question can lead to when it loads; while it is open, other lines use the device voice and
   request nothing (`questionLock`, `kg2IdenticalRequests`). The one bounded exception is documented at `_onTap`.
 - **Fallback.** Any miss goes to `speechSynthesis`, limited to on-device voices (`speechLocalVoiceOnly.test.ts`).
+  A clip that should have played and did not (index not loaded, clip not loaded, play refused) leaves one
+  `[audio]` note per cause per page load in the device's recent-errors ring (`voiceFallbackBreadcrumb.test.ts`).
   Voice rules: [product/voice.md](product/voice.md).
 
 ## 7. Child data, end to end
@@ -279,8 +290,13 @@ Tests are `src/__tests__/<name>.test.ts`; parent requests follow [runbooks/data-
 
 **The upload queue** (`infra/storage/lessonSync.ts`, IndexedDB `milo`/`kv`) holds each answer with the account that
 queued it, sends it only while that account is signed in, in order per learner, and flushes on each new item, page
-load and reconnect. The database keeps the most recently answered standing, so a stale device cannot roll progress
-back. Sign-out (`clearChildrenFromDevice`) removes every per-child key from the device, in kv and in localStorage,
+load and reconnect, and on a timer while online and anything is left (30 s, doubling to 10 min). A refusal
+`classifySyncError` calls `'drop'` (23503, 42501, 23502, 23514, 22P02, an RLS message) keeps the item on the device
+for 7 days, retried without holding that learner's later items, and reports it to `/api/report-error` when first
+refused and when deleted — a broken migration answers those codes for every row. Each upload records the last success
+and the last error code (`syncStatus`) for the diagnostic block; past 2000 items the oldest are dropped with a
+breadcrumb. The database keeps the most recently answered standing, so a stale device cannot roll progress
+back. Sign-out asks first when uploads are still waiting on the device. Sign-out (`clearChildrenFromDevice`) removes every per-child key from the device, in kv and in localStorage,
 except for a child with an upload waiting in either queue (lessons, or `exercise-results-pending` for class
 exercises); the queues themselves, signed-out `…-device-…` keys and the adult's `al-dash-prefs:<account>` stay.
 
@@ -296,7 +312,7 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 | `learner_events` | `track()` in a story chapter | export, admin aggregates |
 | `exercise_results` | the child's login | teacher, child, export |
 | `lesson_feedback` | "Didn't get it?" | export |
-| `error_events` | `errorSink` (service role) | `export_child_records`, `ops_digest` counts |
+| `error_events` | `errorSink` (service role): crashes; caught 5xx in sign-up, consent, unsubscribe and child-login routes (`sinkHandled`: route, status and code only, no message, no learner id); Resend bounces and complaints (type only) | `export_child_records`, `ops_digest` counts |
 | `parental_consents` | consent RPCs (service role) | the parent, consent routes |
 | `auth.users`, `profiles` (child) | `/api/child-login` | Supabase Auth |
 | `deletion_log` | deletion functions, retention jobs | service role |
@@ -304,15 +320,22 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 
 ## 8. Billing
 
-Built and switched off; nothing has been charged.
+Switched on for the paid launch (`BILLING_LIVE`, 2026-10-01); whether a deployment can take real money is decided by
+the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbooks/billing.md](runbooks/billing.md).
 
 - **Schema:** `subscriptions` (one per account), `subscription_seats`, `billing_events` (an allow-listed summary per
   Stripe event), `billing_config.enforced`. Parents read their own rows; no client writes them directly.
 - **`/api/checkout`:** account from the token; requires the renewal-terms tick, whose time goes on the Stripe
-  subscription's metadata with the account id.
+  subscription's metadata with the account id. Refuses (409 `already_subscribed`) while the account's row holds seats
+  (active, trialing, past_due, unpaid), and refuses (503) when it cannot read the row. Returns to
+  `/parent/plan?billing=success`, where the card says "activating" and hides the checkout until the webhook writes the row;
+  `/parent/plan` never shows the checkout beside a plan that holds seats.
 - **`/api/stripe/webhook`:** verifies Stripe's signature on the raw body first; idempotent (`stripe_event_id` unique,
   done only once `processed_at` is set); re-reads the subscription from Stripe and reconciles seats to a target
-  (`materialize_seats`), so delivery order does not matter.
+  (`materialize_seats`), so delivery order does not matter. One row per account, so an event about a DIFFERENT
+  subscription than the row's is applied only if Stripe says the stored one no longer holds seats; otherwise it is
+  closed unapplied and logged (a late event from an old subscription, or a double subscription). A bad signature
+  (per-IP limited) and a missing setting (by name) reach `error_events`, never the payload.
 - **Emails a subscription owes** (`features/billing/subscriptionNotices.ts`, sent by the webhook; docs/legal/01 §3):
   the acknowledgement on `checkout.session.completed` (terms, renewal, how to cancel), and a reminder on
   `invoice.upcoming` for ANNUAL plans that will renew (Stripe sends it 30 days ahead — a dashboard setting). Each has a
@@ -322,7 +345,8 @@ Built and switched off; nothing has been charged.
 - **`/api/billing/seats`:** one more seat on the caller's own active plan (max 4): a preview of the renewal total, then
   Stripe invoices the prorated difference now on the card on file; the row and seats are written at once. If the bank
   wants approval (3-D Secure) or the card fails, the change stays `pending_update` (no seat) and the parent finishes on
-  Stripe's hosted invoice page; the webhook seats the child once paid. Shown when every seat is in use.
+  Stripe's hosted invoice page; the webhook seats the child once paid. Shown when every seat is in use. A request Stripe
+  refuses outright answers `payment_failed` only; Stripe's text goes to `error_events`.
 - **Free trial and entitlement** (20261001120000, reshaped by 20261001140000): the PARENT picks the family's two free
   topics once on `/parent` (`FreeTrialCard` → `choose_free_topics`): two topics of one Grade 3–8 module, or two KG–2
   stories; final. The child's home (`ModuleHome`, via `trial_topics`) shows only those two — no lock, trial or price on
@@ -333,8 +357,9 @@ Built and switched off; nothing has been charged.
 - **Seats fill themselves** (20261001150000): a new paid seat goes to the family's oldest child without one, and a
   child added later takes an empty seat; `reassign_learner_seat` (once per period) is still the only way to MOVE one.
 - **State (2026-10-01):** `BILLING_LIVE = true` (`src/app/legal/registry.ts`, the paid launch with beta legal pages):
-  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). `src/infra/stripe.ts` still
-  refuses non-test keys. `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
+  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). On `main`, `src/infra/stripe.ts`
+  still accepts only `sk_test_` keys, so no deployment can take a real payment; Draft PR #351 pins the mode to the
+  deployment instead (live keys on Vercel Production only). `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
   topic through while off (`chapterGateOff`).
 - **On:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`; to gate
   access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments also need the test-key guard
@@ -347,7 +372,7 @@ Built and switched off; nothing has been charged.
 | Supabase | Postgres, Auth, Storage | all stored data, child data included; audio requests from the child's device (IP, user agent) |
 | Vercel | hosting, API routes, cron | every request (IP, user agent, path); function logs, including crash reports |
 | Resend | app email | the adult's address and the message (first name, token links); the ops digest (counts only); nothing about a child |
-| Stripe (test, off) | checkout | account id, the parent's email or customer id, seat count, renewal-consent time; nothing about a child |
+| Stripe | checkout | account id, the parent's email or customer id, seat count, renewal-consent time; nothing about a child |
 | Google | adult sign-in via Supabase Auth | the adult's Google sign-in |
 | GitHub | code, CI, deploys, backups | the source; an encrypted nightly production dump (30-day artifact) |
 
@@ -372,6 +397,7 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `legalDocs`, `legalSwitch`, `publicClaims` | Legal pages stay dark until a valid switch-on; retention matches its job; no placeholder ships; public copy promises nothing unbuilt. |
 | `runbookNoProdWrites` | No runbook tells its reader to write to production by hand. |
 | `docLinks` | Every link between docs resolves, and no file names a doc that is not there. |
+| `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h and stuck Stripe events. |
 | `deploySafety`, `migrationsPending`, `actionsPinned`, `ci.yml` | Backup before `db push`; unapplied migrations retried; Actions pinned; `release` moves only after tsc, vitest, build, audit and `rls-tests` pass. |
 
 Restores: [runbooks/backup-restore.md](runbooks/backup-restore.md). Support: [runbooks/support.md](runbooks/support.md).

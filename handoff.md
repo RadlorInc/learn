@@ -73,7 +73,10 @@ so the repo's migration chain still builds a body one comment different from pro
   before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
+- An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
+  unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
+- Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
+  `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
 - GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
@@ -130,8 +133,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   service-role helper and one caller-identity helper instead of several; split the parent and teacher dashboards;
   one signed-number formatter (`core/fmt.ts` is imported by nothing).
 - Bugs from the review, all low: the game-time day is counted in UTC for families without a settings row; the
-  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return;
-  nothing retries a failed lesson upload on a timer while online.
+  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
 - Performance: re-measure child-screen first paint and the lesson bundle sizes; the teacher dashboard makes one

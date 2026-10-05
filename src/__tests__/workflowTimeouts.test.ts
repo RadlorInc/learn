@@ -17,7 +17,7 @@ import { resolve } from 'node:path'
  * the files say.
  */
 const EXPECTED: Record<string, string[]> = {
-  'backup.yml': ['dump'],
+  'backup.yml': ['dump', 'notice'],
   'ci.yml': ['verify', 'rls-tests'],
   // `ci` calls ci.yml as a reusable workflow; GitHub rejects `timeout-minutes` on such a job
   // (only name/uses/with/secrets/strategy/needs/if/concurrency/permissions are allowed). The
