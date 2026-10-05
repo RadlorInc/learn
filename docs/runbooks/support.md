@@ -6,7 +6,8 @@
 
 - **The support mailbox** (the address is `SUPPORT_EMAIL` in `src/app/site.ts`). The **founder** reads it. It is reached from:
   - the dashboard's *Need help?* panel (`src/shared/ui/SupportPanel.tsx`), which opens the parent's own mail program with a **diagnostic block** filled in;
-  - `/help`;
+  - `/help`, whose *Report a problem* opens the same email with the diagnostic block;
+  - `/auth` and the consent-link pages (`/consent/...`), which show the address for a parent who is signed out;
   - the legal pages;
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
@@ -39,16 +40,21 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
    | `storage` | `idb` | `local` means IndexedDB was blocked (private browsing, strict settings, full disk). This is the usual cause of "progress vanished" |
    | `unsynced` | `0 session(s)` | Above 0, the work is **on the device** and not yet uploaded. Never tell them it is lost. With `online`, sync is failing, so read `recent errors` |
    | `network` | `online` | `OFFLINE` often explains everything else |
-   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen. `Failed to fetch` means a network problem or a refused request |
+   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen. `Failed to fetch` means a network problem or a refused request. `[audio]` means a recorded clip fell back to the device voice (one note per cause per page load) |
 
-4. **Agent.**
+4. **Founder, for "I did not get the email"** (`/help` promises we check whether it was sent). In Resend → Emails,
+   search the address. *Delivered*: it is in their mailbox, ask them to check spam. *Bounced* or
+   *Suppressed*: the address is wrong or refusing mail. Nothing listed: it was never sent, so ask them to sign up (or
+   tap "Forgot password?") again with the same address, and tell the agent (the sign-up route logs
+   `[auth/signup] failed` in Vercel). Reply with what you found, never with anything about other accounts.
+5. **Agent.**
    - Reproduce on a local build.
    - Read the code, the public site and GitHub runs.
    - If server data is needed, write **read-only SQL** into `docs/legal/sql/<topic>.sql` with placeholders (`'<learner id>'`), never real ids or emails. Say what each column answers and what each result would mean.
    - **Founder** runs it in the SQL editor and pastes back the output.
    - Vercel runtime logs: the **founder** reads them in the dashboard.
-5. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
-6. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
+6. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
+7. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
 
 ## What the agent cannot do
 

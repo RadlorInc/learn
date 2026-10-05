@@ -47,6 +47,9 @@ export async function POST(req: Request) {
   // can say what is missing instead of "Password must be at least 8 characters".
   if (body.adult !== true) return NextResponse.json({ error: 'adult_required' }, { status: 400 })
 
+  // Set once a link is issued, cleared once its email is sent: on a failure in between, the catch below clears the
+  // cooldown, so the parent's retry sends rather than answering "Check your email" for a message that never went.
+  let unsent: { userId: string; signupCount: number } | null = null
   try {
     requireConfig()
     // SEC-04: at most ONE sign-up email per address per SIGNUP_EMAIL_COOLDOWN_MS, across every serverless instance
@@ -76,6 +79,7 @@ export async function POST(req: Request) {
     // The role the account was FIRST created with wins: re-sending must not turn a teacher's sign-up into a consent.
     // A second generate_link REPLACES user_metadata with its `data` (measured 2026-09-26), so `data` above re-sends the
     // first sign-up's; if that lookup failed, the metadata is this request's, as before N2.
+    unsent = { userId: link.userId, signupCount: link.signupCount }
     const asParent = (link.metadata.role ?? role) === 'parent'
     const confirm = `${SITE_URL}/auth/confirm?th=${encodeURIComponent(link.hashedToken)}`
     const key = `signup-${link.userId}-${link.hashedToken.slice(0, 16)}`
@@ -97,6 +101,7 @@ export async function POST(req: Request) {
       }
       if (row) {
         const id = await sendEmail('transactional', email, renderSignup(lang, `${confirm}#t=${token}`, firstName), key)
+        unsent = null
         await rpc('consent_record_request_sent', { p_id: row.consent_id, p_provider_id: id })
         return NextResponse.json({ ok: true })
       }
@@ -104,12 +109,16 @@ export async function POST(req: Request) {
     await sendEmail('transactional', email, renderConfirm(lang, confirm), key)
     return NextResponse.json({ ok: true })
   } catch (e) {
+    // The cooldown reads `confirmation_sent_at`, which generate_link stamped although no email went. SEC-01's password
+    // reset clears it (measured, see lastSignupLinkAt) and kills the unsent token, so the retry is treated as a first send.
+    if (unsent) await scrambleUnconfirmedPassword(unsent.userId, unsent.signupCount + 1)
+      .catch(err => console.error('[auth/signup] could not clear the cooldown after a failed send', err))
     if (e instanceof ConfigMissing) {
       console.error('[auth/signup] not configured: missing', e.message)
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
     // console, not reportCrash: see features/consent/server.ts. An account created without its email is re-sent by
-    // signing up again once the SEC-04 cooldown has passed (generate_link issues a new token for an unconfirmed address).
+    // signing up again (generate_link issues a new token for an unconfirmed address); the cooldown was cleared above.
     console.error('[auth/signup] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }

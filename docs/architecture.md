@@ -115,7 +115,14 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Children** have no real email. The learner's creator sets a username and password via `/api/child-login`: an Auth
   user at a reserved `.invalid` address (`src/core/childLogin.ts`) plus a `learner_access` row with
   `access_role = 'self'`. The child signs in on `/auth` with the username and reaches only their own record. A
-  temporary password sends them to `/auth/new-password` first.
+  temporary password sends them to `/auth/new-password` first. A username `GET /api/child-login` cannot look up is left out of the list
+  and logged to the error sink (status only).
+- **Sign-up email** (`/api/auth/signup`): at most one per address per 2 minutes (SEC-04), counted from a send
+  that went; a failed send clears the cooldown so the retry sends (`signupEmailCooldown.test.ts`). An unconfirmed
+  account gets a fresh link by signing up again with the same address, and `/auth` says so when its sign-in is refused
+  as unconfirmed. A Google sign-in that returns an error lands on `/auth` with a message.
+- **Crash screen**: the root boundary (`MiloErrorBoundary`) and `app/error.tsx` offer *Try again* and the child's
+  `/modules` — never the PIN-gated `/parent` (`crashBoundaryChildHome.test.ts`).
 - **Passwords** are at least `MIN_PASSWORD` (8, `src/core/childLogin.ts`) wherever one is set — a child's, a
   temporary one, an adult's sign-up, reset or invite — matching Supabase Auth's minimum. Sign-in checks no length, so
   a 6- or 7-character password set before 28 September 2026 still works.
@@ -258,6 +265,8 @@ deletion, and the daily cron drain it.
   fetches every line a question can lead to when it loads; while it is open, other lines use the device voice and
   request nothing (`questionLock`, `kg2IdenticalRequests`). The one bounded exception is documented at `_onTap`.
 - **Fallback.** Any miss goes to `speechSynthesis`, limited to on-device voices (`speechLocalVoiceOnly.test.ts`).
+  A clip that should have played and did not (index not loaded, clip not loaded, play refused) leaves one
+  `[audio]` note per cause per page load in the device's recent-errors ring (`voiceFallbackBreadcrumb.test.ts`).
   Voice rules: [product/voice.md](product/voice.md).
 
 ## 7. Child data, end to end

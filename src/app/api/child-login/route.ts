@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { callerKey, overLimit } from '../_rateLimit'
 import { MIN_PASSWORD, childEmail, normalizeUsername, usernameFromEmail } from '@/core/childLogin'
+import { sinkError } from '@/infra/errorSink'
 
 /**
  * A child's username and password, set by the adult who CREATED that learner — a parent or a teacher
@@ -96,7 +97,12 @@ export async function GET(req: Request) {
   const logins: Record<string, string> = {}
   for (const row of rows) {
     const r = await asService(b.e, `/auth/v1/admin/users/${row.parent_id}`)
-    if (!r.ok) continue
+    // Still skipped (the other logins list), but no longer silently: a parent who reports a missing username has a
+    // cause to find. The status only — no id, no name.
+    if (!r.ok) {
+      await sinkError({ at: new Date().toISOString(), source: 'server', message: `child-login: username lookup failed ${r.status}`, routePath: '/api/child-login' }).catch(() => {})
+      continue
+    }
     const u = usernameFromEmail(((await r.json()) as { email?: string }).email)
     if (u) logins[row.learner_id] = u
   }
