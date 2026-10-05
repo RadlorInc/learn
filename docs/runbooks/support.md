@@ -36,10 +36,13 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
    | Line | Healthy | Bad value means |
    |---|---|---|
    | `app` | equals live `VERSION` (`curl -s https://radlic.com/sw.js \| grep -m1 VERSION`) | Lower means a stale shell: the family should fully close and reopen the app. `none` means no service worker |
-   | `storage` | `idb` | `local` means IndexedDB was blocked (private browsing, strict settings, full disk). This is the usual cause of "progress vanished" |
-   | `unsynced` | `0 session(s)` | Above 0, the work is **on the device** and not yet uploaded. Never tell them it is lost. With `online`, sync is failing, so read `recent errors` |
+   | `storage` | `idb`, then quota and `persistent` | `local` means IndexedDB was blocked (private browsing, strict settings, full disk). This is the usual cause of "progress vanished". `not persistent` with used near the quota: the browser may clear the site's data under pressure |
+   | `unsynced` | `0 session(s)` | Above 0, the work is **on the device** and not yet uploaded. Never tell them it is lost. With `online`, sync is failing, so read `sync err`. The app retries on its own every 30 s, backing off to every 10 min, while the page is open |
+   | `last sent` | a recent time | When an upload last went through from this device. `never on this device` with work done means nothing has ever left it |
+   | `sync err` | `none recorded` | The last code an upload got. `network`: no answer (Wi-Fi, a blocker). `P0C01`: no consent the gate accepts yet (the child's screen asks the adult). `42501`, `23503`, `23502`, `23514`, `22P02`: the database refused the row — it stays on the device for 7 days, retried, and each one is also reported to `error_events` (source `client`, message `upload refused <code>…`). Several families with the same code at once means a migration or policy broke uploads: fix it within the week, before the queues delete those rows |
+   | `save err` | absent | Shown only when a write to the device's storage failed during this visit (full disk, IndexedDB closed by the browser): progress made then may not survive a reload |
    | `network` | `online` | `OFFLINE` often explains everything else |
-   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen. `Failed to fetch` means a network problem or a refused request |
+   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen; `[window]` / `[promise]` an error outside a screen; `[sync]` a refused upload or the upload queue overflowing (2000 items, the oldest dropped). `Failed to fetch` means a network problem or a refused request. Crashes, page errors and refused uploads are also in `error_events` (once per message per visit) |
 
 4. **Agent.**
    - Reproduce on a local build.

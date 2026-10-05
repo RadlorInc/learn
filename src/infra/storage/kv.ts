@@ -98,25 +98,22 @@ function safeLS<T>(fn: () => T, fallback: T): T {
 }
 
 /**
- * The last write that did not reach the store (quota full, IndexedDB closed by the browser). Held in memory and NOT
- * written through kv — a breadcrumb about kv failing would fail the same way, and would loop. It is copied to
- * localStorage when that still takes it, so a later diagnostic block can show it; the reads above hide every write
- * failure from their callers, so this is the only trace of one.
+ * The last write that did not reach the store (quota full, IndexedDB closed by the browser), for this page's
+ * diagnostic block. In memory only: a breadcrumb about kv failing, written through kv, would fail the same way and
+ * loop; and a new localStorage key would be a new row in the published device-storage notice (legal doc 08). Every
+ * write failure is hidden from kv's callers, so this is the only trace of one.
+ * ponytail: lost on reload — persist it (and list it in doc 08) if support ever needs it from an earlier visit.
  */
-const WRITE_ERROR = 'milo-kv-write-error'
 let writeError: string | null = null
 function noteWriteError(key: string, e: unknown): void {
   writeError = `${new Date().toISOString()} ${key}: ${String((e as Error)?.message ?? e).slice(0, 120)}`
-  try { localStorage.setItem(WRITE_ERROR, writeError) } catch { /* that store is full too */ }
 }
 
-/** Ask once per device that the browser not evict this site's storage under pressure (Chrome decides silently;
- *  Safari ignores it). Never awaited, never blocks anything. */
+/** Ask the browser not to evict this site's storage under pressure, once it has not already agreed (Chrome decides
+ *  silently; Safari ignores it; Firefox may ask the person once). Never awaited, never blocks anything. */
 function askPersist(): void {
   try {
-    if (localStorage.getItem('milo-persist-asked')) return
-    localStorage.setItem('milo-persist-asked', '1')
-    void navigator.storage?.persist?.().catch(() => {})
+    void navigator.storage?.persisted?.().then(kept => kept || navigator.storage.persist()).catch(() => {})
   } catch { /* no storage API */ }
 }
 
@@ -190,7 +187,7 @@ export const kv = {
   },
 
   /** The last write that failed on this device, or null (diagnostics). */
-  writeError: (): string | null => writeError ?? safeLS(() => localStorage.getItem(WRITE_ERROR), null),
+  writeError: (): string | null => writeError,
 
   /** Every key held, from whichever store is in use. */
   keys(): string[] {
