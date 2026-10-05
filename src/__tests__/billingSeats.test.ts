@@ -106,7 +106,11 @@ describe('POST /api/billing/seats', () => {
     declines = true
     const r = await post('tok-A', { confirm: true })
     expect(r.status).toBe(402)
-    expect(r.body.error).toBe('payment_failed')
+    // B7: Stripe's own text goes to error_events for the founder, not to the parent's screen.
+    expect(r.body).toEqual({ error: 'payment_failed' })
+    const sunk = calls.filter(c => c.url.endsWith('/rest/v1/error_events') && c.method === 'POST')
+    expect(sunk.length, 'the refusal was never logged').toBe(1)
+    expect(JSON.parse(sunk[0].body).message).toBe('billing seats: stripe refused the seat update for sub_A: Refused.')
     expect(table[0].seats_paid).toBe(2)
     expect(calls.some(c => c.url.endsWith('/rpc/materialize_seats'))).toBe(false)
   })

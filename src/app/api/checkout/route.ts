@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server'
 import { callerKey, overLimit } from '../_rateLimit'
 import { stripeClient } from '@/infra/stripe'
-import { MAX_SEATS, clampSeats, type Cadence } from '@/core/billing'
+import { HOLDS_SEATS, MAX_SEATS, clampSeats, type Cadence } from '@/core/billing'
 import { SITE_URL } from '@/app/site'
 import { sinkError } from '@/infra/errorSink'
 
 /**
- * Start a Stripe Checkout Session for N seats. **TEST MODE ONLY** — `stripeClient()` refuses a live
- * key outright, which is the whole of the stage's hard constraint (fbf193280:docs/billing-stage-2.md §0).
+ * Start a Stripe Checkout Session for N seats. Which Stripe mode (test or live) a deployment may use is decided in
+ * one place, `stripeClient()` in src/infra/stripe.ts — not here.
+ *
+ * ⚠️ ONE SUBSCRIPTION PER ACCOUNT. The webhook keeps one row per account, so a second live subscription would charge
+ * the family twice and overwrite the first one's row. A family whose plan still holds seats is refused (409); a
+ * second child is added with /api/billing/seats instead.
  *
  * ⚠️ THE ACCOUNT COMES FROM THE TOKEN, NEVER FROM THE BODY. This is the trust boundary of the whole
  * billing surface: a caller who can name the account they are buying for can seat a child on
@@ -83,11 +87,15 @@ export async function POST(req: Request) {
    * return their own row — and checkout needs no service-role key at all, which keeps the one key
    * that bypasses every policy out of the request path a logged-in stranger can reach.
    */
+  // ⚠️ FAILS CLOSED: this read is also the double-subscription check, so "could not look" is not "has none".
   const owned = await fetch(
-    `${supabaseUrl}/rest/v1/subscriptions?account_id=eq.${user.id}&select=stripe_customer_id`,
+    `${supabaseUrl}/rest/v1/subscriptions?account_id=eq.${user.id}&select=stripe_customer_id,status`,
     { headers: { apikey: anon, Authorization: `Bearer ${token}` } },
-  ).then(r => (r.ok ? r.json() : [])).catch(() => [])
-  const customer = (owned as { stripe_customer_id?: string | null }[])[0]?.stripe_customer_id || null
+  ).then(r => (r.ok ? r.json() : null)).catch(() => null)
+  if (!Array.isArray(owned)) return NextResponse.json({ error: 'lookup_failed' }, { status: 503 })
+  const [mine] = owned as { stripe_customer_id?: string | null; status?: string }[]
+  if (mine?.status && HOLDS_SEATS.has(mine.status)) return NextResponse.json({ error: 'already_subscribed' }, { status: 409 })
+  const customer = mine?.stripe_customer_id || null
 
   const params = {
     mode: 'subscription' as const,
@@ -96,7 +104,8 @@ export async function POST(req: Request) {
     // The consent's time travels with the subscription, so Stripe holds the record of when they agreed.
     subscription_data: { metadata: { account_id: user.id, renewal_consent_at: renewalConsentAt } },
     // No trial — founder's call, Stage 1 §1.
-    success_url: `${SITE_URL}/parent?billing=success`,
+    // Back to the plan screen, which reads `billing=success` to say "activating" until the webhook has written the row.
+    success_url: `${SITE_URL}/parent/plan?billing=success`,
     cancel_url: `${SITE_URL}/parent?billing=cancelled`,
   }
 
