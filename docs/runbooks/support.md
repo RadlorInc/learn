@@ -20,7 +20,7 @@ The panel promises **a reply within 2 working days**. Keep that promise and do n
 
 | Level | What | When |
 |---|---|---|
-| **P1** | Site down · nobody can sign in · anything about money · **any request to see, correct or delete data, or to withdraw consent** | Now. Data requests go to [data-requests.md](data-requests.md): they carry a legal deadline and look like ordinary mail |
+| **P1** | Site down · nobody can sign in · anything about money ([billing.md](billing.md)) · **any request to see, correct or delete data, or to withdraw consent** | Now. Data requests go to [data-requests.md](data-requests.md): they carry a legal deadline and look like ordinary mail |
 | **P2** | One family: progress lost, app unusable, errors in the diagnostic block | Same day |
 | **P3** | "How do I…", confusion | Within the 2-day promise |
 | **P4** | Ideas and feedback | Log it, thank them |
@@ -55,7 +55,7 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
 - Never query production, in any way, even read-only. Write the SQL for the founder.
 - It does not email parents. It drafts, and the founder sends.
 - It does not change or delete account data. Deletions follow [data-requests.md](data-requests.md) and are the founder's.
-- It never touches money: no refunds, charges or cancellations. It can read what the founder shows it, check whether a charge was doubled, and draft the reply. The founder acts in Stripe.
+- It never touches money: no refunds, charges or cancellations. It can read what the founder shows it, check whether a charge was doubled, and draft the reply. The founder acts in Stripe; the steps are in [billing.md](billing.md).
 - It never asks a parent for a password, a government ID or any document.
 
 ## Reply shape
