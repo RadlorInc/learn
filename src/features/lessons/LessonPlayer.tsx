@@ -425,6 +425,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'} feedback={feedback} topic={lesson.id}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: INK }}>{lesson.turn.prompt}</p>
+        {/* The question is said once on arrival; a child who missed it hears the same recorded line again (tester,
+            2026-10-05). Practice problems are not spoken at all (voice.md), so this is Screen 8 only. */}
+        <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => say(s.twin ? SAY.twin(lesson) : SAY.turn(lesson))}>🔊 Hear it again</button>
         <div style={stage}>
           <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
           {tapCue(problem.picture) && <p style={{ ...cue, ...(taps === 0 ? { animation: 'lp-nudge 1.6s ease-in-out 3' } : {}) }}>{tapCue(problem.picture)}</p>}
