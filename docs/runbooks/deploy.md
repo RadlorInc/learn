@@ -48,13 +48,29 @@ Never push to `release` by hand. Pointing it at an older commit deploys nothing,
 
 | Job | When (UTC) | What it does | When it fails |
 |---|---|---|---|
-| `backup.yml` | 02:30 daily, plus manual. Scheduled runs started 5–6 h late (measured 2026-09-28, `gh run list --event schedule`) | Encrypted production dump, 30-day artifact ([backup-restore.md](backup-restore.md)) | Red run, flagged in the ops digest. No issue |
+| `backup.yml` | 02:30 daily, plus manual. Scheduled runs started 5–6 h late (measured 2026-09-28, `gh run list --event schedule`) | Encrypted production dump, 30-day artifact ([backup-restore.md](backup-restore.md)) | Its `notice` job (main only) opens or updates the issue "Nightly backup is red" and closes it on the next green run. The ops digest also flags a backup whose last success is over 36 h old, even when the latest run is green |
 | `daily-smoke.yml` | 03:11 daily, plus manual | `npm run smoke:live` against the live site (read-only, no secret), expecting the service-worker version on `release` | Updates the issue "Daily production smoke is red" and closes it on green |
 | `nightly-e2e.yml` | 03:15 daily | Legacy chapter sweep. **Paused** while `LEGACY_CHAPTERS_HIDDEN = true`: green with a warning, tests nothing | Updates the issue "Nightly E2E is red" and closes it on green |
 | `weekly-layout.yml` | Mondays 04:40 | Short-landscape layout sweep. **Paused** the same way | Red run only |
 | `red-main.yml` | After every failed Deploy run on `main`, plus a drift check at 06:37 daily | Files one issue per kind: main red · promote failed · app live but database not migrated · `main` more than 2 commits ahead of `release` | — |
-| Vercel cron `/api/consent/cancel-second-notice` | 06:23 daily (`vercel.json`) | Cancels queued second consent emails, then emails the ops digest (numbers only). The digest is sent only if `CRON_SECRET` and `OPS_DIGEST_TO` are set in Vercel | Digest lines marked `!!` |
+| Vercel cron `/api/consent/cancel-second-notice` | 06:23 daily (`vercel.json`) | Cancels queued second consent emails, then emails the ops digest (numbers only). The digest is sent only if `CRON_SECRET` and `OPS_DIGEST_TO` are set in Vercel | Digest lines marked `!!` (see below) |
 | Database retention jobs (pg_cron) | 03:17–03:37 daily | The schedule in [../legal/04-data-retention-policy.md](../legal/04-data-retention-policy.md) | Digest line `cron_jobs_failing` |
+
+**Reading the ops digest.** Every line is a number, a yes/no or a run result; `!!` marks one to look at.
+- `error_events_24h`: crashes, plus failures a server route caught and answered 5xx (sign-up, consent, unsubscribe,
+  child logins; the row says the route, status and code, never the message) and Resend bounces and complaints
+  (`[resend] email.bounced`). Which ones: the founder reads `error_events` for the last day in the SQL editor.
+- `billing_events_unprocessed_1h`: Stripe events stored more than an hour ago and still not processed. Above 0, the
+  webhook is failing on redelivery: read the Stripe dashboard's webhook attempts and the Vercel logs.
+- `backup.yml: … last success N h ago`: flagged when the latest run failed **or** N is over 36.
+- ⚠️ The GitHub lines read the public Actions API **without a token**. If `learn` goes private they read `unknown`
+  (flagged) every day; give the digest a read-only token then, or read the backup issue instead.
+
+**Uptime checker.** Point it at three URLs, each alerting on anything but 200:
+- `/api/health`: the app is serving (no database call, by design);
+- `/api/health/db`: the app can reach its database (`{ "db": true }`, or 503 `{ "db": false }`; held 30 s, so a
+  check every minute is fine);
+- `/auth`: the sign-in page renders.
 
 Before a launch, or after a change to a KG–2 chapter's layout, run the cross-browser tap sweep locally against an offline dev server (`NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:9 NEXT_PUBLIC_SUPABASE_ANON_KEY=offline npx next dev -p 3055`, which touches no database): `E2E_MATRIX=1 E2E_BASE_URL=http://localhost:3055 npx playwright test e2e/xbrowser-clicks.spec.ts --workers=5` (about 2.5 hours for all 13 profiles; narrow with `--project=mac-safari` and `E2E_ONLY=counting`). Read "could not look" as untested, not as a pass.
 

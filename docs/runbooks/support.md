@@ -12,7 +12,8 @@
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 - **Automatic:**
-  - GitHub issues from `red-main.yml`, `daily-smoke.yml` and `nightly-e2e.yml`;
+  - GitHub issues from `red-main.yml`, `daily-smoke.yml`, `nightly-e2e.yml` and `backup.yml` ("Nightly backup is red");
+  - the uptime checker on `/api/health`, `/api/health/db` and `/auth`, once it is set up ([deploy.md](deploy.md));
   - the daily ops digest email (numbers only) when it is configured ([deploy.md](deploy.md) → scheduled jobs).
 
 The panel promises **a reply within 2 working days**. Keep that promise and do not widen it.
@@ -21,12 +22,14 @@ The panel promises **a reply within 2 working days**. Keep that promise and do n
 
 | Level | What | When |
 |---|---|---|
-| **P1** | Site down · nobody can sign in · anything about money · **any request to see, correct or delete data, or to withdraw consent** | Now. Data requests go to [data-requests.md](data-requests.md): they carry a legal deadline and look like ordinary mail |
+| **P1** | Site down · nobody can sign in · anything about money ([billing.md](billing.md)) · **any request to see, correct or delete data, or to withdraw consent** | Now. Data requests go to [data-requests.md](data-requests.md): they carry a legal deadline and look like ordinary mail |
 | **P2** | One family: progress lost, app unusable, errors in the diagnostic block | Same day |
 | **P3** | "How do I…", confusion | Within the 2-day promise |
 | **P4** | Ideas and feedback | Log it, thank them |
 
-Read the ops digest and open GitHub issues **before** the mail. One email with a green digest is probably that device. Several at once, or a red digest, means everyone: roll back first ([rollback.md](rollback.md)), diagnose after.
+Read the ops digest and open GitHub issues **before** the mail. A rise in `error_events_24h` now includes failed
+sign-ups and consent emails (rows tagged `[auth/signup] failed`, `[consent/request] failed`, …) and email bounces
+(`[resend] email.bounced`): a parent who says "the email never came" may be one of those. One email with a green digest is probably that device. Several at once, or a red digest, means everyone: roll back first ([rollback.md](rollback.md)), diagnose after.
 
 ## Steps
 
@@ -37,10 +40,13 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
    | Line | Healthy | Bad value means |
    |---|---|---|
    | `app` | equals live `VERSION` (`curl -s https://radlic.com/sw.js \| grep -m1 VERSION`) | Lower means a stale shell: the family should fully close and reopen the app. `none` means no service worker |
-   | `storage` | `idb` | `local` means IndexedDB was blocked (private browsing, strict settings, full disk). This is the usual cause of "progress vanished" |
-   | `unsynced` | `0 session(s)` | Above 0, the work is **on the device** and not yet uploaded. Never tell them it is lost. With `online`, sync is failing, so read `recent errors` |
+   | `storage` | `idb`, then quota and `persistent` | `local` means IndexedDB was blocked (private browsing, strict settings, full disk). This is the usual cause of "progress vanished". `not persistent` with used near the quota: the browser may clear the site's data under pressure |
+   | `unsynced` | `0 session(s)` | Above 0, the work is **on the device** and not yet uploaded. Never tell them it is lost. With `online`, sync is failing, so read `sync err`. The app retries on its own every 30 s, backing off to every 10 min, while the page is open |
+   | `last sent` | a recent time | When an upload last went through from this device. `never on this device` with work done means nothing has ever left it |
+   | `sync err` | `none recorded` | The last code an upload got. `network`: no answer (Wi-Fi, a blocker). `P0C01`: no consent the gate accepts yet (the child's screen asks the adult). `42501`, `23503`, `23502`, `23514`, `22P02`: the database refused the row — it stays on the device for 7 days, retried, and each one is also reported to `error_events` (source `client`, message `upload refused <code>…`). Several families with the same code at once means a migration or policy broke uploads: fix it within the week, before the queues delete those rows |
+   | `save err` | absent | Shown only when a write to the device's storage failed during this visit (full disk, IndexedDB closed by the browser): progress made then may not survive a reload |
    | `network` | `online` | `OFFLINE` often explains everything else |
-   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen. `Failed to fetch` means a network problem or a refused request. `[audio]` means a recorded clip fell back to the device voice (one note per cause per page load) |
+   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen; `[window]` / `[promise]` an error outside a screen; `[sync]` a refused upload or the upload queue overflowing (2000 items, the oldest dropped); `[audio]` a recorded clip fell back to the device voice (one note per cause per page load). `Failed to fetch` means a network problem or a refused request. Crashes, page errors and refused uploads are also in `error_events` (once per message per visit) |
 
 4. **Founder, for "I did not get the email"** (`/help` promises we check whether it was sent). In Resend → Emails,
    search the address. *Delivered*: it is in their mailbox, ask them to check spam. *Bounced* or
@@ -56,12 +62,26 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
 6. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
 7. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
 
+## Email bounces (Resend webhook)
+
+`/api/email/resend-webhook` turns each bounce or spam complaint into one `error_events` row (`[resend] email.bounced`
+or `[resend] email.complained`): the type only, never the address. Which address bounced is in Resend → Emails.
+
+To switch it on (**founder**, once):
+1. Resend → Webhooks → Add endpoint: `https://radlic.com/api/email/resend-webhook`, events `email.bounced` and
+   `email.complained`.
+2. Copy its signing secret (`whsec_…`) into Vercel Production as `RESEND_WEBHOOK_SECRET`, then redeploy.
+3. In Resend, send the endpoint a test event: it should answer 200. Until the secret is set the route answers 503
+   and records nothing.
+
+A bounce does not yet stop the next email to that address; complaints are not added to `email_suppressions`.
+
 ## What the agent cannot do
 
 - Never query production, in any way, even read-only. Write the SQL for the founder.
 - It does not email parents. It drafts, and the founder sends.
 - It does not change or delete account data. Deletions follow [data-requests.md](data-requests.md) and are the founder's.
-- It never touches money: no refunds, charges or cancellations. It can read what the founder shows it, check whether a charge was doubled, and draft the reply. The founder acts in Stripe.
+- It never touches money: no refunds, charges or cancellations. It can read what the founder shows it, check whether a charge was doubled, and draft the reply. The founder acts in Stripe; the steps are in [billing.md](billing.md).
 - It never asks a parent for a password, a government ID or any document.
 
 ## Reply shape

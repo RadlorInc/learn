@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { NOTICE_VERSION } from '@/features/consent/copy'
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
       return json({ error: 'not_configured' }, 503)
     }
     console.error('[consent/child-blocked] failed', e)
+    await sinkHandled('[consent/child-blocked] failed', e)
     return json({ error: 'failed' }, 502)
   }
 }

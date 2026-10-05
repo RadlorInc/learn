@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { NOTICE_VERSION } from '@/features/consent/copy'
@@ -64,8 +65,9 @@ export async function POST(req: Request) {
       console.error('[consent/request] not configured: missing', e.message)
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
-    // console, not reportCrash: see server.ts. The pending row without a send record simply expires.
+    // sinkHandled, not reportCrash: no learner id, no message (see infra/errorSink.ts). The pending row without a send record simply expires.
     console.error('[consent/request] failed', e)
+    await sinkHandled('[consent/request] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }
 }

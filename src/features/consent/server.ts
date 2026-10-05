@@ -11,6 +11,8 @@
  *
  * ⚠️ AND NO ERROR FROM HERE GOES THROUGH `reportCrash` — that path writes `error_events` with a
  * `learner_id`, which the consent gate refuses for exactly the children whose consent is missing.
+ * The routes that call this record their caught failures with `sinkHandled` (infra/errorSink.ts) instead: no
+ * learner id and no message, only the route, the status and the code.
  */
 import { firstNameOf } from './firstName'
 import { createHash, randomBytes } from 'node:crypto'
