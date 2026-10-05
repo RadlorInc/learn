@@ -1,5 +1,5 @@
 -- SUPPORT LOOKUP: ONE FAMILY (read-only; the founder runs it in the Supabase SQL editor — the agent never does)
--- Used from docs/runbooks/support.md step 4. Billing has its own file (billing-lookup.sql); this one does not read it.
+-- Used from docs/runbooks/support.md step 5 (Agent). Billing has its own file (billing-lookup.sql); this one does not read it.
 --
 -- Fill ONE placeholder, '<account email>' (the verified address the parent wrote from), in the `acct` line of each
 -- query, and run the queries one at a time. Nothing here writes. Names, emails and answers are not selected: an
