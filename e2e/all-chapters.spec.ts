@@ -3,11 +3,8 @@ import { IGNORED_ERRORS, MIN_TAP, TIGHT_TAP } from './personas'
 import { seedSession } from './session'
 
 /**
- * ⚠️ SIGNED IN, BECAUSE THE CAMERA GUARD REFUSES AN AR CHAPTER WITHOUT A SESSION. Eight chapters
- * (all in 9–11) do not render at all to a logged-out visitor — see src/core/arChapters.ts. Without
- * this seed, this sweep would quietly grade the consent card for those eight and report them clean,
- * which is the "graded the wrong screen" fault start-card.spec.ts exists to prevent. The logged-out
- * side is covered deliberately by ar-consent.spec.ts.
+ * ⚠️ SIGNED IN (an unsigned session in localStorage, see ./session): `/game` waits on its auth guard. The camera
+ * guard and its consent card, which this seed was first added for, went with the AR chapters.
  */
 /**
  * ⚠️⚠️ THE WIDE-TEXT STRESS — `E2E_WIDE_TEXT=1`, A DELIBERATE ONE-OFF, NEVER THE NIGHTLY DEFAULT.
@@ -131,22 +128,6 @@ const FAILURE_TEXT = [
   'Oops! Something went wrong',          // app/error.tsx and shared/ui/ErrorBoundary
   'Oops! Something needs a moment',      // app/global-error.tsx
   "We can't find that page",             // app/not-found.tsx
-  /**
-   * ⚠️ THE CAMERA CONSENT CARD IS A FAILURE **HERE**, THOUGH IT IS THE CORRECT SCREEN ELSEWHERE.
-   * Eight AR chapters do not render to a logged-out visitor (src/core/arChapters.ts), and this
-   * sweep drives `/teen-preview?c=<id>` — so without the seeded session above it lands on the card
-   * for those eight. Measured when the guard was added: all nine of those runs PASSED, grading a
-   * screen that is not the chapter, exactly the fault start-card.spec.ts was written for. The seed
-   * fixes it; this line is what makes REMOVING the seed go red instead of quietly narrowing the
-   * sweep to 62 chapters while reporting 70.
-   */
-  'played with your hands',              // CameraConsentGate
-  /**
-   * ⚠️ THE "HIDDEN" SCREEN IS A FAILURE HERE. `/game` shows it for a chapter that is not visible, and it has a link
-   * back — on a production build a hidden chapter would otherwise be graded as a calm, operable page.
-   */
-  'New lessons are on the way',          // shared/ui/NewLessonsSoon
-  'is waiting for you',                  // shared/ui/LockedChapterCard (the paywall, not the chapter)
 ]
 
 /**

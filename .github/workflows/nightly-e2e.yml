@@ -52,7 +52,7 @@ permissions:
 jobs:
   chapters:
     runs-on: ubuntu-latest
-    timeout-minutes: 45 # the cap is here so a hang cannot burn the budget
+    timeout-minutes: 45 # 178 tests took 5.6 min on a laptop (2026-10-05); capped so a hang cannot burn the budget
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
