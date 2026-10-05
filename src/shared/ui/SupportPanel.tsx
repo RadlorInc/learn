@@ -16,7 +16,7 @@ import {
   collectDiagnostics, formatDiagnostics, supportMailto, SUPPORT_EMAIL,
 } from '@/infra/diagnostics'
 
-export function SupportPanel({ learnerId }: { learnerId?: string }) {
+export function SupportPanel({ learnerId, label = 'Need help?' }: { learnerId?: string; label?: string }) {
   const [open, setOpen] = useState(false)
   const [block, setBlock] = useState('')
   const [note, setNote] = useState('')
@@ -54,7 +54,7 @@ export function SupportPanel({ learnerId }: { learnerId?: string }) {
           cursor: 'pointer', textDecoration: 'underline',
         }}
       >
-        Need help?
+        {label}
       </button>
 
       {open && (

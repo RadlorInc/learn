@@ -207,6 +207,18 @@ describe('/api/child-login', () => {
     expect(adminCalls().map(c => `${c.method} ${c.path}`)).toEqual([`DELETE /auth/v1/admin/users/${CHILD}`])
   })
 
+  it('a username that cannot be looked up is left out of the list but LOGGED, with its status and no id', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    script = [signedIn, owns, hasLogin, [`GET /auth/v1/admin/users/${CHILD}`, () => res(500, {})]]
+    const g = await (await route()).GET(req('GET'))
+    expect(await g.json()).toEqual({ ok: true, logins: {} })
+    const logged = JSON.stringify(err.mock.calls)
+    expect(logged, 'the failed lookup left no trace').toContain('child-login: username lookup failed 500')
+    expect(logged).not.toContain(CHILD)
+    expect(logged).not.toContain(LEARNER)
+    err.mockRestore()
+  })
+
   it('without the service key says not_configured and never falls back to the anon key', async () => {
     delete process.env.SUPABASE_SERVICE_ROLE_KEY
     script = [signedIn, owns]

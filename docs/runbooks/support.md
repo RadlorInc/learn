@@ -6,7 +6,8 @@
 
 - **The support mailbox** (the address is `SUPPORT_EMAIL` in `src/app/site.ts`). The **founder** reads it. It is reached from:
   - the dashboard's *Need help?* panel (`src/shared/ui/SupportPanel.tsx`), which opens the parent's own mail program with a **diagnostic block** filled in;
-  - `/help`;
+  - `/help`, whose *Report a problem* opens the same email with the diagnostic block;
+  - `/auth` and the consent-link pages (`/consent/...`), which show the address for a parent who is signed out;
   - the legal pages;
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
@@ -45,16 +46,21 @@ sign-ups and consent emails (rows tagged `[auth/signup] failed`, `[consent/reque
    | `sync err` | `none recorded` | The last code an upload got. `network`: no answer (Wi-Fi, a blocker). `P0C01`: no consent the gate accepts yet (the child's screen asks the adult). `42501`, `23503`, `23502`, `23514`, `22P02`: the database refused the row — it stays on the device for 7 days, retried, and each one is also reported to `error_events` (source `client`, message `upload refused <code>…`). Several families with the same code at once means a migration or policy broke uploads: fix it within the week, before the queues delete those rows |
    | `save err` | absent | Shown only when a write to the device's storage failed during this visit (full disk, IndexedDB closed by the browser): progress made then may not survive a reload |
    | `network` | `online` | `OFFLINE` often explains everything else |
-   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen; `[window]` / `[promise]` an error outside a screen; `[sync]` a refused upload or the upload queue overflowing (2000 items, the oldest dropped). `Failed to fetch` means a network problem or a refused request. Crashes, page errors and refused uploads are also in `error_events` (once per message per visit) |
+   | `recent errors` | `none recorded` | `[react]` means the app crashed on screen; `[window]` / `[promise]` an error outside a screen; `[sync]` a refused upload or the upload queue overflowing (2000 items, the oldest dropped); `[audio]` a recorded clip fell back to the device voice (one note per cause per page load). `Failed to fetch` means a network problem or a refused request. Crashes, page errors and refused uploads are also in `error_events` (once per message per visit) |
 
-4. **Agent.**
+4. **Founder, for "I did not get the email"** (`/help` promises we check whether it was sent). In Resend → Emails,
+   search the address. *Delivered*: it is in their mailbox, ask them to check spam. *Bounced* or
+   *Suppressed*: the address is wrong or refusing mail. Nothing listed: it was never sent, so ask them to sign up (or
+   tap "Forgot password?") again with the same address, and tell the agent (the sign-up route logs
+   `[auth/signup] failed` in Vercel). Reply with what you found, never with anything about other accounts.
+5. **Agent.**
    - Reproduce on a local build.
    - Read the code, the public site and GitHub runs.
    - If server data is needed, write **read-only SQL** into `docs/legal/sql/<topic>.sql` with placeholders (`'<learner id>'`), never real ids or emails. Say what each column answers and what each result would mean.
    - **Founder** runs it in the SQL editor and pastes back the output.
    - Vercel runtime logs: the **founder** reads them in the dashboard.
-5. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
-6. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
+6. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
+7. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
 
 ## Email bounces (Resend webhook)
 
