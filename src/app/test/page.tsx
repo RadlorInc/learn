@@ -12,7 +12,7 @@
  * No learner, and the chapter records nothing even on a device with a child chosen, so nothing here touches a
  * child's data.
  */
-import { useCallback, useEffect, useLayoutEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import { CATALOGUE, STORY_CATALOGUE, storyOf, useModule, ladderOf } from '@/features/lessons/catalogue'
 import { LessonPlayer } from '@/features/lessons/LessonPlayer'
 import { pill, INK, TEAL, ON_TEAL, PAGE_BG, BAD } from '@/features/lessons/Pictures'
@@ -108,10 +108,11 @@ export default function TesterPage() {
   const lesson = whole?.lessons.find(l => l.id === topic)
   if (whole && lesson) {
     return <>
-      {/* Room under the page for the review bar, so Next is never hidden behind it: teaching screens are `.lp-page`
-          (Frame), Screen 8 and practice are `.pr-page` (PracticeLayout). `body` outranks their own short-screen
-          `!important` padding rules, which come later in the page. */}
-      <style>{'body .lp-page, body .pr-page { padding-bottom: 190px !important }'}</style>
+      {/* The lesson lives ABOVE the review bar, never under it: the bar measures itself into --tester-bar, the lesson's
+          page (`.lp-page` in Frame, `.pr-page` in PracticeLayout) is exactly the height left above it and scrolls
+          inside itself when a screen is taller, and its card shrinks to fit. `body` outranks the layouts' own
+          short-screen `!important` rules, which come later in the page. */}
+      <style>{TESTER_FIT}</style>
       <LessonPlayer key={lesson.id} lesson={lesson} earlier={whole.lessons.slice(0, whole.lessons.indexOf(lesson)).map(l => l.id)}
         onFinish={() => {}} onExit={() => setTopic(null)}
         review={{
@@ -120,7 +121,11 @@ export default function TesterPage() {
           bar: (k, played, answer) => <ReviewBar key={`${lesson.id}/${k}`} token={token} lessonId={lesson.id} screen={k}
             played={played} answer={answer} saved={reviewed.has(`${lesson.id}/${k}`)}
             // Bring Next into view above the bar: on a short screen it sits under it until the page is scrolled down.
-            onSaved={() => { mark(`${lesson.id}/${k}`, Number(/^L(\d+) ·/.exec(answer)?.[1]) || undefined); setTimeout(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' }), 50) }} />,
+            onSaved={() => {
+              mark(`${lesson.id}/${k}`, Number(/^L(\d+) ·/.exec(answer)?.[1]) || undefined)
+              // Next sits at the end of the lesson's own scroll area: bring it into view.
+              setTimeout(() => document.querySelector('.lp-page, .pr-page')?.scrollTo({ top: 1e6, behavior: 'smooth' }), 50)
+            }} />,
         }} />
     </>
   }
@@ -150,12 +155,32 @@ export default function TesterPage() {
   )
 }
 
+const TESTER_FIT = `
+body .lp-page, body .pr-page { box-sizing: border-box; height: calc(100dvh - var(--tester-bar, 150px)); min-height: 0 !important;
+  overflow-y: auto; padding-bottom: 14px !important }
+body .lp-wrap, body .pr-wrap { flex-shrink: 0; min-height: clamp(320px, calc(100dvh - 40px - var(--tester-bar, 150px)), 900px) !important }
+body .lp-row:not(.lp-stack) .lp-pic { min-height: 0 !important }
+`
+
 const TAGS = ['Voice / audio', 'Text / spelling', 'Picture / board', 'Answer is wrong', 'Too fast / slow', 'Confusing', 'Broken / bug']
 
 function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved }: {
   token: string; lessonId: string; screen: string; played: boolean; answer: string; saved: boolean; onSaved: () => void
 }) {
   const [openedAt] = useState(() => Date.now())
+  // The bar's own height (it grows when the issue form opens) → --tester-bar, which the lesson's layout gives way to.
+  const boxRef = useRef<HTMLDivElement>(null)
+  const fit = () => { const el = boxRef.current; if (el) document.documentElement.style.setProperty('--tester-bar', `${Math.ceil(el.getBoundingClientRect().height) + 20}px`) }
+  // After every render (its content changes with the state) and on any resize (the note box growing, a rotation).
+  useLayoutEffect(fit)
+  useEffect(() => {
+    const el = boxRef.current
+    if (!el) return
+    const ro = new ResizeObserver(fit)
+    ro.observe(el)
+    return () => { ro.disconnect(); document.documentElement.style.removeProperty('--tester-bar') }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fit reads only the ref
+  }, [])
   const [mode, setMode] = useState<'ask' | 'issue' | 'sending'>('ask')
   const [tags, setTags] = useState<string[]>([])
   const [text, setText] = useState('')
@@ -207,7 +232,7 @@ function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved }: 
   }
 
   return (
-    <div role="region" aria-label="Review this screen" style={bar}>
+    <div ref={boxRef} role="region" aria-label="Review this screen" style={bar}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         <span style={{ fontSize: 13, opacity: 0.8 }}>Tester review · {lessonId} · screen {screen}</span>
       </div>
