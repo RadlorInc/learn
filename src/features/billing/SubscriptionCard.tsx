@@ -3,6 +3,10 @@
  * "Your subscription" on /parent/plan — the state, and the in-app way to cancel it (docs/legal/01 §4).
  * Two taps: Cancel subscription → Yes, cancel. No reason asked, no offer in the way.
  * The state shown is the `subscriptions` row (see /api/billing/cancel for why that is the one source).
+ *
+ * `children` is the checkout, and it is shown only to a family that can buy: never beside a plan that still holds
+ * seats (/api/checkout refuses a second one too), and never straight after paying (`?billing=success`) while the
+ * webhook has not written the row yet — that is the window where a second tap would buy a second subscription.
  */
 import { useEffect, useState } from 'react'
 import { HOLDS_SEATS } from '@/core/billing'
@@ -13,13 +17,18 @@ const card: React.CSSProperties = { background: '#fff', borderRadius: 20, paddin
 const p: React.CSSProperties = { fontSize: 14, lineHeight: 1.55, color: '#083d85', margin: '0 0 10px' }
 const btn: React.CSSProperties = { minHeight: 44, padding: '0 18px', borderRadius: 999, cursor: 'pointer', fontWeight: 800, fontSize: 14, background: '#fff', color: '#083d85', border: '2px solid rgba(8,61,133,.2)', marginRight: 8, marginTop: 6 }
 
-export function SubscriptionCard() {
+export function SubscriptionCard({ children }: { children?: React.ReactNode }) {
   const [sub, setSub] = useState<MySubscription | null | undefined | 'loading'>('loading')
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [justPaid, setJustPaid] = useState(false)
 
-  useEffect(() => { getMySubscription().then(setSub) }, [])
+  useEffect(() => {
+    setJustPaid(new URLSearchParams(window.location.search).get('billing') === 'success')
+    getMySubscription().then(setSub)
+  }, [])
+  const live = !!sub && sub !== 'loading' && HOLDS_SEATS.has(sub.status)
 
   async function cancel() {
     setBusy(true); setNote(null)
@@ -39,7 +48,10 @@ export function SubscriptionCard() {
   let body: React.ReactNode
   if (sub === 'loading') body = <p style={p}>Loading…</p>
   else if (sub === undefined) body = <p style={p}>We could not load your subscription. Please try again.</p>
-  else if (!sub || !HOLDS_SEATS.has(sub.status)) body = <p style={p}>You do not have a subscription, so there is nothing to cancel.</p>
+  else if (!live && justPaid) body = <p style={p} data-testid="plan-activating">
+    <strong>Payment received — we are switching your plan on.</strong> This usually takes less than a minute. Refresh
+    this page to see it. If it has not appeared after a few minutes, email support@radlor.com.</p>
+  else if (!sub || !live) body = <p style={p}>You do not have a subscription, so there is nothing to cancel.</p>
   else if (sub.cancel_at_period_end) body = <p style={p} data-testid="plan-ends"><strong>{endsLine(sub.current_period_end)}</strong></p>
   else if (confirming) body = <>
     <p style={p}><strong>Cancel your subscription?</strong></p>
@@ -61,11 +73,12 @@ export function SubscriptionCard() {
     <button style={btn} onClick={() => setConfirming(true)}>Cancel subscription</button>
   </>
 
-  return (
+  return (<>
     <section style={card} aria-label="Your subscription">
       <h2 style={{ fontSize: 15, fontWeight: 800, margin: '0 0 10px', color: '#083d85' }}>Your subscription</h2>
       {body}
       {note && <p style={{ ...p, margin: '10px 0 0' }}>{note}</p>}
     </section>
-  )
+    {!live && !justPaid && children}
+  </>)
 }

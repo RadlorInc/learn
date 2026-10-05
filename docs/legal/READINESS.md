@@ -70,7 +70,7 @@ recorded in a pull request.
 - [ ] 💳 **What a paid subscription unlocks in the lesson system** — today's entitlement guards only the hidden legacy chapters
 - [ ] 💳 **Subscription consequence of withdrawal** (with the attorney)
 - [ ] 💳 **An affirmative auto-renewal consent control at checkout** — BUILT 2026-09-28 (a separate unticked tick; the route refuses without it); **the attorney confirms its words** (packet C1)
-- [ ] 💳 Hide checkout for a parent who already subscribes
+- [x] 💳 Hide checkout for a parent who already subscribes (the plan screen hides it and `/api/checkout` refuses a second subscription, `already_subscribed`)
 - [ ] 💳 Before live keys: watch one Stripe test-mode purchase become a subscription and its seats, then replay the event and see nothing change; decide on point-in-time recovery; rename the Stripe product and card statement descriptor to Radlic; set the webhook on radlic.com; the JSON-LD `offers` price on both sites
 - [ ] 👪 **The live Spanish consent text**: show English until it is reviewed?
 - [ ] 👪 The real content-review process to describe in Terms §8 — and whether §8's sentence that the service uses AI to "generate or select content" is accurate (nothing calls an AI at runtime)
