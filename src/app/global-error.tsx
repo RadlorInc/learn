@@ -31,7 +31,7 @@ export default function GlobalError({
         <title>Radlic — something went wrong</title>
         <CrashScreen
           title="Oops! Something needs a moment"
-          body="Something went wrong while starting up. Nothing is lost — your stars and progress are saved."
+          body="Something went wrong while starting up. What you finished before this should still be saved."
           primary={{ label: 'Try again', onClick: retry }}
           secondary={{ label: 'Go back home', href: '/modules' }}
           digest={error?.digest}

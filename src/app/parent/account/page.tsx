@@ -100,7 +100,7 @@ export default function AccountPage() {
         </p>
         <p style={p}>Thank you for trying Radlic.</p>
         <button style={{ ...btn, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none' }}
-          onClick={async () => { await signOut(); router.replace('/') }}>Close</button>
+          onClick={async () => { await signOut({ unsentOk: true }); router.replace('/') }}>Close</button>
       </Shell>
     )
   }
@@ -154,7 +154,7 @@ export default function AccountPage() {
             that it cannot be done by someone who simply picked up an unlocked device. Nothing has been
             deleted.
           </p>
-          <button style={{ ...btn, marginTop: 12 }} onClick={async () => { await signOut(); router.replace('/auth') }}>
+          <button style={{ ...btn, marginTop: 12 }} onClick={async () => { if (await signOut()) router.replace('/auth') }}>
             Sign in again
           </button>
         </div>

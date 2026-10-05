@@ -29,7 +29,7 @@ const MIGRATE_PREFIXES = ['milo-profile', 'milo-last-played', 'milo_offline_queu
 const KV_PREFIXES = [
   'milo-newflow-done-', 'milo-newflow-standing-', 'milo-newflow-run-', 'milo-lesson-', 'milo-nudge-', 'milo-chres-',
   'milo-last-played-', 'milo-demo-run', 'milo-voice', 'milo-hand-input', 'milo-speech-rate', 'milo_recent_errors',
-  'milo_lead_email', 'milo_events_queue',
+  'milo_lead_email', 'milo_events_queue', 'milo-sync-status',
 ]
 // Queues are merged by item identity; a queued item is never dropped for being on the "wrong" side.
 const QUEUE_IDS: Record<string, string> = { 'milo-lesson-sync-queue': 'id', milo_events_queue: 'client_id' }
@@ -97,6 +97,29 @@ function safeLS<T>(fn: () => T, fallback: T): T {
   try { return fn() } catch { return fallback }
 }
 
+/**
+ * The last write that did not reach the store (quota full, IndexedDB closed by the browser). Held in memory and NOT
+ * written through kv — a breadcrumb about kv failing would fail the same way, and would loop. It is copied to
+ * localStorage when that still takes it, so a later diagnostic block can show it; the reads above hide every write
+ * failure from their callers, so this is the only trace of one.
+ */
+const WRITE_ERROR = 'milo-kv-write-error'
+let writeError: string | null = null
+function noteWriteError(key: string, e: unknown): void {
+  writeError = `${new Date().toISOString()} ${key}: ${String((e as Error)?.message ?? e).slice(0, 120)}`
+  try { localStorage.setItem(WRITE_ERROR, writeError) } catch { /* that store is full too */ }
+}
+
+/** Ask once per device that the browser not evict this site's storage under pressure (Chrome decides silently;
+ *  Safari ignores it). Never awaited, never blocks anything. */
+function askPersist(): void {
+  try {
+    if (localStorage.getItem('milo-persist-asked')) return
+    localStorage.setItem('milo-persist-asked', '1')
+    void navigator.storage?.persist?.().catch(() => {})
+  } catch { /* no storage API */ }
+}
+
 async function hydrate(): Promise<void> {
   if (typeof indexedDB === 'undefined') { useFallback = true; resolveReady(); return }
   // Safari (first load in a session, private browsing, or strict storage settings)
@@ -143,7 +166,7 @@ async function hydrate(): Promise<void> {
   }
 }
 
-if (typeof window !== 'undefined') hydrate()
+if (typeof window !== 'undefined') { hydrate(); askPersist() }
 
 export const kv = {
   /** Resolves once the in-memory cache has hydrated from IndexedDB. */
@@ -161,10 +184,13 @@ export const kv = {
   },
 
   set(key: string, value: string): void {
-    if (useFallback) { safeLS(() => localStorage.setItem(key, value), undefined); return }
+    if (useFallback) { try { localStorage.setItem(key, value) } catch (e) { noteWriteError(key, e) } return }
     mem.set(key, value)
-    idbWrite('put', key, value).catch(() => {})
+    idbWrite('put', key, value).catch(e => noteWriteError(key, e))
   },
+
+  /** The last write that failed on this device, or null (diagnostics). */
+  writeError: (): string | null => writeError ?? safeLS(() => localStorage.getItem(WRITE_ERROR), null),
 
   /** Every key held, from whichever store is in use. */
   keys(): string[] {
