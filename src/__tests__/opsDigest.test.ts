@@ -23,7 +23,7 @@ const CHILD = 'Zebediah Quux'
 const PARENT_EMAIL = 'secret.parent@example.test'
 const CRASH = 'TypeError: cannot read Zebediah'
 const sent: { to: string[]; subject: string; text: string; html: string }[] = []
-const github = { backup: 'failure', deploy: 'success' }
+const github = { backup: 'failure', deploy: 'success', latestAgeH: 2 }
 
 async function fakeFetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
   const url = String(input instanceof Request ? input.url : input)
@@ -48,7 +48,25 @@ async function fakeFetch(input: string | URL | Request, init?: RequestInit): Pro
     const latest = github[gh[1] as 'backup' | 'deploy']
     const hour = (h: number) => new Date(Date.now() - h * 3_600_000).toISOString()
     return new Response(JSON.stringify({ workflow_runs: [
-      { conclusion: latest, created_at: hour(2) }, { conclusion: 'success', created_at: hour(50) }] }))
+      { conclusion: latest, created_at: hour(github.latestAgeH) }, { conclusion: 'success', created_at: hour(50) }] }))
+  }
+  // PostgREST's count: a HEAD with `Prefer: count=exact` answers `Content-Range: */<n>`. The filters are translated
+  // generically (is / lt / eq) and run on the database as the service role — the expected count is written in the test.
+  const table = url.match(/^http:\/\/sb\.test\/rest\/v1\/(\w+)\?(.*)$/)
+  if (table && init?.method === 'HEAD') {
+    const where: string[] = [], vals: unknown[] = []
+    for (const [k, v] of new URLSearchParams(table[2])) {
+      if (k === 'select') continue
+      const [op, val] = [v.slice(0, v.indexOf('.')), v.slice(v.indexOf('.') + 1)]
+      if (op === 'is' && val === 'null') where.push(`${k} is null`)
+      else if (op === 'lt' || op === 'eq') { vals.push(val); where.push(`${k} ${op === 'lt' ? '<' : '='} $${vals.length}`) }
+      else throw new Error(`fake PostgREST: unsupported filter ${k}=${v}`)
+    }
+    await db.exec('set role service_role')
+    try {
+      const [{ n }] = (await db.query<{ n: number }>(`select count(*)::int n from public.${table[1]} where ${where.join(' and ') || 'true'}`, vals)).rows
+      return new Response(null, { status: 200, headers: { 'content-range': `*/${n}` } })
+    } finally { await db.exec('reset role') }
   }
   throw new Error(`unexpected fetch ${url}`)
 }
@@ -77,6 +95,15 @@ beforeAll(async () => {
     ('re_missed', gen_random_uuid(), now() - interval '1 day', 'deleted', 'refused: 401 restricted')`)
   await q(`insert into public.parental_consents (parent_id, method, state, notice_version, privacy_version, terms_version, email_address, token_hash, expires_at, created_at)
     values ('${P}', 'email_plus', 'pending', 'n', 'p', 't', $1, md5(random()::text), now() - interval '3 days', now() - interval '10 days')`, [PARENT_EMAIL])
+  // Supabase's default privileges give service_role every new public table (the Stripe webhook reads billing_events as
+  // service_role in production); the PGlite prelude has no default privileges, so that one grant is written here.
+  await db.exec('grant select on public.billing_events to service_role')
+  // Stripe events: two stuck (2 h and 3 days old), one still in flight (5 min), one processed.
+  await db.exec(`insert into public.billing_events (stripe_event_id, type, at, processed_at) values
+    ('evt_stuck_2h', 'checkout.session.completed', now() - interval '2 hours', null),
+    ('evt_stuck_3d', 'invoice.upcoming', now() - interval '3 days', null),
+    ('evt_inflight', 'customer.subscription.updated', now() - interval '5 minutes', null),
+    ('evt_done', 'customer.subscription.created', now() - interval '3 hours', now() - interval '3 hours')`)
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://sb.test')
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon')
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service')
@@ -141,13 +168,27 @@ describe('the daily cron emails the digest', () => {
       '!! error_events_24h: 2', '!! cron_runs_failed_24h: 1', '!! cron_jobs_failing: prune-error-events, prune-unconfirmed-users',
       '!! b3_cancel_failing: 2', '!! b3_cancel_missed_7d: 1', '!! consent_pending_overdue: 1', '!! consent_request_unsent: 1',
       '!! backup.yml: latest failure, last success 50 h ago', '   deploy.yml: latest success, last success 2 h ago',
+      '!! billing_events_unprocessed_1h: 2',
       '   database: ok',
     ]) expect(m.text).toContain(line)
-    for (const secret of [CHILD, 'Zebediah', PARENT_EMAIL, 'secret.parent', CRASH, 'restricted', 're_ref', P]) {
+    for (const secret of [CHILD, 'Zebediah', PARENT_EMAIL, 'secret.parent', CRASH, 'restricted', 're_ref', P, 'evt_stuck', 'checkout.session']) {
       expect(m.text + m.html + m.subject, `leaked: ${secret}`).not.toContain(secret)
     }
     // Every body line is "<marker><key>: <value>" with a value of digits, words, commas or job names.
     for (const line of m.text.split('\n').slice(2)) expect(line).toMatch(/^(!! | {3})[\w. ]+: [\w ,.()-]+$/)
+  })
+
+  it('a green backup that is too old is still flagged; a fresh one is not', async () => {
+    github.backup = 'success'
+    try {
+      github.latestAgeH = 40
+      await call(CRON)
+      expect(sent[0].text).toContain('!! backup.yml: latest success, last success 40 h ago')
+      sent.length = 0
+      github.latestAgeH = 20
+      await call(CRON)
+      expect(sent[0].text).toContain('   backup.yml: latest success, last success 20 h ago')
+    } finally { github.backup = 'failure'; github.latestAgeH = 2 }
   })
 
   it('a caller without the cron secret gets the drain but no email', async () => {

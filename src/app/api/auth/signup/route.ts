@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { NOTICE_VERSION } from '@/features/consent/copy'
@@ -108,9 +109,10 @@ export async function POST(req: Request) {
       console.error('[auth/signup] not configured: missing', e.message)
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
-    // console, not reportCrash: see features/consent/server.ts. An account created without its email is re-sent by
+    // sinkHandled, not reportCrash: no learner id, no message (see infra/errorSink.ts). An account created without its email is re-sent by
     // signing up again once the SEC-04 cooldown has passed (generate_link issues a new token for an unconfirmed address).
     console.error('[auth/signup] failed', e)
+    await sinkHandled('[auth/signup] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }
 }

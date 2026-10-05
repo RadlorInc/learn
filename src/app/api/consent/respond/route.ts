@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { randomUUID } from 'node:crypto'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
@@ -107,6 +108,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
     console.error('[consent/respond] failed', e)
+    await sinkHandled('[consent/respond] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }
 }

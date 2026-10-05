@@ -11,7 +11,8 @@
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 - **Automatic:**
-  - GitHub issues from `red-main.yml`, `daily-smoke.yml` and `nightly-e2e.yml`;
+  - GitHub issues from `red-main.yml`, `daily-smoke.yml`, `nightly-e2e.yml` and `backup.yml` ("Nightly backup is red");
+  - the uptime checker on `/api/health`, `/api/health/db` and `/auth`, once it is set up ([deploy.md](deploy.md));
   - the daily ops digest email (numbers only) when it is configured ([deploy.md](deploy.md) → scheduled jobs).
 
 The panel promises **a reply within 2 working days**. Keep that promise and do not widen it.
@@ -25,7 +26,9 @@ The panel promises **a reply within 2 working days**. Keep that promise and do n
 | **P3** | "How do I…", confusion | Within the 2-day promise |
 | **P4** | Ideas and feedback | Log it, thank them |
 
-Read the ops digest and open GitHub issues **before** the mail. One email with a green digest is probably that device. Several at once, or a red digest, means everyone: roll back first ([rollback.md](rollback.md)), diagnose after.
+Read the ops digest and open GitHub issues **before** the mail. A rise in `error_events_24h` now includes failed
+sign-ups and consent emails (rows tagged `[auth/signup] failed`, `[consent/request] failed`, …) and email bounces
+(`[resend] email.bounced`): a parent who says "the email never came" may be one of those. One email with a green digest is probably that device. Several at once, or a red digest, means everyone: roll back first ([rollback.md](rollback.md)), diagnose after.
 
 ## Steps
 
@@ -52,6 +55,20 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
    - Vercel runtime logs: the **founder** reads them in the dashboard.
 5. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
 6. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
+
+## Email bounces (Resend webhook)
+
+`/api/email/resend-webhook` turns each bounce or spam complaint into one `error_events` row (`[resend] email.bounced`
+or `[resend] email.complained`): the type only, never the address. Which address bounced is in Resend → Emails.
+
+To switch it on (**founder**, once):
+1. Resend → Webhooks → Add endpoint: `https://radlic.com/api/email/resend-webhook`, events `email.bounced` and
+   `email.complained`.
+2. Copy its signing secret (`whsec_…`) into Vercel Production as `RESEND_WEBHOOK_SECRET`, then redeploy.
+3. In Resend, send the endpoint a test event: it should answer 200. Until the secret is set the route answers 503
+   and records nothing.
+
+A bounce does not yet stop the next email to that address; complaints are not added to `email_suppressions`.
 
 ## What the agent cannot do
 
