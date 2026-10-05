@@ -101,9 +101,11 @@ describe('retrying while online', () => {
     await flushLessonSync()
     expect(pendingLessonUploads()).toBe(1)
     fail = false
-    await vi.advanceTimersByTimeAsync(31_000)
-    await flushLessonSync()
-    expect(pendingLessonUploads()).toBe(0)
+    // No flush is called from here on: calling one would do the retry itself and hide a missing timer.
+    await vi.advanceTimersByTimeAsync(29_000)
+    expect(pendingLessonUploads()).toBe(1)                    // not before the first 30 s
+    await vi.advanceTimersByTimeAsync(2_000)
+    await vi.waitFor(() => expect(pendingLessonUploads()).toBe(0))
   })
 })
 
