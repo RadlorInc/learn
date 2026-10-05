@@ -25,8 +25,10 @@ export function SubscriptionCard({ children }: { children?: React.ReactNode }) {
   const [justPaid, setJustPaid] = useState(false)
 
   useEffect(() => {
-    setJustPaid(new URLSearchParams(window.location.search).get('billing') === 'success')
-    getMySubscription().then(setSub)
+    getMySubscription().then(s => {
+      setJustPaid(new URLSearchParams(window.location.search).get('billing') === 'success')
+      setSub(s)
+    })
   }, [])
   const live = !!sub && sub !== 'loading' && HOLDS_SEATS.has(sub.status)
 
