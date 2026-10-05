@@ -132,8 +132,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   service-role helper and one caller-identity helper instead of several; split the parent and teacher dashboards;
   one signed-number formatter (`core/fmt.ts` is imported by nothing).
 - Bugs from the review, all low: the game-time day is counted in UTC for families without a settings row; the
-  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return;
-  nothing retries a failed lesson upload on a timer while online.
+  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
 - Performance: re-measure child-screen first paint and the lesson bundle sizes; the teacher dashboard makes one

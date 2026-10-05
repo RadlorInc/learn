@@ -31,6 +31,12 @@ const missing = (e: { code?: string; message?: string }) => e.code === 'PGRST202
 const awaitingChapterIds = (e: { code?: string; message?: string }, args: Record<string, unknown>) =>
   e.code === '23514' && typeof args.p_lesson === 'string' && args.p_lesson.startsWith('c:')
 
+/** Why the last upload below did not go through: a SQLSTATE / PostgREST code, else the message; 'network' when the
+ *  request threw. Read by lessonSync for the device's sync status and its reports — a code, never a payload. */
+let lastCode = ''
+export const lastSyncErrorCode = () => lastCode
+const noted = (e: { code?: string; message?: string }) => { lastCode = e.code || (e.message ?? '').slice(0, 80) || 'unknown'; return e }
+
 async function send(fn: string, args: Record<string, unknown>, older?: Record<string, unknown>): Promise<SyncOutcome> {
   try {
     const { error } = await db().rpc(fn, args)
@@ -38,9 +44,9 @@ async function send(fn: string, args: Record<string, unknown>, older?: Record<st
     if (error && older && missing(error)) return send(fn, older)
     // Not applied yet: keep it queued, so nothing earned before the migration is lost.
     return !error ? 'ok'
-      : missing(error) || awaitingChapterIds(error, args) ? 'retry'
+      : missing(noted(error)) || awaitingChapterIds(error, args) ? 'retry'
       : classifySyncError(error)
-  } catch { return 'retry' }
+  } catch { lastCode = 'network'; return 'retry' }
 }
 
 /**
@@ -67,8 +73,8 @@ export const recordModulePractice = (learnerId: string, moduleId: string, event:
 export async function recordPracticeRun(learnerId: string, lessonId: string, run: unknown): Promise<SyncOutcome> {
   try {
     const { error } = await db().rpc('save_practice_run', { p_learner: learnerId, p_lesson: lessonId, p_run: run })
-    return !error || missing(error) ? 'ok' : classifySyncError(error)
-  } catch { return 'retry' }
+    return !error || missing(error) ? 'ok' : classifySyncError(noted(error))
+  } catch { lastCode = 'network'; return 'retry' }
 }
 
 /** The signed-in account's id, or null with no session. A local read (no network) unless the token needs refreshing. */

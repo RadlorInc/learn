@@ -1,8 +1,7 @@
 'use client'
 
 import React from 'react'
-import { installErrorCapture } from '@/infra/storage/lastError'
-import { reportCrash } from '@/infra/reportCrash'
+import { reportCrash, installErrorCapture } from '@/infra/reportCrash'
 
 interface State {
   hasError:  boolean

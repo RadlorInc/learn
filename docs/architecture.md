@@ -79,7 +79,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `GET/POST/DELETE /api/child-login` | the learner's creator | A child's username and password (service role for Auth admin and the `self` row) |
 | `GET /api/admin/metrics` | admin (own token forwarded) | One `admin_*` aggregate RPC; non-admins get 404; small buckets suppressed (`ADMIN_MIN_COHORT`) |
 | `POST /api/tester` | anyone holding a tester link's token (checked by Radlor Ops) | Forwards a paid tester's open/review to Radlor Ops `/api/radlic-tester`; stores nothing here |
-| `POST /api/report-error` | anyone; capped | Crash reports: log, `error_events`, `MONITORING_INGEST_URL` if set |
+| `POST /api/report-error` | anyone; capped | Crashes, page errors, unhandled rejections and refused uploads (`infra/reportCrash`: once per message, 10 a page load): log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
@@ -279,8 +279,13 @@ Tests are `src/__tests__/<name>.test.ts`; parent requests follow [runbooks/data-
 
 **The upload queue** (`infra/storage/lessonSync.ts`, IndexedDB `milo`/`kv`) holds each answer with the account that
 queued it, sends it only while that account is signed in, in order per learner, and flushes on each new item, page
-load and reconnect. The database keeps the most recently answered standing, so a stale device cannot roll progress
-back. Sign-out (`clearChildrenFromDevice`) removes every per-child key from the device, in kv and in localStorage,
+load and reconnect, and on a timer while online and anything is left (30 s, doubling to 10 min). A refusal
+`classifySyncError` calls `'drop'` (23503, 42501, 23502, 23514, 22P02, an RLS message) keeps the item on the device
+for 7 days, retried without holding that learner's later items, and reports it to `/api/report-error` when first
+refused and when deleted — a broken migration answers those codes for every row. Each upload records the last success
+and the last error code (`syncStatus`) for the diagnostic block; past 2000 items the oldest are dropped with a
+breadcrumb. The database keeps the most recently answered standing, so a stale device cannot roll progress
+back. Sign-out asks first when uploads are still waiting on the device. Sign-out (`clearChildrenFromDevice`) removes every per-child key from the device, in kv and in localStorage,
 except for a child with an upload waiting in either queue (lessons, or `exercise-results-pending` for class
 exercises); the queues themselves, signed-out `…-device-…` keys and the adult's `al-dash-prefs:<account>` stay.
 

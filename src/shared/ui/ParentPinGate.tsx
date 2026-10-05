@@ -113,7 +113,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
           <button type="button" disabled={busy} onClick={submit} style={btn}>{busy ? 'Checking…' : stage === 'create' ? 'Save PIN' : 'Open dashboard'}</button>
           {stage === 'enter' && <button type="button" disabled={busy} onClick={forgot} style={link}>Forgot PIN?</button>}
         </>}
-        <button type="button" onClick={async () => { await signOut(); router.replace('/auth') }} style={link}>Sign out</button>
+        <button type="button" onClick={async () => { if (await signOut()) router.replace('/auth') }} style={link}>Sign out</button>
       </div>
     </div>
   )
