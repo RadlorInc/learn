@@ -80,4 +80,60 @@ Never restore into production from this runbook ([rollback.md](rollback.md) cove
 
 The last full rehearsal passed on 2026-09-23 (restore proven, see [../legal/05-information-security-program.md](../legal/05-information-security-program.md)). Repeat it quarterly and after any change to `backup.yml` or the prod-backup action.
 
+## Put one family's lost rows back (partial restore)
+
+**Use this when:** one family's progress, points or settings were lost or damaged by a fault (a bug, a bad migration),
+and the rest of production is fine. A whole-project restore would throw away everyone else's day, so instead the lost
+rows are copied out of a dump and inserted back.
+
+**Never for a deleted child.** A child deleted by a parent, a withdrawal or an account close stays deleted (06). The
+mechanism refuses it anyway: with no `learners` row and no granted consent, the consent gate rejects every insert
+(rehearsed), but do not rely on that — check query 7 of `support-lookup.sql` first.
+
+**What it puts back:** rows for one child in `lesson_progress`, `point_events`, `game_settings`, `game_saves`,
+`learner_events`, `lesson_feedback`, `exercise_results`. Not `learners`, `learner_access` or `learner_invites` (who
+may see a child is never taken from an old copy), not `error_events`. Only rows that are **missing**: a row production
+still has, by primary key, is left exactly as it is (`on conflict do nothing`), so nothing newer is overwritten.
+
+1. **Founder.** Pick the dump: the newest nightly (or premigrate) run from **before** the loss. Note its time — work
+   done between that time and the loss is not in it, and the reply to the parent says so.
+2. **Founder.** Restore it into a throwaway local stack: steps 1–5 of the rehearsal above.
+3. **Founder.** Find the child's id: query 2 of [../legal/sql/support-lookup.sql](../legal/sql/support-lookup.sql) in
+   the SQL editor (production), with the verified parent's address. Check it is the same child in the restored copy:
+   `select created_by, age_group, created_at from public.learners where id = '<learner id>';` (both should match).
+4. **Founder.** Write the insert script from the restored copy. Save this as `<scratch>/extract.sql` (outside any repo):
+   ```sql
+   select format(
+     $q$select format('insert into public.%%I select * from json_populate_recordset(null::public.%%I, %%L::json) on conflict do nothing;', %L, %L, json_agg(t)) from public.%I t where learner_id = %L having count(*) > 0$q$,
+     tbl, tbl, tbl, :'learner')
+   from (values ('lesson_progress'), ('point_events'), ('game_settings'), ('game_saves'),
+                ('learner_events'), ('lesson_feedback'), ('exercise_results')) v(tbl)
+   \gexec
+   ```
+   ```bash
+   psql "$LOCAL_DB" -At -v learner='<learner id>' -f <scratch>/extract.sql -o <scratch>/upsert.sql
+   ```
+   `upsert.sql` holds one `insert` per table that has rows for that child, the rows as JSON. It is children's data:
+   it stays in the scratch directory, never in the repo, a PR, an issue or a chat with the agent.
+5. **Agent and founder, review.** The agent reviews the **shape**, not the data: the founder pastes only
+   `grep -o '^insert into public\.[a-z_]*' <scratch>/upsert.sql` and the row count per table
+   (`select count(*) from public.<table> where learner_id = '<learner id>'` in the restored copy and in production,
+   side by side). The founder confirms every row is that child's (`learner_id`) and nothing else is in the file.
+6. **Founder, SQL editor (production).** Paste the file's statements between `begin;` and `commit;`. Any error rolls
+   all of it back. A `P0C01` error means the child has no granted consent now: stop, nothing is restored.
+7. **Founder.** Re-run the per-table counts in production: each is now at least the restored copy's count (higher
+   where the child has played since). Run step 6 again and every insert reports `INSERT 0 0` — the script is safe to
+   repeat. Tear down the local stack and delete the scratch directory (step 7 above).
+8. **Founder.** Tell the parent what came back and from what time. The parent dashboard reads the server's copy;
+   what a child's own device shows after a restore was not measured.
+
+**Rehearsed 2026-10-05, on local stacks only:** a seeded database was dumped with `supabase db dump --local` (the
+same two files as `backup.yml`), encrypted and checked with `verify-backup.sh` using a throwaway passphrase, and
+restored into a second empty local stack by step 5's commands. In the first stack, one child's progress and points
+were deleted; steps 4 and 6 put both rows back; a second run inserted 0; and the script for a child who had been
+deleted was refused by the consent gate. **Not rehearsed:** a real production dump (it needs the passphrase and the
+matching auth/storage versions — the full rehearsal above covers that, last on 2026-09-23); running the inserts in
+the hosted SQL editor; a table whose columns changed between the dump and today (then the insert fails and nothing
+is applied: fix the column list by hand, with the agent).
+
 Supabase's own daily backups (Pro, 7 days) restore only as a whole-project, in-place replacement from the dashboard. They are the founder's, and no substitute for this rehearsal.
