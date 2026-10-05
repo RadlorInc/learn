@@ -24,11 +24,11 @@ const EXPECTED: Record<string, string[]> = {
   // called jobs carry their own, checked under ci.yml above.
   'deploy.yml': ['promote', 'migrate-staging', 'migrations-changed', 'migrate-prod', 'record-migrated'],
   'migrate-region.yml': ['migrate'],
-  'nightly-e2e.yml': ['legacy-gate', 'chapters'],
+  'nightly-e2e.yml': ['chapters'],
   'red-main.yml': ['notify'],
   'staging.yml': ['apply', 'repair'],
   'upload-audio.yml': ['upload'],
-  'weekly-layout.yml': ['legacy-gate', 'layout'],
+  'weekly-layout.yml': ['layout'],
 }
 const REUSABLE_CALLERS: Record<string, string[]> = { 'deploy.yml': ['ci'] }
 

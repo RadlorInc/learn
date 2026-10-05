@@ -1,71 +1,42 @@
-name: Weekly layout sweep (short-landscape)
+name: Weekly KG–2 tap sweep
 
-# The layer-collision gate: proves the teen shell is still OPERABLE on a wide-but-short frame, not
-# merely non-overlapping. Every size in that shell is `clamp(px, vw, px)` — width-derived, no vh
-# term — so a short frame gets near-desktop sizes with no vertical room, and the failure mode is a
-# commit button rendered 61x13 rather than anything that throws. Nothing else in the repo can see it.
+# "Can a child actually tap it", for the 23 KG–2 chapters children play at `/game?c=<id>`:
+# `e2e/xbrowser-clicks.spec.ts` plays each chapter from a seeded mid-run state to its end card, hit-tests
+# every visible control on every screen it passes (is the element at the control's centre the control
+# itself?), then presses the end card's real buttons. Chromium only here; the 13-profile matrix stays a
+# local pre-launch run (docs/runbooks/deploy.md).
 #
-# ⚠️ WHY WEEKLY AND NOT NIGHTLY. It is ~57 minutes. Nightly, that is ~29 runner-hours a month to
-# re-measure layout constants that change a few times a year — and the practical cost of a slow gate
-# is that people stop reading it. The defects it catches arrive with a LAYOUT change, not with time,
-# so it is scheduled weekly AND exposed via workflow_dispatch to run on demand before a release or
-# after touching FitSlot / GameShell / kidKit. If it ever starts finding things weekly, make it
-# nightly then — do not pay for that up front.
+# ⚠️ FROM 2026-09-13 TO 2026-10 THIS FILE TESTED NOTHING AND SHOWED GREEN. A `legacy-gate` job skipped it
+# while `LEGACY_CHAPTERS_HIDDEN` was true, and the spec it named (the short-landscape sweep of the teen
+# shell's layout sweep) had been deleted with that shell. Both are gone; `src/__tests__/workflowSpecs.test.ts`
+# fails any PR in which a workflow names a spec that does not exist.
 #
-# ⚠️⚠️ THIS ONE NEEDS `next dev`, AND THE NIGHTLY DELIBERATELY DOES NOT.
-# It drives real questions through `reachPractice`, which reads the `[data-test-answer]` /
-# `[data-test-phase]` hooks — and those are emitted ONLY by `next dev`; they are dead-code-eliminated
-# from any production build (that is deliberate: the hook must never ship the answer to a child).
-# So `next start` — correct for nightly-e2e.yml, which only opens chapters — would leave every
-# `reachPractice` call finding no board, and the suite would measure the wrong screen while passing.
-# The CSP is branched on NODE_ENV precisely so the dev build still gets 'unsafe-eval' and the
-# "zero console errors" contract holds here too.
+# ⚠️ WHY WEEKLY AND NOT NIGHTLY: it plays every chapter rather than opening it, so it is the slow one, and
+# the defects it catches arrive with a layout change, not with time. Run it on demand (workflow_dispatch)
+# after touching a KG–2 chapter's layout. Do not widen the schedule without a reason: Actions minutes.
 #
-# ⚠️ THE SEED IS PINNED AND THAT IS THE POINT. This suite measures ONE randomly-drawn question kind
-# per chapter; unseeded it was a coin flip that failed 3 runs in 7 on a real defect, which teaches
-# people to re-run instead of read. `E2E_SEED` defaults to a fixed value in the spec, so a red run is
-# reproducible from the log. Buy BREADTH by dispatching with a different seed — never with re-runs.
+# Against a PRODUCTION BUILD on the runner (as nightly-e2e.yml, which explains why), never production.
 
 on:
   schedule:
-    - cron: '40 4 * * 1' # Mondays 04:40 UTC — a fresh result waiting at the start of the week
+    - cron: '40 4 * * 1' # Mondays 04:40 UTC
   workflow_dispatch:
     inputs:
-      seed:
-        description: 'E2E_SEED override (breadth: try a different seed, do not re-run the same one)'
+      only:
+        description: 'Narrow to chapters (comma-separated, e.g. counting,shapes)'
         required: false
         default: ''
+  pull_request:
+    paths: ['.github/workflows/weekly-layout.yml', 'e2e/xbrowser-clicks.spec.ts']
+
+permissions:
+  contents: read
+  issues: write        # a red scheduled run files the notice below
 
 jobs:
-  # ⚠️ PAUSED WHILE LEGACY CHAPTERS ARE HIDDEN (src/core/chapters.ts, founder's call 2026-09-13).
-  # This sweep drives the legacy chapters; with them hidden it could only go red every run, and a
-  # permanently-red scheduled job is noise nobody reads. The pause is LOUD, not silent: this job
-  # writes a warning and a summary line on every run, and the sweep job shows as skipped.
-  legacy-gate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10 # p95 0.2 min; 10 min floor (ARC-07; GitHub default 360)
-    outputs:
-      run: ${{ steps.flag.outputs.run }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: flag
-        run: |
-          if grep -q 'export const LEGACY_CHAPTERS_HIDDEN = true' src/core/chapters.ts; then
-            echo "::warning::Legacy chapters are hidden (src/core/chapters.ts) — this chapter sweep is PAUSED and tested nothing."
-            echo "### ⏸ Paused: legacy chapters hidden — sweep did not run" >> "$GITHUB_STEP_SUMMARY"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          elif grep -q 'export const LEGACY_CHAPTERS_HIDDEN = false' src/core/chapters.ts; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::could not read LEGACY_CHAPTERS_HIDDEN in src/core/chapters.ts — refusing to guess"
-            exit 2
-          fi
-
   layout:
-    needs: legacy-gate
-    if: needs.legacy-gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 90 # ~57 min observed; headroom for a slower runner, capped so a hang cannot idle
+    timeout-minutes: 90 # 23 chapters, each capped by the spec's own play budget; capped so a hang cannot idle
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
@@ -78,43 +49,33 @@ jobs:
 
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - run: npx next build
 
-      - name: Start dev server
+      - name: Start production server
         run: |
           # nohup + disown so it survives this step's shell; a plain `&` fails later as a wall of
           # navigation errors rather than as a missing server.
-          #
-          # ⚠️ THE PORT MUST BE EXPLICIT. `npm run dev` is `next dev`, which binds 3000 — while
-          # playwright's baseURL is 3017. Locally that mismatch is invisible because the preview
-          # tooling starts it from .claude/launch.json, which pins 3017; in CI there is no
-          # launch.json, so this job would have failed the health poll every Monday. Named directly
-          # rather than via `npm run dev -- -p`, so there is no arg-forwarding to get wrong.
-          nohup npx next dev -p 3017 > /tmp/next-dev.log 2>&1 &
+          nohup npx next start -p 3017 > /tmp/next-start.log 2>&1 &
           disown || true
-          # Dev compiles routes on first request, so poll generously and fail HERE with the log if
-          # it never comes up.
-          for i in $(seq 1 120); do
+          for i in $(seq 1 60); do
             if [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3017/api/health)" = "200" ]; then
-              echo "dev server up after ${i}s"; exit 0
+              echo "server up after ${i}s"; exit 0
             fi
             sleep 1
           done
-          echo "::error::dev server did not become healthy in 120s"; cat /tmp/next-dev.log; exit 1
+          echo "::error::server did not become healthy in 60s"; cat /tmp/next-start.log; exit 1
 
-      # Set E2E_SEED only when non-empty: a `schedule` run passes '' for an unset input, and
-      # `Number('')` is 0 — a silently DIFFERENT seed from the spec's pinned default, which would
-      # make the scheduled run unreproducible against a dispatched one. Same class of empty-string
-      # trap that made the nightly sweep zero chapters; checked for here rather than rediscovered.
-      - name: Short-landscape layout sweep
-        # ⚠️ Via `env:` rather than `${{ }}` inside the script — see nightly-e2e.yml for why:
-        # an interpolated dispatch input is pasted in as shell CODE, not passed as a value.
+      - name: KG–2 tap sweep (23 chapters)
+        # The input arrives via `env:`, never interpolated into the script (see nightly-e2e.yml).
+        # Set only when non-empty: a `schedule` run passes '' for an unset input.
         env:
-          SEED_INPUT: ${{ github.event.inputs.seed }}
+          ONLY_INPUT: ${{ github.event.inputs.only }}
         run: |
-          if [ -n "$SEED_INPUT" ]; then
-            export E2E_SEED="$SEED_INPUT"
+          if [ -n "$ONLY_INPUT" ]; then
+            export E2E_ONLY="$ONLY_INPUT"
           fi
-          npx playwright test e2e/short-landscape.spec.ts
+          set -o pipefail
+          npx playwright test e2e/xbrowser-clicks.spec.ts 2>&1 | tee /tmp/e2e.log
 
       - name: Upload traces on failure
         if: failure()
@@ -124,3 +85,32 @@ jobs:
           path: test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+      # A red scheduled run nobody is told about is the same as no run: one issue, updated in place,
+      # closed by the next green run (the pattern in nightly-e2e.yml and daily-smoke.yml).
+      - name: File (or update) the failure notice
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          TITLE='Weekly KG–2 tap sweep is red'
+          FAILING=$(grep -E '^\s+✘' /tmp/e2e.log | sed 's/([0-9.]*m*s)//' | head -20 || true)
+          [ -n "$FAILING" ] || FAILING='(the run failed before any test reported — see the log)'
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n%s\n' \
+            "Last red run: $RUN_URL (commit ${GITHUB_SHA:0:7})" "$FAILING" \
+            "Updated in place while red; closed by the next green run.")
+          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then gh issue comment "$EXISTING" -R "$REPO" --body "$BODY"
+          else gh issue create -R "$REPO" --title "$TITLE" --body "$BODY" --label bug || gh issue create -R "$REPO" --title "$TITLE" --body "$BODY"; fi
+
+      - name: Close the notice on a green run
+        if: success() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          EXISTING=$(gh issue list -R "$REPO" --state open --search 'Weekly KG–2 tap sweep is red in:title' --json number -q '.[0].number' || true)
+          if [ -n "$EXISTING" ]; then gh issue close "$EXISTING" -R "$REPO" --comment "Green again: $RUN_URL"; fi

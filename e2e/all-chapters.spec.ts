@@ -1,6 +1,4 @@
 import { test, expect, Page } from '@playwright/test'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 import { IGNORED_ERRORS, MIN_TAP, TIGHT_TAP } from './personas'
 import { seedSession } from './session'
 
@@ -67,16 +65,12 @@ test.beforeEach(async ({ page }) => {
  * reports politely; it is the one thing that must not happen on day one, and with 70 chapters
  * nobody is going to click through them by hand before each deploy.
  *
- * ⚠️ THE CHAPTER LIST IS DERIVED FROM THE SOURCE, NEVER TYPED OUT. A hardcoded list of 70 ids is
- * wrong the first time a chapter is added, renamed or ported between shells — and it would go on
- * reporting green while covering 69. This reads `core/chapters.ts` (what a child can be offered)
- * and the two component tables, so adding a chapter automatically adds a test and MOVING one
- * between shells automatically follows it.
+ * The list is written out by hand below (the 23 KG–2 chapters and the first topic of each of the 36 grade 3–8
+ * modules); see the note on `chapters()`.
  *
- * Run it: `npm run test:chapters` against the dev server on :3017, or against production with
- * `E2E_BASE_URL=https://milo-story-mode.vercel.app`. It is a pre-deploy gate, not a per-commit one
- * — 70 chapters x 3 frames is a few hundred loads. Narrow it while iterating with
- * `E2E_ONLY=decimals,rounding` or `E2E_FRAMES=laptop`.
+ * Run it: `npm run test:chapters` against a production build on :3017 (`next build && next start -p 3017`, the
+ * placeholder Supabase env from nightly-e2e.yml). It is a scheduled gate, not a per-commit one — 59 entries x 3 frames.
+ * Narrow it while iterating with `E2E_ONLY=counting,g5m1-t1` or `E2E_FRAMES=laptop`.
  *
  * ⚠️ DO NOT RUN IT AGAINST PROD WHILE A DEPLOY IS STILL PROPAGATING. The first prod run reported
  * two chapters failing on a resource 404; both passed minutes later, untouched. A deploy briefly
@@ -84,9 +78,6 @@ test.beforeEach(async ({ page }) => {
  * transient as a defect — and, worse, would teach you to ignore a real one. Wait for the new
  * `sw.js` VERSION to be live, then run.
  */
-
-const ROOT = process.cwd()
-const read = (p: string) => readFileSync(join(ROOT, p), 'utf8')
 
 /** The frames a real child holds. 640x320 is this repo's documented fault zone: `short` is
  *  `vh < 470`, so a wide-but-short phone gets near-desktop sizes with no vertical room. */
@@ -97,33 +88,36 @@ const FRAMES = {
 } as const
 type FrameName = keyof typeof FRAMES
 
-interface Chapter { id: string; url: string; shell: 'gameshell' | 'story' }
+interface Chapter { id: string; url: string; shell: 'chapter' | 'lesson' }
 
 /**
- * Where each chapter lives — all of them are storybook chapters now (`storyChapters.tsx`). The
- * story route takes an ALIAS rather than the skill id (`?ch=add100` for `additionTo100`), so the
- * alias table in `app/story/page.tsx` is reversed here.
+ * ⚠️ WHAT A CHILD CAN REACH TODAY, WRITTEN OUT BY HAND (bound to intent, not derived from the code under test).
+ * Until 2026-10 this read `core/chapters.ts` and drove `/story?ch=<alias>` — a route that has shown "New lessons are on
+ * the way" since the legacy surfaces were hidden (2026-09-13), so the nightly was paused rather than pointed at the
+ * routes children actually use:
+ *   • KG, Grade 1, Grade 2: the 23 story chapters, played at `/game?c=<id>` (the KG–2 tabs link there).
+ *   • Grades 3–8: every module's first topic, `/lesson?id=g<grade>m<n>-t1` — the lesson entry a module card opens.
+ * A chapter or module added later is NOT covered until it is added here; the guard below pins the counts, so a
+ * removal shows up as a red count rather than a quietly shorter sweep.
  */
+const KG2 = [
+  'counting', 'numberOrdering', 'numberRecognition', 'matchingQuantities', 'numberComparison', 'shapes', 'colors',
+  'patterns', 'measurement', 'addition', 'subtraction',
+  'numbersTo100', 'placeValue', 'skipCounting', 'storyProblems', 'multiplication', 'fractions', 'money', 'time',
+  'compareNumbers', 'additionTo100', 'subtractionTo100', 'shapes2d3d',
+]
+/** Modules per grade, 3 to 8 (36 in all). */
+const MODULES_PER_GRADE: Record<number, number> = { 3: 6, 4: 6, 5: 6, 6: 7, 7: 5, 8: 6 }
+
 function chapters(): Chapter[] {
-  const ids = [...read('src/core/chapters.ts').matchAll(/\{ id: '([A-Za-z0-9]+)'/g)].map(m => m[1])
-  const story = read('src/features/chapters/storyChapters.tsx')
-
-  // alias -> skill, from the PREVIEW table; reversed to skill -> alias (first alias wins).
-  const page = read('src/app/story/page.tsx')
-  const aliasOf: Record<string, string> = {}
-  for (const [, alias, skill] of page.matchAll(/(\w+):\s*'([A-Za-z0-9]+)'/g)) {
-    if (!aliasOf[skill]) aliasOf[skill] = alias
-  }
-
-  return ids.map(id => {
-    if (new RegExp(`^\\s*${id}:`, 'm').test(story)) {
-      const alias = aliasOf[id] ?? id
-      return { id, url: `/story?ch=${alias}`, shell: 'story' as const }
+  const out: Chapter[] = KG2.map(id => ({ id, url: `/game?c=${id}`, shell: 'chapter' as const }))
+  for (const [g, n] of Object.entries(MODULES_PER_GRADE)) {
+    for (let m = 1; m <= n; m++) {
+      const id = `g${g}m${m}-t1`
+      out.push({ id, url: `/lesson?id=${id}`, shell: 'lesson' as const })
     }
-    // Declared to children with nothing behind it — a dead tap. Kept in the list, pointed at a
-    // URL that cannot resolve, so it FAILS loudly rather than being silently skipped.
-    return { id, url: `/story?ch=${id}`, shell: 'story' as const }
-  })
+  }
+  return out
 }
 
 /** What "the chapter did not open" looks like on screen, including our own crash screens. */
@@ -132,10 +126,11 @@ const FAILURE_TEXT = [
   'There is no chapter called',
   'Application error',
   'client-side exception',
-  'Oops! Milo tripped over something',   // app/error.tsx
-  'Oops! Milo needs a moment',           // app/global-error.tsx
-  'Milo can’t find that page',      // app/not-found.tsx
-  'Oops! Something went wrong',          // MiloErrorBoundary
+  // ⚠️ The three crash screens were renamed with the mascot; the old "Oops! Milo …" lines here matched nothing
+  // until 2026-10. Re-read these against the screens when one changes.
+  'Oops! Something went wrong',          // app/error.tsx and shared/ui/ErrorBoundary
+  'Oops! Something needs a moment',      // app/global-error.tsx
+  "We can't find that page",             // app/not-found.tsx
   /**
    * ⚠️ THE CAMERA CONSENT CARD IS A FAILURE **HERE**, THOUGH IT IS THE CORRECT SCREEN ELSEWHERE.
    * Eight AR chapters do not render to a logged-out visitor (src/core/arChapters.ts), and this
@@ -146,6 +141,12 @@ const FAILURE_TEXT = [
    * sweep to 62 chapters while reporting 70.
    */
   'played with your hands',              // CameraConsentGate
+  /**
+   * ⚠️ THE "HIDDEN" SCREEN IS A FAILURE HERE. `/game` shows it for a chapter that is not visible, and it has a link
+   * back — on a production build a hidden chapter would otherwise be graded as a calm, operable page.
+   */
+  'New lessons are on the way',          // shared/ui/NewLessonsSoon
+  'is waiting for you',                  // shared/ui/LockedChapterCard (the paywall, not the chapter)
 ]
 
 /**
@@ -169,9 +170,8 @@ test.describe('every chapter opens', () => {
   test('the chapter list was really derived (guards the regex above)', () => {
     // ⚠️ A parse that silently returns [] would make every test below pass by vacuity — the
     // "a sweep that flags everything is a broken sweep" rule, in its quiet direction.
-    expect(ALL.length).toBeGreaterThanOrEqual(60)
-    expect(ALL.filter(c => c.shell === 'gameshell').length).toBeGreaterThan(30)
-    expect(ALL.filter(c => c.shell === 'story').length).toBeGreaterThan(10)
+    expect(ALL.filter(c => c.shell === 'chapter').length).toBe(23)
+    expect(ALL.filter(c => c.shell === 'lesson').length).toBe(36)
     expect(new Set(ALL.map(c => c.id)).size).toBe(ALL.length)
 
     // ⚠️ And that the SELECTION is non-empty. The check above proves the chapter list parsed; it
@@ -194,7 +194,14 @@ test.describe('every chapter opens', () => {
             if (m.type() !== 'error') return
             const t = m.text()
             if (IGNORED_ERRORS.test(t)) return
-            errors.push(t)
+            /**
+             * ⚠️ THE RUNNER HAS NO BACKEND: CI builds with `NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co`,
+             * which does not resolve, so every lesson-audio clip and RPC fails to load (the app falls back to device
+             * speech and fails open). Only a failed load FROM THAT HOST is excused, read off the message's own URL —
+             * a missing chunk or asset from our own origin still fails here.
+             */
+            if (/^Failed to load resource/.test(t) && new URL(m.location().url || 'x:').hostname === 'placeholder.supabase.co') return
+            errors.push(`${t}${m.location().url ? ` (${m.location().url})` : ''}`)
           })
           page.on('pageerror', e => errors.push(String(e)))
 
@@ -286,7 +293,15 @@ test.describe('every chapter opens', () => {
               const cs = getComputedStyle(el)
               if (cs.visibility === 'hidden') continue
               const label = (el.textContent || '').trim().slice(0, 24) || el.tagName
-              if (r.right < 0 || r.left > innerWidth || r.bottom < 0 || r.top > innerHeight) {
+              /**
+               * ⚠️ HOW FAR DOWN A CHILD CAN GET: the viewport inside a fixed layer (every chapter stage), the scrollable
+               * document otherwise. A grade 3–8 lesson is a scrolling page — at 640×320 its question card sits at
+               * y 620 of a 748px document, reached by scrolling, and the viewport-only bound failed all 36 of them.
+               */
+              let fixed = false
+              for (let e: Element | null = el; e; e = e.parentElement) if (getComputedStyle(e).position === 'fixed') { fixed = true; break }
+              const reachY = fixed ? innerHeight : document.scrollingElement!.scrollHeight - scrollY
+              if (r.right < 0 || r.left > innerWidth || r.bottom < 0 || r.top > reachY) {
                 out.push(`offscreen: ${label}`)
                 continue
               }
@@ -341,7 +356,7 @@ test.describe('every chapter opens', () => {
               const r = el.getBoundingClientRect()
               if (!r.width || !r.height) continue
               if (getComputedStyle(el).visibility === 'hidden') continue
-              if (/^\s*‹?\s*(menu|back)/i.test(el.textContent || '')) continue
+              if (/^\s*[‹←]?\s*(menu|back|topics)/i.test(el.textContent || '')) continue   // ← Menu (/game), ← Topics (/lesson)
               if (r.width * r.height > bestA) { bestA = r.width * r.height; best = el }
             }
             if (!best) return null
@@ -368,8 +383,16 @@ test.describe('every chapter opens', () => {
               // ⚠️ The message names its AXIS. The old one printed the y-range for a violation that
               // was horizontal (`BUTTON (30–249 of 720)` on a 720-tall frame reads as perfectly
               // in-frame), which is what made two nights of nightly failures unreadable.
-              if (r.bottom > innerHeight + 1 || r.top < -1) {
-                out.push(`offscreen after entering (vertical): ${label} (y ${Math.round(r.top)}–${Math.round(r.bottom)} of ${innerHeight})`)
+              /**
+               * HOW FAR DOWN A CHILD CAN GET: the viewport inside a fixed layer (every chapter stage), the scrollable
+               * document otherwise. A grade 3–8 lesson is a scrolling page — at 640×320 its question card sits at
+               * y 620 of a 748px document, reached by scrolling, and the viewport-only bound failed all 36 of them.
+               */
+              let fixed = false
+              for (let e: Element | null = el; e; e = e.parentElement) if (getComputedStyle(e).position === 'fixed') { fixed = true; break }
+              const reachY = fixed ? innerHeight : document.scrollingElement!.scrollHeight - scrollY
+              if (r.bottom > reachY + 1 || r.top < -1) {
+                out.push(`offscreen after entering (vertical): ${label} (y ${Math.round(r.top)}–${Math.round(r.bottom)} of ${Math.round(reachY)})`)
               }
               /**
                * ⚠️⚠️ HORIZONTAL IS A DIFFERENT AXIS AND REQUIRING THE WHOLE BOX INSIDE IT WAS A

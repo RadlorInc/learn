@@ -110,9 +110,9 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
-  `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
-  (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
+- `nightly-e2e` and `weekly-layout` now sweep the KG–2 chapters and the grade 3–8 lesson entry (PR
+  support-e2e-sweeps); neither has had a scheduled run on GitHub yet — read the first of each, and the issue it files
+  if red.
 - No operator path closes an account for a parent who cannot use the app (`delete_my_account` needs their own recent
   sign-in): write one and rehearse it locally before the first such request.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the

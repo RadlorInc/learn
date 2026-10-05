@@ -11,7 +11,7 @@
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 - **Automatic:**
-  - GitHub issues from `red-main.yml`, `daily-smoke.yml` and `nightly-e2e.yml`;
+  - GitHub issues from `red-main.yml`, `daily-smoke.yml`, `nightly-e2e.yml` and `weekly-layout.yml`;
   - the daily ops digest email (numbers only) when it is configured ([deploy.md](deploy.md) → scheduled jobs).
 
 The panel promises **a reply within 2 working days**. Keep that promise and do not widen it.
