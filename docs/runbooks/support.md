@@ -44,11 +44,41 @@ Read the ops digest and open GitHub issues **before** the mail. One email with a
 4. **Agent.**
    - Reproduce on a local build.
    - Read the code, the public site and GitHub runs.
-   - If server data is needed, write **read-only SQL** into `docs/legal/sql/<topic>.sql` with placeholders (`'<learner id>'`), never real ids or emails. Say what each column answers and what each result would mean.
+   - For one family, start with [../legal/sql/support-lookup.sql](../legal/sql/support-lookup.sql): the account by email → its children → each child's progress and last activity → crash records (7 days) → consent → PIN and teacher plan → deletions recorded. One placeholder, the address. Billing questions have their own file (`billing-lookup.sql`).
+   - If more server data is needed, write **read-only SQL** into `docs/legal/sql/<topic>.sql` with placeholders (`'<learner id>'`), never real ids or emails. Say what each column answers and what each result would mean.
    - **Founder** runs it in the SQL editor and pastes back the output.
    - Vercel runtime logs: the **founder** reads them in the dashboard.
 5. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
 6. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
+
+## Parent PIN locked or forgotten
+
+The PIN guards the dashboard screens from a child on the device (architecture.md §3); it is not a password. Five wrong
+tries lock it for 15 minutes, doubling per lock up to 24 hours. In the app, *Forgot PIN* removes it 24 hours later.
+Help sooner only when the request comes **from the account's own address** (as data-requests.md verifies), never on a
+phone call or another address — a child who can email support from the parent's mail is the case the 24-hour wait
+exists for, so if anything about the request is odd, point them to *Forgot PIN* instead.
+
+1. **Founder.** Query 6 of [../legal/sql/support-lookup.sql](../legal/sql/support-lookup.sql) shows `pin_set`,
+   `locked_until` and `reset_takes_effect`.
+2. **Founder, SQL editor.** One of the two (each touches only that account's row; `parent_pins` has no client access):
+   - **They know the PIN, they are locked out** — clear the lock and keep the PIN:
+     ```sql
+     update public.parent_pins set failed_count = 0, lockouts = 0, locked_until = null, updated_at = now()
+      where account_id = (select id from auth.users where lower(email) = lower(btrim('<account email>')))
+     returning account_id is not null as unlocked;   -- one row "true"; no row: no PIN or no such account
+     ```
+   - **They forgot it** — remove it; the next visit to the dashboard asks them to choose a new one. Until they do,
+     whoever holds the signed-in device can choose it, so tell them to open the dashboard straight away:
+     ```sql
+     delete from public.parent_pins
+      where account_id = (select id from auth.users where lower(email) = lower(btrim('<account email>')))
+     returning account_id is not null as removed;
+     ```
+3. **Founder.** Run query 6 again: `locked_until` empty (unlock), or `pin_set = false` (removed). Reply.
+
+Rehearsed on a local stack (2026-10-05): a locked account answered `locked` to the right PIN; after the unlock the same
+PIN passed; after the delete the status read `none` and a new PIN could be set and verified.
 
 ## What the agent cannot do
 

@@ -113,8 +113,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
   `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
   (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
-- No operator path closes an account for a parent who cannot use the app (`delete_my_account` needs their own recent
-  sign-in): write one and rehearse it locally before the first such request.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the

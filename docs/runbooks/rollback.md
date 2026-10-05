@@ -62,11 +62,13 @@ There is no point-in-time recovery. PITR is not recorded as bought; the founder 
 - **Supabase's daily backups** (Pro, kept 7 days). A restore replaces the **whole project** in place and loses everything written since. Founder only, in the dashboard, with downtime announced.
 - **Our encrypted dumps.** They come from the nightly `backup.yml`, plus `milo-db-backup-premigrate-<run id>`, which every `migrate-prod` run takes just before it applies anything. Restore them into a **throwaway local** database first ([backup-restore.md](backup-restore.md)), then decide.
 
-No rehearsed path exists for putting selected rows back into production. Write one and rehearse it on a local stack before using it. A dump holds children's data, so no part of it ever goes into a migration file, a PR or git.
+To put one family's lost rows back without a whole-project restore, follow [backup-restore.md](backup-restore.md) → *Put one family's lost rows back* (rehearsed on local stacks only, 2026-10-05). A dump holds children's data, so no part of it ever goes into a migration file, a PR or git.
 
 Never restore a deleted child's record from a backup. See [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 
 ## Security incident (a spike of `42501` denials, a suspected cross-family read, a leaked secret)
+
+The whole procedure — evidence, the incident log, notification — is [incident.md](incident.md). These are its database and secret steps.
 
 1. **Founder.** Read the Supabase and Vercel logs in the dashboards.
 2. **Agent.** Write the catalog queries for the founder, from `supabase/tests/security_posture.sql`. Diff the founder's output against `supabase/schema/security_baseline.sql`.
