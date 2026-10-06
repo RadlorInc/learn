@@ -41,7 +41,7 @@ A migration reaches production only one way: `deploy.yml` → `migrate-prod`, be
 10. **Founder — run the proof-SQL.** Every row should read `PASS`, and each `INFO` should match what the before-SQL predicted.
 11. **Agent — record it.** Put the before, backup, approval and proof results in the PR, as counts and `PASS`/`FAIL` only. If a grant, policy or `SECURITY DEFINER` changed, regenerate the security baseline (below).
 
-**If `migrate-prod` fails or the approval is rejected**, `red-main.yml` opens the issue "app is live, database NOT migrated". Read the job log, then either re-run the failed job (it needs the approval again) or revert the app ([rollback.md](rollback.md)). The app must tolerate the old schema meanwhile. That is what expand/contract buys.
+**If `migrate-prod` fails or the approval is rejected**, `red-main.yml` opens the issue "app is live, database NOT migrated" (or comments on the open one), and closes it on the first later Deploy run whose `migrate-prod` succeeds. A failed `migrate-staging` on a push with no pending migration opens "staging migrate failed (no production migration pending)" instead: production has nothing to apply, but with a staging project configured the next migration waits for staging. Read the job log, then either re-run the failed job (it needs the approval again) or revert the app ([rollback.md](rollback.md)). The app must tolerate the old schema meanwhile. That is what expand/contract buys.
 
 **Expand, migrate, contract.**
 - The client learns to tolerate both shapes first: a missing RPC answers `PGRST202`, an unknown column `42703`, and the client must fall back on either.
