@@ -96,7 +96,13 @@ suppression list and drops them too. A listing is deleted 12 months after its la
 ## Parent PIN locked or forgotten
 
 The PIN guards the dashboard screens from a child on the device (architecture.md §3); it is not a password. Five wrong
-tries lock it for 15 minutes, doubling per lock up to 24 hours. In the app, *Forgot PIN* removes it 24 hours later.
+tries lock it for 15 minutes, doubling per lock up to 24 hours. In the app, *Forgot PIN* removes it 24 hours later,
+and the account's address is emailed when the reset is asked for (once per reset; `/api/parent/pin-reset`) — a parent
+who did not ask can enter the PIN to cancel it. If they write in about that email, treat it as someone else on the
+device: they cancel by entering the PIN; if they cannot, unlock or remove below only from the account's own address.
+A locked PIN never blocks a parent's rights: the PIN screen links to `/rights` (help, *Withdraw permission for all
+your children*, *Download a copy* per child), which needs only their signed-in session. Closing the account still
+needs the PIN.
 Help sooner only when the request comes **from the account's own address** (as data-requests.md verifies), never on a
 phone call or another address — a child who can email support from the parent's mail is the case the 24-hour wait
 exists for, so if anything about the request is odd, point them to *Forgot PIN* instead.

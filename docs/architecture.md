@@ -140,7 +140,11 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   has enrolled ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
-  data.
+  data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
+  token and emails the account once per reset. `/rights` sits outside `app/parent/`, so the gate does not wrap it: help,
+  withdraw-all (`WithdrawAllCard`) and the per-child export (`DataRights`) stay reachable with the PIN locked, for a
+  signed-in adult only (a `learner` login is sent to its lessons); closing the account (`/parent/account`) stays behind
+  the PIN (`pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
 
 ## 4. Supabase
 

@@ -108,6 +108,7 @@ export const LANDING_URL = 'https://radlor.com/radlic'
 export const PRIVATE_ROUTES = [
   '/api/', '/parent', '/admin', '/play', '/shop', '/game', '/story',
   '/auth', '/practice', '/lesson', '/modules',
+  '/rights',    // a signed-in parent's help and rights page, open without the PIN (app/rights)
   '/consent',   // token-bearing pages reached from a consent email; also noindex in their layout
   '/test',      // a paid tester's link (token in the hash); also noindex in its layout
 ] as const
