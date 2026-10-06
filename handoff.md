@@ -33,6 +33,8 @@ so the repo's migration chain still builds a body one comment different from pro
 1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
 2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
+3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
+   the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
 
 ## Open — the founder decides
 
