@@ -77,7 +77,8 @@ so the repo's migration chain still builds a body one comment different from pro
   unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
 - Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
   `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
-- GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
+- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
+  before 6 Oct, all closed): close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
