@@ -10,6 +10,7 @@ import AuthEventLogger from '@/infra/AuthEventLogger'
 import './fonts.css'
 import './globals.css'
 import { ToastProvider } from '@/shared/ui/Toast'
+import OutageNotice from '@/shared/ui/OutageNotice'
 
 /**
  * ⚠️ THE FONTS ARE SELF-HOSTED FROM THE REPO — `public/fonts/` + `./fonts.css` — AND NOTHING FETCHES THEM FROM GOOGLE,
@@ -137,6 +138,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <MiloErrorBoundary>
+          {/* First in the flow: the founder's outage notice (OUTAGE_NOTICE), outside StorageGate so it shows during its splash. */}
+          <OutageNotice />
           <StorageGate>
             {/* One listener for the whole app: every sign-in, every provider, every route. */}
             <AuthEventLogger />

@@ -84,6 +84,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
+| `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
 
 ### Layers (`src`)
