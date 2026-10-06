@@ -56,7 +56,7 @@ charged; they start checkout again.
      not defined in doc 01 or measured by the app — an open question below; until it is answered, the founder decides;
    - a duplicate charge, a charge after a valid cancellation, or a purchase by a child without the parent's
      permission → always a full refund;
-   - withdrawal of consent → cancel and refund the unused part (see below);
+   - withdrawal of consent for every child, or closing the account → done automatically (see below);
    - anything else → no refund is owed by doc 01; the founder decides whether to give one. A state law may give more
      (doc 01 §5); if the parent cites one, the founder asks the attorney.
 3. **Founder.** In Stripe: the payment → **Refund**. A refund does not cancel the plan: if they also want to stop, cancel
@@ -82,9 +82,49 @@ offers no checkout while the cancelled plan still holds seats, so this is the on
 
 ## Withdrawal of consent or closing the account
 
-Doc 01 §5 promises to cancel and refund the unused part on a consent withdrawal. Closing an account in the app does
-**not** cancel the Stripe subscription today. Both follow [data-requests.md](data-requests.md) first; then the
-founder cancels the subscription in Stripe **immediately** and refunds as decided — see the open questions below.
+Decided 6 October 2026 (doc 01 §4, §5): **closing the account** and **withdrawing permission for every child** both
+cancel the Stripe subscription **immediately** and refund the unused part, automatically. A withdrawal for **one**
+child does not (not decided). How it is built: [../architecture.md](../architecture.md) §8.
+
+**The rule** (`unusedCents` in `src/features/billing/closeRefund.ts`, applied to each paid invoice of the
+subscription): payment × full days left in the period that invoice paid for, counted from the moment the request was
+actioned (`billing_cancellations.queued_at`), ÷ days in that period, rounded down to the cent. Within 14 days of a
+payment (or a payment made after the request), the whole payment. A $0 invoice, an ended period, or a payment that
+already carries any refund (ours or one made by hand) → nothing more. Monthly and annual alike.
+
+**What happens on its own:**
+1. The close (`delete_my_account`, the operator SQL, or a dashboard deletion) or the withdraw-all
+   (`consent_withdraw_account`) writes one row to `billing_cancellations` in the same transaction: Stripe's
+   subscription id, why, and when. Nothing about Stripe can block or undo the close.
+2. Right after, the app calls `/api/consent/cancel-second-notice` (the email-link withdrawal settles it in
+   `/api/consent/respond`), which cancels the subscription at Stripe now (idempotency key `close-cancel-<sub>`),
+   refunds each invoice's unused part (`close-refund-<sub>-<invoice>`), and emails the parent at the address on the
+   Stripe customer: "cancelled from today", and the amount. The row's `result` becomes `done: …`.
+3. If Stripe could not be reached or refused, `result` is `error: …`; every later drain retries (the daily cron at
+   06:23 UTC) and the ops digest shows `!! billing_cancellations_owed: <n>` until it is settled. The refund stays counted
+   from the original time.
+4. Stripe then sends `customer.subscription.deleted` and `charge.refunded`. For a closed account the webhook closes
+   them as `ignored: account_closed` (200), with no error row.
+
+**Founder — the parent asks "did I get my refund?"** In Stripe: Customers → the parent's email → the subscription
+(cancelled, with the date) and the payment's **Refunds**. The email told them the amount; refunds take up to 10
+business days.
+
+**Founder — the digest says `billing_cancellations_owed` is not 0** (the automatic refund failed):
+1. SQL editor, read-only: `select stripe_subscription_id, queued_because, queued_at, result from public.billing_cancellations where result is null or result like 'error:%';`
+   Paste nothing from it into the repo or an issue (Stripe ids). `result` says what failed.
+2. A passing Stripe outage: nothing to do; it settles on the next drain (or run one now:
+   `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice`).
+3. Otherwise do it by hand in Stripe: the subscription → **Cancel** → **immediately**; then each payment of the current
+   period → **Refund** the amount the rule above gives, counted from `queued_at` (the agent works it out from the
+   dates and amounts you paste). Then email the parent the amount (the Stripe customer's address).
+4. Then run the drain once (the `curl` above, or wait for the cron). It finds the plan cancelled and each payment
+   already refunded, refunds nothing more, and settles the row as `done: already canceled; … already refunded` — the
+   digest stops flagging it. No database write by hand.
+
+**A request by email** (close or withdraw-all): follow [data-requests.md](data-requests.md); the in-app control or
+the operator SQL it names queues the cancel and refund like the app does. Do not refund in Stripe first: a payment
+that already carries a refund is refunded nothing more, so the parent would get only what you gave by hand.
 
 ## Dispute or chargeback
 
@@ -137,12 +177,12 @@ metadata — not applied"* and ignores it, for ever. The family pays and gets no
 
 Not decided here. Until each is decided, the founder handles that case one by one.
 
-1. **The refund for a consent withdrawal** (doc 01 §5, "the unused part"): prorated by day, or by whole months? From
-   the date of the request, or the date it is actioned (doc 01 says actioned)?
-2. **Closing an account with a live plan:** cancel at once with a prorated refund, cancel at period end, or no refund?
-   The app does not cancel Stripe on close today.
-3. **"Not used since the renewal charge"** (doc 01 §5, renewals): what counts as use — any child session, a sign-in?
+1. **"Not used since the renewal charge"** (doc 01 §5, renewals): what counts as use — any child session, a sign-in?
    The app does not measure it for this purpose.
-4. **Refunds outside doc 01's cases:** goodwill refunds, partial refunds — a rule, or case by case?
-5. **Disputes:** counter by default, or accept under some amount?
-6. **Stripe's failed-payment emails and retry schedule** (doc 01 §7): confirm they are on and match the 7 days.
+2. **Refunds outside doc 01's cases:** goodwill refunds, partial refunds — a rule, or case by case?
+3. **Disputes:** counter by default, or accept under some amount?
+4. **Stripe's failed-payment emails and retry schedule** (doc 01 §7): confirm they are on and match the 7 days.
+5. **Withdrawal for ONE child of several:** keep the plan as it is, drop a seat (and refund it?), or nothing? Today
+   nothing changes in billing.
+6. **The withdraw-all screen** (doc 03's wording, `WITHDRAW_ALL` in `src/features/consent/copy.ts`) does not yet say
+   that it cancels the plan and refunds the unused part; the close page does. A line for doc 03?

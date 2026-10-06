@@ -104,6 +104,10 @@ beforeAll(async () => {
     ('evt_stuck_3d', 'invoice.upcoming', now() - interval '3 days', null),
     ('evt_inflight', 'customer.subscription.updated', now() - interval '5 minutes', null),
     ('evt_done', 'customer.subscription.created', now() - interval '3 hours', now() - interval '3 hours')`)
+  // Plans owed a cancel and refund (20261008000000): one never settled, one done. No STRIPE_SECRET_KEY here, so the
+  // cron's own drain records an error on the first and it stays owed.
+  await db.exec(`insert into public.billing_cancellations (stripe_subscription_id, queued_because, result) values
+    ('sub_owed_secret', 'account_closed', null), ('sub_settled', 'consent_withdrawn', 'done: cancelled now; refunded 605')`)
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://sb.test')
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon')
   vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'service')
@@ -169,13 +173,27 @@ describe('the daily cron emails the digest', () => {
       '!! b3_cancel_failing: 2', '!! b3_cancel_missed_7d: 1', '!! consent_pending_overdue: 1', '!! consent_request_unsent: 1',
       '!! backup.yml: latest failure, last success 50 h ago', '   deploy.yml: latest success, last success 2 h ago',
       '!! billing_events_unprocessed_1h: 2',
+      '!! billing_cancellations_owed: 1',
       '   database: ok',
     ]) expect(m.text).toContain(line)
-    for (const secret of [CHILD, 'Zebediah', PARENT_EMAIL, 'secret.parent', CRASH, 'restricted', 're_ref', P, 'evt_stuck', 'checkout.session']) {
+    for (const secret of [CHILD, 'Zebediah', PARENT_EMAIL, 'secret.parent', CRASH, 'restricted', 're_ref', P, 'evt_stuck', 'checkout.session', 'sub_owed_secret']) {
       expect(m.text + m.html + m.subject, `leaked: ${secret}`).not.toContain(secret)
     }
     // Every body line is "<marker><key>: <value>" with a value of digits, words, commas or job names.
     for (const line of m.text.split('\n').slice(2)) expect(line).toMatch(/^(!! | {3})[\w. ]+: [\w ,.()-]+$/)
+  })
+
+  it('a plan the drain could not cancel stays owed and flagged; settled, the line reads 0 unflagged', async () => {
+    await call(CRON)
+    expect((await q<{ result: string }>(`select result from public.billing_cancellations where stripe_subscription_id = 'sub_owed_secret'`))[0].result)
+      .toBe('error: STRIPE_SECRET_KEY is not set')
+    expect(sent[0].text).toContain('!! billing_cancellations_owed: 1')
+    sent.length = 0
+    await q(`update public.billing_cancellations set result = 'done: by hand' where stripe_subscription_id = 'sub_owed_secret'`)
+    try {
+      await call(CRON)
+      expect(sent[0].text).toContain('   billing_cancellations_owed: 0')
+    } finally { await q(`update public.billing_cancellations set result = null where stripe_subscription_id = 'sub_owed_secret'`) }
   })
 
   it('a green backup that is too old is still flagged; a fresh one is not', async () => {

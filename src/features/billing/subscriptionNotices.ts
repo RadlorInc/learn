@@ -54,3 +54,15 @@ export function renderRenewalReminder(a: { amountCents: number; renewsIso: strin
     POLICY,
   ])
 }
+
+/** After "Close your account" or "Withdraw permission for all your children" (docs/legal/01 §4, §5): the plan stops
+ *  today, not at period end, and the unused part is refunded. Sent by `drainBillingCancellations`. */
+export function renderCancelledNow(refundCents: number): Rendered {
+  return render('Your Radlic subscription is cancelled', [
+    'Your Radlic subscription is cancelled from today. You will not be charged again.',
+    refundCents > 0
+      ? `We have refunded ${usd(refundCents)}, the part of your plan you had not used. It reaches your card within 10 business days.`
+      : 'There is no unused part of your plan left to refund.',
+    POLICY,
+  ])
+}
