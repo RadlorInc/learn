@@ -4,7 +4,7 @@
  * Expressions are always answered as choices, and no two choices are ever the same expression written two ways.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 /** One tape row of labelled cells, each 1 wide unless given as [text, width]. */
@@ -20,7 +20,6 @@ const choose = (r: Rng, right: string, wrong: string[]) => {
   return { choices, correct: choices.indexOf(right) }
 }
 /** Re-roll until `ok` — every generator here has plenty of good numbers, so this ends quickly. */
-const until = <T>(make: () => T, ok: (t: T) => boolean): T => { let t = make(); while (!ok(t)) t = make(); return t }
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹'
 const sup = (n: number) => String(n).split('').map(d => SUP[+d]).join('')
 const times = (b: number, e: number) => Array.from({ length: e }, () => String(b)).join(' × ')

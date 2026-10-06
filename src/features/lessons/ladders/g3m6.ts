@@ -4,14 +4,13 @@
  * rulers to the half and quarter inch, line plots, square/rectangle/neither, the distance around, same fence ≠ same room.
  */
 import type { Answer, Picture } from '../script'
-import { int, pick, shuffle, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, type Level, type Rng, until } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const pl = (n: number, one: string, many: string) => (n === 1 ? one : many)
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 

@@ -4,14 +4,13 @@
  * Edge lengths stay at 9 or less, so a label can never print a volume (every volume asked is 10 or more).
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const NAMES = ['Leo', 'Mia', 'Sam', 'Ava', 'Kai', 'Nina', 'Ben', 'Zoe']
 const cubes = (l: number, w: number, h: number, layers?: number): Picture => ({ kind: 'cubes', l, w, h, ...(layers ? { layers } : {}) })
 const prism = (labels: { l?: string; w?: string; h?: string }): Picture => ({ kind: 'solid', shape: 'prism', labels })

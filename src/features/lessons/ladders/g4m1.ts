@@ -3,14 +3,13 @@
  * (see ../adaptive.ts and the reference ladders in ./g5m1.ts). Each level is a different KIND of question.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 /** Every number a picture shows, the way the gate reads it (a table row is also read joined up). */
 const shown = (pic: unknown) => {
   const texts: string[] = []

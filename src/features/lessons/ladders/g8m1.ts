@@ -4,7 +4,7 @@
  * As in the lessons, the child types ONE number: a new exponent, a value, a front number, a root — or picks.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const cards = (wrong: string, right: string): Picture => ({ kind: 'cards', wrong, right })
@@ -18,7 +18,6 @@ const choose = (r: Rng, right: string, wrong: string[]) => {
   return { choices, correct: choices.indexOf(right) }
 }
 /** Re-roll until `ok` — every generator here has plenty of good numbers, so this ends quickly. */
-const until = <T>(make: () => T, ok: (t: T) => boolean): T => { let t = make(); while (!ok(t)) t = make(); return t }
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹'
 const sup = (n: number) => (n < 0 ? '⁻' : '') + String(Math.abs(n)).split('').map(d => SUP[+d]).join('')
 /** base with a raised exponent, e.g. pw(2, -3) → "2⁻³". */

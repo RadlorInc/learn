@@ -6,14 +6,13 @@
  * keeps `labels: 'none'` (the lesson's own turn picture) so the two tens are never printed.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 /** Every number a picture prints as a string label — the same reading the gate does (a string row is also read joined). */
 const shown = (pic: Picture): Set<string> => {
   const texts: string[] = []

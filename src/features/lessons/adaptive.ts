@@ -39,6 +39,18 @@ export const shuffle = <T>(r: Rng, xs: readonly T[]): T[] => {
   return a
 }
 /** 12345 → "12,345" — how every number is written in a question. */
+/**
+ * Re-roll until `ok` holds — at most UNTIL_MAX times, then throw. A generator whose condition can never hold used to
+ * spin for ever: in a child's browser that freezes the lesson, and in vitest it pins a worker the test timeout cannot
+ * stop (ARC-07: a timeout is a timer on the event loop the loop is blocking). A throw is a named failure instead.
+ * This was copied into 19 ladders as an unbounded `while`; the ~140 `for (;;)` re-roll loops elsewhere in the ladders
+ * are still unbounded (handoff).
+ */
+export const UNTIL_MAX = 10_000
+export function until<T>(make: () => T, ok: (t: T) => boolean): T {
+  for (let i = 0; i < UNTIL_MAX; i++) { const t = make(); if (ok(t)) return t }
+  throw new Error(`until: no acceptable draw in ${UNTIL_MAX} tries`)
+}
 export const fmt = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 6 })
 
 export interface Level {

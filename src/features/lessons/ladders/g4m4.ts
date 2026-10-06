@@ -5,11 +5,10 @@
  * question asks for wholes and a fraction, where typing the fraction back would not be an answer.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, type Level, type Rng, until } from '../adaptive'
 
 const f = (n: number, d: number) => `${n}/${d}`
 const pl = (k: number, w: string) => `${k} ${w}${k === 1 ? '' : 's'}`
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 
 const SING: Record<number, string> = { 2: 'half', 3: 'third', 4: 'fourth', 5: 'fifth', 6: 'sixth', 8: 'eighth', 10: 'tenth', 12: 'twelfth', 100: 'hundredth' }
 const PLUR: Record<number, string> = { 2: 'halves', 3: 'thirds', 4: 'fourths', 5: 'fifths', 6: 'sixths', 8: 'eighths', 10: 'tenths', 12: 'twelfths', 100: 'hundredths' }

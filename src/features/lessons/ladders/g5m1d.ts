@@ -3,7 +3,7 @@
  * Every level is a different KIND of question; numbers are picked per problem and the answer computed from them.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 type Row = Extract<Picture, { kind: 'tape' }>['rows'][number]
 type Cell = Row['cells'][number]
@@ -21,7 +21,6 @@ const choose = (r: Rng, right: string, wrong: string[]) => {
   return { choices, correct: choices.indexOf(right) }
 }
 /** Re-roll until `ok` — every generator here has plenty of good numbers, so this ends quickly. */
-const until = <T>(make: () => T, ok: (t: T) => boolean): T => { let t = make(); while (!ok(t)) t = make(); return t }
 const NAMES = ['Mia', 'Leo', 'Ava', 'Ben', 'Zoe', 'Sam', 'Ruby', 'Omar']
 const twoNames = (r: Rng) => { const [x, y] = shuffle(r, NAMES); return [x, y] as const }
 

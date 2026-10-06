@@ -6,7 +6,7 @@
  * 9s as 10s − one group, breaking a fact apart, one-digit × tens, and two-step stories.
  */
 import type { Picture, Problem } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 
@@ -36,7 +36,7 @@ const hides = (p: Problem) => {
 }
 /** A level whose numbers are re-picked until the picture hides the answer. */
 const lv = (style: string, make: (r: Rng) => Problem): Level => ({
-  style, make: r => { let p = make(r); while (!hides(p)) p = make(r); return p },
+  style, make: r => until(() => make(r), hides),
 })
 /** "6 × 7" or its turnaround "7 × 6". */
 const either = (r: Rng, a: number, b: number) => (r() < 0.5 ? `${a} × ${b}` : `${b} × ${a}`)

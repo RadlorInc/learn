@@ -4,7 +4,7 @@
  * is built as divisor × quotient, so there is never a remainder.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const ld = (d: number, n: number): Picture => ({ kind: 'longdiv', divisor: String(d), dividend: String(n) })
@@ -16,7 +16,6 @@ const choose = (r: Rng, right: string, wrong: string[]) => {
 /** True when the picture does not show `a` as a whole number (the same test the gate runs). */
 const hides = (p: Picture, a: number) => !new RegExp(`(^|[^\\d,.])${fmt(a)}(?![\\d,.]*\\d)`).test(JSON.stringify(p))
 /** Draw from `gen` until `ok` holds. */
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const roundTen = (d: number) => Math.round(d / 10) * 10
 const times = (g: number) => (g === 1 ? 'one time' : `${g} times`)
 

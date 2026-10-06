@@ -6,12 +6,11 @@
  * always does — the numbers are picked for it.
  */
 import type { Answer, Picture } from '../script'
-import { int, pick, shuffle, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, type Level, type Rng, until } from '../adaptive'
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a)
 const lcm = (a: number, b: number) => (a * b) / gcd(a, b)
 const f = (n: number, d: number) => `${n}/${d}`
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
