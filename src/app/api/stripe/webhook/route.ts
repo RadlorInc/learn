@@ -244,8 +244,13 @@ export async function POST(req: Request) {
   }).catch(() => null)
   let up = await upsert()
   if (up && up.status === 409) {
-    const text = await up.text()
-    if (!text.includes('"23505"')) return fail('subscription upsert', text)
+    // ⚠️ THE ACCOUNT IS GONE. `subscriptions.account_id` references auth.users, so PostgREST answers 409 / 23503 for
+    // a subscription whose account was closed — and closing it is what made Stripe send this event (the cancel and
+    // refund in features/billing/closeRefund.ts). Retrying can never succeed and nobody is left to entitle, so the
+    // event is closed, naming nobody. A 23505 is the first-row race above: retried once. Any other refusal is a 500.
+    const t = await up.text()
+    if (/"code"\s*:\s*"23503"/.test(t)) return done({ ignored: 'account_closed' })
+    if (!/"code"\s*:\s*"23505"/.test(t)) return fail('subscription upsert', t)
     up = await upsert()
   }
   if (!up || !up.ok) return fail('subscription upsert', up ? await up.text() : 'network')

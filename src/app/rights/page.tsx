@@ -19,6 +19,7 @@ import { getCurrentSession } from '@/data/auth'
 import { getMyRole, getMyLearners, getRecentSessions, enterAsChild } from '@/data/repositories'
 import { DataRights } from '@/shared/ui/DataRights'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
+import { usePaidSeats } from '@/features/billing/SeatsFull'
 import { PROPOSED } from '@/features/consent/copy'
 import { LangContext, makeT, useSavedLang } from '@/features/dashboard/i18n'
 import { SUPPORT_EMAIL } from '@/app/site'
@@ -32,6 +33,7 @@ export default function RightsPage() {
   const t = makeT(lang)
   const [st, setSt] = useState<State>({ stage: 'loading' })
   const [msg, setMsg] = useState<string | null>(null)
+  const [paidSeats] = usePaidSeats()
 
   async function load() {
     setSt({ stage: 'loading' })
@@ -73,7 +75,7 @@ export default function RightsPage() {
 
           {st.stage === 'open' && !st.teacher && <>
             {msg && <p role="status" style={{ ...p, fontWeight: 700 }}>{msg}</p>}
-            <WithdrawAllCard lang={lang} style={card} onDone={() => { setMsg(PROPOSED.withdrawnAllBody[lang]); void load() }} />
+            <WithdrawAllCard lang={lang} style={card} paid={paidSeats !== null} onDone={() => { setMsg(PROPOSED.withdrawnAllBody[lang]); void load() }} />
             <section style={card} data-rights="export">
               <h2 style={h2}>{t('A copy of your data')}</h2>
               {st.kids.length === 0

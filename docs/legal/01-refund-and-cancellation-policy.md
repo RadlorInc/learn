@@ -7,7 +7,7 @@
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Radlic
 **Effective date:** 1 October 2026
-**Last updated:** 1 October 2026
+**Last updated:** 6 October 2026
 
 ---
 
@@ -61,6 +61,7 @@ You do not need to call us, chat with an agent, or explain why you are cancellin
 - You will not be charged again.
 - Cancelling does not by itself issue a refund; refunds are covered in Section 5.
 - After the period ends, your subscription ends. Your account and your child's profiles stay open unless you close your account.
+- **Closing your account, or withdrawing permission for all your children, is different:** it ends your subscription straight away rather than at the end of the period, and we refund the unused part as set out in Section 5.
 - Your child's learning data is handled as described in Section 8.
 
 ## 5. Refunds
@@ -74,7 +75,10 @@ You are also a resident of a state whose law may give you a cancellation or refu
 ### Circumstances in which we will always refund
 
 In every case:
-- **Withdrawal of parental consent.** If you withdraw your permission for us to collect your children's information, write to support@radlor.com and we will cancel your subscription and refund the unused part of it, calculated from the date we action your request to the end of the period you have paid for. You are never charged for exercising a privacy right.
+- **Withdrawal of parental consent.** If you withdraw your permission for all your children — in the app (**Account → Withdraw permission for all your children**), from the link in our second consent email, or by writing to support@radlor.com — we cancel your subscription straight away and refund the unused part of it, calculated as set out below. You are never charged for exercising a privacy right.
+- **Withdrawing for one child, or deleting one child's profile, while other children stay.** That child's seat comes off your plan the same day and we refund the unused part of what you paid for that seat, calculated as set out below. Your plan continues for your other children, and your next payment is for one seat fewer. If a child on your account who has no seat yet takes the freed seat straight away, the seat is still in use and nothing changes. If it was your last child, it is the same as withdrawing for all your children: we cancel your subscription and refund the unused part.
+- **Closing your account.** If you close your account — in the app (**Account → Close your account**) or by writing to support@radlor.com — we cancel your subscription straight away and refund the unused part of it, calculated the same way.
+- **How the unused part is calculated** (for the three cases above, on monthly and annual plans alike): each payment for your current billing period (a seat added part-way through is its own payment, for the rest of that period; for one child's seat, only what you paid for that one seat — the most recently added seat first), multiplied by the number of full days left in the period it paid for, counted from the day we action your request, divided by the number of days in that period, rounded down to the cent. If your request comes within 14 days of a payment, we refund that whole payment. A plan that has already ended, or a payment that has already been refunded, has nothing left to refund. We email you the amount; refunds reach your original payment method within 10 business days.
 - **Duplicate charges** are refunded in full.
 - **Charges after a valid cancellation** are refunded in full.
 - **Unauthorised charges made by a child** — if a child completed a purchase without your permission, contact us at support@radlor.com and we will refund it in full. We will not ask you to justify the request.
@@ -107,4 +111,5 @@ We do not currently offer a telephone contact.
 4. **Refund stance.** A 14-day satisfaction window has been adopted. Please confirm it against state-specific refund rights.
 5. **In-app cancellation now exists** (Section 4): two taps from the plan page, no reason asked, cancelling at the end of the paid period, with an on-screen end date and a confirmation email. Please confirm that satisfies the online-cancellation and acknowledgement requirements, and what the confirmation email must contain.
 6. **Starting free and adding a seat (added 1 October 2026, founder's decision for the paid launch).** Section 2 describes free access to two topics with no payment details collected and no automatic conversion, and an in-app seat added mid-period with a prorated charge on the card on file, disclosed before confirmation. Please confirm neither is a "free trial" or "automatic renewal offer" term needing further disclosure under state ARLs or ROSCA.
-7. **Children and purchases.** Confirm whether any additional protections are needed given that the end users are children and the account holders are parents.
+7. **Cancel and refund on closing the account or withdrawing consent (added 6 October 2026, founder's decision).** Section 4's last bullet and Section 5's first three bullets: closing the account or withdrawing permission for all children cancels the subscription at once and refunds the unused full days pro rata (the whole payment within 14 days of it), automatically. Please review the wording and the calculation. Added the same day (founder's decision): withdrawing for one child, or deleting one child's profile, removes that child's seat and refunds its unused part by the same rule (Section 5's second bullet); the last child is treated as withdrawing for all children.
+8. **Children and purchases.** Confirm whether any additional protections are needed given that the end users are children and the account holders are parents.

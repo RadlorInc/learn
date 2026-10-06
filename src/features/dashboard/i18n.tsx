@@ -116,9 +116,13 @@ export const ES: Record<string, string> = {
   'Permanently delete {name}? This cannot be undone. All progress, sessions and data will be lost.': '¿Eliminar a {name} para siempre? No se puede deshacer. Se perderán todo el progreso, las sesiones y los datos.',
   'Remove yourself from {name}’s profile? You will lose access.': '¿Salir del perfil de {name}? Perderá el acceso.',
   'Yes, delete': 'Sí, eliminar',
+  'This is your last child, so your paid plan is cancelled today and the part you have not used is refunded to your card.': 'Es su último hijo, así que su plan de pago se cancela hoy y se le reembolsa a su tarjeta la parte que no ha usado.',
+  'Their seat comes off your paid plan today, and the part of it you have not used is refunded to your card.': 'Su asiento se retira hoy de su plan de pago, y se le reembolsa a su tarjeta la parte que no ha usado.',
   'Yes, remove me': 'Sí, quitarme',
   'Cancel': 'Cancelar',
   'Delete {name}’s profile': 'Eliminar el perfil de {name}',
+  'Just want to fix the name, avatar or grade? Nothing needs deleting.': '¿Solo quiere corregir el nombre, el avatar o el grado? No hace falta eliminar nada.',
+  'Edit {name}’s details instead': 'Mejor edite los datos de {name}',
   'Remove myself from {name}’s profile': 'Salir del perfil de {name}',
   'Language': 'Idioma',
   // Review 1 Q5 (unreviewed draft)
