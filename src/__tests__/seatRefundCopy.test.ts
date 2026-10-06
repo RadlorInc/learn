@@ -123,6 +123,12 @@ describe('delete one child: the seat line, before the parent confirms', () => {
     expect(after, 'control: the confirmation opened').toContain('Permanently delete Ada?')
     expect(after).not.toMatch(/refund|paid plan/i)
   })
+  it('a free family\'s only child: no billing words either', async () => {
+    w.plan = null; w.kids = ['kid-a']
+    const { after } = await confirmScreen('child=kid-a&tab=login', 'Delete Ada’s profile')
+    expect(after, 'control: the confirmation opened').toContain('Permanently delete Ada?')
+    expect(after).not.toMatch(/refund|paid plan/i)
+  })
   it('a free family: no billing words', async () => {
     w.plan = null; w.kids = ['kid-a', 'kid-b']
     const { after } = await confirmScreen('child=kid-a&tab=login', 'Delete Ada’s profile')

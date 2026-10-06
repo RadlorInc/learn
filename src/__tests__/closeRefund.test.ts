@@ -348,11 +348,18 @@ describe('withdrawing for ONE child of several takes that seat off the plan and 
     expect(await drain()).toBe(0)
     expect(calls).toEqual([])
     keys.clear()
+    // …and the parent has since re-added a seat in the same month: its own $2.99 invoice has an unrefunded seat on it,
+    // which this removal must not take (its refund is already made, in this period).
+    // (Stripe ends a seat-add invoice's period exactly where the subscription's period ends.)
+    const periodEnd = (stripe.invoices[f.sub][0] as { lines: { data: { period: { end: number } }[] } }).lines.data[0].period.end
+    stripe.invoices[f.sub].unshift(invoice('in_readd', 299, Math.floor(Date.now() / 1000) - DAY, periodEnd,
+      undefined, undefined, { reason: 'subscription_update' }))
     await q(`update public.billing_seat_removals set result = null where id = $1`, [row.id])
     await drain()
     expect(writes(f.sub), 'no second update, no second refund').toEqual([])
     expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
     expect(refundsOn('pi_in_s2m').map(r => r.amount)).toEqual([232])
+    expect(refundsOn('pi_in_readd')).toEqual([])
     expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 0; seat already removed/)
   })
 
