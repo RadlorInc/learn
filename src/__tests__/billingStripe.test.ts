@@ -634,6 +634,9 @@ describe('POST /api/checkout', () => {
     sameSecond?: boolean
   } = {}) {
     const { userOk = true, customerId = null, staleCustomer = false, status, lookupFails = false } = opts
+    // ⚠️ The memoised Stripe client keeps the `fetch` it was built with, so a second stub in one test would be
+    // talking to nobody: the client is rebuilt with every stub (found when a loop's later cases saw the first stub).
+    __resetStripe()
     const calls: Call[] = []
     const customersByKey = new Map<string, string>()
     const customers: string[] = []
