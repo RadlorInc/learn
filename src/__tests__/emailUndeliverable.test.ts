@@ -141,8 +141,9 @@ describe('sendEmail sends nothing to a listed address, of any kind', () => {
     await deliver('email.bounced', ['typo@x.test'], 'Permanent')
     events.length = 0
     const { sendEmail, Undeliverable } = await server()
-    await expect(sendEmail('transactional', '  TYPO@x.test ', MSG, 'k1')).rejects.toBeInstanceOf(Undeliverable)
+    const err = await sendEmail('transactional', '  TYPO@x.test ', MSG, 'k1').then(() => null, (e: unknown) => e)
     expect(resend, 'a listed address was mailed').toHaveLength(0)
+    expect(err, 'the caller was not told the address is undeliverable').toBeInstanceOf(Undeliverable)
     expect(events.map(e => e.message)).toEqual(['[email] not sent: the address bounced earlier'])
     expect(JSON.stringify(events)).not.toContain('typo')
   })
