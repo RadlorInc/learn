@@ -20,6 +20,7 @@ import { safeUrl } from '@/infra/safeUrl'
 
 const SEND_CAP = 10
 const sent = new Set<string>()
+const RESIZE_OBSERVER_NOTICE = /^ResizeObserver loop (completed with undelivered notifications|limit exceeded)/
 
 let installed = false
 
@@ -34,6 +35,12 @@ export function installErrorCapture(): void {
   if (installed || typeof window === 'undefined') return
   installed = true
   window.addEventListener('error', (e) => {
+    // Chrome's "ResizeObserver loop …" is a notice that layout settled a frame late, not a fault: nothing breaks and the
+    // child sees nothing. Reported, it filled the ops digest's error count (6 in two days from /test, 5–6 Oct).
+    if (RESIZE_OBSERVER_NOTICE.test(e.message ?? '')) {
+      try { recordError(e.message, 'window') } catch { /* storage can be blocked */ }
+      return
+    }
     reportCrash(e.error instanceof Error ? e.error : new Error(e.message || 'script error'), 'window')
   })
   window.addEventListener('unhandledrejection', (e) => {
