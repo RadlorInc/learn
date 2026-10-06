@@ -64,7 +64,7 @@ jobs:
     environment: staging
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: 2.117.0   # pinned: `latest` asks the GitHub API and a rate limit failed a deploy (2026-09-17)
       # The mirror of the prod guard, and the worse direction: a STAGING ref pointing at production
@@ -153,7 +153,7 @@ jobs:
     environment: production-db   # NOT Vercel's `Production` — see docs/runbooks/migrations.md. Create it WITH its required-reviewer rule when enabling this job, not before.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+      - uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
         with:
           version: 2.117.0   # pinned: `latest` asks the GitHub API and a rate limit failed a deploy (2026-09-17)
       # ⚠️ THE REF IS ASSERTED IN THE REPO, NOT TRUSTED FROM THE DASHBOARD. `PROD_PROJECT_REF` sat
