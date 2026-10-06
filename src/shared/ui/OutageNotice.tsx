@@ -28,7 +28,7 @@ export default function OutageNotice() {
   return (
     <div role="status" data-outage-notice style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      padding: '4px 4px 4px 16px', background: '#DCEBFF', color: '#0B4FA8',
+      padding: '0 4px 0 16px', background: '#DCEBFF', color: '#0B4FA8',
       fontSize: 14, fontWeight: 600, lineHeight: 1.3, textAlign: 'center',
     }}>
       <span>{text}</span>
