@@ -17,7 +17,7 @@
 # The origin repo lost a day to exactly that: its "red for the wrong reason" case had no live break,
 # and that is precisely where a real bug lived. Re-run this after any vitest upgrade.
 #
-# It takes a few minutes: eight vitest runs, each in a throwaway worktree.
+# It takes a few minutes: nine vitest runs, each in a throwaway worktree.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -96,6 +96,12 @@ run 4 "red because the fixture threw (top-level beforeAll, every test skipped)" 
 run 4 "red because one describe's fixture threw (others passed)" \
   "printf '\ndo \$\$ begin raise exception %s; end \$\$;\n' \"'PLANTED_SUITE_SETUP'\" >> supabase/migrations/20260924100000_consent_once.sql" \
   src/__tests__/consentZeroExemptions.test.ts PLANTED_SUITE_SETUP
+
+# 4 — red because a beforeEach's OWN expect failed: every test is reported `failed` with an
+#     AssertionError, though no test body ran. Until 2026-10-06 this was certified 0 (a known hole).
+run 4 "red because a beforeEach's own expect failed (no test body ran)" \
+  "perl -0pi -e 's/^(describe\\()/beforeEach(() => { expect(1, \"PLANTED_HOOK_EXPECT\").toBe(2) })\\n\$1/m' $SPEC" \
+  "$SPEC" "a beforeEach failed"
 
 # 5 — every test skipped and nothing red: the skip path (CLAUDE.md's first row). Green here would be
 #     "passed" about a file in which no assertion ran.

@@ -107,9 +107,10 @@ if (broke.length) {
  *   beforeAll whose expect fails → same shapes; the hook's AssertionError is NOT a test's assertion
  *   afterAll throws              → file `failed`, `message: "<error text>"`, tests `passed`
  *   beforeEach throws            → each test `failed` with the hook's error → the exit-4 path below
- * ⚠️ KNOWN HOLE, NOT FIXED (2026-09-26): a `beforeEach` whose own `expect()` fails lands on each test
- *   as `AssertionError: …` and is certified 0, though no test body ran. The only tell in the report
- *   is `runHook` in the stack — vitest internals — so it was recorded rather than keyed on.
+ *   beforeEach whose own expect fails → each test `failed` with `AssertionError: …`, though no test
+ *   body ran. The only tell is vitest's `runHook` frame in the stack (re-measured on vitest 5.0.1,
+ *   2026-10-06: present for a hook, absent for a test body), so `fromHook` below keys on it and
+ *   `npm run break:live` holds the shape — after a vitest upgrade that rename is what it catches.
  *   describe.skip / skipIf(true) → file `passed`, every test `skipped`
  *
  * Why 4 and not 5: the file WAS reached and it DID go red — the red just came from a fixture, not
@@ -161,7 +162,9 @@ if (!failed.length) {
   process.exit(1)
 }
 
-const onAssertion = failed.filter((a) => (a.failureMessages ?? []).some(isAssertion))
+/** A failure raised inside a hook (`beforeEach`), not in the test's own body — see the shapes above. */
+const fromHook = (msg) => /\bat runHook \(/.test(strip(msg))
+const onAssertion = failed.filter((a) => (a.failureMessages ?? []).some((m) => isAssertion(m) && !fromHook(m)))
 
 // Collateral is worth printing even when the verdict is good: a break that also took down unrelated
 // files is usually broader than the defect it was meant to model.
@@ -170,7 +173,8 @@ if (didNotRun.length) console.error(`  note: ${didNotRun.length} test(s) in ${ex
 if (others.length) console.error(`  note: ${others.length} other file(s) also went red — ${others.map((f) => basename(f.name)).join(', ')}`)
 
 if (!onAssertion.length) {
-  console.error(`✗ ${expected} went red, but NOT on an assertion — red for the wrong reason:`)
+  const hooked = failed.some((a) => (a.failureMessages ?? []).some(fromHook))
+  console.error(`✗ ${expected} went red, but NOT on a test's own assertion — red for the wrong reason${hooked ? ' (a beforeEach failed, so no test body ran)' : ''}:`)
   for (const a of failed) console.error(`    ${a.fullName}: ${headline(a.failureMessages?.[0]).slice(0, 160)}`)
   console.error('  A break that stops the code running proves nothing about the check. Narrow it.')
   process.exit(4)
