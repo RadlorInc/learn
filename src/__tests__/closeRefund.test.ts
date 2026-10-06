@@ -279,7 +279,10 @@ describe('withdrawing permission for every child does the same; one child does n
 
 describe('Stripe down: the close goes through, the money is owed, retried and flagged', () => {
   it('never blocks the close; leaves the row due with an error; the next drain settles it with the same refund', async () => {
-    const f = await family({ invoices: now => [invoice('in_down', 1298, now - 15.5 * DAY, now + 14.5 * DAY)] })
+    // $12.98 paid 18.5 days ago for 30 days. The close is then dated 3 days back (Stripe down for 3 days): counted from
+    // the close, 15.5 days after the payment, 14 full days left → 1298 × 14 / 30 = 605. Counted from the retry it would
+    // be 11 days → 475.
+    const f = await family({ invoices: now => [invoice('in_down', 1298, now - 18.5 * DAY, now + 11.5 * DAY)] })
     stripeDown = true
     await close(f)
     expect(await q(`select 1 from auth.users where id = '${f.id}'`), 'the close was not blocked').toEqual([])
@@ -293,6 +296,7 @@ describe('Stripe down: the close goes through, the money is owed, retried and fl
         .map(r => r.stripe_subscription_id)).toContain(f.sub)
     } finally { await db.exec('reset role') }
 
+    await q(`update public.billing_cancellations set queued_at = queued_at - interval '3 days' where stripe_subscription_id = $1`, [f.sub])
     stripeDown = false
     await drain()
     expect((await queued(f.sub)).result).toMatch(/^done: cancelled now; refunded 605/)
