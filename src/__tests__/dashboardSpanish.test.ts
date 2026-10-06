@@ -21,6 +21,7 @@ const FILES = [
   'src/features/dashboard/Helpers.tsx', 'src/features/dashboard/DashNav.tsx', 'src/features/dashboard/reminders.ts',
   'src/features/dashboard/helpGoals.ts', 'src/features/lessons/Performance.tsx', 'src/shared/ui/ChildLoginSheet.tsx',
   'src/shared/ui/DataRights.tsx', 'src/features/dashboard/TextSizeCard.tsx', 'src/app/auth/page.tsx', 'src/app/auth/set-password/page.tsx', 'src/app/auth/callback/page.tsx',
+  'src/app/rights/page.tsx',
 ]
 
 /** Every string literal passed to t(…), including each arm of a `t(x ? 'a' : 'b')`. */
