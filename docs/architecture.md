@@ -408,6 +408,7 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `docLinks` | Every link between docs resolves, and no file names a doc that is not there. |
 | `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h and stuck Stripe events. |
 | `deploySafety`, `migrationsPending`, `actionsPinned`, `ci.yml` | Backup before `db push`; unapplied migrations retried; Actions pinned; `release` moves only after tsc, vitest, build, audit and `rls-tests` pass. |
+| `redMain` | A red Deploy run opens one issue per kind (or comments on the open one); "database NOT migrated" only when a migration was pending; a finished run closes only the kinds its own jobs prove fixed. |
 
 Restores: [runbooks/backup-restore.md](runbooks/backup-restore.md). Support: [runbooks/support.md](runbooks/support.md).
 
