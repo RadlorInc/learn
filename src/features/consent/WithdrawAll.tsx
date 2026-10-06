@@ -9,13 +9,16 @@ import { withdrawAllConsent } from '@/data/repositories'
 import { Md } from './Md'
 import { S } from './Notice'
 
-export function WithdrawAll({ lang, busy, onConfirm, onKeep }: { lang: Lang; busy?: boolean; onConfirm: () => void; onKeep: () => void }) {
+/** `paid`: whether the family has a paid plan. Unknown (the signed-out email link) shows the billing line, which is
+ *  worded "if you have a paid plan"; a family known to be free (`false`) is not shown billing words. */
+export function WithdrawAll({ lang, busy, paid, onConfirm, onKeep }: { lang: Lang; busy?: boolean; paid?: boolean; onConfirm: () => void; onKeep: () => void }) {
   const t = (x: L) => x[lang]
   return (
     <div data-consent="withdraw-all">
       <h2 style={{ ...S.h3, fontSize: 22, lineHeight: 1.3 }}>{t(WITHDRAW_ALL.heading)}</h2>
       <p style={S.p}><Md s={t(WITHDRAW_ALL.body0)} /></p>
       <p style={S.p}><Md s={t(WITHDRAW_ALL.body1)} /></p>
+      {paid !== false && <p style={S.p} data-consent="withdraw-all-billing"><Md s={t(WITHDRAW_ALL.paid)} /></p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 20 }}>
         <button type="button" disabled={busy} onClick={onConfirm} style={S.danger}>{t(WITHDRAW_ALL.confirm)}</button>
         <button type="button" disabled={busy} onClick={onKeep} style={{ ...S.ghost, width: '100%' }}>{t(WITHDRAW.keep)}</button>
@@ -30,7 +33,7 @@ export function WithdrawAll({ lang, busy, onConfirm, onKeep }: { lang: Lang; bus
  * mistake. So it lives beside "Close your account", NOT on its page, looks nothing like it (no red until the
  * confirm itself), and on success `onDone` takes the parent back to the dashboard — never to the close page.
  */
-export function WithdrawAllCard({ lang, style, onDone }: { lang: Lang; style: CSSProperties; onDone: () => void }) {
+export function WithdrawAllCard({ lang, style, paid, onDone }: { lang: Lang; style: CSSProperties; paid: boolean; onDone: () => void }) {
   const [st, setSt] = useState<'idle' | 'confirm' | 'busy' | 'error'>('idle')
   async function go() {
     setSt('busy')
@@ -41,7 +44,7 @@ export function WithdrawAllCard({ lang, style, onDone }: { lang: Lang; style: CS
   return (
     <section style={style} data-tour="withdraw-all-card">
       {st === 'confirm' || st === 'busy'
-        ? <WithdrawAll lang={lang} busy={st === 'busy'} onConfirm={go} onKeep={() => setSt('idle')} />
+        ? <WithdrawAll lang={lang} busy={st === 'busy'} paid={paid} onConfirm={go} onKeep={() => setSt('idle')} />
         : <>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' }}>{WITHDRAW_ALL.heading[lang]}</h2>
             <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}><Md s={WITHDRAW_ALL.body1[lang]} /></p>

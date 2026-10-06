@@ -8,12 +8,15 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (6 October 2026)
 
-- **Production** is on `29dd28c77` (#392), service worker v247; `smoke:live` passed on it (6 Oct). The repo `learn` is
+- **Production** is on `849337eee` (#362), service worker v251; `smoke:live` passed on it (6 Oct). The repo `learn` is
   public (see the Vercel item below). A private beta with families the founder knows has run since 25 September;
   Stripe still runs with test keys only until #351.
 - **Support and alerts proven live (6 Oct):** ops digest email, uptime checker, Resend bounce webhook (#389 stops
   mail to a bounced address), crash forwarding, password reset, Stripe one-week retries with card-update emails.
   Operator SQL is in `docs/legal/sql/`; runbooks `support`, `billing`, `outages`, `incident`.
+- **Closing the account or withdrawing consent cancels the plan now and refunds the unused part** (#396, live 6 Oct,
+  migrations proven PASS); one child's seat comes off and is refunded too. All 19 Stripe test-mode steps in #396
+  passed on a local stack. Also live: `/rights` outside the PIN (#394), the `OUTAGE_NOTICE` switch (#395).
 - **The launch wipe (1 Oct) had deleted the founder's admin row;** re-added 6 Oct with `docs/legal/sql/admin-grant.sql`.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
@@ -34,9 +37,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 repo's migration chain still builds a body one comment different from production's.
 1. #325 (database requires admin two-step) — **not yet:** its before-SQL FAILed on 6 Oct (0 *verified*
    authenticators). Verify two at `/admin/mfa`, rerun `admin-mfa-before.sql` until all PASS, then merge.
-2. #351 (Stripe live keys); then a live webhook to `/api/stripe/webhook` with `STRIPE_WEBHOOK_SECRET`
+2. #398 — the Stripe webhook retries the subscription upsert once on a first-row race (23505); no migration.
+3. #351 (Stripe live keys); then a live webhook to `/api/stripe/webhook` with `STRIPE_WEBHOOK_SECRET`
    ([billing.md](docs/runbooks/billing.md)), and #388's two-tab and 3-D Secure checks in test mode.
-3. Old handoff Drafts #330, #343, #350 are superseded: close them.
+4. Old handoff Drafts #330, #343, #350 are superseded: close them.
 
 ## Open — the founder decides
 
@@ -54,13 +58,12 @@ repo's migration chain still builds a body one comment different from production
   founder); a free teacher can sign up as a parent to get lessons free.
 - A way to mute the lesson voice (classrooms).
 - Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
-- A maintenance switch or outage banner: none exists, so stopping the app means removing the domain
-  ([outages.md](docs/runbooks/outages.md) has the reply templates).
-- Billing ([billing.md](docs/runbooks/billing.md) open questions): closing an account or withdrawing consent does not
-  cancel Stripe (now or period end? refund?); Stripe receipts; granting a teacher's `paid` flag.
-- Forgot PIN locks the whole dashboard (help, withdraw, export, close) for 24 h — keep, or leave those outside the lock.
-- With the attorney: the breach-notice timelines in [incident.md](docs/runbooks/incident.md) (marked TO CONFIRM), and
-  #389's wording and 12-month retention of a bounced address's hash (merged as written).
+- A maintenance switch: none exists, so stopping the app means removing the domain. A notice switch does
+  (`OUTAGE_NOTICE`, [runbooks/outages.md](docs/runbooks/outages.md)); it tells people and stops nothing.
+- Billing ([billing.md](docs/runbooks/billing.md) open questions): Stripe receipts (a dashboard setting); granting a
+  teacher's `paid` flag.
+- With the attorney: the breach-notice timelines in [incident.md](docs/runbooks/incident.md) (marked TO CONFIRM),
+  #389's wording and 12-month retention of a bounced address's hash, and doc 01 §4–5 (refund on close, #396).
 - Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
@@ -115,16 +118,13 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); its 5 Oct scheduled
-  run started 13 minutes before #378 merged, so the new sweep has not had a scheduled run yet — read the first one.
-- red-main (#387) closes its own issues: read the first red → green pair. The `staging` token failed with "FGA
-  Authentication Error" on 6 Oct and was replaced; why is not known.
-- Not yet seen in a browser (need a signed-in session): the sign-out confirm, the sync-bar count, the crash screen's
-  "Go back home".
-  `weekly-layout` was deleted with it (its spec and the teen shell were gone; the nightly's 640×320 frame covers short
-  phones). `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
-  passed — 10 end-card buttons fail Playwright's "stable" wait because the nudge animates them (a harness fault: a
-  child taps them fine), 3 chapters "could not look" (the monkey cannot solve them), colors timed out.
+- `nightly-e2e` (#378) passed on GitHub when dispatched (178 tests), but the 6 Oct SCHEDULED run still ran
+  the old definition (`legacy-gate`, nothing tested). Read the next scheduled run's jobs: `chapters` must run.
+  `e2e/xbrowser-clicks.spec.ts` is not ready for a timer (harness faults, #378).
+- The `staging` token failed with "FGA Authentication Error" on 6 Oct and was replaced; why is not known.
+- Closing a `past_due` account leaves Stripe's unpaid invoice `open` (a manual retry would charge): void it on close.
+  On `/parent?add=1` a paid family's add form kept "Choose at least one module" after a tick (6 Oct, local).
+- Not yet seen in a browser: the sign-out confirm, the sync-bar count, the crash screen's home link.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the

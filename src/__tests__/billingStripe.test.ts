@@ -182,6 +182,7 @@ function stubNetwork(opts: {
   resendStatus?: number         // what Resend answers a send with
   stored?: string               // the stripe_subscription_id already on the account's row (none by default)
   others?: Record<string, Record<string, unknown>>  // Stripe's answer for a subscription other than `sub`
+  upsert?: { status: number; body: unknown }        // what PostgREST answers the subscriptions upsert with
 } = {}) {
   const calls: Call[] = []
   const json = (body: unknown, status = 200) =>
@@ -205,6 +206,7 @@ function stubNetwork(opts: {
     }
     if (url.includes('/rest/v1/subscriptions')) {
       if ((init.method ?? 'GET').toUpperCase() === 'GET') return json(opts.stored ? [{ stripe_subscription_id: opts.stored }] : [])
+      if (opts.upsert) return json(opts.upsert.body, opts.upsert.status)
       return json([{ id: 'sub-row-1' }], 201)
     }
     if (url.includes('/rest/v1/rpc/materialize_seats')) return json(2)
@@ -460,6 +462,39 @@ describe('the Stripe webhook', () => {
       object_id: 'sub_123', subscription: 'sub_123',
     })
     expect(post(calls, 'rpc/materialize_seats').length).toBe(1)
+  })
+
+  // ⚠️ AFTER "CLOSE YOUR ACCOUNT" (20261008000000): the close cancels and refunds at Stripe, and Stripe then sends
+  // `customer.subscription.deleted` (and `charge.refunded`) for an account that no longer exists. PostgREST answers
+  // the upsert with 409 / 23503 — `subscriptions.account_id` references auth.users — its real shape, typed out.
+  const FK_GONE = { status: 409, body: { code: '23503', details: 'Key (account_id)=(…) is not present in table "users".', hint: null,
+    message: 'insert or update on table "subscriptions" violates foreign key constraint "subscriptions_account_id_fkey"' } }
+
+  it('an event for a CLOSED account is acknowledged and closed — no 500, no redelivery, naming nobody', async () => {
+    const calls = stubNetwork({ sub: SUB({ status: 'canceled' }), upsert: FK_GONE })
+    const res = await deliver('customer.subscription.deleted', { id: 'sub_123' })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ignored: 'account_closed' })
+    expect(post(calls, 'rpc/materialize_seats')).toEqual([])
+    expect(post(calls, '/rest/v1/error_events'), 'an expected event is not an error').toEqual([])
+    const patch = calls.find(c => c.method === 'PATCH' && c.url.includes('billing_events'))
+    expect(JSON.parse(patch!.body)).toMatchObject({ account_id: null })
+    expect(JSON.parse(patch!.body).processed_at).toBeTruthy()
+  })
+
+  it('positive twin — any OTHER refusal of the upsert is still a 500, so Stripe redelivers', async () => {
+    const calls = stubNetwork({ upsert: { status: 409, body: { code: '23505', message: 'duplicate key value violates unique constraint' } } })
+    const res = await deliver('customer.subscription.updated', { id: 'sub_123' })
+    expect(res.status).toBe(500)
+    expect(calls.some(c => c.method === 'PATCH' && c.url.includes('billing_events')), 'the event must stay open').toBe(false)
+  })
+
+  it('the refund\'s own event (charge.refunded) is closed without a Stripe round-trip or a write', async () => {
+    const calls = stubNetwork({ upsert: FK_GONE })
+    const res = await deliver('charge.refunded', { id: 'ch_1', object: 'charge', amount_refunded: 605 })
+    expect(res.status).toBe(200)
+    expect(calls.filter(c => c.url.startsWith('https://api.stripe.com'))).toEqual([])
+    expect(post(calls, '/rest/v1/subscriptions')).toEqual([])
   })
 
   it('a failed database write returns 5xx and does NOT close the event', async () => {

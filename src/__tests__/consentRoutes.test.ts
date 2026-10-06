@@ -119,18 +119,18 @@ describe('withdraw', () => {
   it('withdraws, then drains the queue the withdrawal filled — the drain cancels and records B3 (b3Cancel.test.ts)', async () => {
     lookup = b3Ahead()
     expect((await post({ t: TOKEN, action: 'withdraw' })).status).toBe('withdrawn')
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'rpc:billing_cancellations_due'])   // then the plan's cancel and refund (closeRefund.test.ts)
   })
   it('before the queue migration exists (drain → null), cancels the B3 it read directly, as before', async () => {
     lookup = b3Ahead(); drainAnswer = null
     expect((await post({ t: TOKEN, action: 'withdraw' })).status).toBe('withdrawn')
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'cancel:re_b3'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'cancel:re_b3', 'rpc:billing_cancellations_due'])
   })
   it('does not try to cancel a B3 that has already been sent', async () => {
     lookup = pending({ state: 'granted', second_email_provider_id: 're_b3', second_notice_scheduled_for: new Date(Date.now() - 1000).toISOString() })
     drainAnswer = null
     await post({ t: TOKEN, action: 'withdraw' })
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'rpc:billing_cancellations_due'])
   })
 })
 
@@ -141,7 +141,7 @@ describe('the cancel route — open, because after "Close your account" the call
       log.length = 0
       const res = await r[m](new Request('http://x/api/consent/cancel-second-notice', { method: m, headers: { 'x-forwarded-for': `10.2.0.${Math.random() * 250 | 0}` } }))
       expect(res.status).toBe(200)
-      expect(log).toEqual(['drain'])
+      expect(log).toEqual(['drain', 'rpc:billing_cancellations_due'])   // B3, then the plans owed a cancel and refund
     }
   })
   it('the daily cron is configured for it', async () => {

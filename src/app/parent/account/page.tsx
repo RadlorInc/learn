@@ -121,6 +121,11 @@ export default function AccountPage() {
         their lessons, practice results, points, game-time settings and logins — permanently, straight away.
         There is no grace period and nothing kept in case you change your mind.
       </p>
+      <p style={p}>
+        If you have a paid plan, closing the account <strong>cancels it straight away</strong> and refunds the part
+        you have not used — all of it if you paid in the last 14 days. We email the amount to the address you paid
+        with. Refunds reach your card within 10 business days.
+      </p>
 
       {/* ⚠️ THE EXPORT, ABOVE THE CONFIRM. Once this is done there is nothing to come back for. */}
       <h2 style={h2}>First — take a copy, if you want one</h2>

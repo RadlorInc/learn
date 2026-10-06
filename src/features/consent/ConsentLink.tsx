@@ -18,6 +18,7 @@ import { B1, B2, WITHDRAW, PROPOSED, type Lang, type L } from './copy'
 import { makeT } from '@/features/dashboard/i18n'
 import { Md } from './Md'
 import { WithdrawAll } from './WithdrawAll'
+import { PAYWALL_ENABLED } from '@/features/billing/useTopicGate'
 import { SUPPORT_EMAIL } from '@/app/site'
 
 type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'already_consented' | 'declined' | 'withdrawn' | 'expired' | 'unconfirmed' | 'unknown' | 'kept' | 'error'
@@ -75,7 +76,8 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
       </div>
     )
   } else if (mode === 'withdraw' && status === 'granted' && scope === 'account') {
-    content = <WithdrawAll lang={lang} busy={busy} onConfirm={() => act('withdraw')} onKeep={() => setStatus('kept')} />
+    // Signed out, so whether this family pays is unknown: the billing line shows whenever billing is on.
+    content = <WithdrawAll lang={lang} busy={busy} paid={PAYWALL_ENABLED ? undefined : false} onConfirm={() => act('withdraw')} onKeep={() => setStatus('kept')} />
   } else if (mode === 'withdraw' && status === 'granted') {
     content = (
       <div data-consent="withdraw">
