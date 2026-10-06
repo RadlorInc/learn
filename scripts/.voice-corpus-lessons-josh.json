@@ -25927,11 +25927,11 @@
     ]
   },
   {
-    "key": "1sn0i99",
-    "check": "crt8wis4vz",
-    "text": "Buns come in packs of 4, so you can't get exactly 6 buns.",
+    "key": "11suxsf",
+    "check": "1ok2jsc2c1g",
+    "text": "Erasers come in packs of 4, so you can't get exactly 6 erasers.",
     "style": "B",
-    "chars": 57,
+    "chars": 63,
     "kind": "beat",
     "sources": [
       "g6m2-t7 s2 b2"
@@ -25960,11 +25960,11 @@
     ]
   },
   {
-    "key": "1sa9hmu",
-    "check": "ilefftvxcw",
-    "text": "Start with the hot dogs.",
+    "key": "11rmcba",
+    "check": "12ms0ao2wzm",
+    "text": "Start with the pencils.",
     "style": "B",
-    "chars": 24,
+    "chars": 23,
     "kind": "beat",
     "sources": [
       "g6m2-t7 s4 b1"
@@ -25982,11 +25982,11 @@
     ]
   },
   {
-    "key": "t3ql36",
-    "check": "2bk31fszoec",
-    "text": "Now the buns, on a line underneath.",
+    "key": "1oiptjb",
+    "check": "1b8va1r1fdy",
+    "text": "Now the erasers, on a line underneath.",
     "style": "B",
-    "chars": 35,
+    "chars": 38,
     "kind": "beat",
     "sources": [
       "g6m2-t7 s5 b1"
@@ -26015,11 +26015,11 @@
     ]
   },
   {
-    "key": "1bt6zgn",
-    "check": "d7gx6c5san",
-    "text": "So buy 12 of each. That's 2 packs of hot dogs and 3 packs of buns.",
+    "key": "1yjblvg",
+    "check": "5y88zswckq",
+    "text": "So buy 12 of each. That's 2 packs of pencils and 3 packs of erasers.",
     "style": "B",
-    "chars": 66,
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g6m2-t7 s6 b2"
@@ -47399,11 +47399,11 @@
     ]
   },
   {
-    "key": "1sg4gt4",
-    "check": "25jf7jsgw2u",
-    "text": "Hot dogs and buns. Hot dogs come in packs of 6. Buns come in packs of 4. You want the same number of hot dogs and buns. What is the smallest number of each you can buy?",
+    "key": "foesqt",
+    "check": "29uqdzx96p3",
+    "text": "Pencils and erasers. Pencils come in packs of 6. Erasers come in packs of 4. You want the same number of pencils and erasers. What is the smallest number of each you can buy?",
     "style": "A",
-    "chars": 168,
+    "chars": 174,
     "kind": "screen1",
     "sources": [
       "g6m2-t7 s1"

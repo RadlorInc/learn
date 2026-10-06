@@ -12,7 +12,7 @@
  * makes a child choose before they know what they are choosing, and then gives them ten rounds of
  * one backdrop. Same call chapter 2 took when its three biomes were merged.
  *   🐠 Coral Reef  — seal · crab · dolphin · seahorse              (swim over/away · who has more)
- *   🌳 Green Park  — calf · goat · hen · lamb · puppy · kitten      (wander · who has more)
+ *   🌳 Green Park  — calf · goat · hen · lamb · rabbit · kitten      (wander · who has more)
  *   🌼 Flower Beds — dragonfly · butterfly · bee · ladybug          (flutter · who has more)
  * EVERY item is a drawn walk cycle, so the things that join and leave do it on their own legs — and
  * the cast is 14 deep against 14 questions (3 demo + guided + 10 scored), so NO CREATURE IS EVER
@@ -113,7 +113,7 @@ const SETTINGS: SpWorld[] = [
     ],
     ground: 62,
     items: [IT('calf', 'calf', 'calves'), IT('goat', 'goat', 'goats'), IT('hen', 'hen', 'hens'),
-      IT('lamb', 'lamb', 'lambs'), IT('puppy', 'puppy', 'puppies'), IT('kitten', 'kitten', 'kittens')],
+      IT('lamb', 'lamb', 'lambs'), IT('rabbit', 'rabbit', 'rabbits'), IT('kitten', 'kitten', 'kittens')],
     friend: 'Pat', join: 'spot', leave: 'wander off' },
   /**
    * Replaces the moon base (its astronaut and alien were the only cast here that could not belong

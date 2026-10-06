@@ -70,6 +70,10 @@ The kinds are the `Picture` type in `script.ts`, drawn by `Diagrams.tsx`. See ev
 
 ### Words
 
+- **Halal examples only** (founder, 2026-10-06). No pig, pork, ham, bacon, sausage or pepperoni; no hot dog or
+  hamburger; no dog or puppy; no alcohol (wine, beer…); no gambling (casino, lottery…). Pick a neutral thing instead:
+  pencils, melons, pumpkins, rabbits, cats, juice boxes. `halalExamples.test.ts` reads every lesson, ladder sample,
+  KG–2 spoken line and asset name and fails on the list written there; add a word to it when a new one comes up.
 - US English and units (metric where the curriculum says metric). Short sentences, to the child. No emoji. Warm:
   never "wrong", "fail", "easy". A name in a word problem is fine; no characters talk.
 - **Numbers are numerals** (`It is not 34.`), except counting aloud ("Five, ten, fifteen.").

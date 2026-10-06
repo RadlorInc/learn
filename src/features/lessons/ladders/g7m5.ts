@@ -410,7 +410,7 @@ const T5: Level[] = [
 // ── t6 · Two things happening ───────────────────────────────────────────────────────────────────────────────
 const blank = (cols: string[], rows: string[]): Picture => table(['', ...cols], rows.map(x => [x, ...cols.map(() => '')]), true)
 const MENUS = [
-  { row: 'sandwich', rows: ['Turkey', 'Cheese', 'Ham', 'Tuna'], col: 'fruit', cols: ['Apple', 'Banana', 'Grapes', 'Orange', 'Pear'], things: 'lunches' },
+  { row: 'sandwich', rows: ['Chicken', 'Cheese', 'Egg', 'Tuna'], col: 'fruit', cols: ['Apple', 'Banana', 'Grapes', 'Orange', 'Pear'], things: 'lunches' },
   { row: 'shirt', rows: ['Red', 'Blue', 'White', 'Green'], col: 'cap', cols: ['Black', 'Gray', 'Tan'], things: 'outfits' },
   { row: 'drink', rows: ['Milk', 'Juice', 'Water'], col: 'snack', cols: ['Crackers', 'Carrots', 'Pretzels', 'Yogurt', 'Popcorn'], things: 'snack packs' },
   { row: 'ice cream', rows: ['Vanilla', 'Chocolate', 'Mint', 'Mango'], col: 'topping', cols: ['Sprinkles', 'Nuts', 'Fudge', 'Cherries'], things: 'cones' },
