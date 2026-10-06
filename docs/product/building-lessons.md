@@ -65,6 +65,8 @@ The kinds are the `Picture` type in `script.ts`, drawn by `Diagrams.tsx`. See ev
 - Some kinds print values their data does not name: `angle` `parts` draw their degrees, `bars` print their `label`,
   `numline` prints its ticks. Open the preview, do not trust the data alone.
 - One picture kind for the teaching (plus `eq`, `cards`, `table` helpers). Do not mix a number line and a bar model.
+- A `measure` scale whose question weighs a thing shows it on the pan: `on: 'bag' | 'jar' | 'box' | 'book' |
+  'watermelon' | 'suitcase' | 'cat'`, drawn at one size whatever it weighs, and the text says it is on the scale.
 
 ### Words
 

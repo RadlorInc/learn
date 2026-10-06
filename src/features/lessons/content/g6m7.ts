@@ -188,7 +188,7 @@ export const G6M7: Lesson[] = [
       hint1: 'Put the heights in order, smallest to biggest.',
       hint2: 'Cross off one number from each end until only one is left.',
       twin: {
-        text: 'These 7 dogs weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?',
+        text: 'These 7 pumpkins weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?',
         picture: row([12, 30, 18, 25, 9, 21, 14]),
         answer: 18,
         steps: ['Sort the weights: 9, 12, 14, 18, 21, 25, 30.', 'Cross off 9 and 30, then 12 and 25, then 14 and 21.', 'The one left is 18. So the middle weight is 18 pounds.'],

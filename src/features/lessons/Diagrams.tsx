@@ -8,7 +8,7 @@
  * `motion` reveals the parts one after another (bars shading, jumps, points, cubes), the "picture that moves" of Screens 4–6.
  */
 import { useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
-import type { Picture } from './script'
+import type { Picture, ScaleItem } from './script'
 import { INK, ACCENT } from './Pictures'
 // The drawings keep their own teal for the second colour of a figure (a hand, a ray, an answer row): it is
 // content, like the chalk, and Pictures' TEAL is now the pale button fill, which would vanish on a white figure.
@@ -265,6 +265,54 @@ function Clock({ p }: { p: P<'clock'> }) {
 }
 
 // ── Measuring tools ────────────────────────────────────────────────────────────────────────────
+/** The thing on a scale's pan, flat and simple, always the same size (about 120 × 100, sitting on `base`):
+ *  a bigger drawing for a heavier thing would let a child read the weight off the picture. */
+function OnPan({ item, cx, base }: { item: ScaleItem; cx: number; base: number }) {
+  const s = { stroke: INK, strokeWidth: 5, strokeLinejoin: 'round' as const }
+  const y = base
+  switch (item) {
+    case 'bag': return <g {...s}>
+      <path d={`M ${cx - 50} ${y} Q ${cx - 58} ${y - 60} ${cx - 26} ${y - 78} L ${cx + 26} ${y - 78} Q ${cx + 58} ${y - 60} ${cx + 50} ${y} Z`} fill="#F1D9A6" />
+      <path d={`M ${cx - 26} ${y - 78} L ${cx - 16} ${y - 96} L ${cx + 16} ${y - 96} L ${cx + 26} ${y - 78}`} fill="#F1D9A6" />
+      <line x1={cx - 24} y1={y - 80} x2={cx + 24} y2={y - 80} strokeWidth={6} />
+    </g>
+    case 'jar': return <g {...s}>
+      <rect x={cx - 42} y={y - 84} width={84} height={84} rx={16} fill="#F2B33D" />
+      <rect x={cx - 34} y={y - 100} width={68} height={18} rx={5} fill="#C98B4A" />
+      <rect x={cx - 26} y={y - 58} width={52} height={30} rx={6} fill="#fff" strokeWidth={3} />
+    </g>
+    case 'box': return <g {...s}>
+      <rect x={cx - 60} y={y - 80} width={120} height={80} rx={4} fill="#D9A066" />
+      <line x1={cx - 60} y1={y - 62} x2={cx + 60} y2={y - 62} strokeWidth={3} />
+      <line x1={cx} y1={y - 80} x2={cx} y2={y - 62} strokeWidth={3} />
+    </g>
+    case 'book': return <g {...s}>
+      <rect x={cx - 60} y={y - 34} width={120} height={34} rx={4} fill="#fff" />
+      <rect x={cx - 64} y={y - 44} width={128} height={14} rx={4} fill="#5B7FD1" />
+      <rect x={cx - 64} y={y - 6} width={128} height={10} rx={4} fill="#5B7FD1" />
+    </g>
+    case 'watermelon': return <g {...s}>
+      <ellipse cx={cx} cy={y - 42} rx={62} ry={42} fill="#3FA56B" />
+      <path d={`M ${cx - 30} ${y - 78} Q ${cx - 42} ${y - 42} ${cx - 30} ${y - 6} M ${cx} ${y - 84} V ${y} M ${cx + 30} ${y - 78} Q ${cx + 42} ${y - 42} ${cx + 30} ${y - 6}`} fill="none" stroke="#1F6B3E" strokeWidth={5} />
+    </g>
+    case 'suitcase': return <g {...s}>
+      <path d={`M ${cx - 20} ${y - 78} V ${y - 96} H ${cx + 20} V ${y - 78}`} fill="none" strokeWidth={7} />
+      <rect x={cx - 62} y={y - 80} width={124} height={80} rx={10} fill="#D6423A" />
+      <line x1={cx - 30} y1={y - 80} x2={cx - 30} y2={y} strokeWidth={3} />
+      <line x1={cx + 30} y1={y - 80} x2={cx + 30} y2={y} strokeWidth={3} />
+    </g>
+    case 'cat': return <g {...s}>
+      <path d={`M ${cx - 48} ${y - 14} Q ${cx - 78} ${y - 30} ${cx - 66} ${y - 62}`} fill="none" strokeWidth={8} strokeLinecap="round" />
+      <ellipse cx={cx - 6} cy={y - 28} rx={44} ry={28} fill="#9AA5B1" />
+      <path d={`M ${cx + 18} ${y - 70} L ${cx + 22} ${y - 100} L ${cx + 38} ${y - 80} L ${cx + 54} ${y - 100} L ${cx + 58} ${y - 70} Z`} fill="#9AA5B1" />
+      <circle cx={cx + 38} cy={y - 62} r={24} fill="#9AA5B1" />
+      <circle cx={cx + 30} cy={y - 64} r={3.5} fill={INK} stroke="none" />
+      <circle cx={cx + 46} cy={y - 64} r={3.5} fill={INK} stroke="none" />
+      <path d={`M ${cx + 34} ${y - 54} L ${cx + 38} ${y - 50} L ${cx + 42} ${y - 54}`} fill="none" strokeWidth={3} />
+    </g>
+  }
+}
+
 function Measure({ p }: { p: P<'measure'> }) {
   const min = p.min ?? 0, every = p.labelEvery ?? p.step
   const n = Math.round((p.max - min) / p.step)
@@ -291,12 +339,19 @@ function Measure({ p }: { p: P<'measure'> }) {
   }
 
   if (p.tool === 'scale') {
-    const cx = 200, cy = 190, r = 150
+    // With something to weigh, a pan sits on top of the dial and the dial moves down to make room.
+    const top = p.on ? 130 : 0
+    const cx = 200, cy = 190 + top, r = 150
     const ang = (v: number) => Math.PI * 1.1 + ((v - min) / (p.max - min)) * Math.PI * 0.8
     const pt = (v: number, len: number) => [cx + len * Math.cos(ang(v)), cy + len * Math.sin(ang(v))]
     const [nx, ny] = pt(has ? p.value! : min, r - 30)
     return (
-      <Svg w={400} h={250} max={320} label={`A weighing scale from ${min} to ${p.max} ${p.unit}`}>
+      <Svg w={400} h={250 + top} max={320 + top} label={`A weighing scale from ${min} to ${p.max} ${p.unit}${p.on ? ` with a ${p.on} on it` : ''}`}>
+        {p.on && <>
+          <rect x={cx - 12} y={top - 4} width={24} height={30} fill={INK} />
+          <rect x={cx - 120} y={top - 18} width={240} height={16} rx={8} fill="#fff" stroke={INK} strokeWidth={5} />
+          <OnPan item={p.on} cx={cx} base={top - 18} />
+        </>}
         <path d={`M ${cx - r - 20} ${cy} A ${r + 20} ${r + 20} 0 0 1 ${cx + r + 20} ${cy} Z`} fill="#fff" stroke={INK} strokeWidth={6} />
         {vals.map((v, i) => {
           const [x1, y1] = pt(v, r), [x2, y2] = pt(v, isLabel(v) ? r - 18 : r - 9), [lx, ly] = pt(v, r - 38)

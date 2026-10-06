@@ -55,8 +55,8 @@ function measure(q: Q): string {
   const p = q.picture
   if (p?.kind !== 'measure') fail(q)
   const v: number = p.value
-  if (/^How heavy is .+\?$/.test(q.text) || /^How many (grams|kilograms|liters|milliliters) (does|of) .+ (weigh|are in the .+)\?/.test(q.text)) return String(v)
-  let r = q.text.match(/says the .+ weighs ([\d,]+) grams\. Is that right\?/)
+  if (/^(The .+ is on the scale\. )?How heavy is .+\?$/.test(q.text) || /^(The .+ is on the scale\. )?How many (grams|kilograms|liters|milliliters) (does|of) .+ (weigh|are in the .+)\?/.test(q.text)) return String(v)
+  let r = q.text.match(/says (?:the .+|it) weighs ([\d,]+) grams\. Is that right\?/)
   if (r) {
     const claim = num(r[1])
     const below = Math.floor(v / p.labelEvery) * p.labelEvery

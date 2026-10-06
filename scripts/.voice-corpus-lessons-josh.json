@@ -1837,11 +1837,11 @@
     ]
   },
   {
-    "key": "u8oem4",
-    "check": "wpjcuaobnt",
-    "text": "What about a dog? A dog is heavy, so we use kilograms.",
+    "key": "r4q5ww",
+    "check": "rlcv871g5p",
+    "text": "What about a watermelon? A watermelon is heavy, so we use kilograms.",
     "style": "B",
-    "chars": 54,
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g3m2-t4 s6 b2"
@@ -63888,11 +63888,11 @@
     ]
   },
   {
-    "key": "l79grg",
-    "check": "2dtjx8kt5qo",
-    "text": "Try a new one. How heavy is the puppy?",
+    "key": "fsky6a",
+    "check": "2enleyaqakc",
+    "text": "Try a new one. How heavy is the cat?",
     "style": "A",
-    "chars": 38,
+    "chars": 36,
     "kind": "twin",
     "sources": [
       "g3m2-t4 twin"
@@ -65912,11 +65912,11 @@
     ]
   },
   {
-    "key": "66leyy",
-    "check": "2ab45x9ioek",
-    "text": "Try a new one. These 7 dogs weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?",
+    "key": "1lxa26o",
+    "check": "f8jfzjmxn1",
+    "text": "Try a new one. These 7 pumpkins weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?",
     "style": "A",
-    "chars": 97,
+    "chars": 101,
     "kind": "twin",
     "sources": [
       "g6m7-t2 twin"
@@ -67056,11 +67056,11 @@
     ]
   },
   {
-    "key": "1i49k0k",
-    "check": "1zkaafi05ky",
-    "text": "You counted the marks and found the puppy weighs 7 kilograms.",
+    "key": "efc95u",
+    "check": "2b6c13aqekl",
+    "text": "You counted the marks and found the cat weighs 7 kilograms.",
     "style": "A",
-    "chars": 61,
+    "chars": 59,
     "kind": "won",
     "sources": [
       "g3m2-t4 twinWon"
