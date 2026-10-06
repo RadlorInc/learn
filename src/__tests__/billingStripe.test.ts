@@ -619,15 +619,37 @@ describe('POST /api/checkout', () => {
     }))
   }
 
-  function stubCheckout(opts: { userOk?: boolean; customerId?: string | null; staleCustomer?: boolean; status?: string; lookupFails?: boolean } = {}) {
+  type FakeSession = { id: string; customer: string; status: 'open' | 'complete' | 'expired'; created: number; url: string | null }
+  /**
+   * A small STATEFUL Stripe: customers (one per idempotency key, a new one for a request without a key, as Stripe
+   * does), checkout sessions that can be listed and expired, and the customer's subscriptions. Stateful because the
+   * race is about what a SECOND request sees of the first one.
+   */
+  function stubCheckout(opts: {
+    userOk?: boolean; customerId?: string | null; staleCustomer?: boolean; status?: string; lookupFails?: boolean
+    stripeSubs?: string[]                 // statuses of the subscriptions Stripe holds for the customer
+    priorSessions?: FakeSession[]         // sessions that already exist in Stripe
+    stripeListFails?: boolean             // Stripe answers the subscription list with an error
+    unexpirable?: string[]                // session ids Stripe refuses to expire (already paid)
+    sameSecond?: boolean
+  } = {}) {
     const { userOk = true, customerId = null, staleCustomer = false, status, lookupFails = false } = opts
     const calls: Call[] = []
+    const customersByKey = new Map<string, string>()
+    const customers: string[] = []
+    const sessions: FakeSession[] = [...(opts.priorSessions ?? [])]
+    let clock = 1_000
     const json = (body: unknown, status = 200) =>
       new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+    const stripeError = (code: string, status = 400) =>
+      json({ error: { type: 'invalid_request_error', code, message: code } }, status)
     vi.stubGlobal('fetch', vi.fn(async (input: unknown, init: RequestInit = {}) => {
       const url = String(input)
-      calls.push({ url, method: (init.method ?? 'GET').toUpperCase(), body: String(init.body ?? ''),
-                   headers: (init.headers ?? {}) as Record<string, string> })
+      const method = (init.method ?? 'GET').toUpperCase()
+      const headers = (init.headers ?? {}) as Record<string, string>
+      calls.push({ url, method, body: String(init.body ?? ''), headers })
+      const sent = new URLSearchParams(String(init.body ?? ''))
+      const query = new URL(url).searchParams
       if (url.includes('/auth/v1/user')) {
         return userOk ? json({ id: ACC, email: 'p@example.com' }) : json({ msg: 'invalid token' }, 401)
       }
@@ -636,20 +658,52 @@ describe('POST /api/checkout', () => {
         if (lookupFails) return json({ message: 'upstream' }, 502)
         return json(customerId || status ? [{ stripe_customer_id: customerId, ...(status ? { status } : {}) }] : [])
       }
-      if (url.includes('/v1/checkout/sessions')) {
-        // A stale stored id: Stripe answers `resource_missing` the FIRST time and succeeds on the
-        // retry that drops it.
-        const sent = new URLSearchParams(String(init.body ?? ''))
-        if (staleCustomer && sent.get('customer')) {
-          return json({ error: { type: 'invalid_request_error', code: 'resource_missing',
-                                 message: 'No such customer' } }, 400)
-        }
-        return json({ id: 'cs_1', url: 'https://checkout.stripe.com/c/cs_1' })
+      if (url.startsWith('https://api.stripe.com/v1/customers') && method === 'POST') {
+        // The SDK sends its own random key on every POST unless the caller names one; Stripe replays per key.
+        const key = new Headers(init.headers).get('idempotency-key')
+        const known = key ? customersByKey.get(key) : undefined
+        if (known) return json({ id: known, object: 'customer' })
+        const id = `cus_new_${customers.length + 1}`
+        customers.push(id)
+        if (key) customersByKey.set(key, id)
+        return json({ id, object: 'customer', email: sent.get('email') })
+      }
+      if (url.startsWith('https://api.stripe.com/v1/subscriptions') && method === 'GET') {
+        if (opts.stripeListFails) return stripeError('api_error_stub')
+        return json({ object: 'list', has_more: false,
+          data: (opts.stripeSubs ?? []).map((s, i) => ({ id: `sub_${i}`, object: 'subscription', status: s })) })
+      }
+      const expire = url.match(/\/v1\/checkout\/sessions\/([^/?]+)\/expire/)
+      if (expire) {
+        const s = sessions.find(x => x.id === expire[1])
+        if (!s || s.status !== 'open' || opts.unexpirable?.includes(s.id)) return stripeError('checkout_session_not_open')
+        s.status = 'expired'; s.url = null
+        return json({ ...s, object: 'checkout.session' })
+      }
+      const one = url.match(/\/v1\/checkout\/sessions\/([^/?]+)$/)
+      if (one && method === 'GET') {
+        const s = sessions.find(x => x.id === one[1])
+        return s ? json({ ...s, object: 'checkout.session' }) : stripeError('resource_missing', 404)
+      }
+      if (url.startsWith('https://api.stripe.com/v1/checkout/sessions') && method === 'GET') {
+        const mine = sessions.filter(s => s.customer === query.get('customer')).sort((a, b) => b.created - a.created)
+        return json({ object: 'list', has_more: false, data: mine.map(s => ({ ...s, object: 'checkout.session' })) })
+      }
+      if (url.startsWith('https://api.stripe.com/v1/checkout/sessions') && method === 'POST') {
+        // A stale stored id: Stripe answers `resource_missing` for it.
+        if (staleCustomer && sent.get('customer') === customerId) return stripeError('resource_missing')
+        const id = `cs_${sessions.length + 1}`
+        // Stripe's `created` is in whole SECONDS, so two tabs usually tie: `sameSecond` keeps the clock still.
+        const s: FakeSession = { id, customer: sent.get('customer')!, status: 'open',
+                                 created: opts.sameSecond ? clock : clock++, url: `https://checkout.stripe.com/c/${id}` }
+        sessions.push(s)
+        return json({ ...s, object: 'checkout.session' })
       }
       return json({ unexpected: url }, 500)
     }))
-    return calls
+    return Object.assign(calls, { customers, sessions })
   }
+  const creates = (calls: Call[]) => calls.filter(c => c.method === 'POST' && /\/v1\/checkout\/sessions$/.test(c.url))
 
   it('refuses a caller with no token', async () => {
     stubCheckout()
@@ -676,14 +730,14 @@ describe('POST /api/checkout', () => {
       expect(res.status, JSON.stringify(renewalConsent)).toBe(400)
       expect(await res.json()).toEqual({ error: 'renewal_consent_required' })
     }
-    expect(calls.some(c => c.url.includes('/v1/checkout/sessions')), 'a session was opened without the tick').toBe(false)
+    expect((creates(calls).length > 0), 'a session was opened without the tick').toBe(false)
   })
 
   it('positive control: WITH the tick the session opens, and the subscription carries when they agreed', async () => {
     const calls = stubCheckout()
     const res = await checkout({ seats: 1, renewalConsent: true })
     expect(res.status).toBe(200)
-    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    const form = new URLSearchParams(creates(calls)[0].body)
     expect(form.get('subscription_data[metadata][renewal_consent_at]')).toMatch(/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/)
   })
 
@@ -693,7 +747,7 @@ describe('POST /api/checkout', () => {
     const calls = stubCheckout()
     const res = await checkout({ seats: 3, account_id: '99999999-9999-9999-9999-999999999999' })
     expect(res.status).toBe(200)
-    const session = calls.find(c => c.url.includes('/v1/checkout/sessions'))!
+    const session = creates(calls)[0]
     const form = new URLSearchParams(session.body)
     expect(form.get('client_reference_id')).toBe(ACC)
     expect(form.get('subscription_data[metadata][account_id]')).toBe(ACC)
@@ -703,7 +757,7 @@ describe('POST /api/checkout', () => {
   it('sends the seat count as the QUANTITY on one tiered price', async () => {
     const calls = stubCheckout()
     await checkout({ seats: 3, cadence: 'annual' })
-    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    const form = new URLSearchParams(creates(calls)[0].body)
     expect(form.get('line_items[0][price]')).toBe('price_a')
     expect(form.get('line_items[0][quantity]')).toBe('3')
     expect(form.get('mode')).toBe('subscription')
@@ -714,7 +768,7 @@ describe('POST /api/checkout', () => {
   it('clamps a request for more seats than we sell', async () => {
     const calls = stubCheckout()
     await checkout({ seats: 40 })
-    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    const form = new URLSearchParams(creates(calls)[0].body)
     expect(form.get('line_items[0][quantity]')).toBe(String(MAX_SEATS))
   })
 
@@ -727,7 +781,7 @@ describe('POST /api/checkout', () => {
     // answer, and it gets worse every month it exists.
     const calls = stubCheckout({ customerId: 'cus_existing' })
     await checkout({ seats: 1 })
-    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
+    const form = new URLSearchParams(creates(calls)[0].body)
     expect(form.get('customer')).toBe('cus_existing')
     // ⚠️ `customer` and `customer_email` are mutually exclusive — a session carrying both is
     // rejected by Stripe, so this pair is the check, not the first line alone.
@@ -737,11 +791,19 @@ describe('POST /api/checkout', () => {
   it('starts a new customer when the account has none', async () => {
     // The positive control for the case above: without it, "reuses the customer" is equally
     // satisfied by a route that always sends a `customer` field, including an empty one.
+    // Since the two-tabs fix the customer is created first (so Stripe can be asked about it), carrying the email and
+    // the account; the session then names that customer.
     const calls = stubCheckout({ customerId: null })
-    await checkout({ seats: 1 })
-    const form = new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body)
-    expect(form.get('customer')).toBeNull()
-    expect(form.get('customer_email')).toBe('p@example.com')
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ url: 'https://checkout.stripe.com/c/cs_1' })
+    expect(calls.customers).toEqual(['cus_new_1'])
+    const made = new URLSearchParams(calls.find(c => c.url.endsWith('/v1/customers'))!.body)
+    expect(made.get('email')).toBe('p@example.com')
+    expect(made.get('metadata[account_id]')).toBe(ACC)
+    const form = new URLSearchParams(creates(calls)[0].body)
+    expect(form.get('customer')).toBe('cus_new_1')
+    expect(form.get('customer_email')).toBeNull()
   })
 
   it('looks the customer up with the PARENT\'S OWN token, never the service role', async () => {
@@ -765,9 +827,9 @@ describe('POST /api/checkout', () => {
     const calls = stubCheckout({ customerId: 'cus_deleted', staleCustomer: true })
     const res = await checkout({ seats: 1 })
     expect(res.status).toBe(200)
-    const sessions = calls.filter(c => c.url.includes('/v1/checkout/sessions'))
+    const sessions = creates(calls)
     expect(sessions.length, 'it did not retry').toBe(2)
-    expect(new URLSearchParams(sessions[1].body).get('customer_email')).toBe('p@example.com')
+    expect(new URLSearchParams(sessions[1].body).get('customer')).toBe('cus_new_1')
   })
 
   it('B1 — refuses a SECOND subscription while the family\'s plan still holds seats, and never reaches Stripe', async () => {
@@ -776,7 +838,7 @@ describe('POST /api/checkout', () => {
       const res = await checkout({ seats: 1 })
       expect(res.status, status).toBe(409)
       expect(await res.json()).toEqual({ error: 'already_subscribed' })
-      expect(calls.some(c => c.url.includes('/v1/checkout/sessions')), `a session opened beside a ${status} plan`).toBe(false)
+      expect((creates(calls).length > 0), `a session opened beside a ${status} plan`).toBe(false)
     }
   })
 
@@ -784,14 +846,94 @@ describe('POST /api/checkout', () => {
     const calls = stubCheckout({ customerId: 'cus_existing', status: 'canceled' })
     const res = await checkout({ seats: 1 })
     expect(res.status).toBe(200)
-    expect(new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body).get('customer')).toBe('cus_existing')
+    expect(new URLSearchParams(creates(calls)[0].body).get('customer')).toBe('cus_existing')
   })
 
   it('B1 — when the plan cannot be looked up, it refuses rather than risk a second subscription', async () => {
     const calls = stubCheckout({ lookupFails: true })
     const res = await checkout({ seats: 1 })
     expect(res.status).toBe(503)
-    expect(calls.some(c => c.url.includes('/v1/checkout/sessions'))).toBe(false)
+    expect((creates(calls).length > 0)).toBe(false)
+  })
+
+  // ── TWO TABS: the row is written after payment, so Stripe is what has to answer before one exists. ──
+  const openIn = (calls: { sessions: FakeSession[] }) => calls.sessions.filter(s => s.status === 'open').map(s => s.id)
+
+  for (const sameSecond of [false, true]) {
+    it(`T1 — two tabs at once, no row yet: ONE payable session, and both tabs get its URL${sameSecond ? ' (same second)' : ''}`, async () => {
+      const calls = stubCheckout({ sameSecond })
+      const [a, b] = await Promise.all([checkout({ seats: 1 }), checkout({ seats: 1 })])
+      expect([a.status, b.status]).toEqual([200, 200])
+      expect(creates(calls)).toHaveLength(2)
+      const open = openIn(calls)
+      expect(open, 'more than one session can still be paid').toHaveLength(1)
+      const urls = [(await a.json()).url, (await b.json()).url]
+      expect(urls).toEqual([`https://checkout.stripe.com/c/${open[0]}`, `https://checkout.stripe.com/c/${open[0]}`])
+    })
+  }
+
+  it('T1 — a second click after the first returned: the older session is expired, the newer is the one to pay', async () => {
+    const calls = stubCheckout({ customerId: 'cus_existing', status: 'canceled' })
+    const first = await (await checkout({ seats: 1 })).json()
+    const second = await (await checkout({ seats: 2 })).json()
+    expect(first).toEqual({ url: 'https://checkout.stripe.com/c/cs_1' })
+    expect(second).toEqual({ url: 'https://checkout.stripe.com/c/cs_2' })
+    expect(openIn(calls)).toEqual(['cs_2'])
+  })
+
+  it('T2 — a live Stripe subscription with NO row yet is refused, and the session just made is expired', async () => {
+    for (const s of ['active', 'trialing', 'past_due', 'unpaid', 'incomplete']) {
+      const calls = stubCheckout({ stripeSubs: ['canceled', s] })
+      const res = await checkout({ seats: 1 })
+      expect(res.status, s).toBe(409)
+      expect(await res.json()).toEqual({ error: 'already_subscribed' })
+      expect(openIn(calls), `a ${s} subscription left a payable session`).toEqual([])
+    }
+  })
+
+  it('T2 positive twin — only ended subscriptions in Stripe: the checkout opens', async () => {
+    const calls = stubCheckout({ stripeSubs: ['canceled', 'incomplete_expired'] })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ url: 'https://checkout.stripe.com/c/cs_1' })
+    expect(openIn(calls)).toEqual(['cs_1'])
+  })
+
+  it('T3 — a completed or expired session is never handed back, even when it is newer', async () => {
+    const calls = stubCheckout({ customerId: 'cus_existing', status: 'canceled', priorSessions: [
+      { id: 'cs_paid', customer: 'cus_existing', status: 'complete', created: 9_999, url: null },
+      { id: 'cs_old', customer: 'cus_existing', status: 'expired', created: 9_998, url: null },
+    ] })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ url: 'https://checkout.stripe.com/c/cs_3' })
+  })
+
+  it('T4 — two first checkouts at once end with ONE Stripe customer', async () => {
+    const calls = stubCheckout()
+    const [a, b] = await Promise.all([checkout({ seats: 1 }), checkout({ seats: 1 })])
+    expect([a.status, b.status]).toEqual([200, 200])
+    expect(calls.customers, 'two customers were created for one account').toEqual(['cus_new_1'])
+    expect(creates(calls).map(c => new URLSearchParams(c.body).get('customer'))).toEqual(['cus_new_1', 'cus_new_1'])
+  })
+
+  it('T5 — when Stripe cannot be asked, it refuses and leaves nothing payable', async () => {
+    const calls = stubCheckout({ stripeListFails: true })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(503)
+    expect(await res.json()).toEqual({ error: 'lookup_failed' })
+    expect(openIn(calls)).toEqual([])
+  })
+
+  it('T5 — an older session that cannot be expired (just paid) makes it refuse, leaving nothing payable', async () => {
+    const calls = stubCheckout({ customerId: 'cus_existing', status: 'canceled', unexpirable: ['cs_other'], priorSessions: [
+      { id: 'cs_other', customer: 'cus_existing', status: 'open', created: 1, url: 'https://checkout.stripe.com/c/cs_other' },
+    ] })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(409)
+    expect(await res.json()).toEqual({ error: 'checkout_conflict' })
+    // cs_other is the one Stripe would not expire (in the stub it stays "open"); ours must not stay payable.
+    expect(openIn(calls)).toEqual(['cs_other'])
   })
 
   it('answers 503 while no price is configured', async () => {
