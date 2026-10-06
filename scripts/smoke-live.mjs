@@ -2,7 +2,7 @@
 // Live smoke for radlic.com — run after every production deploy that touches the app.
 //
 //   node scripts/smoke-live.mjs                      # all checks against https://radlic.com
-//   SMOKE_SW=v239 node scripts/smoke-live.mjs        # after a service-worker bump
+//   SMOKE_SW=v239 node scripts/smoke-live.mjs        # expect another worker version (default: this checkout's sw.js)
 //   SMOKE_BASE=http://localhost:3000 SMOKE_ONLY=email-login node scripts/smoke-live.mjs
 //
 // Exit 0 = looked, every check passed · 1 = a check failed (named) · 2 = could not look (network,
@@ -19,7 +19,10 @@ import { chromium } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
 const BASE = (process.env.SMOKE_BASE ?? 'https://radlic.com').replace(/\/$/, '')
-const SW = process.env.SMOKE_SW ?? 'v242'
+// The version the live worker must report: by default the one in THIS checkout's public/sw.js, so run it from the
+// commit that was deployed (a hand-kept literal here went stale: it said v242 while main shipped v251).
+const SW = process.env.SMOKE_SW ?? /const VERSION\s*=\s*'(v\d+)'/.exec(readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8'))?.[1]
+if (!SW) { console.log('  BLIND could not read VERSION from public/sw.js; set SMOKE_SW'); process.exit(2) }
 const ONLY = process.env.SMOKE_ONLY
 const LANDING = 'https://radlor.com/radlic'
 const cb = () => `cb=${Date.now()}`
