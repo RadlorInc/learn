@@ -116,6 +116,7 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-09-28 · Sign-out clears every per-child key on the device except queued uploads · founder · this PR
 - 2026-09-28 · The docs' leftover non-Markdown folders are deleted (screenshots, art, verification, rename; tool output there is now git-ignored); PLACEHOLDERS names roles, not people; `docs/review/sql/` goes once its proof SQL has run · founder · this PR
 - 2026-09-28 · Pinch-zoom allowed everywhere, every text field at least 16px, a 3px keyboard focus ring, every tap-only control also works from the keyboard · WCAG 1.4.4 / 2.4.7 / 2.1.1 (ADA); the zoom lock came with the first commit, not as a choice · this PR
+- 2026-09-28 · `/admin` sign-in asks for an authenticator code (TOTP) once an admin has set one up; the database then requires it (`admin_assert()` checks `aal2`), applied only after the founder has enrolled · the dashboard reads aggregates across every family, so a password alone should not open it · two Draft PRs (enrol + verify; the database requirement)
 - 2026-09-29 · Points: a chapter's or topic's first uploaded answer keeps its +3 level-up (a new row starts at level 0) · founder · —
 - 2026-09-29 · Admin two-step verification ships as built in #325; the founder enrols two authenticators, so a lost one is not a lock-out · founder · #325
 - 2026-09-30 · Annual price = radlor.com's published one ($75.99 first child, $48 each more; was $63.99/$39.99); Stripe product shown as "Radlic — family plan" · families were already sent the site's figures · —

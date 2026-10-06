@@ -27,6 +27,7 @@ Step-by-step, and each step says whether the founder or the agent does it.
 | [support](runbooks/support.md) | answer a parent who writes in, and log it |
 | [billing](runbooks/billing.md) | a double charge, refund, dispute, cancellation by email, "paid but locked", a failed payment |
 | [data-requests](runbooks/data-requests.md) | handle a request to see or delete someone's data |
+| [admin-access](runbooks/admin-access.md) | turn on two-step verification for `/admin`, or recover from a lost authenticator |
 | [outages](runbooks/outages.md) | Supabase, Vercel, Resend or Stripe is down: what parents see, what to check, what to tell them |
 | [incident](runbooks/incident.md) | a security incident or breach: first hour, evidence, notification questions for the attorney (draft) |
 | [testers](runbooks/testers.md) | give a paid tester a link to one module and check their screen-by-screen review before paying |

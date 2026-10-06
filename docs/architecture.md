@@ -54,7 +54,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 |---|---|
 | Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then BlockCraft opens full page at `/blockcraft/`; [product/points.md](product/points.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
-| Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login` |
+| Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
 | Auth | `/auth` · `/auth/confirm` (sign-up link) · `/auth/callback` (Google) · `/auth/set-password` (invite, reset) · `/auth/new-password` (child's temporary password) |
 | Email links | `/consent/respond`, `/consent/withdraw`, `/email/unsubscribe` (act only on a button press) |
@@ -131,7 +131,12 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Other adults** see a child through an invite (`learner_invites` → a `viewer` row), removable by the creator or the
   viewer.
 - **Admin** is an account listed in `admin_users` (no client access; rows added by hand). Every `admin_*` RPC starts
-  with `admin_assert()`; `/admin` shows aggregates and writes nothing.
+  with `admin_assert()`; `/admin` shows aggregates and writes nothing. **Two-step verification:** an admin sets up
+  an authenticator app (TOTP, Supabase Auth MFA) at `/admin/mfa`; from then on `/admin/login` asks for its 6-digit
+  code after the password, and the `/admin` layout sends a password-only (`aal1`) session back to that step. An
+  account without an authenticator signs in as before and is shown nothing about it. The database does not require
+  the code until `admin_assert()` also checks the token's `aal`, a separate migration merged only after the founder
+  has enrolled ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
   data.

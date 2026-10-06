@@ -34,7 +34,11 @@ export function useMetrics(page: 'overview' | 'learning' | 'funnel' | 'activatio
   // ⚠️ `err` MUST BE RENDERABLE, and the page must never sit on "Loading…" for ever. Before this,
   // any failure that was not a 404 left `data` undefined and the page showed "Loading…" with no end
   // — indistinguishable from a slow network, which is how a real failure gets mistaken for latency.
-  const [state, setState] = useState<{ data?: any; minCohort?: number; err?: string; rid?: string; violations?: Violation[] }>({})
+  const [state, setState] = useState<{ data?: any; minCohort?: number; err?: string; rid?: string; violations?: Violation[]; nf?: boolean }>({})
+  // ⚠️ `notFound()` works by THROWING, and only a throw during render reaches Next's not-found boundary. It used to be
+  // called inside the fetch below, where the `.catch` caught it: a non-admin saw "Could not load metrics:
+  // NEXT_HTTP_ERROR_FALLBACK;404" instead of the 404 (measured in adminMfa.test.ts, 2026-09-28).
+  if (state.nf) notFound()
   useEffect(() => {
     let dead = false
     ;(async () => {
@@ -47,7 +51,7 @@ export function useMetrics(page: 'overview' | 'learning' | 'funnel' | 'activatio
       // ⚠️ 404 for a signed-in NON-ADMIN, deliberately. /admin must not confirm it exists to
       // somebody who may not see it. The real boundary is admin_assert() in the database; this is
       // the part that declines to tell them there is a door.
-      if (r.status === 404) { notFound(); return }
+      if (r.status === 404) { setState({ nf: true }); return }
       const j = await r.json().catch(() => ({}))
       if (!r.ok) {
         setState({ err: `Could not load metrics (HTTP ${r.status}).`, rid: j?.rid })

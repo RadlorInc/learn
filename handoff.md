@@ -62,6 +62,8 @@ so the repo's migration chain still builds a body one comment different from pro
   production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
+- Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
+  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Vercel, before `learn` goes private: whether the block checks the commit's author (the founder, who merges) or
   the pusher (GitHub Actions) was not measured; the blocked deployment's message names the GitHub user. The author →
@@ -148,8 +150,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist; the comments in
   `content/voice/styles.ts` name a test that does not exist; `scripts/lesson-questions.mjs` now needs `npx tsx`.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
-  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comments: `/api/health`
-  mentions tools we do not use; `admin/login/page.tsx` says "the admin role" (the gate is the `admin_users` table).
+  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
+  mentions tools we do not use.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
