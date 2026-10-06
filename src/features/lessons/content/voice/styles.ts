@@ -63,7 +63,7 @@ const UNITS: Record<string, string> = { mm: 'millimeters', cm: 'centimeters', m:
 
 /**
  * Symbols a voice model reads badly, said the way she would say them (docs/product/voice.md: math in the mouth is
- * words). What this cannot say safely it leaves alone, and `lessonVoiceSpeakable.test.ts` then names the line, so the
+ * words). What this cannot say safely it leaves alone, and `lessonExplainStyle.test.ts` then names the line, so the
  * lesson gives it a `say` of its own — it never guesses.
  */
 export const speakable = (t: string) =>
