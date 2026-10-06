@@ -50,7 +50,8 @@ so the repo's migration chain still builds a body one comment different from pro
   founder); a free teacher can sign up as a parent to get lessons free.
 - A way to mute the lesson voice (classrooms).
 - Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
-- A maintenance switch: none exists, so stopping the app means removing the domain.
+- A maintenance switch: none exists, so stopping the app means removing the domain. A notice switch does
+  (`OUTAGE_NOTICE`, [runbooks/outages.md](docs/runbooks/outages.md)); it tells people and stops nothing.
 - Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
