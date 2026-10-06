@@ -67,7 +67,6 @@ so the repo's migration chain still builds a body one comment different from pro
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
 - Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
-- Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - Vercel, before `learn` goes private: whether the block checks the commit's author (the founder, who merges) or
   the pusher (GitHub Actions) was not measured; the blocked deployment's message names the GitHub user. The author →
   link the founder's GitHub login to their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote`
@@ -78,10 +77,6 @@ so the repo's migration chain still builds a body one comment different from pro
   before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
-  unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
-- Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
-  `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
 - GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
   before 6 Oct, all closed): close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
@@ -113,30 +108,20 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 
 ## Open — agent work
 
-- The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
-- An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); it
-  has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
-  `weekly-layout` was deleted with it (its spec and the teen shell were gone; the nightly's 640×320 frame covers short
-  phones). `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
+- `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
   passed — 10 end-card buttons fail Playwright's "stable" wait because the nudge animates them (a harness fault: a
   child taps them fine), 3 chapters "could not look" (the monkey cannot solve them), colors timed out.
-- `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
-  previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
-- `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
-  alone — twice on 28 Sep. A timing assumption in the test, not yet found.
-- The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
+- The vitest hang (ARC-07): the 19 copies of the ladders' `until` are now one bounded `until` (adaptive.ts), but
+  about 140 `for (;;)` re-roll loops in other ladders are still unbounded.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
-  `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's
-  refusal has never been watched firing. Three lint errors (`Diagrams.tsx`, `LessonPlayer.tsx`,
-  `ModulePractice.tsx`); CI does not lint.
-- `LessonPlayer` sets its voice in a `useEffect`; whether a lesson speaks from a child's mount effect before the
-  voice is set is unmeasured.
+  `voiceBoundaryVerb` literal. The walk harness's refusal has never been watched
+  firing. Lint: `npx eslint .` reports 204 errors (measured 6 Oct; 81 in app code, mostly the React Compiler's
+  `react-hooks/*` rules in KG–2 chapters, 123 in tests and scripts), not three; CI does not lint.
 - Architecture: widen the layering gate beyond `core/`; type the Supabase client from generated types; one
   service-role helper and one caller-identity helper instead of several; split the parent and teacher dashboards;
   one signed-number formatter (`core/fmt.ts` is imported by nothing).
@@ -150,11 +135,9 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   JSON-LD `@id`/publisher parity check across both sites; the stale comment in `src/app/site.ts`.
 - Small: `/ui-preview` still shows a fox; the vertical number line's targets are 26 px (the app uses 44); the chalk
   "speck" in g5m1-t1/t2 is unexplained; Playwright defaults to port 3017; the backup action's `upload-artifact` is not
-  scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist; the comments in
-  `content/voice/styles.ts` name a test that does not exist; `scripts/lesson-questions.mjs` now needs `npx tsx`.
+  scanned by Dependabot; `AccountConsent.tsx`'s header describes a path that does not exist.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
-  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
-  mentions tools we do not use.
+  (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Declaring them is family-facing wording — the founder's.
 - `email_suppressions` (20260923190000) revokes from public/anon/authenticated but not service_role, so on Supabase the
   server also holds DELETE/TRUNCATE by default privilege (measured on a local supabase/postgres container, 6 Oct; the
   baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
