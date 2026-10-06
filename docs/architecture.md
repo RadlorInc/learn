@@ -135,7 +135,7 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   an authenticator app (TOTP, Supabase Auth MFA) at `/admin/mfa`; from then on `/admin/login` asks for its 6-digit
   code after the password, and the `/admin` layout sends a password-only (`aal1`) session back to that step. An
   account without an authenticator signs in as before and is shown nothing about it. The database requires it:
-  `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20260928200000, applied only once every admin
+  `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261006120000, applied only once every admin
   has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not

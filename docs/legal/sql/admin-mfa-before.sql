@@ -1,4 +1,4 @@
--- ADMIN TWO-STEP VERIFICATION — BEFORE the migration 20260928200000 (read-only; counts and booleans only — no names,
+-- ADMIN TWO-STEP VERIFICATION — BEFORE the migration 20261006120000 (read-only; counts and booleans only — no names,
 -- emails or ids). Run it in the SQL editor BEFORE merging, and again right before approving the production-db run.
 -- Expected: every row without INFO says PASS.
 --   · A FAIL in a STOP-CHECK row about admin_assert means production's function is not the repo's: do NOT apply.
@@ -15,8 +15,8 @@ union all select 'STOP-CHECK every admin has a verified authenticator (and there
                               where not exists (select 1 from auth.mfa_factors f
                                                  where f.user_id = a.user_id and f.factor_type = 'totp' and f.status = 'verified'))
             then 'PASS' else 'FAIL' end
-union all select 'ledger does NOT yet have 20260928200000',
-       case when not exists (select 1 from supabase_migrations.schema_migrations where version = '20260928200000') then 'PASS' else 'FAIL' end
+union all select 'ledger does NOT yet have 20261006120000',
+       case when not exists (select 1 from supabase_migrations.schema_migrations where version = '20261006120000') then 'PASS' else 'FAIL' end
 union all select 'EXECUTE on admin_assert(): authenticated yes, anon no',
        case when has_function_privilege('authenticated', 'public.admin_assert()', 'execute')
              and not has_function_privilege('anon', 'public.admin_assert()', 'execute') then 'PASS' else 'FAIL' end

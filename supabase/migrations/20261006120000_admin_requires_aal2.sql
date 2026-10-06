@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════════════════════════════
--- Admin data requires two-step verification (2026-09-28). `admin_assert()` — the first statement of admin_overview,
+-- Admin data requires two-step verification (written 2026-09-28; renamed 2026-10-06 to sort after 20261001190000 — `supabase db push` refuses a file older than the newest one already applied). `admin_assert()` — the first statement of admin_overview,
 -- admin_learning, admin_funnel and admin_activation — now also refuses a token whose `aal` claim is not 'aal2': a
 -- session that signed in with the password but has not given its authenticator code. Supabase Auth writes `aal` into
 -- every access token ('aal1' after a password, 'aal2' after a TOTP code); PostgREST hands the claims to `auth.jwt()`.

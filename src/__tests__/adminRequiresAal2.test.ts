@@ -15,7 +15,7 @@ import { resolve } from 'node:path'
 import type { PGlite } from '@electric-sql/pglite'
 import { loadSchema } from './_schema'
 
-const MIGRATION = '20260928200000_admin_requires_aal2.sql'
+const MIGRATION = '20261006120000_admin_requires_aal2.sql'
 const MIG_SQL = readFileSync(resolve(__dirname, '../../supabase/migrations', MIGRATION), 'utf8')
 
 const ADMIN = '0000aa00-0000-4000-8000-000000000001'

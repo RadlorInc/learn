@@ -62,7 +62,7 @@ so the repo's migration chain still builds a body one comment different from pro
   production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
   On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
   (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
-- Admin two-step verification in the database (`20260928200000`): approve `production-db`, then run
+- Admin two-step verification in the database (`20261006120000`): approve `production-db`, then run
   `docs/legal/sql/admin-mfa-proof.sql` and sign in to `/admin` with the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.

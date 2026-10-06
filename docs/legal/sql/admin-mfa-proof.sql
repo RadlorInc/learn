@@ -1,4 +1,4 @@
--- ADMIN TWO-STEP VERIFICATION — PROOF after the migration 20260928200000 (read-only; counts and booleans only).
+-- ADMIN TWO-STEP VERIFICATION — PROOF after the migration 20261006120000 (read-only; counts and booleans only).
 -- Expected: every row without INFO says PASS, and the INFO rows match the before-SQL's.
 -- The behaviour itself (an aal1 admin refused, the same admin at aal2 served, a non-admin refused at aal2) is proved on
 -- the repo's schema by src/__tests__/adminRequiresAal2.test.ts; on production the founder's check is to sign in at
@@ -13,8 +13,8 @@ union all select 'EXECUTE on admin_assert(): authenticated and service_role yes,
              and not has_function_privilege('anon', 'public.admin_assert()', 'execute')
              and not exists (select 1 from pg_proc p, aclexplode(p.proacl) x where p.oid = 'public.admin_assert()'::regprocedure and x.grantee = 0)
             then 'PASS' else 'FAIL' end
-union all select 'ledger has 20260928200000',
-       case when exists (select 1 from supabase_migrations.schema_migrations where version = '20260928200000') then 'PASS' else 'FAIL' end
+union all select 'ledger has 20261006120000',
+       case when exists (select 1 from supabase_migrations.schema_migrations where version = '20261006120000') then 'PASS' else 'FAIL' end
 union all select 'every admin has a verified authenticator',
        case when exists (select 1 from public.admin_users)
              and not exists (select 1 from public.admin_users a
