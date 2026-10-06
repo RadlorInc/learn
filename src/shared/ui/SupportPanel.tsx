@@ -16,7 +16,8 @@ import {
   collectDiagnostics, formatDiagnostics, supportMailto, SUPPORT_EMAIL,
 } from '@/infra/diagnostics'
 
-export function SupportPanel({ learnerId, label = 'Need help?' }: { learnerId?: string; label?: string }) {
+/** `firstLine`: one more line at the top of the technical details (the crash screen's error code). */
+export function SupportPanel({ learnerId, label = 'Need help?', firstLine }: { learnerId?: string; label?: string; firstLine?: string }) {
   const [open, setOpen] = useState(false)
   const [block, setBlock] = useState('')
   const [note, setNote] = useState('')
@@ -26,7 +27,8 @@ export function SupportPanel({ learnerId, label = 'Need help?' }: { learnerId?: 
     setOpen(true)
     setBlock('collecting…')
     try {
-      setBlock(formatDiagnostics(await collectDiagnostics(learnerId)))
+      const block = formatDiagnostics(await collectDiagnostics(learnerId))
+      setBlock(firstLine ? `${firstLine}\n${block}` : block)
     } catch {
       setBlock('(diagnostics unavailable — please describe the problem above)')
     }
@@ -49,7 +51,7 @@ export function SupportPanel({ learnerId, label = 'Need help?' }: { learnerId?: 
       <button
         onClick={openPanel}
         style={{
-          background: 'none', border: 'none', padding: '8px 4px',
+          background: 'none', border: 'none', padding: '8px 4px', minHeight: 44,
           fontSize: 13, fontWeight: 600, color: '#3D6FB8',
           cursor: 'pointer', textDecoration: 'underline',
         }}
