@@ -121,6 +121,8 @@ export const ES: Record<string, string> = {
   'Yes, remove me': 'Sí, quitarme',
   'Cancel': 'Cancelar',
   'Delete {name}’s profile': 'Eliminar el perfil de {name}',
+  'Just want to fix the name, avatar or grade? Nothing needs deleting.': '¿Solo quiere corregir el nombre, el avatar o el grado? No hace falta eliminar nada.',
+  'Edit {name}’s details instead': 'Mejor edite los datos de {name}',
   'Remove myself from {name}’s profile': 'Salir del perfil de {name}',
   'Language': 'Idioma',
   // Review 1 Q5 (unreviewed draft)

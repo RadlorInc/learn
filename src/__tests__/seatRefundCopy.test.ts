@@ -129,6 +129,30 @@ describe('delete one child: the seat line, before the parent confirms', () => {
     expect(after, 'control: the confirmation opened').toContain('Permanently delete Ada?')
     expect(after).not.toMatch(/refund|paid plan/i)
   })
+  it('offers editing instead, and that link closes the confirmation and lands in the name field (nothing deleted)', async () => {
+    w.plan = { status: 'active', seats_paid: 1 }; w.kids = ['kid-a']
+    w.qs = 'child=kid-a&tab=login'
+    localStorage.clear()
+    const { default: Dashboard } = await import('@/app/parent/page')
+    const host = document.createElement('div'); document.body.appendChild(host)
+    const root = createRoot(host)
+    await act(async () => { root.render(createElement(Dashboard)) })
+    await settle()
+    const click = async (text: string) => {
+      const b = [...host.querySelectorAll('button')].find(x => x.textContent?.includes(text))
+      if (!b) throw new Error(`no button "${text}"`)
+      await act(async () => { b.click() }); await settle()
+    }
+    await click('Delete Ada’s profile')
+    expect(host.textContent, 'control: the confirmation opened').toContain('Permanently delete Ada?')
+    expect(host.textContent).toContain('Just want to fix the name, avatar or grade? Nothing needs deleting.')
+    await click('Edit Ada’s details instead')
+    expect(host.textContent).not.toContain('Permanently delete Ada?')
+    const card = host.querySelector('[data-tour="correct-card"]')
+    expect(card?.contains(document.activeElement), 'focus is in the edit card').toBe(true)
+    expect((document.activeElement as HTMLInputElement).value).toBe('Ada')
+    await act(async () => root.unmount()); host.remove()
+  })
   it('a free family: no billing words', async () => {
     w.plan = null; w.kids = ['kid-a', 'kid-b']
     const { after } = await confirmScreen('child=kid-a&tab=login', 'Delete Ada’s profile')

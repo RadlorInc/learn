@@ -502,6 +502,21 @@ function Dashboard() {
                     : null
                   return line && <p data-billing="delete-child" style={{ fontSize:14, color:'#991B1B', margin:'0 0 12px' }}>{line}</p>
                 })()}
+                {/* A wrong name or grade is the common reason to reach for delete (founder, 6 Oct): point at the edit card
+                    above, so a parent fixing a typo does not delete the child — and, for the last child, cancel the plan. */}
+                {d.accessRole === 'owner' && (
+                  <p style={{ fontSize:14, color:'#991B1B', margin:'0 0 12px' }}>
+                    {t('Just want to fix the name, avatar or grade? Nothing needs deleting.')}{' '}
+                    <button type="button" onClick={() => {
+                      setConfirming(null)
+                      const card = document.querySelector<HTMLElement>('[data-tour="correct-card"]')
+                      card?.scrollIntoView?.({ block: 'center' })
+                      card?.querySelector<HTMLInputElement>('input')?.focus()
+                    }} style={{ background:'none', border:'none', padding:0, minHeight:44, color:'#3D6FB8', fontSize:14, fontWeight:800, textDecoration:'underline', cursor:'pointer' }}>
+                      {t('Edit {name}’s details instead', { name: d.learner.display_name })}
+                    </button>
+                  </p>
+                )}
                 <div style={{ display:'flex', gap:10 }}>
                   <button onClick={() => d.accessRole === 'owner' ? handleDelete(d.learner.id) : handleRemoveSelf(d.learner.id)}
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
