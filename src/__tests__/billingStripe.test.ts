@@ -182,6 +182,7 @@ function stubNetwork(opts: {
   resendStatus?: number         // what Resend answers a send with
   stored?: string               // the stripe_subscription_id already on the account's row (none by default)
   others?: Record<string, Record<string, unknown>>  // Stripe's answer for a subscription other than `sub`
+  upsertFails?: { status: number; body: unknown }[]  // answers to the subscription upserts, in order, before a success
 } = {}) {
   const calls: Call[] = []
   const json = (body: unknown, status = 200) =>
@@ -205,6 +206,8 @@ function stubNetwork(opts: {
     }
     if (url.includes('/rest/v1/subscriptions')) {
       if ((init.method ?? 'GET').toUpperCase() === 'GET') return json(opts.stored ? [{ stripe_subscription_id: opts.stored }] : [])
+      const fail = opts.upsertFails?.shift()
+      if (fail) return json(fail.body, fail.status)
       return json([{ id: 'sub-row-1' }], 201)
     }
     if (url.includes('/rest/v1/rpc/materialize_seats')) return json(2)
@@ -308,6 +311,34 @@ describe('the Stripe webhook', () => {
     const patch = calls.find(c => c.method === 'PATCH' && c.url.includes('billing_events'))
     expect(patch).toBeTruthy()
     expect(JSON.parse(patch!.body).processed_at).toBeTruthy()
+  })
+
+  // Seen on a local stack driven by Stripe test mode (6 Oct 2026): checkout.session.completed, invoice.paid and
+  // customer.subscription.created arrive within a second; two of them insert the account's first row at once, and the
+  // loser's upsert fails on subscriptions_stripe_customer_id_key (ON CONFLICT names only account_id) → 500.
+  const RACE = { status: 409, body: { code: '23505', message: 'duplicate key value violates unique constraint "subscriptions_stripe_customer_id_key"' } }
+
+  it('RACE — a first-row race (23505) is retried once and then applied: 200, seats reconciled, event closed', async () => {
+    const calls = stubNetwork({ upsertFails: [RACE] })
+    const res = await deliver('checkout.session.completed', { id: 'cs_1', subscription: 'sub_123' })
+    expect(res.status).toBe(200)
+    expect(post(calls, '/rest/v1/subscriptions').length, 'the upsert was not tried again').toBe(2)
+    expect(post(calls, 'rpc/materialize_seats').length).toBe(1)
+    expect(calls.some(c => c.method === 'PATCH' && c.url.includes('billing_events'))).toBe(true)
+  })
+
+  it('RACE — only once: a second 23505 is a real failure (500, Stripe redelivers), not a loop', async () => {
+    const calls = stubNetwork({ upsertFails: [RACE, RACE] })
+    const res = await deliver('checkout.session.completed', { id: 'cs_1', subscription: 'sub_123' })
+    expect(res.status).toBe(500)
+    expect(post(calls, '/rest/v1/subscriptions').length).toBe(2)
+  })
+
+  it('RACE — any other failure is not retried', async () => {
+    const calls = stubNetwork({ upsertFails: [{ status: 400, body: { code: '22P02', message: 'invalid input syntax' } }] })
+    const res = await deliver('checkout.session.completed', { id: 'cs_1', subscription: 'sub_123' })
+    expect(res.status).toBe(500)
+    expect(post(calls, '/rest/v1/subscriptions').length).toBe(1)
   })
 
   it('C2 — the SAME event delivered twice does nothing the second time', async () => {
