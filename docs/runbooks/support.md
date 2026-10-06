@@ -7,6 +7,7 @@
 - **The support mailbox** (the address is `SUPPORT_EMAIL` in `src/app/site.ts`). The **founder** reads it. It is reached from:
   - the dashboard's *Need help?* panel (`src/shared/ui/SupportPanel.tsx`), which opens the parent's own mail program with a **diagnostic block** filled in;
   - `/help`, whose *Report a problem* opens the same email with the diagnostic block;
+  - every crash screen (`src/shared/ui/CrashScreen.tsx`: the route error screen, the root-layout one and the root boundary), whose *Report a problem* opens it too, with the server error's digest as the block's first line (`error code …`) when there is one;
   - `/auth` and the consent-link pages (`/consent/...`), which show the address for a parent who is signed out;
   - the legal pages;
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
