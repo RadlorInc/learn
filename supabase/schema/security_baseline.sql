@@ -101,6 +101,11 @@
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
 --                                                  only) for the learner's creator or a learner_access row. Reasons
 --                                                  are a fixed list (check constraint), no free text. No update/delete.
+--   game_saves                 rls=t  policies=3   2026-10-01 (20261001170000): the /play game's save, one row per
+--                                                  child. SELECT/INSERT/UPDATE for any learner_access row (owner,
+--                                                  viewer, the child's 'self' login); INSERT/UPDATE on
+--                                                  (learner_id, data) only; no DELETE (cascade with the learner).
+--                                                  Not read by anything privileged. No SECURITY DEFINER.
 --   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
 --                                                  or the row of the adult who created my learner. Every write
 --                                                  privilege revoked from public/anon/authenticated and no write
@@ -143,6 +148,12 @@
 --   subscription_seats         rls=t  policies=1   SELECT only, via subscriptions.account_id. Seats
 --                                                  are created by Stripe (service role) and moved
 --                                                  only by reassign_learner_seat().
+--   free_topics                rls=t  policies=1   2026-10-01 (20261001120000): SELECT only (account_id = auth.uid()),
+--                                                  every client write revoked; written only by claim_topic(), which
+--                                                  caps a family at two free topics under an advisory lock.
+--   lesson_catalog             rls=t  policies=0   2026-09-28 (20260928180000): INTENTIONAL, every client privilege
+--                                                  revoked. The ids that may earn progress and points; read only
+--                                                  inside record_lesson_progress / record_module_practice.
 
 -- ==== RLS POLICIES (every access predicate is scoped by auth.uid()/jwt email) ====
 --   chapters: select        SELECT  using(true)                          [public catalog]
@@ -150,6 +161,7 @@
 --   grades / grade_chapters SELECT/INSERT/UPDATE/DELETE scoped to grades.created_by = auth.uid() (+ learner_access for read)
 --   subscriptions: owner can read       SELECT  using(account_id = auth.uid())          [no write policy exists]
 --   subscription_seats: owner can read  SELECT  using(exists subscriptions where account_id = auth.uid())
+--   free_topics: owner reads            SELECT  using(account_id = auth.uid())          [no write policy, writes revoked]
 --   sessions: parent can insert         INSERT  check(learner_access AND is_chapter_entitled(learner_id, chapter))
 --   learner_progress: parent access     ALL     using(learner_access) / check(learner_access AND is_chapter_entitled(...))
 --                                               ⚠️ the entitlement is in WITH CHECK only, never USING:

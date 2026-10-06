@@ -70,14 +70,14 @@ const adminCalls = () => calls.filter(c => c.path.startsWith('/auth/v1/admin') |
 describe('/api/child-login', () => {
   it('refuses a caller whose token Supabase rejects, before touching anything else', async () => {
     script = [signedIn]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }, 'forged'))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }, 'forged'))
     expect(r.status).toBe(401)
     expect(calls.map(c => `${c.method} ${c.path}`)).toEqual(['GET /auth/v1/user'])
   })
 
   it('asks ownership with the CALLER\'S token and created_by = the caller, and refuses a learner they did not create', async () => {
     script = [signedIn, ['GET /rest/v1/learners', () => res(200, [])]]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect(r.status).toBe(403)
     const own = calls.find(c => c.path.startsWith('/rest/v1/learners'))!
     expect(own.auth).toBe('Bearer parent-token')   // never the service key: RLS must apply to this read
@@ -90,11 +90,11 @@ describe('/api/child-login', () => {
       ['POST /auth/v1/admin/users', () => res(200, { id: CHILD })],
       ['POST /rest/v1/learner_access', () => res(201, {})],
       ['POST /rest/v1/profiles', () => res(201, {})]]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: ' Aarav7', password: 'secret1' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: ' Aarav7', password: 'secret12' }))
     expect(await r.json()).toEqual({ ok: true, username: 'aarav7' })
     expect(adminCalls().map(c => [c.method, c.path, c.auth, c.body])).toEqual([
       ['POST', '/auth/v1/admin/users', 'Bearer service-key',
-        { email: 'aarav7@learner.adaptivelearn.invalid', password: 'secret1', email_confirm: true, user_metadata: { full_name: 'Aarav', must_change_password: false } }],
+        { email: 'aarav7@learner.adaptivelearn.invalid', password: 'secret12', email_confirm: true, user_metadata: { full_name: 'Aarav', must_change_password: false } }],
       ['POST', '/rest/v1/learner_access', 'Bearer service-key', { learner_id: LEARNER, parent_id: CHILD, access_role: 'self' }],
       ['POST', '/rest/v1/profiles', 'Bearer service-key', { id: CHILD, role: 'learner', display_name: 'Aarav' }],
     ])
@@ -105,9 +105,10 @@ describe('/api/child-login', () => {
       ['POST /auth/v1/admin/users', () => res(200, { id: CHILD })],
       ['POST /rest/v1/learner_access', () => res(400, { message: 'violates check constraint' })],
       [`DELETE /auth/v1/admin/users/${CHILD}`, () => res(200, {})]]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect(r.status).toBe(502)
-    expect(adminCalls().map(c => `${c.method} ${c.path}`)).toEqual([
+    // The failure's own error_events row (status and code only) is checked in handledFailuresSink.test.ts.
+    expect(adminCalls().filter(c => c.path !== '/rest/v1/error_events').map(c => `${c.method} ${c.path}`)).toEqual([
       'POST /auth/v1/admin/users', 'POST /rest/v1/learner_access', `DELETE /auth/v1/admin/users/${CHILD}`,
     ])
   })
@@ -142,38 +143,53 @@ describe('/api/child-login', () => {
 
   it('reports a taken username as such, and rejects a bad username or short password before any write', async () => {
     script = [signedIn, owns, noLogin, ['POST /auth/v1/admin/users', () => res(422, { msg: 'A user with this email address has already been registered' })]]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect([r.status, await r.json()]).toEqual([409, { ok: false, error: 'username_taken' }])
 
     calls = []
-    const bad = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'a b', password: 'secret1' }))
+    const bad = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'a b', password: 'secret12' }))
     const short = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '123' }))
     expect([bad.status, short.status]).toEqual([400, 400])
     expect(adminCalls()).toEqual([])
   })
 
-  // Production, 2026-09-24: "123456" with leaked-password protection on came back as 502 → "Check your connection".
+  it('the minimum is 8: a 7-character password is refused before any write, exactly as a short one always was; 8 goes through', async () => {
+    script = [signedIn, owns, noLogin,
+      ['POST /auth/v1/admin/users', () => res(200, { id: CHILD })],
+      ['POST /rest/v1/learner_access', () => res(201, {})],
+      ['POST /rest/v1/profiles', () => res(201, {})]]
+    const seven = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'abcdefg' }))
+    expect([seven.status, await seven.json()]).toEqual([400, { ok: false, error: 'weak_password' }])
+    expect(adminCalls(), 'a 7-character password reached Supabase').toEqual([])
+
+    calls = []
+    const eight = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'abcdefgh' }))
+    expect([eight.status, await eight.json()]).toEqual([200, { ok: true, username: 'aarav7' }])
+    expect((adminCalls()[0].body as { password: string }).password, 'POSITIVE TWIN: the 8-character password was not sent').toBe('abcdefgh')
+  })
+
+  // Production, 2026-09-24: "123456" with leaked-password protection on (now "12345678": a 6-character one stops at the minimum) came back as 502 → "Check your connection".
   // Supabase's refusal, as @supabase/auth-js parses it: 422, error_code weak_password, weak_password.reasons.
   const weak = () => res(422, { code: 422, error_code: 'weak_password', msg: 'Password is known to be weak and easy to guess, please choose a different one.', weak_password: { reasons: ['pwned'] } })
   it('a password Supabase refuses is a 422 password_rejected — on a new login and on a changed one — not a 502', async () => {
     script = [signedIn, owns, noLogin, ['POST /auth/v1/admin/users', weak]]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '123456' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '12345678' }))
     expect([r.status, await r.json()]).toEqual([422, { ok: false, error: 'password_rejected' }])
     expect(adminCalls().map(c => `${c.method} ${c.path}`), 'nothing may be linked for an account that was never made').toEqual(['POST /auth/v1/admin/users'])
 
     calls = []
     script = [signedIn, owns, hasLogin, [`PUT /auth/v1/admin/users/${CHILD}`, weak]]
-    const u = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '123456' }))
+    const u = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: '12345678' }))
     expect([u.status, await u.json()]).toEqual([422, { ok: false, error: 'password_rejected' }])
   })
 
   it('control: any OTHER refusal is still a 502, and is logged with its status and code but never the password', async () => {
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})
     script = [signedIn, owns, noLogin, ['POST /auth/v1/admin/users', () => res(500, { code: 500, error_code: 'unexpected_failure' })]]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect([r.status, await r.json()]).toEqual([502, { ok: false, error: 'create_failed' }])
-    expect(err.mock.calls).toEqual([['[child-login] create failed', 500, 'unexpected_failure']])
-    expect(JSON.stringify(err.mock.calls)).not.toContain('secret1')
+    expect(err.mock.calls[0]).toEqual(['[child-login] create failed', 500, 'unexpected_failure'])
+    expect(JSON.stringify(err.mock.calls)).not.toContain('secret12')
     err.mockRestore()
   })
 
@@ -191,10 +207,22 @@ describe('/api/child-login', () => {
     expect(adminCalls().map(c => `${c.method} ${c.path}`)).toEqual([`DELETE /auth/v1/admin/users/${CHILD}`])
   })
 
+  it('a username that cannot be looked up is left out of the list but LOGGED, with its status and no id', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    script = [signedIn, owns, hasLogin, [`GET /auth/v1/admin/users/${CHILD}`, () => res(500, {})]]
+    const g = await (await route()).GET(req('GET'))
+    expect(await g.json()).toEqual({ ok: true, logins: {} })
+    const logged = JSON.stringify(err.mock.calls)
+    expect(logged, 'the failed lookup left no trace').toContain('child-login: username lookup failed 500')
+    expect(logged).not.toContain(CHILD)
+    expect(logged).not.toContain(LEARNER)
+    err.mockRestore()
+  })
+
   it('without the service key says not_configured and never falls back to the anon key', async () => {
     delete process.env.SUPABASE_SERVICE_ROLE_KEY
     script = [signedIn, owns]
-    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret1' }))
+    const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect([r.status, calls.length]).toEqual([503, 0])
   })
 })

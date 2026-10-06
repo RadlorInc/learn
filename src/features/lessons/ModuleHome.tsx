@@ -11,6 +11,8 @@ import { pullLessonProgress } from '@/infra/storage/lessonSync'
 import { getWallet } from '@/data/repositories/points'
 import { getMyLearners } from '@/data/repositories/learners'
 import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSession'
+import { trialTopics } from '@/data/repositories/billing'
+import { PAYWALL_ENABLED } from '@/features/billing/useTopicGate'
 import { showDay } from './progressReport'
 import { Thing, INK, TEAL, ON_TEAL, pill, PAGE_BG, shell, topBar } from './Pictures'
 import { bubble, primary } from './Frame'
@@ -23,14 +25,49 @@ const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 
 /** `lessonIds` = the topics the parent chose for this child (null = every topic); grades and modules with none are hidden. */
 /** `exercises`: the class's exercises, for a child in a PAID teacher's class (features/classes) — a button to open them. */
-export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exercises }: {
+type Props = {
   learnerId: string | null; back?: { href: string; label: string } | { onClick: () => void; label: string }; grade?: number; lessonIds?: readonly string[] | null
   exercises?: { count: number; onOpen: () => void }
-}) {
+}
+
+/**
+ * The free trial (20261001140000): while the family has not paid, the child's home holds ONLY the two topics the parent
+ * picked on their dashboard — no lock, no trial, no price on this side. Before the parent picks, a calm "being chosen"
+ * screen. `trial_topics` answers null when there is no restriction; a failed lookup falls back to the parent's own choice.
+ */
+export function ModuleHome(props: Props) {
+  const { learnerId } = props
+  const [trial, setTrial] = useState<string[] | null | undefined>(() => (PAYWALL_ENABLED && learnerId ? undefined : null))
+  useEffect(() => {
+    if (!PAYWALL_ENABLED || !learnerId) return
+    let live = true
+    trialTopics(learnerId).then(t => { if (live) setTrial(t === undefined ? null : t) })
+    return () => { live = false }
+  }, [learnerId])
+  if (trial === undefined) return null
+  if (trial && trial.length === 0) return <BeingChosen back={props.back} />
+  return <Home {...props} trial={trial} />
+}
+
+function BeingChosen({ back }: { back: Props['back'] }) {
+  return (
+    <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: 14, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ ...shell, maxWidth: 520, padding: 28, textAlign: 'center' }}>
+        <p style={{ fontSize: 44, margin: 0 }} aria-hidden>📚</p>
+        <h1 style={{ fontSize: 24, margin: '10px 0 8px', color: INK }}>Your grown-up is picking your first lessons</h1>
+        <p style={{ fontSize: 16, margin: '0 0 18px', color: INK }}>Come back soon. They will be right here.</p>
+        {back && 'href' in back ? <Link href={back.href} style={{ ...pill, textDecoration: 'none', display: 'inline-flex' }}>{back.label}</Link>
+          : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : null}
+      </div>
+    </div>
+  )
+}
+
+function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exercises, trial }: Props & { trial: string[] | null }) {
   // The assigned lessons as of the latest read: the copy saved at sign-in, replaced by the account's own on mount, so a
   // lesson the parent assigns while the child is signed in reaches them the next time they open this screen.
   const [fresh, setFresh] = useState<{ ids: string[] | null; due: Record<string, string> | null } | null>(null)
-  const lessonIds = fresh ? fresh.ids : savedIds
+  const lessonIds = trial ?? (fresh ? fresh.ids : savedIds)
   const due = fresh ? fresh.due : getActiveLearner()?.lesson_due ?? null
   const all = chooseFrom([...STORY_CATALOGUE, ...CATALOGUE], lessonIds)
   // KG–2 story modules get their own layout (one Play card each); Grades 3–8 are the lesson modules.
@@ -49,7 +86,8 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
       const me = all.find(l => l.id === learnerId)
       if (!live || !me) return
       const active = getActiveLearner()
-      if (active?.id === me.id) setActiveLearner({ ...active, lesson_ids: me.lesson_ids ?? null, lesson_due: me.lesson_due ?? null })
+      // During the trial the saved copy holds the two free topics, so the topic path (/lesson) shows only those.
+      if (active?.id === me.id) setActiveLearner({ ...active, lesson_ids: trial ?? me.lesson_ids ?? null, lesson_due: me.lesson_due ?? null })
       setFresh({ ids: me.lesson_ids ?? null, due: me.lesson_due ?? null })
     }).catch(() => { /* offline: the saved copy stands */ })
     // The wallet after the pull, so points earned by uploads it just sent are counted.
@@ -57,7 +95,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
       .then(ok => { if (live && ok) redraw(n => n + 1); return getWallet(learnerId) })
       .then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
     return () => { live = false }
-  }, [learnerId])
+  }, [learnerId, trial])
   const [picked, setPicked] = useState(() => GRADES.length ? firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]) : '')
   // A story tab is open when the child asked for KG–2, or when the parent chose nothing from Grades 3–8.
   const [storyTab, setStoryTab] = useState<number | null>(() => STORY_TABS.includes(startGrade) ? startGrade : GRADES.length ? null : STORY_TABS[0] ?? null)
@@ -142,14 +180,14 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
               <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>
             </div>
 
-            <div style={{ ...card, background: '#fbdbba' }}>
+            {!trial && <div style={{ ...card, background: '#fbdbba' }}>
               <div style={{ flex: 1 }}>
                 <strong style={cardTitle}>2. Practice</strong>
                 {m.lessons.length} mixed problems
               </div>
               <span aria-hidden style={{ display: 'flex', gap: 3, '--lp-u': '18px' } as CSSProperties}><Thing obj="cookie" /><Thing obj="chair" /><Thing obj="apple" /></span>
               <Link href={`/practice?module=${m.id}`} style={{ ...primary, background: '#fff', color: INK }}>Practice</Link>
-            </div>
+            </div>}
             </>}
           </section>
         </div>}
@@ -194,7 +232,7 @@ function StoryChapters({ modules, learnerId }: { modules: ModuleMeta[]; learnerI
             <strong style={cardTitle}>Story</strong>
             {isDone(c.id) ? 'Done! Play it again any time.' : 'Watch first, then it is your turn.'}
           </div>
-          <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{c.emoji}</span>
+          <CardArt src={c.asset} emoji={c.emoji} />
           <Link href={`/game?c=${c.id}`} style={primary}>{isDone(c.id) ? 'Play again' : 'Play'}</Link>
         </div>
       </section>
@@ -231,3 +269,12 @@ const num: CSSProperties = { width: 34, height: 34, borderRadius: '50%', flexShr
 const card: CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', border: `4px solid ${INK}`, borderRadius: 20, padding: '14px 16px',
   fontSize: 18, fontWeight: 600, color: INK }
 const cardTitle: CSSProperties = { display: 'block', fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 900 }
+
+/** A chapter's picture on its Play card. Decorative (the title is beside it), so alt="" — and if the file fails to load
+ *  the chapter's emoji stands in, so the card is never left with an empty gap. */
+function CardArt({ src, emoji }: { src: string; emoji: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{emoji}</span>
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" width={72} height={72} decoding="async" onError={() => setFailed(true)} style={{ width: 72, height: 72, objectFit: 'contain', flexShrink: 0 }} />
+}

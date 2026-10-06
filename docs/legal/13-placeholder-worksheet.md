@@ -21,8 +21,8 @@
 - [ ] ...
 - [ ] effective date
 - [ ] last updated date
-- [ ] monthly price, USD
-- [ ] annual price, USD
+- [x] monthly price, USD — $7.99 first child, $4.99 each additional (2026-10-01)
+- [x] annual price, USD — $75.99 first child, $48.00 each additional (2026-10-01)
 - [ ] there is no in-app cancellation today. A cancel path must exist before this policy is published: several state statutes require cancelling online to be as easy as subscribing, and a policy that names a path a parent cann
 
 ## 02-coppa-direct-notice-to-parents.md  (3 total)

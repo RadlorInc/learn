@@ -17,7 +17,7 @@ import {
   START, next, back, check, hintsFor, wonFor, KEEP_GOING, afterWorked, toPractice, nextPractice, replayLesson, currentProblem, solutionOf, stepsOf, outcomeOf, SAY,
   type FlowState, type Lesson,
 } from './script'
-import { rng, freshSeed, beginRun, advance, startLevel, reviewTopic, toSaved, fromSaved, runDone, ladderAnswers, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
+import { rng, freshSeed, beginRun, advance, draw, SEEN, startLevel, reviewTopic, toSaved, fromSaved, runDone, ladderAnswers, FRESH, CHECKPOINT, type Run, type Pause } from './adaptive'
 import { ladderOf, loadedLesson } from './catalogue'
 import { loadStanding, saveStanding } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
@@ -26,10 +26,10 @@ import { syncLesson, syncRun } from '@/infra/storage/lessonSync'
 import { C } from './sessionCopy'
 import type { Nudge } from './nudge'
 import { markNudgeShown } from '@/infra/storage/nudgeSeen'
-import { Pic, tapCue, pill, INK } from './Pictures'
+import { Pic, tapCue, pill, INK, TEAL, ON_TEAL } from './Pictures'
 import { Ink, wrap } from './Diagrams'
 import { Chalkboard } from './Chalkboard'
-import { beatMs } from './chalk'
+import { beatMs, setWordTimes } from './chalk'
 import { Frame, stage, bubble, primary, hint, idea, cue, tick, right } from './Frame'
 import { AnswerInput, ready, needsSign, needsWhole } from './AnswerInput'
 import { PracticeLayout, hintBtn, RIGHT_MS } from './PracticeLayout'
@@ -51,8 +51,25 @@ const LESSON_RATE = 0.9
  * `learnerId` and `earlier` (the ids of this module's topics before this one) feed adaptive practice: a laddered lesson
  * (see ./adaptive) asks generated problems that follow the child, and may bring back one earlier topic that is not mastered.
  */
-export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit, nudge = null, onPractise, practiceFirst = false, onModuleComplete }: {
+/**
+ * A paid tester's review (/test): nothing moves on by itself, and every way forward stays shut until the screen has
+ * played out (her lines finished, the question answered) AND `done(key)` says the tester reviewed it. `bar` draws the
+ * review form for the screen on show. Keys: '1'–'7' teaching screens, '8' / '8-twin' Now you try, 'p1'… practice, '9'.
+ */
+export interface ReviewGate {
+  done: (key: string) => boolean
+  bar: (key: string, played: boolean, answer: string) => ReactNode
+  /**
+   * Practice in review mode. `start`: practice reviews this topic already has, so a new sitting numbers its problems on
+   * from there (p6, p7…) instead of reusing keys an earlier sitting saved. `counts[i]`: reviewed problems at level i+1.
+   * `need`: how many each level needs before Finish practice opens.
+   */
+  practice: { start: number; counts: readonly number[]; need: number }
+}
+
+export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDone, onFinish, onExit, nudge = null, onPractise, practiceFirst = false, onModuleComplete, review }: {
   lesson: Lesson; learnerId?: string | null; earlier?: readonly string[]
+  review?: ReviewGate
   /** "Practice again" from the module summary: straight into practice — no teaching screens, no welcome card. */
   practiceFirst?: boolean
   /** The module's last topic just finished: its end screen leads to the module summary instead of the topic map. */
@@ -80,9 +97,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   useEffect(() => {
     setSceneVoice(lessonVoice(lesson.id), VOICE_INDEX[lesson.id.split('-')[0]])
     setClipRate(LESSON_RATE)
+    // The chalk lands on her real words (./word-times, one small chunk per module); until it loads, or for a module with
+    // none, the board keeps chalk.ts's estimate.
+    let live = true
+    import(`./word-times/${lesson.id.split('-')[0]}.json`).then(x => { if (live) setWordTimes(x.default, LESSON_RATE) }, () => {})
     // Download her lines now, so one sentence runs into the next instead of waiting on a download between them.
     prefetchClips([...lesson.screens.flatMap(sc => sc.beats?.map(b => b.say) ?? []), SAY.turn(lesson), lesson.bigIdea])
-    return () => { setSceneVoice(null); setClipRate(1) }
+    return () => { live = false; setSceneVoice(null); setClipRate(1); setWordTimes({}, 1) }
   }, [lesson])
   const ladder = ladderOf(lesson.id)
   const [run, setRun] = useState<Run | null>(null)
@@ -90,7 +111,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // Short sessions (founder, 2026-09-24): a choice after every 5 answers and at mastery; the run is saved after every
   // answer, so Take a break — or closing the app — continues from exactly there. A saved run greets the child with a
   // choice to go straight back to practice (never an automatic skip of the lesson).
-  const [welcome, setWelcome] = useState(() => !practiceFirst && !!ladder && !!loadRun(learnerId, lesson.id))
+  const [welcome, setWelcome] = useState(() => !review && !practiceFirst && !!ladder && !!loadRun(learnerId, lesson.id))
   // Held in state from the first render: marking it shown makes the page's next answer "no card", and a re-render must
   // not snatch the card away while the child is reading it.
   const [nudging, setNudging] = useState(nudge)
@@ -111,10 +132,17 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // forward — and Next turns it back on. Screen 1 too, once its line is said (founder, 2026-09-24; it used to wait for
   // the child to tap its question), and Screen 7 runs on into "Your turn" (founder, 2026-09-20).
   const [autoOn, setAutoOn] = useState(true)
+  // Review mode: which screen's lines have played to the end (the beats array, or Screen 1's line), and what the
+  // tester typed on this problem.
+  const [playedOf, setPlayedOf] = useState<unknown>(null)
+  const [tries, setTries] = useState<string[]>([])
+  // Review mode, laddered practice: the tester picks the level the next problem comes from (0-based), so every level's
+  // questions get checked — the adaptive ladder does not move, nothing is saved, and the run ends when they choose.
+  const [reviewLevel, setReviewLevel] = useState(0)
 
   const say = (text: string, on = audio) => { if (on && text) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
-    if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false) }
+    if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false); if (n.mode !== 'won') setTries([]) }
     setS(n)
     if (spoken) say(spoken)
     // A laddered topic is done by its run (see nextProblem); its 'finish' screen is only the break.
@@ -128,7 +156,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // list (their tap) and not on a lesson opened cold from a link — where Screen 1's own button is the first tap.
   const line1 = s.mode === 'lesson' && s.screen === 0 && !welcome && !nudging ? screenSay(lesson.screens[0]) : ''
   const autoNext = useLatestRef(() => {
-    if (!autoOn || s.mode !== 'lesson') return
+    if (review || !autoOn || s.mode !== 'lesson') return
     const n = next(s)
     go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
   })
@@ -137,7 +165,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     // speakSteps, not speak: it says when the line is over — and, when the browser blocks sound (a cold link), its
     // own timer stands in, so the screen still moves on.
     let hold: ReturnType<typeof setTimeout> | undefined
-    const stop = speakSteps([line1], { onDone: () => { hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
+    const stop = speakSteps([line1], { onDone: () => { setPlayedOf(line1); hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
     return () => { stop(); clearTimeout(hold) }
   }, [line1, replay, autoNext])
 
@@ -148,18 +176,23 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     // fast for a long line. Either way the lines and the board move together.
     let hold: ReturnType<typeof setTimeout> | undefined
     if (audio) {
-      const stop = speakSteps(beats.map(b => b.say), { gapMs: GAP_MS, onStep: i => setShown(i + 1), onDone: () => { hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
+      const stop = speakSteps(beats.map(b => b.say), { gapMs: GAP_MS, onStep: i => setShown(i + 1), onDone: () => { setPlayedOf(beats); hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
       return () => { stop(); clearTimeout(hold) }
     }
     let t = 0
     const ids = beats.map((b, i) => { const at = t; t += beatMs(b.say); return setTimeout(() => setShown(i + 1), at) })
-    ids.push(setTimeout(() => autoNext.current(), t + HOLD_MS))
+    ids.push(setTimeout(() => { setPlayedOf(beats); autoNext.current() }, t + HOLD_MS))
     return () => ids.forEach(clearTimeout)
   }, [beats, audio, replay, autoNext])
 
   // Screen 8 solved (or the twin's worked steps seen): straight on to practice with the green check. Screen 9 (its sentence
   // and the math-word sticker) comes AFTER practice (founder, 2026-09-24).
   const startPractice = () => {
+    if (ladder && review) {
+      setRun(beginRun(lesson.id, ladder, FRESH, r, null))
+      setReviewLevel(0)
+      return go(toPractice(s))
+    }
     if (ladder) {
       const saved = loadRun(learnerId, lesson.id)
       if (saved) {
@@ -180,7 +213,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   const takeBreak = () => { stopSpeech(); setPause(null); if (session.answered === 0) onExit(); else go({ ...s, mode: 'finish', misses: 0, feedback: null }) }
   const won = s.mode === 'won'
   useEffect(() => {
-    if (!won) return
+    if (!won || review) return
     // A child who did not solve the twin gets no check: nothing to celebrate, so no pause either.
     const id = setTimeout(startPractice, wonFor(lesson, s).helped ? 0 : 1500)
     return () => clearTimeout(id)
@@ -189,7 +222,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // A right practice answer moves on by itself; the button stays for a child who wants to go sooner. Not after the
   // worked steps — those are there to be read.
   const nextRef = useRef<() => void>(() => {})
-  const rightAt = s.mode === 'practice' && s.feedback === 'right' ? s.practice : -1
+  const rightAt = !review && s.mode === 'practice' && s.feedback === 'right' ? s.practice : -1
   useEffect(() => {
     if (rightAt < 0) return
     const id = setTimeout(() => nextRef.current(), RIGHT_MS)
@@ -199,7 +232,15 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   // "Didn't get it?" on every screen, for a signed-in child only (the row belongs to a learner). Opening it pauses the
   // lesson: her voice stops and the screen does not move on while the child is choosing.
-  const where = s.mode === 'lesson' ? `${s.screen + 1}` : s.mode === 'turn' || s.mode === 'won' ? '8' : s.mode === 'practice' ? `p${s.practice + 1}` : '9'
+  const where = s.mode === 'lesson' ? `${s.screen + 1}` : s.mode === 'turn' || s.mode === 'won' ? '8' : s.mode === 'practice' ? `p${s.practice + 1 + (review?.practice.start ?? 0)}` : '9'
+  const rkey = s.mode === 'turn' || s.mode === 'won' ? (s.twin ? '8-twin' : '8') : where
+  const played = s.mode === 'lesson'
+    ? (beats ? playedOf === beats : s.screen === 0 ? playedOf === line1 : true)
+    : s.mode === 'turn' || s.mode === 'practice' ? s.feedback === 'right' || s.feedback === 'worked' : true
+  const answer = (review && ladder && s.mode === 'practice' ? `L${reviewLevel + 1} · ` : '') + tries.join(' → ') + (s.mode === 'won' || s.feedback === 'right' ? ' ✓' : s.feedback === 'worked' ? ' (steps shown)' : '')
+  const locked = !!review && !review.done(rkey)
+  const shut: CSSProperties = locked ? { opacity: 0.45, cursor: 'not-allowed' } : {}
+  const bar = review?.bar(rkey, played, answer)
   const feedback = learnerId
     ? <Feedback key={where} learnerId={learnerId} lessonId={lesson.id} screen={where} onOpen={() => { stopSpeech(); setAutoOn(false) }} />
     : undefined
@@ -249,13 +290,22 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const worked = s.feedback === 'worked', answering = s.feedback !== 'right' && !worked
     const submit = () => {
       if (!ready(solutionOf(problem), value)) return
+      setTries(t => [...t, value])
       const n = check(lesson, s, value, problem)
       go(n, n.feedback === 'idea' ? bigIdea : n.feedback === 'right' ? SAY.right : n.feedback === 'worked' ? SAY.worked : undefined)
       if (n.feedback !== 'right') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
     // Laddered: no "of 5" — how many problems depends on the child, and the count must not read as a score.
     const nextProblem = () => {
+      if (locked) return
       if (!run || !ladder) return go(nextPractice(s))
+      if (review) {
+        // The tester's level, not the ladder's: no standing moves, no checkpoint, no end at DONE_AFTER.
+        const next = draw(ladder, reviewLevel, r, run.recent)
+        setRun({ ...run, asked: run.asked + 1, recent: [...run.recent, next.text].slice(-SEEN), current: { problem: next, from: lesson.id } })
+        setSession(x => ({ ...x, answered: x.answered + 1 }))
+        return go({ ...s, practice: s.practice + 1, misses: 0, feedback: null })
+      }
       const o = outcomeOf(s), outcome = asked && o === 'first' ? 'second' : o
       const moved = advance(run, lesson.id, ladderOf, outcome, r)
       for (const [id, st] of moved.saved) { saveStanding(learnerId, id, st); syncLesson(learnerId, id, outcome) }
@@ -278,11 +328,48 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     // The five dots: answers in this set, the one on screen counted the moment it is over; all five while the checkpoint
     // is up. A resumed run continues its set (asked is saved).
     const setDone = pause === 'checkpoint' ? CHECKPOINT : (run && ladder ? run.asked : s.practice) % CHECKPOINT + (answering ? 0 : 1)
-    return (
+    return (<>{bar}
       <PracticeLayout corner={lesson.title} crumb={`Practice ${s.practice + 1}${of}`} title={`Problem ${s.practice + 1}${of}`}
-        exitLabel={ladder ? C.takeBreak : undefined}
-        onExit={ladder ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
+        exitLabel={review ? '← Topics' : ladder ? C.takeBreak : undefined}
+        onExit={ladder && !review ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
+        {review && ladder && run && (
+          <div role="group" aria-label="Tester: question level" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+            <b style={{ fontSize: 16 }}>Level</b>
+            {ladder.map((_, i) => (
+              <button key={i} type="button" aria-pressed={i === reviewLevel} disabled={!answering}
+                onClick={() => {
+                  // A new problem at that level, in place of the one on screen (not yet answered).
+                  const next = draw(ladder, i, r, run.recent)
+                  setReviewLevel(i)
+                  setRun({ ...run, recent: [...run.recent, next.text].slice(-SEEN), current: { problem: next, from: lesson.id } })
+                  setValue(''); setTries([]); setAsked(false); setTaps(0)
+                  go({ ...s, misses: 0, feedback: null })
+                }}
+                style={{ ...pill, fontSize: 16, padding: '6px 12px', background: i === reviewLevel ? TEAL : '#fff', color: i === reviewLevel ? ON_TEAL : INK }}>
+                L{i + 1}
+              </button>
+            ))}
+          </div>
+        )}
+        {review && ladder && run && (() => {
+          // How far this topic's practice is, from the reviews saved (any sitting), and the way out once it is enough.
+          const counts = ladder.map((_, i) => review.practice.counts[i] ?? 0)
+          const enough = counts.every(c => c >= review.practice.need)
+          return (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '8px 12px', borderRadius: 14, border: `3px dashed ${INK}`, background: '#fffbe8' }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>
+                Tester: {review.practice.need} questions per level —{' '}
+                {counts.map((c, i) => <span key={i} style={{ color: c >= review.practice.need ? '#1f7a43' : INK }}>L{i + 1} {Math.min(c, review.practice.need)}/{review.practice.need}{i < counts.length - 1 ? ' · ' : ''}</span>)}
+              </span>
+              <button type="button" style={{ ...primary, minHeight: 44, padding: '8px 18px', fontSize: 17, marginLeft: 'auto', ...(enough && !(locked && !answering) ? {} : { opacity: 0.45, cursor: 'not-allowed' }) }}
+                disabled={!enough || (locked && !answering)} title={enough ? undefined : 'Review the questions above at every level first'}
+                onClick={() => { stopSpeech(); go({ ...s, mode: 'finish', misses: 0, feedback: null }) }}>
+                Finish practice ▶
+              </button>
+            </div>
+          )
+        })()}
         <SetDots n={setDone} />
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <div style={stage}>
@@ -311,9 +398,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           {answering ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || s.feedback === 'idea'}>Hint</button> : <span />}
           {answering
             ? <button type="submit" form="lp-answer" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>
-            : <button type="button" style={primary} onClick={nextProblem}>{!ladder && s.practice === 4 ? 'Finish' : 'Next problem'}</button>}
+            : <button type="button" style={{ ...primary, ...shut }} disabled={locked} onClick={nextProblem}>{!ladder && s.practice === 4 ? 'Finish' : 'Next problem'}</button>}
         </div>
-      </PracticeLayout>
+      </PracticeLayout></>
     )
   }
 
@@ -324,6 +411,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     const worked = s.feedback === 'worked'
     const submit = () => {
       if (!ready(solutionOf(problem), value)) return
+      setTries(t => [...t, value])
       const n = check(lesson, s, value)
       if (n.mode === 'won') firstTry.current = !s.twin && s.misses === 0
       const fb = n.mode === 'won' ? wonFor(lesson, n).text
@@ -332,11 +420,14 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       go(n, fb)
       if (n.mode !== 'won') setValue('')   // a wrong answer must not sit there to be re-submitted
     }
-    return (
+    return (<>{bar}
       <PracticeLayout corner={lesson.title} crumb="Screen 8 of 9" title="Now you try" exitLabel="Exit lesson"
         onExit={() => { stopSpeech(); onExit() }} pad padKey={s.twin ? 'twin' : 'first'} feedback={feedback} topic={lesson.id}>
         <p style={{ ...bubble, fontWeight: 700 }}>{problem.text}</p>
         <p style={{ margin: 0, fontSize: 19, fontWeight: 700, color: INK }}>{lesson.turn.prompt}</p>
+        {/* The question is said once on arrival; a child who missed it hears the same recorded line again (tester,
+            2026-10-05). Practice problems are not spoken at all (voice.md), so this is Screen 8 only. */}
+        <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => say(s.twin ? SAY.twin(lesson) : SAY.turn(lesson))}>🔊 Hear it again</button>
         <div style={stage}>
           <Pic p={problem.picture} scratch={{ taps, onTap: () => setTaps(t => t + 1) }} />
           {tapCue(problem.picture) && <p style={{ ...cue, ...(taps === 0 ? { animation: 'lp-nudge 1.6s ease-in-out 3' } : {}) }}>{tapCue(problem.picture)}</p>}
@@ -359,13 +450,13 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         <div className="pr-foot">
           <button type="button" style={hintBtn} onClick={() => { setAutoOn(false); go(back(s)) }}>← Back</button>
           {worked
-            ? <button type="button" style={primary} onClick={() => {
+            ? <button type="button" style={{ ...primary, ...shut }} disabled={locked} onClick={() => {
                 const n = afterWorked(s)
                 go(n, n.mode === 'turn' ? SAY.twin(lesson) : wonFor(lesson, n).text)
               }}>{s.twin ? 'Next' : 'Try a new one'}</button>
             : <button type="submit" form="lp-turn" style={primary} disabled={!ready(solutionOf(problem), value)}>Check</button>}
         </div>
-      </PracticeLayout>
+      </PracticeLayout></>
     )
   }
 
@@ -407,7 +498,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
             <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{b.say}</p>)}
         </div>
       : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
-    action = <button type="button" style={ask ? askBtn : primary} onClick={() => {
+    action = <button type="button" style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
       setAutoOn(true)
       const n = next(s)
       go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
@@ -422,11 +513,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       {!w.helped && <span style={{ ...tick, width: 120, height: 120, fontSize: 72, animation: 'lp-pop .4s ease-out' }} aria-hidden>✓</span>}
     </div>
     words = <p style={bubble}>{w.text}</p>
-    action = <button type="button" style={primary} onClick={startPractice}>Next</button>
+    action = <button type="button" style={{ ...primary, ...shut }} disabled={locked} onClick={startPractice}>Next</button>
   } else {
     crumb = 'Done!'; at = 8
     // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
-    const topicDone = !ladder || doneHere || lessonDone(learnerId, lesson.id)
+    // A tester reviews the real Screen 9 (the sticker and Screen 8's sentence), not the child's break card.
+    const topicDone = !!review || !ladder || doneHere || lessonDone(learnerId, lesson.id)
     const allDone = topicDone && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
     // Screen 9, once practice is complete: Screen 8's sentence and the math word (README: the math word appears ONLY
@@ -454,14 +546,14 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         : <p style={bubble}>You worked through all 5 practice problems. Nice work sticking with it!</p>}
     </div>
     action = allDone && onModuleComplete
-      ? <button type="button" style={primary} onClick={() => { stopSpeech(); onModuleComplete() }}>{C.seeSummary}</button>
-      : <button type="button" style={primary} onClick={onExit}>{C.backToTopics}</button>
+      ? <button type="button" style={{ ...primary, ...shut }} disabled={locked} onClick={() => { stopSpeech(); onModuleComplete() }}>{C.seeSummary}</button>
+      : <button type="button" style={{ ...primary, ...shut }} disabled={locked} onClick={onExit}>{C.backToTopics}</button>
   }
 
-  return (
+  return (<>{bar}
     <Frame corner={feedback} crumb={crumb} at={at} total={9} stack={stack} title={title} picture={picture} words={words} action={action} back={backBtn}
       exit={{ label: '← Topics', onClick: () => { stopSpeech(); onExit() } }}
-      progress={beats ? shown / beats.length : undefined} />
+      progress={beats ? shown / beats.length : undefined} /></>
   )
 }
 

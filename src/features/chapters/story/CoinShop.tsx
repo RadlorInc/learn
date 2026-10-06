@@ -76,11 +76,11 @@ export {
 }
 
 const BG = (n: string) => `/assets/backgrounds/${n}`
-/** The shopper the child pays for — the foreman bear, a real walk cycle. Chosen over the badger
+/** The shopper the child pays for — the bear cub (the foreman bear until 2026-09-29), a real walk cycle. Chosen over the badger
  *  because his dominant colour is the old walker's (a 15–30° brown, measured 23.6° against 23.3°), so
  *  the ground-contrast gate in coinShopPay.test.ts still describes the sprite on screen; the badger's
  *  green jacket would stand on green grass. */
-const BUYER = '/assets/objects/foreman_bear_side.png'
+const BUYER = '/assets/objects/bearcub_side.png'
 
 // ─── The coins ────────────────────────────────────────────────────────────────────────
 /**
@@ -597,7 +597,7 @@ export const CoinRound: React.FC<{ st: Stall; data: MoneyRound; mode: Mode; onCo
       <Scene st={st} slot={data.slot} leg={leg} vw={vw} vh={vh} band={band}
         resetKey={`${st.key}-${price}-${kind}`} />
 
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
+      <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
         display: 'flex', justifyContent: 'center', padding: '0 8px' }}>
         <CoinCard pool={pool} laid={t.laid} band={band} vw={vw} live={live && !ok}
               full={t.laid.length >= PURSE_MAX} swept={t.swept}
@@ -748,7 +748,7 @@ const CoinExplain: React.FC<{ st: Stall; data: MoneyRound; onDone: () => void }>
         price={data.asPile ? undefined : data.price} coins={data.asPile ? data.shown : undefined} />
       <Scene st={st} slot={data.slot} leg={leg} vw={vw} vh={vh} band={band}
         resetKey={`demo-${st.key}-${data.price}`} />
-      <div style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
+      <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: Math.round(vh * 0.02), zIndex: 36,
         display: 'flex', justifyContent: 'center', padding: '0 8px' }}>
         {/* the same card the child will use, driven rather than tapped — so what they watch and what
             they then touch are one object, not a demonstration of a different thing */}

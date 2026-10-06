@@ -21,8 +21,6 @@ import { useT } from '@/features/dashboard/i18n'
 
 export interface ExportBundle {
   learner: unknown
-  stats: unknown
-  progress: unknown[]
   sessions: unknown[]
 }
 
@@ -48,10 +46,7 @@ export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras)
     // Consent-once: the parent's attestation for THIS child, named on its own so it cannot be missed inside
     // the learner row. Who confirmed they are the child's parent or guardian, when, against which notice, how.
     parentalAttestation: attestation(b.learner),
-    stats: b.stats,
-    chapterProgress: b.progress,
     sessions: b.sessions,
-    shopState:              extra?.learnerState           ?? null,
     activityEvents:         extra?.events                 ?? [],
     placementChecks:        extra?.diagnosticSessions      ?? [],
     placementCheckAnswers:  extra?.diagnosticAnswers       ?? [],
@@ -65,6 +60,7 @@ export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras)
     lessonFeedback:         extra?.lessonFeedback          ?? [],
     crashRecords:           extra?.crashRecords            ?? [],
     adultsWithAccess:       extra?.access                  ?? [],
+    gameSave:               extra?.gameSave                ?? null,
     // ⚠️ SAYS WHAT IT RETURNED. Empty on the normal path; populated when a section was capped or
     // could not be read. A "download everything" file that quietly holds less is worse than one
     // that returns slightly less and tells the parent so — they can act on the second.

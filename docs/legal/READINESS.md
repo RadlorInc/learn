@@ -58,19 +58,19 @@ recorded in a pull request.
 | [x] | One-shot ledger repair removed (R10) | #196 | merged |
 | [ ] 👪 | Every placeholder tracked and guarded (R11) | #199 | the founder approves the placeholders replaced in Round 1 (`PLACEHOLDERS.md`, "Resolved in Round 1") |
 | [x] 👪 | Spanish drafts, unrenderable until signed (R13) | #190 | merged; the review itself is in §3 |
-| [ ] 👪 | Staging prepared: seed, runbook, `deploy.yml` staging-first tested (R14) | #193 | **create staging** (`docs/runbooks/deploy.md`, Staging) |
+| [x] 👪 | Staging prepared: seed, runbook, `deploy.yml` staging-first tested (R14) | #193, #337, #338 | done 2026-10-01: 20261001090000 ran on staging (branch), then production after the approval |
 
 ## 3. Waiting on the founder, the attorney, a provider, or a reviewer
 
 ### The founder (placeholders in `PLACEHOLDERS.md`: the founder's category and *date*)
-- [ ] 👪 **Staging database** before the first real family
+- [x] 👪 **Staging database** before the first real family (`radlic-staging`, 2026-09-30; `docs/runbooks/deploy.md`, Staging)
 - [ ] 👪 **A second GitHub owner**, so production migrations do not depend on one account
 - [ ] 👪 **Open security items** — tracked privately, outside this public repo
 - [ ] 💳 **Prices** (monthly, annual; must equal `LADDER`), plan names, the receipt-email design
 - [ ] 💳 **What a paid subscription unlocks in the lesson system** — today's entitlement guards only the hidden legacy chapters
 - [ ] 💳 **Subscription consequence of withdrawal** (with the attorney)
 - [ ] 💳 **An affirmative auto-renewal consent control at checkout** — BUILT 2026-09-28 (a separate unticked tick; the route refuses without it); **the attorney confirms its words** (packet C1)
-- [ ] 💳 Hide checkout for a parent who already subscribes
+- [x] 💳 Hide checkout for a parent who already subscribes (the plan screen hides it and `/api/checkout` refuses a second subscription, `already_subscribed`)
 - [ ] 💳 Before live keys: watch one Stripe test-mode purchase become a subscription and its seats, then replay the event and see nothing change; decide on point-in-time recovery; rename the Stripe product and card statement descriptor to Radlic; set the webhook on radlic.com; the JSON-LD `offers` price on both sites
 - [ ] 👪 **The live Spanish consent text**: show English until it is reviewed?
 - [ ] 👪 The real content-review process to describe in Terms §8 — and whether §8's sentence that the service uses AI to "generate or select content" is accurate (nothing calls an AI at runtime)

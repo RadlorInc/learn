@@ -26,6 +26,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { setPassword, verifyEmailToken } from '@/data/auth'
 import { getMyRole, homeForRole, setMyRole } from '@/data/repositories'
 import { makeT, useSavedLang } from '@/features/dashboard/i18n'
+import { MIN_PASSWORD } from '@/core/childLogin'
 
 export default function ConfirmPage() {
   return <Suspense fallback={null}><Confirm /></Suspense>
@@ -70,7 +71,7 @@ function Confirm() {
   }, [th, router, attempt])
 
   async function savePassword() {
-    if (pw.length < 6) { setPwError(t('Use at least 6 characters')); return }
+    if (pw.length < MIN_PASSWORD) { setPwError(t('Use at least {n} characters', { n: MIN_PASSWORD })); return }
     setSaving(true); setPwError(null)
     const { error } = await setPassword(pw).catch(() => ({ error: { message: '' } }))
     if (error) { setPwError(t('Couldn’t save it — try again')); setSaving(false); return }

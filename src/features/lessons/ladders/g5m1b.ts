@@ -54,7 +54,7 @@ const T7: Level[] = [
     const [first, second] = pick(r, [['corn', 'beans'], ['carrots', 'potatoes'], ['tulips', 'daisies']] as const)
     const total = a * n + b * m
     return { text: `A farmer plants ${a} rows of ${first} with ${fmt(n)} plants in each row, and ${b} rows of ${second} with ${fmt(m)} plants in each row. How many plants is that in all?`,
-      picture: eq(`${a} × ${fmt(n)} = ?`, [`${b} × ${fmt(m)} = ?`]), answer: total,
+      picture: eq(`${a} × ${fmt(n)} = ?`, [`${b} × ${fmt(m)} = ?`, '? + ? = ?']), answer: total,
       steps: [`The ${first}: ${a} × ${fmt(n)} = ${fmt(a * n)}.`, `The ${second}: ${b} × ${fmt(m)} = ${fmt(b * m)}.`, `${fmt(a * n)} + ${fmt(b * m)} = ${fmt(total)}, so there are ${fmt(total)} plants in all.`] }
   } },
 ]
@@ -169,7 +169,7 @@ const T10: Level[] = [
     const p = int(r, 112, 399), q = threeDigit(r), s = int(r, 112, 399), u = threeDigit(r)
     const one = p * q.m, two = s * u.m, total = one + two
     return { text: `A juice factory fills ${q.m} crates with ${fmt(p)} bottles each on Monday, and ${u.m} crates with ${fmt(s)} bottles each on Tuesday. How many bottles is that in all?`,
-      picture: eq(`${fmt(p)} × ${q.m} = ?`, [`${fmt(s)} × ${u.m} = ?`]), answer: total,
+      picture: eq(`${fmt(p)} × ${q.m} = ?`, [`${fmt(s)} × ${u.m} = ?`, '? + ? = ?']), answer: total,
       steps: [`Monday: ${fmt(p)} × ${q.m} = ${fmt(one)}.`, `Tuesday: ${fmt(s)} × ${u.m} = ${fmt(two)}.`, `${fmt(one)} + ${fmt(two)} = ${fmt(total)}, so there are ${fmt(total)} bottles in all.`] }
   } },
 ]

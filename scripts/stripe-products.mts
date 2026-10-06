@@ -41,25 +41,32 @@ if (!stripe) {
 }
 
 const PRODUCT_ID = 'milo_family'
-const LOOKUP: Record<Cadence, string> = { monthly: 'milo_family_monthly_v1', annual: 'milo_family_annual_v1' }
+const PRODUCT_NAME = 'Radlic — family plan'
+const LOOKUP: Record<Cadence, string> = { monthly: 'milo_family_monthly_v1', annual: 'milo_family_annual_v2' }
 
 const usd = (c: number) => `$${(c / 100).toFixed(2)}`
 
 async function ensureProduct() {
-  try {
-    const p = await stripe!.products.retrieve(PRODUCT_ID)
+  const p = await stripe!.products.retrieve(PRODUCT_ID).catch(() => null)
+  if (p) {
     console.log(`product   ${p.id} (exists)`)
-    return p
-  } catch {
-    if (DRY) { console.log(`product   ${PRODUCT_ID} WOULD BE CREATED`); return null }
-    const p = await stripe!.products.create({
-      id: PRODUCT_ID,
-      name: 'Milo — family plan',
-      description: 'Adaptive maths for up to 4 children.',
-    })
-    console.log(`product   ${p.id} CREATED`)
+    // The name is what a parent reads on Stripe's checkout page and receipts. Unlike a price it is
+    // mutable, so a product created under the old name is renamed rather than left as it is.
+    if (p.name !== PRODUCT_NAME) {
+      if (DRY) { console.log(`product   ${p.id} WOULD BE RENAMED "${p.name}" → "${PRODUCT_NAME}"`); return p }
+      await stripe!.products.update(p.id, { name: PRODUCT_NAME })
+      console.log(`product   ${p.id} RENAMED "${p.name}" → "${PRODUCT_NAME}"`)
+    }
     return p
   }
+  if (DRY) { console.log(`product   ${PRODUCT_ID} WOULD BE CREATED`); return null }
+  const created = await stripe!.products.create({
+    id: PRODUCT_ID,
+    name: PRODUCT_NAME,
+    description: 'Adaptive maths for up to 4 children.',
+  })
+  console.log(`product   ${created.id} CREATED`)
+  return created
 }
 
 /** Everything the ladder claims, asked of the object Stripe will actually bill from. */
@@ -146,6 +153,6 @@ if (monthly && annual) {
   console.log(`  STRIPE_PRICE_ANNUAL=${annual}`)
 }
 console.log(
-  '\n⚠️  Statement descriptor (RADLOR MILO) is an ACCOUNT setting, not a price one — set it in the\n' +
+  '\n⚠️  Statement descriptor (RADLOR RADLIC) is an ACCOUNT setting, not a price one — set it in the\n' +
   '    Stripe dashboard (Settings → Public details). It is step 4 of the go-live sequence.\n',
 )

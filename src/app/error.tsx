@@ -29,9 +29,10 @@ export default function SegmentError({
   return (
     <CrashScreen
       title="Oops! Something went wrong"
-      /** True, and the reason it is worth saying: the app is local-first, so a crash mid-chapter
-       *  does not cost the child their stars. */
-      body="Nothing is lost — your stars and progress are saved. Let's try that again."
+      /** It used to promise "Nothing is lost". Answers are saved on the device as they are made, so what was saved
+       *  before the crash is still there — but the one in hand when it broke may not be, and a device that cannot
+       *  write (private browsing, a full disk) saves nothing. Say only what is true on every device. */
+      body="What you finished before this should still be saved. Let's try that again."
       primary={{ label: 'Try again', onClick: retry }}
       secondary={{ label: 'Go back home', href: '/modules' }}
       digest={error?.digest}

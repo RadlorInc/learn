@@ -46,24 +46,27 @@ const HOPPER = '/assets/objects/frog_side.png'
 // ─── Settings ────────────────────────────────────────────────────────────────────────
 /**
  * Three painted scenes, and the ground line is MEASURED in each rather than guessed: mean row colour
- * down the image, largest jump. Horizons sit at 51% / 38% / 43% and all three read as real grass at
+ * down the image, largest jump. Horizons sit at 55% / 54% / 54% and all three read as real grass at
  * 64% — sampled, because `town_park` looked like grass in a thumbnail and turned out to be pale haze
  * where the feet land, which reads as hovering (chapter-craft.md).
  *
- * ⚠️ These three are a DELIBERATE third overlap with MarketDay's Garden and StoryTime's Flower Beds
- * (founder's call). Only a handful of scenes in the library paint ground high enough for a row of
- * creatures to stand on, and a line of families walking a meadow cannot be mistaken for a grid of
- * market pens.
+ * These three are this chapter's OWN (generated 2026-09-29, `meadow_brook` / `garden_veg` /
+ * `garden_cottage`). It used to share MarketDay's Garden and StoryTime's Flower Beds, because only a
+ * handful of scenes painted ground high enough; the new ones were drawn to that composition.
  */
 interface Setting { id: string; label: string; bg: string; ground: number; family: string; airOk: boolean }
 /**
  * ⚠️ `airOk` — CAN A HOVERING GROUP BE SEEN AGAINST THIS SCENE? A flier sits at the hopper's head height, ~41% of
  * the frame, and what a backdrop paints THERE decides whether the child can count them. Measured as
- * the pixel variation across that band (mean per-channel σ), not judged by eye:
+ * the pixel variation across that band (mean per-channel σ over 36–46% of the height), not judged by eye:
  *
- *     garden_meadow 22.3  →  open sky above the horizon, a butterfly reads cleanly
- *     garden_park   45.5  →  trees and hedges
- *     garden        71.3  →  the flower bed and fence sit exactly there — a butterfly DISAPPEARS
+ *     garden_meadow   9.1  →  open sky above the horizon, a butterfly reads cleanly
+ *     garden_park    47.1  →  trees and hedges
+ *     garden         78.8  →  the flower bed and fence sit exactly there — a butterfly DISAPPEARS
+ *     meadow_brook    5.5 · garden_veg 8.3 · garden_cottage 14.8  →  the scenes this chapter uses: open sky
+ *
+ * (Re-measured 2026-09-29 over that stated band; an earlier table used a wider one, so its numbers
+ * were larger — 22.3 / 45.5 / 71.3 — with the same order.)
  *
  * The founder caught the butterflies planted on the ground; lifting them then hid them in the
  * flowers instead, which is the countability rule ("a set the child cannot read is a wrong answer
@@ -72,9 +75,9 @@ interface Setting { id: string; label: string; bg: string; ground: number; famil
  * with painted ground: check the pixels where the creature actually sits.
  */
 const SETTINGS: Record<string, Setting> = {
-  meadow: { id: 'meadow', label: 'Meadow',       bg: '/assets/backgrounds/garden_meadow.png', ground: 0.64, family: 'family', airOk: true },
-  garden: { id: 'garden', label: 'Flower Patch', bg: '/assets/backgrounds/garden.png',        ground: 0.64, family: 'bunch',  airOk: false },
-  park:   { id: 'park',   label: 'Park',         bg: '/assets/backgrounds/garden_park.png',   ground: 0.64, family: 'group',  airOk: false },
+  meadow: { id: 'meadow', label: 'Meadow',       bg: '/assets/backgrounds/meadow_brook.jpeg', ground: 0.64, family: 'family', airOk: true },
+  garden: { id: 'garden', label: 'Flower Patch', bg: '/assets/backgrounds/garden_veg.jpeg',   ground: 0.64, family: 'bunch',  airOk: false },
+  park:   { id: 'park',   label: 'Park',         bg: '/assets/backgrounds/garden_cottage.jpeg', ground: 0.64, family: 'group',  airOk: false },
 }
 
 // ─── Cast ────────────────────────────────────────────────────────────────────────────

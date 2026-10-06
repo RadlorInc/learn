@@ -105,7 +105,7 @@ describe('the export names the child\'s attestation', () => {
   it('who, when, which notice, how — from the learner row', async () => {
     const { buildExport } = await import('@/shared/ui/DataRights')
     const learner = { id: 'k', attested_by: 'p1', attested_at: '2026-09-24T10:00:00Z', attested_notice_version: 'notice-v7', attestation_method: 'checkbox' }
-    const out = buildExport('Bea', { learner, stats: {}, progress: [], sessions: [] }) as Record<string, unknown>
+    const out = buildExport('Bea', { learner, sessions: [] }) as Record<string, unknown>
     expect(out.parentalAttestation).toEqual({ attested_by: 'p1', attested_at: '2026-09-24T10:00:00Z', attested_notice_version: 'notice-v7', attestation_method: 'checkbox' })
   })
 })

@@ -104,8 +104,9 @@ jobs:
   #
   # ⚠️ "THIS PUSH" IS THE WRONG QUESTION (OPS-02): a migration whose migrate-prod was rejected, failed
   # or cancelled while pending would never be retried by a later app-only push. The script diffs from
-  # the last commit a migrate-prod SUCCEEDED on, and answers `true` whenever it cannot tell.
-  # Read-only: it only lists this workflow's runs and jobs (`actions: read`).
+  # the last commit a migrate-prod SUCCEEDED on, and answers `true` whenever it cannot tell. That commit is read from
+  # the tag `record-migrated` (below) keeps; the Deploy-run scan is only the fallback.
+  # Read-only: it reads one ref and, only without it, lists this workflow's runs and jobs (`actions: read`).
   migrations-changed:
     runs-on: ubuntu-latest
     timeout-minutes: 10 # p95 0.6 min over 26 runs; 10 min floor (ARC-07; GitHub default 360)
@@ -177,3 +178,36 @@ jobs:
         run: |
           supabase link --project-ref "${{ vars.PROD_PROJECT_REF }}"
           supabase db push
+
+  # ⚠️ THE RECORD `migrations-changed` STARTS FROM (2026-09-28). After every successful migrate-prod, the tag
+  # `prod-db-migrated` is moved to the commit whose migrations production now has. scripts/migrations-pending.sh reads
+  # that one ref instead of reconstructing the answer from the Actions API, which twice on 2026-09-28 answered without
+  # a successful run that was there and so held a docs-only deploy for a production-db approval with nothing to apply.
+  # Its own job, so the job holding the production secrets never gets write access to the repo, and this one holds
+  # nothing but the run's token. If it fails the tag stays behind, which errs the safe way: the next push is offered
+  # a migrate-prod that applies nothing.
+  # ⚠️ THE `if:` IS REQUIRED. Without one, GitHub applies an implicit success(), which is false when ANY ancestor
+  # was skipped, not just the direct need: on Deploy run 36469923680 migrate-prod succeeded and this job was
+  # skipped, because migrate-staging (always skipped while no staging project exists) is migrate-prod's need.
+  # `!cancelled()` stops that; the result check keeps it from running after a failed or skipped apply.
+  record-migrated:
+    needs: migrate-prod
+    if: ${{ !cancelled() && needs.migrate-prod.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5 # two API calls
+    permissions:
+      contents: write
+    steps:
+      - name: Move prod-db-migrated to this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/$REPO/git/ref/tags/prod-db-migrated" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$REPO/git/refs/tags/prod-db-migrated" -f sha="$SHA" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/$REPO/git/refs" -f ref=refs/tags/prod-db-migrated -f sha="$SHA" >/dev/null
+          fi
+          echo "prod-db-migrated -> $SHA"

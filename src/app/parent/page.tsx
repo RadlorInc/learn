@@ -16,18 +16,18 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
-  getMyLearners, getParentDashboard, getLearnerStats, getLearnerProgress,
+  getMyLearners, getParentDashboard,
   getRecentSessions, signOut, createLearner,
   getReceivedInvites, acceptInvite,
-  deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, correctLearner, removeMyselfFromLearner,
-  getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins, removeChildLogin,
+  deleteLearnerPermanently, correctLearner, removeMyselfFromLearner,
+  getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins,
   getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
   getRecentPoints, getExerciseResults,
 } from '@/data/repositories'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
 import { getCurrentSession } from '@/data/auth'
-import type { Learner, LearnerStats, LearnerProgress, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
+import type { Learner, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
 import { ChildLoginSheet } from '@/shared/ui/ChildLoginSheet'
 import { chosenModules, ALL_MODULES as MODULES, GRADES, findLesson } from '@/features/lessons/modules'
@@ -53,6 +53,10 @@ import { firstNameOf } from '@/features/consent/firstName'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
 import { BILLING_LIVE } from '@/app/legal/registry'
+import { FreeTrialCard } from '@/features/billing/FreeTrialCard'
+import { TrialTopicPicker, useFamilyTrial, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
+import { chooseFreeTopics } from '@/data/repositories/billing'
+import { usePaidSeats, SeatsFullDialog } from '@/features/billing/SeatsFull'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
@@ -71,8 +75,6 @@ const P = {
 
 interface LearnerData {
   learner:     Learner
-  stats:       LearnerStats | null
-  progress:    LearnerProgress[]
   sessions:    Session[]
   accessRole:  'owner' | 'viewer' | 'self' | null
 }
@@ -98,6 +100,9 @@ function Dashboard() {
   // ?add=1 opens the add-a-child flow — where B2 ("permission recorded") sends the parent, so the consent they just
   // gave is used straight away instead of waiting behind a second press of "Add a child".
   const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
+  // A paying family with every seat taken gets "you have used all N seats" instead of the add sheet (features/billing/SeatsFull).
+  const [paidSeats, setPaidSeats] = usePaidSeats()
+  const [seatsFull, setSeatsFull] = useState(false)
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
   const [acceptingId,  setAcceptingId]  = useState<string | null>(null)
   const [inviteMsg,    setInviteMsg]    = useState<string | null>(null)
@@ -171,16 +176,10 @@ function Dashboard() {
       if (dash !== null) {
         data = dash.map(d => ({ ...d, accessRole: d.learner.accessRole }))
       } else {
-        // Fallback: role rides along on getMyLearners(); the 3 per-learner reads run in parallel.
+        // Fallback: role rides along on getMyLearners().
         const list = await getMyLearners()
-        data = await Promise.all(list.map(async learner => {
-          const [stats, progress, sessions] = await Promise.all([
-            getLearnerStats(learner.id),
-            getLearnerProgress(learner.id),
-            getRecentSessions(learner.id, 3),
-          ])
-          return { learner, stats, progress, sessions, accessRole: learner.accessRole }
-        }))
+        data = await Promise.all(list.map(async learner =>
+          ({ learner, sessions: await getRecentSessions(learner.id, 3), accessRole: learner.accessRole })))
       }
 
       setLearners(data)
@@ -237,17 +236,7 @@ function Dashboard() {
 
   async function handleDelete(learnerId: string) {
     // One call deletes the child, their login and every record about them (delete_learner).
-    let result = await deleteLearnerPermanently(learnerId)
-    if (result.error === LEGACY_DELETE) {
-      // Before 20260923140000: the child's own account first — deleting the learner removes its access
-      // row but NOT the auth user, which would outlive the child as a login that signs in to nothing.
-      if (childLogins === null || childLogins[learnerId]) {
-        const r = await removeChildLogin(learnerId)
-        // not_configured = this server cannot have made a login, so there is none to outlive the learner.
-        if (!r.ok && r.error !== 'not_configured') { setActionMsg(t('Could not remove this learner’s login, so nothing was deleted. Try again.')); return }
-      }
-      result = await deleteLearnerRowLegacy(learnerId)
-    }
+    const result = await deleteLearnerPermanently(learnerId)
     if (result.ok) {
       setActionMsg(t('Learner deleted.'))
       setConfirming(null)
@@ -495,7 +484,7 @@ function Dashboard() {
         dataRights={
           /* COPPA: a parent may SEE what is stored and have it DELETED — both under one heading so they are findable. */
           <DataRights name={d.learner.display_name} learnerId={d.learner.id}
-            bundle={{ learner: d.learner, stats: d.stats, progress: d.progress, sessions: d.sessions }}>
+            bundle={{ learner: d.learner, sessions: d.sessions }}>
             {confirming === d.learner.id ? (
               <div style={{ background:'#FEF2F2', border:'1.5px solid #FCA5A5', borderRadius:16, padding:'16px', marginBottom:16 }}>
                 <p style={{ fontSize:14, fontWeight:700, color:'#991B1B', margin:'0 0 12px' }}>
@@ -566,6 +555,7 @@ function Dashboard() {
             )
           })}
         </section>
+        {!tea && <FreeTrialCard />}
         {tea
           ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
           // The private beta is free (founder, 2026-09-24): no plans, no prices, no link to the (dark) refund policy until billing is live.
@@ -638,6 +628,8 @@ function Dashboard() {
       {learners.length === 0 ? <EmptyDashboard onAdd={() => setShowAddModal(true)} /> : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {upNext}
+          {/* The family's free trial and the way to purchase, on the home the parent lands on (also under Account). */}
+          <FreeTrialCard />
           <div className="card-grid">
             {learners.map(d => {
               const lessons = chosenModules(d.learner.lesson_ids).flatMap(m => m.lessons)
@@ -647,7 +639,7 @@ function Dashboard() {
                 lastPlayed={lastAt[d.learner.id] ? new Date(lastAt[d.learner.id]!).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
                 next={next?.title ?? null} done={done} total={lessons.length} onStart={() => launchGame(d)} />
             })}
-            <button type="button" data-tour="add-child" onClick={() => setShowAddModal(true)}
+            <button type="button" data-tour="add-child" onClick={() => paidSeats !== null && learners.filter(d => d.accessRole === 'owner').length >= paidSeats ? setSeatsFull(true) : setShowAddModal(true)}
               style={{ border:`2px dashed ${P.edge}`, background:'transparent', borderRadius:16, minHeight:180, fontWeight:900, fontSize:15, color:P.ink2, cursor:'pointer' }}>{t('+ Add a child')}</button>
           </div>
         </div>
@@ -732,6 +724,8 @@ function Dashboard() {
 
       {/* Add learner modal */}
       {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
+      {seatsFull && paidSeats !== null && <SeatsFullDialog seats={paidSeats} onClose={() => setSeatsFull(false)}
+        onAdded={n => { setPaidSeats(n); setSeatsFull(false); setShowAddModal(true) }} />}
       {showAddModal && (
         <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
           <>
@@ -896,19 +890,28 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
   const [pick,        setPick]        = useState<Set<string>>(() => new Set())
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
+  // The free trial (TrialTopicPicker): two topics instead of whole modules, chosen once for the family.
+  const trial = useFamilyTrial()
+  const [trialPick,   setTrialPick]   = useState<string[]>([])
+  const trialIds = trial?.state === 'chosen' ? trial.topics : trial?.state === 'choose' ? trialPick : null
 
   async function handleAdd() {
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError(t('Please enter a name (at least 2 characters)')); return }
-    if (pick.size === 0) { setError(t('Choose at least one module for this learner.')); return }
+    if (!trial) return
+    if (trialIds ? trialIds.length < FREE_TOPICS : pick.size === 0) { setError(trialIds ? 'Choose two topics for the free trial.' : t('Choose at least one module for this learner.')); return }
     if (!attest || !attested) return
-    const chosen = MODULES.filter(m => pick.has(m.id))
+    const chosen = trialIds ? MODULES.filter(m => m.lessons.some(l => trialIds.includes(l.id))) : MODULES.filter(m => pick.has(m.id))
     // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19).
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
+    if (trial.state === 'choose') {
+      const out = await chooseFreeTopics(trialPick)
+      if (!out.ok) { setError(out.error ?? t('Something went wrong. Please try again.')); setLoading(false); return }
+    }
     const noticeVersion = await attestationVersion(attest.noticeVersion)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: trialIds ?? chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     onAdded()
   }
@@ -940,9 +943,10 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
         <div data-tour="add-modules">
-        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{t('Which modules can they see?')}</p>
+        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{trialIds ? 'Which topics can they see?' : t('Which modules can they see?')}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
+          {trialIds ? <TrialTopicPicker value={trialIds} onChange={trial?.state === 'choose' ? setTrialPick : undefined} />
+            : <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />}
         </div>
         </div>
 

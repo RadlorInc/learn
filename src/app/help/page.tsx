@@ -13,6 +13,7 @@
 import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { SupportPanel } from '@/shared/ui/SupportPanel'
 
 /* The adult surface's palette, from globals.css — same tokens the other parent screens use.
    These pages previously mixed ad-hoc greys (#3D6FB8 / #3d6fb8 / #083d85 / #f3f9ff) with the brand
@@ -95,6 +96,22 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
        we will check whether it was sent.</>,
   },
   {
+    q: 'The password reset email has not arrived',
+    a: <>Check spam, and that you typed the address you signed up with: for safety the page says the same thing
+       whether or not that address has an account. Still nothing after a few minutes? Email us the address and we will check whether it was sent.</>,
+  },
+  {
+    q: 'Google sign-in is not working',
+    a: <>Try again in a normal browser window: private browsing and strict privacy settings can block it. If you made
+       your account with Google, choose the same Google account each time. Still failing? Email us and say what the
+       screen showed.</>,
+  },
+  {
+    q: 'I forgot my parent PIN',
+    a: <>On the PIN screen, tap &ldquo;Forgot PIN?&rdquo;. For your child&apos;s safety the PIN is removed 24 hours
+       later, and entering it before then cancels the reset. After that you can set a new one.</>,
+  },
+  {
     q: 'How does Radlic decide what to teach?',
     a: <>You choose. On your dashboard you pick what your child sees: whole modules or single topics,
        from any grade, kindergarten through grade 8, or simply every topic. Each lesson explains one idea step by step,
@@ -116,8 +133,9 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'What are points for?',
-    a: <>Your child earns points by practicing. Games to spend them on are coming soon; until then the
-       points are saved and none are taken away.</>,
+    a: <>Your child earns points by practicing and spends them on game time: minutes of BlockCraft, a calm
+       block-building game with no fighting. You choose whether game time is on and how many minutes a day. If your
+       child stops early, only the time played is charged, and points never reset.</>,
   },
   {
     q: 'What do you store about my child, and can I see it?',
@@ -131,6 +149,19 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'What if the internet drops during a lesson?',
     a: <>Your child can carry on. Their answers are kept on the device and sent the next time it is online.</>,
+  },
+  {
+    q: 'Does private browsing or clearing browser data lose work?',
+    a: <>It can. Answers waiting to be sent are kept in the browser, so a private window that is closed, or clearing
+       this site&apos;s data, before the device is back online loses them. Lessons already sent are safe in your
+       account. For everyday use, open Radlic in a normal window and let it finish sending before you clear anything.</>,
+  },
+  {
+    q: 'How do I close my account?',
+    a: <>On your{' '}<Link href="/parent" style={{ color: '#0B4FA8', fontWeight: 700 }}>dashboard</Link>, open
+       Account and choose &ldquo;Close my account&rdquo;. It deletes the account and every child profile in it, and it
+       cannot be undone; you may be asked to sign in again first. If you cannot sign in, email us from the address on
+       the account.</>,
   },
 ]
 
@@ -173,11 +204,13 @@ export default function HelpPage() {
           </section>
         ))}
 
-        <p style={{ marginTop: 24, fontSize: 15, color: P.ink2 }}>
-          Still stuck? Email{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
-          {' '}— tell us the device and browser, and we will come back to you.
-        </p>
+        {/* The same report as the dashboard's Need help? panel: the email carries this device's diagnostic block. */}
+        {/* A div, not a p: the panel opens a block-level dialog, which a <p> may not contain. */}
+        <div style={{ marginTop: 24, fontSize: 15, lineHeight: 1.6, color: P.ink2 }}>
+          Still stuck? <SupportPanel label="Report a problem" /> — it opens an email to us with technical details about
+          this device attached. Or write to{' '}
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>.
+        </div>
       </div>
       <HelpJsonLd />
     </main>

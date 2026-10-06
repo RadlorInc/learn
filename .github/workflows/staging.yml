@@ -1,0 +1,115 @@
+name: Staging
+
+# Try a change against the STAGING database BEFORE it is merged to main (2026-10-01).
+#
+# deploy.yml's `migrate-staging` runs only after a merge, so a PR's migration first met staging at the same moment it
+# was queued for production. Pushing (or merging) a branch into `staging` now runs the same apply + RLS suite here,
+# and the `staging` branch's preview (adaptivelearn-git-staging-radlor1.vercel.app) runs that code against it.
+# Nothing in this file can reach production: every job refuses production's ref before it links.
+#
+# ⚠️ A MIGRATION THAT REACHES STAGING HERE AND NEVER REACHES MAIN leaves a version in staging's ledger that main does
+# not have, and deploy.yml's `migrate-staging` then fails `db push` — which holds every production migration behind it.
+# Recovery is the `repair` job below (run by hand, with the version); docs/runbooks/deploy.md (Staging) has the steps.
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+    inputs:
+      revert_version:
+        description: "repair: the migration version to mark reverted in STAGING's ledger (14 digits). Empty = apply + seed."
+        required: false
+        default: ""
+
+# One staging run at a time from this workflow. deploy.yml's migrate-staging is deliberately not in this group: a
+# queued run there must never be cancelled by one here, because migrate-prod needs it to succeed.
+concurrency:
+  group: staging-branch
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: ${{ vars.STAGING_PROJECT_REF != '' && inputs.revert_version == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.117.0   # pinned, as in deploy.yml
+      - name: Refuse if the staging ref is production
+        env:
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+        run: |
+          if [ "$STAGING_PROJECT_REF" = "wrnjqjhrbnqxornmfisf" ]; then
+            echo "::error::STAGING_PROJECT_REF is the PRODUCTION project. Refusing."
+            exit 1
+          fi
+      - name: Apply migrations to staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "${{ vars.STAGING_PROJECT_REF }}"
+          supabase db push
+      - name: RLS regression suite (staging)
+        env:
+          STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          psql "$STAGING_DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_regression.sql
+      # Fake parents, a teacher and five children, so a migration meets rows and not only empty tables. Re-running
+      # adds nothing (the script reuses what exists). Skipped, loudly, until both staging secrets exist.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Seed fake data (staging)
+        env:
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+          STAGING_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SERVICE_ROLE_KEY }}
+          SEED_PASSWORD: ${{ secrets.SEED_PASSWORD }}
+        run: |
+          if [ -z "$STAGING_SERVICE_ROLE_KEY" ] || [ -z "$SEED_PASSWORD" ]; then
+            echo "::warning::STAGING_SERVICE_ROLE_KEY or SEED_PASSWORD not set in the staging environment — seed skipped."
+            exit 0
+          fi
+          npm ci --ignore-scripts
+          STAGING_SUPABASE_URL="https://${STAGING_PROJECT_REF}.supabase.co" node scripts/seed-staging.mjs
+
+  repair:
+    if: ${{ vars.STAGING_PROJECT_REF != '' && inputs.revert_version != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: staging
+    permissions:
+      contents: read
+    steps:
+      - uses: supabase/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520 # v3.0.0
+        with:
+          version: 2.117.0
+      - name: Refuse production, and anything that is not a migration version
+        env:
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+          V: ${{ inputs.revert_version }}
+        run: |
+          if [ "$STAGING_PROJECT_REF" = "wrnjqjhrbnqxornmfisf" ]; then
+            echo "::error::STAGING_PROJECT_REF is the PRODUCTION project. Refusing."
+            exit 1
+          fi
+          if ! printf '%s' "$V" | grep -Eq '^[0-9]{14}$'; then
+            echo "::error::revert_version must be exactly 14 digits (a migration version), got: $V"
+            exit 1
+          fi
+      - name: Mark the version reverted in staging's ledger
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+          V: ${{ inputs.revert_version }}
+        run: |
+          supabase link --project-ref "${{ vars.STAGING_PROJECT_REF }}"
+          supabase migration repair --status reverted "$V"
+          echo "Ledger repaired. The objects that migration created are still in staging: undo them in staging's SQL editor."

@@ -4,8 +4,8 @@
  * access to that learner.
  *
  * Property checked: a signed-in account with NO `learner_access` row for a learner is refused (42501) by both
- * functions; the owner, the child's own 'self' login and service_role still get a boolean answer; and the
- * `learner_progress` WITH CHECK, which calls `is_chapter_entitled`, still admits the owner's own write.
+ * functions; the owner, the child's own 'self' login and service_role still get a boolean answer. (The
+ * `learner_progress` WITH CHECK that also called it went with that table on 2026-09-28.)
  * Built on the real schema (baseline + every migration) in PGlite — nothing retyped.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -62,9 +62,4 @@ describe('every legitimate caller still gets its answer (paired GRANT half)', ()
       expect(typeof (r.rows?.[0].v as Record<string, unknown>).g3m1).toBe('boolean')
     })
   }
-  it('the learner_progress WITH CHECK (which calls is_chapter_entitled) still admits the owner', async () => {
-    const [{ id: chapter }] = (await db.query<{ id: string }>(`select id from public.chapters order by id limit 1`)).rows
-    const r = await as('authenticated', OWNER, `insert into public.learner_progress (learner_id, chapter) values ('${learner}', '${chapter}') returning learner_id`)
-    expect(r).toEqual({ rows: [{ learner_id: learner }] })
-  })
 })

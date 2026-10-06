@@ -33,4 +33,13 @@ describe('RLS is on for every public table', () => {
         and (has_table_privilege('anon', c.oid, 'select') or has_table_privilege('authenticated', c.oid, 'select'))`)).rows
     expect(views.map(r => r.v), 'public views a client can select that run as their owner (bypass RLS)').toEqual([])
   }, 120_000)
+
+  // The net itself, at the END of the migration chain. On 2026-10-01 production was found without it (a fingerprint
+  // against staging); 20261001090000 puts it back. A migration that drops it and does not recreate it fails here.
+  it('the ensure_rls event trigger exists, is enabled, and runs rls_auto_enable', async () => {
+    const { db } = await loadSchema()
+    const rows = (await db.query<{ name: string; fn: string; enabled: string }>(`select evtname name,
+      evtfoid::regproc::text fn, evtenabled::text enabled from pg_event_trigger where evtname = 'ensure_rls'`)).rows
+    expect(rows).toEqual([{ name: 'ensure_rls', fn: 'rls_auto_enable', enabled: 'O' }])
+  }, 120_000)
 })

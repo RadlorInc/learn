@@ -14,14 +14,12 @@
  * is "a serialize of what is on screen" with no new queries — true, and the reason was to avoid
  * a second copy of the access rule. That reason is preserved here: every read below goes through
  * a policy the parent ALREADY has (diag_sessions_read / diag_items_read / diag_plans_read /
- * diag_progress_read / diag_rechecks_read / learner_events_select / "learner_state: parent
- * access"), so this adds no RLS surface — only reads. Doing it at click time keeps the
+ * diag_progress_read / diag_rechecks_read / learner_events_select), so this adds no RLS surface — only reads. Doing it at click time keeps the
  * dashboard's first paint unchanged for the ~100% of visits that never press it.
  */
 import { db } from '@/data/repositories/_shared'
 
 export interface ExportExtras {
-  learnerState:      unknown
   events:            unknown[]
   diagnosticSessions: unknown[]
   diagnosticAnswers:  unknown[]
@@ -36,6 +34,7 @@ export interface ExportExtras {
   /** error_events and learner_access, through `export_child_records` (owner only). */
   crashRecords:      unknown[]
   access:            unknown[]
+  gameSave:          unknown
   /** Empty when everything came back whole. Anything in here is printed IN the file. */
   notes:             string[]
 }
@@ -61,10 +60,10 @@ const EVENTS_CAP = 5000
 
 /** Empty-but-shaped, so a failed fetch still produces a valid file rather than nothing. */
 const EMPTY: ExportExtras = {
-  learnerState: null, events: [], diagnosticSessions: [], diagnosticAnswers: [],
+  events: [], diagnosticSessions: [], diagnosticAnswers: [],
   diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
   lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [],
-  crashRecords: [], access: [],
+  crashRecords: [], access: [], gameSave: null,
   notes: ['We could not read part of this data. Nothing has been deleted — please try again, or write to us and we will send it.'],
 }
 
@@ -78,8 +77,7 @@ const EMPTY: ExportExtras = {
 export async function getLearnerExportExtras(learnerId: string): Promise<ExportExtras> {
   const supabase = db()
   try {
-    const [state, events, sessions, plans, rechecks, lessons, points, game, exercises, feedback, records] = await Promise.all([
-      supabase.from('learner_state').select('*').eq('learner_id', learnerId).maybeSingle(),
+    const [events, sessions, plans, rechecks, lessons, points, game, exercises, feedback, records, save] = await Promise.all([
       supabase.from('learner_events').select('*').eq('learner_id', learnerId).order('created_at').limit(EVENTS_CAP),
       supabase.from('diagnostic_sessions').select('*').eq('learner_id', learnerId).order('started_at'),
       supabase.from('diagnostic_plans').select('*').eq('learner_id', learnerId).order('created_at'),
@@ -90,6 +88,7 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       supabase.from('exercise_results' as never).select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.from('lesson_feedback' as never).select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.rpc('export_child_records' as never, { p_learner_id: learnerId } as never),
+      supabase.from('game_saves' as never).select('*').eq('learner_id', learnerId).maybeSingle(),
     ])
 
     const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
@@ -118,7 +117,6 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
 
     return {
       notes,
-      learnerState:           state.data ?? null,
       events:                 eventRows,
       diagnosticSessions:     sessions.data ?? [],
       diagnosticAnswers:      answers.data ?? [],
@@ -132,6 +130,7 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       lessonFeedback:         (feedback.data as unknown[] | null) ?? [],
       crashRecords:           rec?.crashRecords ?? [],
       access:                 rec?.access ?? [],
+      gameSave:               (save.data as unknown) ?? null,
     }
   } catch {
     // A parent exercising a data right must still get a file. An empty section is visibly

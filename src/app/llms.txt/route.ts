@@ -36,7 +36,8 @@ answer is never marked with a red cross.
 
 A parent chooses what each child sees (whole modules or single topics, from any grade), can set
 due dates, and sees what the child finds hard. Children sign in with a username and password their
-parent sets. Children earn points by practicing; games to spend them on are coming soon.
+parent sets. Children earn points by practicing and spend them on game time in BlockCraft, a calm
+block-building game, within a daily limit the parent sets.
 
 ## Earlier names
 
