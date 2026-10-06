@@ -47,6 +47,23 @@ export const SURVIVORS: readonly Survivor[] = [
     why: 'it stops us sending email to an address that cannot receive it or that asked not to get it. It is not '
        + 'linked to your account, and it is deleted 12 months after the last bounce or complaint.',
   },
+  // 20261008000000 (cancel and refund on close): proposed wording; Terms §11 and the attorney's view are open in the PR.
+  {
+    table: 'public.billing_cancellations',
+    what: 'only if you had a paid plan: our payment provider\'s reference for it, when you closed the account, and '
+        + 'whether the plan was cancelled and the unused part refunded',
+    why: 'closing the account cancels your plan and refunds the part you had not used, and this record is how we make '
+       + 'sure that happens even if the payment provider cannot be reached at that moment, and how we can show it was '
+       + 'done. It holds no name or email and is not linked to your account.',
+  },
+  // 20261008010000 (one child's seat refunded): proposed wording, open with the entry above.
+  {
+    table: 'public.billing_seat_removals',
+    what: 'only if you removed one child from a paid plan: our payment provider\'s reference for the plan, when, and '
+        + 'whether that child\'s seat was taken off and its unused part refunded',
+    why: 'it is how we make sure the seat comes off and the refund is paid even if the payment provider cannot be '
+       + 'reached at that moment. It holds no name, email or child, and is not linked to your account.',
+  },
 ] as const
 
 /**

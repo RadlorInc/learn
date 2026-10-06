@@ -100,6 +100,22 @@
 --                                                  service_role, then SELECT/INSERT/UPDATE granted to service_role
 --                                                  (no DELETE: lifting is the founder's SQL-editor write). No FK.
 --                                                  NOT YET APPLIED TO PRODUCTION.
+--   billing_cancellations      rls=t  policies=0   2026-10-08 (20261008000000): INTENTIONAL deny-all, the
+--                                                  consent_b3_cancellations precedent. Stripe subscription ids to
+--                                                  cancel now and refund pro rata after an account close or a
+--                                                  withdraw-all. Rows written ONLY by the DEFINER trigger
+--                                                  billing_queue_cancel_on_delete and consent_withdraw_account. Every
+--                                                  privilege revoked from public/anon/authenticated/service_role, then
+--                                                  SELECT/UPDATE granted to service_role (billing_cancellations_due /
+--                                                  billing_cancellation_record, INVOKER). No FK: it outlives the account.
+--                                                  NOT YET APPLIED TO PRODUCTION.
+--   billing_seat_removals      rls=t  policies=0   2026-10-08 (20261008010000): INTENTIONAL deny-all, the same
+--                                                  shape. One seat to take off a Stripe subscription and refund pro
+--                                                  rata after a one-child withdrawal. Rows written ONLY by the DEFINER
+--                                                  delete_child_data. Every privilege revoked from public/anon/
+--                                                  authenticated/service_role, then SELECT/UPDATE granted to
+--                                                  service_role (billing_seat_removals_due / billing_seat_removal_record,
+--                                                  INVOKER). No FK, no account or child id. NOT YET APPLIED TO PRODUCTION.
 --   consent_notice_versions    rls=t  policies=1   2026-09-24 (20260924100000, consent-once): SELECT for
 --                                                  authenticated (using true — notice versions are not personal
 --                                                  data). All privileges revoked from public/anon/authenticated,
