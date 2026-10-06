@@ -17,6 +17,35 @@ below matter. Never promise a time we do not control.
 5. Start the incident log ([incident.md](incident.md) → the incident log): time, what is seen, what was checked. If
    anyone's data might have been exposed, it is a security incident: follow incident.md instead of this page.
 
+## The notice switch (a one-line notice on every page)
+
+One Vercel variable, `OUTAGE_NOTICE`, puts a calm line at the top of every page for parents and children. Unset, nothing
+shows and nothing changes. It does not depend on Supabase, so it works while the database is down; if Vercel itself is
+down, nothing on our side shows anything.
+
+**Turn it on (founder).**
+1. Vercel → the project → Settings → Environment Variables → add `OUTAGE_NOTICE`, environment **Production** only.
+   Value `on` shows the default sentence — "We’re fixing a problem. Your child’s progress is safe." (in Spanish on a
+   device whose dashboard is set to Spanish). Any other value is shown as it is, as plain text: one line, at most 160
+   characters (longer is cut and ends in "…"); HTML is shown as typed, never run.
+2. Vercel → Deployments → the current Production deployment → ⋯ → **Redeploy**. A variable reaches only a new
+   deployment ([deploy.md](deploy.md): variables bind at deploy time), so this step is what turns it on. It builds the
+   same commit again; the build does not need Supabase (`nightly-e2e` builds production against a placeholder one).
+3. When that deployment is READY: `curl -s https://radlic.com/api/notice` → `{"notice":{"preset":true}}` for `on`, or
+   `{"notice":{"text":"…"}}`.
+
+**Turn it off.** Delete the variable (or empty it), Redeploy the same way, then the same `curl` → `{"notice":null}`.
+
+**How long, and who sees it.** As long as the redeploy's build takes (not measured for a dashboard redeploy), then
+every page load. The page asks `/api/notice` once per full load, and `sw.js` never caches `/api/*`, so an installed app
+or a device on a cached shell sees it too, as long as it reaches radlic.com. A page already open shows it on its next
+full load, not on an in-app move between pages. A device that is offline asks nothing and shows nothing (the offline
+bar shows instead). The × hides it until the next load. It sits in the page's flow at the top, so a full-screen KG–2
+chapter or the game draws over it: a child sees it on `/modules` and between chapters, never over a stage or an
+answer button.
+
+There is no maintenance mode that stops the app; this only tells people.
+
 ## Supabase down or slow (database, sign-in, storage)
 
 **What parents and children see.**

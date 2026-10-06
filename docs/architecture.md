@@ -84,6 +84,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
+| `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
 
 ### Layers (`src`)
@@ -139,7 +140,11 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   has enrolled ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
-  data.
+  data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
+  token and emails the account once per reset. `/rights` sits outside `app/parent/`, so the gate does not wrap it: help,
+  withdraw-all (`WithdrawAllCard`) and the per-child export (`DataRights`) stay reachable with the PIN locked, for a
+  signed-in adult only (a `learner` login is sent to its lessons); closing the account (`/parent/account`) stays behind
+  the PIN (`pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
 
 ## 4. Supabase
 
