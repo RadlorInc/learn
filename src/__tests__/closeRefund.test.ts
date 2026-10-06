@@ -313,10 +313,10 @@ describe('withdrawing permission for every child does the same; so does the last
 
 // ── 5. One child of several (founder, 6 Oct 2026; migration 20261008010000) ───────────────────────
 describe('withdrawing for ONE child of several takes that seat off the plan and refunds its unused part', () => {
-  it('monthly: the quantity goes 2 → 1 with no proration, and the seat\'s $4.99 is refunded pro rata — $2.32', async () => {
-    // Two seats, $12.98 ($7.99 + $4.99) paid 15.5 days ago for 30 days: 14 full days left → 499 × 14 / 30 = 232.87 → 232.
-    const f = await family({ invoices: now => [invoice('in_s2m', 1298, now - 15.5 * DAY, now + 14.5 * DAY, undefined, undefined, { quantity: 2 })] })
-    const [kid] = await withKids(f, 2, 2)
+  it('monthly: the quantity goes 3 → 2 with no proration, and the seat\'s $4.99 is refunded pro rata — $2.32', async () => {
+    // Three seats, $17.97 ($7.99 + 2 × $4.99) paid 15.5 days ago for 30 days: 14 full days left → 499 × 14 / 30 = 232.87 → 232.
+    const f = await family({ invoices: now => [invoice('in_s2m', 1797, now - 15.5 * DAY, now + 14.5 * DAY, undefined, undefined, { quantity: 3 })] })
+    const [kid] = await withKids(f, 3, 3)
     await deleteKid(f.id, kid)
     expect(await q(`select 1 from public.learners where id = '${kid}'`), 'control: the child is deleted').toEqual([])
     const [row, ...more] = await seatRows(f.sub)
@@ -328,14 +328,14 @@ describe('withdrawing for ONE child of several takes that seat off the plan and 
     const [update, refund, ...rest] = writes(f.sub)
     expect(rest).toEqual([])
     expect(update).toMatchObject({ method: 'POST', url: `https://api.stripe.com/v1/subscriptions/${f.sub}`, key: `seat-remove-${f.sub}-${row.id}` })
-    expect(form(update).get('items[0][quantity]')).toBe('1')
+    expect(form(update).get('items[0][quantity]')).toBe('2')
     expect(form(update).get('proration_behavior')).toBe('none')
     expect(form(update).get(`metadata[rs_${row.id.replace(/-/g, '')}]`)).toMatch(/^\d{10}$/)
     expect(refund).toMatchObject({ method: 'POST', url: 'https://api.stripe.com/v1/refunds', key: `seat-refund-${f.sub}-${row.id}-in_s2m` })
     expect(refundsOn('pi_in_s2m').map(r => [r.amount, r.metadata?.why, r.metadata?.seat_paid])).toEqual([[232, 'seat_removed', '499']])
-    expect(stripe.subs[f.sub].status, 'the plan stays for the other child').toBe('active')
-    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
-    expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 232; seats 2 → 1; in_s2m refunded 232 of 499/)
+    expect(stripe.subs[f.sub].status, 'the plan stays for the other children').toBe('active')
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(2)
+    expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 232; seats 3 → 2; in_s2m refunded 232 of 499/)
     const [mail, ...extra] = mails
     expect(extra).toEqual([])
     expect(mail.to).toEqual([f.paidWith])
@@ -357,7 +357,7 @@ describe('withdrawing for ONE child of several takes that seat off the plan and 
     await q(`update public.billing_seat_removals set result = null where id = $1`, [row.id])
     await drain()
     expect(writes(f.sub), 'no second update, no second refund').toEqual([])
-    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(2)
     expect(refundsOn('pi_in_s2m').map(r => r.amount)).toEqual([232])
     expect(refundsOn('pi_in_readd')).toEqual([])
     expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 0; seat already removed/)
