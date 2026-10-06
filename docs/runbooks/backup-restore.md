@@ -5,7 +5,7 @@
 ## What `backup.yml` does
 
 - **When.**
-  - 02:30 UTC daily. GitHub started scheduled runs 5–6 h late (07:41–08:49 UTC on 23–28 Sep, measured 2026-09-28), so "no run yet" before ~09:00 UTC is normal.
+  - 19:30 UTC daily (until 6 Oct: 02:30). GitHub starts scheduled runs 5–6 h late (the 02:30 runs began 07:41–09:17 UTC, 23 Sep–6 Oct), so it is asked for early enough to finish before the 06:23 UTC ops digest; "no run yet" before ~02:00 UTC is normal.
   - Manual at any time: Actions → *Backup (prod database)* → Run workflow, or `gh workflow run backup.yml`.
   - The job runs in the GitHub environment `prod-backup` (only `main` may use it). Its three secrets live there and in
     `production-db`, never as repository secrets: `secretsInEnvironments.test.ts` fails on a job that reads one outside an

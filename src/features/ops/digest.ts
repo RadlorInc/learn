@@ -15,7 +15,8 @@ const REPO = 'RadlorInc/learn'
 const INT_KEYS = ['error_events_24h', 'cron_runs_failed_24h', 'b3_cancel_failing', 'b3_cancel_missed_7d',
   'consent_pending_overdue', 'consent_request_unsent'] as const
 /** A backup older than this is flagged even when the latest run is green. Scheduled runs start 5–6 h late and the
- *  digest goes at 06:23 UTC, so a healthy night reads about 22 h; one missed night reads over 40. */
+ *  digest goes at 06:23 UTC; the backup is scheduled 19:30 UTC so a healthy night reads about 5–10 h, and one missed
+ *  night over 29. */
 const BACKUP_MAX_AGE_H = 36
 const CONCLUSIONS = new Set(['success', 'failure', 'cancelled', 'skipped', 'timed_out', 'action_required', 'neutral', 'stale', 'startup_failure'])
 
