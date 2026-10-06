@@ -232,19 +232,26 @@ export async function POST(req: Request) {
   }
 
   // ── 5. The write. Upsert on the ACCOUNT, then reconcile the seats to it ────
-  const up = await db('subscriptions?on_conflict=account_id&select=id', {
+  // ⚠️ ONE RETRY, ON 23505 ONLY. A checkout sends checkout.session.completed, invoice.paid and
+  // customer.subscription.created within a second; two of them can insert the account's FIRST row at once, and the
+  // loser fails on subscriptions_stripe_customer_id_key, which ON CONFLICT (account_id) does not arbitrate. By then the
+  // winner's row exists, so the same upsert again takes the account_id path and updates it (measured on a local stack,
+  // 6 Oct 2026). Anything else, or a second 23505, is a real failure and returns 5xx so Stripe redelivers.
+  const upsert = () => db('subscriptions?on_conflict=account_id&select=id', {
     method: 'POST',
     prefer: 'resolution=merge-duplicates,return=representation',
     body: JSON.stringify(row),
   }).catch(() => null)
+  let up = await upsert()
   if (up && up.status === 409) {
     // ⚠️ THE ACCOUNT IS GONE. `subscriptions.account_id` references auth.users, so PostgREST answers 409 / 23503 for
     // a subscription whose account was closed — and closing it is what made Stripe send this event (the cancel and
     // refund in features/billing/closeRefund.ts). Retrying can never succeed and nobody is left to entitle, so the
-    // event is closed, naming nobody. Any other refusal is still a 500 and redelivered.
+    // event is closed, naming nobody. A 23505 is the first-row race above: retried once. Any other refusal is a 500.
     const t = await up.text()
     if (/"code"\s*:\s*"23503"/.test(t)) return done({ ignored: 'account_closed' })
-    return fail('subscription upsert', t)
+    if (!/"code"\s*:\s*"23505"/.test(t)) return fail('subscription upsert', t)
+    up = await upsert()
   }
   if (!up || !up.ok) return fail('subscription upsert', up ? await up.text() : 'network')
   const [saved] = (await up.json().catch(() => [])) as { id?: string }[]

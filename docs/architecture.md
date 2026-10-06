@@ -348,7 +348,9 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
   done only once `processed_at` is set); re-reads the subscription from Stripe and reconciles seats to a target
   (`materialize_seats`), so delivery order does not matter. One row per account, so an event about a DIFFERENT
   subscription than the row's is applied only if Stripe says the stored one no longer holds seats; otherwise it is
-  closed unapplied and logged (a late event from an old subscription, or a double subscription). A bad signature
+  closed unapplied and logged (a late event from an old subscription, or a double subscription). A checkout's first
+  events arrive together, so two can insert the account's first row at once; the loser's upsert fails on the
+  `stripe_customer_id` unique key (23505) and is retried once, which then updates the winner's row. A bad signature
   (per-IP limited) and a missing setting (by name) reach `error_events`, never the payload.
 - **Emails a subscription owes** (`features/billing/subscriptionNotices.ts`, sent by the webhook; docs/legal/01 §3):
   the acknowledgement on `checkout.session.completed` (terms, renewal, how to cancel), and a reminder on
