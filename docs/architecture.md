@@ -332,7 +332,11 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
   Stripe event), `billing_config.enforced`. Parents read their own rows; no client writes them directly.
 - **`/api/checkout`:** account from the token; requires the renewal-terms tick, whose time goes on the Stripe
   subscription's metadata with the account id. Refuses (409 `already_subscribed`) while the account's row holds seats
-  (active, trialing, past_due, unpaid), and refuses (503) when it cannot read the row. Returns to
+  (active, trialing, past_due, unpaid), and refuses (503) when it cannot read the row. Because the row is written
+  after payment, it then asks Stripe too: one customer per account (created under an idempotency key from the account
+  id, which Stripe keeps about 24 h), then — after creating the session — the customer's subscriptions (a live or
+  `incomplete` one → 409) and sessions (only the newest open one is kept; the rest are expired; an expire that fails
+  on a session that is not then expired → 409 `checkout_conflict`). A failed Stripe read → 503. Returns to
   `/parent/plan?billing=success`, where the card says "activating" and hides the checkout until the webhook writes the row;
   `/parent/plan` never shows the checkout beside a plan that holds seats.
 - **`/api/stripe/webhook`:** verifies Stripe's signature on the raw body first; idempotent (`stripe_event_id` unique,
@@ -404,6 +408,7 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `docLinks` | Every link between docs resolves, and no file names a doc that is not there. |
 | `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h and stuck Stripe events. |
 | `deploySafety`, `migrationsPending`, `actionsPinned`, `ci.yml` | Backup before `db push`; unapplied migrations retried; Actions pinned; `release` moves only after tsc, vitest, build, audit and `rls-tests` pass. |
+| `redMain` | A red Deploy run opens one issue per kind (or comments on the open one); "database NOT migrated" only when a migration was pending; a finished run closes only the kinds its own jobs prove fixed. |
 
 Restores: [runbooks/backup-restore.md](runbooks/backup-restore.md). Support: [runbooks/support.md](runbooks/support.md).
 

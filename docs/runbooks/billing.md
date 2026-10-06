@@ -38,7 +38,13 @@ Two payments for the same period, or two live subscriptions for one family.
    card in up to 10 business days (doc 01 §5).
 
 The app refuses a second checkout while a plan holds seats (`/api/checkout` answers `already_subscribed`), and the plan
-screen hides the checkout then. A double can still come from Stripe itself or a subscription made by hand.
+screen hides the checkout then. Before the webhook has written a row (two tabs, a double click), checkout asks Stripe:
+one customer per account, a live subscription on it refuses, and only the newest open Checkout Session stays payable
+(older ones are expired). A double can still come from Stripe itself, a subscription made by hand, or an account
+whose row never got written that comes back more than a day later (a second customer; see architecture §8).
+
+A parent who says "the payment page said expired": they had two tabs open and paid in the older one. Nothing was
+charged; they start checkout again.
 
 ## Refund request
 
