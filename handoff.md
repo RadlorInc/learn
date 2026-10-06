@@ -79,7 +79,8 @@ so the repo's migration chain still builds a body one comment different from pro
   unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
 - Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
   `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
-- GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
+- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
+  before 6 Oct, all closed): close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
@@ -105,7 +106,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Play one KG–2 chapter signed in and read its `c:` row back.
 - Use the new dashboard signed in: the Help walkthroughs, a class CSV upload → temporary password → first-login
   change, the parent PIN's "Forgot PIN" and its lock after 5 wrong tries.
-- Crash forwarding: send a test error to `/api/report-error`, then read it back in `error_events`.
 - RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
