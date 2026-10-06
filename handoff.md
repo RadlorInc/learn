@@ -103,7 +103,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Play one KG–2 chapter signed in and read its `c:` row back.
 - Use the new dashboard signed in: the Help walkthroughs, a class CSV upload → temporary password → first-login
   change, the parent PIN's "Forgot PIN" and its lock after 5 wrong tries.
-- Crash forwarding: send a test error to `/api/report-error`, then read it back in `error_events`.
 - RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
