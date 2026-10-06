@@ -492,6 +492,16 @@ function Dashboard() {
                     ? `⚠️ ${t('Permanently delete {name}? This cannot be undone. All progress, sessions and data will be lost.', { name: d.learner.display_name })}`
                     : t('Remove yourself from {name}’s profile? You will lose access.', { name: d.learner.display_name })}
                 </p>
+                {/* A paid family only (docs/legal/01 §5; migration 20261008010000): the seat this child frees comes off
+                    the plan and is refunded — unless a child without a seat takes it (more children than seats) — and
+                    the last child takes the whole plan with it, as withdrawing for every child does. */}
+                {d.accessRole === 'owner' && paidSeats !== null && (() => {
+                  const kids = learners.filter(x => x.accessRole === 'owner').length
+                  const line = kids <= 1 ? t('This is your last child, so your paid plan is cancelled today and the part you have not used is refunded to your card.')
+                    : kids <= paidSeats ? t('Their seat comes off your paid plan today, and the part of it you have not used is refunded to your card.')
+                    : null
+                  return line && <p data-billing="delete-child" style={{ fontSize:14, color:'#991B1B', margin:'0 0 12px' }}>{line}</p>
+                })()}
                 <div style={{ display:'flex', gap:10 }}>
                   <button onClick={() => d.accessRole === 'owner' ? handleDelete(d.learner.id) : handleRemoveSelf(d.learner.id)}
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
@@ -563,7 +573,7 @@ function Dashboard() {
         {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
         {/* Withdraw permission for every child, and KEEP the account — its own card, never on the close page (prod check 2.8).
             On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}
-        {!tea && <WithdrawAllCard lang={lang} style={dcard}
+        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null}
           onDone={() => { setActionMsg(PROPOSED.withdrawnAllBody[lang]); router.push('/parent'); void loadAll(true) }} />}
         {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under

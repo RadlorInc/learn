@@ -23,7 +23,7 @@ The first choice is always the in-app control. It is immediate, it checks owners
 
 **After a deletion from SQL,** the database has already queued the cancel of any pending second consent email (a trigger). The daily cron sends it at 06:23 UTC. To send it now (agent or founder; public, harmless, rate-limited): `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice`.
 
-**A paid plan** is cancelled immediately and its unused part refunded on **Withdraw for every child** and **Close the account**, whichever door was used (in the app, the email link, or the SQL above): the database queues it in the same transaction (`billing_cancellations`) and the same call settles it, then emails the parent the amount. Withdrawing for **one** child changes nothing in billing. If the automatic refund failed, the ops digest says `billing_cancellations_owed`; the steps are in [billing.md](billing.md) → *Withdrawal of consent or closing the account*. A deletion request is never held back for it.
+**A paid plan** is cancelled immediately and its unused part refunded on **Withdraw for every child** and **Close the account**, whichever door was used (in the app, the email link, or the SQL above): the database queues it in the same transaction (`billing_cancellations`) and the same call settles it, then emails the parent the amount. Withdrawing for **one** child of several (deleting that child, by any door above) takes that child's seat off the plan and refunds the seat's unused part, queued in `billing_seat_removals`; if a child with no seat takes the freed seat, nothing changes; the last child is the whole plan, as withdraw-all. If the automatic refund failed, the ops digest says `billing_cancellations_owed`; the steps are in [billing.md](billing.md) → *Withdrawal of consent or closing the account*. A deletion request is never held back for it.
 
 **Kept on purpose, not deleted by these steps:**
 - the consent record after an account closes (04 §2, attorney question);
@@ -76,6 +76,8 @@ nothing (`learners.created_by` is `ON DELETE RESTRICT`), and without children it
   (`HELD_ELSEWHERE`);
 - `billing_cancellations` — only if there was a paid plan: Stripe's subscription id, when, and whether it was cancelled
   and refunded; no account link (`SURVIVORS`);
+- `billing_seat_removals` — only if a child was removed from a paid plan: Stripe's subscription id, when, and whether
+  the seat came off and was refunded; no account or child link (`SURVIVORS`);
 - `deletion_log` — the audit rows (ids and counts);
 - `email_suppressions` — the address, if it ever unsubscribed, so that no marketing email reaches it again;
 - `email_undeliverable` — only if an email to the address bounced permanently or was marked as spam: its sha256 hash,

@@ -205,6 +205,8 @@ export const WITHDRAW_ALL = {
   body0: { en: "If you withdraw permission, we will stop collecting information from every child on your account, delete everything we hold about each of them — including their own sign-ins — and close their profiles. This cannot be undone.", es: 'Si retira el permiso, dejaremos de recopilar información de todos los niños de su cuenta, eliminaremos todo lo que tenemos sobre cada uno de ellos — incluidos sus propios inicios de sesión — y cerraremos sus perfiles. Esto no se puede deshacer.' },
   body1: { en: "**Your account stays open.** If you add a child again later, we will ask for your permission again first.", es: '**Su cuenta sigue abierta.** Si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.' },
   confirm: { en: "Withdraw permission and delete my children's data", es: 'Retirar el permiso y eliminar los datos de mis hijos' },
+  // Founder, 6 Oct 2026 (migration 20261008000000): withdraw-all cancels a paid plan now and refunds the unused part.
+  paid: { en: "**If you have a paid plan, this also cancels it today** and refunds the part you have not used to your card.", es: '**Si tiene un plan de pago, esto también lo cancela hoy** y le reembolsa a su tarjeta la parte que no ha usado.' },
 }
 export const WAITING = {
   heading: { en: "Waiting for your permission", es: 'Esperando su permiso' },

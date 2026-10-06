@@ -66,3 +66,15 @@ export function renderCancelledNow(refundCents: number): Rendered {
     POLICY,
   ])
 }
+
+/** After one child's profile is deleted or their permission withdrawn while other children stay (docs/legal/01 §5):
+ *  that child's seat is off the plan from today and its unused part refunded. Sent by `drainBillingCancellations`. */
+export function renderSeatRemoved(refundCents: number): Rendered {
+  return render('A seat was removed from your Radlic plan', [
+    'We have removed one child\'s seat from your Radlic plan from today. Your next payment is for one seat fewer.',
+    refundCents > 0
+      ? `We have refunded ${usd(refundCents)}, the part of that seat you had not used. It reaches your card within 10 business days.`
+      : 'There is no unused part of that seat left to refund.',
+    POLICY,
+  ])
+}

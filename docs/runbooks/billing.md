@@ -84,7 +84,8 @@ offers no checkout while the cancelled plan still holds seats, so this is the on
 
 Decided 6 October 2026 (doc 01 §4, §5): **closing the account** and **withdrawing permission for every child** both
 cancel the Stripe subscription **immediately** and refund the unused part, automatically. A withdrawal for **one**
-child does not (not decided). How it is built: [../architecture.md](../architecture.md) §8.
+child of several takes that child's seat off the plan and refunds the seat's unused part (*One child withdrawn*,
+below). How it is built: [../architecture.md](../architecture.md) §8.
 
 **The rule** (`unusedCents` in `src/features/billing/closeRefund.ts`, applied to each paid invoice of the
 subscription): payment × full days left in the period that invoice paid for, counted from the moment the request was
@@ -121,6 +122,35 @@ business days.
 4. Then run the drain once (the `curl` above, or wait for the cron). It finds the plan cancelled and each payment
    already refunded, refunds nothing more, and settles the row as `done: already canceled; … already refunded` — the
    digest stops flagging it. No database write by hand.
+
+### One child withdrawn (of several)
+
+Decided 6 October 2026 (doc 01 §5): withdrawing for one child — **Delete \<name\>'s profile** on the dashboard, or a
+pre-24-September per-child consent link — while other children stay. Both run `delete_child_data`, and either ends
+that child's use, so both are handled the same (migration 20261008010000).
+
+- **When a seat comes off.** After the child is deleted and the seat refill has run (a child with no seat takes a
+  freed seat at once): if a seat of the plan is now **empty**, one seat removal is queued in `billing_seat_removals`.
+  If a sibling took the seat, nothing is queued — every paid seat is still in use. If **no child is left**, it is the
+  withdraw-all case: the whole plan is queued in `billing_cancellations` (`consent_withdrawn`), once.
+- **How seats are billed.** One graduated price; the quantity is the number of seats (seat 1 at $7.99/$75.99, every
+  other seat $4.99/$48.00). A seat added part-way through (`/api/billing/seats`, `always_invoice`) is its own invoice
+  for the rest of the period.
+- **The refund** (`removeSeatAndRefund`, `closeRefund.ts`): per billing period still running when the request was
+  actioned, the newest paid invoice with a seat not yet refunded — a seat-add invoice (its whole amount) or the
+  period's own invoice (one seat's `extra`, capped at what is left of the payment). That one seat's share × full days
+  left from `queued_at` ÷ days in the period, rounded down; the whole share within 14 days of the payment. A payment
+  already refunded by hand, or by a close, gets nothing more.
+- **At Stripe:** the quantity goes down by one with `proration_behavior: 'none'` (we refund; Stripe does not also
+  credit), key `seat-remove-<sub>-<row id>`, and a metadata marker `rs_<row id>` so a retry never lowers it twice; the
+  refund is keyed `seat-refund-<sub>-<row id>-<invoice>` and tagged `why: seat_removed`, `seat_paid`. The parent gets
+  "A seat was removed from your Radlic plan" with the amount. A later close refunds only what the seat refunds left.
+- **Failures** are as for a close: the withdrawal is never blocked; `result` is `error: …`, retried by every drain, and
+  counted in the digest's `billing_cancellations_owed`. A close or withdraw-all queued before the seat was settled
+  supersedes it (`done: the whole plan was cancelled and refunded instead`).
+- **Founder, owed seat rows:** `select id, queued_at, result from public.billing_seat_removals where result is null or result like 'error:%';`
+  A passing outage settles on its own (or run the drain `curl` above). Otherwise do **not** lower the quantity in
+  Stripe by hand — the drain finds no marker and lowers it again; paste the `result` to the agent.
 
 **A request by email** (close or withdraw-all): follow [data-requests.md](data-requests.md); the in-app control or
 the operator SQL it names queues the cancel and refund like the app does. Do not refund in Stripe first: a payment
@@ -182,7 +212,3 @@ Not decided here. Until each is decided, the founder handles that case one by on
 2. **Refunds outside doc 01's cases:** goodwill refunds, partial refunds — a rule, or case by case?
 3. **Disputes:** counter by default, or accept under some amount?
 4. **Stripe's failed-payment emails and retry schedule** (doc 01 §7): confirm they are on and match the 7 days.
-5. **Withdrawal for ONE child of several:** keep the plan as it is, drop a seat (and refund it?), or nothing? Today
-   nothing changes in billing.
-6. **The withdraw-all screen** (doc 03's wording, `WITHDRAW_ALL` in `src/features/consent/copy.ts`) does not yet say
-   that it cancels the plan and refunds the unused part; the close page does. A line for doc 03?

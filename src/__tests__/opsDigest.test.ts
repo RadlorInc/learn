@@ -193,7 +193,18 @@ describe('the daily cron emails the digest', () => {
     try {
       await call(CRON)
       expect(sent[0].text).toContain('   billing_cancellations_owed: 0')
-    } finally { await q(`update public.billing_cancellations set result = null where stripe_subscription_id = 'sub_owed_secret'`) }
+      // A one-child seat removal the drain could not settle (20261008010000) is owed the same way.
+      sent.length = 0
+      await q(`insert into public.billing_seat_removals (stripe_subscription_id) values ('sub_seat_secret')`)
+      await call(CRON)
+      expect((await q<{ result: string }>(`select result from public.billing_seat_removals where stripe_subscription_id = 'sub_seat_secret'`))[0].result)
+        .toBe('error: STRIPE_SECRET_KEY is not set')
+      expect(sent[0].text).toContain('!! billing_cancellations_owed: 1')
+      expect(sent[0].text).not.toContain('sub_seat_secret')
+    } finally {
+      await q(`update public.billing_cancellations set result = null where stripe_subscription_id = 'sub_owed_secret'`)
+      await q(`delete from public.billing_seat_removals where stripe_subscription_id = 'sub_seat_secret'`)
+    }
   })
 
   it('a green backup that is too old is still flagged; a fresh one is not', async () => {

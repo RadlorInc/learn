@@ -53,7 +53,15 @@ async function billingUnprocessed(): Promise<string> {
  * settle. Read AFTER the cron's drain, so anything still due failed today. Only the count reaches the email.
  */
 async function billingCancellationsOwed(): Promise<{ line: string; bad: boolean }> {
-  try { return { line: String((await rpc<unknown[]>('billing_cancellations_due', {})).length), bad: false } } catch (e) {
+  try {
+    const plans = (await rpc<unknown[]>('billing_cancellations_due', {})).length
+    // One-child seat removals (20261008010000) count too; a queue not there yet owes nothing.
+    const seats = await rpc<unknown[]>('billing_seat_removals_due', {}).then(r => r.length, (e: RpcError) => {
+      if (e?.code === 'PGRST202') return 0
+      throw e
+    })
+    return { line: String(plans + seats), bad: false }
+  } catch (e) {
     if ((e as RpcError)?.code === 'PGRST202') return { line: 'queue missing (migration 20261008000000 not applied)', bad: false }
     return { line: 'unknown', bad: true }
   }

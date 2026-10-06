@@ -56,6 +56,14 @@ export const SURVIVORS: readonly Survivor[] = [
        + 'sure that happens even if the payment provider cannot be reached at that moment, and how we can show it was '
        + 'done. It holds no name or email and is not linked to your account.',
   },
+  // 20261008010000 (one child's seat refunded): proposed wording, open with the entry above.
+  {
+    table: 'public.billing_seat_removals',
+    what: 'only if you removed one child from a paid plan: our payment provider\'s reference for the plan, when, and '
+        + 'whether that child\'s seat was taken off and its unused part refunded',
+    why: 'it is how we make sure the seat comes off and the refund is paid even if the payment provider cannot be '
+       + 'reached at that moment. It holds no name, email or child, and is not linked to your account.',
+  },
 ] as const
 
 /**

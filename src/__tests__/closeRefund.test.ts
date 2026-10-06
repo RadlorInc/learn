@@ -54,9 +54,9 @@ describe('the refund for one payment', () => {
 let db: PGlite
 const q = async <T = Record<string, unknown>>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows
 
-type Sub = { id: string; object: 'subscription'; status: string; customer: string; canceled_at: number | null; metadata: Record<string, string>; items: unknown }
+type Sub = { id: string; object: 'subscription'; status: string; customer: string; canceled_at: number | null; metadata: Record<string, string>; items: { object: 'list'; data: { id: string; object: 'subscription_item'; quantity: number }[] } }
 type Inv = Record<string, unknown>
-type Refund = { id: string; object: 'refund'; amount: number; payment_intent: string; status: string }
+type Refund = { id: string; object: 'refund'; amount: number; payment_intent: string; status: string; metadata?: Record<string, string> }
 const stripe = { subs: {} as Record<string, Sub>, invoices: {} as Record<string, Inv[]>, refunds: [] as Refund[], emails: {} as Record<string, string> }
 const keys = new Map<string, Response>()          // Stripe's idempotency: the same key gets the first answer back
 let stripeDown = false
@@ -96,6 +96,11 @@ async function fakeFetch(input: string | URL | Request, init: RequestInit = {}):
     const s = stripe.subs[m[1]]
     if (!s) return json({ error: { type: 'invalid_request_error', code: 'resource_missing' } }, 404)
     if (method === 'DELETE') { s.status = 'canceled'; s.canceled_at = Math.floor(Date.now() / 1000) }
+    if (method === 'POST') {   // subscriptions.update: the quantity and metadata, as Stripe applies them
+      const f = new URLSearchParams(String(init.body))
+      if (f.has('items[0][quantity]')) s.items.data[0].quantity = Number(f.get('items[0][quantity]'))
+      for (const [k, v] of f) { const mk = k.match(/^metadata\[(.+)\]$/); if (mk) s.metadata[mk[1]] = v }
+    }
     res = json(s)
   } else if (path === 'invoices') {
     res = json({ object: 'list', has_more: false, data: stripe.invoices[u.searchParams.get('subscription') ?? ''] ?? [] })
@@ -103,7 +108,8 @@ async function fakeFetch(input: string | URL | Request, init: RequestInit = {}):
     res = json({ object: 'list', has_more: false, data: stripe.refunds.filter(r => r.payment_intent === u.searchParams.get('payment_intent')) })
   } else if (path === 'refunds' && method === 'POST') {
     const f = new URLSearchParams(String(init.body))
-    const r: Refund = { id: `re_${stripe.refunds.length + 1}`, object: 'refund', amount: Number(f.get('amount')), payment_intent: f.get('payment_intent')!, status: 'succeeded' }
+    const metadata = Object.fromEntries([...f].flatMap(([k, v]) => { const mk = k.match(/^metadata\[(.+)\]$/); return mk ? [[mk[1], v]] : [] }))
+    const r: Refund = { id: `re_${stripe.refunds.length + 1}`, object: 'refund', amount: Number(f.get('amount')), payment_intent: f.get('payment_intent')!, status: 'succeeded', metadata }
     stripe.refunds.push(r)
     res = json(r)
   } else if ((m = path.match(/^customers\/([^/]+)$/))) {
@@ -123,14 +129,16 @@ async function family(opts: { invoices?: (now: number) => Inv[]; status?: string
     insert into public.profiles (id, role) values ('${id}', 'parent') on conflict (id) do update set role = excluded.role;
     insert into public.subscriptions (account_id, stripe_customer_id, stripe_subscription_id, status, seats_paid)
       values ('${id}', '${cus}', '${sub}', 'active', 2);`)
-  stripe.subs[sub] = { id: sub, object: 'subscription', status: opts.status ?? 'active', customer: cus, canceled_at: null, metadata: { account_id: id }, items: { object: 'list', data: [] } }
+  stripe.subs[sub] = { id: sub, object: 'subscription', status: opts.status ?? 'active', customer: cus, canceled_at: null, metadata: { account_id: id }, items: { object: 'list', data: [{ id: `si_${i}`, object: 'subscription_item', quantity: 2 }] } }
   stripe.emails[cus] = `paid-with-${i}@x.test`
   stripe.invoices[sub] = opts.invoices?.(Math.floor(Date.now() / 1000)) ?? []
   return { id, email, sub, cus, paidWith: `paid-with-${i}@x.test` }
 }
-const invoice = (id: string, paid: number, start: number, end: number, paidAt = start, pi = `pi_${id}`): Inv => ({
+const invoice = (id: string, paid: number, start: number, end: number, paidAt = start, pi = `pi_${id}`,
+  o: { quantity?: number; reason?: string } = {}): Inv => ({
   id, object: 'invoice', status: 'paid', amount_paid: paid, status_transitions: { paid_at: paidAt },
-  lines: { object: 'list', data: [{ id: `il_${id}`, object: 'line_item', period: { start, end } }] },
+  billing_reason: o.reason ?? 'subscription_cycle',
+  lines: { object: 'list', data: [{ id: `il_${id}`, object: 'line_item', quantity: o.quantity ?? 1, period: { start, end } }] },
   payments: { object: 'list', data: [{ id: `inpay_${id}`, object: 'invoice_payment', status: 'paid', payment: { type: 'payment_intent', payment_intent: pi } }] },
 })
 
@@ -148,6 +156,30 @@ const queued = async (sub: string) => (await q<{ queued_because: string; result:
 const drain = async () => (await import('@/features/billing/closeRefund')).drainBillingCancellations()
 const writes = (sub: string) => calls.filter(c => c.method !== 'GET' && (c.url.includes(sub) || c.body.includes(sub)))
 const refundsOn = (pi: string) => stripe.refunds.filter(r => r.payment_intent === pi)
+
+/** `seats` paid seats (Stripe's quantity, `seats_paid`, the seat rows) and `kids` children, created oldest first: the
+ *  database's own fill trigger seats them. Returns the children's ids. */
+async function withKids(f: { id: string; sub: string }, seats: number, kids: number): Promise<string[]> {
+  const [{ id: row }] = await q<{ id: string }>(`update public.subscriptions set seats_paid = $2 where account_id = $1 returning id`, [f.id, seats])
+  await q(`select public.materialize_seats($1::uuid, $2)`, [row, seats])
+  if (stripe.subs[f.sub]) stripe.subs[f.sub].items.data[0].quantity = seats
+  return addKids(f.id, kids)
+}
+async function addKids(parent: string, kids: number): Promise<string[]> {
+  const consent = await grantedConsent(db, parent)
+  const ids: string[] = []
+  for (let k = 0; k < kids; k++) {
+    const [{ id }] = await q<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version, created_at)
+      values ('Kid${k}', 0, '6-8', $1, $2, $3, now() - make_interval(mins => $4)) returning id`, [parent, consent, FIXTURE_NOTICE, 60 - k])
+    await q(`insert into public.learner_access (learner_id, parent_id, access_role) values ($1, $2, 'owner') on conflict do nothing`, [id, parent])
+    ids.push(id)
+  }
+  return ids
+}
+const seatRows = async (sub: string) => q<{ id: string; result: string | null }>(
+  `select id, result from public.billing_seat_removals where stripe_subscription_id = $1 order by queued_at`, [sub])
+const deleteKid = (parent: string, kid: string) => asUser(parent, `select public.delete_learner('${kid}')`)
+const form = (c: { body: string }) => new URLSearchParams(c.body)
 
 beforeAll(async () => {
   ({ db } = await loadSchema())
@@ -249,7 +281,7 @@ describe('closing the account cancels the plan now and refunds the unused part',
   })
 })
 
-describe('withdrawing permission for every child does the same; one child does not', () => {
+describe('withdrawing permission for every child does the same; so does the last child', () => {
   it('withdraw_my_consent queues the plan, the account stays, and the annual plan is refunded pro rata', async () => {
     // $75.99 for 365 days, 90.375 days used: 274 full days left → 7599 × 274 / 365 = 5704.45 → $57.04.
     const f = await family({ invoices: now => [invoice('in_year', 7599, now - 90.375 * DAY, now + 274.625 * DAY)] })
@@ -265,15 +297,189 @@ describe('withdrawing permission for every child does the same; one child does n
     expect(await queued(f.sub)).toMatchObject({ queued_because: 'consent_withdrawn' })
   })
 
-  it('deleting ONE child (the per-child path) queues nothing — not decided, out of scope', async () => {
-    const f = await family()
-    const consent = await grantedConsent(db, f.id)
-    const [{ id: kid }] = await q<{ id: string }>(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
-      values ('Kid', 0, '6-8', '${f.id}', '${consent}', '${FIXTURE_NOTICE}') returning id`)
-    await db.exec(`insert into public.learner_access (learner_id, parent_id, access_role) values ('${kid}', '${f.id}', 'owner') on conflict do nothing`)
+  it('deleting the LAST child is the whole plan, as withdrawing for every child is: queued once, never as a seat', async () => {
+    // $7.99 paid 3 days ago: within 14 days → the whole $7.99.
+    const f = await family({ invoices: now => [invoice('in_lastkid', 799, now - 3 * DAY, now + 27 * DAY)] })
+    const [kid] = await withKids(f, 1, 1)
     await asUser(f.id, `select public.delete_learner('${kid}')`)
     expect(await q(`select 1 from public.learners where id = '${kid}'`), 'control: the child is deleted').toEqual([])
+    expect(await queued(f.sub)).toEqual({ queued_because: 'consent_withdrawn', result: null })
+    expect(await seatRows(f.sub)).toEqual([])
+    await drain()
+    expect(writes(f.sub).map(c => `${c.method} ${c.url.replace('https://api.stripe.com/v1/', '')}`)).toEqual([`DELETE subscriptions/${f.sub}`, 'POST refunds'])
+    expect(refundsOn('pi_in_lastkid').map(r => r.amount)).toEqual([799])
+  })
+})
+
+// ── 5. One child of several (founder, 6 Oct 2026; migration 20261008010000) ───────────────────────
+describe('withdrawing for ONE child of several takes that seat off the plan and refunds its unused part', () => {
+  it('monthly: the quantity goes 2 → 1 with no proration, and the seat\'s $4.99 is refunded pro rata — $2.32', async () => {
+    // Two seats, $12.98 ($7.99 + $4.99) paid 15.5 days ago for 30 days: 14 full days left → 499 × 14 / 30 = 232.87 → 232.
+    const f = await family({ invoices: now => [invoice('in_s2m', 1298, now - 15.5 * DAY, now + 14.5 * DAY, undefined, undefined, { quantity: 2 })] })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    expect(await q(`select 1 from public.learners where id = '${kid}'`), 'control: the child is deleted').toEqual([])
+    const [row, ...more] = await seatRows(f.sub)
+    expect(more).toEqual([])
+    expect(row.result).toBeNull()
+    expect(await queued(f.sub), 'not the whole plan').toBeUndefined()
+
+    expect(await drain()).toBe(1)
+    const [update, refund, ...rest] = writes(f.sub)
+    expect(rest).toEqual([])
+    expect(update).toMatchObject({ method: 'POST', url: `https://api.stripe.com/v1/subscriptions/${f.sub}`, key: `seat-remove-${f.sub}-${row.id}` })
+    expect(form(update).get('items[0][quantity]')).toBe('1')
+    expect(form(update).get('proration_behavior')).toBe('none')
+    expect(form(update).get(`metadata[rs_${row.id.replace(/-/g, '')}]`)).toMatch(/^\d{10}$/)
+    expect(refund).toMatchObject({ method: 'POST', url: 'https://api.stripe.com/v1/refunds', key: `seat-refund-${f.sub}-${row.id}-in_s2m` })
+    expect(refundsOn('pi_in_s2m').map(r => [r.amount, r.metadata?.why, r.metadata?.seat_paid])).toEqual([[232, 'seat_removed', '499']])
+    expect(stripe.subs[f.sub].status, 'the plan stays for the other child').toBe('active')
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
+    expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 232; seats 2 → 1; in_s2m refunded 232 of 499/)
+    const [mail, ...extra] = mails
+    expect(extra).toEqual([])
+    expect(mail.to).toEqual([f.paidWith])
+    expect(mail.subject).toBe('A seat was removed from your Radlic plan')
+    expect(mail.text).toContain('We have refunded $2.32, the part of that seat you had not used.')
+
+    // Retries: the settled row is not due again; reopened with Stripe's keys long expired, Stripe's state still stops a
+    // second quantity change (the marker) and a second refund (the refund's `removal`).
+    calls.length = 0
+    expect(await drain()).toBe(0)
+    expect(calls).toEqual([])
+    keys.clear()
+    await q(`update public.billing_seat_removals set result = null where id = $1`, [row.id])
+    await drain()
+    expect(writes(f.sub), 'no second update, no second refund').toEqual([])
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
+    expect(refundsOn('pi_in_s2m').map(r => r.amount)).toEqual([232])
+    expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 0; seat already removed/)
+  })
+
+  it('annual: the seat\'s $48.00 for 274 of 365 days left — $36.03', async () => {
+    // $123.99 ($75.99 + $48.00) for 365 days, 90.375 used: 274 full days left → 4800 × 274 / 365 = 3603.29 → 3603.
+    const f = await family({ invoices: now => [invoice('in_s2y', 12399, now - 90.375 * DAY, now + 274.625 * DAY, undefined, undefined, { quantity: 2 })] })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    await drain()
+    expect(refundsOn('pi_in_s2y').map(r => r.amount)).toEqual([3603])
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
+  })
+
+  it('within 14 days of the payment: the seat\'s whole $4.99, once even when two drains race', async () => {
+    const f = await family({ invoices: now => [invoice('in_s14', 1298, now - 3 * DAY, now + 27 * DAY, undefined, undefined, { quantity: 2 })] })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    await Promise.all([drain(), drain()])
+    expect(refundsOn('pi_in_s14').map(r => r.amount)).toEqual([499])
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
+  })
+
+  it('a seat added part-way through is the one refunded: its own $1.66 invoice, 10 of 26 days left — $0.63', async () => {
+    // Month: $7.99 for one seat, 19.5 days ago. Seat 2 added 15.5 days ago for the 26 days to period end: $1.66, its own
+    // invoice. Last in, first out: 166 × 10 / 26 = 63.85 → 63, and the month's payment is not touched.
+    const f = await family({ invoices: now => [
+      invoice('in_add', 166, now - 15.5 * DAY, now + 10.5 * DAY, undefined, undefined, { reason: 'subscription_update' }),
+      invoice('in_base', 799, now - 19.5 * DAY, now + 10.5 * DAY),
+    ] })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    await drain()
+    expect(refundsOn('pi_in_add').map(r => r.amount)).toEqual([63])
+    expect(refundsOn('pi_in_base')).toEqual([])
+  })
+
+  it('a payment already refunded by hand gets nothing more; the seat still comes off', async () => {
+    const f = await family({ invoices: now => [invoice('in_shand', 1298, now - 20 * DAY, now + 10 * DAY, undefined, undefined, { quantity: 2 })] })
+    stripe.refunds.push({ id: 're_hand_seat', object: 'refund', amount: 1298, payment_intent: 'pi_in_shand', status: 'succeeded' })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    await drain()
+    expect(refundsOn('pi_in_shand').map(r => r.id)).toEqual(['re_hand_seat'])
+    expect(stripe.subs[f.sub].items.data[0].quantity).toBe(1)
+  })
+
+  it('closing the account afterwards refunds only what the seat refund left: $3.72, each part once', async () => {
+    // Seat first: 499 × 14 / 30 → 232. Then the close: (1298 − 499) × 14 / 30 = 799 × 14 / 30 = 372.87 → 372.
+    const f = await family({ invoices: now => [invoice('in_then', 1298, now - 15.5 * DAY, now + 14.5 * DAY, undefined, undefined, { quantity: 2 })] })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    await drain()
+    await close(f)
+    await drain()
+    expect(refundsOn('pi_in_then').map(r => r.amount)).toEqual([232, 372])
+    expect(stripe.subs[f.sub].status).toBe('canceled')
+  })
+
+  it('a close queued before the seat was drained supersedes it: the plan is refunded once, whole', async () => {
+    // 15.5 days in, 14 full days left of 30: 1298 × 14 / 30 = 605.73 → 605, no separate seat refund.
+    const f = await family({ invoices: now => [invoice('in_sup', 1298, now - 15.5 * DAY, now + 14.5 * DAY, undefined, undefined, { quantity: 2 })] })
+    const [kid] = await withKids(f, 2, 2)
+    await deleteKid(f.id, kid)
+    await close(f)
+    await drain()
+    expect(refundsOn('pi_in_sup').map(r => r.amount)).toEqual([605])
+    expect(writes(f.sub).map(c => c.method), 'one cancel, one refund, no seat update').toEqual(['DELETE', 'POST'])
+    expect((await seatRows(f.sub))[0].result).toBe('done: the whole plan was cancelled and refunded instead')
+  })
+
+  it('withdrawing for every child is the whole plan only: no seat removal is queued for any of them', async () => {
+    const f = await family({ invoices: now => [invoice('in_all2', 1298, now - 3 * DAY, now + 27 * DAY, undefined, undefined, { quantity: 2 })] })
+    await withKids(f, 2, 2)
+    await asUser(f.id, `select public.withdraw_my_consent()`)
+    expect(await q(`select 1 from public.learners where created_by = '${f.id}'`), 'control: both children deleted').toEqual([])
+    expect(await seatRows(f.sub)).toEqual([])
+    expect(await queued(f.sub)).toEqual({ queued_because: 'consent_withdrawn', result: null })
+    await drain()
+    expect(writes(f.sub).map(c => c.method)).toEqual(['DELETE', 'POST'])
+    expect(refundsOn('pi_in_all2').map(r => r.amount)).toEqual([1298])
+  })
+
+  it('a seat a sibling takes at once is still in use: nothing queued (the sibling is seated — the control)', async () => {
+    const f = await family({ invoices: now => [invoice('in_sib', 799, now - 3 * DAY, now + 27 * DAY)] })
+    const [seated, waiting] = await withKids(f, 1, 2)
+    expect(await q(`select 1 from public.subscription_seats where learner_id = $1`, [waiting]), 'control: the second child has no seat').toEqual([])
+    await deleteKid(f.id, seated)
+    expect(await q(`select 1 from public.subscription_seats where learner_id = $1`, [waiting]), 'the sibling took the seat').toHaveLength(1)
+    expect(await seatRows(f.sub)).toEqual([])
     expect(await queued(f.sub)).toBeUndefined()
+  })
+
+  it('a family with no paid plan: nothing is queued and Stripe is never called', async () => {
+    const id = 'eeeeeeee-eeee-4eee-8eee-f00000000001'
+    await db.exec(`insert into auth.users (id, email, email_confirmed_at) values ('${id}', 'free@x.test', now());
+      insert into public.profiles (id, role) values ('${id}', 'parent') on conflict (id) do update set role = excluded.role;`)
+    const [kid] = await addKids(id, 2)
+    const count = async () => Number((await q<{ n: number }>(`select (select count(*) from public.billing_seat_removals) + (select count(*) from public.billing_cancellations) as n`))[0].n)
+    const before = await count()
+    await deleteKid(id, kid)
+    expect(await q(`select 1 from public.learners where id = '${kid}'`), 'control: the child is deleted').toEqual([])
+    expect(await count()).toBe(before)
+    calls.length = 0
+    expect(await drain()).toBe(0)
+    expect(calls).toEqual([])
+  })
+
+  it('Stripe down: the withdrawal still goes through; the seat is owed, flagged, and settled later from when it was asked', async () => {
+    // $12.98 for two seats paid 18.5 days ago for 30 days. The withdrawal is then dated 3 days back: counted from it,
+    // 14 full days left → 499 × 14 / 30 = 232. Counted from the retry it would be 11 → 182.
+    const f = await family({ invoices: now => [invoice('in_sdown', 1298, now - 18.5 * DAY, now + 11.5 * DAY, undefined, undefined, { quantity: 2 })] })
+    const [kid] = await withKids(f, 2, 2)
+    stripeDown = true
+    await deleteKid(f.id, kid)
+    expect(await q(`select 1 from public.learners where id = '${kid}'`), 'the withdrawal was not blocked').toEqual([])
+    await drain()
+    const [row] = await seatRows(f.sub)
+    expect(row.result).toMatch(/^error: /)
+    await db.exec('set role service_role')
+    try {
+      expect((await q<{ id: string }>(`select id from public.billing_seat_removals_due()`)).map(r => r.id)).toContain(row.id)
+    } finally { await db.exec('reset role') }
+    await q(`update public.billing_seat_removals set queued_at = queued_at - interval '3 days' where id = $1`, [row.id])
+    stripeDown = false
+    await drain()
+    expect(refundsOn('pi_in_sdown').map(r => r.amount)).toEqual([232])
+    expect((await seatRows(f.sub))[0].result).toMatch(/^done: refunded 232/)
   })
 })
 
@@ -318,5 +524,18 @@ describe('the queue is the server\'s alone', () => {
     expect(await yes(`has_table_privilege('service_role', 'public.billing_cancellations', 'update')`)).toBe(true)
     expect(await yes(`has_table_privilege('service_role', 'public.billing_cancellations', 'insert')`)).toBe(false)
     expect(await yes(`has_function_privilege('service_role', 'public.billing_cancellations_due()', 'execute')`)).toBe(true)
+    // The seat queue (20261008010000), the same shape.
+    for (const role of ['anon', 'authenticated']) {
+      for (const priv of ['select', 'insert', 'update', 'delete']) {
+        expect(await yes(`has_table_privilege('${role}', 'public.billing_seat_removals', '${priv}')`), `${role} ${priv} seats`).toBe(false)
+      }
+      expect(await yes(`has_function_privilege('${role}', 'public.billing_seat_removals_due()', 'execute')`)).toBe(false)
+      expect(await yes(`has_function_privilege('${role}', 'public.billing_seat_removal_record(uuid, text)', 'execute')`)).toBe(false)
+    }
+    expect(await yes(`has_table_privilege('service_role', 'public.billing_seat_removals', 'select')`)).toBe(true)
+    expect(await yes(`has_table_privilege('service_role', 'public.billing_seat_removals', 'update')`)).toBe(true)
+    expect(await yes(`has_table_privilege('service_role', 'public.billing_seat_removals', 'insert')`)).toBe(false)
+    expect(await yes(`has_function_privilege('service_role', 'public.billing_seat_removals_due()', 'execute')`)).toBe(true)
+    expect(await yes(`has_function_privilege('service_role', 'public.billing_seat_removal_record(uuid, text)', 'execute')`)).toBe(true)
   })
 })

@@ -163,7 +163,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions`, `email_undeliverable` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
-| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations` |
+| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations`, `billing_seat_removals` |
 | Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.
@@ -175,7 +175,7 @@ Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3
   child is deleted only by `delete_learner` → `delete_child_data` (logged, consent withdrawn, the child's login removed).
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
-- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `email_undeliverable`, `consent_b3_cancellations`, `billing_cancellations`,
+- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `email_undeliverable`, `consent_b3_cancellations`, `billing_cancellations`, `billing_seat_removals`,
   `error_events`, `lesson_catalog` (the ids that may earn progress and points; read only by the two point functions). A parent reads only their own `parental_consents` rows and writes none.
 - Privilege is never read from a column its owner can write (admin is `admin_users`, not `profiles.role`). Some rules
   are column grants (invite status, `lesson_feedback`).
@@ -192,7 +192,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
   `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
   `consent_lookup`, `consent_grant`, `consent_decline`, `consent_withdraw`, `consent_ok`, `consent_expire_stale`,
-  `materialize_seats`, `ops_digest`, `billing_cancellations_due` and `billing_cancellation_record` (INVOKER). **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
+  `materialize_seats`, `ops_digest`, `billing_cancellations_due`, `billing_cancellation_record`, `billing_seat_removals_due` and `billing_seat_removal_record` (INVOKER). **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
   functions).
 - **Policy helpers and triggers:** `is_learner_creator`, `can_self_grant_access`, and the triggers for new users, new
   learners, caps, the consent gate (§5), B3 cancellation and the plan-cancel queue (`billing_queue_cancel_on_delete`, §8).
@@ -292,7 +292,7 @@ deletion, and the daily cron drain it.
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |
 | Export | every child table, crash records, access list | `export_child_records` + reads | `exportCompleteness`, `withdrawExportE2e` |
-| Delete a child | `learners` cascade, child login, `deletion_log` | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel` |
+| Delete a child | `learners` cascade, child login, `deletion_log`; on a paid plan the freed seat removed and refunded, or the plan for the last child (§8) | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel`, `closeRefund` |
 | Close account | all children, the account; consent kept; the plan cancelled and refunded (§8) | `delete_my_account` | `accountDeletion`, `keepConsentRecord`, `closeRefund` |
 | Withdraw | all children; the plan cancelled and refunded (§8) | `withdraw_my_consent`, `consent_withdraw` | `withdrawalScope`, `b3CancelWiring`, `closeRefund` |
 
@@ -365,7 +365,14 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
   `close-cancel-<sub>` / `close-refund-<sub>-<invoice>`, and a payment that already carries a refund gets none, so a
   retry never pays twice. An unsettled row stays due, is retried, and the ops digest flags it
   (`billing_cancellations_owed`). Stripe's later events for a closed account are closed as `account_closed` (the upsert's
-  23503). A one-child withdrawal does not touch billing.
+  23503).
+- **One child of several withdrawn removes that seat and refunds it** (20261008010000; doc 01 §5): `delete_child_data`
+  on the `delete_child` / `withdraw_consent_child` paths, after the seat refill, queues a row in `billing_seat_removals`
+  when a seat of the plan is left empty (the whole plan in `billing_cancellations` when no child is left). The same
+  drain lowers Stripe's quantity by one (`proration_behavior: 'none'`, a metadata marker against a second decrement)
+  and refunds that seat's share of its newest paid invoice per period, last in first out, by the same rule
+  (`removeSeatAndRefund`). Its refunds are tagged `seat_removed`; a later close subtracts them. `/api/billing/seats`
+  adds the count of removals to its idempotency key so a re-add after a removal is a new request.
 - **`/api/billing/seats`:** one more seat on the caller's own active plan (max 4): a preview of the renewal total, then
   Stripe invoices the prorated difference now on the card on file; the row and seats are written at once. If the bank
   wants approval (3-D Secure) or the card fails, the change stays `pending_update` (no seat) and the parent finishes on
@@ -422,7 +429,7 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `runbookNoProdWrites` | No runbook tells its reader to write to production by hand. |
 | `docLinks` | Every link between docs resolves, and no file names a doc that is not there. |
 | `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h, stuck Stripe events and plans owed a cancel and refund. |
-| `closeRefund`, `billingStripe` | Close and withdraw-all cancel the plan now and refund the unused part, by hand-worked amounts, once (a retry and a race refund nothing more), after the row is deleted, and Stripe being down never blocks the close; the webhook closes a closed account's events with 200. |
+| `closeRefund`, `billingStripe`, `seatRefundCopy` | Close and withdraw-all cancel the plan now and refund the unused part, by hand-worked amounts, once (a retry and a race refund nothing more), after the row is deleted, and Stripe being down never blocks the close; one child of several takes off one seat and refunds its share, the last child the whole plan; the webhook closes a closed account's events with 200; the confirmations say so to a paid family only. |
 | `deploySafety`, `migrationsPending`, `actionsPinned`, `ci.yml` | Backup before `db push`; unapplied migrations retried; Actions pinned; `release` moves only after tsc, vitest, build, audit and `rls-tests` pass. |
 | `redMain` | A red Deploy run opens one issue per kind (or comments on the open one); "database NOT migrated" only when a migration was pending; a finished run closes only the kinds its own jobs prove fixed. |
 
