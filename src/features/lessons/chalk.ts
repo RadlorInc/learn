@@ -6,6 +6,7 @@
  *
  * The board is always 600 × 400. Pure data and timing here; drawing is ./Chalkboard.tsx.
  */
+import { clipKey } from '@/core/voiceClips'
 
 export type ChalkColor = 'w' | 'y' | 'b' | 'r' | 'd'   // white, yellow, blue, coral, dim
 export const CHALK: Record<ChalkColor, string> = { w: '#F0EBDA', y: '#F2CE6B', b: '#8AC0DB', r: '#E88E74', d: '#A9A897' }
@@ -27,13 +28,21 @@ export interface ChalkMark {
 /** How long a line takes to say. The same estimate paces the silent-mode beat clock, so the chalk matches either way. */
 export const beatMs = (say: string) => Math.min(6500, 1500 + say.length * 55)
 
-const norm = (w: string) => w.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+export const normWord = (w: string) => w.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
 
-/** When, in ms into the line, `at` is said: its place among the words times the line's length. -1 = not in the line. */
+/** Real word times of the open lesson's clips — `{ clipKey: { word: ms into the clip } }`, ./word-times/<module>.json, built
+ *  by scripts/audio/build-word-times.mts from her recordings — and the rate the clips play at (LessonPlayer sets both). */
+let heard: Record<string, Record<string, number>> = {}, heardRate = 1
+export const setWordTimes = (t: typeof heard, rate: number) => { heard = t; heardRate = rate }
+
+/** When, in ms into the line, `at` is said: the real time from her clip when there is one, else its place among the
+ *  words times the line's length (a line with no clip, or a word whisper did not match). -1 = not in the line. */
 export function wordMs(say: string, at?: string): number {
   if (!at) return 0
-  const words = say.split(/\s+/).map(norm)
-  const i = words.indexOf(norm(at))
+  const real = heard[clipKey(say)]?.[normWord(at)]
+  if (real !== undefined) return Math.round(real / heardRate)
+  const words = say.split(/\s+/).map(normWord)
+  const i = words.indexOf(normWord(at))
   return i < 0 ? -1 : Math.round((i / words.length) * beatMs(say))
 }
 

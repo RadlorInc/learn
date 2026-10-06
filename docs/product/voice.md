@@ -16,7 +16,8 @@ A Grade 3–8 lesson speaks these lines, each from its own recorded clip:
 - Screen 1 (its title and text), then every teaching line (`beats[].say`) on Screens 2–7;
 - the big idea, which is said again when a practice answer misses;
 - Screen 8 ("Now you try." with the question and prompt), both hints, the twin ("Try a new one."), "Right!",
-  "Here is how this one works.", and Screen 9 (all three versions).
+  "Here is how this one works.", and Screen 9 (all three versions). Screen 8's **🔊 Hear it again** says its question
+  line (or the twin's) again from the same clip.
 
 Not spoken: the worked steps (shown only) and the practice problems, which the ladders generate with random numbers,
 so there is no fixed set to record (the founder: not now). A teaching screen moves on by itself once her last line

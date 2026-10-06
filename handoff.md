@@ -6,31 +6,43 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (28 September 2026)
+## Where things stand (29 September 2026)
 
-- **Production** was on `fbf193280` (#311) when this file was written. A private beta with families the founder knows
-  has run since 25 September; it is free and billing is off.
+- **Production** is on `132c38297` (#323); `smoke:live` passed on it (29 Sep). The repo `learn` is public again (see
+  the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
+  billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
-  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points (game time
-  spends nothing until a game is attached); six legal pages as beta versions; nightly backups green.
-- **The game is on GitHub, not on `main`:** branch `wip/game-in-play` (a snapshot based on 18 September, not rebased
-  or re-tested on `main`) holds `blockcraft/` (a violence-free block-building game framed on `/play`), migration
-  `20260919100000_game_saves.sql` (not applied) and the test files `adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules`. The founder's main checkout is back on `main`; its other uncommitted leftovers are in a local
-  `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
+  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy
+  BlockCraft game time on `/play` (#352, 1 Oct); six legal pages as beta versions; nightly
+  backups green.
+- **The game (BlockCraft) is live** (#352, merged 1 Oct; its three migrations applied and proved on production): the
+  game opens full page from `/play` in creative (a pause-menu button switches to survival, which has no damage), saved to the child's account; stopping early charges the seconds
+  played. Not yet played signed in by a real child on production. Branch `wip/game-in-play` is superseded, except its three test files `adaptiveEngine`, `adaptiveWiring`,
+  `lessonFlowAllModules` (never ported). The founder's main checkout is back on `main`; its other uncommitted
+  leftovers are in a local `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
   Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
 - The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
   machine, readable by the owner only.
 
+## Open — Draft PRs waiting for the founder
+
+Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323 (each migration's before- and proof-SQL
+all PASS). #323 was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️),
+so the repo's migration chain still builds a body one comment different from production's.
+1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
+2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
+   #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
+
 ## Open — the founder decides
 
-- `wip/game-in-play`: rebase onto `main` and ship it, or drop it; blockcraft multiplayer later (needs a server
-  decision; a children's app means no chat); try it on a real tablet.
+- The game: multiplayer later (needs a server decision; a children's app means no chat);
+  try it on a real tablet; the end time is in the game's URL, so a child who edits it plays past it (points already
+  paid; a `ponytail:` note in `blockcraft/src/main.js`).
 - `learner-grade`: rework on top of notice-v7, or drop.
 - Whether both repos stay public now that Vercel is on Pro (the original reason has gone), and where backups are kept.
 - A "not this month" list and one deciding metric (7-day activation); a paid pilot before new surfaces.
-- Hide the child page's Game time tab while `/play` says "coming soon"; bring back the install banner on `/modules`.
+- Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
 - Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
@@ -54,10 +66,22 @@ fixed yet are tracked outside this public repo; ask the founder.
   `docs/legal/sql/admin-mfa-proof.sql` and sign in to `/admin` with the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
+- Vercel, before `learn` goes private: whether the block checks the commit's author (the founder, who merges) or
+  the pusher (GitHub Actions) was not measured; the blocked deployment's message names the GitHub user. The author →
+  link the founder's GitHub login to their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote`
+  (the agent builds it).
+- **If `learn` goes private, Actions minutes cost money**: measured 28 Sep, about 5,400 minutes in 30 days (CI on PR
+  pushes ~2,300, Deploy ~2,700) against 2,000 included on the free org plan — roughly US$20 a month over. Without a
+  payment method or budget, Actions stops when the 2,000 are used, and deploys stop with it. Set an Actions budget
+  before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- An uptime checker on `/api/health` and `/auth` that alerts a phone (`/api/health` does not touch the database).
-- GitHub: read and close or act on the red-main issues #78, #99, #100; the "allowed actions" setting.
+- An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
+  unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
+- Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
+  `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
+- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
+  before 6 Oct, all closed): close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
@@ -83,7 +107,6 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Play one KG–2 chapter signed in and read its `c:` row back.
 - Use the new dashboard signed in: the Help walkthroughs, a class CSV upload → temporary password → first-login
   change, the parent PIN's "Forgot PIN" and its lock after 5 wrong tries.
-- Crash forwarding: send a test error to `/api/report-error`, then read it back in `error_events`.
 - RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
 
 ## Open — agent work
@@ -93,21 +116,18 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- `migrate-prod`'s signed-in image pull (#311) has not run yet — watch the next migration.
-- `scripts/migrations-pending.sh` read a blind API answer on 2026-09-28 (Deploy run 36438372718, the docs merge):
-  it missed the successful `migrate-prod` at `774ac5170`, named `78dee7be1` instead, and offered `production-db` with
-  nothing to apply (the same script run locally a minute later said `changed=false`). The run was cancelled. Its
-  blind-read guard only catches a run with no jobs; a job list missing one job passes it. Cross-check with a second
-  source (e.g. the `production-db` deployments list) before trusting a `true`.
-- No CI job runs Playwright or checks page layout: `nightly-e2e` and `weekly-layout` skip while
-  `LEGACY_CHAPTERS_HIDDEN` is true, yet the same 23 chapters are live as KG–2, and the specs they name
-  (`e2e/start-card.spec.ts`, `e2e/short-landscape.spec.ts`) no longer exist. Point the sweeps at the KG–2 tabs.
-- No operator path closes an account for a parent who cannot use the app (`delete_my_account` needs their own recent
-  sign-in): write one and rehearse it locally before the first such request.
+- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); it
+  has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
+  `weekly-layout` was deleted with it (its spec and the teen shell were gone; the nightly's 640×320 frame covers short
+  phones). `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
+  passed — 10 end-card buttons fail Playwright's "stable" wait because the nudge animates them (a harness fault: a
+  child taps them fine), 3 chapters "could not look" (the monkey cannot solve them), colors timed out.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
-- Delete the legacy code KG–2 does not use (the founder approves the list); drop the emptied legacy tables in the same
-  change that stops the export and the dashboard RPC reading them.
+- Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
+  `diagnostic_*` tables stay (read by /admin's funnel and the export).
+- `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
+  alone — twice on 28 Sep. A timing assumption in the test, not yet found.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's
@@ -119,8 +139,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   service-role helper and one caller-identity helper instead of several; split the parent and teacher dashboards;
   one signed-number formatter (`core/fmt.ts` is imported by nothing).
 - Bugs from the review, all low: the game-time day is counted in UTC for families without a settings row; the
-  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return;
-  nothing retries a failed lesson upload on a timer while online.
+  Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
 - Performance: re-measure child-screen first paint and the lesson bundle sizes; the teacher dashboard makes one
@@ -134,12 +153,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
   (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
   mentions tools we do not use.
-- Points, read from the code and not measured: a chapter's (or a topic's) first uploaded answer may also pay the +3
-  level-up, because tiers start at 1 and a new row starts at 0. Measure on a local stack before changing anything.
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
-- Never recorded, so check or drop: the console 404 on every page; whether Vercel firewall rules exist; whether an
+- Never recorded, so check or drop: whether Vercel firewall rules exist; whether an
   Instant Rollback has ever been timed; the classroom AR demo
   (labs) track; the id-free event rollup decided on 5 September and never built.

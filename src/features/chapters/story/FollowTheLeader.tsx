@@ -46,7 +46,7 @@ import {
 import { rint, shuffle } from '@/core/rand'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar from './ReadyBar'
+import SubmitOnPick from './SubmitOnPick'
 
 // Just long enough to swallow a double-tap. It is deliberately NOT tied to the voice: measured
 // live in Chrome, `speechSynthesis.speaking` stays true for over 3.2 SECONDS after a single spoken
@@ -449,9 +449,9 @@ export const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct
   }, [])
 
   /**
-   * A tap only CHOOSES which little one goes next; nobody walks until Ready.
+   * A tap only CHOOSES which little one goes next; nobody walks until it is submitted (at once: SubmitOnPick).
    *
-   * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so Ready happens ONCE PER PLACE IN THE LINE rather than once
+   * ⚠️ THIS CHAPTER BUILDS A SEQUENCE, so a submit happens ONCE PER PLACE IN THE LINE rather than once
    * per round — the child chooses who is next, sends them, then chooses again. That keeps the
    * per-step feedback the chapter teaches with (a wrong pick wiggles and the voice says which to look
    * for) instead of holding a whole ordering back to be graded at the end, which would be a
@@ -551,7 +551,7 @@ export const LineScene: React.FC<{ data: LineRound; mode: Mode; onDone: (correct
           </React.Fragment>
         )
       })}
-      <ReadyBar show={pending !== null} onCommit={commit} label="Send ▶" />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -648,7 +648,7 @@ export default function FollowTheLeader({ onFinish, onExit }: {
   if (needsRotate) return <RotateGate line="The little ones line up in landscape! 🐾" />
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '10px 24px',
         fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
     </div>

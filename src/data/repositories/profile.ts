@@ -4,7 +4,7 @@
 import { db } from '@/data/repositories/_shared'
 import { logAuthEvent } from '@/data/auth'
 import { clearActiveLearner } from '@/data/supabase/useLearnerSession'
-import { clearSyncedProgress } from '@/infra/storage/lessonSync'
+import { clearChildrenFromDevice, unsentOnDevice } from '@/infra/storage/lessonSync'
 import type { UserRole } from '@/data/supabase/types'
 
 /**
@@ -47,7 +47,18 @@ export async function setMyRole(role: UserRole): Promise<boolean> {
 export const homeForRole = (role: UserRole | null): string =>
   role === 'learner' ? '/modules' : '/parent'
 
-export async function signOut() {
+/**
+ * Returns false when the person chose to stay signed in. With uploads still waiting on this device it asks first: they
+ * are not lost by signing out (the queue keeps them for their owner), but they leave only when this account signs in
+ * HERE again — on a shared or school computer that may be never. `unsentOk`: the caller knows they no longer matter
+ * (the account was just deleted).
+ */
+export async function signOut(opts?: { unsentOk?: boolean }): Promise<boolean> {
+  const unsent = opts?.unsentOk === true ? 0 : unsentOnDevice()
+  if (unsent > 0 && !window.confirm(
+    `${unsent} update${unsent === 1 ? ' has' : 's have'} not reached your account yet. ` +
+    'If you sign out now, they wait on this device and are sent the next time this account signs in here. Sign out anyway?',
+  )) return false
   const supabase = db()
   // Log the logout BEFORE revoking the token (an insert after signOut would 401).
   // Race against a short timeout so a dead network can never hang the sign-out —
@@ -63,6 +74,7 @@ export async function signOut() {
   } catch { /* best-effort — never block sign-out */ }
   await supabase.auth.signOut()
   clearActiveLearner()        // else the next account (same tab) briefly sees the previous child's profile
-  clearSyncedProgress()       // the children's progress copies leave the device with the account (N16); unsent work stays
+  clearChildrenFromDevice()   // every child's keys leave the device with the account (N16); a child with unsent work keeps them
   window.location.href = '/auth'
+  return true
 }

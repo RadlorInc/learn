@@ -29,11 +29,11 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { getMyLearners, getLearnerStats, getLearnerProgress, getRecentSessions, deleteMyAccount, signOut } from '@/data/repositories'
+import { getMyLearners, getRecentSessions, deleteMyAccount, signOut } from '@/data/repositories'
 import { getCurrentSession } from '@/data/auth'
 import { DataRights } from '@/shared/ui/DataRights'
 import { SURVIVORS, HELD_ELSEWHERE } from '@/core/accountDeletion'
-import type { Learner, LearnerStats, LearnerProgress, Session } from '@/data/supabase/types'
+import type { Learner, Session } from '@/data/supabase/types'
 
 /* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
 const P = {
@@ -47,7 +47,7 @@ const P = {
 } as const
 
 
-interface Owned { learner: Learner; stats: LearnerStats | null; progress: LearnerProgress[]; sessions: Session[] }
+interface Owned { learner: Learner; sessions: Session[] }
 
 export default function AccountPage() {
   const router = useRouter()
@@ -69,8 +69,6 @@ export default function AccountPage() {
       const mine = learners.filter(l => l.created_by === session.user.id)
       setOwned(await Promise.all(mine.map(async learner => ({
         learner,
-        stats:    await getLearnerStats(learner.id),
-        progress: await getLearnerProgress(learner.id),
         sessions: await getRecentSessions(learner.id),
       }))))
     })()
@@ -102,7 +100,7 @@ export default function AccountPage() {
         </p>
         <p style={p}>Thank you for trying Radlic.</p>
         <button style={{ ...btn, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none' }}
-          onClick={async () => { await signOut(); router.replace('/') }}>Close</button>
+          onClick={async () => { await signOut({ unsentOk: true }); router.replace('/') }}>Close</button>
       </Shell>
     )
   }
@@ -130,7 +128,7 @@ export default function AccountPage() {
         ? <p style={p}>There are no child profiles on this account.</p>
         : owned.map(o => (
             <DataRights key={o.learner.id} name={o.learner.display_name} learnerId={o.learner.id}
-              bundle={{ learner: o.learner, stats: o.stats, progress: o.progress, sessions: o.sessions }} />
+              bundle={{ learner: o.learner, sessions: o.sessions }} />
           ))}
 
       {/* ⚠️ RENDERED FROM THE DECLARATION, NOT RETYPED. `SURVIVORS` is the same list the gate
@@ -156,7 +154,7 @@ export default function AccountPage() {
             that it cannot be done by someone who simply picked up an unlocked device. Nothing has been
             deleted.
           </p>
-          <button style={{ ...btn, marginTop: 12 }} onClick={async () => { await signOut(); router.replace('/auth') }}>
+          <button style={{ ...btn, marginTop: 12 }} onClick={async () => { if (await signOut()) router.replace('/auth') }}>
             Sign in again
           </button>
         </div>

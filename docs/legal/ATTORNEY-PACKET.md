@@ -175,5 +175,20 @@ browser-storage rows seen in a live child session.
 
 **Doc 08, added after publication (founder-approved 24 Sep 2026, #219):** a functional local-storage row `al-text-size` (the text size chosen on the device; nothing kept for Normal) and one sentence in the signed-out paragraph; "Effective" kept at 25 Sep 2026; a "Last updated" line carries the day #219 merges. Please confirm a new functional row needs no fresh notice.
 
+## B. The paid launch, with beta pages (founder, 1 October 2026)
+
+Billing is switched on with the legal pages as beta versions, before your review. Published that day: the **Refund and
+Cancellation Policy** (01) for the first time; the **Terms** (12) with §5 Subscriptions back (plus §6 four children,
+§7 licence, §10 refund on our closure); the **Privacy Policy** (11) with the billing row, purpose and payment
+provider back; the **subprocessor list** (07) with Stripe's real row. New, and needing your view:
+
+- **Starting free:** two topics the parent chooses once, free indefinitely, no payment details, no conversion.
+  Is that a "free trial" under state ARLs or ROSCA? (01 §2, 12 §5)
+- **Adding a seat mid-period:** a prorated charge on the card on file, shown before confirmation; a bank's 3-D
+  Secure approval on Stripe's page when asked. Enough disclosure and consent? (01 §2, 12 §5)
+- **No sales tax collected** (founder, 1 October 2026): prices are what the parent pays; we are below every state's economic-nexus threshold today and registered in none. 01 §2 and 12 §5 promise 30 days' notice before tax would ever apply. Please confirm the wording, and whether any state treats this product as taxable at our size.
+- Withdrawal of consent now leads to cancellation and a pro-rata refund **on request by email** (01 §5), not
+  automatically; please confirm that is enough.
+
 ## What we are not asking you
 Prices, dates, regions, the DMCA agent's identity, provider log-retention periods and the reviewer's name are the founder's or providers' to supply. They are tracked in `PLACEHOLDERS.md`.

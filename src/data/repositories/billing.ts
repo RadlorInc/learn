@@ -2,12 +2,9 @@
 /**
  * Billing reads. The data layer is the only place that talks to Supabase.
  *
- * ⚠️⚠️ THERE IS EXACTLY ONE DEFINITION OF "MAY THIS BE RECORDED", AND IT IS IN THE DATABASE.
- * `is_chapter_entitled` is already called from three places — the `sessions` INSERT policy, the
- * `learner_progress` WITH CHECK and inside `sync_session` — precisely so that two guards cannot
- * diverge. A TypeScript copy of the same rules would be a FOURTH guard, and it would disagree
- * silently in the worst direction: letting a child into a chapter the database will then refuse to
- * save, which is a run of work thrown away with nothing on screen saying why.
+ * ⚠️⚠️ THERE IS EXACTLY ONE DEFINITION OF "MAY THIS CHILD OPEN THIS", AND IT IS IN THE DATABASE
+ * (`claim_topic`, which also counts the family's two free topics). A TypeScript copy of the rules would disagree
+ * silently — and the count of two must be taken in one place, under one lock, or two siblings both get "the last" slot.
  *
  * So this asks. It does not decide.
  */
@@ -23,12 +20,15 @@ import { db } from '@/data/repositories/_shared'
  * anyway. `billing_config` fails open for the same reason and the camera guard fails closed for the
  * opposite one — different failure costs, different defaults.
  */
-export async function isChapterEntitled(learnerId: string, chapter: string): Promise<boolean | null> {
+
+/**
+ * The free trial's entry question (20261001120000 `claim_topic`): may this child open this topic — a lesson id, a
+ * `c:<chapter>` or a module id (its mixed practice)? The database records it as one of the family's two free topics
+ * when a slot is left. Same answer shape as above: `null` = could not find out (→ the gate lets them in).
+ */
+export async function claimTopic(learnerId: string, topic: string): Promise<boolean | null> {
   try {
-    const { data, error } = await db().rpc('is_chapter_entitled', {
-      p_learner_id: learnerId,
-      p_chapter: chapter,
-    })
+    const { data, error } = await db().rpc('claim_topic' as never, { p_learner_id: learnerId, p_topic: topic } as never)
     if (error) return null
     return typeof data === 'boolean' ? data : null
   } catch {
@@ -36,15 +36,41 @@ export async function isChapterEntitled(learnerId: string, chapter: string): Pro
   }
 }
 
-/** The same question for a handful of chapters at once — the parent dashboard's scoped list, which
- *  is about a dozen. Still one definition, asked N times; deriving the set locally is the thing
- *  §1 of fbf193280:docs/billing-stage-3.md forbids. */
-export async function entitledChapters(
-  learnerId: string, chapters: string[],
-): Promise<Record<string, boolean | null>> {
-  const verdicts = await Promise.all(chapters.map(c => isChapterEntitled(learnerId, c)))
-  return Object.fromEntries(chapters.map((c, i) => [c, verdicts[i]]))
+/** The parent's one-time choice of the family's two free topics (`choose_free_topics`). `error` is the database's own
+ *  words for a refusal (already chosen, two modules, …) or `null` when the request itself failed. */
+export async function chooseFreeTopics(topics: string[]): Promise<{ ok: true } | { ok: false; error: string | null }> {
+  try {
+    const { error } = await db().rpc('choose_free_topics' as never, { p_topics: topics } as never)
+    if (!error) return { ok: true }
+    return { ok: false, error: (error as { code?: string }).code === 'P0F01' ? error.message : null }
+  } catch {
+    return { ok: false, error: null }
+  }
 }
+
+/** What the child's home shows during the trial (`trial_topics`): `null` = no restriction (paywall off, or a paid seat),
+ *  an array = only these (empty until the parent chooses), `undefined` = could not find out. */
+export async function trialTopics(learnerId: string): Promise<string[] | null | undefined> {
+  try {
+    const { data, error } = await db().rpc('trial_topics' as never, { p_learner_id: learnerId } as never)
+    if (error) return undefined
+    return data === null ? null : Array.isArray(data) ? (data as string[]) : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** The family's free topics so far (owner reads own rows), or `null` when we could not find out. */
+export async function myFreeTopics(): Promise<string[] | null> {
+  try {
+    const { data, error } = await db().from('free_topics' as never).select('topic')
+    if (error || !Array.isArray(data)) return null
+    return (data as { topic: string }[]).map(r => r.topic)
+  } catch {
+    return null
+  }
+}
+
 
 export interface MySubscription {
   status: string
@@ -68,6 +94,29 @@ export type CancelResult =
   | { ok: false; error: 'no_subscription' | 'billing_not_configured' | 'unauthenticated' | 'failed' }
 
 /** Asks /api/billing/cancel. Sends no subscription id: the server finds it from the token. */
+export type SeatPreview = { seats: number; cadence: 'monthly' | 'annual'; renewalCents: number; newRenewalCents: number }
+export type AddSeatResult =
+  | { ok: true; preview?: SeatPreview; seats?: number; payUrl?: string }
+  | { ok: false; error: 'no_subscription' | 'not_active' | 'at_most' | 'payment_failed' | 'billing_not_configured' | 'unauthenticated' | 'failed' }
+
+/** Asks /api/billing/seats: `confirm: false` = what one more seat costs (changes nothing); `true` = buy it — `seats`
+ *  when it was paid at once, `payUrl` when the bank wants the parent's approval first (Stripe's page). */
+export async function addSeat(confirm: boolean): Promise<AddSeatResult> {
+  const { data: { session } } = await db().auth.getSession()
+  if (!session) return { ok: false, error: 'unauthenticated' }
+  try {
+    const r = await fetch('/api/billing/seats', {
+      method: 'POST', headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm }),
+    })
+    const j = (await r.json().catch(() => null)) as { ok?: boolean; error?: string; preview?: SeatPreview; seats?: number; pay_url?: string } | null
+    if (r.ok && j?.ok) return { ok: true, preview: j.preview, seats: j.seats, payUrl: j.pay_url }
+    const known = ['no_subscription', 'not_active', 'at_most', 'payment_failed', 'billing_not_configured', 'unauthenticated'] as const
+    const e = known.find(k => k === j?.error)
+    return { ok: false, error: e ?? 'failed' }
+  } catch { return { ok: false, error: 'failed' } }
+}
+
 export async function cancelMySubscription(): Promise<CancelResult> {
   const { data: { session } } = await db().auth.getSession()
   if (!session) return { ok: false, error: 'unauthenticated' }

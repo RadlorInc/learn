@@ -1,19 +1,17 @@
 # Terms of Service
 
-> **STATUS: BETA — published 26 September 2026 on the founder's decisions for the private beta; attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
+> **STATUS: BETA — published 1 October 2026 on the founder's decisions for the paid launch (billing switched on); attorney review pending (each decision is recorded in ATTORNEY-PACKET.md).**
 > Structure: **the parent is the account holder and the only party to this contract. The child is not.** That single decision fixes the age contradiction that ordinary consumer terms fall into when the actual user is a child.
 
-> **Beta (decided 24 September 2026): the Service is free during the beta and billing is switched off.** The paid-plan text was taken out; it comes back, with the Refund and Cancellation Policy, before billing goes live.
->
-> One dependency survives that decision and should not be lost: **verifiable parental consent by payment card only works once a card is actually charged.** If any real child signs up during a window when nothing is being charged, the card path is not available for that child and email-plus is the only valid consent method. The clean way to avoid the question entirely is for payment to go live before the first real child account, not after.
+> **Paid launch (decided 1 October 2026):** billing is switched on. The paid-plan text that was taken out for the free beta (24 September 2026) is back in §5, §6, §7 and §10, with starting free and adding a seat.
 
 **Company:** Radlor Inc., a Delaware corporation
 
 **Product:** Radlic
 
-**Effective date:** 26 September 2026
+**Effective date:** 1 October 2026
 
-**Last updated:** 26 September 2026
+**Last updated:** 1 October 2026
 
 ---
 
@@ -50,9 +48,15 @@ Because the Service is used by children, additional rules apply:
 
 Our [Privacy Policy](https://radlic.com/legal/privacy) describes all of this in full and forms part of these Terms.
 
-## 5. The beta is free
+## 5. Subscriptions, renewal and cancellation
 
-During the beta the Service is free and no payment is taken. Before any paid plan starts, we will email you and ask you to agree to updated Terms.
+- **Starting free.** Before you subscribe, you can choose two topics (two from one module, or two stories for kindergarten to grade 2) that your children can use free, with no payment details and no automatic charge. They are chosen once and cannot be changed.
+- Plans, prices and billing periods are shown before you pay. One subscription covers up to four children, one seat each.
+- **Subscriptions renew automatically** until you cancel. The renewal amount and date are disclosed to you before you subscribe and repeated in the confirmation email we send you.
+- **Adding a child.** If every seat is in use, you can add a seat in the app. We show the new price before you confirm, charge the prorated difference for the current period straight away, and the new total from your next renewal.
+- **You can cancel at any time**, online, in the same number of steps it took to subscribe: in the app, under **Account → Plan & billing**. Cancelling stops all future charges; your access continues until the end of the period you have paid for, and we email you a confirmation with that date.
+- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://radlic.com/legal/refunds), which forms part of these Terms.
+- Prices are in US dollars and are what you pay: we do not currently charge sales tax. If we ever must in your state, we will tell you by email at least 30 days before it applies.
 
 ## 6. Acceptable use
 
@@ -61,7 +65,7 @@ You agree not to, and not to let anyone else:
 - use the Service for any unlawful purpose;
 - copy, scrape, resell, sublicense or redistribute the content or the questions;
 - reverse-engineer, decompile, or attempt to extract the models, algorithms or source code;
-- share your account credentials, or use the Service on behalf of anyone other than your own household;
+- share your account credentials, or use the Service on behalf of anyone other than your own household; one subscription covers up to four children;
 - upload anything unlawful, harmful or infringing;
 - interfere with, overload or probe the Service or its security;
 - use automated means to access the Service except as we expressly permit;
@@ -71,7 +75,7 @@ We may suspend or close an account that breaches this section. Where it is reaso
 
 ## 7. Content and intellectual property
 
-**Ours.** The Service, and everything in it — lessons, questions, diagrams, audio, software, models and design — belongs to us or our licensors. We grant you a limited, personal, non-exclusive, non-transferable licence to use it for your own household's non-commercial educational use while you have an account.
+**Ours.** The Service, and everything in it — lessons, questions, diagrams, audio, software, models and design — belongs to us or our licensors. We grant you a limited, personal, non-exclusive, non-transferable licence to use it for your own household's non-commercial educational use while you have an account (beyond your two free topics, while your subscription is active).
 
 We do not claim copyright in any part of the Service beyond what the law gives us; your use is governed by this licence and by these Terms.
 
@@ -98,9 +102,9 @@ We may perform maintenance, and we may suspend the Service where necessary for s
 
 ## 10. Ending this agreement
 
-**You** may close your account at any time.
+**You** may cancel your subscription or close your account at any time.
 
-**We** may suspend or close your account if you materially breach these Terms, if we are required to by law, or if we stop offering the Service. Except where a breach makes it inappropriate, we will give you reasonable notice.
+**We** may suspend or close your account if you materially breach these Terms, if we are required to by law, or if we stop offering the Service. Except where a breach makes it inappropriate, we will give you reasonable notice, and if we close your account other than for breach we will refund the unused part of what you have paid.
 
 When an account closes, your child's information is handled as described in the Privacy Policy and the Data Retention Policy. Sections 7, 11, 12, 13 and 15 survive.
 

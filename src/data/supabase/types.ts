@@ -123,46 +123,6 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['sessions']['Row'], 'id' | 'started_at'>
         Update: Partial<Database['public']['Tables']['sessions']['Insert']>
       }
-      learner_progress: {
-        Row: {
-          id:              string
-          learner_id:      string
-          chapter:         ChapterType
-          best_stars:      number
-          total_xp:        number
-          total_sessions:  number
-          last_played_at:  string | null
-          /** ⚠️ The adaptive DIFFICULTY tier (1–3) this learner left this chapter on — NOT the XP
-           *  level. `learner_stats.current_level` is the XP level, and the two share a name. */
-          current_level:   number
-          updated_at:      string
-        }
-        Insert: Omit<Database['public']['Tables']['learner_progress']['Row'], 'id' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['learner_progress']['Insert']>
-      }
-      learner_stats: {
-        Row: {
-          learner_id:      string
-          total_xp:        number
-          total_coins:     number
-          current_level:   number
-          last_played_at:  string | null
-          updated_at:      string
-        }
-        Insert: Omit<Database['public']['Tables']['learner_stats']['Row'], 'updated_at'>
-        Update: Partial<Database['public']['Tables']['learner_stats']['Insert']>
-      }
-      learner_state: {
-        Row: {
-          learner_id:     string
-          coins_spent:    number
-          owned_items:    string[]
-          equipped_items: Record<string, string>
-          updated_at:     string
-        }
-        Insert: Omit<Database['public']['Tables']['learner_state']['Row'], 'updated_at'>
-        Update: Partial<Database['public']['Tables']['learner_state']['Insert']>
-      }
     }
   }
 }
@@ -172,9 +132,6 @@ export type Profile        = Database['public']['Tables']['profiles']['Row']
 export type Learner        = Database['public']['Tables']['learners']['Row']
 export type Grade          = Database['public']['Tables']['grades']['Row']
 export type Session        = Database['public']['Tables']['sessions']['Row']
-export type LearnerProgress = Database['public']['Tables']['learner_progress']['Row']
-export type LearnerStats   = Database['public']['Tables']['learner_stats']['Row']
-export type LearnerState   = Database['public']['Tables']['learner_state']['Row']
 
 // Invite with optional learner name (joined query result)
 export interface InviteWithLearner {

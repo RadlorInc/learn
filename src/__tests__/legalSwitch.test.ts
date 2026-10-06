@@ -69,9 +69,10 @@ describe('a beta page: published on the founder\'s decisions, and still refused 
   })
 })
 
-describe('every real page: the six beta pages publish; refunds is refused, and says why', () => {
+describe('every real page: all seven publish as beta versions (refunds joined with billing, 2026-10-01)', () => {
   // terms joined 2026-09-26: the founder decided §12's floor (US$100) and §14 (a plain contact) for the beta.
-  const BETA = ['privacy', 'terms', 'parent-rights', 'subprocessors', 'cookies', 'retention']
+  // refunds joined 2026-10-01 with the paid launch (founder: "beta versions ke saath launch karo").
+  const BETA = ['privacy', 'terms', 'parent-rights', 'subprocessors', 'cookies', 'retention', 'refunds']
   it.each(LEGAL_PAGES.map(p => [p.slug, p] as const))('%s', async (slug, p) => {
     const { readDoc } = await import('@/app/legal/source')
     const why = publishRefusals(p, readDoc(p.source), p.spanish ? readDoc(p.spanish.source) : null)
@@ -81,15 +82,16 @@ describe('every real page: the six beta pages publish; refunds is refused, and s
     if (p.needs) expect(why.some(w => w.startsWith(p.needs + ':'))).toBe(true)
   })
 
-  it('flipping a real page on stops the build, naming its reasons', async () => {
+  it('switching on a real page nobody decided for stops the build, naming its reasons', async () => {
+    // Every real page is a beta page now, so the case is made from one: refunds with its founder's decision taken away.
     vi.resetModules()
     vi.doMock('@/app/legal/registry', async orig => {
       const m = await orig<typeof import('@/app/legal/registry')>()
-      return { ...m, pageBySlug: (s: string) => ({ ...m.pageBySlug(s)!, published: true }) }
+      return { ...m, pageBySlug: (s: string) => ({ ...m.pageBySlug(s)!, published: true, beta: undefined }) }
     })
     const { default: View } = await import('@/app/legal/[slug]/page')
     await expect(View({ params: Promise.resolve({ slug: 'refunds' }) }))
-      .rejects.toThrow(/\/legal\/refunds is switched on but must not be published:[\s\S]*billing: /)
+      .rejects.toThrow(/\/legal\/refunds is switched on but must not be published:[\s\S]*sign-off: /)
     vi.doUnmock('@/app/legal/registry')
   })
 })

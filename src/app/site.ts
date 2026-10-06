@@ -9,12 +9,25 @@
  * SWITCH for the move to radlic.com (2026-09-24): while it names the old domain, the old domain serves the app exactly
  * as before and nothing redirects; set it to https://radlic.com and redeploy, and canonical URLs, email links and the
  * old-domain 308 all move together. See fbf193280:docs/RENAME-MANUAL.md §A.5.
+ *
+ * ⚠️ A PREVIEW BUILD USES ITS OWN BRANCH URL (2026-09-30). Previews run against the staging database, so an email link
+ * or a Stripe return URL that named production would carry a staging token to the production app, which cannot
+ * resolve it. `VERCEL_BRANCH_URL` is the branch's stable alias; the deployment is behind Vercel Authentication, so it
+ * advertises nothing. Production never reaches this branch: `NEXT_PUBLIC_SITE_URL` is set there and wins first.
  */
-export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : 'https://radlic.com')
+export function siteUrlFrom(env: Record<string, string | undefined>): string {
+  if (env.NEXT_PUBLIC_SITE_URL) return env.NEXT_PUBLIC_SITE_URL
+  if (env.VERCEL_ENV === 'preview' && env.VERCEL_BRANCH_URL) return `https://${env.VERCEL_BRANCH_URL}`
+  return env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://radlic.com'
+}
+
+// Each read spelled out: Next inlines `process.env.NEXT_PUBLIC_*` only as a literal member access, never through the object.
+export const SITE_URL = siteUrlFrom({
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+  VERCEL_ENV: process.env.VERCEL_ENV,
+  VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
+  VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+})
 
 /** The product's domain until 2026-09-24. It keeps working, as a permanent redirect to `SITE_URL`. */
 export const OLD_HOST = 'adaptivelearn.radlor.com'
@@ -96,4 +109,5 @@ export const PRIVATE_ROUTES = [
   '/api/', '/parent', '/admin', '/play', '/shop', '/game', '/story',
   '/auth', '/practice', '/lesson', '/modules',
   '/consent',   // token-bearing pages reached from a consent email; also noindex in their layout
+  '/test',      // a paid tester's link (token in the hash); also noindex in its layout
 ] as const

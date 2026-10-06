@@ -10,9 +10,9 @@
  * The pans stay LEVEL (counter-rotated) so the animals/numbers are always upright. The child PICKS
  * one of three worlds; the animals SHUFFLE and the scene rotates across the 10 adaptive rounds (one
  * continuous SkillBeat — wider range on a streak, gentler when struggling, re-teach after 3 wrong):
- *   🛝 Playground — rabbit · duck · ladybug      (park & garden)
- *   🌲 Forest     — squirrel · butterfly · ant   (woodland floor & glade)
- *   🐸 Pond       — frog · fish · turtle
+ *   🛝 Playground — puppy · duck · ladybug · kitten · lamb   (park_picnic / park_fountain / park_pond)
+ *   🌲 Forest     — squirrel · fawn · hedgehog · owl · mouse  (woods_fern / woods_stream / woods_autumn)
+ *   🐸 Pond       — otter · beaver · penguin · duckling
  *
  * EVERY animal here is one the walk sheets cover, so the cast is uniformly ALIVE — they walk onto
  * the pan and then stand still and breathe. cat / fox / bear were dropped for exactly that reason:
@@ -37,7 +37,7 @@ import { rint } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 import { DirectionsInline } from '@/features/chapters/directions'
 
 /** The three signs, in the order they are drawn. The answer is a SIGN, not a side. */
@@ -61,20 +61,20 @@ interface CmpWorld {
 const SETTINGS: CmpWorld[] = [
   { id: 'playground',
     bgs: [
-      { grad: 'linear-gradient(#cfe9f7 0%, #dff0d8 52%, #b6db94 100%)', img: '/assets/backgrounds/town_park.jpeg' },
-      { grad: 'linear-gradient(#d6efff 0%, #e6f5d8 52%, #c2e69a 100%)', img: '/assets/backgrounds/garden_park.png' },
-      { grad: 'linear-gradient(#d2eefc 0%, #e4f2d6 52%, #c0e498 100%)', img: '/assets/backgrounds/town_garden.jpeg' },
+      { grad: 'linear-gradient(#cfe9f7 0%, #dff0d8 52%, #b6db94 100%)', img: '/assets/backgrounds/park_picnic.jpeg' },
+      { grad: 'linear-gradient(#d6efff 0%, #e6f5d8 52%, #c2e69a 100%)', img: '/assets/backgrounds/park_fountain.jpeg' },
+      { grad: 'linear-gradient(#d2eefc 0%, #e4f2d6 52%, #c0e498 100%)', img: '/assets/backgrounds/park_pond.jpeg' },
     ],
-    items: [IT('rabbit_side', '🐰', true), IT('duck_side', '🦆'), IT('ladybug_side', '🐞'),
-      IT('chick_side', '🐤'), IT('lamb_side', '🐑')] },
+    items: [IT('puppy_side', '🐶'), IT('duck_side', '🦆'), IT('ladybug_side', '🐞'),
+      IT('kitten_side', '🐱'), IT('lamb_side', '🐑')] },
   { id: 'forest',
     bgs: [
-      { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/forest_1.jpeg' },
-      { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/forest_2.jpeg' },
-      { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_3.jpeg' },
+      { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/woods_fern.jpeg' },
+      { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/woods_stream.jpeg' },
+      { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/woods_autumn.jpeg' },
     ],
-    items: [IT('squirrel_side', '🐿️'), IT('butterfly_side', '🦋'), IT('ant_side', '🐜'),
-      IT('eagle_side', '🦅'), IT('bird_side', '🐦')] },
+    items: [IT('squirrel_side', '🐿️'), IT('fawn_side', '🦌'), IT('hedgehog_side', '🦔'),
+      IT('owl_side', '🦉'), IT('mouse_side', '🐭')] },
   /**
    * ⚠️ THE THREE SCENES THIS REPLACES WERE FLAT VECTOR CARTOONS — `pond` / `lake` / `pond_top`, all
    * thick uniform outlines and flat fills, under painted sprites. That is a STYLE mismatch, not a
@@ -82,8 +82,9 @@ const SETTINGS: CmpWorld[] = [
    * the identical three and a founder named it on sight; they are swapped in both chapters together
    * so the fault does not survive next door.
    *
-   * The cast is frog · fish · turtle, so unlike StoryTime's fliers this one could NOT move to the
-   * garden — a fish on a lawn is a worse answer than a mismatched style. These three are painted
+   * The cast is water animals (otter · beaver · penguin · duckling since 2026-09-29; fish · turtle ·
+   * crab before), so unlike StoryTime's fliers it could NOT move to the garden — a fish on a lawn is
+   * a worse answer than a mismatched style. These three are painted
    * WATER: a lily pond, open sea, and a sunlit shallow. `farm_pond` is MarketDay's farm as well,
    * the same deliberate overlap as the shared forests — a balance scale weighing two frogs cannot
    * be mistaken for pens of ducklings.
@@ -98,7 +99,7 @@ const SETTINGS: CmpWorld[] = [
     // airborne for 3. These animals WALK onto a pan at a constant speed, so a hop cycle slides the
     // creature along the ground while it is crouched. A hop needs a discrete hop(from, to), which
     // does not exist yet; HopAlong is where that sheet earns its place.
-    items: [IT('fish_side', '🐟'), IT('turtle_side', '🐢'), IT('crab_side', '🦀'),
+    items: [IT('otter_side', '🦦'), IT('beaver_side', '🦫'), IT('penguin_side', '🐧'),
       IT('duckling_side', '🐥')] },
 ]
 const INTRO = 'We put animals on each side of the balance. The side with MORE tips DOWN! Pick the sign that opens toward the bigger number. First, watch!'
@@ -326,7 +327,7 @@ export const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (co
   }, [])
 
 
-  /** A tap only CHOOSES; nothing is graded until Ready. Re-tapping the choice unchooses it, so
+  /** A tap only CHOOSES; nothing is graded until it is submitted (at once: SubmitOnPick). Re-tapping the choice unchooses it, so
    *  the bar is never a trap. The grading path below is untouched — it simply runs later. */
   function pick(ch: string) {
     if (done.current || picked !== null) return
@@ -375,7 +376,7 @@ export const ComparePlay: React.FC<{ data: CmpRound; mode: Mode; onComplete: (co
         <Scale a={a} b={b} item={item} tilt={tilt} short={short} />
         <SignRow picked={picked} answer={answer} onPick={pick} short={short} pending={pending} />
       </div>
-      <ReadyBar show={pending !== null} onCommit={commit} />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }

@@ -45,7 +45,8 @@ const queued = (): { learnerId: string }[] => JSON.parse(kv.get('milo-lesson-syn
 
 // jsdom cannot navigate; signOut ends on `window.location.href = '/auth'`.
 Object.defineProperty(window, 'location', { value: { href: '' }, writable: true, configurable: true })
-beforeEach(() => { localStorage.clear(); world.session = 'parent'; world.offline = false; world.sent = [] })
+// The person confirms "sign out anyway" when work is still waiting (profile.ts signOut; supportSync.test.ts).
+beforeEach(() => { localStorage.clear(); world.session = 'parent'; world.offline = false; world.sent = []; vi.spyOn(window, 'confirm').mockReturnValue(true) })
 
 function seed() {
   for (const L of [A, B]) {

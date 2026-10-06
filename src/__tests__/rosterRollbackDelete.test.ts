@@ -6,8 +6,9 @@
  * Property checked: when a roster add fails at the login step, the calls the client makes to the database are
  * `rpc('delete_learner', { p_learner_id })` and NO `from('learners').delete()`. It does not check what the
  * database does with that call (consentDeletion.test.ts drives delete_child_data itself).
- * Expand side: on a database without delete_learner (PGRST202) the rollback falls back to the row, like the
- * dashboard does. Positive control: the dashboard's deleteLearnerPermanently still calls the same RPC.
+ * Contract side (20260928160000): even when the RPC answers PGRST202 there is no fallback to a row delete —
+ * clients hold no DELETE on `learners`. Positive control: the dashboard's deleteLearnerPermanently still calls
+ * the same RPC.
  * Expected values are written out by hand.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -91,10 +92,13 @@ describe('the roster rollback removes a half-made student through delete_learner
     expect(text).toContain('✗ username already used — pick another')
   })
 
-  it('a database without delete_learner (PGRST202) → the row fallback, as the dashboard does', async () => {
+  it('the RPC answering PGRST202 → still no REST DELETE on learners, and the failure is reported', async () => {
     h.rpcAnswer = { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } }
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
     await addOneStudent()
-    expect(restDeletesOnLearners(h.calls)).toHaveLength(1)
+    expect(restDeletesOnLearners(h.calls)).toEqual([])
+    expect(err.mock.calls.some(c => c[0] === '[addOne] could not remove the half-made student' && c[1] === 'kid-1')).toBe(true)
+    err.mockRestore()
   })
 
   it('a failed rollback is reported, not swallowed', async () => {

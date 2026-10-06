@@ -87,3 +87,6 @@ public/audio/**/*.mp3
 # scripts/rename-inventory.mjs writes its inventory here.
 /docs/legal/screenshots/
 /docs/rename/
+
+# The game (blockcraft/) is built into here by `npm run build:game`, which `npm run build` runs first.
+/public/blockcraft/

@@ -82,9 +82,6 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.learners':                 `public.learners where created_by = '${uid}'`,
     'public.learner_access':           `public.learner_access where parent_id = '${uid}' or learner_id in (${ls})`,
     'public.learner_invites':          `public.learner_invites where invited_by = '${uid}' or learner_id in (${ls})`,
-    'public.learner_progress':         `public.learner_progress where learner_id in (${ls})`,
-    'public.learner_stats':            `public.learner_stats where learner_id in (${ls})`,
-    'public.learner_state':            `public.learner_state where learner_id in (${ls})`,
     'public.learner_events':           `public.learner_events where learner_id in (${ls})`,
     'public.sessions':                 `public.sessions where learner_id in (${ls})`,
     'public.diagnostic_sessions':      `public.diagnostic_sessions where learner_id in (${ls})`,
@@ -99,6 +96,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.admin_users':              `public.admin_users where user_id = '${uid}'`,
     'public.auth_events':              `public.auth_events where user_id = '${uid}'`,
     'public.billing_events':           `public.billing_events where account_id = '${uid}'`,
+    'public.free_topics':              `public.free_topics where account_id = '${uid}'`,
     'public.parent_pins':              `public.parent_pins where account_id = '${uid}'`,
     'public.lesson_progress':          `public.lesson_progress where learner_id in (${ls})`,
     'public.point_events':             `public.point_events where learner_id in (${ls})`,
@@ -106,6 +104,7 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.teacher_plans':            `public.teacher_plans where teacher_id = '${uid}'`,
     'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
     'public.lesson_feedback':          `public.lesson_feedback where learner_id in (${ls})`,
+    'public.game_saves':               `public.game_saves where learner_id in (${ls})`,
     /**
      * ⚠️ AND THIS ONE IS A DECISION, NOT A MAPPING — flag it to the attorney before it ships.
      * `parental_consents.parent_id` cascades from auth.users, so closing an account destroys the
@@ -141,22 +140,21 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
     insert into public.subscriptions (account_id, status, seats_paid) values ('${uid}', 'active', 2);
     insert into public.billing_events (account_id, stripe_event_id, type)
       values ('${uid}', 'evt_${uid.slice(0, 8)}', 'checkout.session.completed');
+    insert into public.free_topics (account_id, topic) values ('${uid}', 'g3m2-t1');
   `)
   // Consent-once: ONE account consent covers every child of the family.
   const consent = await grantedConsent(db, uid)
   for (const l of learners) {
     await db.exec(`
-      -- ⚠️ Triggers on public.learners already create the owner's learner_access row and the
-      -- learner_stats row. Inserting them by hand is a duplicate-key error, and it is also how you
-      -- find out the triggers are in the schema being tested.
+      -- ⚠️ A trigger on public.learners already creates the owner's learner_access row. Inserting it
+      -- by hand is a duplicate-key error, and it is also how you find out the trigger is in the schema.
       insert into public.learners (id, display_name, created_by, age_group, consent_id, attested_notice_version) values ('${l}', 'Kid', '${uid}', '3-5', '${consent}', '${FIXTURE_NOTICE}');
-      insert into public.learner_state (learner_id) values ('${l}');
       insert into public.lesson_progress (learner_id, lesson_id, done) values ('${l}', 'g3m2-t1', true);
       insert into public.point_events (learner_id, reason, lesson_id, points) values ('${l}', 'lesson_done', 'g3m2-t1', 10);
       insert into public.game_settings (learner_id) values ('${l}');
       insert into public.exercise_results (learner_id, class_id, exercise_id, outcomes) values ('${l}', '${klass}', 'e1', '{first,worked}');
       insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${l}', 'g3m2-t1', '3', '{fast,words}');
-      insert into public.learner_progress (learner_id, chapter, best_stars) values ('${l}', 'counting', 3);
+      insert into public.game_saves (learner_id, data) values ('${l}', '{"v":2}');
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');
       insert into public.error_events (learner_id, source, message) values ('${l}', 'client', 'boom');

@@ -22,8 +22,8 @@ import { getCurrentSession, verifyEmailToken, setPassword } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 import { APP_NAME } from '@/app/site'
 import { makeT, useSavedLang } from '@/features/dashboard/i18n'
+import { MIN_PASSWORD } from '@/core/childLogin'
 
-const MIN = 6
 
 const C = {
   page:   'var(--paper)',
@@ -130,7 +130,7 @@ function SetPasswordForm() {
       const tokenHash = params.get('token_hash')
       const type      = params.get('type') as EmailOtpType | null
       if (!tokenHash || !type) {
-        setError(t('This link is missing its token. Ask for a fresh invite.'))
+        setError(t('This link is missing its token.'))
         setDead(true)
         return
       }
@@ -139,8 +139,8 @@ function SetPasswordForm() {
       if (error) {
         setError(
           error.message.toLowerCase().includes('expired')
-            ? t('This invite link has expired. Ask for a fresh one.')
-            : t('This invite link is not valid any more. Ask for a fresh one.'),
+            ? t('This link has expired.')
+            : t('This link is not valid any more.'),
         )
         setDead(true)
         return
@@ -156,7 +156,7 @@ function SetPasswordForm() {
   }, [params])
 
   async function submit() {
-    if (password.length < MIN)  { setError(t('Password must be at least {n} characters', { n: MIN })); return }
+    if (password.length < MIN_PASSWORD)  { setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD })); return }
     if (password !== confirm)   { setError(t('The two passwords do not match')); return }
 
     setLoading(true); setError(null)
@@ -172,7 +172,7 @@ function SetPasswordForm() {
   }
 
   const disabled  = loading || !ready
-  const longEnough = password.length >= MIN
+  const longEnough = password.length >= MIN_PASSWORD
   const matches    = password.length > 0 && password === confirm
 
   /**
@@ -188,6 +188,11 @@ function SetPasswordForm() {
       }}>{error}</div>
       <p style={{ fontSize: 12.5, color: C.ink3, margin: 0, lineHeight: 1.5 }}>
         {t('Invite and reset links expire so that an old email in somebody’s inbox cannot be used to reach your family’s account later.')}
+      </p>
+      {/* One page serves both links, and a reset link that failed at Supabase arrives with no `type` to tell them
+          apart — so the way forward is given for both, rather than telling a parent resetting a password to ask for an invite. */}
+      <p style={{ fontSize: 13.5, color: C.ink2, margin: 0, lineHeight: 1.5 }}>
+        {t('Resetting your password? On the sign-in page, tap “Forgot password?” for a new link. Invited by someone? Ask them for a fresh invite.')}
       </p>
       <Link
         href="/auth"
@@ -232,7 +237,7 @@ function SetPasswordForm() {
       )}
 
       {[
-        { id: 'sp-new',     label: t('New password'),     value: password, set: setPasswordV, ph: t('At least {n} characters', { n: MIN }) },
+        { id: 'sp-new',     label: t('New password'),     value: password, set: setPasswordV, ph: t('At least {n} characters', { n: MIN_PASSWORD }) },
         { id: 'sp-confirm', label: t('Confirm password'), value: confirm,  set: setConfirm,   ph: t('Type it again') },
       ].map(f => (
         <div key={f.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -256,7 +261,7 @@ function SetPasswordForm() {
       {/* The two rules, live. They are the SAME two conditions `submit` enforces — stated where
           they can be read before the button is pressed rather than only after it is. */}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
-        <Rule met={longEnough}>{t('{n} or more characters', { n: MIN })}</Rule>
+        <Rule met={longEnough}>{t('{n} or more characters', { n: MIN_PASSWORD })}</Rule>
         <Rule met={matches}>{t('Both passwords match')}</Rule>
       </ul>
 

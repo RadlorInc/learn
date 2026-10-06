@@ -11,7 +11,7 @@ import { track } from '@/infra/analytics'
 import { CHAPTER_COMPONENTS } from '@/features/chapters/registry'
 import { isChapterVisible, getChapter, type ChapterType } from '@/core/chapters'
 import { NewLessonsSoon } from '@/shared/ui/NewLessonsSoon'
-import { useChapterGate } from '@/features/billing/useChapterGate'
+import { useTopicGate } from '@/features/billing/useTopicGate'
 import { LockedChapterCard } from '@/shared/ui/LockedChapterCard'
 import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { JOSH } from '@/infra/storage/voicePref'
@@ -44,7 +44,7 @@ function Game() {
    * database that already refuses the write, and locking a paying child out because their wifi
    * dropped is the worse failure. See fbf193280:docs/billing-stage-3.md §2.
    */
-  const gate = useChapterGate(playingChapter)
+  const gate = useTopicGate(playingChapter ? `c:${playingChapter}` : null)   // the catalogue id: one of the family's two
   const [ready,          setReady]          = useState(false)
   const [childName,      setChildName]      = useState('')
 

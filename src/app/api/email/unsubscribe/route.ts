@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { ConfigMissing, looksLikeToken, unsubscribe } from '@/features/consent/server'
 
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
     console.error('[email/unsubscribe] failed', e)
+    await sinkHandled('[email/unsubscribe] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }
 }

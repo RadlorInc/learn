@@ -25,6 +25,7 @@
    - Run `unzip -n <zip> -d audio-src/`. `audio-src/` is gitignored; on a fresh machine, fill it first with `AUDIO_BASE_URL=<bucket base> node scripts/audio/fetch-src.mjs`.
    - Then run `node scripts/audio/build-manifest.mjs`. It fails on a missing clip, an orphan, a duplicate key or a name collision.
    - Commit the manifest and both `voice-index/` folders on the PR branch.
+   - For a lesson line with chalk, give its marks real timing: `<venv>/bin/python scripts/audio/whisper-word-times.py` (faster-whisper, local; only new clips are transcribed), then `npx tsx scripts/audio/build-word-times.mts`, and commit `src/features/lessons/word-times/`. Skipped, the new line's marks keep the length estimate.
 4. **Agent — put only the new mp3s on a side ref.** That is an orphan-branch commit holding them under the voice folder `upload-audio.yml` reads (see its *Fetch* step), tagged `audio-src-<date>` and pushed. A tag does not deploy, and it is also the clips' backup.
 5. **Upload** (next section) **from the PR branch**, with `source_ref` = that tag. Not from `main`: the workflow uploads what **its own branch's** manifest names, so a run from `main` finds nothing missing and goes green having uploaded nothing.
 6. **Founder — merge the PR** only after the upload run ends "all N manifest objects present", where N is that branch's manifest count.

@@ -8,7 +8,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCurrentSession, mustChangePassword, setOwnPassword } from '@/data/auth'
-import { CHILD_MIN_PASSWORD, usernameFromEmail } from '@/core/childLogin'
+import { MIN_PASSWORD, usernameFromEmail } from '@/core/childLogin'
 
 const C = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', accent: 'var(--milo-orange)' } as const
 const field: React.CSSProperties = { padding: '12px 14px', fontSize: 16, minHeight: 44, border: `2px solid ${C.edge}`, borderRadius: 12, background: '#fff', color: C.ink, outline: 'none', width: '100%', boxSizing: 'border-box' }
@@ -31,7 +31,7 @@ export default function NewPasswordPage() {
   }, [router])
 
   async function submit() {
-    if (password.length < CHILD_MIN_PASSWORD) { setError(`Use at least ${CHILD_MIN_PASSWORD} letters or numbers`); return }
+    if (password.length < MIN_PASSWORD) { setError(`Use at least ${MIN_PASSWORD} letters or numbers`); return }
     if (password !== confirm) { setError('The two passwords are different — type it again'); return }
     setSaving(true); setError(null)
     try {
@@ -57,7 +57,7 @@ export default function NewPasswordPage() {
         {error && <div role="alert" style={{ background: '#FFF1F0', border: '1.5px solid #F0B4AE', borderRadius: 12, padding: '10px 14px', fontSize: 14, color: '#93000A', fontWeight: 600 }}>{error}</div>}
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 700, color: C.ink2 }}>
           New password
-          <input type="password" autoComplete="new-password" value={password} placeholder={`At least ${CHILD_MIN_PASSWORD} letters or numbers`}
+          <input type="password" autoComplete="new-password" value={password} placeholder={`At least ${MIN_PASSWORD} letters or numbers`}
             onChange={e => { setPassword(e.target.value); setError(null) }} style={field} disabled={saving || who === null} />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, fontWeight: 700, color: C.ink2 }}>

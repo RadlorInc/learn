@@ -35,7 +35,7 @@ describe('the price ladder', () => {
    */
   const EXPECTED: Record<Cadence, Record<number, number>> = {
     monthly: { 1: 799, 2: 1298, 3: 1797, 4: 2296 },
-    annual: { 1: 6399, 2: 10398, 3: 14397, 4: 18396 },
+    annual: { 1: 7599, 2: 12399, 3: 17199, 4: 21999 },
   }
 
   for (const cadence of ['monthly', 'annual'] as Cadence[]) {
@@ -95,6 +95,7 @@ const SUB = (over: Record<string, unknown> = {}, item: Record<string, unknown> =
     data: [{
       id: 'si_1', quantity: 2,
       current_period_start: PERIOD_START, current_period_end: PERIOD_END,
+      price: { recurring: { interval: 'month' } },
       ...item,
     }],
   },
@@ -178,6 +179,9 @@ function stubNetwork(opts: {
   sub?: Record<string, unknown>
   inserted?: unknown[]          // what the billing_events insert returns ([] = duplicate)
   processedAt?: string | null   // what the duplicate look-up finds
+  resendStatus?: number         // what Resend answers a send with
+  stored?: string               // the stripe_subscription_id already on the account's row (none by default)
+  others?: Record<string, Record<string, unknown>>  // Stripe's answer for a subscription other than `sub`
 } = {}) {
   const calls: Call[] = []
   const json = (body: unknown, status = 200) =>
@@ -188,14 +192,21 @@ function stubNetwork(opts: {
     calls.push({ url, method: (init.method ?? 'GET').toUpperCase(), body: String(init.body ?? ''),
                  headers: (init.headers ?? {}) as Record<string, string> })
 
-    if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) return json(opts.sub ?? SUB())
+    if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) {
+      const id = url.slice('https://api.stripe.com/v1/subscriptions/'.length).split('?')[0]
+      return json(opts.others?.[id] ?? opts.sub ?? SUB())
+    }
+    if (url === 'https://api.resend.com/emails') return json({ id: 'em_1' }, opts.resendStatus ?? 200)
     if (url.includes('/rest/v1/billing_events')) {
       if ((init.method ?? 'GET').toUpperCase() === 'POST') return json(opts.inserted ?? [{ id: 'be_1' }], 201)
       // 204 must carry a null body — `new Response('null', {status:204})` is a TypeError.
       if ((init.method ?? 'GET').toUpperCase() === 'PATCH') return new Response(null, { status: 204 })
       return json([{ processed_at: opts.processedAt ?? null }])
     }
-    if (url.includes('/rest/v1/subscriptions')) return json([{ id: 'sub-row-1' }], 201)
+    if (url.includes('/rest/v1/subscriptions')) {
+      if ((init.method ?? 'GET').toUpperCase() === 'GET') return json(opts.stored ? [{ stripe_subscription_id: opts.stored }] : [])
+      return json([{ id: 'sub-row-1' }], 201)
+    }
     if (url.includes('/rest/v1/rpc/materialize_seats')) return json(2)
     if (url.includes('/auth/v1/user')) return json({ id: ACC, email: 'p@example.com' })
     return json({ unexpected: url }, 500)
@@ -226,6 +237,7 @@ describe('the Stripe webhook', () => {
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
     process.env.STRIPE_SECRET_KEY = 'sk_test_stage2b'
     process.env.STRIPE_WEBHOOK_SECRET = SECRET
+    process.env.RESEND_API_KEY = 're_test'
   })
   afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
 
@@ -234,8 +246,9 @@ describe('the Stripe webhook', () => {
     const res = await deliver('checkout.session.completed', { subscription: 'sub_123' }, 't=1,v1=deadbeef')
     expect(res.status).toBe(400)
     // ⚠️ The status alone would pass on a handler that wrote the row and THEN checked the
-    // signature. The claim is that an unverifiable body reaches nothing.
-    expect(calls, `it called out to: ${calls.map(c => c.url).join(', ')}`).toEqual([])
+    // signature. The claim is that an unverifiable body reaches nothing (but the error sink, below).
+    const reached = calls.filter(c => !c.url.includes('/rest/v1/error_events'))
+    expect(reached, `it called out to: ${reached.map(c => c.url).join(', ')}`).toEqual([])
   })
 
   it('C8b — a signature from the WRONG secret is rejected too', async () => {
@@ -244,7 +257,32 @@ describe('the Stripe webhook', () => {
     const header = stripeClient()!.webhooks.generateTestHeaderString({ payload, secret: 'whsec_someone_else' })
     const res = await deliver('checkout.session.completed', { subscription: 'sub_123' }, header)
     expect(res.status).toBe(400)
-    expect(calls).toEqual([])
+    expect(calls.filter(c => !c.url.includes('/rest/v1/error_events'))).toEqual([])
+  })
+
+  it('B5 — a signature that does not verify reaches error_events: a fixed line, never the body or the header', async () => {
+    // A rotated or mistyped STRIPE_WEBHOOK_SECRET fails EVERY real delivery this way: paid, never applied. Before
+    // this it was a console.warn only, gone from Vercel's logs within the hour.
+    const calls = stubNetwork()
+    await deliver('checkout.session.completed', { subscription: 'sub_secret_123', customer_email: 'p@x.example' }, 't=1,v1=deadbeef')
+    const sunk = post(calls, '/rest/v1/error_events')
+    expect(sunk.length, 'the bad signature never reached error_events').toBe(1)
+    expect(JSON.parse(sunk[0].body).message).toBe(
+      'stripe webhook: signature did not verify — if Stripe is the sender, STRIPE_WEBHOOK_SECRET is wrong')
+    for (const leak of ['sub_secret_123', 'p@x.example', 'deadbeef', SECRET]) expect(sunk[0].body).not.toContain(leak)
+  })
+
+  it('B5 — a webhook with a setting missing says WHICH one in error_events, never a value', async () => {
+    delete process.env.STRIPE_WEBHOOK_SECRET
+    const calls = stubNetwork()
+    const res = await deliver('checkout.session.completed', { subscription: 'sub_123' }, 't=1,v1=deadbeef')
+    expect(res.status).toBe(503)
+    const sunk = post(calls, '/rest/v1/error_events')
+    expect(sunk.length, 'the missing setting never reached error_events').toBe(1)
+    expect(JSON.parse(sunk[0].body).message).toBe(
+      'stripe webhook: not configured (STRIPE_WEBHOOK_SECRET) — delivery refused, Stripe will retry')
+    expect(sunk[0].body).not.toContain('sk_test_stage2b')
+    expect(sunk[0].body).not.toContain('service-key')
   })
 
   it('C1 — a completed checkout writes the subscription and reconciles its seats', async () => {
@@ -316,6 +354,37 @@ describe('the Stripe webhook', () => {
     // Nothing in this path may reach a learner row. The seat is released; the child's record is not
     // ours to take away — reads are deliberately never gated.
     expect(calls.some(c => c.url.includes('/rest/v1/learner'))).toBe(false)
+  })
+
+  it('B2 — a late event about an OLD subscription does not overwrite the plan the family has now', async () => {
+    // The parent cancelled sub_123, re-subscribed as sub_new, and sub_123's `deleted` arrives afterwards. One row per
+    // account: applying it would write `canceled`, 0 seats over the plan they are paying for.
+    const calls = stubNetwork({
+      sub: SUB({ status: 'canceled' }), stored: 'sub_new', others: { sub_new: SUB({ id: 'sub_new', status: 'active' }) },
+    })
+    const res = await deliver('customer.subscription.deleted', { id: 'sub_123' })
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ ignored: 'not_current_subscription' })
+    expect(post(calls, '/rest/v1/subscriptions'), 'the stale event overwrote the current subscription').toEqual([])
+    expect(post(calls, 'rpc/materialize_seats')).toEqual([])
+    expect(calls.some(c => c.method === 'PATCH' && c.url.includes('billing_events')), 'the event was left open').toBe(true)
+    expect(JSON.parse(post(calls, '/rest/v1/error_events')[0].body).message).toContain('sub_new (active)')
+  })
+
+  it('B2 positive twin — a new subscription replaces one that has ENDED', async () => {
+    const calls = stubNetwork({ stored: 'sub_old', others: { sub_old: SUB({ id: 'sub_old', status: 'canceled' }) } })
+    await deliver('checkout.session.completed', { id: 'cs_2', subscription: 'sub_123' })
+    expect(JSON.parse(post(calls, '/rest/v1/subscriptions')[0].body)).toMatchObject({
+      account_id: ACC, stripe_subscription_id: 'sub_123', status: 'active', seats_paid: 2,
+    })
+    expect(JSON.parse(post(calls, 'rpc/materialize_seats')[0].body).p_seats).toBe(2)
+  })
+
+  it('B2 positive twin — the CURRENT subscription\'s own deletion is applied', async () => {
+    const calls = stubNetwork({ sub: SUB({ status: 'canceled' }), stored: 'sub_123' })
+    await deliver('customer.subscription.deleted', { id: 'sub_123' })
+    expect(JSON.parse(post(calls, '/rest/v1/subscriptions')[0].body)).toMatchObject({ status: 'canceled', seats_paid: 0 })
+    expect(JSON.parse(post(calls, 'rpc/materialize_seats')[0].body).p_seats).toBe(0)
   })
 
   it('a subscription created outside our checkout is logged and closed, never retried for ever', async () => {
@@ -424,6 +493,111 @@ describe('the Stripe webhook', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 //  4. CHECKOUT.
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+//  THE EMAILS A SUBSCRIPTION OWES (docs/legal/01 §3). Every sentence, date and amount below is typed out by hand.
+//  PERIOD_END is 2026-02-01T00:00:00Z.
+// ─────────────────────────────────────────────────────────────────────────────
+describe('the Stripe webhook sends the acknowledgement and the annual renewal reminder', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    __resetStripe()
+    process.env.NEXT_PUBLIC_SUPABASE_URL = SUPA
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
+    process.env.STRIPE_SECRET_KEY = 'sk_test_stage2b'
+    process.env.STRIPE_WEBHOOK_SECRET = SECRET
+    process.env.RESEND_API_KEY = 're_test'
+  })
+  afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
+
+  const sent = (calls: Call[]) => calls.filter(c => c.url === 'https://api.resend.com/emails' && c.method === 'POST')
+  const closed = (calls: Call[]) => calls.some(c => c.method === 'PATCH' && c.url.includes('billing_events'))
+  const CHECKOUT = { id: 'cs_1', subscription: 'sub_123', amount_total: 1298, customer_details: { email: 'parent@example.com' } }
+  const UPCOMING = { object: 'invoice', parent: { subscription_details: { subscription: 'sub_123' } },
+                     customer_email: 'parent@example.com', amount_due: 12399 }
+  const ANNUAL = (over: Record<string, unknown> = {}) => SUB(over, { price: { recurring: { interval: 'year' } } })
+
+  it('a completed checkout sends ONE acknowledgement: terms, renewal and how to cancel', async () => {
+    const calls = stubNetwork()
+    const res = await deliver('checkout.session.completed', CHECKOUT)
+    expect(res.status).toBe(200)
+    const mails = sent(calls)
+    expect(mails).toHaveLength(1)
+    const body = JSON.parse(mails[0].body)
+    expect(body.to).toEqual(['parent@example.com'])
+    expect(body.subject).toBe('Your Radlic subscription — confirmation and how to cancel')
+    expect(body.text).toContain('Plan: Radlic Family, for 2 children.')
+    expect(body.text).toContain('Charged today: $12.98.')
+    expect(body.text).toContain('Renews: automatically, every month, next on February 1, 2026. Renewal amount: $12.98 (we do not charge sales tax).')
+    expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, or email support@radlor.com')
+    expect(body.text).toContain('https://radlic.com/legal/refunds')
+    expect(body.text).not.toContain('permission')   // consent is the email-plus flow, not checkout
+    expect(mails[0].headers['Idempotency-Key']).toBe('billing-ack-sub_123')
+    expect(closed(calls)).toBe(true)
+  })
+
+  it('an annual plan: the acknowledgement says every 12 months and the annual renewal amount', async () => {
+    const calls = stubNetwork({ sub: ANNUAL() })
+    await deliver('checkout.session.completed', { ...CHECKOUT, amount_total: 12399 })
+    const body = JSON.parse(sent(calls)[0].body)
+    expect(body.text).toContain('Renews: automatically, every 12 months, next on February 1, 2026. Renewal amount: $123.99 (we do not charge sales tax).')
+  })
+
+  it('an annual renewal coming up sends the reminder, with the amount Stripe will charge and the date', async () => {
+    const calls = stubNetwork({ sub: ANNUAL() })
+    const res = await deliver('invoice.upcoming', UPCOMING)
+    expect(res.status).toBe(200)
+    const mails = sent(calls)
+    expect(mails).toHaveLength(1)
+    const body = JSON.parse(mails[0].body)
+    expect(body.to).toEqual(['parent@example.com'])
+    expect(body.subject).toBe('Your Radlic annual subscription renews soon')
+    expect(body.text).toContain('Your Radlic annual subscription for 2 children renews automatically on February 1, 2026.')
+    expect(body.text).toContain('You will be charged $123.99 for the next 12 months.')
+    expect(body.text).toContain('Cancel subscription, or email support@radlor.com')
+    // One reminder per renewal: the key carries the period, so next year's is a new message.
+    expect(mails[0].headers['Idempotency-Key']).toBe('billing-renewal-sub_123-2026-02-01T00:00:00.000Z')
+  })
+
+  it('no reminder for a MONTHLY renewal — the policy promises it for annual plans only', async () => {
+    const calls = stubNetwork()
+    const res = await deliver('invoice.upcoming', UPCOMING)
+    expect(res.status).toBe(200)
+    expect(sent(calls)).toEqual([])
+    expect(closed(calls)).toBe(true)
+  })
+
+  it('no reminder for an annual plan already cancelled — it will not renew', async () => {
+    const calls = stubNetwork({ sub: ANNUAL({ cancel_at_period_end: true }) })
+    await deliver('invoice.upcoming', UPCOMING)
+    expect(sent(calls)).toEqual([])
+  })
+
+  it('no email for any other subscription event', async () => {
+    const calls = stubNetwork()
+    await deliver('customer.subscription.updated', { id: 'sub_123' })
+    expect(sent(calls)).toEqual([])
+  })
+
+  it('a failed send answers 5xx and leaves the event OPEN, so Stripe redelivers (the key stops a double send)', async () => {
+    const calls = stubNetwork({ resendStatus: 500 })
+    const res = await deliver('checkout.session.completed', CHECKOUT)
+    expect(res.status).toBe(500)
+    expect(sent(calls)).toHaveLength(1)
+    expect(closed(calls)).toBe(false)
+  })
+
+  it('no RESEND_API_KEY: billing still completes and the event closes; nothing is sent', async () => {
+    delete process.env.RESEND_API_KEY
+    const calls = stubNetwork()
+    const res = await deliver('checkout.session.completed', CHECKOUT)
+    expect(res.status).toBe(200)
+    expect(sent(calls)).toEqual([])
+    expect(post(calls, 'rpc/materialize_seats')).toHaveLength(1)
+    expect(closed(calls)).toBe(true)
+  })
+})
+
 describe('POST /api/checkout', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
@@ -445,8 +619,8 @@ describe('POST /api/checkout', () => {
     }))
   }
 
-  function stubCheckout(opts: { userOk?: boolean; customerId?: string | null; staleCustomer?: boolean } = {}) {
-    const { userOk = true, customerId = null, staleCustomer = false } = opts
+  function stubCheckout(opts: { userOk?: boolean; customerId?: string | null; staleCustomer?: boolean; status?: string; lookupFails?: boolean } = {}) {
+    const { userOk = true, customerId = null, staleCustomer = false, status, lookupFails = false } = opts
     const calls: Call[] = []
     const json = (body: unknown, status = 200) =>
       new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -459,7 +633,8 @@ describe('POST /api/checkout', () => {
       }
       // The account's own subscription row — where a Stripe customer id would already be.
       if (url.includes('/rest/v1/subscriptions')) {
-        return json(customerId ? [{ stripe_customer_id: customerId }] : [])
+        if (lookupFails) return json({ message: 'upstream' }, 502)
+        return json(customerId || status ? [{ stripe_customer_id: customerId, ...(status ? { status } : {}) }] : [])
       }
       if (url.includes('/v1/checkout/sessions')) {
         // A stale stored id: Stripe answers `resource_missing` the FIRST time and succeeds on the
@@ -593,6 +768,30 @@ describe('POST /api/checkout', () => {
     const sessions = calls.filter(c => c.url.includes('/v1/checkout/sessions'))
     expect(sessions.length, 'it did not retry').toBe(2)
     expect(new URLSearchParams(sessions[1].body).get('customer_email')).toBe('p@example.com')
+  })
+
+  it('B1 — refuses a SECOND subscription while the family\'s plan still holds seats, and never reaches Stripe', async () => {
+    for (const status of ['active', 'trialing', 'past_due', 'unpaid']) {
+      const calls = stubCheckout({ customerId: 'cus_existing', status })
+      const res = await checkout({ seats: 1 })
+      expect(res.status, status).toBe(409)
+      expect(await res.json()).toEqual({ error: 'already_subscribed' })
+      expect(calls.some(c => c.url.includes('/v1/checkout/sessions')), `a session opened beside a ${status} plan`).toBe(false)
+    }
+  })
+
+  it('B1 positive twin — a family whose plan has ENDED can buy again, on the same customer', async () => {
+    const calls = stubCheckout({ customerId: 'cus_existing', status: 'canceled' })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(200)
+    expect(new URLSearchParams(calls.find(c => c.url.includes('/v1/checkout/sessions'))!.body).get('customer')).toBe('cus_existing')
+  })
+
+  it('B1 — when the plan cannot be looked up, it refuses rather than risk a second subscription', async () => {
+    const calls = stubCheckout({ lookupFails: true })
+    const res = await checkout({ seats: 1 })
+    expect(res.status).toBe(503)
+    expect(calls.some(c => c.url.includes('/v1/checkout/sessions'))).toBe(false)
   })
 
   it('answers 503 while no price is configured', async () => {

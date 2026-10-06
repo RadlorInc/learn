@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/data/supabase/client'
 import {
-  createClass, updateClass, createLearner, deleteLearnerPermanently, deleteLearnerRowLegacy, LEGACY_DELETE, setChildLogin, setClassLessons,
+  createClass, updateClass, createLearner, deleteLearnerPermanently, setChildLogin, setClassLessons,
   type ClassRow,
 } from '@/data/repositories'
 import { GRADES, LESSON_GRADES, ALL_MODULES as MODULES, modulesOf, hasModule, gradeName } from '@/features/lessons/modules'
@@ -166,10 +166,8 @@ async function addOne(row: RosterRow, cls: ClassRow): Promise<Made> {
   if (!r.ok) {
     // No half-made student: without a login they could not sign in, and the teacher would re-upload a duplicate.
     // Removed the way the dashboard's "Delete" does (delete_learner → delete_child_data: consent closed, B3
-    // cancelled), never a REST delete on `learners` (SEC-07). The row fallback is only for a database that
-    // predates delete_learner (PGRST202), exactly as the dashboard's.
-    let gone = await deleteLearnerPermanently(learner.id)
-    if (gone.error === LEGACY_DELETE) gone = await deleteLearnerRowLegacy(learner.id)
+    // cancelled); clients hold no DELETE on `learners`.
+    const gone = await deleteLearnerPermanently(learner.id)
     if (!gone.ok) console.error('[addOne] could not remove the half-made student', learner.id, gone.error)
     return { ...row, error: loginError(r.error) }
   }
