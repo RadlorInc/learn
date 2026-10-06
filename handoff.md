@@ -152,6 +152,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
   (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
   mentions tools we do not use.
+- `email_suppressions` (20260923190000) revokes from public/anon/authenticated but not service_role, so on Supabase the
+  server also holds DELETE/TRUNCATE by default privilege (measured on a local supabase/postgres container, 6 Oct; the
+  baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
+- Bounce suppression: a B3 refused as undeliverable shows the respond page's generic error (nothing is granted).
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).

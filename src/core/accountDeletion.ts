@@ -39,6 +39,14 @@ export const SURVIVORS: readonly Survivor[] = [
        + 'must not erase that. It is no longer linked to your account; '
        + 'a request you never answered is deleted with the account.',
   },
+  // 20261007000000 (bounce suppression): proposed wording; Terms §11 and the attorney's view are open in the PR.
+  {
+    table: 'public.email_undeliverable',
+    what: 'only if an email to your address bounced permanently or was marked as spam: a scrambled form of the '
+        + 'address (not the address itself), whether it bounced or was marked as spam, and when',
+    why: 'it stops us sending email to an address that cannot receive it or that asked not to get it. It is not '
+       + 'linked to your account, and it is deleted 12 months after the last bounce or complaint.',
+  },
 ] as const
 
 /**

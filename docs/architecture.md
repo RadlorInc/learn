@@ -81,7 +81,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/tester` | anyone holding a tester link's token (checked by Radlor Ops) | Forwards a paid tester's open/review to Radlor Ops `/api/radlic-tester`; stores nothing here |
 | `POST /api/report-error` | anyone; capped | Crashes, page errors, unhandled rejections and refused uploads (`infra/reportCrash`: once per message, 10 a page load): log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
-| `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type |
+| `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -156,7 +156,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Children | `learners` (name, avatar, age band, class, chosen lessons, consent, attestation), `learner_access` (owner, viewer, self), `learner_invites` |
 | Learning | `lesson_progress` (per topic, or `c:<chapter>`: done, level, streak, mastered, practice position), `point_events`, `game_settings`, `game_saves` (the game's world, one row per child) |
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
-| Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions` |
+| Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions`, `email_undeliverable` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
 | Billing (off) | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config` |
 | Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
@@ -170,7 +170,7 @@ Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3
   child is deleted only by `delete_learner` → `delete_child_data` (logged, consent withdrawn, the child's login removed).
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
-- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
+- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `email_undeliverable`, `consent_b3_cancellations`,
   `error_events`, `lesson_catalog` (the ids that may earn progress and points; read only by the two point functions). A parent reads only their own `parental_consents` rows and writes none.
 - Privilege is never read from a column its owner can write (admin is `admin_users`, not `profiles.role`). Some rules
   are column grants (invite status, `lesson_feedback`).

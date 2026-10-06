@@ -21,6 +21,7 @@ import { readPublic } from '@/app/legal/source'
 import { SITE_URL } from '@/app/site'
 import { EMAIL_FROM, EMAIL_REPLY_TO } from './config'
 import type { Rendered } from './email'
+import { sinkError } from '@/infra/errorSink'
 
 export class ConfigMissing extends Error {}
 
@@ -201,10 +202,21 @@ const RESEND = () => process.env.RESEND_API_URL || 'https://api.resend.com'
  *   commercial    — anything promotional: refused for a suppressed address (returns `SUPPRESSED`, no
  *                   Resend call), otherwise sent with the §4 footer, a one-click unsubscribe link and
  *                   the RFC 8058 headers. If the list cannot be read, it THROWS rather than sends.
+ *
+ * ⚠️ AND EVERY SEND, OF EITHER KIND, IS REFUSED TO AN ADDRESS THAT HARD-BOUNCED OR COMPLAINED
+ * (`email_undeliverable`, filled by the Resend webhook): it THROWS `Undeliverable`, with no Resend call,
+ * so a caller cannot report "sent" for an email that cannot arrive. Fails OPEN — if that list cannot
+ * be read (or does not exist yet), the email is sent as before.
  */
 export function sendEmail(kind: 'transactional', to: string, m: Rendered, idempotencyKey: string, scheduledAt?: Date): Promise<string>
 export function sendEmail(kind: 'commercial', to: string, m: Rendered, idempotencyKey: string): Promise<string | typeof SUPPRESSED>
 export async function sendEmail(kind: EmailKind, to: string, m: Rendered, idempotencyKey: string, scheduledAt?: Date): Promise<string> {
+  const listed = await undeliverableReason(to)
+  if (listed) {
+    // The server sink, never the address: which one is in Resend → Emails, and its hash is in the table.
+    await sinkError({ at: new Date().toISOString(), source: 'server', message: `[email] not sent: the address ${listed} earlier` })
+    throw new Undeliverable(listed)
+  }
   let headers: Record<string, string> | undefined
   if (kind === 'commercial') {
     // A scheduled email would be checked against the list now and delivered later, after an unsubscribe.
@@ -228,6 +240,46 @@ export async function sendEmail(kind: EmailKind, to: string, m: Rendered, idempo
   const body = await r.json().catch(() => null)
   if (!r.ok || typeof body?.id !== 'string') throw new Error(`resend ${r.status}: ${body?.message ?? body?.name ?? 'no id returned'}`)
   return body.id
+}
+
+// ── addresses that hard-bounced or complained (20261007000000): no email of any kind ──
+/** Thrown by `sendEmail` for a listed address. The message names the reason only, never the address. */
+export class Undeliverable extends Error {
+  constructor(readonly reason: 'bounced' | 'complained') { super(`undeliverable: the address ${reason} earlier`); this.name = 'Undeliverable' }
+}
+export const emailHash = (e: string) => createHash('sha256').update(normalEmail(e)).digest('hex')
+
+/** Why this address is listed, or null. Null too when the list cannot be read — transactional mail never stops on it. */
+export async function undeliverableReason(email: string): Promise<'bounced' | 'complained' | null> {
+  try {
+    const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
+    const r = await fetch(`${url}/rest/v1/email_undeliverable?email_sha256=eq.${emailHash(email)}&select=reason`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: 'no-store',
+    })
+    if (!r.ok) { console.error('[email] undeliverable list unreadable, sending anyway', r.status); return null }
+    const [row] = await r.json() as { reason?: string }[]
+    return row?.reason === 'bounced' || row?.reason === 'complained' ? row.reason : null
+  } catch (e) {
+    if (e instanceof ConfigMissing) throw e
+    console.error('[email] undeliverable list unreadable, sending anyway', e)
+    return null
+  }
+}
+
+/**
+ * List an address (the webhook's half). An upsert: a second event refreshes `last_at` and the reason, keeps `first_at`.
+ * 'missing' = the table is not there yet (the migration waits for approval); anything else that fails throws.
+ */
+export async function markUndeliverable(email: string, reason: 'bounced' | 'complained'): Promise<'ok' | 'missing'> {
+  const url = env('NEXT_PUBLIC_SUPABASE_URL'), key = env('SUPABASE_SERVICE_ROLE_KEY')
+  const r = await fetch(`${url}/rest/v1/email_undeliverable?on_conflict=email_sha256`, {
+    method: 'POST', cache: 'no-store',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ email_sha256: emailHash(email), reason, last_at: new Date().toISOString() }),
+  })
+  if (r.ok) return 'ok'
+  if (r.status === 404) return 'missing'
+  throw new Error(`email_undeliverable ${r.status}`)
 }
 
 // ── commercial email: the suppression list and the footer (CAN-SPAM, docs/legal/09 §2, §4, §7) ──

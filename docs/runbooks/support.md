@@ -75,7 +75,23 @@ To switch it on (**founder**, once):
 3. In Resend, send the endpoint a test event: it should answer 200. Until the secret is set the route answers 503
    and records nothing.
 
-A bounce does not yet stop the next email to that address; complaints are not added to `email_suppressions`.
+**What a bounce stops (20261007000000).** A `Permanent` bounce or a complaint also puts the recipient on
+`email_undeliverable` — the sha256 of the lowercase address, never the address — and `sendEmail` then sends that address
+nothing, of any kind, and records `[email] not sent: the address bounced earlier` (or `complained`). The parent is told:
+sign-up says the address cannot be emailed; the Waiting card says the email could not be delivered and to write to
+support. A soft bounce (`Transient`, `Undetermined`: a full mailbox) lists nobody. A new or corrected address is never
+affected. Supabase Auth's own emails (password reset) do not go through `sendEmail`, but Resend keeps its own
+suppression list and drops them too. A listing is deleted 12 months after its last event (`prune-email-undeliverable`).
+
+**A parent says they get no email** (typo at sign-up, mailbox fixed, or a complaint made by mistake):
+1. **Founder, SQL editor.** Query 1 of [../legal/sql/email-undeliverable.sql](../legal/sql/email-undeliverable.sql) with
+   their address: no row = we are not blocking it (look in Resend → Emails instead).
+2. A typo: nothing to lift. They sign up again with the right address (the wrong one's unconfirmed account is pruned
+   after 3 days). A signed-in parent with a wrong address on the account has no in-app way to change it today — handle
+   it as a data request.
+3. The address is right and now works (mailbox recreated, complaint withdrawn **in writing from that address**):
+   query 2 lifts our listing, then remove the address in Resend → Suppressions too, or Resend keeps dropping it. Then
+   they press "Send the email again" (or sign up again).
 
 ## Parent PIN locked or forgotten
 

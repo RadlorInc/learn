@@ -235,6 +235,11 @@ export const PROPOSED = {
   checkPending: { en: 'We have already sent you a message asking for your permission. The link in it works until {date}.',
                   es: 'Ya le hemos enviado un mensaje pidiéndole su permiso. El enlace funciona hasta el {date}.' },
   sendAgain: { en: 'Send it again', es: 'Enviarlo de nuevo' },
+  // Bounce suppression (20261007000000): the address hard-bounced or was marked as spam, so nothing was or will be sent.
+  undeliverable: {
+    en: 'We could not deliver email to {email}: earlier emails to it bounced or were marked as spam, so we have stopped sending to it. Check the address for a typo. To use a different address, or if this one is right, write to {support}.',
+    es: 'No pudimos entregar correos a {email}: los correos anteriores rebotaron o se marcaron como spam, así que hemos dejado de enviarle. Revise si la dirección tiene un error. Para usar otra dirección, o si esta es correcta, escríbanos a {support}.',
+  },
   stale: { en: 'This page is out of date. Please reload it and read the notice again.', es: 'Esta página está desactualizada. Vuelva a cargarla y lea el aviso de nuevo.' },
   declinedHeading: { en: 'Request cancelled', es: 'Solicitud cancelada' },
   declinedBody: { en: 'Nothing about your child has been collected.', es: 'No se ha recopilado nada sobre su hijo.' },

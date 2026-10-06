@@ -13,14 +13,17 @@
  */
 import { useEffect, useState } from 'react'
 import { PROPOSED, REASK, WAITING, NOTICE, type Lang, type L } from './copy'
-import { readAccountConsent, requestAccountConsent, daysLeft, type AccountConsent } from './consentState'
+import { readAccountConsent, requestAccountConsent, ownEmailUndeliverable, daysLeft, type AccountConsent } from './consentState'
+import { SUPPORT_EMAIL } from '@/app/site'
 import { Notice, S } from './Notice'
 import { Md } from './Md'
 
 export type Granted = Extract<AccountConsent, { k: 'granted' }>
 export type View =
   | { k: 'loading' } | { k: 'notice' } | { k: 'reask' } | { k: 'sending'; reask?: boolean }
-  | { k: 'waiting'; email: string; days: number } | { k: 'error'; stale?: boolean } | Granted
+  | { k: 'waiting'; email: string; days: number } | { k: 'error'; stale?: boolean }
+  /** The address hard-bounced or complained: no email can arrive, so the parent is not told to wait for one. */
+  | { k: 'undeliverable'; email: string } | Granted
 
 export function useAccountConsent({ lang }: { lang: Lang }) {
   const [view, setView] = useState<View>({ k: 'loading' })
@@ -28,7 +31,8 @@ export function useAccountConsent({ lang }: { lang: Lang }) {
   async function ask(reask?: boolean) {
     setView({ k: 'sending', reask })
     const r = await requestAccountConsent(lang)
-    setView(r.ok ? { k: 'waiting', email: r.email, days: r.days } : { k: 'error', stale: r.error === 'stale' })
+    setView(r.ok ? { k: 'waiting', email: r.email, days: r.days }
+      : r.error === 'undeliverable' ? { k: 'undeliverable', email: r.email } : { k: 'error', stale: r.error === 'stale' })
   }
 
   useEffect(() => {
@@ -36,7 +40,12 @@ export function useAccountConsent({ lang }: { lang: Lang }) {
     void readAccountConsent().then(s => {
       if (!live) return
       if (s.k === 'granted') return setView(s)
-      if (s.k === 'pending') return setView({ k: 'waiting', email: s.email, days: daysLeft(s.until) })
+      if (s.k === 'pending') {
+        setView({ k: 'waiting', email: s.email, days: daysLeft(s.until) })
+        // The request went out, but it may have bounced since: then say so instead of "check your email".
+        void ownEmailUndeliverable().then(u => { if (live && u) setView({ k: 'undeliverable', email: s.email }) })
+        return
+      }
       if (s.k === 'reask') return setView({ k: 'reask' })
       if (s.k === 'error') return setView({ k: 'error' })
       setView({ k: 'notice' })
@@ -74,6 +83,14 @@ export function ConsentPanel({ lang, view, onAsk, onClose }: { lang: Lang; view:
         <button type="button" onClick={onAsk} style={S.ghost}>{t(WAITING.resend)}</button>
         {onClose && <button type="button" onClick={onClose} style={S.ghost}>{t(NOTICE.tertiary)}</button>}
       </div>
+    </div>
+  )
+  if (view.k === 'undeliverable') return (
+    <div data-consent="undeliverable">
+      <p role="alert" style={{ ...S.p, color: '#93000A', fontWeight: 700 }}>
+        {t(PROPOSED.undeliverable).replace('{email}', view.email).replace('{support}', SUPPORT_EMAIL)}
+      </p>
+      {onClose && <button type="button" onClick={onClose} style={S.ghost}>{t(NOTICE.tertiary)}</button>}
     </div>
   )
   return (

@@ -93,6 +93,13 @@
 --                                                  from public/anon/authenticated/service_role, then SELECT granted to
 --                                                  service_role only. No FK: it outlives what it records.
 --                                                  NOT YET APPLIED TO PRODUCTION.
+--   email_undeliverable        rls=t  policies=0   2026-10-07 (20261007000000): INTENTIONAL deny-all, the
+--                                                  error_events precedent. sha256 of an address that hard-bounced
+--                                                  or complained, reason, first/last time; sendEmail sends nothing
+--                                                  to it. Every privilege revoked from public/anon/authenticated/
+--                                                  service_role, then SELECT/INSERT/UPDATE granted to service_role
+--                                                  (no DELETE: lifting is the founder's SQL-editor write). No FK.
+--                                                  NOT YET APPLIED TO PRODUCTION.
 --   consent_notice_versions    rls=t  policies=1   2026-09-24 (20260924100000, consent-once): SELECT for
 --                                                  authenticated (using true — notice versions are not personal
 --                                                  data). All privileges revoked from public/anon/authenticated,
