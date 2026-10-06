@@ -6,7 +6,7 @@ import { NOTICE_VERSION } from '@/features/consent/copy'
 import { PENDING_TTL_DAYS } from '@/features/consent/config'
 import { renderB1 } from '@/features/consent/email'
 import {
-  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, userFromBearer, type RpcError,
+  ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, hashToken, newToken, rpc, sendEmail, userFromBearer, Undeliverable, type RpcError,
 } from '@/features/consent/server'
 
 /**
@@ -75,7 +75,14 @@ export async function POST(req: Request) {
       if (code === 'PGRST202' || code === 'P0C04') return json({ error: 'not_ready' }, 503)
       throw e
     }
-    const id = await sendEmail('transactional', row.email, renderB1('en', `${SITE_URL}/consent/respond#t=${tok}`, null), `consent-${row.consent_id}-b1`)
+    let id: string
+    try {
+      id = await sendEmail('transactional', row.email, renderB1('en', `${SITE_URL}/consent/respond#t=${tok}`, null), `consent-${row.consent_id}-b1`)
+    } catch (e) {
+      // The adult's address hard-bounced or complained: nobody can be emailed, so the screen says to ask a grown-up.
+      if (e instanceof Undeliverable) return json({ ok: true, sent: false })
+      throw e
+    }
     await rpc('consent_record_request_sent', { p_id: row.consent_id, p_provider_id: id })
     return json({ ok: true, sent: true })
   } catch (e) {

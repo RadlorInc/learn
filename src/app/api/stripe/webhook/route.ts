@@ -4,7 +4,7 @@ import { stripeClient } from '@/infra/stripe'
 import { HOLDS_SEATS, subscriptionRow, totalCents } from '@/core/billing'
 import { sinkError } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../../_rateLimit'
-import { ConfigMissing, sendEmail } from '@/features/consent/server'
+import { ConfigMissing, sendEmail, Undeliverable } from '@/features/consent/server'
 import { renderRenewalReminder, renderSubscribed } from '@/features/billing/subscriptionNotices'
 
 /**
@@ -280,8 +280,10 @@ export async function POST(req: Request) {
     try {
       await sendEmail('transactional', mail.to, mail.m, mail.key)
     } catch (e) {
-      if (!(e instanceof ConfigMissing)) return fail('email', e instanceof Error ? e.message : String(e))
-      await sinkError({
+      // A listed address (hard bounce / complaint) is final, not a retry: sendEmail already recorded it. A failure here
+      // would make Stripe redeliver for days to an address that cannot receive it.
+      if (!(e instanceof ConfigMissing) && !(e instanceof Undeliverable)) return fail('email', e instanceof Error ? e.message : String(e))
+      if (e instanceof ConfigMissing) await sinkError({
         at: new Date().toISOString(), source: 'server',
         message: `stripe webhook: ${event.type} for ${sub.id} owed an email but ${e.message} is not set — not sent`,
         routePath: '/api/stripe/webhook',

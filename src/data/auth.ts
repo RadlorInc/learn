@@ -21,12 +21,12 @@ export async function getCurrentSession(): Promise<Session | null> {
  * sends our own email — for a parent it confirms the address AND asks for consent; for a teacher it only confirms.
  * Supabase's own confirmation email is not used for this path. The link lands on `/auth/confirm`.
  */
-export type SignUpResult = 'ok' | 'exists' | 'weak_password' | 'invalid' | 'adult_required' | 'rate_limited' | 'failed'
+export type SignUpResult = 'ok' | 'exists' | 'weak_password' | 'invalid' | 'adult_required' | 'rate_limited' | 'undeliverable' | 'failed'
 export async function signUpOneEmail(body: { email: string; password: string; firstName: string | null; role: 'parent' | 'teacher'; lang: 'en' | 'es'; adult: boolean }): Promise<SignUpResult> {
   const r = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   if (r.ok) return 'ok'
   const e = (await r.json().catch(() => null))?.error
-  return e === 'exists' || e === 'weak_password' || e === 'invalid' || e === 'adult_required' || e === 'rate_limited' ? e : 'failed'
+  return e === 'exists' || e === 'weak_password' || e === 'invalid' || e === 'adult_required' || e === 'rate_limited' || e === 'undeliverable' ? e : 'failed'
 }
 
 /**

@@ -72,6 +72,8 @@ nothing (`learners.created_by` is `ON DELETE RESTRICT`), and without children it
   (`HELD_ELSEWHERE`);
 - `deletion_log` — the audit rows (ids and counts);
 - `email_suppressions` — the address, if it ever unsubscribed, so that no marketing email reaches it again;
+- `email_undeliverable` — only if an email to the address bounced permanently or was marked as spam: its sha256 hash,
+  the reason and when, deleted 12 months after the last event (`SURVIVORS`; lifting one: support.md → Email bounces);
 - `diagnostic_leads` — only if not deleted in step 3;
 - the backup copies, until they expire (04 §5).
 

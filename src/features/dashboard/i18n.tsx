@@ -479,6 +479,7 @@ export const ES: Record<string, string> = {
   'Please enter your email and password': 'Escriba su correo y su contraseña',
   'Passwords do not match': 'Las contraseñas no coinciden',
   'This email already has an account. Sign in below, or tap “Forgot password?”': 'Este correo ya tiene una cuenta. Inicie sesión abajo, o toque “¿Olvidó su contraseña?”',
+  'We cannot send email to this address: earlier emails to it bounced or were marked as spam. Check it for a typo, or use another address. If it is right, write to {support}.': 'No podemos enviar correos a esta dirección: los correos anteriores rebotaron o se marcaron como spam. Revise si tiene un error, o use otra dirección. Si es correcta, escríbanos a {support}.',
   'Check your email for a confirmation link!': '¡Revise su correo: le enviamos un enlace de confirmación!',
   'Check your email: one message confirms your address and asks for your permission.': 'Revise su correo: un solo mensaje confirma su dirección y le pide su permiso.',
   'Please choose Parent or Teacher': 'Elija Padre/Madre o Docente',

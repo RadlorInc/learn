@@ -255,6 +255,29 @@ describe('add a child: the sheet opens only on a granted, current account consen
     await m.done()
   })
 
+  // 20261007000000: the request went out, then bounced permanently (or the parent marked it as spam). The pending test
+  // above is the positive twin: there the deliverability answer is empty and WAITING stays.
+  it('pending, but the address has since bounced: says so, names the address and support, and no "We have emailed"', async () => {
+    st.consents = [granted({ state: 'pending', confirmed_at: null, expires_at: new Date(Date.now() + 3 * 86_400_000).toISOString() })]
+    fetchAnswer = url => url === '/api/email/deliverable' ? { undeliverable: true } : {}
+    const m = await flow()
+    expect(fetchLog.map(f => f.url)).toContain('/api/email/deliverable')
+    expect(m.host.querySelector('[data-consent="undeliverable"]'), 'the parent is still told to wait for an email that bounced').toBeTruthy()
+    expect(m.host.textContent).toContain('We could not deliver email to p@x.test')
+    expect(m.host.textContent).toContain('support@radlor.com')
+    expect(m.host.textContent).not.toContain('We have emailed')
+    await m.done()
+  })
+
+  it('"continue" refused as undeliverable: the same message, never "Waiting for your permission"', async () => {
+    fetchAnswer = url => url === '/api/consent/request' ? { error: 'undeliverable', email: 'p@x.test' } : {}
+    const m = await flow()
+    await click(button(m.host, /legal guardian — continue/))
+    expect(m.host.textContent).toContain('We could not deliver email to p@x.test')
+    expect(m.host.textContent).not.toContain('Waiting for your permission')
+    await m.done()
+  })
+
   it('granted but no longer current: the re-ask and the notice, never the sheet', async () => {
     st.consents = [granted()]; st.current = false
     const m = await flow()
