@@ -50,6 +50,60 @@ export function wrap(t: string, n: number): string[] {
   return out
 }
 
+/** A row other than the last that ends on an operator, or on a "?" standing for a sign, leaves its operand behind. */
+const dangles = (rows: string[]) => rows.slice(0, -1).some(r => /[=+−×÷:→]$| \?$/.test(r))
+/** Words, with everything inside parentheses kept as one piece and an operator kept with what follows it. */
+function pieces(t: string): string[] {
+  const out: string[] = []
+  let depth = 0, carry = false
+  for (const w of t.split(' ')) {
+    if (depth > 0 || carry) out[out.length - 1] += ' ' + w
+    else out.push(w)
+    depth += (w.match(/\(/g)?.length ?? 0) - (w.match(/\)/g)?.length ?? 0)
+    carry = /^[=+−×÷:→?]$/.test(w)
+  }
+  return out
+}
+const pack = (ps: string[], n: number) => ps.reduce<string[]>((o, p) => {
+  if (o.length && (o[o.length - 1] + ' ' + p).length <= n) o[o.length - 1] += ' ' + p
+  else o.push(p)
+  return o
+}, [])
+/** Rows of an expression: ratio names keep their own row ("red crayons :"); otherwise rows of about equal length,
+ *  never inside parentheses or ending on an operator. Falls back to plain `wrap`. */
+function exprRows(t: string, n: number): string[] {
+  if (t.length <= n) return [t]
+  const names = t.split(' : ')
+  if (names.length > 1 && !names.some(p => /[\d?]/.test(p))) {
+    const chunks = names.map((p, i) => (i < names.length - 1 ? `${p} :` : p))
+    if (chunks.every(c => c.length <= n)) return pack(chunks, n)
+  }
+  const ps = pieces(t)
+  if (ps.some(p => p.length > n)) return wrap(t, n)
+  const k = pack(ps, n).length
+  for (let w = Math.ceil(t.length / k); w <= n; w++) { const o = pack(ps, w); if (o.length === k && !dangles(o)) return o }
+  return wrap(t, n)
+}
+
+/** An equation's rows. A long one breaks before the first "=" (or "→", then a "?" standing for a sign) whose whole
+ *  right side fits one row — a paid tester: "move everything after the equals sign down" — so "= 12 : ?" or "= 52" is
+ *  never split. Otherwise plain `wrap`, unless a row would end on an operator. */
+export function wrapEq(t: string, n: number): string[] {
+  if (t.length <= n) return [t]
+  // A label ("Clue 1:") or a comma ("x = weeks, y = height") already splits it in two: break there when both halves fit.
+  const label = t.match(/^(.*?\S): (.*)$/), comma = t.lastIndexOf(', ')
+  if (label && label[1].length < n && label[2].length <= n) return [`${label[1]}:`, label[2]]
+  const open = (u: string) => (u.match(/\(/g)?.length ?? 0) - (u.match(/\)/g)?.length ?? 0)
+  if (comma > 0 && comma < n && t.length - comma - 2 <= n && open(t.slice(0, comma)) === 0) return [t.slice(0, comma + 1), t.slice(comma + 2)]
+  const at = (sep: string) => [...t.matchAll(new RegExp(sep, 'g'))].map(m => m.index)
+  for (const i of [...at(' [=→] '), ...at(' \\? (?=[\\d(])')]) {
+    const right = t.slice(i + 1)
+    if (i > 0 && right.length <= n) return [...exprRows(t.slice(0, i), n), right]
+  }
+  const rows = wrap(t, n)
+  return dangles(rows) ? exprRows(t, n) : rows
+}
+
 // Text width, for sizing an SVG around its words. Measured on a canvas in the display font once the page is live;
 // the server (and the first client render, so hydration matches) uses an estimate. Re-measures when a font loads,
 // because Fredoka is wider than its fallback.
