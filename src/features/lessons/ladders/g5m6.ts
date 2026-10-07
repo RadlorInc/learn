@@ -6,7 +6,7 @@
  * reads a choice found inside a label as a giveaway. Place choices are "the park" against a "Park" label, for the same reason.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 type Pt = { x: number; y: number; label?: string }
 const grid = (max: number, points: Pt[]): Picture => ({ kind: 'coord', min: 0, max, points })
@@ -16,7 +16,6 @@ const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const distinct = (xs: string[]) => new Set(xs).size === xs.length
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'K', 'M', 'N', 'P', 'Q', 'R', 'S', 'T']
 const letters = (r: Rng, n: number) => shuffle(r, LETTERS).slice(0, n)

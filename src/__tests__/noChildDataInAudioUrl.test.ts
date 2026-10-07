@@ -100,9 +100,14 @@ describe('no child data in any audio request', () => {
     await React.act(async () => {
       root.render(React.createElement(ChapterDone, { open: true, childName: 'Carlos Tyler', onPlayAgain: () => {}, onExit: () => {} }))
     })
-    await tick(300)   // the browser path waits 100 ms after cancel() before it speaks (useMiloSpeaker._doSpeakBrowser)
-    expect(requests, 'ChapterDone made an audio request for a named line').toEqual([])
-    expect(utterances.some(t => t.includes('Carlos Tyler')), 'the device voice said the line (the drive really reached speech)').toBe(true)
+    // Wait for the speech itself, not a clock: the browser path sits behind two 100 ms timers, and a fixed
+    // tick(300) failed here as an assertion whenever the machine was loaded (handoff, 28 Sep; reproduced 6 Oct by
+    // stretching one timer). "Nothing requested" is asserted first inside the wait, so a request (which would come
+    // before, and instead of, the device's speech) fails with ITS message, not as "the device never spoke".
+    await vi.waitFor(() => {
+      expect(requests, 'ChapterDone made an audio request for a named line').toEqual([])
+      expect(utterances.some(t => t.includes('Carlos Tyler')), 'the device voice said the line (the drive really reached speech)').toBe(true)
+    }, { timeout: 5000 })
 
     function Say() { const { speak } = useMiloSpeaker(); React.useEffect(() => { speak(REAL) }, [speak]); return null }
     await React.act(async () => { root.render(React.createElement(Say)) })
@@ -130,9 +135,10 @@ describe('no child data in any audio request', () => {
     await React.act(async () => {
       root.render(React.createElement(ChapterDone, { open: true, childName: 'Joseph Ritchey', onPlayAgain: () => {}, onExit: () => {} }))
     })
-    await tick(300)   // the browser path waits 100 ms after cancel() before it speaks
-    expect(requests, 'ChapterDone made an audio request for a named line').toEqual([])
-    expect(utterances, 'the device voice said the line (the drive really reached speech)').toContain(NAMED_KG)
+    await vi.waitFor(() => {   // the speech, not a clock; the request assertion first (see B)
+      expect(requests, 'ChapterDone made an audio request for a named line').toEqual([])
+      expect(utterances, 'the device voice said the line (the drive really reached speech)').toContain(NAMED_KG)
+    }, { timeout: 5000 })
 
     function Say() { const { speak } = useMiloSpeaker(); React.useEffect(() => { speak(REAL_KG) }, [speak]); return null }
     await React.act(async () => { root.render(React.createElement(Say)) })

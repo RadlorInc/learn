@@ -4,7 +4,7 @@
  * written like the lessons write them — `{ frac }` with no `exact`, so an equal fraction is also right.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, type Level, type Rng, until } from '../adaptive'
 
 const DEN = [2, 3, 4, 6, 8] as const
 const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth']
@@ -12,7 +12,6 @@ const ORD = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 
 const f = (n: number, d: number) => `${n}/${d}`
 const pl = (k: number, w: string) => `${k} ${w}${k === 1 ? '' : 's'}`
 const upto = (n: number) => Array.from({ length: n }, (_, i) => i + 1).join(', ')
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 
 type Bar = { parts: number; shaded: number; label?: string }
 const bar = (parts: number, shaded: number, label?: string): Bar => (label ? { parts, shaded, label } : { parts, shaded })

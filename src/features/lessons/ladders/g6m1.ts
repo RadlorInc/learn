@@ -4,7 +4,7 @@
  * and only turned into dollars for the answer, so no float noise reaches a child.
  */
 import type { Picture, Problem } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 type TapeRow = Extract<Picture, { kind: 'tape' }>['rows'][number]
 
@@ -27,7 +27,6 @@ const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(make: () => T, ok: (t: T) => boolean): T => { let t = make(); while (!ok(t)) t = make(); return t }
 /** a/b equals c/d, by cross multiplying. */
 const same = (a: number, b: number, c: number, d: number) => a * d === b * c
 

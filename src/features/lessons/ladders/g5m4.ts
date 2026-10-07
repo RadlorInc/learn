@@ -4,7 +4,7 @@
  * and only turned into a number at the end (`dec`), so float noise never reaches a question or an answer.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 // ── shared helpers ─────────────────────────────────────────────────────────────────────────────────────────
 /** n counted in units of 10^-p, as a clean number. */
@@ -13,7 +13,6 @@ const dec = (n: number, p: number) => Math.round((n / 10 ** p) * 1e6) / 1e6
 const fix = (n: number, p: number) => (n / 10 ** p).toFixed(p)
 const pl = (k: number, w: string) => `${k} ${w}${k === 1 ? '' : 's'}`
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...wrong])

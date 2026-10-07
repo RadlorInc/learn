@@ -3,15 +3,15 @@
  * Print a module's questions WITHOUT their answers or worked steps, for whoever writes the independent answer key
  * (src/__tests__/answerKeys/<module>.ts). The solver sees what a child sees: the question text and the picture data.
  *
- *   node scripts/lesson-questions.mjs g4m2
+ *   npx tsx scripts/lesson-questions.mjs g4m2
  *
- * Content files import only types, so Node's built-in type stripping loads them directly.
+ * Run it through tsx: the content files now import values (and `@/` paths) that Node's type stripping cannot resolve.
  */
 import { pathToFileURL } from 'node:url'
 import { resolve } from 'node:path'
 
 const id = process.argv[2]
-if (!/^g\d+m\d+$/.test(id ?? '')) { console.error('usage: node scripts/lesson-questions.mjs g4m2'); process.exit(2) }
+if (!/^g\d+m\d+$/.test(id ?? '')) { console.error('usage: npx tsx scripts/lesson-questions.mjs g4m2'); process.exit(2) }
 
 const mod = await import(pathToFileURL(resolve(`src/features/lessons/content/${id}.ts`)).href)
 const lessons = mod[id.toUpperCase()]

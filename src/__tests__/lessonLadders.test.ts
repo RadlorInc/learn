@@ -15,7 +15,7 @@ import { createElement } from 'react'
 import { MODULES } from '@/features/lessons/modules'
 import { Pic } from '@/features/lessons/Pictures'
 import { LADDERS } from '@/features/lessons/ladders'
-import { rng, step, startLevel, draw, beginRun, advance, reviewTopic, nextModuleTopic, FRESH, CHECKPOINT, DONE_AFTER, runDone, toSaved, fromSaved, type Level, type Standing } from '@/features/lessons/adaptive'
+import { rng, step, startLevel, draw, beginRun, advance, reviewTopic, nextModuleTopic, FRESH, CHECKPOINT, DONE_AFTER, runDone, toSaved, fromSaved, until, type Level, type Standing } from '@/features/lessons/adaptive'
 import { isCorrect, showAnswer, type Answer, type Problem } from '@/features/lessons/script'
 
 // Every built module, written out (not read from MODULES): a module that silently loses its ladders must fail here.
@@ -281,3 +281,15 @@ function invalidAnswer(a: Answer): string | null {
   if (new Set(a.choices).size !== a.choices.length) return `duplicate choices ${a.choices.join(' | ')}`
   return a.correct >= 0 && a.correct < a.choices.length ? null : 'correct index out of range'
 }
+
+describe('a re-roll that can never succeed', () => {
+  it('throws a named error instead of spinning for ever (ARC-07)', () => {
+    let tries = 0
+    expect(() => until(() => ++tries, () => false)).toThrow(/no acceptable draw in 10000 tries/)
+    expect(tries, 'it gave up after exactly the ceiling, written here by hand').toBe(10000)
+  })
+  it('positive twin: returns the first draw that holds', () => {
+    let n = 0
+    expect(until(() => ++n, x => x === 3)).toBe(3)
+  })
+})

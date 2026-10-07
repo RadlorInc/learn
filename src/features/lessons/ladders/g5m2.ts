@@ -5,11 +5,10 @@
  * (so an equal fraction is also right), a `whole` when there is more than 1.
  */
 import type { Answer, Picture } from '../script'
-import { int, pick, shuffle, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, type Level, type Rng, until } from '../adaptive'
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a)
 const lcm = (a: number, b: number) => (a / gcd(a, b)) * b
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 /** A top number for d in simplest form (the question's fractions are written the way a child meets them: 2/3, not 4/6). */
 const top = (r: Rng, d: number, lo = 1, hi = d - 1) => until(() => int(r, lo, hi), n => gcd(n, d) === 1)
 

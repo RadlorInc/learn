@@ -3,14 +3,13 @@
  * (see ../adaptive.ts and the reference ladders in ./g5m1.ts). A level is a different KIND of question, not bigger numbers.
  */
 import type { Picture, Problem } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 const choose = (r: Rng, right: string, wrong: string[]) => {
   const choices = shuffle(r, [right, ...new Set(wrong.filter(w => w !== right))])
   return { choices, correct: choices.indexOf(right) }
 }
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 
 /** Every number the picture puts in front of the child (a table row is also read joined up) — the gate's own reading. */
 const shown = (p: Picture) => {

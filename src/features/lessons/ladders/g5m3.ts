@@ -5,12 +5,11 @@
  * a pan grid, one square meter.
  */
 import type { Picture } from '../script'
-import { int, pick, shuffle, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, type Level, type Rng, until } from '../adaptive'
 
 const gcd = (a: number, b: number): number => (b ? gcd(b, a % b) : a)
 const f = (n: number, d: number) => `${n}/${d}`
 const pl = (k: number, one: string, many: string) => `${k} ${k === 1 ? one : many}`
-const until = <T>(gen: () => T, ok: (x: T) => boolean): T => { let x = gen(); while (!ok(x)) x = gen(); return x }
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
 
 /** `n` whole bars, each optionally cut into `split` pieces. */

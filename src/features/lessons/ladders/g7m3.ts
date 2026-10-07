@@ -5,7 +5,7 @@
  * match — that is how no two choices can both be right. Equation choices are compared by their solutions.
  */
 import type { Picture, Problem } from '../script'
-import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
+import { int, pick, shuffle, fmt, until, type Level, type Rng } from '../adaptive'
 
 // ── Writing numbers, terms and expressions the way the lessons do ────────────────────────────────────────
 /** −4, not -4. */
@@ -58,7 +58,6 @@ type Eqn = { a: number; b: number; c: number; show: string }
 const chooseEqn = (r: Rng, right: Eqn, wrong: Eqn[]) =>
   chooseBy(r, right, wrong.filter(e => e.a !== 0), e => String((e.c - e.b) / e.a), e => e.show)
 
-const until = <T>(make: () => T, ok: (t: T) => boolean): T => { let t = make(); while (!ok(t)) t = make(); return t }
 
 /** Every string a picture prints, plus each list of strings joined (a table row). */
 const labels = (v: unknown, out: string[] = []): string[] => {

@@ -64,7 +64,9 @@ name: Backup (prod database)
 
 on:
   schedule:
-    - cron: '30 2 * * *' # 02:30 UTC daily, off the 03:17 error_events prune
+    - cron: '30 19 * * *' # 19:30 UTC daily. Asked for this early so that, landing 5–6 h late (below), it finishes
+    # before the ops digest at 06:23 UTC and the digest reports THAT night's backup. At 02:30 it landed ~08:20–09:20 UTC
+    # (25 Sep–6 Oct), so every digest reported the previous day's (handoff, measured 2026-10-06 with `gh run list`).
     # ⚠️ GitHub starts it ~5–6 h LATE here: 23–27 Sep 2026 every scheduled run began 07:41–08:24 UTC (and nightly-e2e's
     # 03:15 at 08:30–09:18, weekly-layout's Mon 04:40 at ~10:05) — measured 2026-09-28 from `gh run list --event
     # schedule`. So "no scheduled backup yet" before ~08:30 UTC is normal, not a failure. Scheduled events are best-effort
