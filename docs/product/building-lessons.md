@@ -65,6 +65,9 @@ The kinds are the `Picture` type in `script.ts`, drawn by `Diagrams.tsx`. See ev
 - Some kinds print values their data does not name: `angle` `parts` draw their degrees, `bars` print their `label`,
   `numline` prints its ticks. Open the preview, do not trust the data alone.
 - One picture kind for the teaching (plus `eq`, `cards`, `table` helpers). Do not mix a number line and a bar model.
+- A long `eq` (over 22 characters) breaks at a label (`Clue 1:`) or a comma, else before its first `=` whose right
+  side fits one row; ratio names, parentheses and an operator with its number stay together
+  (`src/__tests__/eqRows.test.ts`). Write the equation as one line and let it break.
 
 ### Words
 
