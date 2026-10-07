@@ -9,7 +9,7 @@ fixed yet are tracked outside this public repo; ask the founder.
 ## Where things stand (7 October 2026)
 
 - **Production** is on `9f85fb336` (#400), service worker v252; `smoke:live` on it (7 Oct) passed every check but
-  its own stale service-worker literal (it expected v242; fixed in the agent-fixes PR below). The repo `learn` is
+  its own stale service-worker literal (it expected v242; fixed in #401). The repo `learn` is
   public (see the Vercel item below). A private beta with families the founder knows has run since 25 September;
   Stripe still runs with test keys only until #351.
 - **Support and alerts proven live (6 Oct):** ops digest email, uptime checker, Resend bounce webhook (#389 stops
@@ -44,7 +44,7 @@ repo's migration chain still builds a body one comment different from production
 4. #386 — scale pictures show what they weigh, halal examples only, 142 new clips (uploaded): revoke the S3 key and
    both `production-db` secrets, run `docs/legal/sql/audio-bucket-proof.sql` (P5 expects 18026 | 274803288), merge;
    agent: `npm run smoke:live` after the deploy.
-5. The agent-fixes PR (`agent-fixes-oct6`, 7 Oct; no migration): test and harness fixes, `smoke:live`'s version,
+5. #401 (7 Oct; no migration): test and harness fixes, `smoke:live`'s version,
    the backup at 19:30 UTC so the 06:23 digest reports that night's.
 6. Old handoff Drafts #330, #343, #350 and #393 are superseded: close them.
 
@@ -122,7 +122,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
-- `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: its end-card press is fixed (agent-fixes PR; seen on 3
+- `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: its end-card press is fixed (#401; seen on 3
   chapters), the full 25 not re-run; 3 chapters "could not look" (the monkey cannot solve them).
 - The `staging` token failed with "FGA Authentication Error" on 6 Oct and was replaced; why is not known.
 - Closing a `past_due` account leaves Stripe's unpaid invoice `open` (a manual retry would charge): void it on close.
@@ -130,7 +130,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Not yet seen in a browser: the sign-out confirm, the sync-bar count.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
-- The vitest hang (ARC-07): the ladders' 19 copies of `until` are one bounded `until` now (agent-fixes PR), but about
+- The vitest hang (ARC-07): the ladders' 19 copies of `until` are one bounded `until` now (#401), but about
   140 `for (;;)` re-roll loops in other ladders are still unbounded.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. The walk harness's refusal has never been watched
