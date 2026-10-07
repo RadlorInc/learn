@@ -113,6 +113,20 @@ const tapHealth = (page: Page) => page.evaluate(() => {
   return { small, enabled, disabled, screen, speaking }
 })
 
+/** Playwright's refusal for an element that never stops moving (a nudge animates for ever). */
+const UNSTABLE = /not stable|visible, enabled and stable/
+/**
+ * Tap an element's centre with the real pointer, but only if the element is what is at that point (else a cover would
+ * take the tap); returns whether it tapped. For controls that never pass the "stable" wait.
+ */
+const tapCentre = async (page: Page, el: ReturnType<Page['locator']>, touch: boolean) => {
+  const pt = await el.evaluate(n => { const r = n.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2
+    const h = document.elementFromPoint(x, y); return h && (n === h || n.contains(h)) ? { x, y } : null }, undefined, { timeout: 1000 }).catch(() => null)
+  if (!pt) return false
+  if (touch) await page.touchscreen.tap(pt.x, pt.y); else await page.mouse.click(pt.x, pt.y)
+  return true
+}
+
 /** Tag what a child would tap (enabled controls + anything styled clickable) with data-xb; returns the count. */
 const tagTappables = (page: Page) => page.evaluate(() => {
   document.querySelectorAll('[data-xb]').forEach(e => e.removeAttribute('data-xb'))
@@ -234,11 +248,7 @@ for (const id of CHAPTERS) {
         } catch (e) {
           // A control that animates for ever (a nudging hint) never passes Playwright's "stable" wait, though a child
           // taps it fine: hit-test its centre ourselves and tap that point with the real pointer.
-          if (/not stable|visible, enabled and stable/.test(String(e))) {
-            const pt = await el.evaluate(n => { const r = n.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2
-              const h = document.elementFromPoint(x, y); return h && (n === h || n.contains(h)) ? { x, y } : null }, undefined, { timeout: 1000 }).catch(() => null)
-            if (pt) { if (touch) await page.touchscreen.tap(pt.x, pt.y); else await page.mouse.click(pt.x, pt.y) }
-          }
+          if (UNSTABLE.test(String(e))) await tapCentre(page, el, touch)
           // Playwright names the element that would receive the tap instead — the Safari "it does nothing" bug.
           const m = /<(.+?)> (?:from <.+?> subtree )?intercepts pointer events/.exec(String(e))
           // Not a verdict on its own (a creature mid-walk, a card fading in): kept as a suspect to look at.
@@ -265,7 +275,15 @@ for (const id of CHAPTERS) {
     let backWorks: boolean | null = null
     let playAgainWorks: boolean | null = null
     let card: 'all-done' | 'take' | null = null
-    const press = (name: RegExp) => { const b = page.getByRole('button', { name }); return touch ? b.tap({ timeout: 10_000 }) : b.click({ timeout: 10_000 }) }
+    // The end-card buttons are nudged (they bounce for ever), so Playwright's "stable" wait never passes though a child
+    // taps them fine (5 Oct: 10 of 25 failed on that alone). Then hit-test the centre ourselves and tap it; a cover over
+    // the centre still fails, by name.
+    const press = async (name: RegExp) => {
+      const b = page.getByRole('button', { name })
+      try { await (touch ? b.tap({ timeout: 10_000 }) : b.click({ timeout: 10_000 })) } catch (e) {
+        if (!UNSTABLE.test(String(e)) || !(await tapCentre(page, b, touch))) throw e
+      }
+    }
     const record = () => {
       mkdirSync('test-results/xbrowser', { recursive: true })
       appendFileSync('test-results/xbrowser/results.jsonl', JSON.stringify({ project: info.project.name, chapter: id, seeded: !!skill, card, crashed, reachedEnd, playAgainWorks, backWorks, covered: coverList, suspects: [...suspects], small: [...small], deadMs: worstDead.ms, deadScreen: worstDead.screen, errors }) + '\n')
