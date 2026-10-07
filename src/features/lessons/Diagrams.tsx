@@ -212,6 +212,15 @@ function Bars({ p }: { p: P<'bars'> }) {
 }
 
 // ── Tape diagram ───────────────────────────────────────────────────────────────────────────────
+/** A row named for a colour ("Red", "Blue crayons") is filled in that colour, whatever its `shade`: a "Red" row in
+ *  mint and a "Blue" row in white told a tester the opposite of the words. Only the first word counts ("Oranges" is fruit).
+ *  A cell can name its own `colour` (one row of red and blue beads); that wins over the row. */
+const NAMED: Record<string, string> = {
+  red: '#ffb3a3', blue: '#b9d4ff', green: '#9cf0d8', yellow: '#ffd166', purple: '#d9c6ff', pink: '#ffc6dc',
+  orange: '#ffc68a', brown: '#d9b38c', gray: '#d4d4d4', grey: '#d4d4d4', black: '#6b6b6b', white: '#fff',
+}
+const named = (label?: string) => NAMED[label?.split(' ')[0].toLowerCase() ?? '']
+
 function Tape({ p }: { p: P<'tape'> }) {
   const total = Math.max(...p.rows.map(r => r.cells.reduce((s, c) => s + c.w, 0)))
   const lw = p.rows.some(r => r.label) ? 120 : 0, W = 520, u = W / total, rh = 56, gap = 44
@@ -229,7 +238,7 @@ function Tape({ p }: { p: P<'tape'> }) {
               const cx = x; x += c.w * u
               return (
                 <g key={j} style={reveal(k++, p.motion, 300)}>
-                  <rect x={cx} y={y} width={c.w * u} height={rh} fill={TONE[c.shade ? 1 : 0]} stroke={INK} strokeWidth={4} />
+                  <rect x={cx} y={y} width={c.w * u} height={rh} fill={named(c.colour) ?? named(r.label) ?? TONE[c.shade ? 1 : 0]} stroke={INK} strokeWidth={4} />
                   {c.text && <T x={cx + (c.w * u) / 2} y={y + rh / 2} s={22}>{c.text}</T>}
                 </g>
               )
