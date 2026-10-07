@@ -27,14 +27,17 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — Draft PRs waiting for the founder
 
-Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323 (each migration's before- and proof-SQL
-all PASS). #323 was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️),
-so the repo's migration chain still builds a body one comment different from production's.
-1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
-2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
-   #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
-3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
-   the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
+1. #386 — scale pictures, halal examples, 142 clips (uploaded, proof P5 passed): merge, then `npm run smoke:live`.
+2. #325 — admin 2-step in the database (migration), after two authenticators enrol at `/admin/mfa`.
+
+## Open — paid testers and the triage routine (7 Oct)
+
+- Paid testers use Radlor Ops links; who and rates: the founder's private tracker.
+- Routine **Radlic tester triage** (claude.ai → Routines, daily 03:30 UTC) reads Ops' `GET /api/radlic-tester/export`
+  (radlor-ops #12, `TRIAGE_SECRET`; environment `radlic-triage` allows `ops.radlor.com`), fixes clear defects on ONE
+  Draft PR, reports; decisions are in its prompt. ⚠️ An API edit re-attached every connector (prod
+  Supabase too): keep `mcp_connections` empty. Push fix branches before 09:00 IST or it redoes them.
+- Unsettled: audio lag on some laptops; one tester hears no voice; g6m1-t5 Screen 3.
 
 ## Open — the founder decides
 
