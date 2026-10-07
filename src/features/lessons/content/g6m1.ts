@@ -54,7 +54,7 @@ export const G6M1: Lesson[] = [
           { say: "How many beads are in one set? 3 + 2 is 5." },
           { say: "So 3 out of every 5 beads are red.", pic: 1 },
         ],
-        pictures: [{ kind: 'tape', rows: [{ cells: [{ w: 1, shade: true }, { w: 1, shade: true }, { w: 1, shade: true }, { w: 1 }, { w: 1 }], brace: '5 beads' }], motion: true },
+        pictures: [{ kind: 'tape', rows: [{ cells: [{ w: 1, colour: 'red' }, { w: 1, colour: 'red' }, { w: 1, colour: 'red' }, { w: 1, colour: 'blue' }, { w: 1, colour: 'blue' }], brace: '5 beads' }], motion: true },
           { kind: 'eq', text: 'red out of all = 3 out of 5' }] },
       { title: "Order matters", text: "Wait. The order of the words sets the order of the numbers. Red to blue is 3 : 2. Blue to red is 2 : 3.",
         beats: [

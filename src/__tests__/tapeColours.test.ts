@@ -65,6 +65,20 @@ describe('a tape row named for a colour is drawn in it', () => {
     expect([...new Set(wrong)]).toEqual([])
   })
 
+  it('a cell that names its own colour is drawn in it (one row of red and blue beads)', () => {
+    const cells = [
+      ...MODULES.flatMap(m => m.lessons).flatMap(l => tapes(l).map(t => [l.id, t] as const)),
+    ].flatMap(([where, t]) => t.rows.flatMap(r => r.cells.filter(c => c.colour).map(c => [where, c] as const)))
+    expect(cells.filter(([w]) => w === 'g6m1-t1').map(([, c]) => c.colour)).toEqual(['red', 'red', 'red', 'blue', 'blue'])
+    const wrong = cells.flatMap(([where, c]) => {
+      const rule = LOOKS[c.colour!], fill = fillOf({ cells: [c] })
+      if (!rule) return [`${where}: no rule for ${c.colour} in this test`]
+      const hex = fill && (fill.length === 4 ? '#' + [...fill.slice(1)].map(h => h + h).join('') : fill)
+      return hex && rule(...(rgb(hex) as [number, number, number])) ? [] : [`${where} cell "${c.colour}" is drawn ${fill}`]
+    })
+    expect(wrong).toEqual([])
+  })
+
   it('a row that is not a colour keeps the plain fill ("Oranges" is fruit)', () => {
     expect(fillOf({ label: 'Oranges', cells: [{ w: 1 }] })).toMatch(/^#fff(fff)?$/i)
     expect(fillOf({ label: 'Apples', cells: [{ w: 1, shade: true }] })).not.toMatch(/^#fff(fff)?$/i)
