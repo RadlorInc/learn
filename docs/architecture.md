@@ -75,15 +75,16 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/consent/request` | signed-in adult | Pending account consent on the current notice; B1 |
 | `POST /api/consent/respond` | a link token, no session | `lookup`, `grant` (B3 scheduled first), `decline`, `withdraw` |
 | `POST /api/consent/child-blocked` | caller who can see the child | B1 to a refused child's adult, unless a request is open or granted |
-| `GET/POST /api/consent/cancel-second-notice` | anyone (rate-limited); daily cron | Cancels queued B3s (reads nothing from the request); with `CRON_SECRET`, the ops digest |
+| `GET/POST /api/consent/cancel-second-notice` | anyone (rate-limited); daily cron | Cancels queued B3s and settles queued plan cancels and refunds (§8; reads nothing from the request); with `CRON_SECRET`, the ops digest |
 | `GET/POST/DELETE /api/child-login` | the learner's creator | A child's username and password (service role for Auth admin and the `self` row) |
 | `GET /api/admin/metrics` | admin (own token forwarded) | One `admin_*` aggregate RPC; non-admins get 404; small buckets suppressed (`ADMIN_MIN_COHORT`) |
 | `POST /api/tester` | anyone holding a tester link's token (checked by Radlor Ops) | Forwards a paid tester's open/review to Radlor Ops `/api/radlic-tester`; stores nothing here |
 | `POST /api/report-error` | anyone; capped | Crashes, page errors, unhandled rejections and refused uploads (`infra/reportCrash`: once per message, 10 a page load): log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
-| `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type |
+| `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/health` | anyone | Liveness, no database call |
+| `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
 
 ### Layers (`src`)
@@ -139,7 +140,11 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   has enrolled ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
-  data.
+  data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
+  token and emails the account once per reset. `/rights` sits outside `app/parent/`, so the gate does not wrap it: help,
+  withdraw-all (`WithdrawAllCard`) and the per-child export (`DataRights`) stay reachable with the PIN locked, for a
+  signed-in adult only (a `learner` login is sent to its lessons); closing the account (`/parent/account`) stays behind
+  the PIN (`pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
 
 ## 4. Supabase
 
@@ -156,9 +161,9 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Children | `learners` (name, avatar, age band, class, chosen lessons, consent, attestation), `learner_access` (owner, viewer, self), `learner_invites` |
 | Learning | `lesson_progress` (per topic, or `c:<chapter>`: done, level, streak, mastered, practice position), `point_events`, `game_settings`, `game_saves` (the game's world, one row per child) |
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
-| Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions` |
+| Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions`, `email_undeliverable` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
-| Billing (off) | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config` |
+| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations`, `billing_seat_removals` |
 | Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.
@@ -170,7 +175,7 @@ Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3
   child is deleted only by `delete_learner` → `delete_child_data` (logged, consent withdrawn, the child's login removed).
 - Progress tables are read-only to clients; DEFINER RPCs write them and compute points
   ([product/points.md](product/points.md)).
-- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `consent_b3_cancellations`,
+- No client access: `admin_users`, `parent_pins`, `deletion_log`, `email_suppressions`, `email_undeliverable`, `consent_b3_cancellations`, `billing_cancellations`, `billing_seat_removals`,
   `error_events`, `lesson_catalog` (the ids that may earn progress and points; read only by the two point functions). A parent reads only their own `parental_consents` rows and writes none.
 - Privilege is never read from a column its owner can write (admin is `admin_users`, not `profiles.role`). Some rules
   are column grants (invite status, `lesson_feedback`).
@@ -187,10 +192,10 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
   `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
   `consent_lookup`, `consent_grant`, `consent_decline`, `consent_withdraw`, `consent_ok`, `consent_expire_stale`,
-  `materialize_seats`, `ops_digest`. **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
+  `materialize_seats`, `ops_digest`, `billing_cancellations_due`, `billing_cancellation_record`, `billing_seat_removals_due` and `billing_seat_removal_record` (INVOKER). **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
   functions).
 - **Policy helpers and triggers:** `is_learner_creator`, `can_self_grant_access`, and the triggers for new users, new
-  learners, caps, the consent gate (§5) and B3 cancellation.
+  learners, caps, the consent gate (§5), B3 cancellation and the plan-cancel queue (`billing_queue_cancel_on_delete`, §8).
 - Legacy `sync_recheck` and `start_diagnostic` are defined; the app calls neither. `sync_session` and `sync_diagnostic` were dropped with the legacy progress tables (2026-09-28).
 
 ### Scheduled jobs (pg_cron, UTC, as defined in the migrations)
@@ -287,9 +292,9 @@ deletion, and the daily cron drain it.
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |
 | Export | every child table, crash records, access list | `export_child_records` + reads | `exportCompleteness`, `withdrawExportE2e` |
-| Delete a child | `learners` cascade, child login, `deletion_log` | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel` |
-| Close account | all children, the account; consent kept | `delete_my_account` | `accountDeletion`, `keepConsentRecord` |
-| Withdraw | all children | `withdraw_my_consent`, `consent_withdraw` | `withdrawalScope`, `b3CancelWiring` |
+| Delete a child | `learners` cascade, child login, `deletion_log`; on a paid plan the freed seat removed and refunded, or the plan for the last child (§8) | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel`, `closeRefund` |
+| Close account | all children, the account; consent kept; the plan cancelled and refunded (§8) | `delete_my_account` | `accountDeletion`, `keepConsentRecord`, `closeRefund` |
+| Withdraw | all children; the plan cancelled and refunded (§8) | `withdraw_my_consent`, `consent_withdraw` | `withdrawalScope`, `b3CancelWiring`, `closeRefund` |
 
 Tests are `src/__tests__/<name>.test.ts`; parent requests follow [runbooks/data-requests.md](runbooks/data-requests.md).
 
@@ -332,14 +337,20 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
   Stripe event), `billing_config.enforced`. Parents read their own rows; no client writes them directly.
 - **`/api/checkout`:** account from the token; requires the renewal-terms tick, whose time goes on the Stripe
   subscription's metadata with the account id. Refuses (409 `already_subscribed`) while the account's row holds seats
-  (active, trialing, past_due, unpaid), and refuses (503) when it cannot read the row. Returns to
+  (active, trialing, past_due, unpaid), and refuses (503) when it cannot read the row. Because the row is written
+  after payment, it then asks Stripe too: one customer per account (created under an idempotency key from the account
+  id, which Stripe keeps about 24 h), then — after creating the session — the customer's subscriptions (a live or
+  `incomplete` one → 409) and sessions (only the newest open one is kept; the rest are expired; an expire that fails
+  on a session that is not then expired → 409 `checkout_conflict`). A failed Stripe read → 503. Returns to
   `/parent/plan?billing=success`, where the card says "activating" and hides the checkout until the webhook writes the row;
   `/parent/plan` never shows the checkout beside a plan that holds seats.
 - **`/api/stripe/webhook`:** verifies Stripe's signature on the raw body first; idempotent (`stripe_event_id` unique,
   done only once `processed_at` is set); re-reads the subscription from Stripe and reconciles seats to a target
   (`materialize_seats`), so delivery order does not matter. One row per account, so an event about a DIFFERENT
   subscription than the row's is applied only if Stripe says the stored one no longer holds seats; otherwise it is
-  closed unapplied and logged (a late event from an old subscription, or a double subscription). A bad signature
+  closed unapplied and logged (a late event from an old subscription, or a double subscription). A checkout's first
+  events arrive together, so two can insert the account's first row at once; the loser's upsert fails on the
+  `stripe_customer_id` unique key (23505) and is retried once, which then updates the winner's row. A bad signature
   (per-IP limited) and a missing setting (by name) reach `error_events`, never the payload.
 - **Emails a subscription owes** (`features/billing/subscriptionNotices.ts`, sent by the webhook; docs/legal/01 §3):
   the acknowledgement on `checkout.session.completed` (terms, renewal, how to cancel), and a reminder on
@@ -347,6 +358,23 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
   fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
   `RESEND_API_KEY` is logged and the event still closes.
 - **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
+- **Close or withdraw-all cancels now and refunds** (20261008000000, `features/billing/closeRefund.ts`; doc 01 §5):
+  the close (a trigger on `subscriptions` DELETE) and `consent_withdraw_account` write the Stripe subscription id to
+  `billing_cancellations` in the same transaction, so Stripe can never block or undo a deletion. The drain (called by
+  the dashboard after either, by `/api/consent/respond` after the email-link withdrawal, and by the daily cron) cancels
+  at Stripe immediately and refunds each paid invoice pro rata by full days left from `queued_at` (the whole payment
+  within 14 days of it), then emails the parent at the Stripe customer's address. Idempotency keys
+  `close-cancel-<sub>` / `close-refund-<sub>-<invoice>`, and a payment that already carries a refund gets none, so a
+  retry never pays twice. An unsettled row stays due, is retried, and the ops digest flags it
+  (`billing_cancellations_owed`). Stripe's later events for a closed account are closed as `account_closed` (the upsert's
+  23503).
+- **One child of several withdrawn removes that seat and refunds it** (20261008010000; doc 01 §5): `delete_child_data`
+  on the `delete_child` / `withdraw_consent_child` paths, after the seat refill, queues a row in `billing_seat_removals`
+  when a seat of the plan is left empty (the whole plan in `billing_cancellations` when no child is left). The same
+  drain lowers Stripe's quantity by one (`proration_behavior: 'none'`, a metadata marker against a second decrement)
+  and refunds that seat's share of its newest paid invoice per period, last in first out, by the same rule
+  (`removeSeatAndRefund`). Its refunds are tagged `seat_removed`; a later close subtracts them. `/api/billing/seats`
+  adds the count of removals to its idempotency key so a re-add after a removal is a new request.
 - **`/api/billing/seats`:** one more seat on the caller's own active plan (max 4): a preview of the renewal total, then
   Stripe invoices the prorated difference now on the card on file; the row and seats are written at once. If the bank
   wants approval (3-D Secure) or the card fails, the change stays `pending_update` (no seat) and the parent finishes on
@@ -402,8 +430,10 @@ published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
 | `legalDocs`, `legalSwitch`, `publicClaims` | Legal pages stay dark until a valid switch-on; retention matches its job; no placeholder ships; public copy promises nothing unbuilt. |
 | `runbookNoProdWrites` | No runbook tells its reader to write to production by hand. |
 | `docLinks` | Every link between docs resolves, and no file names a doc that is not there. |
-| `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h and stuck Stripe events. |
+| `handledFailuresSink`, `healthDb`, `resendWebhook`, `backupNotice`, `opsDigest` | A caught 5xx reaches `error_events` without personal data; `/api/health/db` answers one boolean; Resend webhooks are signature-checked and stored as their type; a red backup opens an issue and a green one closes it; the digest flags a backup older than 36 h, stuck Stripe events and plans owed a cancel and refund. |
+| `closeRefund`, `billingStripe`, `seatRefundCopy` | Close and withdraw-all cancel the plan now and refund the unused part, by hand-worked amounts, once (a retry and a race refund nothing more), after the row is deleted, and Stripe being down never blocks the close; one child of several takes off one seat and refunds its share, the last child the whole plan; the webhook closes a closed account's events with 200; the confirmations say so to a paid family only. |
 | `deploySafety`, `migrationsPending`, `actionsPinned`, `ci.yml` | Backup before `db push`; unapplied migrations retried; Actions pinned; `release` moves only after tsc, vitest, build, audit and `rls-tests` pass. |
+| `redMain` | A red Deploy run opens one issue per kind (or comments on the open one); "database NOT migrated" only when a migration was pending; a finished run closes only the kinds its own jobs prove fixed. |
 
 Restores: [runbooks/backup-restore.md](runbooks/backup-restore.md). Support: [runbooks/support.md](runbooks/support.md).
 

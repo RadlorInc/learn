@@ -12,6 +12,7 @@
  * able to tell which boundary caught it.
  */
 import React from 'react'
+import { SupportPanel } from './SupportPanel'
 
 export const CRASH_UI = {
   page: {
@@ -59,6 +60,10 @@ export function CrashScreen({
           {secondary.label}
         </a>
       </div>
+
+      {/* A crash used to offer only "Try again" and "Go back home", so a parent had no way to tell us from the
+          screen where it happened (6 Oct). The report carries the device's details and, for a server error, the digest. */}
+      <SupportPanel label="Report a problem" firstLine={digest ? `error code ${digest}` : undefined} />
 
       {/**
         * ⚠️ THE DIGEST IS SHOWN, AND THE MESSAGE AND STACK ARE NOT. Next deliberately replaces a

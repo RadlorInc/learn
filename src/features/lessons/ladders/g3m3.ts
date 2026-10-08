@@ -129,7 +129,7 @@ const T2: Level[] = [
     const a = int(r, 2, 9), b = int(r, 2, 9), s = a + b
     const [kids, gift] = pick(r, [['children', 'balloon'], ['players', 'cap'], ['campers', 'flashlight']] as const)
     return { text: `${a} ${kids} each get 1 ${gift}. Then ${b} more ${kids} come, and each gets 1 ${gift} too. How many ${gift}s are given out?`,
-      picture: eq(`${a} × 1`, [`${b} × 1`]), answer: s,
+      picture: eq(`${a} × 1 = ?`, [`${b} × 1 = ?`, '? + ? = ?']), answer: s,
       steps: [`First, ${a} × 1 = ${a} ${gift}s.`, `Then ${b} × 1 = ${b} more ${gift}s.`, `${a} + ${b} = ${s}, so ${s} ${gift}s are given out.`] }
   }),
 ]

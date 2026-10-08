@@ -82,7 +82,7 @@ function tableSolve(q: Q): R {
   const ask = qr ? b : a, other = qr ? a : b
   let ans: R | null = null
   for (let j = 0; j < ask.length; j++) {
-    if (j === qc) continue
+    if (j === qc || ask[j] === '…') continue   // "…" marks skipped columns, not a value
     const got = mul(num(ask[j]), div(num(other[qc]), num(other[j])))
     if (ans && !same(ans, got)) fail(q, 'table columns are not all the same ratio')
     ans = got
@@ -271,7 +271,7 @@ export const SOLVE: Record<string, (q: Q) => string> = {
       const rows: string[][] = q.picture.rows
       const key = (label: string) => lc(label.split(' ')[0])
       const ratio: Record<string, R> = { [key(rows[0][0])]: num(rows[0][1]), [key(rows[1][0])]: num(rows[1][1]) }
-      for (let j = 2; j < rows[0].length; j++) if (!same(div(num(rows[0][j]), num(rows[1][j])), div(ratio[key(rows[0][0])], ratio[key(rows[1][0])]))) fail(q, 'table columns differ')
+      for (let j = 2; j < rows[0].length; j++) if (rows[0][j] !== '?' && !same(div(num(rows[0][j]), num(rows[1][j])), div(ratio[key(rows[0][0])], ratio[key(rows[1][0])]))) fail(q, 'table columns differ')
       return one(q, ch => {
         const x = ch.match(/^(\d+) (?:cups of )?(\w+) and (\d+) (?:cups of )?(\w+)$/) ?? fail(q, `cannot read "${ch}"`)
         const [a, b] = [ratio[x[2]] ?? fail(q, `unknown ${x[2]}`), ratio[x[4]] ?? fail(q, `unknown ${x[4]}`)]

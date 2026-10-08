@@ -58,6 +58,7 @@ Para cancelar no necesita llamarnos, chatear con un agente ni explicar por qué 
 - No se le volverá a cobrar.
 - Cancelar no genera por sí solo un reembolso; los reembolsos se tratan en la sección 5.
 - Cuando termina el periodo, su suscripción termina. Su cuenta y los perfiles de sus hijos siguen abiertos, salvo que usted cierre su cuenta.
+- **Cerrar su cuenta, o retirar el permiso para todos sus hijos, es distinto:** pone fin a su suscripción de inmediato, en lugar de al final del periodo, y le reembolsamos la parte no utilizada como se indica en la sección 5.
 - Los datos de aprendizaje de su hijo se tratan como se describe en la sección 8.
 
 ## 5. Reembolsos
@@ -71,7 +72,10 @@ Usted también es residente de un estado cuya ley puede otorgarle un derecho de 
 ### Circunstancias en las que siempre haremos un reembolso
 
 En todos los casos:
-- **Retiro del consentimiento de los padres.** Si usted retira su permiso para que recopilemos la información de su hijo, cerramos la cuenta y le reembolsamos la parte no utilizada de su suscripción, calculada desde la fecha en que tramitamos el retiro hasta el final del periodo que usted pagó. Nunca se le cobra por ejercer un derecho de privacidad.
+- **Retiro del consentimiento de los padres.** Si usted retira su permiso para todos sus hijos — en la aplicación (**Account → Withdraw permission for all your children**, retirar el permiso para todos sus hijos), desde el enlace de nuestro segundo correo de consentimiento o escribiendo a support@radlor.com — cancelamos su suscripción de inmediato y le reembolsamos la parte no utilizada, calculada como se indica más abajo. Nunca se le cobra por ejercer un derecho de privacidad.
+- **Retiro del permiso para un hijo, o eliminación del perfil de un hijo, mientras sus otros hijos siguen.** El asiento de ese hijo se retira de su plan ese mismo día y le reembolsamos la parte no utilizada de lo que pagó por ese asiento, calculada como se indica más abajo. Su plan continúa para sus otros hijos, y su próximo pago es por un asiento menos. Si un hijo de su cuenta que todavía no tiene asiento ocupa de inmediato el asiento liberado, el asiento sigue en uso y no cambia nada. Si era su último hijo, es lo mismo que retirar el permiso para todos sus hijos: cancelamos su suscripción y le reembolsamos la parte no utilizada.
+- **Cierre de su cuenta.** Si cierra su cuenta — en la aplicación (**Account → Close your account**, cerrar su cuenta) o escribiendo a support@radlor.com — cancelamos su suscripción de inmediato y le reembolsamos la parte no utilizada, calculada de la misma manera.
+- **Cómo se calcula la parte no utilizada** (en los tres casos anteriores, tanto en planes mensuales como anuales): cada pago de su periodo de facturación actual (un asiento añadido a mitad del periodo es un pago aparte, por el resto de ese periodo; para el asiento de un hijo, solo lo que pagó por ese asiento — primero el asiento añadido más recientemente), multiplicado por el número de días completos que quedan del periodo que cubrió, contados desde el día en que tramitamos su solicitud, y dividido por el número de días de ese periodo, redondeado a la baja al centavo. Si su solicitud llega dentro de los 14 días siguientes a un pago, le reembolsamos ese pago completo. Un plan que ya terminó, o un pago que ya se reembolsó, no tiene nada que reembolsar. Le enviamos el importe por correo electrónico; los reembolsos llegan a su método de pago original en un plazo de 10 días hábiles.
 - **Los cobros duplicados** se reembolsan en su totalidad.
 - **Los cobros posteriores a una cancelación válida** se reembolsan en su totalidad.
 - **Los cobros no autorizados realizados por un niño** — si un niño completó una compra sin su permiso, comuníquese con nosotros en support@radlor.com y la reembolsaremos en su totalidad. No le pediremos que justifique la solicitud.

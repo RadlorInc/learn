@@ -20,7 +20,9 @@ select count(*) from supabase_migrations.schema_migrations where version = '2026
 select count(*) as badly_named from storage.objects
 where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> 'anon-probe-canary.mp3';
 
--- P5. After the upload run: every manifest object is there.     expected: 18026 | 274803288
+-- P5. After the upload run: every manifest object is there.     expected: 18027 | 274844265
+--     (2026-10-08, #407: the bucket read 18026 | 274803288 after #386's 142-clip upload (6 Oct); this run adds 1 object,
+--     40977 bytes, g6m1-t5's new big idea. The old line's clip stays in the bucket: the upload never deletes.)
 --     (2026-10-06, #386: the manifest still names 16985 objects. The run adds 142 objects, 1737876 bytes: 4 for the
 --     watermelon / cat / pumpkins lines, 5 for g6m2-t7's pencils and erasers, 133 for StoryTime's rabbits. The dog,
 --     puppy and hot-dog clips they replace stay in the bucket, because the upload never deletes. Before this upload

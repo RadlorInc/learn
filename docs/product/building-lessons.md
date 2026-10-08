@@ -67,6 +67,9 @@ The kinds are the `Picture` type in `script.ts`, drawn by `Diagrams.tsx`. See ev
 - One picture kind for the teaching (plus `eq`, `cards`, `table` helpers). Do not mix a number line and a bar model.
 - A `measure` scale whose question weighs a thing shows it on the pan: `on: 'bag' | 'jar' | 'box' | 'book' |
   'watermelon' | 'suitcase' | 'cat'`, drawn at one size whatever it weighs, and the text says it is on the scale.
+- A long `eq` (over 22 characters) breaks at a label (`Clue 1:`) or a comma, else before its first `=` whose right
+  side fits one row; ratio names, parentheses and an operator with its number stay together
+  (`src/__tests__/eqRows.test.ts`). Write the equation as one line and let it break.
 
 ### Words
 

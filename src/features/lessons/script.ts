@@ -29,7 +29,7 @@ export type Picture =
   | { kind: 'eq'; text: string; lines?: string[] }
   // ── Grades 3–8 diagrams (drawn in ./Diagrams.tsx; every field is documented in docs/product/building-lessons.md) ──
   | { kind: 'bars'; bars: { parts: number; shaded: number; shade2?: number; split?: number; label?: string }[]; motion?: boolean }
-  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean }[]; brace?: string }[]; motion?: boolean }
+  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean; colour?: string }[]; brace?: string }[]; motion?: boolean }
   | { kind: 'numline'; min: number; max: number; ticks: number; labels?: (string | null)[] | 'ends' | 'none';
       points?: { at: number; label?: string; open?: boolean }[]; jumps?: { from: number; to: number; label?: string }[];
       ray?: { from: number; dir: 'left' | 'right'; open: boolean }; motion?: boolean }

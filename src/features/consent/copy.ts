@@ -205,6 +205,8 @@ export const WITHDRAW_ALL = {
   body0: { en: "If you withdraw permission, we will stop collecting information from every child on your account, delete everything we hold about each of them — including their own sign-ins — and close their profiles. This cannot be undone.", es: 'Si retira el permiso, dejaremos de recopilar información de todos los niños de su cuenta, eliminaremos todo lo que tenemos sobre cada uno de ellos — incluidos sus propios inicios de sesión — y cerraremos sus perfiles. Esto no se puede deshacer.' },
   body1: { en: "**Your account stays open.** If you add a child again later, we will ask for your permission again first.", es: '**Su cuenta sigue abierta.** Si más adelante vuelve a añadir un niño, primero le pediremos su permiso de nuevo.' },
   confirm: { en: "Withdraw permission and delete my children's data", es: 'Retirar el permiso y eliminar los datos de mis hijos' },
+  // Founder, 6 Oct 2026 (migration 20261008000000): withdraw-all cancels a paid plan now and refunds the unused part.
+  paid: { en: "**If you have a paid plan, this also cancels it today** and refunds the part you have not used to your card.", es: '**Si tiene un plan de pago, esto también lo cancela hoy** y le reembolsa a su tarjeta la parte que no ha usado.' },
 }
 export const WAITING = {
   heading: { en: "Waiting for your permission", es: 'Esperando su permiso' },
@@ -235,6 +237,11 @@ export const PROPOSED = {
   checkPending: { en: 'We have already sent you a message asking for your permission. The link in it works until {date}.',
                   es: 'Ya le hemos enviado un mensaje pidiéndole su permiso. El enlace funciona hasta el {date}.' },
   sendAgain: { en: 'Send it again', es: 'Enviarlo de nuevo' },
+  // Bounce suppression (20261007000000): the address hard-bounced or was marked as spam, so nothing was or will be sent.
+  undeliverable: {
+    en: 'We could not deliver email to {email}: earlier emails to it bounced or were marked as spam, so we have stopped sending to it. Check the address for a typo. To use a different address, or if this one is right, write to {support}.',
+    es: 'No pudimos entregar correos a {email}: los correos anteriores rebotaron o se marcaron como spam, así que hemos dejado de enviarle. Revise si la dirección tiene un error. Para usar otra dirección, o si esta es correcta, escríbanos a {support}.',
+  },
   stale: { en: 'This page is out of date. Please reload it and read the notice again.', es: 'Esta página está desactualizada. Vuelva a cargarla y lea el aviso de nuevo.' },
   declinedHeading: { en: 'Request cancelled', es: 'Solicitud cancelada' },
   declinedBody: { en: 'Nothing about your child has been collected.', es: 'No se ha recopilado nada sobre su hijo.' },

@@ -7,6 +7,7 @@
 - **The support mailbox** (the address is `SUPPORT_EMAIL` in `src/app/site.ts`). The **founder** reads it. It is reached from:
   - the dashboard's *Need help?* panel (`src/shared/ui/SupportPanel.tsx`), which opens the parent's own mail program with a **diagnostic block** filled in;
   - `/help`, whose *Report a problem* opens the same email with the diagnostic block;
+  - every crash screen (`src/shared/ui/CrashScreen.tsx`: the route error screen, the root-layout one and the root boundary), whose *Report a problem* opens it too, with the server error's digest as the block's first line (`error code …`) when there is one;
   - `/auth` and the consent-link pages (`/consent/...`), which show the address for a parent who is signed out;
   - the legal pages;
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
@@ -75,12 +76,34 @@ To switch it on (**founder**, once):
 3. In Resend, send the endpoint a test event: it should answer 200. Until the secret is set the route answers 503
    and records nothing.
 
-A bounce does not yet stop the next email to that address; complaints are not added to `email_suppressions`.
+**What a bounce stops (20261007000000).** A `Permanent` bounce or a complaint also puts the recipient on
+`email_undeliverable` — the sha256 of the lowercase address, never the address — and `sendEmail` then sends that address
+nothing, of any kind, and records `[email] not sent: the address bounced earlier` (or `complained`). The parent is told:
+sign-up says the address cannot be emailed; the Waiting card says the email could not be delivered and to write to
+support. A soft bounce (`Transient`, `Undetermined`: a full mailbox) lists nobody. A new or corrected address is never
+affected. Supabase Auth's own emails (password reset) do not go through `sendEmail`, but Resend keeps its own
+suppression list and drops them too. A listing is deleted 12 months after its last event (`prune-email-undeliverable`).
+
+**A parent says they get no email** (typo at sign-up, mailbox fixed, or a complaint made by mistake):
+1. **Founder, SQL editor.** Query 1 of [../legal/sql/email-undeliverable.sql](../legal/sql/email-undeliverable.sql) with
+   their address: no row = we are not blocking it (look in Resend → Emails instead).
+2. A typo: nothing to lift. They sign up again with the right address (the wrong one's unconfirmed account is pruned
+   after 3 days). A signed-in parent with a wrong address on the account has no in-app way to change it today — handle
+   it as a data request.
+3. The address is right and now works (mailbox recreated, complaint withdrawn **in writing from that address**):
+   query 2 lifts our listing, then remove the address in Resend → Suppressions too, or Resend keeps dropping it. Then
+   they press "Send the email again" (or sign up again).
 
 ## Parent PIN locked or forgotten
 
 The PIN guards the dashboard screens from a child on the device (architecture.md §3); it is not a password. Five wrong
-tries lock it for 15 minutes, doubling per lock up to 24 hours. In the app, *Forgot PIN* removes it 24 hours later.
+tries lock it for 15 minutes, doubling per lock up to 24 hours. In the app, *Forgot PIN* removes it 24 hours later,
+and the account's address is emailed when the reset is asked for (once per reset; `/api/parent/pin-reset`) — a parent
+who did not ask can enter the PIN to cancel it. If they write in about that email, treat it as someone else on the
+device: they cancel by entering the PIN; if they cannot, unlock or remove below only from the account's own address.
+A locked PIN never blocks a parent's rights: the PIN screen links to `/rights` (help, *Withdraw permission for all
+your children*, *Download a copy* per child), which needs only their signed-in session. Closing the account still
+needs the PIN.
 Help sooner only when the request comes **from the account's own address** (as data-requests.md verifies), never on a
 phone call or another address — a child who can email support from the parent's mail is the case the 24-hour wait
 exists for, so if anything about the request is odd, point them to *Forgot PIN* instead.

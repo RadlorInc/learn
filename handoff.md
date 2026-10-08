@@ -37,6 +37,8 @@ so the repo's migration chain still builds a body one comment different from pro
    agent: `npm run smoke:live` after the deploy.
 2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
+3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
+   the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
 
 ## Open — the founder decides
 
@@ -54,7 +56,8 @@ so the repo's migration chain still builds a body one comment different from pro
   founder); a free teacher can sign up as a parent to get lessons free.
 - A way to mute the lesson voice (classrooms).
 - Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
-- A maintenance switch: none exists, so stopping the app means removing the domain.
+- A maintenance switch: none exists, so stopping the app means removing the domain. A notice switch does
+  (`OUTAGE_NOTICE`, [runbooks/outages.md](docs/runbooks/outages.md)); it tells people and stops nothing.
 - Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
@@ -156,6 +159,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
   (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
   mentions tools we do not use.
+- `email_suppressions` (20260923190000) revokes from public/anon/authenticated but not service_role, so on Supabase the
+  server also holds DELETE/TRUNCATE by default privilege (measured on a local supabase/postgres container, 6 Oct; the
+  baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
+- Bounce suppression: a B3 refused as undeliverable shows the respond page's generic error (nothing is granted).
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).

@@ -130,6 +130,8 @@ export default function AuthPage() {
           setError(t('Please confirm you are 18 or older'))
         } else if (r === 'weak_password' || r === 'invalid') {
           setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD }))
+        } else if (r === 'undeliverable') {
+          setError(t('We cannot send email to this address: earlier emails to it bounced or were marked as spam. Check it for a typo, or use another address. If it is right, write to {support}.', { support: SUPPORT_EMAIL }))
         } else if (r !== 'ok') {
           setError(t('Something went wrong. Please try again.'))
         } else {
