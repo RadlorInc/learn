@@ -22,6 +22,8 @@ import { ChapterReviewContext } from '@/shared/chapterReview'
 import { setSceneVoice } from '@/infra/voiceClipPlayer'
 import { JOSH } from '@/infra/storage/voicePref'
 import { TesterGuide } from './TesterGuide'
+import { TourRunner } from '@/features/dashboard/Helpers'
+import { TESTER_TOURS, tourFor, firstTime, type TourName } from './testerTours'
 
 /** `levels`: the practice level of each practice review (`'g4m4-t1/p3': 2`), read back from Radlor Ops. */
 type Open = { module_id: string; reviewed: string[]; levels?: Record<string, number> }
@@ -50,6 +52,8 @@ export default function TesterPage() {
   // Fixed when a topic opens: this sitting's practice keys start after the ones already saved.
   const [practiceStart, setPracticeStart] = useState(0)
   const [ask, setAsk] = useState<Ask | null>(null)
+  // The walkthrough on show (testerTours.ts): spotlights on the real controls, above the review bar.
+  const [tour, setTour] = useState<TourName | null>(null)
 
   useEffect(() => {
     if (!token) return
@@ -73,6 +77,8 @@ export default function TesterPage() {
     setSceneVoice(JOSH, CHAPTER_VOICE_INDEX[playing])
     return () => setSceneVoice(null)
   }, [playing])
+  const runner = <div className="tester-tour"><TourRunner tour={tour ? TESTER_TOURS[tour] : null} onEnd={() => setTour(null)} /></div>
+  const onTour = (n: TourName) => setTour(n)
 
   if (!mounted) return null
   if (!token || open === 'bad') return <Note>This tester link is not active. Ask Radlic for a new one.</Note>
@@ -119,7 +125,7 @@ export default function TesterPage() {
           done: k => reviewed.has(`${lesson.id}/${k}`),
           practice: { start: practiceStart, counts: levelCounts(open, lesson.id, ladderOf(lesson.id)?.length ?? 0), need: PER_LEVEL },
           bar: (k, played, answer) => <ReviewBar key={`${lesson.id}/${k}`} token={token} lessonId={lesson.id} screen={k}
-            played={played} answer={answer} saved={reviewed.has(`${lesson.id}/${k}`)}
+            played={played} answer={answer} saved={reviewed.has(`${lesson.id}/${k}`)} onTour={onTour}
             // Bring Next into view above the bar: on a short screen it sits under it until the page is scrolled down.
             onSaved={() => {
               mark(`${lesson.id}/${k}`, Number(/^L(\d+) ·/.exec(answer)?.[1]) || undefined)
@@ -127,6 +133,7 @@ export default function TesterPage() {
               setTimeout(() => document.querySelector('.lp-page, .pr-page')?.scrollTo({ top: 1e6, behavior: 'smooth' }), 50)
             }} />,
         }} />
+      {runner}
     </>
   }
 
@@ -137,13 +144,13 @@ export default function TesterPage() {
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: 16, color: INK }}>
       <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <h1 style={{ margin: 0, fontSize: 26 }}>{grade} · {chapter ? 'Chapter' : `Module ${meta?.n}`}: {meta?.title}</h1>
-        <TesterGuide chapter={!!chapter} />
-        {topics.map(l => {
+        {chapter ? <TesterGuide /> : <HowTo onShow={() => setTour('list')} />}
+        {topics.map((l, i) => {
           const n = open.reviewed.filter(x => x.startsWith(`${l.id}/`)).length, finished = isDone(l.id)
           const lv = chapter ? [] : levelCounts(open, l.id, ladderOf(l.id)?.length ?? 0)
           const practice = lv.length ? ` · practice ${lv.reduce((a, c) => a + Math.min(c, PER_LEVEL), 0)}/${lv.length * PER_LEVEL}` : ''
           return (
-            <button key={l.id} type="button" onClick={() => openTopic(l.id)}
+            <button key={l.id} type="button" data-tour={i === 0 ? 'tester-topic' : undefined} onClick={() => openTopic(l.id)}
               style={{ ...pill, justifyContent: 'space-between', display: 'flex', fontSize: 18, padding: '14px 16px', whiteSpace: 'normal', textAlign: 'left',
                 background: finished ? TEAL : '#fff', color: finished ? ON_TEAL : INK }}>
               <span>{l.title}</span><span style={{ fontSize: 14 }}>{finished ? '✓ done' : n ? `${n} screens reviewed${practice}` : 'not started'}</span>
@@ -151,6 +158,25 @@ export default function TesterPage() {
           )
         })}
       </div>
+      {runner}
+    </div>
+  )
+}
+
+/** A Grade 3–8 module's "how to test": the few rules, and the walkthrough on the real screens (testerTours.ts). */
+function HowTo({ onShow }: { onShow: () => void }) {
+  // The topic list's walkthrough runs by itself the first time a module's list is on screen.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on mount
+  useEffect(() => { if (firstTime('list')) onShow() }, [])
+  return (
+    <div style={{ background: '#fff', border: `4px solid ${INK}`, borderRadius: 18, padding: 14, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 16, lineHeight: 1.5 }}>
+      <b style={{ fontSize: 20 }}>How to test</b>
+      <p style={{ margin: 0 }}>You check that every screen is <b>correct</b>: the maths, the words, the voice and the pictures. A specific note
+        is worth more than many 👍.</p>
+      <p data-tour="tester-help" style={{ margin: 0 }}>🔊 <b>Sound on</b>: every screen is read aloud.</p>
+      <p style={{ margin: 0 }}>Open a topic and a short walkthrough shows each step on the real screen. See it again any time with
+        <b> How this works</b> in the yellow bar.</p>
+      <button type="button" onClick={onShow} style={{ ...pill, alignSelf: 'flex-start', background: TEAL, color: ON_TEAL }}>▶ Show me how</button>
     </div>
   )
 }
@@ -164,9 +190,14 @@ body .lp-row:not(.lp-stack) .lp-pic { min-height: 0 !important }
 
 const TAGS = ['Voice / audio', 'Text / spelling', 'Picture / board', 'Answer is wrong', 'Too fast / slow', 'Confusing', 'Broken / bug']
 
-function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved }: {
+function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved, onTour }: {
   token: string; lessonId: string; screen: string; played: boolean; answer: string; saved: boolean; onSaved: () => void
+  /** A lesson's bar starts the walkthrough for its kind of screen, the first time; a chapter's has none. */
+  onTour?: (n: TourName) => void
 }) {
+  const kind = onTour ? tourFor(screen) : null
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when this screen's bar first appears
+  useEffect(() => { if (kind && firstTime(kind)) onTour?.(kind) }, [])
   const [openedAt] = useState(() => Date.now())
   // The bar's own height (it grows when the issue form opens) → --tester-bar, which the lesson's layout gives way to.
   const boxRef = useRef<HTMLDivElement>(null)
@@ -232,9 +263,10 @@ function ReviewBar({ token, lessonId, screen, played, answer, saved, onSaved }: 
   }
 
   return (
-    <div ref={boxRef} role="region" aria-label="Review this screen" style={bar}>
+    <div ref={boxRef} role="region" aria-label="Review this screen" data-tour="tester-bar" style={bar}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
         <span style={{ fontSize: 13, opacity: 0.8 }}>Tester review · {lessonId} · screen {screen}</span>
+        {kind && <button type="button" onClick={() => onTour?.(kind)} style={{ background: 'none', border: 0, padding: '4px 0', minHeight: 32, fontSize: 14, fontWeight: 800, color: INK, textDecoration: 'underline', cursor: 'pointer' }}>How this works</button>}
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>{body}</div>
       {err && <p role="alert" style={{ margin: 0, color: BAD, fontWeight: 700 }}>{err}</p>}
