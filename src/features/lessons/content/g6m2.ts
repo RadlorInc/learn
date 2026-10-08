@@ -304,7 +304,13 @@ export const G6M2: Lesson[] = [
     bigIdea: 'Change mixed numbers into fractions first, then flip the one you divide by and multiply.',
     screens: [
       { title: 'Burger patties', text: 'You have 2 1/4 pounds of ground beef. Each patty uses 3/4 pound. How many patties can you make?',
-        pictures: [mixed(2, 1, 4)] },
+        // Both amounts, named, in quarter-pound boxes on one scale (a tester, 8 Oct: three unnamed bars did not say which
+        // was the beef and showed no patty). Only filled boxes, so each brace spans exactly its amount. How many patties is
+        // not drawn: that is the question.
+        pictures: [{ kind: 'tape', rows: [
+          { label: 'Beef', cells: Array.from({ length: 9 }, () => ({ w: 1, shade: true, text: '1/4' })), brace: '2 1/4 pounds' },
+          { label: '1 patty', cells: Array.from({ length: 3 }, () => ({ w: 1, shade: true, text: '1/4' })), brace: '3/4 pound' },
+        ] }] },
       { title: 'The rule needs one fraction', text: "Our rule is flip and multiply. But 2 1/4 is a whole number and a fraction stuck together. What would we flip? We can't use the rule yet.",
         beats: [
           { say: 'Our rule is flip and multiply.' },
