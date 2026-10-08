@@ -32,7 +32,8 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Line up the points, fill each empty place with a 0, then add or take away like whole numbers.',
     screens: [
       { title: 'A long bike ride', text: 'A bike trail is 12.5 kilometers long. You have ridden 3.875 kilometers. How far is left?',
-        pictures: [{ kind: 'eq', text: '12.5 − 3.875' }] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'tape', rows: [{ label: 'Trail', cells: [{ w: 3.875, shade: true, text: '3.875 km' }, { w: 8.625, text: '?' }], brace: '12.5 km' }] }] },
       { title: "The ends don't match", text: 'Can you just line up the last digits? No. The 5 tenths would sit on top of the 5 thousandths. Those are different places.',
         beats: [
           { say: 'Can you just line up the last digits? No.', pic: 0 },
@@ -114,7 +115,9 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Multiply as if there were no points, then give the answer as many places after the point as both numbers have together.',
     screens: [
       { title: 'A garden bed', text: 'A garden bed is 2.4 meters long and 1.3 meters wide. What is its area?',
-        pictures: [{ kind: 'columns', rows: ['2.4', '1.3'], op: '×' }] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'poly', shapes: [{ pts: [[0, 0], [2.4, 0], [2.4, 1.3], [0, 1.3]], sides: ['2.4 m', '1.3 m', null, null], right: [0], tone: 2 }],
+          labels: [{ at: [1.2, 0.65], text: 'area = ?' }] }] },
       { title: 'Where does the point go?', text: "When you add, you line up the points. But when you multiply, lining them up doesn't help. So where does the point go in the answer?",
         beats: [
           { say: 'When you add, you line up the points.' },
@@ -197,7 +200,8 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Put the point in the answer straight above the point inside, then divide like whole numbers.',
     screens: [
       { title: 'Cut the rope', text: 'A rope is 8.52 meters long. You cut it into 4 equal pieces. How long is each piece?',
-        pictures: [rope()] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'tape', rows: [{ label: 'Rope', cells: Array.from({ length: 4 }, () => ({ w: 1, shade: true, text: '?' })), brace: '8.52 m' }] }] },
       { title: 'A point inside', text: 'You know how to divide whole numbers this way. But 8.52 has a point inside it. So where does the point go in the answer?',
         beats: [
           { say: 'You know how to divide whole numbers this way.', pic: 0 },
@@ -281,7 +285,12 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Multiply both numbers by 10 or 100 until the number you divide by is whole, and the answer stays the same.',
     screens: [
       { title: 'Ribbon pieces', text: 'A ribbon is 9.6 meters long. You cut it into pieces that are 0.4 meters long. How many pieces do you get?',
-        pictures: [ld('0.4', '9.6')] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        // How many pieces is not drawn: that is the question.
+        pictures: [{ kind: 'tape', rows: [
+          { label: 'Ribbon', cells: [{ w: 9.6, shade: true }], brace: '9.6 m' },
+          { label: '1 piece', cells: [{ w: 0.4, shade: true }], brace: '0.4 m' },
+        ] }] },
       { title: 'The 0.4 is not whole', text: "You can divide by a whole number. But 0.4 is not whole. How many 0.4s fit in 9.6? That's hard to see.",
         beats: [
           { say: 'You can divide by a whole number.' },
@@ -364,7 +373,10 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Go one digit at a time: guess with a round number, then multiply, take away and bring down.',
     screens: [
       { title: 'Packing eggs', text: 'A farm has 5,184 eggs. Each box holds 24 eggs. How many boxes can the farm fill?',
-        pictures: [eggs()] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'tape', rows: [{ label: 'Boxes', cells: [
+          { w: 1, shade: true, text: '24' }, { w: 1, shade: true, text: '24' }, { w: 1, shade: true, text: '24' }, { w: 1.4, text: '…' }, { w: 1, shade: true, text: '24' },
+        ], brace: '5,184 eggs' }] }] },
       { title: 'Too big to do at once', text: "Nobody knows 5,184 ÷ 24 by heart. And 24 isn't in the times tables. So how do we start? One small piece at a time.",
         beats: [
           { say: 'Nobody knows 5,184 ÷ 24 by heart.', pic: 0 },
