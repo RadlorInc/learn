@@ -6,7 +6,7 @@
  *   · A reminder has one button that finishes it; "Remind me in 3 days" and "Not needed" sit behind ⋯.
  *   · At most one pop-up per visit (a celebration, else the weekly recap, else the first-visit tour) — decided by the page.
  */
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Reminder } from './reminders'
 import { useT } from './i18n'
@@ -167,6 +167,16 @@ export function TourRunner({ tour, onEnd }: { tour: Tour | null; onEnd: (finishe
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on WHICH step, not the object: a derived tour is rebuilt every render
   }, [stepKey])
   useEffect(() => { coach.current?.querySelector<HTMLButtonElement>('[data-next]')?.focus() }, [box])
+  // The card's REAL height decides where it goes (the render guesses 220 px): below the spotlight if it fits, else above,
+  // and never past the screen's top or bottom. A long step on a phone put its Next button below the screen (8 Oct).
+  useLayoutEffect(() => {
+    const el = coach.current
+    if (!el || !box) return
+    const pad = getComputedStyle(document.body), inset = (k: string) => parseFloat(pad.getPropertyValue(`padding-${k}`)) || 0
+    const h = el.offsetHeight, lo = 12 + inset('top'), hi = window.innerHeight - inset('bottom') - 12 - h
+    const below = box.t + box.h + 14
+    el.style.top = `${Math.max(lo, Math.min(below <= hi ? below : box.t - 14 - h, hi))}px`
+  })
   useEffect(() => {
     if (!tour) return
     const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onEnd(false) }
