@@ -24,6 +24,15 @@ They open the link, see the module's topics (or the chapter) and a short "how to
 same voice, screens and questions as a child gets; it is the live code, not a copy. A yellow bar asks "Is this
 screen right?":
 
+**Walkthroughs (a Grade 3–8 module, since 8 Oct).** The first time each applies on that device, a walkthrough puts a
+spotlight on the real control and a card beside it saying what to do: the topic list (sound on, open a topic), a
+teaching screen (the bar, the locked Next), Screen 8 (answer it yourself) and practice (the Level row, the per-level
+count, Finish practice). **Show me how** on the topic list and **How this works** in the yellow bar run one again.
+They are defined in `src/app/test/testerTours.ts` and use the dashboard's `TourRunner`; `testerTours.test.ts` checks
+every target is rendered. They replaced pictures of the controls, which a tester on a phone tapped as if they were
+the controls. A KG–2 chapter still shows the drawn guide (`TesterGuide.tsx`). "Seen" is kept in the browser's
+storage, so a new device or a cleared browser shows them again.
+
 - before a screen has played (teaching) or been answered (Screen 8, practice) the bar says so;
 - **👍 Looks right** saves and lets it go on;
 - **⚠️ Something is wrong** asks for tags (voice, text, picture, answer, speed, confusing, bug) and a note of at least

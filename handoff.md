@@ -6,9 +6,9 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (29 September 2026)
+## Where things stand (8 October 2026)
 
-- **Production** is on `132c38297` (#323); `smoke:live` passed on it (29 Sep). The repo `learn` is public again (see
+- **Production** is on `e34fa9684` (#386); `smoke:live` passed on it (8 Oct). The repo `learn` is public again (see
   the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
   billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
@@ -16,9 +16,9 @@ fixed yet are tracked outside this public repo; ask the founder.
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy
   BlockCraft game time on `/play` (#352, 1 Oct); six legal pages as beta versions; nightly
   backups green.
-- **The game (BlockCraft) is live** (#352, merged 1 Oct; its three migrations applied and proved on production): the
-  game opens full page from `/play` in creative (a pause-menu button switches to survival, which has no damage), saved to the child's account; stopping early charges the seconds
-  played. Not yet played signed in by a real child on production. Branch `wip/game-in-play` is superseded, except its three test files `adaptiveEngine`, `adaptiveWiring`,
+- **The game (BlockCraft) is live** (#352, 1 Oct; migrations proved on production): full page from `/play`, creative
+  (pause menu → survival, no damage), saved to the child's account; stopping early charges the seconds played. Not yet
+  played signed in by a real child. Branch `wip/game-in-play` is superseded, except its three test files `adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules` (never ported). The founder's main checkout is back on `main`; its other uncommitted
   leftovers are in a local `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
   Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
@@ -27,17 +27,25 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — Draft PRs waiting for the founder
 
-1. #386 — scale pictures, halal examples, 142 clips (uploaded, proof P5 passed): merge, then `npm run smoke:live`.
-2. #325 — admin 2-step in the database (migration), after two authenticators enrol at `/admin/mfa`.
+1. #325 — admin 2-step in the database (migration), after two authenticators enrol at `/admin/mfa`.
+2. Superseded handoff Drafts, to close: #330, #343, #350, #393.
 
-## Open — paid testers and the triage routine (7 Oct)
+## Open — paid testers and the triage routine (8 Oct)
 
-- Paid testers use Radlor Ops links; who and rates: the founder's private tracker.
+- Paid testers use Radlor Ops links; who and rates: the founder's private tracker. Its **Tester feedback** tab has one
+  row per tester note (Ops, email or LinkedIn) with a status; "Founder decides" rows wait on the founder. Email and
+  LinkedIn notes reach it only when pasted to the agent. `/test` walks a tester through the real controls (#408).
 - Routine **Radlic tester triage** (claude.ai → Routines, daily 03:30 UTC) reads Ops' `GET /api/radlic-tester/export`
-  (radlor-ops #12, `TRIAGE_SECRET`; environment `radlic-triage` allows `ops.radlor.com`), fixes clear defects on ONE
-  Draft PR, reports; decisions are in its prompt. ⚠️ An API edit re-attached every connector (prod
-  Supabase too): keep `mcp_connections` empty. Push fix branches before 09:00 IST or it redoes them.
-- Unsettled: audio lag on some laptops; one tester hears no voice; g6m1-t5 Screen 3.
+  (`TRIAGE_SECRET`; environment `radlic-triage` allows `ops.radlor.com`), fixes clear defects on ONE Draft PR,
+  reports; decisions are in its prompt. Its STEP 5 updates the feedback tab, but a routine is not offered the Claude
+  Docs connector (8 Oct): decide a local scheduled task that copies its report into the tab, or the agent on request.
+  ⚠️ An API edit re-attaches every connector (prod Supabase too): check `mcp_connections` is empty after one. Push
+  fix branches before 09:00 IST or it redoes them.
+- Ops' testers tab read only the first 1,000 reviews until radlor-ops #13 (8 Oct; nothing was lost). Its other admin
+  lists (to-dos, issues…) are still read unpaged and would cut the same way past 1,000 rows.
+- Unsettled: audio lag on one tester's laptop; a tester heard "Ana eats 3 slices" twice on g3m5-t7 Screen 1 (on
+  screen once; clip `0d68a76d6d2aad99` unheard); where Speed sits (g6m1-t8, Grade 6 in Common Core).
+- How testers abroad are paid: not decided; the first grade completes within days.
 
 ## Open — the founder decides
 
@@ -71,14 +79,12 @@ fixed yet are tracked outside this public repo; ask the founder.
 - Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
-- Vercel, before `learn` goes private: whether the block checks the commit's author (the founder, who merges) or
-  the pusher (GitHub Actions) was not measured; the blocked deployment's message names the GitHub user. The author →
-  link the founder's GitHub login to their Vercel account; GitHub Actions → a Vercel deploy hook called by `promote`
-  (the agent builds it).
-- **If `learn` goes private, Actions minutes cost money**: measured 28 Sep, about 5,400 minutes in 30 days (CI on PR
-  pushes ~2,300, Deploy ~2,700) against 2,000 included on the free org plan — roughly US$20 a month over. Without a
-  payment method or budget, Actions stops when the 2,000 are used, and deploys stop with it. Set an Actions budget
-  before switching, or ask the agent to cut the minutes (Deploy re-runs the whole CI on every merge).
+- Vercel, before `learn` goes private: does the block check the commit's author (the founder) or the pusher (GitHub
+  Actions)? Unmeasured; the blocked deployment names the user. Author → link the founder's GitHub to Vercel; pusher →
+  a deploy hook called by `promote` (the agent builds it).
+- **If `learn` goes private, Actions minutes cost money**: ~5,400 a month (28 Sep) against 2,000 free, ~US$20 over;
+  without a budget Actions, and so deploys, stop at 2,000. Set a budget first, or have the agent cut minutes (Deploy
+  re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
@@ -92,11 +98,11 @@ fixed yet are tracked outside this public repo; ask the founder.
   who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
-- Hard spend caps, not alerts (the "surprise bill" reel, 28 Sep): Vercel Spend Management with "pause production
-  deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
-  Vercel connector does not show it.
+- Hard spend caps, not alerts: Vercel Spend Management "pause production deployment"; Supabase Spend Cap on; the
+  Resend plan stops at its quota. Unmeasured (the Vercel connector does not show it).
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
-  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
+  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches, and the
+  parked orphan clips `audio-src-parked-2026-10-06`, `-10-08`, `-10-08b` (lines no longer spoken; all in the bucket).
 
 ## Open — live checks on production (the founder)
 
@@ -117,16 +123,12 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 ## Open — agent work
 
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
-- ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
-  zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
-  button) — not a gate.
+- ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a person on a screen reader, an iPhone with zoom.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
 - `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); it
   has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
-  `weekly-layout` was deleted with it (its spec and the teen shell were gone; the nightly's 640×320 frame covers short
-  phones). `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: on a correct production build (5 Oct) 11 of 25
-  passed — 10 end-card buttons fail Playwright's "stable" wait because the nudge animates them (a harness fault: a
-  child taps them fine), 3 chapters "could not look" (the monkey cannot solve them), colors timed out.
+  `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: 11 of 25 passed on a correct build (5 Oct) — end-card
+  buttons fail Playwright's "stable" wait (the nudge animates them), 3 chapters "could not look", colors timed out.
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
   previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the

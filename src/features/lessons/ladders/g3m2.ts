@@ -5,7 +5,7 @@
  * labels, a scale's marks) is invisible to it — so readings sit one mark past a printed number, and a rounding line
  * keeps `labels: 'none'` (the lesson's own turn picture) so the two tens are never printed.
  */
-import type { Picture } from '../script'
+import type { Picture, ScaleItem } from '../script'
 import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
@@ -188,8 +188,18 @@ const T3: Level[] = [
 ]
 
 // ── t4 · scales, t5 · jugs ──────────────────────────────────────────────────────────────────────────────────
-const tool = (t: 'scale' | 'jug', unit: string, value: number, max: number, step: number, labelEvery: number): Picture =>
-  ({ kind: 'measure', tool: t, max, step, labelEvery, value, unit })
+const tool = (t: 'scale' | 'jug', unit: string, value: number, max: number, step: number, labelEvery: number, on?: ScaleItem): Picture =>
+  ({ kind: 'measure', tool: t, max, step, labelEvery, value, unit, ...(on ? { on } : {}) })
+/** What the scale's pan shows for each thing a question weighs. Every item in G_ITEMS / KG_ITEMS needs its row. */
+const SHAPE: Record<string, ScaleItem> = {
+  'bag of apples': 'bag', 'bag of flour': 'bag', 'bag of rice': 'bag', 'bag of potatoes': 'bag', 'jar of honey': 'jar',
+  'box of pasta': 'box', 'box of books': 'box', book: 'book', cat: 'cat', suitcase: 'suitcase', watermelon: 'watermelon',
+}
+const shape = (item: string): ScaleItem => {
+  const it = SHAPE[item]
+  if (!it) throw new Error(`g3m2 scale: no pan drawing for "${item}" — add it to SHAPE`)
+  return it
+}
 /** A small reading (under 10) on a 1-per-mark tool, never on a printed number. */
 const small = (r: Rng) => until(() => { const [max, lab] = pick(r, [[10, 2], [20, 5]]); return { max, lab, v: int(r, 1, 9) } }, x => x.v % x.lab !== 0)
 /** A big reading on a 100-per-mark or 50-per-mark tool, one mark past a printed number. */
@@ -198,17 +208,17 @@ const big = (r: Rng) => pick(r, [
   () => ({ max: 500, step: 50, lab: 100, v: pick(r, [150, 250, 350, 450]) }),
 ])()
 const G_ITEMS = ['bag of apples', 'bag of flour', 'book', 'box of pasta', 'bag of rice', 'jar of honey']
-const KG_ITEMS = ['puppy', 'suitcase', 'bag of dog food', 'watermelon', 'box of books']
+const KG_ITEMS = ['cat', 'suitcase', 'bag of potatoes', 'watermelon', 'box of books']
 
 const T4: Level[] = [
   { style: 'kilogram scale, 1 per mark', make: r => {
     const { max, lab, v } = small(r), item = pick(r, KG_ITEMS), base = v - (v % lab)
-    return { text: `How heavy is the ${item}?`, picture: tool('scale', 'kilograms', v, max, 1, lab), answer: v,
+    return { text: `The ${item} is on the scale. How heavy is it?`, picture: tool('scale', 'kilograms', v, max, 1, lab, shape(item)), answer: v,
       steps: [`From 0 to ${lab} there are ${lab} jumps, so each mark is 1 kilogram.`, `The needle is ${pl(v - base, 'mark')} past ${base}.`, `So the ${item} weighs ${pl(v, 'kilogram')}.`] }
   } },
   { style: 'gram scale, each mark worth more than 1', make: r => {
     const { max, step, lab, v } = big(r), item = pick(r, G_ITEMS)
-    return { text: `How many grams does the ${item} weigh? Find what one mark is worth first.`, picture: tool('scale', 'grams', v, max, step, lab),
+    return { text: `The ${item} is on the scale. How many grams does it weigh? Find what one mark is worth first.`, picture: tool('scale', 'grams', v, max, step, lab, shape(item)),
       answer: v,
       steps: [`From 0 to ${lab} there are 2 jumps, so each mark is ${step} grams.`, `The needle is 1 mark past ${v - step}.`, `So the ${item} weighs ${v} grams.`] }
   } },
@@ -220,7 +230,7 @@ const T4: Level[] = [
       { claim: v - step, right: 'No. The needle is past that number, not on it.' },
     ]
     const { claim, right } = pick(r, kinds)
-    return { text: `${name} says the ${item} weighs ${claim} grams. Is that right?`, picture: tool('scale', 'grams', v, max, step, lab),
+    return { text: `The ${item} is on the scale. ${name} says it weighs ${claim} grams. Is that right?`, picture: tool('scale', 'grams', v, max, step, lab, shape(item)),
       answer: choose(r, right, kinds.map(k => k.right).filter(t => t !== right)),
       steps: [`Each mark is ${step} grams, and the needle is 1 mark past ${v - step}.`, `So the ${item} weighs ${v} grams.`, right] }
   } },
@@ -228,14 +238,14 @@ const T4: Level[] = [
     const item = pick(r, G_ITEMS)
     const v = until(() => pick(r, [100, 300, 500, 700, 900]), x => hides(tool('scale', 'grams', x, 1000, 100, 200), 1000 - x) && x !== 500)
     const n = (1000 - v) / 100
-    return { text: `1 kilogram is 1,000 grams. How many more grams does the ${item} need to weigh 1 kilogram?`,
-      picture: tool('scale', 'grams', v, 1000, 100, 200), answer: 1000 - v,
+    return { text: `The ${item} is on the scale. 1 kilogram is 1,000 grams. How many more grams does it need to weigh 1 kilogram?`,
+      picture: tool('scale', 'grams', v, 1000, 100, 200, shape(item)), answer: 1000 - v,
       steps: [`Each mark is 100 grams, so the ${item} weighs ${v} grams now.`, `Count up from ${v} to 1,000 by 100s: that is ${pl(n, 'jump')} of 100.`, `So it needs ${1000 - v} more grams.`] }
   } },
   { style: 'two-step story: read, then add', make: r => {
     const v = pick(r, [200, 300, 400, 500, 600]), s = pick(r, [150, 250, 350]), [a, b] = shuffle(r, G_ITEMS).slice(0, 2), name = pick(r, NAMES)
     return { text: `${name} puts a ${a} on the scale. The scale shows the ${a}. Then a ${b} that weighs ${s} grams goes on too. How many grams are on the scale now?`,
-      picture: tool('scale', 'grams', v, 1000, 100, 200), answer: v + s,
+      picture: tool('scale', 'grams', v, 1000, 100, 200, shape(a)), answer: v + s,
       steps: [`Each mark is 100 grams, so the ${a} weighs ${v} grams.`, `Add the ${b}: ${v} + ${s}.`, `So there are ${v + s} grams on the scale now.`] }
   } },
 ]

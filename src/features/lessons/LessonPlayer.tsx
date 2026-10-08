@@ -334,7 +334,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         onExit={ladder && !review ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
         {review && ladder && run && (
-          <div role="group" aria-label="Tester: question level" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+          <div role="group" aria-label="Tester: question level" data-tour="tester-levels" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
             <b style={{ fontSize: 16 }}>Level</b>
             {ladder.map((_, i) => (
               <button key={i} type="button" aria-pressed={i === reviewLevel} disabled={!answering}
@@ -358,11 +358,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           const enough = counts.every(c => c >= review.practice.need)
           return (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '8px 12px', borderRadius: 14, border: `3px dashed ${INK}`, background: '#fffbe8' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>
+              <span data-tour="tester-count" style={{ fontSize: 15, fontWeight: 700, color: INK }}>
                 Tester: {review.practice.need} questions per level —{' '}
                 {counts.map((c, i) => <span key={i} style={{ color: c >= review.practice.need ? '#1f7a43' : INK }}>L{i + 1} {Math.min(c, review.practice.need)}/{review.practice.need}{i < counts.length - 1 ? ' · ' : ''}</span>)}
               </span>
-              <button type="button" style={{ ...primary, minHeight: 44, padding: '8px 18px', fontSize: 17, marginLeft: 'auto', ...(enough && !(locked && !answering) ? {} : { opacity: 0.45, cursor: 'not-allowed' }) }}
+              <button type="button" data-tour="tester-finish" style={{ ...primary, minHeight: 44, padding: '8px 18px', fontSize: 17, marginLeft: 'auto', ...(enough && !(locked && !answering) ? {} : { opacity: 0.45, cursor: 'not-allowed' }) }}
                 disabled={!enough || (locked && !answering)} title={enough ? undefined : 'Review the questions above at every level first'}
                 onClick={() => { stopSpeech(); go({ ...s, mode: 'finish', misses: 0, feedback: null }) }}>
                 Finish practice ▶
@@ -378,7 +378,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center' }} onClick={() => setTaps(0)}>Clear picture</button>}
         </div>
         {answering && (
-          <form id="lp-answer" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <form id="lp-answer" data-tour={review ? 'tester-answer' : undefined} onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <b style={{ fontSize: 22 }}>Your answer</b>
             {box}
           </form>
@@ -434,7 +434,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center' }} onClick={() => setTaps(0)}>Clear picture</button>}
         </div>
         {!worked && (
-          <form id="lp-turn" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <form id="lp-turn" data-tour={review ? 'tester-answer' : undefined} onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <b style={{ fontSize: 22 }}>Your answer</b>
             {box}
           </form>
@@ -498,7 +498,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
             <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{b.say}</p>)}
         </div>
       : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
-    action = <button type="button" style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
+    action = <button type="button" data-tour={review ? 'tester-next' : undefined} style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
       setAutoOn(true)
       const n = next(s)
       go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)

@@ -381,7 +381,7 @@ const T7: Level[] = [
   { style: 'two-step story (same number of each, how many packs)', make: r => {
     // A shared factor, or the answer is just the other pack size, which the table prints.
     const { a, b } = lcmPair(r, 3, 12, 60, (a, b) => gcd(a, b) > 1), l = lcm(a, b)
-    const [X, Y, xs, ys] = pick(r, [['Hot dogs', 'Buns', 'hot dogs', 'buns'], ['Paper plates', 'Cups', 'paper plates', 'cups'], ['Juice boxes', 'Granola bars', 'juice boxes', 'granola bars']] as const)
+    const [X, Y, xs, ys] = pick(r, [['Pencils', 'Erasers', 'pencils', 'erasers'], ['Paper plates', 'Cups', 'paper plates', 'cups'], ['Juice boxes', 'Granola bars', 'juice boxes', 'granola bars']] as const)
     const [pa, pb] = r() < 0.5 ? [a, b] : [b, a]
     const askFirst = r() < 0.5, askN = askFirst ? pa : pb, askWord = askFirst ? xs : ys
     return { text: `${X} come in packs of ${pa}. ${Y} come in packs of ${pb}. You want the same number of ${xs} and ${ys}, and as few as you can. How many packs of ${askWord} do you buy?`,

@@ -446,9 +446,9 @@ export const G5M3: Lesson[] = [
       { why: 'A little harder', problem: { text: 'Work it out: what is 3/5 × 10? Check that it is smaller than 10.',
         picture: tape(1, '10'), answer: 6,
         steps: ['10 ÷ 5 = 2, so 1/5 of 10 is 2.', '3/5 is 3 of those parts: 3 × 2.', 'So 3/5 × 10 = 6, which is smaller than 10.'] } },
-      { why: 'Same math in a story', problem: { text: 'A puppy weighs 10 pounds. A kitten weighs 1/2 as much as the puppy. Does the kitten weigh more than 10 pounds, less than 10 pounds, or exactly 10 pounds?',
+      { why: 'Same math in a story', problem: { text: 'A pumpkin weighs 10 pounds. A melon weighs 1/2 as much as the pumpkin. Does the melon weigh more than 10 pounds, less than 10 pounds, or exactly 10 pounds?',
         picture: tape(1, '10 pounds'), answer: { choices: ['more than 10 pounds', 'less than 10 pounds', 'exactly 10 pounds'], correct: 1 },
-        steps: ['The kitten weighs 1/2 × 10 pounds.', '1/2 is less than 1, so it is only part of 10.', 'So the kitten weighs less than 10 pounds.'] } },
+        steps: ['The melon weighs 1/2 × 10 pounds.', '1/2 is less than 1, so it is only part of 10.', 'So the melon weighs less than 10 pounds.'] } },
     ],
   },
 
