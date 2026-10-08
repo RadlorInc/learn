@@ -24,7 +24,7 @@ export const T5: (ChalkMark[] | undefined)[] = [
     write([1, 'steps'], 'small steps', 345, 372, 24, 'b'),
     { beat: 1, at: 'table', c: 'w', w: 2, d: 'M40 240 H560 M128 175 V305 M245 175 V305 M345 175 V305 M445 175 V305' },
   ],
-  // The big idea: every column is the same mix; × and ÷ a column, or add two
+  // The big idea: every column is the same mix; × and ÷ a column, or add two (but not 1 to each number)
   [
     ...rows([0, 'column'], 'nuts', 'cereal', 70, 190, 270), n([0, 'column'], '3', 190, 190), n([0, 'column'], '5', 190, 270),
     box([0, 'column'], 155, 155, 70, 150),
@@ -35,6 +35,8 @@ export const T5: (ChalkMark[] | undefined)[] = [
     n([0, 'add'], '+', 260, 190, 'b'), n([0, 'add'], '+', 260, 270, 'b'),
     n([0, 'add'], '=', 405, 190, 'b'), n([0, 'add'], '=', 405, 270, 'b'),
     n([0, 'add'], '9', 480, 190, 'y'), n([0, 'add'], '15', 480, 270, 'y'),
+    // A tester (8 Oct): t2 taught "don't add 1 to each"; adding whole columns is different, so the board says both.
+    write([0, 'changes'], 'not + 1 to each', 460, 372, 24, 'r'),
   ],
   // Double it
   [
