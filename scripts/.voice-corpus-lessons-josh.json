@@ -24420,11 +24420,11 @@
     ]
   },
   {
-    "key": "1ge1wjt",
-    "check": "15wqs1zcfun",
-    "text": "Every column is the same mix, so you can multiply, divide or add whole columns to make a new one.",
+    "key": "1wtq86x",
+    "check": "2dqf6dgazni",
+    "text": "Every column is the same mix, so you can multiply, divide or add two whole columns to make a new one, but adding 1 to each number still changes the mix.",
     "style": "B",
-    "chars": 97,
+    "chars": 152,
     "kind": "beat",
     "sources": [
       "g6m1-t5 s3 b1 + g6m1-t5 bigIdea"
