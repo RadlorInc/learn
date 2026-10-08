@@ -33,7 +33,8 @@ export const G6M3: Lesson[] = [
     screens: [
       { title: 'A long bike ride', text: 'A bike trail is 12.5 kilometers long. You have ridden 3.875 kilometers. How far is left?',
         // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
-        pictures: [{ kind: 'tape', rows: [{ label: 'Trail', cells: [{ w: 3.875, shade: true, text: '3.875 km' }, { w: 8.625, text: '?' }], brace: '12.5 km' }] }] },
+        // The bike is 3.875 / 12.5 = 0.31 of the way along.
+        pictures: [{ kind: 'trail', total: '12.5 km', done: 0.31, doneLabel: '3.875 km', left: '?' }] },
       { title: "The ends don't match", text: 'Can you just line up the last digits? No. The 5 tenths would sit on top of the 5 thousandths. Those are different places.',
         beats: [
           { say: 'Can you just line up the last digits? No.', pic: 0 },
