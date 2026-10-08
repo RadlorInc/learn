@@ -276,6 +276,10 @@ deletion, and the daily cron drain it.
 - **KG–2 questions.** Some lines depend on what the child tapped, so `openQuestion()` (`infra/voiceClipPlayer.ts`)
   fetches every line a question can lead to when it loads; while it is open, other lines use the device voice and
   request nothing (`questionLock`, `kg2IdenticalRequests`). The one bounded exception is documented at `_onTap`.
+- **Output kept awake.** While a Josh scene is on, an inaudible 20 Hz tone in an `AudioContext` keeps the device's
+  sound output open; it is suspended when the scene ends, and never started on iPhone or iPad. Without it, a laptop
+  that closed its output after some seconds of silence lost the first words of the next line (tester report,
+  8 October 2026; `audioOutputAwake.test.ts`). The tab shows its audio icon for the whole lesson.
 - **Fallback.** Any miss goes to `speechSynthesis`, limited to on-device voices (`speechLocalVoiceOnly.test.ts`).
   A clip that should have played and did not (index not loaded, clip not loaded, play refused) leaves one
   `[audio]` note per cause per page load in the device's recent-errors ring (`voiceFallbackBreadcrumb.test.ts`).
