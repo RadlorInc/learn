@@ -59,6 +59,9 @@ export type Picture =
   | { kind: 'chips'; pos: number; neg: number; pairs?: number; motion?: boolean }
   | { kind: 'balance'; left: string; right: string }
   | { kind: 'spinner'; parts: string[]; tones?: (1 | 2 | 3 | 4)[] }
+  /** A winding trail from a start dot to an arrow, a bike `done` (0–1) of the way along; brackets under it: the whole
+   *  trail (`total`) and the part ridden (`doneLabel`); `left` is written over the part still to ride. */
+  | { kind: 'trail'; total: string; done: number; doneLabel: string; left?: string; motion?: boolean }
 
 export type Op =
   | { t: 'mul'; a: number; b: number }                       // a groups of b
