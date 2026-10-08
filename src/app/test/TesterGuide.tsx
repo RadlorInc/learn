@@ -31,7 +31,7 @@ const Svg = ({ children, label }: { children: ReactNode; label: string }) =>
 
 const SOUND: Step = {
   title: 'Sound on, then open a topic',
-  text: <>Use headphones or turn the volume up. Every screen is read aloud — a wrong word or a cut-off sentence is a real problem, so listen as well as look.</>,
+  text: <>Use headphones or turn the volume up. Every screen is read aloud — a wrong word or a cut-off sentence is a real problem, so listen as well as look. No sound on an Android phone? In Chrome, tap the icon left of the address, then <b>Permissions → Sound → Allow</b>, and reload.</>,
   pic: <Svg label="A phone with the sound turned up">
     <Box x={80} y={10} w={80} h={130} r={14} /><Box x={90} y={24} w={60} h={90} fill="#eaf5fe" r={6} />
     <path d="M104 62 h10 l12 -10 v32 l-12 -10 h-10 z" fill={INK} />
@@ -87,7 +87,7 @@ const ANSWER: Step = {
 }
 const LEVELS: Step = {
   title: 'Practice: test every level',
-  text: <>Practice questions come in levels, easy (<b>L1</b>) to hard (L5 on most topics) — they never run out by themselves. Tap a level to get a question from it, and review <b>2 questions at every level</b>. The yellow line counts for you (<i>L1 2/2 · L2 1/2…</i>); when every level is done, <b>Finish practice ▶</b> opens. Is a hard level really harder? Is the answer ever wrong?</>,
+  text: <>Practice questions come in levels, easy (<b>L1</b>) to hard (L5 on most topics) — they never run out by themselves. Tap a level to get a question from it (the levels can be tapped only before you answer; after an answer, tap <b>Next problem</b> first), and review <b>2 questions at every level</b>. The yellow line counts for you (<i>L1 2/2 · L2 1/2…</i>); when every level is done, <b>Finish practice ▶</b> opens. Is a hard level really harder? Is the answer ever wrong?</>,
   pic: <Svg label="The Level row, L1 to L5, with L3 chosen">
     <T x={14} y={30} anchor="start" size={13}>Level</T>
     {[0, 1, 2, 3, 4].map(i => <g key={i}>
