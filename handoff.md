@@ -31,6 +31,10 @@ Merged and live on 29 Sep: #318, #319, #315, #328, #326, #321, website#6, #323 (
 all PASS). #323 was rebuilt first: production's `get_parent_dashboard()` differed from the repo by one comment (no ⚠️),
 so the repo's migration chain still builds a body one comment different from production's.
 1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
+3. #386 — scale pictures show what they weigh, halal examples only (gate `halalExamples.test.ts`), 142 new clips.
+   The upload ran (run 37453122387: 142 uploaded, all 16,985 manifest objects present). Founder: revoke the S3 key and
+   both `production-db` secrets, run `docs/legal/sql/audio-bucket-proof.sql` (P5 expects 18026 | 274803288), merge;
+   agent: `npm run smoke:live` after the deploy.
 2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
 3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run

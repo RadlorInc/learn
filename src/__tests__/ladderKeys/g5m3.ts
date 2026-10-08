@@ -184,7 +184,7 @@ export const SOLVE: Record<string, (q: Q) => string> = {
     }
     r = m(q, new RegExp(`^Work it out: what is ${FR} × (\\d+)\\?$`))
     if (r) { tape(q, +r[2], r[3]); return whole(q, mul(F(+r[1], +r[2]), F(+r[3]))) }
-    r = m(q, /^A (?:puppy weighs|recipe uses) (\d+) (pounds|cups)(?: of flour)?\. (?:A kitten weighs|You make) ((?:\d+ )?\d+\/\d+)(?: times)? (?:as much as the puppy|of the recipe|the recipe)\. (?:Does the kitten weigh|Will you use) more than (\d+) \2, less than (\d+) \2, or exactly (\d+) \2\?$/)
+    r = m(q, /^A (?:pumpkin weighs|recipe uses) (\d+) (pounds|cups)(?: of flour)?\. (?:A melon weighs|You make) ((?:\d+ )?\d+\/\d+)(?: times)? (?:as much as the pumpkin|of the recipe|the recipe)\. (?:Does the melon weigh|Will you use) more than (\d+) \2, less than (\d+) \2, or exactly (\d+) \2\?$/)
     if (r) {
       same(q, [r[4], r[5], r[6]].join(), [r[1], r[1], r[1]].join(), 'base amount'); tape(q, 1, `${r[1]} ${r[2]}`)
       const k = parse(r[3]), w = cmp(k, F(1))

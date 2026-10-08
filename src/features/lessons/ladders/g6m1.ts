@@ -324,7 +324,7 @@ const T5: Level[] = [
 // ── t6 · Part-part-whole ratios ─────────────────────────────────────────────────────────────────────────────
 const GROUPS = [
   { whole: 'A class', A: 'boys', B: 'girls', all: 'students' }, { whole: 'A club', A: 'boys', B: 'girls', all: 'members' },
-  { whole: 'A fruit bowl', A: 'apples', B: 'oranges', all: 'pieces of fruit' }, { whole: 'A pet shelter', A: 'cats', B: 'dogs', all: 'pets' },
+  { whole: 'A fruit bowl', A: 'apples', B: 'oranges', all: 'pieces of fruit' }, { whole: 'A pet shop', A: 'cats', B: 'rabbits', all: 'pets' },
 ] as const
 const PARTS3 = [
   { what: 'Paint is mixed', k: ['blue', 'white', 'black'] }, { what: 'A fruit punch is mixed', k: ['juice', 'soda water', 'lemonade'] },

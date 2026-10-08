@@ -12,6 +12,9 @@
 
 export type Obj = 'cookie' | 'chair' | 'plant' | 'muffin' | 'dot' | 'sock' | 'finger' | 'straw' | 'wheel' | 'apple' | 'sticker' | 'crayon'
 
+/** The things a lesson weighs on a scale (`measure` `on`). */
+export type ScaleItem = 'bag' | 'jar' | 'box' | 'book' | 'watermelon' | 'suitcase' | 'cat'
+
 export type Picture =
   | { kind: 'groups'; groups: number; each: number; obj: Obj; show?: 'count' | 'running' | 'rings'; motion?: boolean }
   | { kind: 'scatter'; n: number; obj: Obj }
@@ -31,7 +34,9 @@ export type Picture =
       points?: { at: number; label?: string; open?: boolean }[]; jumps?: { from: number; to: number; label?: string }[];
       ray?: { from: number; dir: 'left' | 'right'; open: boolean }; motion?: boolean }
   | { kind: 'clock'; h: number; m: number; hands?: boolean; fives?: boolean }
-  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string }
+  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string;
+      /** A scale only: what sits on its pan, always drawn at one size so the picture never hints at the weight. */
+      on?: ScaleItem }
   | { kind: 'blocks'; hundreds: number; tens: number; ones: number; trade?: 'ones' | 'tens'; motion?: boolean }
   | { kind: 'columns'; rows: string[]; op?: '+' | '−' | '×'; carry?: string; places?: string[]; answer?: string | null; motion?: boolean }
   | { kind: 'longdiv'; divisor: string; dividend: string; quotient?: string; work?: string[] }
