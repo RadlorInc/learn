@@ -74,7 +74,7 @@ export const G6M1_VOICE: Record<string, VoiceLine> = {
   // ── g6m1-t5 ──
   "You have 15 cups of nuts. How much cereal goes with them?": { style: 'B' },
   "Going from 3 and 5 straight to 15 is a big jump. So take small steps, in a table.": { style: 'B' },
-  "Every column is the same mix, so you can multiply, divide or add whole columns to make a new one.": { style: 'B' },
+  "Every column is the same mix, so you can multiply, divide or add two whole columns to make a new one, but adding 1 to each number still changes the mix.": { style: 'B' },
   "Start with 3 cups of nuts and 5 cups of cereal.": { style: 'B' },
   "Double both. 3 × 2 = 6, and 5 × 2 = 10.": { style: 'B' },
   "Same mix, just twice as much.": { style: 'B' },
