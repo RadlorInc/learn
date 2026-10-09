@@ -6,31 +6,31 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (8 October 2026)
+## Where things stand (9 October 2026)
 
-- **Production** is on `e34fa9684` (#386); `smoke:live` passed on it (8 Oct). The repo `learn` is public again (see
-  the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
-  billing is off.
+- **Production** is on `f29f20b90` (#413); `smoke:live` passed (9 Oct, `SMOKE_SW=v252`; its default is stale).
+  The repo `learn` is public again (see the Vercel item below). A private beta with families the founder knows has
+  run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
-  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy
-  BlockCraft game time on `/play` (#352, 1 Oct); six legal pages as beta versions; nightly
-  backups green.
+  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); six legal pages as
+  beta versions; nightly backups green.
 - **The game (BlockCraft) is live** (#352, 1 Oct; migrations proved on production): full page from `/play`, creative
   (pause menu → survival, no damage), saved to the child's account; stopping early charges the seconds played. Not yet
-  played signed in by a real child. Branch `wip/game-in-play` is superseded, except its three test files `adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules` (never ported). The founder's main checkout is back on `main`; its other uncommitted
-  leftovers are in a local `git stash` there. Branch `classroom-parked` (on GitHub) holds the first classroom build — never ship it as is.
-  Local branch `learner-grade` defines its own "notice-v7", which now clashes with the one that shipped.
-- The pre-rewrite handoff and everything extracted from the old docs are saved outside the repo on the founder's
-  machine, readable by the owner only.
+  played signed in by a real child. `wip/game-in-play` is superseded but for three unported test files
+  (`adaptiveEngine`, `adaptiveWiring`, `lessonFlowAllModules`). The founder's main checkout is back on `main`; its
+  other uncommitted leftovers are in a local `git stash` there. Branch `classroom-parked` (on GitHub) holds the first
+  classroom build — never ship it as is. Local branch `learner-grade` defines its own "notice-v7", which now clashes
+  with the one that shipped.
+- The pre-rewrite handoff and old-doc extracts are on the founder's machine, outside the repo (owner-only).
 
 ## Open — Draft PRs waiting for the founder
 
 1. #325 — admin 2-step in the database (migration), after two authenticators enrol at `/admin/mfa`.
-2. Superseded handoff Drafts, to close: #330, #343, #350, #393.
+2. #401 — agent fixes (6–7 Oct): flaky audio test, bounded ladder re-rolls, `smoke:live`'s service-worker version.
+3. Superseded handoff Drafts, to close: #330, #343, #350, #393.
 
-## Open — paid testers and the triage routine (8 Oct)
+## Open — paid testers and the triage routine (9 Oct)
 
 - Paid testers use Radlor Ops links; who and rates: the founder's private tracker. Its **Tester feedback** tab has one
   row per tester note (Ops, email or LinkedIn) with a status; "Founder decides" rows wait on the founder. Email and
@@ -41,9 +41,11 @@ fixed yet are tracked outside this public repo; ask the founder.
   Docs connector (8 Oct): decide a local scheduled task that copies its report into the tab, or the agent on request.
   ⚠️ An API edit re-attaches every connector (prod Supabase too): check `mcp_connections` is empty after one. Push
   fix branches before 09:00 IST or it redoes them.
-- Ops' testers tab read only the first 1,000 reviews until radlor-ops #13 (8 Oct; nothing was lost). Its other admin
-  lists (to-dos, issues…) are still read unpaged and would cut the same way past 1,000 rows.
-- Unsettled: audio lag on one tester's laptop; a tester heard "Ana eats 3 slices" twice on g3m5-t7 Screen 1 (on
+- Ops' other admin lists (to-dos, issues…) are read unpaged and cut at 1,000 rows (the testers tab was fixed, #13).
+- Audio lag on one tester's laptop (Windows): #411 keeps the sound output awake while a lesson is on (live 8 Oct).
+  Unconfirmed by her; if the lag stays, revert #411 (the tab shows an audio icon all lesson).
+- Ops: a new tester link REPLACES the card's note; retype the standing note each time.
+- Unsettled: a tester heard "Ana eats 3 slices" twice on g3m5-t7 Screen 1 (on
   screen once; clip `0d68a76d6d2aad99` unheard); where Speed sits (g6m1-t8, Grade 6 in Common Core).
 - How testers abroad are paid: not decided; the first grade completes within days.
 
@@ -58,11 +60,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 - Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
-- Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
-  exercise due dates, teacher billing; confirm "the first attempt is the class-exercise result" (decided without the
-  founder); a free teacher can sign up as a parent to get lessons free.
-- A way to mute the lesson voice (classrooms).
-- Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
+- Teachers: due dates, moving a student between classes, bulk password reset, teacher billing; confirm "the first
+  attempt is the class-exercise result" (decided without the founder); a free teacher can sign up as a parent.
+- A way to mute the lesson voice (classrooms). Lead capture is gone since `/api/lead` was deleted: rebuild it, and
+  keep or drop the `diagnostic_leads` table.
 - A maintenance switch: none exists, so stopping the app means removing the domain. A notice switch does
   (`OUTAGE_NOTICE`, [runbooks/outages.md](docs/runbooks/outages.md)); it tells people and stops nothing.
 - Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
@@ -129,8 +130,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
   `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: 11 of 25 passed on a correct build (5 Oct) — end-card
   buttons fail Playwright's "stable" wait (the nudge animates them), 3 chapters "could not look", colors timed out.
-- `scripts/smoke-live.mjs` hard-codes the expected service-worker version; the ops digest (06:23 UTC) reports the
-  previous day's backup, because scheduled backups start hours late.
+- `scripts/smoke-live.mjs` hard-codes the expected service-worker version (`v242`; production is `v252`, 9 Oct;
+  #401); the ops digest (06:23 UTC) reports the previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
 - `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
