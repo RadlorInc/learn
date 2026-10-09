@@ -71,6 +71,9 @@ if not READY.exists():
 print(subprocess.run([str(PY), '-c', "import torch; print('cuda:', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NONE — set the accelerator')"], capture_output=True, text=True).stdout)"""
 
 render = """OUT = WORK / 'out' / VOICE
+# The renderer skips a key whose mp3 is already in OUT, and a Kaggle session keeps OUT between notebooks: a re-render
+# (redo) found last run's clips and rendered nothing (9 Oct 2026). This run's keys start from no file.
+for r in todo: (OUT / f"{r['key']}.mp3").unlink(missing_ok=True)
 cmd = [str(PY), str(REPO / 'scripts/chatterbox-render.py'), '--voice', VOICE, '--corpus', str(WORK / 'todo.json'), '--out', str(OUT)]
 proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 for line in proc.stdout:
@@ -78,7 +81,7 @@ for line in proc.stdout:
     print(line.rstrip()[:160], flush=True)
 print('exit code', proc.wait())"""
 
-zipc = f"""clips = sorted(OUT.glob('*.mp3'))
+zipc = f"""clips = sorted(p for p in (OUT / f"{{r['key']}}.mp3" for r in todo) if p.exists())   # this run's keys only
 missing = [r['key'] for r in todo if not (OUT / f"{{r['key']}}.mp3").exists()]
 stage = WORK / 'stage'; shutil.rmtree(stage, ignore_errors=True); (stage / VOICE).mkdir(parents=True)
 for c in clips: shutil.copy2(c, stage / VOICE / c.name)
