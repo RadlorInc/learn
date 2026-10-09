@@ -20,7 +20,7 @@ describe('g8m1 · exponents', () => {
   })
 
   it('t1 level 5: the worked steps say "a single 10", not "a lone 10"', () => {
-    const steps = samples('g8m1-t1', 4).flatMap(p => p.steps)
+    const steps = samples('g8m1-t1', 4).flatMap(p => p.steps ?? [])
     expect(steps.some(s => s.includes('10¹'))).toBe(true)          // the paper-clip story, where the word was, is sampled
     expect(steps.filter(s => /\blone\b/.test(s))).toEqual([])
   })
