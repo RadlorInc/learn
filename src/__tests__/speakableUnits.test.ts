@@ -39,6 +39,9 @@ describe('speakable numbers', () => {
     ['Count by 6s and 10s, the 21st', 'Count by sixes and tens, the twenty-first'],
     ['12 oh 5', 'twelve oh five'],
     ['−3', 'negative three'],
+    ['3 times ? equals 30', 'three times blank equals thirty'],
+    ['5/8 ? 2/6 Check it.', 'five eighths blank two sixths Check it.'],
+    ['Is the ? angle next door?', 'Is the blank angle next door?'],
   ])('%s', (t, said) => expect(speakable(t)).toBe(said))
   it('leaves no digit for the voice model on any of these', () => expect(speakable('9 times 23 equals 207; 1,176 ÷ 24 = 49')).not.toMatch(/\d/))
 })

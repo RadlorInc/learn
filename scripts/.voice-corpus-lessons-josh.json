@@ -48534,9 +48534,9 @@
   {
     "key": "qqojcw",
     "check": "218gu0b3fnf",
-    "text": "Two signs. Two triangle signs have the same shape, and one is bigger. The small one has sides four, three and two feet. The big one has sides eight, six and ? feet. How long is the missing side?",
+    "text": "Two signs. Two triangle signs have the same shape, and one is bigger. The small one has sides four, three and two feet. The big one has sides eight, six and blank feet. How long is the missing side?",
     "style": "A",
-    "chars": 194,
+    "chars": 198,
     "kind": "screen1",
     "sources": [
       "g8m4-t5 s1"
@@ -48765,9 +48765,9 @@
   {
     "key": "x3tmx2",
     "check": "142p57yfuhg",
-    "text": "Now you try. three times ? equals thirty Use a times fact you know to find the missing number.",
+    "text": "Now you try. three times blank equals thirty Use a times fact you know to find the missing number.",
     "style": "A",
-    "chars": 94,
+    "chars": 98,
     "kind": "turn",
     "sources": [
       "g3m1-t8 turn"
@@ -49458,9 +49458,9 @@
   {
     "key": "167ajv8",
     "check": "193qou8ih86",
-    "text": "Now you try. Compare five eighths and two sixths. Which sign goes in the middle? five eighths ? two sixths Check each fraction against half. Is it above half or below half?",
+    "text": "Now you try. Compare five eighths and two sixths. Which sign goes in the middle? five eighths blank two sixths Check each fraction against half. Is it above half or below half?",
     "style": "A",
-    "chars": 172,
+    "chars": 176,
     "kind": "turn",
     "sources": [
       "g4m4-t2 turn"
@@ -49469,9 +49469,9 @@
   {
     "key": "1pa4kwb",
     "check": "2d84apgwha",
-    "text": "Now you try. Compare three fourths and seven eighths. Which sign goes in the middle? three fourths ? seven eighths Make the pieces the same size first. Then compare the tops.",
+    "text": "Now you try. Compare three fourths and seven eighths. Which sign goes in the middle? three fourths blank seven eighths Make the pieces the same size first. Then compare the tops.",
     "style": "A",
-    "chars": 174,
+    "chars": 178,
     "kind": "turn",
     "sources": [
       "g4m4-t3 turn"
@@ -49480,9 +49480,9 @@
   {
     "key": "1vo03pl",
     "check": "anl3hik9g7",
-    "text": "Now you try. Break five eighths apart. five eighths equals one eighth plus ? What fraction is missing? Count the pieces in the whole fraction. Find how many pieces are still missing.",
+    "text": "Now you try. Break five eighths apart. five eighths equals one eighth plus blank What fraction is missing? Count the pieces in the whole fraction. Find how many pieces are still missing.",
     "style": "A",
-    "chars": 182,
+    "chars": 186,
     "kind": "turn",
     "sources": [
       "g4m4-t4 turn"
@@ -51636,9 +51636,9 @@
   {
     "key": "j4wymj",
     "check": "10qhc46bmji",
-    "text": "Now you try. These two triangles have the same angles. The small one has sides six, five and three centimeters. The big one has sides eighteen, fifteen and ? cm. How long is the missing side, in cm? Find the scale factor from a matching pair. Then multiply.",
+    "text": "Now you try. These two triangles have the same angles. The small one has sides six, five and three centimeters. The big one has sides eighteen, fifteen and blank cm. How long is the missing side, in cm? Find the scale factor from a matching pair. Then multiply.",
     "style": "A",
-    "chars": 257,
+    "chars": 261,
     "kind": "turn",
     "sources": [
       "g8m4-t5 turn"
@@ -61514,9 +61514,9 @@
   {
     "key": "kydi8i",
     "check": "1ieaxrx8itc",
-    "text": "Is the ? angle next door, or straight across?",
+    "text": "Is the blank angle next door, or straight across?",
     "style": "A",
-    "chars": 45,
+    "chars": 49,
     "kind": "hint",
     "sources": [
       "g7m4-t5 hint1"
@@ -61536,9 +61536,9 @@
   {
     "key": "1darc49",
     "check": "28kq1eeeu4o",
-    "text": "Where is the ? angle, next door, or straight across?",
+    "text": "Where is the blank angle, next door, or straight across?",
     "style": "A",
-    "chars": 52,
+    "chars": 56,
     "kind": "hint",
     "sources": [
       "g7m4-t5 twin hint1"
@@ -63857,9 +63857,9 @@
   {
     "key": "1tcrj4r",
     "check": "7iwa1d1gn9",
-    "text": "Try a new one. five times ? equals fifteen",
+    "text": "Try a new one. five times blank equals fifteen",
     "style": "A",
-    "chars": 42,
+    "chars": 46,
     "kind": "twin",
     "sources": [
       "g3m1-t8 twin"
@@ -64539,9 +64539,9 @@
   {
     "key": "zq8h7e",
     "check": "mn3mefef0",
-    "text": "Try a new one. Compare two tenths and three fourths. Which sign goes in the middle? two tenths ? three fourths",
+    "text": "Try a new one. Compare two tenths and three fourths. Which sign goes in the middle? two tenths blank three fourths",
     "style": "A",
-    "chars": 110,
+    "chars": 114,
     "kind": "twin",
     "sources": [
       "g4m4-t2 twin"
@@ -64550,9 +64550,9 @@
   {
     "key": "b624cc",
     "check": "1k81ufzu761",
-    "text": "Try a new one. Compare two thirds and four sixths. Which sign goes in the middle? two thirds ? four sixths",
+    "text": "Try a new one. Compare two thirds and four sixths. Which sign goes in the middle? two thirds blank four sixths",
     "style": "A",
-    "chars": 106,
+    "chars": 110,
     "kind": "twin",
     "sources": [
       "g4m4-t3 twin"
@@ -64561,9 +64561,9 @@
   {
     "key": "1e9zjb",
     "check": "ywbxtw5p8t",
-    "text": "Try a new one. Break seven tenths apart. seven tenths equals three tenths plus ? What fraction is missing?",
+    "text": "Try a new one. Break seven tenths apart. seven tenths equals three tenths plus blank What fraction is missing?",
     "style": "A",
-    "chars": 106,
+    "chars": 110,
     "kind": "twin",
     "sources": [
       "g4m4-t4 twin"
@@ -66717,9 +66717,9 @@
   {
     "key": "hn65j6",
     "check": "hd4od3h754",
-    "text": "Try a new one. These two triangles have the same angles. The small one has sides eight, six and four in. The big one has sides thirty-two, ? and sixteen in. How long is the missing side, in inches?",
+    "text": "Try a new one. These two triangles have the same angles. The small one has sides eight, six and four in. The big one has sides thirty-two, blank and sixteen in. How long is the missing side, in inches?",
     "style": "A",
-    "chars": 197,
+    "chars": 201,
     "kind": "twin",
     "sources": [
       "g8m4-t5 twin"

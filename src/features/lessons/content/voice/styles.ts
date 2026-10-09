@@ -82,7 +82,9 @@ export const speakable = (t: string) =>
     .replace(/\$(\d+(?:,\d{3})*)\b/g, (_, d) => `${d} ${d === '1' ? 'dollar' : 'dollars'}`)
     .replace(/(^|[\s(])[−-](\d)/g, '$1negative $2')
     .replace(/ × /g, ' times ').replace(/ · /g, ' times ').replace(/ ÷ /g, ' divided by ').replace(/ \+ /g, ' plus ').replace(/ [−–] /g, ' minus ')
-    .replace(/ = \?/g, ' equals what?').replace(/ = /g, ' equals ').replace(/ ≈ /g, ' is about ')
+    .replace(/ = \?/g, ' equals what?')
+    .replace(/(^|\s)\?(?=\s|$)/g, '$1blank')   // a ? standing for a missing number or sign: the model read it as a number (9 Oct)
+    .replace(/ = /g, ' equals ').replace(/ ≈ /g, ' is about ')
     .replace(/ < /g, ' is less than ').replace(/ > /g, ' is greater than ').replace(/ ≤ /g, ' is less than or equal to ').replace(/ ≥ /g, ' is greater than or equal to ')
     .replace(/(\d) : (\d)/g, '$1 to $2')   // a ratio, 3 : 2 — before the prose colon below turns it into "3, 2"
     .replace(/["“”]/g, '').replace(/([^\d]):\s/g, '$1, ').replace(/;\s/g, ', ')
