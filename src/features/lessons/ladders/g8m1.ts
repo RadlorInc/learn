@@ -72,7 +72,7 @@ const T1: Level[] = [
       picture: eq(`${pw(b, a)} × ${b}^? = ${pw(b, t)}`), answer: m,
       steps: [`Same base, so the exponents add: ${a} + ? = ${t}.`, `Work backwards: ${t} − ${a} = ${m}.`, `So the missing exponent is ${m}.`] }
   }) },
-  { style: 'three factors in a story, one of them a lone base', make: r => hidden(() => {
+  { style: 'three factors in a story, one of them a single base', make: r => hidden(() => {
     if (r() < 0.5) {
       const a = int(r, 2, 6), b = int(r, 2, 8), c = int(r, 3, 10), s = a + b + c
       return { text: `A data center has ${pw(2, a)} racks. Each rack holds ${pw(2, b)} drives, and each drive holds ${pw(2, c)} folders. Written as 2 with one exponent, how many folders is that? Type the exponent.`,
@@ -82,7 +82,7 @@ const T1: Level[] = [
     const a = int(r, 2, 6), b = int(r, 2, 5), s = a + b + 1
     return { text: `A factory fills ${pw(10, a)} crates. Each crate holds ${pw(10, b)} boxes, and each box holds 10 paper clips. Written as 10 with one exponent, how many paper clips is that? Type the exponent.`,
       picture: eq(`${pw(10, a)} × ${pw(10, b)} × 10 = 10^?`), answer: s,
-      steps: ['A lone 10 is 10¹, one 10.', `Same base 10: add the exponents, ${a} + ${b} + 1.`, `So the exponent is ${s}.`] }
+      steps: ['A single 10 is 10¹, one 10.', `Same base 10: add the exponents, ${a} + ${b} + 1.`, `So the exponent is ${s}.`] }
   }) },
 ]
 
@@ -104,7 +104,8 @@ const T2: Level[] = [
     const { c, q } = until(() => ({ c: int(r, 2, 5), q: int(r, 2, 6) }), ({ c, q }) => q !== c * q - c)
     const b = pick(r, BASES), a = c * q, d = a - c, who = pick(r, KIDS)
     return { text: `${who} says ${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}. What should the exponent really be?`,
-      picture: cards(`${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}`, `${pw(b, a)} ÷ ${pw(b, c)} = ${b}^?`), answer: d,
+      // Each card says what it does to the exponents (a tester, 8 Oct: the two cards looked alike and did not say why).
+      picture: cards(`${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}`, `${pw(b, a)} ÷ ${pw(b, c)} = ${b}^?, because ${a} − ${c} = ?`), answer: d,
       steps: ['Dividing powers subtracts the exponents. It does not divide them.', `Top minus bottom: ${a} − ${c} = ${d}.`, `So the exponent is ${d}.`] }
   }) },
   { style: 'missing bottom exponent', make: r => hidden(() => {
