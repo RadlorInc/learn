@@ -51,7 +51,8 @@ export const T4: (ChalkMark[] | undefined)[] = [
     write([1, 'Flip'], 'flip', px(rule5, 300, 40, 2), 125, 22, 'b'),
     ...row(flip5, 300, 185, 40),
     ...row([[[2, '36/12'], ['36', '12']], [[2, 'is'], '='], [[2, '3'], '3', 'y']], 300, 285, 42),
-    write([2, 'twelfths'], '12 twelfths = 1', 300, 365, 24, 'd'),
+    // Says what the 1 is for: 36 twelfths are 3 lots of 12 (a tester, 8 Oct: "12 twelfths = 1" alone read as a stray line).
+    write([2, 'twelfths'], '12 twelfths = 1, so 36 twelfths = 3', 300, 365, 24, 'd'),
   ],
   // Check with the picture
   [

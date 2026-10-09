@@ -39,7 +39,8 @@ export const G8M1: Lesson[] = [
     bigIdea: 'When you multiply two numbers with the same base, keep the base and add the exponents.',
     screens: [
       { title: 'Doubling bacteria', text: 'A colony of bacteria doubles every hour. In the first 3 hours it grows 2³ times bigger. In the next 2 hours it grows 2² times bigger again. That is 2³ × 2² times in all. Can you write it as 2 with just one exponent?',
-        pictures: [tape([row('2', 3, '2³'), row('2', 2, '2²')])] },
+        // Each block is one doubling, so it carries its sign (a tester, 8 Oct: bare "2" blocks did not say multiply).
+        pictures: [tape([row('×2', 3, '2³'), row('×2', 2, '2²')])] },
       { title: 'Working it out is slow', text: 'You could work it all out. 2³ is 8, 2² is 4, and 8 × 4 = 32. Then you hunt for the exponent that makes 32. But what about 2¹⁰ × 2¹⁵? You would be counting all day.',
         beats: [
           { say: 'You could work it all out. 2³ is 8, 2² is 4, and 8 × 4 = 32.', pic: 0 },
