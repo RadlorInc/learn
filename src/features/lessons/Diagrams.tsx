@@ -178,8 +178,43 @@ export function Diagram({ p }: { p: Picture }) {
     case 'chips': return <Chips p={p} />
     case 'balance': return <Balance p={p} />
     case 'spinner': return <Spinner p={p} />
+    case 'trail': return <Trail p={p} />
     default: return null
   }
+}
+
+// ── A trail with a bike on it (drawn here from lines and circles; no outside artwork) ────────────
+function Trail({ p }: { p: P<'trail'> }) {
+  const x0 = 40, x1 = 600, span = x1 - x0, mid = 100, amp = 26
+  const yAt = (x: number) => mid - amp * Math.sin((2 * Math.PI * (x - x0)) / span)
+  const pts = (to: number) => Array.from({ length: 61 }, (_, i) => x0 + ((to - x0) * i) / 60).map(x => `${x.toFixed(1)},${yAt(x).toFixed(1)}`).join(' ')
+  const xb = x0 + span * Math.min(1, Math.max(0, p.done)), yb = yAt(xb)
+  const bracket = (y: number, a: number, b: number, label: string, i: number) => (
+    <g style={reveal(i, p.motion, 500)}>
+      <path d={`M ${a} ${y - 9} V ${y} H ${b} V ${y - 9}`} fill="none" stroke={INK} strokeWidth={3} />
+      <rect x={(a + b) / 2 - label.length * 6 - 8} y={y - 12} width={label.length * 12 + 16} height={24} fill="#fff" />
+      <T x={(a + b) / 2} y={y} s={20}>{label}</T>
+    </g>
+  )
+  // The bike: two wheels, a frame, a seat and handlebars, standing on the trail at xb.
+  return (
+    <Svg w={640} h={250} label={`A trail ${p.total} long; ridden ${p.doneLabel}`}>
+      <polyline points={pts(x1)} fill="none" stroke={INK} strokeWidth={6} strokeDasharray="14 11" strokeLinecap="round" />
+      <polyline points={pts(xb)} fill="none" stroke={TEAL} strokeWidth={9} strokeLinecap="round" style={reveal(0, p.motion)} />
+      <circle cx={x0} cy={yAt(x0)} r={11} fill={INK} />
+      <path d={`M ${x1 + 22} ${yAt(x1)} l -24 -14 v 28 z`} fill={INK} />
+      <g style={reveal(1, p.motion)}>
+        <g transform={`translate(${xb} ${yb}) scale(1.6) translate(0 -16)`} stroke={INK} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx={-17} cy={0} r={13} fill="#fff" />
+          <circle cx={17} cy={0} r={13} fill="#fff" />
+          <path d="M -17 0 L -4 -22 L 11 -22 L 17 0 M -4 -22 L 1 0 L -17 0 M 1 0 L 11 -22 M -8 -28 H 1 M 9 -30 L 13 -30" />
+        </g>
+      </g>
+      {p.left && <T x={(xb + x1) / 2} y={yAt((xb + x1) / 2) - 44} s={34}>{p.left}</T>}
+      {bracket(180, x0, xb, p.doneLabel, 2)}
+      {bracket(228, x0, x1, p.total, 3)}
+    </Svg>
+  )
 }
 
 // ── Fraction bars ──────────────────────────────────────────────────────────────────────────────

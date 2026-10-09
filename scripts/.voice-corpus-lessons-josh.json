@@ -47542,11 +47542,11 @@
     ]
   },
   {
-    "key": "1xiw0yk",
-    "check": "2agh1m44q7l",
-    "text": "Money in the bank. You put 500 dollars in a bank. Each year the bank pays you 4 percent of the 500 dollars. How much does the bank pay you in 3 years?",
+    "key": "lc18ei",
+    "check": "1v3brqrjmuo",
+    "text": "Money in the bank. You put 500 dollars in a bank. While your money is there, the bank lends it to other people, so it pays you a little extra for it. That extra money is called interest. Each year the bank pays you 4 percent of the 500 dollars. How much does the bank pay you in 3 years?",
     "style": "A",
-    "chars": 150,
+    "chars": 287,
     "kind": "screen1",
     "sources": [
       "g6m4-t7 s1"
