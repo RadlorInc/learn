@@ -538,7 +538,9 @@ export const G6M4: Lesson[] = [
     id: 'g6m4-t7', title: 'Simple interest', skill: 'Find simple interest and the total with I = P × r × t',
     bigIdea: 'Find what the bank pays for one year, then multiply by the number of years.',
     screens: [
-      { title: 'Money in the bank', text: 'You put $500 in a bank. Each year the bank pays you 4% of the $500. How much does the bank pay you in 3 years?',
+      // What interest is, before how to work it out (a tester, 9 Oct: Grade 6 has not met interest, and the lesson went
+      // straight to the sum). Screen 5 already says why it is "simple": the same 4% of the same $500 every year.
+      { title: 'Money in the bank', text: 'You put $500 in a bank. While your money is there, the bank lends it to other people, so it pays you a little extra for it. That extra money is called interest. Each year the bank pays you 4% of the $500. How much does the bank pay you in 3 years?',
         pictures: [years(3, '?')] },
       { title: 'How many dollars a year?', text: 'The bank pays 4% of your $500, every year. So how many dollars is that? And there are 3 years, not one.',
         beats: [
