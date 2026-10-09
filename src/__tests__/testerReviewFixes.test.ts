@@ -25,14 +25,13 @@ describe('g8m1 · exponents', () => {
     expect(steps.filter(s => /\blone\b/.test(s))).toEqual([])
   })
 
-  it('t2 level 3: each card says what it does to the exponents, the right one still leaving the answer to find', () => {
+  it('t2 level 3: the wrong card says it divided the exponents; the right one still leaves the answer to find', () => {
     for (const p of samples('g8m1-t2', 2)) {
       const m = p.text.match(/(\d+)([⁰-⁹¹²³]+) ÷ \d+([⁰-⁹¹²³]+) = \d+([⁰-⁹¹²³]+)/)!
       const [a, c, q] = [m[2], m[3], m[4]].map(sup)
       const cards = p.picture as Extract<Picture, { kind: 'cards' }>
       expect(cards.wrong.endsWith(`, because ${a} ÷ ${c} = ${q}`), cards.wrong).toBe(true)
-      expect(cards.right.endsWith(`, because ${a} − ${c} = ?`), cards.right).toBe(true)
-      expect(cards.right).not.toContain(`= ${p.answer}`)
+      expect(cards.right).toBe(`${m[1]}${m[2]} ÷ ${m[1]}${m[3]} = ${m[1]}^?`)
     }
   })
 })

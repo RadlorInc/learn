@@ -104,8 +104,8 @@ const T2: Level[] = [
     const { c, q } = until(() => ({ c: int(r, 2, 5), q: int(r, 2, 6) }), ({ c, q }) => q !== c * q - c)
     const b = pick(r, BASES), a = c * q, d = a - c, who = pick(r, KIDS)
     return { text: `${who} says ${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}. What should the exponent really be?`,
-      // Each card says what it does to the exponents (a tester, 8 Oct: the two cards looked alike and did not say why).
-      picture: cards(`${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}`, `${pw(b, a)} ÷ ${pw(b, c)} = ${b}^?, because ${a} − ${c} = ?`), answer: d,
+      // The wrong card says what it did to the exponents (a tester, 8 Oct: the two cards looked alike and did not say why).
+      picture: cards(`${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}`, `${pw(b, a)} ÷ ${pw(b, c)} = ${b}^?`), answer: d,
       steps: ['Dividing powers subtracts the exponents. It does not divide them.', `Top minus bottom: ${a} − ${c} = ${d}.`, `So the exponent is ${d}.`] }
   }) },
   { style: 'missing bottom exponent', make: r => hidden(() => {
