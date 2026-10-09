@@ -355,6 +355,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
                 L{i + 1}
               </button>
             ))}
+            {/* A tester took "the level never moves" for how a child's practice works (8 Oct). It moves for a child:
+                adaptive.ts `step`, two right first tries in a row → one level up. */}
+            <span style={{ fontSize: 14, color: INK, flexBasis: '100%' }}>
+              You choose the level here. For a child, the level moves up by itself after 2 right answers in a row.
+            </span>
           </div>
         )}
         {review && ladder && run && (() => {
