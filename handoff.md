@@ -42,8 +42,6 @@ fixed yet are tracked outside this public repo; ask the founder.
   ⚠️ An API edit re-attaches every connector (prod Supabase too): check `mcp_connections` is empty after one. Push
   fix branches before 09:00 IST or it redoes them.
 - Ops' other admin lists (to-dos, issues…) are read unpaged and cut at 1,000 rows (the testers tab was fixed, #13).
-- Audio lag on one tester's laptop (Windows): #411 keeps the sound output awake while a lesson is on (live 8 Oct).
-  Unconfirmed by her; if the lag stays, revert #411 (the tab shows an audio icon all lesson).
 - Ops: a new tester link REPLACES the card's note; retype the standing note each time.
 - Unsettled: a tester heard "Ana eats 3 slices" twice on g3m5-t7 Screen 1 (on
   screen once; clip `0d68a76d6d2aad99` unheard); where Speed sits (g6m1-t8, Grade 6 in Common Core).
