@@ -1018,17 +1018,26 @@ const session_has_trial = (calls: Call[]) =>
 // ─────────────────────────────────────────────────────────────────────────────
 //  5. THE ONE THING A DRIVEN TEST CANNOT SEE: that the refusal still exists.
 // ─────────────────────────────────────────────────────────────────────────────
-describe('test mode is enforced in code, not in discipline', () => {
+describe('the key mode is pinned to the deployment, in code', () => {
   beforeEach(() => { __resetStripe() })
   afterEach(() => { process.env = { ...ENV }; __resetStripe() })
 
-  it('C9 — a LIVE secret key is refused outright', () => {
-    // ⚠️ DRIVEN, not a grep for the prefix. This is the whole of the founder's hard constraint for
-    // Stage 2: nothing in this stage may be able to take a real card. B12 (no backup of the
-    // children's data) is open, and `billing_config.enforced` gates ACCESS, not PAYMENT — so it is
-    // not a safety net here and must not be sold as one.
+  it('C9 — a LIVE secret key is refused everywhere but Vercel Production', () => {
+    // ⚠️ DRIVEN, not a grep for the prefix. A live key on a preview, staging or a laptop would charge
+    // a real card from code nobody reviewed for production.
     process.env.STRIPE_SECRET_KEY = 'sk_live_realmoney'
-    expect(() => stripeClient()).toThrow(/test mode only/i)
+    delete process.env.VERCEL_ENV
+    expect(() => stripeClient()).toThrow(/sk_test_/)
+    process.env.VERCEL_ENV = 'preview'
+    expect(() => stripeClient()).toThrow(/sk_test_/)
+  })
+
+  it('C9b — Production takes ONLY a live key: a test key there sells access for test cards', () => {
+    process.env.VERCEL_ENV = 'production'
+    process.env.STRIPE_SECRET_KEY = 'sk_test_free'
+    expect(() => stripeClient()).toThrow(/sk_live_/)
+    process.env.STRIPE_SECRET_KEY = 'sk_live_ok'
+    expect(stripeClient()).toBeTruthy()
   })
 
   it('a test key is accepted, and no key at all is a quiet null', () => {
