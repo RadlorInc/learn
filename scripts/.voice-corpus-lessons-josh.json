@@ -46554,9 +46554,9 @@
   {
     "key": "12bycnl",
     "check": "12p3ne258r2",
-    "text": "A tray of brownies. A tray of brownies is cut into one hundred small squares. Ana eats the shaded part. Ben says she ate zero point five of the tray. Ana says zero point five zero. Who is right?",
+    "text": "A tray of brownies. A tray of brownies is cut into one hundred small squares. Ana eats the shaded part. Ben says, she ate zero point five of the tray. Ana says, zero point five zero. Who is right?",
     "style": "A",
-    "chars": 194,
+    "chars": 196,
     "kind": "screen1",
     "sources": [
       "g4m6-t3 s1"
@@ -47687,9 +47687,9 @@
   {
     "key": "1ug5k3c",
     "check": "14cms1t16hg",
-    "text": "Wrapping a gift. A gift box is four centimeters long, three centimeters wide and two centimeters tall. How much paper covers the outside, with no overlap?",
+    "text": "Wrapping a gift. A gift box is four centimeters long, three centimeters wide, and two centimeters tall. How much paper covers the outside, with no overlap?",
     "style": "A",
-    "chars": 154,
+    "chars": 155,
     "kind": "screen1",
     "sources": [
       "g6m6-t4 s1"
@@ -68796,9 +68796,9 @@
   {
     "key": "if2cf2",
     "check": "1hg9h3qaf97",
-    "text": "You saw that zero point three is less than zero point three five by looking at the hundredths.",
+    "text": "You saw, zero point three is less than zero point three five, by looking at the hundredths.",
     "style": "A",
-    "chars": 94,
+    "chars": 91,
     "kind": "won",
     "sources": [
       "g4m6-t5 twinWon"
