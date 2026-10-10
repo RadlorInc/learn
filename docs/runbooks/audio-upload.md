@@ -20,9 +20,10 @@
 ## A new or reworded line gets its clip
 
 1. **Agent — rebuild the corpus** with `npx tsx scripts/lesson-voice-corpus.mts`. A row is "rendered" when its key is already in the manifest.
-2. **Agent — render the missing rows** with `python3 scripts/kaggle-josh-notebook.py <grade|module> <branch>` (KG–2 chapters: `scripts/kaggle-josh-chapters-notebook.py`). It writes a notebook for rows not in the manifest only.
+2. **Agent — render the missing rows** with `python3 scripts/kaggle-josh-notebook.py <grade|module> <branch>` (KG–2 chapters: `scripts/kaggle-josh-chapters-notebook.py`). It writes a notebook for rows not in the manifest only. To re-render clips that already exist (a bad render), `python3 scripts/kaggle-josh-notebook.py redo <branch> <keys.txt>` renders exactly those keys; park their old mp3s outside the repo first, never delete them.
 3. **Agent — merge the clips and rebuild the manifest.**
    - Run `unzip -n <zip> -d audio-src/`. `audio-src/` is gitignored; on a fresh machine, fill it first with `AUDIO_BASE_URL=<bucket base> node scripts/audio/fetch-src.mjs`.
+   - **Hear the new clips back before anything else:** `<venv>/bin/python scripts/audio/check-numbers.py <dir of the new mp3s>`. It must exit 0. Exit 1 lists clips whose spoken numbers differ from their line (re-render them; a line the model misreads three times running gets commas in its `say` row); exit 2 means it could not look. Why: given digits, the voice model dropped words inside numbers (184 → "one hundred four") in about 180 clips (9 Oct 2026); lines now reach it as words, and this is the check that they came out right.
    - Then run `node scripts/audio/build-manifest.mjs`. It fails on a missing clip, an orphan, a duplicate key or a name collision.
    - Commit the manifest and both `voice-index/` folders on the PR branch.
    - For a lesson line with chalk, give its marks real timing: `<venv>/bin/python scripts/audio/whisper-word-times.py` (faster-whisper, local; only new clips are transcribed), then `npx tsx scripts/audio/build-word-times.mts`, and commit `src/features/lessons/word-times/`. Skipped, the new line's marks keep the length estimate.
