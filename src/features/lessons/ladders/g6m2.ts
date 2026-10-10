@@ -139,13 +139,14 @@ const mulSteps = (x: Mixed, y: Mixed, n: number, d: number, lead = 'So the answe
   `Multiply the tops and the bottoms: ${f(x.N, x.q)} × ${f(y.N, y.q)} = ${f(n, d)}.`,
   `${f(n, d)} = ${simple(n, d)}. ${lead} ${simple(n, d)}.`,
 ]
-const mixedBars = (m: Mixed): Picture => ({ kind: 'bars', bars: [...Array.from({ length: m.w }, () => ({ parts: 1, shaded: 1 })), { parts: m.q, shaded: m.p }] })
+/** x × y as an area model: each mixed number split into its whole and its fraction, all four parts drawn. */
+const areaOf = (x: Mixed, y: Mixed): Picture =>
+  ({ kind: 'area', cols: [String(x.w), f(x.p, x.q)], rows: [String(y.w), f(y.p, y.q)], widths: [x.w * x.q, x.p], heights: [y.w * y.q, y.p] })
 
 const T3: Level[] = [
   { style: 'area model with all four parts', make: r => {
     const { x, y, n, d } = product3(r)
-    return { text: `Find ${x.s} × ${y.s}. The area model shows all four parts.`,
-      picture: { kind: 'area', cols: [String(x.w), f(x.p, x.q)], rows: [String(y.w), f(y.p, y.q)], widths: [x.w * x.q, x.p], heights: [y.w * y.q, y.p] },
+    return { text: `Find ${x.s} × ${y.s}. The area model shows all four parts.`, picture: areaOf(x, y),
       answer: fracAnswer(n, d), steps: mulSteps(x, y, n, d) }
   } },
   { style: 'bare mixed numbers', make: r => {
@@ -165,7 +166,9 @@ const T3: Level[] = [
       [`A recipe uses ${x.s} cups of flour. You make ${y.s} batches. How many cups of flour do you need?`, `So you need ${s} cups of flour.`],
       [`You walk ${x.s} miles each hour. How many miles do you walk in ${y.s} hours?`, `So you walk ${s} miles.`],
     ] as const)
-    return { text, picture: mixedBars(x), answer: fracAnswer(n, d),
+    // Both numbers in one area model, as on the lesson's own pages (a tester, 8 Oct: bars of the first number alone did
+    // not help).
+    return { text, picture: areaOf(x, y), answer: fracAnswer(n, d),
       steps: [`Find ${x.s} × ${y.s}. Change to fractions: ${f(x.N, x.q)} and ${f(y.N, y.q)}.`, `Multiply: ${f(x.N, x.q)} × ${f(y.N, y.q)} = ${f(n, d)}, which is ${s}.`, end] }
   } },
   { style: 'two-step story (multiply, then how much more)', make: r => {

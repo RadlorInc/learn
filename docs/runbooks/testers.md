@@ -44,7 +44,8 @@ end). Next stays disabled until that screen is reviewed; Back and ← Topics alw
 
 **Practice levels.** A topic's practice has a ladder of question levels (most have 5). For a tester the ladder does not
 move by itself: a **Level** row (L1, L2, …) above the problem picks the level; tapping one swaps in a new problem at
-that level, and **Next problem** keeps drawing from it. Nothing about levels is saved for a child's account, there is
+that level, and **Next problem** keeps drawing from it. A line under the row says so, and that for a child the level moves up by itself after 2 right
+answers in a row (a tester read the still ladder as how a child's practice works, 8 Oct). Nothing about levels is saved for a child's account, there is
 no 5-answer checkpoint and no end at 12 answers. A yellow line counts the tester's reviewed questions per level
 (`L1 2/2 · L2 1/2 …`, from every sitting); **Finish practice ▶** opens only when every level has 2, and leads to the
 real Screen 9. Each practice review's answer starts with its level (`L3 · 7 → 12 ✓`). A later sitting numbers its

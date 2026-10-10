@@ -23,7 +23,7 @@ export const TESTER_TOURS: Record<TourName, Tour> = {
     { target: 'tester-bar', title: 'Then review it', text: 'Once it is answered, review it here. Your answer is saved with your review.' },
   ] },
   practice: { title: 'Practice: every level', steps: [
-    { target: 'tester-levels', title: 'These are the level buttons', text: 'Tap a level BEFORE you answer to get a question from it. After an answer, tap Next problem first.' },
+    { target: 'tester-levels', title: 'These are the level buttons', text: 'Tap a level BEFORE you answer to get a question from it. After an answer, tap Next problem first. Here you choose the level; for a child it moves up by itself.' },
     { target: 'tester-count', title: '2 questions at every level', text: 'This line counts them: L1 2/2 · L2 1/2 … Only this line counts levels.' },
     { target: 'tester-finish', title: 'Then finish', text: 'It opens when every level has 2. It leads to screen 9: review that too, and the topic is ✓ done.' },
   ] },

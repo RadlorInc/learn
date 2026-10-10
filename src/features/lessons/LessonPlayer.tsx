@@ -40,6 +40,11 @@ import { Feedback } from './Feedback'
  * 2026-09-20: 3 s then 2.3 s both felt long — and the screen now carries a bar that says where it is, so the wait
  * does not have to be long enough to be understood on its own. */
 const HOLD_MS = 1500
+
+/** Her line as it is written on the right, a new row wherever one sentence ends on a number and the next starts with
+ *  one: "10 − 5 = 5. 9 − 7 = 2." on one row reads as "5.9" (a tester, g6m3-t1, 8 Oct). Only how it is shown changes;
+ *  what she says, its clip and the text a screen reader reads (the space stays) are the same line. */
+const sumLines = (say: string) => say.split(/(?<=\d\.) (?=[\d−])/)
 /** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.65 s.
  * History: ~0.8 s sounded generated, none at all (2026-09-19) ran the sentences together, ~0.45 s (300) was still
  * too quick for the founder (2026-09-24: "add a small pause between the sentences"). */
@@ -350,6 +355,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
                 L{i + 1}
               </button>
             ))}
+            {/* A tester took "the level never moves" for how a child's practice works (8 Oct). It moves for a child:
+                adaptive.ts `step`, two right first tries in a row → one level up. */}
+            <span style={{ fontSize: 14, color: INK, flexBasis: '100%' }}>
+              You choose the level here. For a child, the level moves up by itself after 2 right answers in a row.
+            </span>
           </div>
         )}
         {review && ladder && run && (() => {
@@ -495,7 +505,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     words = sc.beats
       ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sc.beats.slice(0, shown).map((b, i) =>
-            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{b.say}</p>)}
+            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{sumLines(b.say).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : ''}{t}</span>)}</p>)}
         </div>
       : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
     action = <button type="button" data-tour={review ? 'tester-next' : undefined} style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
