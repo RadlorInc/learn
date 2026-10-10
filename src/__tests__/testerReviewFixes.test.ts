@@ -85,3 +85,12 @@ describe('g6m6 · area (triage 10 Oct)', () => {
     expect(label.x!).toBeLessThan(Math.max(...pts.map(q => q[0])))
   })
 })
+
+describe('g6m5 · expressions (triage 10 Oct)', () => {
+  it('t6 Screen 1: the picture is the three bags, one row each of x and 2 — not one block beside a "3"', () => {
+    const p = lesson('g6m5-t6').screens[0].pictures[0]
+    expect(p.kind).toBe('tape')
+    const t = p as Extract<Picture, { kind: 'tape' }>
+    expect(t.rows.map(r => [r.label, r.cells.map(c => c.text)])).toEqual([['Bag 1', ['x', '2']], ['Bag 2', ['x', '2']], ['Bag 3', ['x', '2']]])
+  })
+})
