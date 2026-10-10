@@ -6,9 +6,9 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (9 October 2026)
+## Where things stand (10 October 2026)
 
-- **Production** is on `f29f20b90` (#413); `smoke:live` passed (9 Oct, `SMOKE_SW=v252`; its default is stale).
+- **Production** is on `8180af62b` (#415); `smoke:live` passed (10 Oct, `SMOKE_SW=v252`; its default is stale).
   The repo `learn` is public again (see the Vercel item below). A private beta with families the founder knows has
   run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
@@ -26,11 +26,16 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — Draft PRs waiting for the founder
 
-1. #325 — admin 2-step in the database (migration), after two authenticators enrol at `/admin/mfa`.
-2. #401 — agent fixes (6–7 Oct): flaky audio test, bounded ladder re-rolls, `smoke:live`'s service-worker version.
-3. Superseded handoff Drafts, to close: #330, #343, #350, #393.
+1. **#416 — every lesson clip that said a wrong number, re-recorded** (in progress). Given digits, the voice model
+   dropped words inside numbers (184 → "one hundred four"); a tester heard it, a whisper audit of 6,830 lesson
+   clips found ~180. Lines now reach the model as words; 193 re-rendered, 190 heard back right with
+   `scripts/audio/check-numbers.py`. Left: founder runs `scripts/kaggle/josh-redo4.ipynb` (3 lines), then word times,
+   tag, upload, P5 — the checklist and the local files are in the PR. KG–2 chapter clips were not audited.
+2. #325 — admin 2-step in the database (migration), after two authenticators enrol at `/admin/mfa`.
+3. #401 — agent fixes (6–7 Oct): flaky audio test, bounded ladder re-rolls, `smoke:live`'s service-worker version.
+4. Superseded handoff Drafts, to close: #330, #343, #350, #393.
 
-## Open — paid testers and the triage routine (9 Oct)
+## Open — paid testers and the triage routine (10 Oct)
 
 - Paid testers use Radlor Ops links; who and rates: the founder's private tracker. Its **Tester feedback** tab has one
   row per tester note (Ops, email or LinkedIn) with a status; "Founder decides" rows wait on the founder. Email and
@@ -38,14 +43,18 @@ fixed yet are tracked outside this public repo; ask the founder.
 - Routine **Radlic tester triage** (claude.ai → Routines, daily 03:30 UTC) reads Ops' `GET /api/radlic-tester/export`
   (`TRIAGE_SECRET`; environment `radlic-triage` allows `ops.radlor.com`), fixes clear defects on ONE Draft PR,
   reports; decisions are in its prompt. Its STEP 5 updates the feedback tab, but a routine is not offered the Claude
-  Docs connector (8 Oct): decide a local scheduled task that copies its report into the tab, or the agent on request.
+  Docs connector: a local scheduled task that copies its report into the tab, or the agent on request (done by
+  hand 9 Oct). Its rule "audio reports: count only" also counts a WRONG NUMBER
+  spoken; add "a wrong number or word spoken → re-record (bucket C)" to its prompt (founder's call).
   ⚠️ An API edit re-attaches every connector (prod Supabase too): check `mcp_connections` is empty after one. Push
   fix branches before 09:00 IST or it redoes them.
 - Ops' other admin lists (to-dos, issues…) are read unpaged and cut at 1,000 rows (the testers tab was fixed, #13).
 - Ops: a new tester link REPLACES the card's note; retype the standing note each time.
 - Unsettled: a tester heard "Ana eats 3 slices" twice on g3m5-t7 Screen 1 (on
   screen once; clip `0d68a76d6d2aad99` unheard); where Speed sits (g6m1-t8, Grade 6 in Common Core).
-- How testers abroad are paid: not decided; the first grade completes within days.
+- **How testers in Pakistan are paid: not decided, and now due.** Mubashira finished Grade 3 on 9 Oct (PKR 13,050,
+  due by 23 Oct; she asked for a bank transfer); Faiza is on Grade 6's last module (PKR 12,750); Hamna asked too.
+  Who is where and what each was told: the tracker's "Where we are" (10 Oct).
 
 ## Open — the founder decides
 
@@ -71,19 +80,13 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Open — the founder sets (dashboards and accounts)
 
-- **Before the repo goes private again, fix Vercel.** Measured 28 Sep: while `learn` was private, Vercel refused both
-  production deploys (#313, #314: "Deployment was blocked"); made public again, the next one (`dd36c1e27`) deployed.
-  On Pro a private repo deploys only what a Vercel team member pushed, and `release` is pushed by GitHub Actions
-  (`deploy.yml` promote). After switching back, watch the first production deploy reach READY.
+- **Before `learn` goes private again:** (1) Vercel refused both production deploys while it was private (#313, #314,
+  28 Sep): on Pro it deploys only what a team member pushed, and `release` is pushed by Actions. Unmeasured whether the
+  block checks the author (→ link the founder's GitHub to Vercel) or the pusher (→ a deploy hook from `promote`).
+  (2) Actions minutes: ~5,400 a month against 2,000 free (~US$20 over); set a budget first or deploys stop.
 - Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
 - Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
-- Vercel, before `learn` goes private: does the block check the commit's author (the founder) or the pusher (GitHub
-  Actions)? Unmeasured; the blocked deployment names the user. Author → link the founder's GitHub to Vercel; pusher →
-  a deploy hook called by `promote` (the agent builds it).
-- **If `learn` goes private, Actions minutes cost money**: ~5,400 a month (28 Sep) against 2,000 free, ~US$20 over;
-  without a budget Actions, and so deploys, stop at 2,000. Set a budget first, or have the agent cut minutes (Deploy
-  re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
@@ -124,10 +127,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a person on a screen reader, an iPhone with zoom.
 - An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
-- `nightly-e2e` now sweeps the 23 KG–2 chapters and each grade 3–8 module's first topic (#378); it
-  has not had a scheduled run on GitHub yet — read the first one, and its issue if red.
-  `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: 11 of 25 passed on a correct build (5 Oct) — end-card
-  buttons fail Playwright's "stable" wait (the nudge animates them), 3 chapters "could not look", colors timed out.
+- `e2e/xbrowser-clicks.spec.ts` is not ready for a timer: 11 of 25 passed on a correct build (5 Oct); end-card buttons
+  fail Playwright's "stable" wait (the nudge animates them).
 - `scripts/smoke-live.mjs` hard-codes the expected service-worker version (`v242`; production is `v252`, 9 Oct;
   #401); the ops digest (06:23 UTC) reports the previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
