@@ -73,3 +73,15 @@ describe('g6m4 · percent', () => {
     }
   })
 })
+
+describe('g6m6 · area (triage 10 Oct)', () => {
+  it('t1 Screen 6: "6 cm" stands above the rectangle, on its one unbroken side, not under the moved triangle', () => {
+    const marks = lesson('g6m6-t1').screens[5].chalk!
+    const pts = marks.filter(m => m.d && !m.wash).flatMap(m => [...m.d!.matchAll(/([\d.]+)[ ,]([\d.]+)/g)].map(v => [+v[1], +v[2]]))
+    const label = marks.find(m => m.t === '6 cm')!
+    expect(pts.length).toBeGreaterThan(4)
+    expect(label.y!).toBeLessThan(Math.min(...pts.map(q => q[1])))   // above the top edge
+    expect(label.x!).toBeGreaterThan(Math.min(...pts.map(q => q[0])))
+    expect(label.x!).toBeLessThan(Math.max(...pts.map(q => q[0])))
+  })
+})
