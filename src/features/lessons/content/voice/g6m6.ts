@@ -5,6 +5,9 @@
 import type { VoiceLine } from './styles'
 
 export const G6M6_VOICE: Record<string, VoiceLine> = {
+  // A comma before "and" (9 Oct 2026): as written, three renders in a row said "2 centimeters wide and 2 centimeters tall".
+  'Wrapping a gift. A gift box is 4 cm long, 3 cm wide and 2 cm tall. How much paper covers the outside, with no overlap?':
+    { style: 'A', say: 'Wrapping a gift. A gift box is 4 cm long, 3 cm wide, and 2 cm tall. How much paper covers the outside, with no overlap?' },
   // Each topic's "Here's the part people mix up." and "Okay. Your turn." share g5m1's rows.
   // ── g6m6-t1 ──
   "Could you count square tiles?": { style: 'B' },
