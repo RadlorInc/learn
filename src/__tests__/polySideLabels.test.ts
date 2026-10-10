@@ -66,7 +66,7 @@ describe('poly side labels', () => {
   it('every lesson and ladder poly picture keeps its side labels off its own lines', () => {
     const pics: [string, Poly][] = []
     for (const l of MODULES.flatMap(m => m.lessons)) {
-      const all = [...l.screens.flatMap(s => s.pictures), l.turn.picture, l.turn.twin.picture, ...(l.practice ?? []).map(q => q.picture)]
+      const all = [...l.screens.flatMap(s => s.pictures), l.turn.picture, l.turn.twin.picture, ...(l.practice ?? []).map(q => q.problem.picture)]
       all.forEach((p, i) => { if (p?.kind === 'poly') pics.push([`${l.id} #${i}`, p]) })
       LADDERS[l.id]?.forEach((lv, k) => { for (let seed = 1; seed <= 20; seed++) { const p = lv.make(rng(seed)).picture; if (p?.kind === 'poly') pics.push([`${l.id} L${k + 1} seed ${seed}`, p]) } })
     }
