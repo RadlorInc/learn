@@ -619,9 +619,10 @@ function Poly({ p }: { p: P<'poly'> }) {
     ...(p.circles ?? []).flatMap(c => [[c.c[0] - c.r, c.c[1] - c.r], [c.c[0] + c.r, c.c[1] + c.r]] as Pt[])]
   const xs = all.map(q => q[0]), ys = all.map(q => q[1])
   const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys)
-  const pad = 56, S = Math.min(460 / Math.max(maxX - minX, 1), 300 / Math.max(maxY - minY, 1))
-  const W = (maxX - minX) * S + pad * 2, H = (maxY - minY) * S + pad * 2
-  const X = (x: number) => pad + (x - minX) * S, Y = (y: number) => pad + (maxY - y) * S
+  const pad = 56, padX = 76, S = Math.min(460 / Math.max(maxX - minX, 1), 300 / Math.max(maxY - minY, 1))   // padX: a side label's width
+  const W = (maxX - minX) * S + padX * 2, H = (maxY - minY) * S + pad * 2
+  const X = (x: number) => padX + (x - minX) * S, Y = (y: number) => pad + (maxY - y) * S
+  const edges = p.shapes.flatMap(s => s.pts.map((q, i) => [[X(q[0]), Y(q[1])], [X(s.pts[(i + 1) % s.pts.length][0]), Y(s.pts[(i + 1) % s.pts.length][1])]] as [Pt, Pt]))
   return (
     <Svg w={W} h={H} label="A shape">
       {p.grid && Array.from({ length: Math.floor(maxX) - Math.ceil(minX) + 1 }, (_, i) => <line key={`gx${i}`} x1={X(Math.ceil(minX) + i)} y1={Y(minY)} x2={X(Math.ceil(minX) + i)} y2={Y(maxY)} stroke="#e4d3b6" strokeWidth={1.5} />)}
@@ -641,10 +642,13 @@ function Poly({ p }: { p: P<'poly'> }) {
             {s.sides?.map((lab, i) => {
               if (!lab) return null
               const a = pts[i], b = pts[(i + 1) % n], mx = X((a[0] + b[0]) / 2), my = Y((a[1] + b[1]) / 2)
-              const nx = my - Y(cy), ny = -(mx - X(cx))  // not used directly; push away from the centre instead
-              void nx; void ny
-              const d = norm([mx - X(cx), my - Y(cy)])
-              return <T key={i} x={mx + d[0] * 26} y={my + d[1] * 24} s={20}>{lab}</T>
+              if (s.open) { const d = norm([mx - X(cx), my - Y(cy)]); return <T key={i} x={mx + d[0] * 26} y={my + d[1] * 24} s={20}>{lab}</T> }
+              // Square off the edge, on the side outside the shape (an L shape's inner corner too), and far enough that
+              // the label's box clears the line it names.
+              let d = norm([Y(b[1]) - Y(a[1]), -(X(b[0]) - X(a[0]))])
+              if (inside(pts.map(q => [X(q[0]), Y(q[1])] as Pt), [mx + d[0] * 3, my + d[1] * 3])) d = [-d[0], -d[1]]
+              const k = clear(lab, 20, d)
+              return <T key={i} x={mx + d[0] * k} y={my + d[1] * k} s={20}>{lab}</T>
             })}
             {s.angles?.map((lab, i) => {
               if (!lab) return null
@@ -681,7 +685,14 @@ function Poly({ p }: { p: P<'poly'> }) {
             {(s.arrow === 'end' || s.arrow === 'both') && head(bx, by, u)}
             {s.arrow === 'both' && head(ax, ay, [-u[0], -u[1]])}
             {s.dots && <><circle cx={ax} cy={ay} r={7} fill={INK} /><circle cx={bx} cy={by} r={7} fill={INK} /></>}
-            {s.label && <T x={(ax + bx) / 2 - u[1] * 22} y={(ay + by) / 2 + u[0] * 22} s={19} fill={s.tone === 2 ? ACCENT : INK}>{s.label}</T>}
+            {s.label && (() => {
+              // Beside the line, on whichever side stands further from the shapes' edges (a height inside a leaning side).
+              const k = clear(s.label, 19, [-u[1], u[0]]), mx = (ax + bx) / 2, my = (ay + by) / 2
+              const at = [1, -1].map(sg => [mx - sg * u[1] * k, my + sg * u[0] * k] as Pt)
+              const room = (q: Pt) => Math.min(Infinity, ...edges.map(([e, f]) => toSeg(q, e, f)))
+              const [x, y] = room(at[1]) > room(at[0]) + 1 ? at[1] : at[0]
+              return <T x={x} y={y} s={19} fill={s.tone === 2 ? ACCENT : INK}>{s.label}</T>
+            })()}
           </g>
         )
       })}
@@ -690,6 +701,23 @@ function Poly({ p }: { p: P<'poly'> }) {
   )
 }
 const norm = (v: number[]) => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l] }
+/** How far along the unit normal `d` a label's centre goes so its box (about 0.55 × size a character, by the size
+ *  tall) stands 10 px clear of the line. */
+const clear = (lab: string, size: number, d: number[]) => 10 + Math.abs(d[0]) * lab.length * size * 0.28 + Math.abs(d[1]) * size * 0.5
+/** Distance from `q` to the segment `a`–`b`. */
+const toSeg = (q: Pt, a: Pt, b: Pt) => {
+  const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / (dx * dx + dy * dy || 1)))
+  return Math.hypot(q[0] - a[0] - t * dx, q[1] - a[1] - t * dy)
+}
+/** Is point `q` inside the closed polygon `pts` (even-odd rule)? */
+function inside(pts: Pt[], q: Pt): boolean {
+  let hit = false
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j]
+    if ((yi > q[1]) !== (yj > q[1]) && q[0] < ((xj - xi) * (q[1] - yi)) / (yj - yi) + xi) hit = !hit
+  }
+  return hit
+}
 
 // ── Angles and the protractor ──────────────────────────────────────────────────────────────────
 function Angle({ p }: { p: P<'angle'> }) {
