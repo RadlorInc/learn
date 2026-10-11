@@ -84,10 +84,10 @@ export default function PlayPage() {
     setNote(null)
     const r = await startGameTime(learnerId, minutes)
     if (!r.ok) { setNote(NOT_STARTED[r.error] ?? NOT_STARTED.failed); return void load(learnerId) }
-    await play(new Date(r.playing_until).getTime())
+    await play()
   }
-  async function play(ends: number) {
-    if (learnerId && await openGame(learnerId, ends, game) === 'unreachable') { setNote(NOT_STARTED.unreachable); await load(learnerId) }
+  async function play() {
+    if (learnerId && await openGame(learnerId, game) === 'unreachable') { setNote(NOT_STARTED.unreachable); await load(learnerId) }
   }
 
   const picker = (
@@ -114,7 +114,7 @@ export default function PlayPage() {
     body = <>
       <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left</p>
       {picker}
-      <button type="button" style={primary} onClick={() => play(until)}>Play {gameName}</button>
+      <button type="button" style={primary} onClick={() => play()}>Play {gameName}</button>
       <button type="button" style={{ ...primary, background: '#fff' }} onClick={stop}>Stop and keep my minutes</button>
       {note && <p style={bubble}>{note}</p>}
     </>

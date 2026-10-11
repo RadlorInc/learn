@@ -35,12 +35,12 @@ async function show() {
   await vi.waitFor(() => expect(host.textContent).toContain('BeatHop'))
 }
 
-it('buying time with BeatHop picked opens BeatHop, at the end time the database returned', async () => {
+it('buying time with BeatHop picked opens BeatHop (the game asks the database how long)', async () => {
   wallet = base
   await show()
   await act(async () => { button('🏃 BeatHop').click() })
   await act(async () => { button('Play 5 minutes').click() })
-  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'beathop')
+  expect(openGame).toHaveBeenCalledWith('kid-1', 'beathop')
 })
 
 it('buying time with Peak Rider picked opens Peak Rider', async () => {
@@ -49,7 +49,7 @@ it('buying time with Peak Rider picked opens Peak Rider', async () => {
   await act(async () => { button('🏔️ Peak Rider').click() })
   expect(button('🏔️ Peak Rider').getAttribute('aria-label')).toBe('Peak Rider: Rough roads, deep gaps: keep your car on its wheels')
   await act(async () => { button('Play 5 minutes').click() })
-  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'peak')
+  expect(openGame).toHaveBeenCalledWith('kid-1', 'peak')
 })
 
 it('back from Peak Rider (/play?game=peak) the pick is still Peak Rider; an unknown game falls back to BlockCraft', async () => {
@@ -73,14 +73,14 @@ it('buying time with Rescue Rush picked opens Rescue Rush', async () => {
   await act(async () => { button('🚨 Rescue Rush').click() })
   expect(button('🚨 Rescue Rush').getAttribute('aria-label')).toBe('Rescue Rush: Race the clock to the hospital')
   await act(async () => { button('Play 5 minutes').click() })
-  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'rush')
+  expect(openGame).toHaveBeenCalledWith('kid-1', 'rush')
 })
 
 it('nothing picked: BlockCraft, as before', async () => {
   wallet = base
   await show()
   await act(async () => { button('Play 5 minutes').click() })
-  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'blockcraft')
+  expect(openGame).toHaveBeenCalledWith('kid-1', 'blockcraft')
 })
 
 it('back from BeatHop (/play?game=beathop) the pick is still BeatHop, and each choice is named for a screen reader', async () => {
@@ -92,15 +92,15 @@ it('back from BeatHop (/play?game=beathop) the pick is still BeatHop, and each c
     expect(button('🏃 BeatHop').getAttribute('aria-label')).toBe('BeatHop: Jump, glide and flip to the flag')
     expect(button('🧱 BlockCraft').getAttribute('aria-label')).toBe('BlockCraft: Build your own world')
     await act(async () => { button('Play 🏃 BeatHop').click() })
-    expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2099-01-01T00:00:00Z'), 'beathop')
+    expect(openGame).toHaveBeenCalledWith('kid-1', 'beathop')
   } finally { history.replaceState(null, '', '/') }
 })
 
-it('while the time lasts the child can switch: BeatHop picked, "Play" opens BeatHop with the same end time', async () => {
+it('while the time lasts the child can switch: BeatHop picked, "Play" opens BeatHop for the same paid time', async () => {
   wallet = { ...base, playing_until: '2099-01-01T00:00:00Z' }
   await show()
   await act(async () => { button('🏃 BeatHop').click() })
   expect(button('🏃 BeatHop').getAttribute('aria-checked')).toBe('true')
   await act(async () => { button('Play 🏃 BeatHop').click() })
-  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2099-01-01T00:00:00Z'), 'beathop')
+  expect(openGame).toHaveBeenCalledWith('kid-1', 'beathop')
 })

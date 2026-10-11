@@ -61,21 +61,21 @@ export type GameId = 'blockcraft' | 'beathop' | 'peak' | 'rush'
  *  sweep and the doc 08 rows. */
 export const deviceSaveKey = (game: Exclude<GameId, 'blockcraft'>, learnerId: string) => `${game}.save.${learnerId}`
 
-/** The game, full page, for this child until `until` (ms). It saves under its key and comes back to /play. */
-export const gameUrl = (learnerId: string, until: number, game: GameId = 'blockcraft') =>
-  game === 'blockcraft'
-    ? `/blockcraft/index.html?key=${encodeURIComponent(localSaveKey(learnerId))}&until=${until}`
-    : `/${game}/index.html?key=${encodeURIComponent(deviceSaveKey(game, learnerId))}&until=${until}`
+/** The game, full page, for this child. It saves under its key, asks the database how long it may play
+ *  (/api/game-time, public/play-time.js — no end time rides in the URL, so editing it plays no longer) and comes back
+ *  to /play. */
+export const gameUrl = (learnerId: string, game: GameId = 'blockcraft') =>
+  `/${game}/index.html?key=${encodeURIComponent(game === 'blockcraft' ? localSaveKey(learnerId) : deviceSaveKey(game, learnerId))}&learner=${encodeURIComponent(learnerId)}`
 
 /**
  * Opens the game. For BlockCraft it first puts the newest save on this device (the game reads only this device);
  * 'unreachable' = nothing opened: the account could not be read and this device has no copy, so a new world would
  * overwrite the real one. The other games' saves are only on this device, so they open at once.
  */
-export async function openGame(learnerId: string, until: number, game: GameId = 'blockcraft'): Promise<'unreachable' | void> {
-  if (game !== 'blockcraft') return location.assign(gameUrl(learnerId, until, game))
+export async function openGame(learnerId: string, game: GameId = 'blockcraft'): Promise<'unreachable' | void> {
+  if (game !== 'blockcraft') return location.assign(gameUrl(learnerId, game))
   const save = await loadGameSave(learnerId)
   if (save === 'unreachable') return save
   try { if (save) localStorage.setItem(localSaveKey(learnerId), JSON.stringify(save)) } catch { /* full: the game starts from what is there */ }
-  location.assign(gameUrl(learnerId, until))
+  location.assign(gameUrl(learnerId))
 }

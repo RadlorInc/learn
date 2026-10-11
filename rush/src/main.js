@@ -1,6 +1,6 @@
 // Rescue Rush: screens, controls, the garage and saving around the rules (rules.js), the calls (levels.js) and the 3D
-// view (view.js). Like the other games, it plays standalone, or inside the app with ?key=<save key>&until=<ms>: it
-// stops at `until` and goes back to /play.
+// view (view.js). Like the other games, it plays standalone (on localhost only), or inside the
+// app with ?key=<save key>&learner=<child id>: it plays the time the database says and goes back to /play.
 import { DT, newRun, step, vehicleStats } from './rules.js';
 import { LEVELS } from './levels.js';
 import { createView } from './view.js';
@@ -9,7 +9,7 @@ import * as audio from './audio.js';
 const { sfx } = audio;
 const $ = (id) => document.getElementById(id);
 const Q = new URLSearchParams(location.search);
-const PLAY = Q.has('key') && Q.has('until') ? { key: Q.get('key'), until: +Q.get('until') } : null;
+const PLAY = Q.has('key') && Q.has('learner') ? { key: Q.get('key'), learner: Q.get('learner') } : null;
 const SAVE_KEY = PLAY ? PLAY.key : 'rush.save';
 // `game=rush` keeps Rescue Rush picked on /play when the child comes back
 const BACK = '/play?game=rush', STOP = '/play?stop=1&game=rush';
@@ -181,20 +181,17 @@ addEventListener('blur', pause);
 document.addEventListener('visibilitychange', () => document.hidden && pause());
 
 // ------------------------------------------------------------------ inside the app: a time limit
+// how long is decided by the database (public/play-time.js), never by the URL or this device's clock
 if (PLAY) {
   $('bLeave').classList.remove('hidden');
   $('bLeave').onclick = () => { persist(); location.replace(STOP); };
-  if (Date.now() >= PLAY.until) location.replace(BACK);
   $('timer').classList.remove('hidden');
-  const tick = setInterval(() => {
-    const left = Math.max(0, Math.ceil((PLAY.until - Date.now()) / 1000));
-    $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
-    if (left === 0) {
-      clearInterval(tick); persist(); state = 'paused';
-      toast("Time's up! Your coins are saved."); setTimeout(() => location.replace(BACK), 2500);
-    }
-  }, 1000);
 }
+import('/play-time.js').then(({ playTime }) => playTime({
+  learner: PLAY?.learner, back: BACK,
+  show: (left) => { $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; },
+  done: () => { persist(); state = 'paused'; toast("Time's up! Your coins are saved."); },
+}), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
 
 // for poking at the game from the console while building it; never on a real host
 if (['localhost', '127.0.0.1'].includes(location.hostname)) window.RR = { run: () => run, start: startLevel, keys, save: () => save, LEVELS, auto: (f) => (autopilot = f) };
