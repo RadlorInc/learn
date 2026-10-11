@@ -6,7 +6,7 @@
     "smoke:live": "node scripts/smoke-live.mjs",
     "dev": "next dev",
     "build": "next build",
-    "build:game": "npm --prefix blockcraft ci --no-audit --no-fund && npm --prefix blockcraft run build",
+    "build:game": "npm --prefix blockcraft ci --no-audit --no-fund && npm --prefix blockcraft run build && rm -rf public/beathop && mkdir -p public/beathop && cp -R beathop/index.html beathop/src public/beathop/",
     "prebuild": "npm run build:game",
     "start": "next start",
     "lint": "eslint",

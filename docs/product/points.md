@@ -49,6 +49,11 @@ mode only, built from `blockcraft/` into `public/blockcraft` — as a full page 
 `/play` uploads that save to `game_saves`, so the next game starts where this one stopped. (From 2026-09-26 to
 2026-10-01 nothing spent points: a child had bought minutes over an empty placeholder and lost them.)
 
+**A second game (2026-10-11): BeatHop**, a one-button jump-and-glide game (`beathop/`, copied into `public/beathop` by
+`npm run build:game`). `/play` shows both; the paid time is for either, and while it lasts the child can switch. BeatHop
+takes the same URL (`?key=…&until=…`), clock and "Stop and keep my minutes", but its save (levels, stars, gems) stays
+on the device — `game_saves` holds one save per child, BlockCraft's — so another device starts it at level 1.
+
 **Stopping early gives the unused minutes back.** The clock is the database's and keeps running while the child is off
 the game, so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the
 purchase to the time played and ends it. Points follow the seconds (1 point per 7.5 s, rounded up, at least 1 point),

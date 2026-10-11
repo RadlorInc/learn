@@ -2,19 +2,25 @@
 /**
  * /play — the child spends points on game time (rules: docs/product/points.md). Everything that decides whether the
  * game may start — the balance, the parent's daily minutes, on/off — is decided by the database (`start_game_time`);
- * this page shows the wallet and opens the game (public/blockcraft, built from blockcraft/) full page until the end
- * time the database returned. The game saves on this device and comes back here when the time is up; this page then
- * uploads that save to the child's account (`loadGameSave`), so the next game starts where this one stopped.
+ * this page shows the wallet and opens the game the child picked full page until the end time the database returned:
+ * BlockCraft (public/blockcraft, built from blockcraft/) or BeatHop (public/beathop, copied from beathop/). The paid
+ * time is for either, and the child can switch while it lasts. A game saves on this device and comes back here when
+ * the time is up; for BlockCraft this page then uploads that save to the child's account (`loadGameSave`), so the next
+ * game starts where this one stopped. BeatHop's save stays on the device (gameSave.ts).
  */
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { endGameTime, getWallet, startGameTime, type Wallet } from '@/data/repositories/points'
-import { loadGameSave, openGame } from '@/data/repositories/gameSave'
+import { loadGameSave, openGame, type GameId } from '@/data/repositories/gameSave'
 import { INK, PAGE_BG, pill, shell, topBar } from '@/features/lessons/Pictures'
 import { bubble, idea, primary } from '@/features/lessons/Frame'
 
 const CHOICES = [5, 10, 15]
+const GAMES: { id: GameId; name: string; about: string }[] = [
+  { id: 'blockcraft', name: '🧱 BlockCraft', about: 'Build your own world' },
+  { id: 'beathop', name: '🏃 BeatHop', about: 'Jump, glide and flip to the flag' },
+]
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
 const NOT_STARTED: Record<string, string> = {
   off: 'Game time is switched off right now. Ask your grown-up.',
@@ -38,6 +44,9 @@ export default function PlayPage() {
   const [wallet, setWallet] = useState<Wallet | 'unavailable' | null | undefined>(undefined)
   const [note, setNote] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
+  // Back from BeatHop (`/play?game=beathop`): the pick stays BeatHop. Read once; nothing renders it before mount.
+  const [game, setGame] = useState<GameId>(() =>
+    typeof location !== 'undefined' && new URLSearchParams(location.search).get('game') === 'beathop' ? 'beathop' : 'blockcraft')
 
   const load = useCallback((id: string) => getWallet(id).then(setWallet), [])
   // Back from the game: its save is on this device and newer than the account's, so this uploads it. The game's
@@ -74,8 +83,21 @@ export default function PlayPage() {
     await play(new Date(r.playing_until).getTime())
   }
   async function play(ends: number) {
-    if (learnerId && await openGame(learnerId, ends) === 'unreachable') { setNote(NOT_STARTED.unreachable); await load(learnerId) }
+    if (learnerId && await openGame(learnerId, ends, game) === 'unreachable') { setNote(NOT_STARTED.unreachable); await load(learnerId) }
   }
+
+  const picker = (
+    <div role="radiogroup" aria-label="Pick a game" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+      {GAMES.map(g => (
+        <button key={g.id} type="button" role="radio" aria-checked={game === g.id} aria-label={`${g.name.slice(g.name.indexOf(' ') + 1)}: ${g.about}`} onClick={() => setGame(g.id)}
+          style={{ ...primary, background: game === g.id ? primary.background : '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+          <span>{g.name}</span>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{g.about}</span>
+        </button>
+      ))}
+    </div>
+  )
+  const gameName = GAMES.find(g => g.id === game)!.name
 
   let body
   if (learnerId === undefined || wallet === undefined && learnerId) body = null
@@ -87,7 +109,8 @@ export default function PlayPage() {
     const left = Math.max(0, Math.ceil((until - now) / 1000))
     body = <>
       <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left</p>
-      <button type="button" style={primary} onClick={() => play(until)}>Back to my game</button>
+      {picker}
+      <button type="button" style={primary} onClick={() => play(until)}>Play {gameName}</button>
       <button type="button" style={{ ...primary, background: '#fff' }} onClick={stop}>Stop and keep my minutes</button>
       {note && <p style={bubble}>{note}</p>}
     </>
@@ -106,9 +129,9 @@ export default function PlayPage() {
       {!wallet.enabled ? <p style={bubble}>{NOT_STARTED.off}</p>
         : todayLeft === 0 ? <p style={bubble}>{NOT_STARTED.daily_limit}</p>
         : canAfford === 0 ? <p style={bubble}>You need {perMin} points for a minute of game. Practice a topic to earn them!</p>
-        : <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
+        : <>{picker}<div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
             {choices.map(m => <button key={m} type="button" style={primary} onClick={() => start(m)}>Play {m} minute{m === 1 ? '' : 's'} · {m * perMin} points</button>)}
-          </div>}
+          </div></>}
       {note && <p style={bubble}>{note}</p>}
       <p style={{ margin: 0, fontSize: 16, color: INK, textAlign: 'center' }}>Earn points: every practice problem, every level up, and every topic you finish or master.</p>
     </>
