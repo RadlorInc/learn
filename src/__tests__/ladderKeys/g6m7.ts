@@ -31,7 +31,7 @@ const fracVal = (s: string): number => { const [a, b] = s.split('/').map(Number)
 const rowNums = (p: any, r = 0): number[] =>
   (p.rows[r] as string[]).slice(p.rowHead ? 1 : 0).filter(c => c !== '' && c !== '?').map(num)
 const numlinePts = (p: any): number[] => (p.points as { at: number }[]).map(x => x.at)
-/** Dot plot expanded to one value per ✕. */
+/** Dot plot expanded to one value per dot. */
 const dotData = (p: any): number[] =>
   (p.labels as string[]).flatMap((l, i) => Array<number>(p.values[i]).fill(num(l)))
 const dotCount = (p: any, keep: (v: number) => boolean): number =>
@@ -83,7 +83,7 @@ export const SOLVE: Record<string, (q: Q) => string> = {
         return !!m && +m[1] === med
       })
     }
-    if (/Each ✕ is one kid\. What is the median\?/.test(t)) return str(median(dotData(p)))
+    if (/Each dot is one kid\. What is the median\?/.test(t)) return str(median(dotData(p)))
     if (/median/.test(t) && p.kind === 'table') return str(median(rowNums(p)))
     return fail(q)
   },

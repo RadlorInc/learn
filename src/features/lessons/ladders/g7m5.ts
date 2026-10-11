@@ -241,7 +241,7 @@ const T3: Level[] = [
     while (mB === mA) mB = int(r, lo, lo + 8)
     const labels = Array.from({ length: 7 }, (_, i) => String(lo + i)), gap = Math.abs(mA - mB)
     return { text: `The dot plot shows the heights of Class A's ${n} plants. Each dot is one plant. Class B's plants have a mean height of ${mB} inches. What is the difference between the two means, in inches?`,
-      picture: { kind: 'chart', type: 'dot', labels, values: labels.map(l => A.filter(x => x === +l).length), xLabel: 'Class A plants (inches)' },
+      picture: { kind: 'chart', type: 'dot', dots: true, labels, values: labels.map(l => A.filter(x => x === +l).length), xLabel: 'Class A plants (inches)' },
       answer: gap,
       steps: [`Add up Class A: ${A.join(' + ')} = ${sum(A)}.`, `${sum(A)} ÷ ${n} = ${mA}, so Class A's mean is ${mA}.`, `${Math.max(mA, mB)} − ${Math.min(mA, mB)} = ${gap}. So the difference is ${gap} ${plural(gap, 'inch', 'inches')}.`] }
   }),

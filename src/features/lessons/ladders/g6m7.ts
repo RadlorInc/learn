@@ -165,9 +165,9 @@ const T2: Level[] = [
       const said: string[] = []
       for (; at < values.length; at++) { run += values[at]; said.push(`${labels[at]} has ${values[at]} (${run} so far)`); if (run >= k) break }
       const med = +labels[at]
-      return { text: `${total} ${ctx.intro}. Each ✕ is one kid. What is the median?`,
-        picture: { kind: 'chart', type: 'dot', labels, values, xLabel: ctx.x }, answer: med,
-        steps: [`There are ${total} ✕s, so the middle one is number ${k}.`, `Count the ✕s from the left: ${said.join(', ')}.`, `Number ${k} is in the stack above ${med}. So the median is ${med}.`] }
+      return { text: `${total} ${ctx.intro}. Each dot is one kid. What is the median?`,
+        picture: { kind: 'chart', type: 'dot', dots: true, labels, values, xLabel: ctx.x }, answer: med,
+        steps: [`There are ${total} dots, so the middle one is number ${k}.`, `Count the dots from the left: ${said.join(', ')}.`, `Number ${k} is in the stack above ${med}. So the median is ${med}.`] }
     }
   }),
 ]
@@ -203,9 +203,9 @@ const T3: Level[] = [
   lv('dot plot, tallest stack', r => {
     const ctx = pick(r, DOT_CTX), { v, i, top } = stacks(r, 5, 0, 6)
     const labels = v.map((_, j) => String(ctx.start + j)), mode = +labels[i]
-    return { text: `${ctx.intro} Each ✕ is one kid. Which number is the most common?`,
-      picture: { kind: 'chart', type: 'dot', labels, values: v, xLabel: ctx.x }, answer: mode,
-      steps: ['Each ✕ is one kid. Find the tallest stack.', `The stack above ${mode} has ${top} ✕s, more than any other.`, `So the most common number is ${mode}.`] }
+    return { text: `${ctx.intro} Each dot is one kid. Which number is the most common?`,
+      picture: { kind: 'chart', type: 'dot', dots: true, labels, values: v, xLabel: ctx.x }, answer: mode,
+      steps: ['Each dot is one kid. Find the tallest stack.', `The stack above ${mode} has ${top} dots, more than any other.`, `So the most common number is ${mode}.`] }
   }),
   lv('table of how many, find the mode', r => {
     const ctx = pick(r, [
@@ -232,10 +232,10 @@ const T3: Level[] = [
       const labels = v.map((_, j) => String(ctx.start + j)), mode = +labels[i], other = +labels[second]
       if (top === mode || top === other) continue
       const right = `The mode is ${mode}.`
-      return { text: `${ctx.intro} Each ✕ is one kid. Which sentence is true?`,
-        picture: { kind: 'chart', type: 'dot', labels, values: v, xLabel: ctx.x },
+      return { text: `${ctx.intro} Each dot is one kid. Which sentence is true?`,
+        picture: { kind: 'chart', type: 'dot', dots: true, labels, values: v, xLabel: ctx.x },
         answer: choose(r, right, [`The mode is ${top}.`, `The mode is ${other}.`]),
-        steps: [`The tallest stack has ${top} ✕s, and it sits above ${mode}.`, 'The mode is the number under the tallest stack, not how tall the stack is.', `So the true sentence is: ${right}`] }
+        steps: [`The tallest stack has ${top} dots, and it sits above ${mode}.`, 'The mode is the number under the tallest stack, not how tall the stack is.', `So the true sentence is: ${right}`] }
     }
   }),
   lv('two classes, how far apart are their modes', r => {
@@ -364,7 +364,7 @@ const DOTS6 = [
 const dotData = (r: Rng) => {
   const ctx = pick(r, DOTS6), values = Array.from({ length: 6 }, () => int(r, 1, 7))
   const labels = values.map((_, i) => String(ctx.start + i))
-  return { ctx, values, labels, pic: { kind: 'chart', type: 'dot', labels, values, xLabel: ctx.x } as Picture }
+  return { ctx, values, labels, pic: { kind: 'chart', type: 'dot', dots: true, labels, values, xLabel: ctx.x } as Picture }
 }
 const HIST6 = [
   { x: 'Minutes', y: 'Kids', what: 'how many minutes kids read last night', who: 'kids', did: 'read for', unit: 'minutes', base: 0 },
@@ -381,14 +381,14 @@ const T6: Level[] = [
   lv('dot plot, count one stack', r => {
     const { ctx, values, labels, pic } = dotData(r), i = int(r, 2, 5), k = labels[i]
     return { text: `${ctx.intro} How many kids ${ctx.verb} exactly ${k} ${ctx.noun}?`, picture: pic, answer: values[i],
-      steps: ['Each ✕ is one kid.', `Count the ✕s in the stack above ${k}.`, `There are ${values[i]}. So ${pl(values[i], 'kid')} ${ctx.verb} ${k} ${ctx.noun}.`] }
+      steps: ['Each dot is one kid.', `Count the dots in the stack above ${k}.`, `There are ${values[i]}. So ${pl(values[i], 'kid')} ${ctx.verb} ${k} ${ctx.noun}.`] }
   }),
   lv('dot plot, "or more" / "fewer than": add stacks', r => {
     const { ctx, values, labels, pic } = dotData(r), more = r() < 0.5, i = int(r, 2, 4), k = labels[i]
     const idx = more ? Array.from({ length: 6 - i }, (_, j) => i + j) : Array.from({ length: i }, (_, j) => j)
     const got = idx.map(j => values[j]), ans = sum(got)
     return { text: `${ctx.intro} How many kids ${ctx.verb} ${more ? `${k} or more` : `fewer than ${k}`} ${ctx.noun}?`, picture: pic, answer: ans,
-      steps: [`${more ? `${k} or more` : `Fewer than ${k}`} means the stacks above ${and(idx.map(j => labels[j]))}.`, `Count their ✕s: ${and(got)}.`, `${plus(got)} = ${ans}. So ${pl(ans, 'kid')}.`] }
+      steps: [`${more ? `${k} or more` : `Fewer than ${k}`} means the stacks above ${and(idx.map(j => labels[j]))}.`, `Count their dots: ${and(got)}.`, `${plus(got)} = ${ans}. So ${pl(ans, 'kid')}.`] }
   }),
   lv('histogram, add the bars you need', r => {
     const { ctx, values, labels } = histData(r), k = values.length, cut = int(r, 1, k - 1), edge = ctx.base + 10 * cut, less = r() < 0.5
@@ -403,7 +403,7 @@ const T6: Level[] = [
     const { ctx, values, labels, pic } = dotData(r), a = int(r, 0, 2), b = int(r, a + 3, 5)
     const idx = Array.from({ length: b - a - 1 }, (_, j) => a + 1 + j), got = idx.map(j => values[j]), ans = sum(got)
     return { text: `${ctx.intro} How many kids ${ctx.verb} more than ${labels[a]} but fewer than ${labels[b]} ${ctx.noun}?`, picture: pic, answer: ans,
-      steps: [`More than ${labels[a]} and fewer than ${labels[b]} means ${and(idx.map(j => labels[j]))}. Not ${labels[a]}, and not ${labels[b]}.`, `Count their ✕s: ${and(got)}.`, `${plus(got)} = ${ans}. So ${pl(ans, 'kid')}.`] }
+      steps: [`More than ${labels[a]} and fewer than ${labels[b]} means ${and(idx.map(j => labels[j]))}. Not ${labels[a]}, and not ${labels[b]}.`, `Count their dots: ${and(got)}.`, `${plus(got)} = ${ans}. So ${pl(ans, 'kid')}.`] }
   }),
   lv('histogram with a missing bar, work backwards from the total', r => {
     const { ctx, values, labels } = histData(r), i = int(r, 0, values.length - 1), total = sum(values), rest = values.filter((_, j) => j !== i)
