@@ -50,6 +50,19 @@ it('nothing picked: BlockCraft, as before', async () => {
   expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'blockcraft')
 })
 
+it('back from BeatHop (/play?game=beathop) the pick is still BeatHop, and each choice is named for a screen reader', async () => {
+  wallet = { ...base, playing_until: '2099-01-01T00:00:00Z' }
+  history.replaceState(null, '', '/play?game=beathop')
+  try {
+    await show()
+    expect(button('🏃 BeatHop').getAttribute('aria-checked')).toBe('true')
+    expect(button('🏃 BeatHop').getAttribute('aria-label')).toBe('BeatHop: Jump, glide and flip to the flag')
+    expect(button('🧱 BlockCraft').getAttribute('aria-label')).toBe('BlockCraft: Build your own world')
+    await act(async () => { button('Play 🏃 BeatHop').click() })
+    expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2099-01-01T00:00:00Z'), 'beathop')
+  } finally { history.replaceState(null, '', '/') }
+})
+
 it('while the time lasts the child can switch: BeatHop picked, "Play" opens BeatHop with the same end time', async () => {
   wallet = { ...base, playing_until: '2099-01-01T00:00:00Z' }
   await show()

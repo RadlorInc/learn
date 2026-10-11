@@ -65,7 +65,7 @@ describe('BeatHop, the second game on /play', () => {
     expect(beat).toMatch(/Q\.has\('key'\) && Q\.has\('until'\)/)
     expect(beat).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'beathop.save'")
     expect(beat).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
-    expect(beat).toContain("const BACK = '/play', STOP = '/play?stop=1'")
+    expect(beat).toContain("const BACK = '/play?game=beathop', STOP = '/play?stop=1&game=beathop'")
     expect(beat).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
     expect(beat).toMatch(/if \(left === 0\) \{\s*clearInterval\(tick\); persist\(\);[^\n]*\n[^\n]*location\.replace\(BACK\)/)
   })

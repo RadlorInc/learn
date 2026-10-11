@@ -44,7 +44,9 @@ export default function PlayPage() {
   const [wallet, setWallet] = useState<Wallet | 'unavailable' | null | undefined>(undefined)
   const [note, setNote] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
-  const [game, setGame] = useState<GameId>('blockcraft')
+  // Back from BeatHop (`/play?game=beathop`): the pick stays BeatHop. Read once; nothing renders it before mount.
+  const [game, setGame] = useState<GameId>(() =>
+    typeof location !== 'undefined' && new URLSearchParams(location.search).get('game') === 'beathop' ? 'beathop' : 'blockcraft')
 
   const load = useCallback((id: string) => getWallet(id).then(setWallet), [])
   // Back from the game: its save is on this device and newer than the account's, so this uploads it. The game's
@@ -87,7 +89,7 @@ export default function PlayPage() {
   const picker = (
     <div role="radiogroup" aria-label="Pick a game" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
       {GAMES.map(g => (
-        <button key={g.id} type="button" role="radio" aria-checked={game === g.id} onClick={() => setGame(g.id)}
+        <button key={g.id} type="button" role="radio" aria-checked={game === g.id} aria-label={`${g.name.slice(g.name.indexOf(' ') + 1)}: ${g.about}`} onClick={() => setGame(g.id)}
           style={{ ...primary, background: game === g.id ? primary.background : '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <span>{g.name}</span>
           <span style={{ fontSize: 14, fontWeight: 600 }}>{g.about}</span>

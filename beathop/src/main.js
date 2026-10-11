@@ -11,7 +11,8 @@ const cv = $('cv'), cx = cv.getContext('2d');
 const Q = new URLSearchParams(location.search);
 const PLAY = Q.has('key') && Q.has('until') ? { key: Q.get('key'), until: +Q.get('until') } : null;
 const SAVE_KEY = PLAY ? PLAY.key : 'beathop.save';
-const BACK = '/play', STOP = '/play?stop=1';
+// `game=beathop` keeps BeatHop picked on /play when the child comes back
+const BACK = '/play?game=beathop', STOP = '/play?stop=1&game=beathop';
 const COLORS = ['#ff7a1a', '#2f9bff', '#22c55e', '#e64ba0', '#8b5cf6', '#f5c400'];
 
 // kind: 'day' = clouds (and a sun if `sun`), 'dark' = twinkling dots in the deco colour (and a moon if `sun`),
