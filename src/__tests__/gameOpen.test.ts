@@ -48,6 +48,34 @@ describe('opening the game from /play', () => {
   })
 })
 
+describe('BeatHop, the second game on /play', () => {
+  it('opens with this child\'s own device key and the end time, without reading the account', async () => {
+    reply = 'throw' // the account is unreachable: BeatHop's save is on the device, so it still opens
+    expect(await openGame('kid-1', 1234, 'beathop')).toBeUndefined()
+    expect(assign).toHaveBeenCalledWith('/beathop/index.html?key=beathop.save.kid-1&until=1234')
+  })
+  it('BlockCraft is still the one opened when no game is named', async () => {
+    reply = { data: null, error: null }
+    await openGame('kid-1', 99)
+    expect(assign).toHaveBeenCalledWith('/blockcraft/index.html?key=blockcraft.save.kid-1&until=99')
+  })
+
+  const beat = readFileSync(resolve(__dirname, '../../beathop/src/main.js'), 'utf8')
+  it('the game reads the key and end time, saves under that key, and goes back to /play (or stops the time)', () => {
+    expect(beat).toMatch(/Q\.has\('key'\) && Q\.has\('until'\)/)
+    expect(beat).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'beathop.save'")
+    expect(beat).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
+    expect(beat).toContain("const BACK = '/play', STOP = '/play?stop=1'")
+    expect(beat).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
+    expect(beat).toMatch(/if \(left === 0\) \{\s*clearInterval\(tick\); persist\(\);[^\n]*\n[^\n]*location\.replace\(BACK\)/)
+  })
+  it('the build copies it into public/beathop, where gameUrl points', () => {
+    const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'))
+    expect(pkg.scripts['build:game']).toContain('cp -R beathop/index.html beathop/src public/beathop/')
+    expect(pkg.scripts.prebuild).toBe('npm run build:game')
+  })
+})
+
 describe('the game keeps its half of the wire', () => {
   const game = readFileSync(resolve(__dirname, '../../blockcraft/src/main.js'), 'utf8')
   it('reads the key and end time from the URL, saves under that key, and goes back to /play', () => {
