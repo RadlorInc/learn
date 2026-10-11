@@ -25,6 +25,8 @@ const DAY = 1200; // seconds per full day
 const REACH = 5;
 const P_HW = 0.3, P_H = 1.8, EYE = 1.62;
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+document.querySelectorAll('.keyslist').forEach((el) => el.classList.toggle('hidden', isTouch)); // a touch screen has its own buttons, not keys
+let keysHidden = (() => { try { return localStorage.getItem('blockcraft.keysHidden') === '1'; } catch { return false; } })(); // H hides the keys list
 const FACING = (yaw) => { const fx = -Math.sin(yaw), fz = -Math.cos(yaw); return Math.abs(fx) > Math.abs(fz) ? (fx > 0 ? 1 : 3) : (fz > 0 ? 2 : 0); };
 
 // ------------------------------------------------------------------ renderer / scene
@@ -206,6 +208,7 @@ function show(name) {
   for (const s of screens) $(s).classList.toggle('hidden', s !== name);
   $('hud').classList.toggle('hidden', !['playing', 'paused', 'dead'].includes(G.state) && name !== 'inventory');
   $('touch').classList.toggle('hidden', !isTouch || G.state !== 'playing' || name === 'inventory');
+  $('keys').classList.toggle('hidden', isTouch || keysHidden || G.state !== 'playing' || name === 'inventory');
   if (name === 'title') $('bContinue').classList.toggle('hidden', !hasSave());
 }
 if (PLAY) {
@@ -292,6 +295,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyE') openInventory(G.mode === 'creative' ? 'creative' : 'inv');
   if (e.code === 'KeyQ') dropHeld(e.ctrlKey);
   if (e.code === 'F3') { $('debug').classList.toggle('hidden'); e.preventDefault(); }
+  if (e.code === 'KeyH') { keysHidden = !keysHidden; try { localStorage.setItem('blockcraft.keysHidden', keysHidden ? '1' : '0'); } catch { /* private mode */ } $('keys').classList.toggle('hidden', keysHidden); }
   if (e.code === 'Escape') pause();
 });
 addEventListener('keyup', (e) => {

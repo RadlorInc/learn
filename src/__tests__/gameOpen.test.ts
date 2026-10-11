@@ -76,6 +76,50 @@ describe('BeatHop, the second game on /play', () => {
   })
 })
 
+describe('Peak Rider, the third game on /play', () => {
+  it('opens with this child\'s own device key and the end time, without reading the account', async () => {
+    reply = 'throw'
+    expect(await openGame('kid-1', 4321, 'peak')).toBeUndefined()
+    expect(assign).toHaveBeenCalledWith('/peak/index.html?key=peak.save.kid-1&until=4321')
+  })
+  const peak = readFileSync(resolve(__dirname, '../../peak/src/main.js'), 'utf8')
+  it('the game reads the key and end time, saves under that key, and goes back to /play (or stops the time)', () => {
+    expect(peak).toMatch(/Q\.has\('key'\) && Q\.has\('until'\)/)
+    expect(peak).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'peak.save'")
+    expect(peak).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
+    expect(peak).toContain("const BACK = '/play?game=peak', STOP = '/play?stop=1&game=peak'")
+    expect(peak).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
+    expect(peak).toMatch(/if \(left === 0\) \{\s*clearInterval\(tick\); persist\(\);[^\n]*\n[^\n]*location\.replace\(BACK\)/)
+  })
+  it('the build copies it (and the three.js it imports) into public/peak, where gameUrl points', () => {
+    const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'))
+    expect(pkg.scripts['build:game']).toContain('cp -R peak/index.html peak/src peak/vendor public/peak/')
+  })
+})
+
+describe('Rescue Rush, the fourth game on /play', () => {
+  it('opens with this child\'s own device key and the end time, without reading the account', async () => {
+    reply = 'throw'
+    expect(await openGame('kid-1', 4321, 'rush')).toBeUndefined()
+    expect(assign).toHaveBeenCalledWith('/rush/index.html?key=rush.save.kid-1&until=4321')
+  })
+  const rush = readFileSync(resolve(__dirname, '../../rush/src/main.js'), 'utf8')
+  it('the game reads the key and end time, saves under that key, and goes back to /play (or stops the time)', () => {
+    expect(rush).toMatch(/Q\.has\('key'\) && Q\.has\('until'\)/)
+    expect(rush).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'rush.save'")
+    expect(rush).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
+    expect(rush).toContain("const BACK = '/play?game=rush', STOP = '/play?stop=1&game=rush'")
+    expect(rush).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
+    expect(rush).toMatch(/if \(left === 0\) \{\s*clearInterval\(tick\); persist\(\);[^\n]*\n[^\n]*location\.replace\(BACK\)/)
+  })
+  it('the build copies it into public/rush, next to the public/peak whose three.js it imports', () => {
+    const pkg = JSON.parse(readFileSync(resolve(__dirname, '../../package.json'), 'utf8'))
+    expect(pkg.scripts['build:game']).toContain('cp -R rush/index.html rush/src public/rush/')
+    expect(pkg.scripts['build:game']).toContain('cp -R peak/index.html peak/src peak/vendor public/peak/')
+    expect(readFileSync(resolve(__dirname, '../../rush/src/view.js'), 'utf8')).toContain("from '../../peak/vendor/three.module.min.js'")
+  })
+})
+
 describe('the game keeps its half of the wire', () => {
   const game = readFileSync(resolve(__dirname, '../../blockcraft/src/main.js'), 'utf8')
   it('reads the key and end time from the URL, saves under that key, and goes back to /play', () => {

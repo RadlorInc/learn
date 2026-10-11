@@ -483,6 +483,7 @@ function hud() {
 function show(name) {
   for (const id of ['title', 'pause', 'win']) $(id).classList.toggle('hidden', id !== name);
   $('hud').classList.toggle('hidden', name === 'title');
+  $('keys').classList.toggle('hidden', name !== null); // the keys while playing (computers only: see the CSS)
 }
 let toastT = 0;
 function toast(text) {

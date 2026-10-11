@@ -3,10 +3,10 @@
  * /play — the child spends points on game time (rules: docs/product/points.md). Everything that decides whether the
  * game may start — the balance, the parent's daily minutes, on/off — is decided by the database (`start_game_time`);
  * this page shows the wallet and opens the game the child picked full page until the end time the database returned:
- * BlockCraft (public/blockcraft, built from blockcraft/) or BeatHop (public/beathop, copied from beathop/). The paid
- * time is for either, and the child can switch while it lasts. A game saves on this device and comes back here when
+ * BlockCraft (public/blockcraft, built from blockcraft/), BeatHop (public/beathop), Peak Rider (public/peak) or Rescue
+ * Rush (public/rush), the last three copied from beathop/, peak/ and rush/. The paid time is for any of them, and the child can switch while it lasts. A game saves on this device and comes back here when
  * the time is up; for BlockCraft this page then uploads that save to the child's account (`loadGameSave`), so the next
- * game starts where this one stopped. BeatHop's save stays on the device (gameSave.ts).
+ * game starts where this one stopped. The other two keep their saves on the device (gameSave.ts).
  */
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
@@ -20,6 +20,8 @@ const CHOICES = [5, 10, 15]
 const GAMES: { id: GameId; name: string; about: string }[] = [
   { id: 'blockcraft', name: '🧱 BlockCraft', about: 'Build your own world' },
   { id: 'beathop', name: '🏃 BeatHop', about: 'Jump, glide and flip to the flag' },
+  { id: 'peak', name: '🏔️ Peak Rider', about: 'Rough roads, deep gaps: keep your car on its wheels' },
+  { id: 'rush', name: '🚨 Rescue Rush', about: 'Race the clock to the hospital' },
 ]
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
 const NOT_STARTED: Record<string, string> = {
@@ -44,9 +46,11 @@ export default function PlayPage() {
   const [wallet, setWallet] = useState<Wallet | 'unavailable' | null | undefined>(undefined)
   const [note, setNote] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
-  // Back from BeatHop (`/play?game=beathop`): the pick stays BeatHop. Read once; nothing renders it before mount.
-  const [game, setGame] = useState<GameId>(() =>
-    typeof location !== 'undefined' && new URLSearchParams(location.search).get('game') === 'beathop' ? 'beathop' : 'blockcraft')
+  // Back from a game (`/play?game=beathop`): the pick stays that game. Read once; nothing renders it before mount.
+  const [game, setGame] = useState<GameId>(() => {
+    const back = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('game') : null
+    return GAMES.find(g => g.id === back)?.id ?? 'blockcraft'
+  })
 
   const load = useCallback((id: string) => getWallet(id).then(setWallet), [])
   // Back from the game: its save is on this device and newer than the account's, so this uploads it. The game's

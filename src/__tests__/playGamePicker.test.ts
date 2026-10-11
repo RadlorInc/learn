@@ -43,6 +43,39 @@ it('buying time with BeatHop picked opens BeatHop, at the end time the database 
   expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'beathop')
 })
 
+it('buying time with Peak Rider picked opens Peak Rider', async () => {
+  wallet = base
+  await show()
+  await act(async () => { button('🏔️ Peak Rider').click() })
+  expect(button('🏔️ Peak Rider').getAttribute('aria-label')).toBe('Peak Rider: Rough roads, deep gaps: keep your car on its wheels')
+  await act(async () => { button('Play 5 minutes').click() })
+  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'peak')
+})
+
+it('back from Peak Rider (/play?game=peak) the pick is still Peak Rider; an unknown game falls back to BlockCraft', async () => {
+  wallet = { ...base, playing_until: '2099-01-01T00:00:00Z' }
+  history.replaceState(null, '', '/play?game=peak')
+  try {
+    await show()
+    expect(button('🏔️ Peak Rider').getAttribute('aria-checked')).toBe('true')
+  } finally { history.replaceState(null, '', '/') }
+  await act(async () => root.unmount()); root = createRoot(host)
+  history.replaceState(null, '', '/play?game=chess')
+  try {
+    await show()
+    expect(button('🧱 BlockCraft').getAttribute('aria-checked')).toBe('true')
+  } finally { history.replaceState(null, '', '/') }
+})
+
+it('buying time with Rescue Rush picked opens Rescue Rush', async () => {
+  wallet = base
+  await show()
+  await act(async () => { button('🚨 Rescue Rush').click() })
+  expect(button('🚨 Rescue Rush').getAttribute('aria-label')).toBe('Rescue Rush: Race the clock to the hospital')
+  await act(async () => { button('Play 5 minutes').click() })
+  expect(openGame).toHaveBeenCalledWith('kid-1', Date.parse('2030-01-01T00:05:00Z'), 'rush')
+})
+
 it('nothing picked: BlockCraft, as before', async () => {
   wallet = base
   await show()

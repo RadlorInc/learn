@@ -52,7 +52,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 
 | Who | Routes |
 |---|---|
-| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/` or BeatHop at `/beathop/`; [product/points.md](product/points.md)) |
+| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
