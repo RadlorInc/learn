@@ -22,12 +22,15 @@ fixed yet are tracked outside this public repo; ask the founder.
   `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship as is); local `learner-grade` has
   its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
-- **In progress (local branch `game-racer`, uncommitted, not pushed):** two games wired into `/play`, not yet played
-  by the founder. **Peak Rider** (`peak/`): an open 3D world, no road drawn (arrow, distance, map, light columns guide),
-  missions — chests, beacons, deliveries; 2 worlds; inspired by Crash Drive 2, nothing copied; `node peak/check.mjs`.
-  **Rescue Rush** (`rush/`): rescue calls through traffic with a siren; 8 calls; `node rush/check.mjs`. Both are drawn
-  in code and share Peak's vendored three.js (MIT). Next: the founder plays locally, then a Draft PR and the preview.
-  Screenshots: headed Chromium off screen (GPU); `PK.auto(fn)` / `RR.auto(fn)` drive the games on localhost.
+- **Draft PR #424 (`game-racer`): Peak Rider + Rescue Rush on `/play`, keys shown in every game.** Peak (`peak/`):
+  open 3D world, no road (arrow, map, light columns), missions — chests, beacons, deliveries; 2 worlds. Rush (`rush/`):
+  rescue calls through traffic, auto-speed, a siren; 8 calls. Inspired by Crash Drive 2 / Traffic Racer, nothing
+  copied; drawn in code, shared vendored three.js. `node peak/check.mjs` 22/22, `node rush/check.mjs` 24/24 (not in CI).
+  Preview tested 11 Oct in the founder's Chrome: all 4 games open, keys show, no errors, files = the commit. Not yet:
+  real-speed play, a tablet. Also on #424: BeatHop pad traps fixed (gate in `beathop/check.mjs`); the end time comes
+  from the database (`/api/game-time`), not the URL — locally seen only on "no answer → back to /play", so the founder
+  plays one signed-in game on the preview to time's up. Next: more Peak worlds.
+  `PK.auto(fn)` / `RR.auto(fn)` drive the games on localhost (screenshots: headed Chromium off screen).
 - The pre-rewrite handoff and old-doc extracts are outside the repo on the founder's machine (owner-only).
 
 ## Open — Draft PRs waiting for the founder
@@ -45,8 +48,7 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
 
 ## Open — the founder decides
 
-- Games: multiplayer later (a server; no chat); try them on a real tablet; the end time is in the URL, so a child who
-  edits it plays past it (points already paid; `ponytail:` in `blockcraft/src/main.js`).
+- Games: multiplayer later (a server; no chat); try them on a real tablet.
 - `learner-grade`: rework on top of notice-v7, or drop.
 - BeatHop's (and Peak Rider's) saves are on the device only: an account save needs a `game` column on `game_saves`.
 - Whether both repos stay public now that Vercel is on Pro (the original reason has gone), and where backups are kept.

@@ -49,9 +49,17 @@ mode only, built from `blockcraft/` into `public/blockcraft` — as a full page 
 `/play` uploads that save to `game_saves`, so the next game starts where this one stopped. (From 2026-09-26 to
 2026-10-01 nothing spent points: a child had bought minutes over an empty placeholder and lost them.)
 
+**How long a game plays is the database's, not the URL's (2026-10-11).** `/play` opens a game with the child's save
+key and id only (`?key=…&learner=…`). The game (`public/play-time.js`, shared by every game) asks `GET /api/game-time`
+when it opens and every 30 s; the route passes the adult's own token to `game_wallet` and answers the seconds left by
+the server's clock, and the game counts them on `performance.now()`. Editing the URL or the device's clock plays no
+longer; no first answer sends the child back to `/play`, and a later failed ask keeps the last answer (it only runs
+out). A game opened without `/play` plays only on localhost. Until 11 Oct the end time rode in the URL (`&until=`), so
+a child who edited it played longer, and one who removed the query played with no limit.
+
 **A second game (2026-10-11): BeatHop**, a one-button jump-and-glide game (`beathop/`, copied into `public/beathop` by
 `npm run build:game`). `/play` shows both; the paid time is for either, and while it lasts the child can switch. BeatHop
-takes the same URL (`?key=…&until=…`), clock and "Stop and keep my minutes", but its save (levels, stars, gems) stays
+takes the same URL (`?key=…&learner=…`), clock and "Stop and keep my minutes", but its save (levels, stars, gems) stays
 on the device — `game_saves` holds one save per child, BlockCraft's — so another device starts it at level 1.
 
 **A third game (2026-10-11): Peak Rider**, an open-world 3D driving game seen from behind the car (`peak/`, copied
