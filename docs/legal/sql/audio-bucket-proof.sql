@@ -20,8 +20,10 @@ select count(*) from supabase_migrations.schema_migrations where version = '2026
 select count(*) as badly_named from storage.objects
 where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> 'anon-probe-canary.mp3';
 
--- P5. After the upload run: every manifest object is there.     expected: 18041 | 275178138
---     (2026-10-11, #423: before this run the bucket should read 18028 | 274916902 if nothing else was uploaded since #413;
+-- P5. After the upload run: every manifest object is there.     expected: 18042 | <before bytes + 261236>
+--     (2026-10-11, #423: the dry run (run 38140484488) counted 18029 objects in the bucket — one more than #413's 18028 —
+--     with 13 manifest objects missing. Not measured: its bytes. Pre-registered here before the 18028 was known:
+--     18041 | 275178138, which assumed 18028 | 274916902;
 --     this run adds 13 objects, 261236 bytes: the dot-plot lines of g6m7 (12) and g7m5 (1). If "before" reads
 --     differently, the rule is before + 13 objects, + 261236 bytes. The 13 old clips stay in the bucket.)
 --     (2026-10-09, #413: before this run the bucket should read 18027 | 274844265; this run adds 1 object, 72637
