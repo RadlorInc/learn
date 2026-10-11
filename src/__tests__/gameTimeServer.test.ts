@@ -70,7 +70,6 @@ describe('public/play-time.js, in every game', () => {
   })
   afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); localStorage.clear() })
   const start = async (learner: string | null) => {
-    // @ts-expect-error a plain browser module, served at /play-time.js
     const { playTime } = await import('../../public/play-time.js')
     const shown: number[] = [], done = vi.fn()
     playTime({ learner, back: '/play?game=beathop', show: (s: number) => shown.push(s), done })
