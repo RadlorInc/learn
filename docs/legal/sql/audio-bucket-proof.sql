@@ -22,7 +22,7 @@ where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> '
 
 -- P5. After the upload run: every manifest object is there.     expected: 18042 | <before bytes + 261236>
 --     (2026-10-11, #423: the dry run (run 38140484488) counted 18029 objects in the bucket — one more than #413's 18028 —
---     with 13 manifest objects missing. Not measured: its bytes. Pre-registered here before the 18028 was known:
+--     with 13 manifest objects missing. Not measured: its bytes. First pre-registered, before the dry run:
 --     18041 | 275178138, which assumed 18028 | 274916902;
 --     this run adds 13 objects, 261236 bytes: the dot-plot lines of g6m7 (12) and g7m5 (1). If "before" reads
 --     differently, the rule is before + 13 objects, + 261236 bytes. The 13 old clips stay in the bucket.)
