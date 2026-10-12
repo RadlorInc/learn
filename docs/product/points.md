@@ -49,10 +49,37 @@ mode only, built from `blockcraft/` into `public/blockcraft` — as a full page 
 `/play` uploads that save to `game_saves`, so the next game starts where this one stopped. (From 2026-09-26 to
 2026-10-01 nothing spent points: a child had bought minutes over an empty placeholder and lost them.)
 
+**How long a game plays is the database's, not the URL's (2026-10-11).** `/play` opens a game with the child's save
+key and id only (`?key=…&learner=…`). The game (`public/play-time.js`, shared by every game) asks `GET /api/game-time`
+when it opens and every 30 s; the route passes the adult's own token to `game_wallet` and answers the seconds left by
+the server's clock, and the game counts them on `performance.now()`. Editing the URL or the device's clock plays no
+longer; no first answer sends the child back to `/play`, and a later failed ask keeps the last answer (it only runs
+out). A game opened without `/play` plays only on localhost. Until 11 Oct the end time rode in the URL (`&until=`), so
+a child who edited it played longer, and one who removed the query played with no limit.
+
 **A second game (2026-10-11): BeatHop**, a one-button jump-and-glide game (`beathop/`, copied into `public/beathop` by
 `npm run build:game`). `/play` shows both; the paid time is for either, and while it lasts the child can switch. BeatHop
-takes the same URL (`?key=…&until=…`), clock and "Stop and keep my minutes", but its save (levels, stars, gems) stays
+takes the same URL (`?key=…&learner=…`), clock and "Stop and keep my minutes", but its save (levels, stars, gems) stays
 on the device — `game_saves` holds one save per child, BlockCraft's — so another device starts it at level 1.
+
+**A third game (2026-10-11): Peak Rider**, an open-world 3D driving game seen from behind the car (`peak/`, copied
+with its vendored three.js into `public/peak`; everything else is drawn in code, about 750 KB in all). No road to
+follow: the child drives anywhere (gas, brake, steer, boost) and does missions — find treasure chests, light the
+beacons on the peaks, carry crates to the villages (three hard landings, or one crash, break a crate). No road is
+drawn: an arrow with the distance, a map, and a column of light over each mission show the way, and the child can pick
+a mission from the pause menu. The ways to the missions pass steep drops, fords, mud, ice, ridges, tunnels and a ravine
+only boost can jump. A crash goes back to where the car was safe a moment before. `node peak/check.mjs` (by hand, a few seconds; not in CI) proves every mission can be done by driving
+its trail, every marked danger punishes a child who does not control the speed, and no ravine can be jumped without
+boost. Same paid time, URL, clock and stop as BeatHop; its save (missions, coins, cars, upgrades) also stays on the
+device. Its coins are the game's own and buy only things inside the game — they are not points.
+
+**A fourth game (2026-10-11): Rescue Rush** (`rush/`, copied into `public/rush`; it uses Peak Rider's three.js, so it
+adds about 60 KB). The child drives a rescue vehicle through traffic to a hospital before the clock runs out — eight
+calls on South Asian roads (tea gardens, a market, the coast, the desert, a monsoon city, a ghat road, a night market,
+a snowy pass) with cars, auto-rickshaws, scooters, buses and painted trucks. A SIREN asks the vehicles ahead to pull
+over; it needs time to fill again. A crash costs one of the patient's three hearts. `node rush/check.mjs` (by hand, a
+second; not in CI) proves every call can be done in time, that a steady 54 km/h runs out of time, and that driving straight
+down one lane crashes out. The vehicle speeds up by itself: the child steers, brakes and sounds the siren. Same paid time, URL, clock, stop and device-only save as the other games.
 
 **Stopping early gives the unused minutes back.** The clock is the database's and keeps running while the child is off
 the game, so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the

@@ -1,6 +1,6 @@
 // Can a person finish every level, and get all three stars in one run? A search over the one button, decided only
 // every 100 ms (no quick-fingered timing), running the game's own step(). Exit 0 = every level passes, 1 = a level
-// fails (it says how far the best try got), 2 = could not run.
+// fails (it says how far the best try got) or a jump pad needs a press, 2 = could not run.
 //   node beathop/check.mjs
 import { H, makeLevel, newState, step } from './src/game.js';
 import { LEVELS } from './src/levels.js';
@@ -47,6 +47,16 @@ try {
   const shieldOk = none.diedAt >= 7 && none.diedAt <= 8 && one.diedAt >= 19 && one.diedAt <= 20 && !one.shieldLeft;
   if (!shieldOk) bad++;
   console.log(`${shieldOk ? 'ok  ' : 'FAIL'} shield: no shield dies near x=${none.diedAt}, a shield dies near x=${one.diedAt} (expected about 8 and 20)`);
+  // A jump pad must carry the cube over what follows with no press: a child cannot know to jump before it.
+  for (const def of LEVELS) {
+    const lv = makeLevel(def);
+    for (let x = 0; x < lv.w; x++) for (let y = 0; y < H; y++) if (lv.at(x, y) === 'J') {
+      const s = { ...newState(), x: x - 2.5, y };
+      while (!s.dead && s.x < x + 9) step(s, false, lv, []);
+      if (s.dead) bad++;
+      console.log(`${s.dead ? 'FAIL' : 'ok  '} ${def.id} pad at x=${x}: ${s.dead ? `with no press the cube dies at x=${s.x.toFixed(1)}` : 'carries the cube with no press'}`);
+    }
+  }
   for (const def of LEVELS) {
     const lv = makeLevel(def), r = search(lv);
     const msg = !r.finished ? `cannot be finished — the best try dies near x=${r.furthest.toFixed(1)} of ${lv.goal}`

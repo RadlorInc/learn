@@ -3,10 +3,10 @@
  * /play — the child spends points on game time (rules: docs/product/points.md). Everything that decides whether the
  * game may start — the balance, the parent's daily minutes, on/off — is decided by the database (`start_game_time`);
  * this page shows the wallet and opens the game the child picked full page until the end time the database returned:
- * BlockCraft (public/blockcraft, built from blockcraft/) or BeatHop (public/beathop, copied from beathop/). The paid
- * time is for either, and the child can switch while it lasts. A game saves on this device and comes back here when
+ * BlockCraft (public/blockcraft, built from blockcraft/), BeatHop (public/beathop), Peak Rider (public/peak) or Rescue
+ * Rush (public/rush), the last three copied from beathop/, peak/ and rush/. The paid time is for any of them, and the child can switch while it lasts. A game saves on this device and comes back here when
  * the time is up; for BlockCraft this page then uploads that save to the child's account (`loadGameSave`), so the next
- * game starts where this one stopped. BeatHop's save stays on the device (gameSave.ts).
+ * game starts where this one stopped. The other two keep their saves on the device (gameSave.ts).
  */
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
@@ -20,6 +20,8 @@ const CHOICES = [5, 10, 15]
 const GAMES: { id: GameId; name: string; about: string }[] = [
   { id: 'blockcraft', name: '🧱 BlockCraft', about: 'Build your own world' },
   { id: 'beathop', name: '🏃 BeatHop', about: 'Jump, glide and flip to the flag' },
+  { id: 'peak', name: '🏔️ Peak Rider', about: 'Rough roads, deep gaps: keep your car on its wheels' },
+  { id: 'rush', name: '🚨 Rescue Rush', about: 'Race the clock to the hospital' },
 ]
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
 const NOT_STARTED: Record<string, string> = {
@@ -44,9 +46,11 @@ export default function PlayPage() {
   const [wallet, setWallet] = useState<Wallet | 'unavailable' | null | undefined>(undefined)
   const [note, setNote] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
-  // Back from BeatHop (`/play?game=beathop`): the pick stays BeatHop. Read once; nothing renders it before mount.
-  const [game, setGame] = useState<GameId>(() =>
-    typeof location !== 'undefined' && new URLSearchParams(location.search).get('game') === 'beathop' ? 'beathop' : 'blockcraft')
+  // Back from a game (`/play?game=beathop`): the pick stays that game. Read once; nothing renders it before mount.
+  const [game, setGame] = useState<GameId>(() => {
+    const back = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('game') : null
+    return GAMES.find(g => g.id === back)?.id ?? 'blockcraft'
+  })
 
   const load = useCallback((id: string) => getWallet(id).then(setWallet), [])
   // Back from the game: its save is on this device and newer than the account's, so this uploads it. The game's
@@ -58,6 +62,14 @@ export default function PlayPage() {
       history.replaceState(null, '', '/play')
       endGameTime(learnerId).then((back) => { setNote(stopped(back)); return load(learnerId) })
     } else load(learnerId)
+  }, [learnerId, load])
+  // Back from a game with the browser's Back: the browser can show this page from its back-forward cache, frozen at the
+  // moment Play was pressed — the old balance and no clock (founder's audit, 12 Oct). Read it all again.
+  useEffect(() => {
+    if (!learnerId) return
+    const back = (e: PageTransitionEvent) => { if (e.persisted) { void loadGameSave(learnerId); load(learnerId) } }
+    addEventListener('pageshow', back)
+    return () => removeEventListener('pageshow', back)
   }, [learnerId, load])
 
   async function stop() {
@@ -80,10 +92,10 @@ export default function PlayPage() {
     setNote(null)
     const r = await startGameTime(learnerId, minutes)
     if (!r.ok) { setNote(NOT_STARTED[r.error] ?? NOT_STARTED.failed); return void load(learnerId) }
-    await play(new Date(r.playing_until).getTime())
+    await play()
   }
-  async function play(ends: number) {
-    if (learnerId && await openGame(learnerId, ends, game) === 'unreachable') { setNote(NOT_STARTED.unreachable); await load(learnerId) }
+  async function play() {
+    if (learnerId && await openGame(learnerId, game) === 'unreachable') { setNote(NOT_STARTED.unreachable); await load(learnerId) }
   }
 
   const picker = (
@@ -110,7 +122,7 @@ export default function PlayPage() {
     body = <>
       <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left</p>
       {picker}
-      <button type="button" style={primary} onClick={() => play(until)}>Play {gameName}</button>
+      <button type="button" style={primary} onClick={() => play()}>Play {gameName}</button>
       <button type="button" style={{ ...primary, background: '#fff' }} onClick={stop}>Stop and keep my minutes</button>
       {note && <p style={bubble}>{note}</p>}
     </>

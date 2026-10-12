@@ -99,7 +99,7 @@ describe('the KG–2 Josh corpus is current with the chapter source', () => {
   // was filed under 2 chapters, the end card under 1, and BlockYard's subtract-only line below under additionTo100 alone.
   it('the lines any chapter can say are in every chapter (23), and a shared file’s lines reach both its chapters', () => {
     const chaptersOf = (t: string) => rows.find(r => r.spoken === t)?.chapters ?? []
-    for (const t of [...PRAISE, ...ENCOURAGEMENT.flat(), 'All done! Nice work.', 'Great work, 5 questions done! Your spot is saved.'])
+    for (const t of [...PRAISE, ...ENCOURAGEMENT.flat(), 'All done! Nice work.', "You did it! 5 questions solved. You're getting stronger!"])
       expect(chaptersOf(t).length, t).toBe(23)
     for (const l of statics) expect(chaptersOf(l.text.replace(/\s+/g, ' ').trim()).length, `${where(l)} ${l.text}`).toBe(23)
     expect(chaptersOf('Not enough ones left. Tap a rod to fetch it and break it open.')).toContain('subtractionTo100')
