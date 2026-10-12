@@ -6,9 +6,9 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (11 October 2026)
+## Where things stand (12 October 2026)
 
-- **Production** is on `539bfc20e` (#422, 11 Oct); `smoke:live` passed on it except its known stale service-worker
+- **Production** is on `e89358b6b` (#427, 12 Oct); `smoke:live` passed on it except its known stale service-worker
   check (expects v242; live and repo are v252 — agent work below). The repo `learn` is public again (see
   the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
   billing is off.
@@ -16,26 +16,24 @@ fixed yet are tracked outside this public repo; ask the founder.
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy game time
   on `/play`; six legal pages as beta versions; nightly backups green.
-- **Games on `/play`** (one paid time; the child picks, and can switch while it lasts): BlockCraft (#352, 1 Oct;
-  migrations proved; save on the account; not yet played signed in by a real child on production) and BeatHop (#422,
-  11 Oct; a one-button runner, 10 levels, `beathop/` copied to `public/beathop`; save on the device only). Branches:
-  `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship as is); local `learner-grade` has
-  its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
-- **Draft PR #424 (`game-racer`): Peak Rider + Rescue Rush on `/play`, keys shown in every game.** Peak (`peak/`):
-  open 3D world, no road (arrow, map, light columns), missions — chests, beacons, deliveries; 2 worlds. Rush (`rush/`):
-  rescue calls through traffic, auto-speed, a siren; 8 calls. Inspired by Crash Drive 2 / Traffic Racer, nothing
-  copied; drawn in code, shared vendored three.js. `node peak/check.mjs` 22/22, `node rush/check.mjs` 24/24 (not in CI).
-  Preview tested 11 Oct in the founder's Chrome: all 4 games open, keys show, no errors, files = the commit. Not yet:
-  real-speed play, a tablet. Also on #424: BeatHop pad traps fixed (gate in `beathop/check.mjs`); the end time comes
-  from the database (`/api/game-time`), not the URL — locally seen only on "no answer → back to /play", so the founder
-  plays one signed-in game on the preview to time's up. Next: more Peak worlds.
-  `PK.auto(fn)` / `RR.auto(fn)` drive the games on localhost (screenshots: headed Chromium off screen).
+- **Games on `/play`** (one paid time; the child picks, and can switch while it lasts): BlockCraft (save on the account),
+  BeatHop (`beathop/check.mjs` gates its pads), Peak Rider (open 3D world, missions,
+  2 worlds; `node peak/check.mjs`) and Rescue Rush (8 calls; `node rush/check.mjs`); the last three save on the device.
+  How long a game plays comes from the database (`/api/game-time`, `public/play-time.js`), not the URL; `/play` re-reads
+  the wallet after the browser's Back. The founder audited points and time on the #427 preview (12 Oct, 3 rounds, all
+  right). Not yet: a real child signed in on production, a tablet. Next: more Peak worlds. `PK.auto(fn)` /
+  `RR.auto(fn)` drive the games on localhost. Branches: `wip/game-in-play` is superseded except three never-ported tests
+  (`adaptiveEngine`, `adaptiveWiring`, `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never
+  ship as is); local `learner-grade` has its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
+- **Practice stops are wins (#425):** "Set complete!" / "Finish for today 🎉" / "You did it! You're getting stronger at…";
+  KG–2's voiced line re-recorded.
 - The pre-rewrite handoff and old-doc extracts are outside the repo on the founder's machine (owner-only).
 
 ## Open — Draft PRs waiting for the founder
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
+0. #416 — numbers as words, 195 re-rendered clips: its manifest conflicts with main since #425. Merge main in, rebuild
+   the manifest from main's clips (by SHA-256) plus its own, check only its keys change, then its upload.
 1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
 3. #386 — scale pictures show what they weigh, halal examples only (gate `halalExamples.test.ts`), 142 new clips.
    The upload ran (run 37453122387: 142 uploaded, all 16,985 manifest objects present). Founder: revoke the S3 key and
@@ -126,6 +124,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - `nightly-e2e` (#378: 23 KG–2 chapters + each grade 3–8 module's first topic) has had no scheduled run yet — read the
   first, and its issue if red. `e2e/xbrowser-clicks.spec.ts` is not timer-ready (5 Oct: 11 of 25 passed; end-card
   buttons fail Playwright's "stable" wait because the nudge animates them, 3 chapters "could not look", colors timed out).
+- `e2e/short-sessions.spec.ts` "signed out: the device keeps exactly what doc 08 says" fails on main: Chrome's harmless
+  "ResizeObserver loop" warning is stored as `milo_recent_errors` (filter it in the crash recorder; task filed 12 Oct).
 - `scripts/smoke-live.mjs` hard-codes the service-worker version (expects v242, live is v252); the ops digest
   (06:23 UTC) reports the previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
