@@ -166,11 +166,13 @@ const T3: Level[] = [
         picture: eq(`(${pw(2, a)})² × ${pw(2, c)} = 2^?`), answer: s,
         steps: [`First the power of a power: (${pw(2, a)})² = ${pw(2, 2 * a)}, because ${a} × 2 = ${2 * a}.`, `Then ${pw(2, 2 * a)} × ${pw(2, c)} has the same base, so add: ${2 * a} + ${c}.`, `So the exponent is ${s}.`] }
     }
-    const a = int(r, 1, 3), c = int(r, 2, 6), s = 3 * a + c
-    const side = a === 1 ? '10' : pw(10, a), vol = a === 1 ? '10³' : `(${side})³`
+    // The side is always a power with an exponent of 2 or 3: a side of plain 10 made 10³ × 10ᶜ, only adding, in the
+    // power-of-a-power topic whose hint says multiply (a paid tester, 11 Oct 2026).
+    const a = int(r, 2, 3), c = int(r, 2, 6), s = 3 * a + c
+    const side = pw(10, a), vol = `(${side})³`
     return { text: `A box shaped like a cube is ${side} centimeters on each side, so its volume is ${vol} cubic centimeters. A truck carries ${pw(10, c)} of these boxes. Written as 10 with one exponent, what is the volume of all the boxes? Type the exponent.`,
       picture: eq(`${vol} × ${pw(10, c)} = 10^?`), answer: s,
-      steps: [a === 1 ? `First, 10 is 10¹, so ${vol} = ${pw(10, 3)}.` : `First the power of a power: ${vol} = ${pw(10, 3 * a)}, because ${a} × 3 = ${3 * a}.`, `Then ${pw(10, 3 * a)} × ${pw(10, c)} has the same base, so add: ${3 * a} + ${c}.`, `So the exponent is ${s}.`] }
+      steps: [`First the power of a power: ${vol} = ${pw(10, 3 * a)}, because ${a} × 3 = ${3 * a}.`, `Then ${pw(10, 3 * a)} × ${pw(10, c)} has the same base, so add: ${3 * a} + ${c}.`, `So the exponent is ${s}.`] }
   }) },
 ]
 
