@@ -146,7 +146,7 @@ const T3: Level[] = [
     const right = pw(b, a * n)
     return { text: `Which is the same as (${pw(b, a)})${sup(n)}?`, picture: eq(`(${pw(b, a)})${sup(n)}`),
       answer: choose(r, right, [pw(b, a + n), pw(b, a ** n)]),
-      steps: [`The outside exponent ${n} counts copies of ${pw(b, a)}. Adding the exponents is the trap.`, `Copies of the same power: multiply the exponents, ${a} × ${n} = ${a * n}.`, `So it is ${right}.`] }
+      steps: [`The outside exponent ${n} counts copies of ${pw(b, a)}. Adding the exponents is the trap.`, `So multiply the exponents: ${a} × ${n} = ${a * n}.`, `So it is ${right}.`] }
   } },
   { style: 'missing exponent, work backwards', make: r => hidden(() => {
     const b = pick(r, BASES), a = int(r, 2, 9), n = int(r, 2, 5), t = a * n
