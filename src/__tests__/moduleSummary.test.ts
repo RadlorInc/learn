@@ -132,7 +132,7 @@ describe('getting there', () => {
       i.dispatchEvent(new Event('input', { bubbles: true })) })
     await act(async () => { host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
     await click('Next problem')                                    // the 12th answer: the topic is done
-    await click('Take a break')
+    await click('Finish for today 🎉')
     expect(text()).toContain('Module complete!')
     await click('See what you learned ⭐')
     expect(onModuleComplete).toHaveBeenCalledTimes(1)
