@@ -63,6 +63,14 @@ export default function PlayPage() {
       endGameTime(learnerId).then((back) => { setNote(stopped(back)); return load(learnerId) })
     } else load(learnerId)
   }, [learnerId, load])
+  // Back from a game with the browser's Back: the browser can show this page from its back-forward cache, frozen at the
+  // moment Play was pressed — the old balance and no clock (founder's audit, 12 Oct). Read it all again.
+  useEffect(() => {
+    if (!learnerId) return
+    const back = (e: PageTransitionEvent) => { if (e.persisted) { void loadGameSave(learnerId); load(learnerId) } }
+    addEventListener('pageshow', back)
+    return () => removeEventListener('pageshow', back)
+  }, [learnerId, load])
 
   async function stop() {
     if (!learnerId) return

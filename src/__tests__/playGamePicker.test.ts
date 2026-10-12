@@ -10,10 +10,11 @@ import { createRoot, type Root } from 'react-dom/client'
 
 const { openGame } = vi.hoisted(() => ({ openGame: vi.fn(async () => {}) }))
 let wallet: Record<string, unknown>
+let reads = 0
 vi.mock('next/link', () => ({ default: ({ href, children }: { href: string; children: unknown }) => createElement('a', { href }, children as never) }))
 vi.mock('@/data/supabase/useLearnerSession', () => ({ getActiveLearner: () => ({ id: 'kid-1' }) }))
 vi.mock('@/data/repositories/points', () => ({
-  getWallet: async () => wallet,
+  getWallet: async () => { reads++; return wallet },
   startGameTime: async () => ({ ok: true, playing_until: '2030-01-01T00:05:00Z', balance: 60 }),
   endGameTime: async () => 0,
 }))
@@ -103,4 +104,26 @@ it('while the time lasts the child can switch: BeatHop picked, "Play" opens Beat
   expect(button('🏃 BeatHop').getAttribute('aria-checked')).toBe('true')
   await act(async () => { button('Play 🏃 BeatHop').click() })
   expect(openGame).toHaveBeenCalledWith('kid-1', 'beathop')
+})
+
+// The founder's audit (12 Oct): back from a game with the browser's Back, Chrome showed /play from its back-forward
+// cache, frozen at the moment "Play 5 minutes" was pressed — 92 points and no clock, while 52 points and 3 minutes were
+// the truth. A restored page (pageshow, persisted) reads the wallet again.
+const pageshow = (persisted: boolean) => { const e = new Event('pageshow'); Object.defineProperty(e, 'persisted', { value: persisted }); window.dispatchEvent(e) }
+it('back from a game through the browser cache: the wallet is read again, so the clock and the balance are today\'s', async () => {
+  wallet = { ...base, balance: 92 }
+  await show()
+  expect(host.textContent).toContain('🎮 92 points')
+  wallet = { ...base, balance: 52, minutes_used_today: 2, playing_until: '2099-01-01T00:00:00Z' }
+  await act(async () => { pageshow(true) })
+  await vi.waitFor(() => expect(host.textContent).toMatch(/⏱ \d+:\d\d left/))
+  expect(host.textContent).not.toContain('92 points')
+  expect(host.textContent).not.toContain('Play 5 minutes')
+})
+it('control: an ordinary page show (not from the cache) does not read the wallet a second time', async () => {
+  wallet = base
+  await show()
+  const before = reads
+  await act(async () => { pageshow(false) })
+  expect(reads).toBe(before)
 })
