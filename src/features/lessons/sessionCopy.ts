@@ -3,7 +3,8 @@
  * dots, answer feedback), in one
  * place so `childWords.test.ts` can hold all of them to the words a child must never see.
  *
- * Wording approved by the founder, 2026-09-24. ⚠️ SPANISH IS AN UNREVIEWED DRAFT: the child screens have no language
+ * Wording approved by the founder, 2026-09-24; the checkpoint and the stop reworded 2026-10-12 (founder: stopping must
+ * feel like a win, not like leaving something unfinished — no "break", no "saved" there). ⚠️ SPANISH IS AN UNREVIEWED DRAFT: the child screens have no language
  * switch yet, so only `en` is shown; `es` waits for the child screens' language system and a reviewer's sign-off.
  */
 export const SESSION_COPY = {
@@ -16,17 +17,20 @@ export const SESSION_COPY = {
     keepPractisingList: "Let's keep practicing:",
     practiceAgain: 'Practice again',
     backToModules: 'Back to modules',
-    checkpoint: (n: number) => `${n} questions done! ⭐ Nice work.`,
+    checkpoint: (n: number) => `Set complete! ⭐ ${n} questions solved.`,
     mastered: "You've got this topic! ⭐",
-    keepGoing: 'Keep going',
-    takeBreak: 'Take a break',
+    keepGoing: 'One more set',
+    takeBreak: 'Finish for today 🎉',
     // Review 1 Q5: the text-size control on the child's home.
     textSize: 'Text size',
     sizeNormal: 'Normal',
     sizeLarge: 'Large',
     sizeXl: 'Extra large',
-    breakTitle: (n: number) => (n === 1 ? 'Great work, 1 question done! ⭐' : `Great work, ${n} questions done! ⭐`),
-    breakMastered: "Great work! ⭐ You've got this topic.",
+    breakTitle: 'You did it! ⭐',
+    breakMastered: "You did it! ⭐ You've got this topic.",
+    stronger: (topic: string) => `You're getting stronger at ${topic}.`,
+    // KG–2 after a take (one recorded line for every chapter, so no chapter name): ChapterDone.
+    solvedStronger: (n: number) => (n === 1 ? "1 question solved. You're getting stronger!" : `${n} questions solved. You're getting stronger!`),
     // Review 1 Q7: the vertical number line.
     numberLine: 'Number line', showLine: 'Number line', hideLine: 'Hide number line', clearMarks: 'Clear marks',
     mark: (n: string) => `Mark ${n}`, unmark: (n: string) => `Take the mark off ${n}`,
@@ -60,17 +64,19 @@ export const SESSION_COPY = {
     keepPractisingList: 'Sigamos practicando:',
     practiceAgain: 'Practicar otra vez',
     backToModules: 'Volver a los módulos',
-    checkpoint: (n: number) => `¡${n} preguntas hechas! ⭐ Buen trabajo.`,
+    checkpoint: (n: number) => `¡Ronda completa! ⭐ ${n} preguntas resueltas.`,
     mastered: '¡Ya dominas este tema! ⭐',
-    keepGoing: 'Seguir',
-    takeBreak: 'Tomar un descanso',
+    keepGoing: 'Otra ronda',
+    takeBreak: 'Terminar por hoy 🎉',
     // Review 1 Q5.
     textSize: 'Tamaño del texto',
     sizeNormal: 'Normal',
     sizeLarge: 'Grande',
     sizeXl: 'Muy grande',
-    breakTitle: (n: number) => (n === 1 ? '¡Muy bien, 1 pregunta hecha! ⭐' : `¡Muy bien, ${n} preguntas hechas! ⭐`),
-    breakMastered: '¡Muy bien! ⭐ Ya dominas este tema.',
+    breakTitle: '¡Lo lograste! ⭐',
+    breakMastered: '¡Lo lograste! ⭐ Ya dominas este tema.',
+    stronger: (topic: string) => `Cada vez eres más fuerte en ${topic}.`,
+    solvedStronger: (n: number) => (n === 1 ? '1 pregunta resuelta. ¡Cada vez eres más fuerte!' : `${n} preguntas resueltas. ¡Cada vez eres más fuerte!`),
     numberLine: 'Recta numérica', showLine: 'Recta numérica', hideLine: 'Ocultar la recta numérica', clearMarks: 'Borrar las marcas',
     mark: (n: string) => `Marcar ${n}`, unmark: (n: string) => `Quitar la marca de ${n}`,
     spotSaved: 'Guardamos tu lugar.',

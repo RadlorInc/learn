@@ -117,22 +117,23 @@ const deviceRun = (page: Page) => page.evaluate(({ kid, topic }) => new Promise<
   r.onsuccess = () => { const g = r.result.transaction('kv').objectStore('kv').get(`milo-newflow-run-${kid}-${topic}`); g.onsuccess = () => res(g.result ? JSON.parse(g.result) : null) }
 }), { kid: KID, topic: TOPIC })
 
-test('Part A — 5 → checkpoint, Keep going → 10 → checkpoint, Take a break → celebrate; home says Keep practicing', async ({ browser }) => {
+test('Part A — 5 → checkpoint, One more set → 10 → checkpoint, Finish for today → celebrate; home says Keep practicing', async ({ browser }) => {
   const ctx = await device(browser, { kv: { [`milo-newflow-standing-${KID}-${PREV}`]: standing(4) } })
   const page = await ctx.newPage()
   await page.goto(`/lesson?id=${TOPIC}`)
   await toPractice(page)
   for (let k = 1; k <= 4; k++) { await answerNotRight(page); await expect(page.getByRole('dialog')).toHaveCount(0) }
   await answerNotRight(page)
-  await expect(page.getByRole('dialog')).toContainText('5 questions done! ⭐ Nice work.')
+  await expect(page.getByRole('dialog')).toContainText('Set complete! ⭐ 5 questions solved.')
   await page.screenshot({ path: `${SHOTS}/01-checkpoint.png` })
-  await page.getByRole('dialog').getByRole('button', { name: 'Keep going' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'One more set' }).click()
   for (let k = 6; k <= 9; k++) { await answerNotRight(page); await expect(page.getByRole('dialog')).toHaveCount(0) }
   await answerNotRight(page)
-  await expect(page.getByRole('dialog')).toContainText('5 questions done! ⭐ Nice work.')
-  await page.getByRole('dialog').getByRole('button', { name: 'Take a break' }).click()
-  await expect(page.getByText('Great work, 10 questions done! ⭐')).toBeVisible()
-  await expect(page.getByText('Your spot is saved.')).toBeVisible()
+  await expect(page.getByRole('dialog')).toContainText('Set complete! ⭐ 5 questions solved.')
+  await page.getByRole('dialog').getByRole('button', { name: 'Finish for today 🎉' }).click()
+  await expect(page.getByText('You did it! ⭐')).toBeVisible()
+  await expect(page.getByText(/You're getting stronger at /)).toBeVisible()
+  await expect(page.getByText('Your spot is saved.')).toHaveCount(0)
   await expect(page.getByText('+10 points')).toBeVisible()
   // Visible to a child, not just present: once its pop-in ends, the points line is fully opaque.
   await expect.poll(() => page.getByText('+10 points').evaluate(el => {
@@ -183,7 +184,7 @@ test('Part A — reopen: Welcome back, the same problem, nothing asked again; cl
   await answerNotRight(page); await answerNotRight(page)
   await expect(page.getByRole('dialog')).toHaveCount(0)                                                   // 13, 14
   await answerNotRight(page)
-  await expect(page.getByRole('dialog')).toContainText('5 questions done! ⭐ Nice work.')                // 15: the count carried over
+  await expect(page.getByRole('dialog')).toContainText('Set complete! ⭐ 5 questions solved.')                // 15: the count carried over
   // The offline answers' uploads went up once the connection came back.
   await expect.poll(() => server.runs.filter(r => r.lesson === TOPIC).at(-1)?.run.asked).toBe(15)
   await ctx.close()
@@ -247,7 +248,7 @@ test('signed out: the device keeps exactly what the published doc 08 says', asyn
   const page = await ctx.newPage()
   await page.goto(`/lesson?id=${TOPIC}`)
   await toPractice(page)
-  for (let n = 1; n <= 12; n++) { await answerNotRight(page); const d = page.getByRole('dialog'); if (await d.isVisible().catch(() => false)) await d.getByRole('button', { name: 'Keep going' }).click() }
+  for (let n = 1; n <= 12; n++) { await answerNotRight(page); const d = page.getByRole('dialog'); if (await d.isVisible().catch(() => false)) await d.getByRole('button', { name: 'One more set' }).click() }
   const idb = await page.evaluate(() => new Promise<string[]>(res => { const r = indexedDB.open('milo', 1); r.onsuccess = () => { const g = r.result.transaction('kv').objectStore('kv').getAllKeys(); g.onsuccess = () => res(g.result.map(String)) } }))
   const ls = await page.evaluate(() => Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!))
   const ss = await page.evaluate(() => sessionStorage.length)
