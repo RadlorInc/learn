@@ -18,7 +18,7 @@ REVIEWED-BY:
 
 **Fecha de entrada en vigor:** 25 de septiembre de 2026
 
-**Última actualización:** 28 de septiembre de 2026
+**Última actualización:** 14 de octubre de 2026
 
 ---
 
@@ -39,6 +39,7 @@ Este resumen está aquí para ser útil, no para reemplazar lo que sigue.
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
+1-888-812-9373
 
 Somos el operador de Radlic, y el único. Ninguna otra empresa opera ninguna parte del servicio de una manera que recopile información a través de él.
 
@@ -85,7 +86,7 @@ En cualquier momento, usted puede:
 
 Ejercer cualquiera de estos derechos es gratuito. Confirmaremos que la solicitud proviene de usted antes de actuar — normalmente enviando un enlace a la dirección de correo electrónico de la cuenta — y no le exigiremos una identificación oficial ni ningún documento sensible para una solicitud habitual.
 
-**Cómo solicitarlo:** en la aplicación — su panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos**, donde puede corregir el nombre o el apodo de su hijo, su avatar y su franja de grados, descargar una copia de todo lo que tenemos y eliminar el perfil; y **Cuenta → Cerrar su cuenta** para eliminarlo todo. O escriba a support@radlor.com, o a 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
+**Cómo solicitarlo:** en la aplicación — su panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos**, donde puede corregir el nombre o el apodo de su hijo, su avatar y su franja de grados, descargar una copia de todo lo que tenemos y eliminar el perfil; y **Cuenta → Cerrar su cuenta** para eliminarlo todo. O escriba a support@radlor.com, llame al 1-888-812-9373, o escriba a 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
 **Cuánto tardamos:** 10 días.
 
@@ -165,5 +166,6 @@ Si hacemos un cambio importante en la forma en que tratamos la información de u
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
+1-888-812-9373
 
 Respondemos las preguntas sobre privacidad en un plazo de 10 días.

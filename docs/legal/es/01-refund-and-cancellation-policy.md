@@ -96,4 +96,4 @@ Cancelar su suscripción no es lo mismo que eliminar los datos de su hijo. Si qu
 
 Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 Correo electrónico: support@radlor.com
-Actualmente no ofrecemos contacto telefónico.
+Teléfono: 1-888-812-9373

@@ -7,7 +7,7 @@
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Radlic
 **Effective date:** 1 October 2026
-**Last updated:** 6 October 2026
+**Last updated:** 14 October 2026
 
 ---
 
@@ -99,7 +99,7 @@ Cancelling your subscription is not the same as deleting your child's data. If y
 
 Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 Email: support@radlor.com
-We do not currently offer a telephone contact.
+Phone: 1-888-812-9373
 
 ---
 

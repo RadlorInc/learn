@@ -11,6 +11,7 @@
   - `/auth` and the consent-link pages (`/consent/...`), which show the address for a parent who is signed out;
   - the legal pages;
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
+- **Phone**, the toll-free line `SUPPORT_PHONE` in `src/app/site.ts` (1-888-812-9373, since 14 Oct 2026). It is on the landing page footer, `/auth`, `/rights`, the Privacy Policy, Terms, Refund policy and Parent Rights page, and radlor.com's Contact page. The founder decides who answers it. It is not a way to cancel: the Refund policy names the app, email and post.
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 - **Automatic:**
   - GitHub issues from `red-main.yml`, `daily-smoke.yml`, `nightly-e2e.yml` and `backup.yml` ("Nightly backup is red");
