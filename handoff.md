@@ -6,46 +6,46 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (12 October 2026)
+## Where things stand (14 October 2026)
 
 - **Production** is on `e89358b6b` (#427, 12 Oct); `smoke:live` passed on it except its known stale service-worker
-  check (expects v242; live and repo are v252 — agent work below). The repo `learn` is public again (see
+  check (fixed in Draft #401). The repo `learn` is public again (see
   the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
   billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
   on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy game time
   on `/play`; six legal pages as beta versions; nightly backups green.
-- **Games on `/play`** (one paid time; the child picks, and can switch while it lasts): BlockCraft (save on the account),
+- **Games on `/play`** (one paid time; the child can switch game while it lasts): BlockCraft (save on the account),
   BeatHop (`beathop/check.mjs` gates its pads), Peak Rider (open 3D world, missions,
   2 worlds; `node peak/check.mjs`) and Rescue Rush (8 calls; `node rush/check.mjs`); the last three save on the device.
   How long a game plays comes from the database (`/api/game-time`, `public/play-time.js`), not the URL; `/play` re-reads
-  the wallet after the browser's Back. The founder audited points and time on the #427 preview (12 Oct, 3 rounds, all
-  right). Not yet: a real child signed in on production, a tablet. Next: more Peak worlds. `PK.auto(fn)` /
-  `RR.auto(fn)` drive the games on localhost. Branches: `wip/game-in-play` is superseded except three never-ported tests
+  the wallet after the browser's Back; points and time audited on the #427 preview (12 Oct). Not yet: a real child
+  signed in on production, a tablet. Next: more Peak worlds. Branches: `wip/game-in-play` is superseded except three never-ported tests
   (`adaptiveEngine`, `adaptiveWiring`, `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never
   ship as is); local `learner-grade` has its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
-- **Practice stops are wins (#425):** "Set complete!" / "Finish for today 🎉" / "You did it! You're getting stronger at…";
-  KG–2's voiced line re-recorded.
 - The pre-rewrite handoff and old-doc extracts are outside the repo on the founder's machine (owner-only).
 
 ## Open — Draft PRs waiting for the founder
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
-0. #416 — numbers as words, 195 re-rendered clips: its manifest conflicts with main since #425. Merge main in, rebuild
+1. #416 — numbers as words, 195 re-rendered clips: its manifest conflicts with main since #425. Merge main in, rebuild
    the manifest from main's clips (by SHA-256) plus its own, check only its keys change, then its upload.
-1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
+2. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
 3. #386 — scale pictures show what they weigh, halal examples only (gate `halalExamples.test.ts`), 142 new clips.
-   The upload ran (run 37453122387: 142 uploaded, all 16,985 manifest objects present). Founder: revoke the S3 key and
+   Upload ran (run 37453122387). Founder: revoke the S3 key and
    both `production-db` secrets, run `docs/legal/sql/audio-bucket-proof.sql` (P5 expects 18026 | 274803288), merge;
    agent: `npm run smoke:live` after the deploy.
-2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
+4. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
    #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
-3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
+5. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
    the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
+6. #429 — support phone 1-888-812-9373 beside the support email: app, legal pages (en + es); radlor.com in
+   `website` #14. Not in the COPPA notice, so notice-v7 stands. Attorney sees it next round (packet D4).
 
 ## Open — the founder decides
 
+- Who answers the support phone (#429): the Privacy Policy now lists it.
 - Games: multiplayer later (a server; no chat); try them on a real tablet.
 - `learner-grade`: rework on top of notice-v7, or drop.
 - BeatHop's (and Peak Rider's) saves are on the device only: an account save needs a `game` column on `game_saves`.
@@ -79,24 +79,23 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
 - **If `learn` goes private, Actions minutes cost money**: ~5,400 min in 30 days (28 Sep) vs 2,000 free — about US$20
   a month over; with no budget Actions (and deploys) stop at 2,000. Set a budget first, or have the agent cut minutes
   (Deploy re-runs the whole CI on every merge).
-- Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
-  still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
+- Turn off the Claude routine "Milo — daily production health check" (claude.ai → routines): it fails daily on the
+  pre-move URL; `daily-smoke.yml` replaces it.
 - An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
   unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
 - Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
   `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
-- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
-  before 6 Oct, all closed): close them on the next green run.
+- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it: close them on
+  the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
-- Hard spend caps, not alerts (the "surprise bill" reel, 28 Sep): Vercel Spend Management with "pause production
-  deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
-  Vercel connector does not show it.
-- Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
-  27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
+- Hard spend caps, not alerts: Vercel Spend Management with "pause production deployment" on; Supabase Spend Cap
+  on; the Resend plan stops at its quota. Not measured (the Vercel connector does not show it).
+- Local copies that can go: the audio copies (bucket proven 27 Sep), the audio runner rehearsal folder, the
+  stopped local Supabase stack, the local `part-*` branches.
 
 ## Open — live checks on production (the founder)
 
@@ -126,12 +125,12 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   buttons fail Playwright's "stable" wait because the nudge animates them, 3 chapters "could not look", colors timed out).
 - `e2e/short-sessions.spec.ts` "signed out: the device keeps exactly what doc 08 says" fails on main: Chrome's harmless
   "ResizeObserver loop" warning is stored as `milo_recent_errors` (filter it in the crash recorder; task filed 12 Oct).
-- `scripts/smoke-live.mjs` hard-codes the service-worker version (expects v242, live is v252); the ops digest
-  (06:23 UTC) reports the previous day's backup, because scheduled backups start hours late.
+- Draft #401 (agent fixes): `smoke:live`'s hard-coded service-worker version, and the ops digest reporting the
+  previous day's backup (scheduled backups start hours late).
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
-- `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
-  alone — twice on 28 Sep. A timing assumption in the test, not yet found.
+- `noChildDataInAudioUrl.test.ts` (twice, 28 Sep) and `eqRows.test.ts` (14 Oct) fail with assertion errors, not
+  timeouts, under a full run's load and pass alone. A timing assumption, not yet found.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's
@@ -153,14 +152,18 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Small: `/ui-preview` shows a fox; the vertical number line's targets are 26 px (app: 44); the chalk "speck" in
   g5m1-t1/t2; Playwright defaults to port 3017; Dependabot misses the backup action's `upload-artifact`; stale
   comments in `AccountConsent.tsx` and `content/voice/styles.ts`; `scripts/lesson-questions.mjs` needs `npx tsx`.
+- 28 Josh clips do not say their line, the tester's g3m5-t7 Screen 1 among them:
+  it is the clip, not the player. Local branch `voice-word-check` (worktree `../milo-voice-word-check`, not pushed)
+  adds `scripts/audio/voice-check.py`, which lists them. 14 of the 28 are already re-rendered by #416 (their new
+  renders not yet word-checked); the other 14 need a listen and a `redo` render after #416 merges.
 - `deletion_log` and `email_suppressions` outlive a closed account but are not declared in `SURVIVORS`
   (`src/core/accountDeletion.ts`): check against `accountDeletion.test.ts` and the Terms. Stale comment: `/api/health`
   mentions tools we do not use.
-- Doc 08 omits `blockcraft.save.<id>` / `beathop.save.<id>` (now also `peak.save.<id>`, `rush.save.<id>`, `blockcraft.keysHidden`); sign-out does not sweep them (`gameSave.ts`). Sweep only
-  once an account save exists, then the doc 08 rows (founder: the text).
+- Doc 08 omits the games' device keys (`<game>.save.<id>`, `blockcraft.keysHidden`); sign-out does not sweep them
+  (`gameSave.ts`). Sweep once an account save exists, then the doc 08 rows (founder: the text).
 - `email_suppressions` (20260923190000) revokes from public/anon/authenticated but not service_role, so on Supabase the
-  server also holds DELETE/TRUNCATE by default privilege (measured on a local supabase/postgres container, 6 Oct; the
-  baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
+  server also holds DELETE/TRUNCATE by default privilege (measured locally, 6 Oct;
+  the baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
 - Bounce suppression: a B3 refused as undeliverable shows the respond page's generic error (nothing is granted).
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
