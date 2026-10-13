@@ -20,12 +20,14 @@ select count(*) from supabase_migrations.schema_migrations where version = '2026
 select count(*) as badly_named from storage.objects
 where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> 'anon-probe-canary.mp3';
 
--- P5. After the upload run: every manifest object is there.     expected: 18042 | <before bytes + 261236>
---     (2026-10-11, #423: the dry run (run 38140484488) counted 18029 objects in the bucket — one more than #413's 18028 —
---     with 13 manifest objects missing. Not measured: its bytes. First pre-registered, before the dry run:
---     18041 | 275178138, which assumed 18028 | 274916902;
---     this run adds 13 objects, 261236 bytes: the dot-plot lines of g6m7 (12) and g7m5 (1). If "before" reads
---     differently, the rule is before + 13 objects, + 261236 bytes. The 13 old clips stay in the bucket.)
+-- P5. After the upload run: every manifest object is there.     expected: 18042 | 275193411
+--     (read by the founder after #425's upload, 2026-10-12: 18042 | 275193411, so before it 18041 | 275178138; P7: 1 | 1 | no-store)
+--     (2026-10-12, #425: its dry run (run 38195871791) listed 18042 objects = 16984 of the manifest + 1057 older ones +
+--     the canary, so before this run P5 reads 18041 (uploads ran after #413); this run adds 1 object, 15273 bytes: the KG–2 take line "You did it! 5 questions solved. You're
+--     getting stronger!" (1g6guhs → 99106db90a5e9e79.mp3). The old line's clip stays in the bucket.)
+--     (2026-10-11, #423: run 38140569672 added 13 objects, 261236 bytes: the dot-plot lines of g6m7 (12) and g7m5 (1).
+--     P5 went from 18028 | 274916902 to 18041 | 275178138, the "before" #425 derives from the founder's read. The dry run's
+--     18029 / 18042 counts include the canary, which P5 leaves out. The 13 old clips stay in the bucket.)
 --     (2026-10-09, #413: before this run the bucket should read 18027 | 274844265; this run adds 1 object, 72637
 --     bytes, g6m4-t7's Screen 1 with what interest is. The old line's clip stays in the bucket.)
 --     (2026-10-08, #407: the bucket read 18026 | 274803288 after #386's 142-clip upload (6 Oct); this run adds 1 object,

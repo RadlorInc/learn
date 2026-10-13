@@ -33,6 +33,10 @@ h2 { margin: 0 0 8px; text-shadow: 2px 2px 0 #333; }
 #hand { position: absolute; right: 8%; bottom: -10px; width: 22vmin; height: 22vmin; image-rendering: pixelated; transform-origin: 100% 100%; transform: rotate(-12deg); }
 #hand.swing { animation: swing .25s ease-out; }
 @keyframes swing { 0% { transform: rotate(-12deg) translate(0,0);} 40% { transform: rotate(-40deg) translate(-8vmin, -4vmin);} 100% { transform: rotate(-12deg);} }
+/* the keys: a small list in a corner while playing (computers only), and on the pause screen */
+kbd { display: inline-block; min-width: 1.5em; padding: 0 5px; margin: 0 1px; border-radius: 5px; background: #fff; color: #222; border-bottom: 3px solid #999; font: 700 12px system-ui, sans-serif; text-align: center; text-shadow: none; }
+#keys { position: absolute; left: 8px; top: 8px; max-width: 40vw; font-size: 13px; line-height: 1.9; background: rgba(0,0,0,.45); padding: 6px 10px; border-radius: 8px; text-shadow: 1px 1px 0 #000; }
+.keyslist { font-size: 14px; line-height: 2; max-width: 620px; text-align: center; }
 #debug { position: absolute; left: 6px; top: 6px; font-size: 13px; line-height: 1.35; background: rgba(0,0,0,.4); padding: 4px 6px; white-space: pre; }
 #waterOverlay { position: absolute; inset: 0; background: rgba(30,60,160,.35); display: none; }
 #toast { position: absolute; left: 50%; top: 18%; transform: translateX(-50%); font-size: 18px; text-shadow: 2px 2px 0 #000; opacity: 0; transition: opacity .6s; text-align: center; }

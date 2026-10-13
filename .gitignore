@@ -92,3 +92,7 @@ public/audio/**/*.mp3
 /public/blockcraft/
 # BeatHop (beathop/) has no build step: `npm run build:game` copies its page and code here.
 /public/beathop/
+# Peak Rider (peak/), copied the same way (with its vendored three.js).
+/public/peak/
+# Rescue Rush (rush/), copied the same way; it imports Peak Rider's three.js from public/peak.
+/public/rush/

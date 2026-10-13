@@ -92,7 +92,7 @@ describe('child-facing words', () => {
     for (const w of ['Fallaste', 'Incorrecto', 'Bloqueado', 'Incompleto', 'No completado', 'Salir', 'Abandonar'])
       expect(ES.test(w), w).toBe(true)
     // …and not the ordinary words a child does see.
-    for (const w of ['Keep going', 'Take a break', 'Your spot is saved.', 'Keep practicing', 'Seguir practicando'])
+    for (const w of ['Keep going', 'Take a break', 'Your spot is saved.', 'Keep practicing', 'Seguir practicando', 'One more set', 'Finish for today 🎉', 'Set complete! ⭐ 5 questions solved.', 'You did it! ⭐'])
       expect(EN.test(w) || ES.test(w) || PERCENT.test(w), w).toBe(false)
   })
 })

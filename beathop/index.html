@@ -14,6 +14,13 @@
   .big:active { transform: translateY(3px); box-shadow: 0 1px 0 #c45500; }
   .plain { background: var(--soft); color: var(--ink); }
   .hidden { display: none !important; }
+  /* keyboard keys: a strip while playing and a list on the pause screen, only on a computer (a touch screen is tapped) */
+  kbd { display: inline-block; min-width: 1.7em; padding: 1px 6px; border-radius: 6px; background: #fff; color: #1d3557; border: 1px solid #1d355740; border-bottom-width: 3px; font: 800 12px system-ui, sans-serif; text-align: center; }
+  #keys { position: fixed; left: 12px; top: max(58px, calc(env(safe-area-inset-top) + 48px)); background: #ffffffd9; border-radius: 14px; padding: 6px 12px; font-weight: 700; white-space: nowrap; pointer-events: none; display: none; }
+  .controls { text-align: left; margin: 4px auto 12px; max-width: 420px; display: none; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; }
+  .controls dt { text-align: right; white-space: nowrap; }
+  .controls dd { margin: 0; font-weight: 600; }
+  @media (hover: hover) and (pointer: fine) { #keys:not(.hidden) { display: block; } .controls { display: grid; } }
 
   .screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: #1d355766; overflow: auto; }
   .card { background: var(--card); border-radius: 22px; padding: 22px; width: min(560px, 100%); text-align: center; box-shadow: 0 10px 40px #0003; }
@@ -59,13 +66,14 @@
   <span class="pill" id="tries">Try 1</span>
   <span class="pill hidden" id="timer"></span>
 </div>
+<div id="keys" class="hidden"><kbd>Space</kbd> jump — hold it to go higher · <kbd>Esc</kbd> pause</div>
 <div id="toast" style="opacity:0"></div>
 <div id="hint" style="opacity:0"></div>
 
 <div id="title" class="screen">
   <div class="card">
     <h1>BeatHop</h1>
-    <p class="sub">One button. Jump, glide and flip to the flag!</p>
+    <p class="sub">One button. Jump, glide and flip to the flag! Tap, click or press <kbd>Space</kbd> to jump.</p>
     <div class="swatches" id="swatches" aria-label="Pick your colour"></div>
     <div class="row hats" id="hats" aria-label="Pick a hat"></div>
     <p class="sub" id="bank" style="margin:8px 0 0"></p>
@@ -82,6 +90,10 @@
 <div id="pause" class="screen hidden">
   <div class="card">
     <h2>Paused</h2>
+    <dl class="controls">
+      <dt><kbd>Space</kbd> <kbd>↑</kbd> <kbd>W</kbd> or click</dt><dd>Jump — hold it to go higher</dd>
+      <dt><kbd>Esc</kbd> <kbd>P</kbd></dt><dd>Pause</dd>
+    </dl>
     <div class="row">
       <button class="big" id="bResume">Keep playing</button>
       <button class="plain" id="bRestart">Start the level again</button>
