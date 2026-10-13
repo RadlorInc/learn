@@ -31,16 +31,15 @@ fixed yet are tracked outside this public repo; ask the founder.
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
 1. #416 — numbers as words, 195 re-rendered clips: its manifest conflicts with main since #425. Merge main in, rebuild
    the manifest from main's clips (by SHA-256) plus its own, check only its keys change, then its upload.
-2. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
-3. #386 — scale pictures show what they weigh, halal examples only (gate `halalExamples.test.ts`), 142 new clips.
-   Upload ran (run 37453122387). Founder: revoke the S3 key and
-   both `production-db` secrets, run `docs/legal/sql/audio-bucket-proof.sql` (P5 expects 18026 | 274803288), merge;
-   agent: `npm run smoke:live` after the deploy.
-4. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
-   #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
-5. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
-   the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
-6. #429 — support phone 1-888-812-9373 beside the support email: app, legal pages (en + es); radlor.com in
+2. #423 — Grade 6–7 dot plots drawn as dots, not ✕s (a tester's note); g7m5's text said ✕ over a board of dots. 13 new
+   clips uploaded and verified 11 Oct (P5 18041 | 275178138 before #425). Merges clean with main and #426. Founder:
+   look at g6m7-t3/t6 on its preview, then merge.
+3. #426 and #421 — daily tester triage (12 and 10 Oct): g6m7 table row names, t5's late jump, Screen 9 sticker rows,
+   g8m1-t3 practice; shape side labels. Not yet fixed from the same reviews: g6m7-t4 never says "range" before practice
+   asks for it.
+4. Enrol two authenticators at `/admin/mfa` (#324 is live), then #325 as built (migration; its SQL is in the PR).
+   #322 is live too: check Supabase Auth's password minimum is 8.
+5. #429 — support phone 1-888-812-9373 beside the support email: app, legal pages (en + es); radlor.com in
    `website` #14. Not in the COPPA notice, so notice-v7 stands. Attorney sees it next round (packet D4).
 
 ## Open — the founder decides
