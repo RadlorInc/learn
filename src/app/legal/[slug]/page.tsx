@@ -9,7 +9,7 @@
  * the sitemap. The route exists anyway because the consent emails and the collection screens link to
  * it, and a link to a page that says "not yet in force" is honest where a 404 is not.
  */
-import { SUPPORT_EMAIL } from '@/app/site'
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -81,7 +81,8 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
             <div style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.55 }}>
               This document has not been published yet, so nothing is shown here and nothing here is
               in force. For anything that matters, email{' '}
-              <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#fff', fontWeight: 800 }}>{SUPPORT_EMAIL}</a>.
+              <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#fff', fontWeight: 800 }}>{SUPPORT_EMAIL}</a> or call{' '}
+              <a href={`tel:${SUPPORT_TEL}`} style={{ color: '#fff', fontWeight: 800 }}>{SUPPORT_PHONE}</a>.
             </div>
           </div>
         ) : (
@@ -106,7 +107,8 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
 
         <p style={{ marginTop: 28, fontSize: 14, color: '#3d6fb8' }}>
           Questions about your child&apos;s data? Email{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8' }}>{SUPPORT_EMAIL}</a>.
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8' }}>{SUPPORT_EMAIL}</a> or call{' '}
+          <a href={`tel:${SUPPORT_TEL}`} style={{ color: '#0B4FA8' }}>{SUPPORT_PHONE}</a>.
           You can download or delete everything from the{' '}
           <Link href="/parent" style={{ color: '#0B4FA8' }}>parent dashboard</Link>.
         </p>

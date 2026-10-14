@@ -52,7 +52,7 @@ export function SubscriptionCard({ children }: { children?: React.ReactNode }) {
   else if (sub === undefined) body = <p style={p}>We could not load your subscription. Please try again.</p>
   else if (!live && justPaid) body = <p style={p} data-testid="plan-activating">
     <strong>Payment received — we are switching your plan on.</strong> This usually takes less than a minute. Refresh
-    this page to see it. If it has not appeared after a few minutes, email support@radlor.com.</p>
+    this page to see it. If it has not appeared after a few minutes, email support@radlor.com or call 1-888-812-9373.</p>
   else if (!sub || !live) body = <p style={p}>You do not have a subscription, so there is nothing to cancel.</p>
   else if (sub.cancel_at_period_end) body = <p style={p} data-testid="plan-ends"><strong>{endsLine(sub.current_period_end)}</strong></p>
   else if (confirming) body = <>
