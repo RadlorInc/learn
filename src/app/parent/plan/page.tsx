@@ -166,7 +166,7 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
           <ul style={{ margin: '8px 0 12px', paddingLeft: 20 }}>
             <li>You will be charged <strong>{usd(totalCents(seats, cadence))} today</strong>.</li>
             <li>After that, you will be charged <strong>{usd(totalCents(seats, cadence))} every {cadence === 'monthly' ? 'month' : 'year'}</strong> until you cancel.</li>
-            <li>You can cancel any time at <strong>Account → Plan &amp; billing</strong>, or by emailing support@radlor.com. Cancelling stops all future charges. Questions: 1-888-812-9373.</li>
+            <li>You can cancel any time at <strong>Account → Plan &amp; billing</strong>, by emailing support@radlor.com or by calling 1-888-812-9373. Cancelling stops all future charges.</li>
             <li>Full terms: <Link href="/legal/refunds" style={{ color: '#0B4FA8', fontWeight: 700 }}>Refund and Cancellation Policy</Link>,{' '}
               <Link href="/legal/terms" style={{ color: '#0B4FA8', fontWeight: 700 }}>Terms of Service</Link> and{' '}
               <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>.</li>

@@ -51,6 +51,8 @@ You can cancel your subscription at any time, and cancelling is designed to take
 
 **By email:** Write to support@radlor.com. We will action the cancellation within 2 business days of receipt and confirm by email.
 
+**By phone:** Call 1-888-812-9373 (toll-free). We will ask for the email address on the account, action the cancellation within 2 business days and confirm by email to that address.
+
 **By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
 You do not need to call us, chat with an agent, or explain why you are cancelling in order to cancel.

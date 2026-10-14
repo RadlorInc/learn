@@ -595,7 +595,7 @@ describe('the Stripe webhook sends the acknowledgement and the annual renewal re
     expect(body.text).toContain('Plan: Radlic Family, for 2 children.')
     expect(body.text).toContain('Charged today: $12.98.')
     expect(body.text).toContain('Renews: automatically, every month, next on February 1, 2026. Renewal amount: $12.98 (we do not charge sales tax).')
-    expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, or email support@radlor.com')
+    expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, email support@radlor.com or call 1-888-812-9373')
     expect(body.text).toContain('https://radlic.com/legal/refunds')
     expect(body.text).not.toContain('permission')   // consent is the email-plus flow, not checkout
     expect(mails[0].headers['Idempotency-Key']).toBe('billing-ack-sub_123')
@@ -620,7 +620,7 @@ describe('the Stripe webhook sends the acknowledgement and the annual renewal re
     expect(body.subject).toBe('Your Radlic annual subscription renews soon')
     expect(body.text).toContain('Your Radlic annual subscription for 2 children renews automatically on February 1, 2026.')
     expect(body.text).toContain('You will be charged $123.99 for the next 12 months.')
-    expect(body.text).toContain('Cancel subscription, or email support@radlor.com')
+    expect(body.text).toContain('Cancel subscription, email support@radlor.com or call 1-888-812-9373')
     // One reminder per renewal: the key carries the period, so next year's is a new message.
     expect(mails[0].headers['Idempotency-Key']).toBe('billing-renewal-sub_123-2026-02-01T00:00:00.000Z')
   })

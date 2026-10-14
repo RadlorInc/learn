@@ -43,8 +43,8 @@ export function SubscriptionCard({ children }: { children?: React.ReactNode }) {
     }
     if (out.error === 'no_subscription') { setSub(null); return }
     setNote(out.error === 'billing_not_configured'
-      ? 'Cancelling is not switched on yet. Email support@radlor.com and we will cancel it for you.'
-      : 'Something went wrong and nothing has changed. Try again, or email support@radlor.com.')
+      ? 'Cancelling is not switched on yet. Email support@radlor.com or call 1-888-812-9373 and we will cancel it for you.'
+      : 'Something went wrong and nothing has changed. Try again, or email support@radlor.com or call 1-888-812-9373.')
   }
 
   let body: React.ReactNode
