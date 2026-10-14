@@ -335,11 +335,12 @@ export const G6M7: Lesson[] = [
           { say: "Every other game sits in between." },
         ],
         pictures: [line20([11, 7, 9], { points: [{ at: 4, label: 'smallest' }, { at: 15, label: 'biggest' }], motion: true })] },
-      { title: "Measure the gap", text: "How far is it from 4 up to 15? 15 − 4 = 11. So his scores are spread over 11 points.",
+      { title: "Measure the gap", text: "How far is it from 4 up to 15? 15 − 4 = 11. So his scores are spread over 11 points. This gap is called the range.",
         beats: [
           { say: "How far is it from 4 up to 15?", pic: 0 },
           { say: "15 − 4 = 11.", pic: 1 },
           { say: "So his scores are spread over 11 points." },
+          { say: "This gap is called the range." },
         ],
         pictures: [line20([4, 11, 7, 15, 9], { jumps: [{ from: 4, to: 15, label: '11' }], motion: true }), { kind: 'eq', text: '15 − 4 = 11' }] },
       { title: "A small gap", text: "Now Kim. She scored 9, 10, 8, 11 and 10. Her gap is 11 − 8 = 3. See how her scores huddle close together?",
