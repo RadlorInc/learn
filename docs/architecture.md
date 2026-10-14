@@ -395,13 +395,14 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
 - **Seats fill themselves** (20261001150000): a new paid seat goes to the family's oldest child without one, and a
   child added later takes an empty seat; `reassign_learner_seat` (once per period) is still the only way to MOVE one.
 - **State (2026-10-01):** `BILLING_LIVE = true` (`src/app/legal/registry.ts`, the paid launch with beta legal pages):
-  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). On `main`, `src/infra/stripe.ts`
-  still accepts only `sk_test_` keys, so no deployment can take a real payment; Draft PR #351 pins the mode to the
-  deployment instead (live keys on Vercel Production only). `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
+  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). `src/infra/stripe.ts` pins the
+  key's mode to the deployment (#351): Vercel Production (`VERCEL_ENV=production`) accepts only `sk_live_`, everywhere
+  else only `sk_test_`; any other key throws. `scripts/stripe-products.mts --live` makes the live product and prices
+  (key from the environment only). `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
   topic through while off (`chapterGateOff`).
 - **On:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`; to gate
-  access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments also need the test-key guard
-  changed, a deliberate code change. Rollback: `billing_config.enforced = false` (no deploy), then `BILLING_LIVE = false`.
+  access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments need the live values of all four
+  in Vercel Production. Rollback: `billing_config.enforced = false` (no deploy), then `BILLING_LIVE = false`.
 
 ## 9. External services
 
