@@ -16,7 +16,7 @@ type Rendered = { subject: string; html: string; text: string }
 const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`
 const children = (n: number) => `${n} ${n === 1 ? 'child' : 'children'}`
 const HOW_TO_CANCEL =
-  'How to cancel: sign in and go to Account → Plan & billing → See plans → Cancel subscription, or email support@radlor.com. ' +
+  'How to cancel: sign in and go to Account → Plan & billing → See plans → Cancel subscription, email support@radlor.com or call 1-888-812-9373. ' +
   'Cancelling stops all future charges. Your plan continues until the end of the period you have paid for.'
 const POLICY = 'Our Refund and Cancellation Policy: https://radlic.com/legal/refunds'
 

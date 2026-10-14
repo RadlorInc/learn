@@ -44,6 +44,7 @@ Nunca se le cobra por ejercer un derecho de privacidad.
 
 **En la aplicación:** panel de padres → la tarjeta de su hijo → **Inicio de sesión y datos** → *Descargar una copia* o *Eliminar el perfil de nombre*. Para eliminarlo todo: **Cuenta → Cerrar su cuenta**, que le pide escribir su dirección de correo electrónico para confirmar y requiere haber iniciado sesión recientemente.
 **Por correo electrónico:** support@radlor.com, desde la dirección de correo electrónico de la cuenta
+**Por teléfono:** 1-888-812-9373
 **Por correo postal:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 **Cómo comprobamos que realmente es usted.** Antes de mostrar o eliminar nada, confirmamos que la solicitud la hizo el padre o la madre titular de la cuenta. Enviaremos un enlace de confirmación a la dirección de correo electrónico de la cuenta y solo actuaremos cuando usted haga clic en él. Eliminar una cuenta desde la aplicación requiere, además, que usted haya iniciado sesión en los últimos diez minutos. Le pedimos esto para proteger a su hijo — impide que cualquier otra persona obtenga su información. No le pediremos una identificación oficial ni ningún documento sensible para hacer una solicitud habitual.

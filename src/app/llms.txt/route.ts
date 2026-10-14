@@ -1,4 +1,4 @@
-import { APP_NAME, COMPANY, COMPANY_URL, LANDING_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, COMPANY, COMPANY_URL, LANDING_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL, SUPPORT_PHONE } from '@/app/site'
 import { LEGAL_PAGES } from '@/app/legal/registry'
 
 /**
@@ -56,6 +56,7 @@ ${COMPANY} — ${COMPANY_URL}
 
 ## Contact
 ${SUPPORT_EMAIL}
+${SUPPORT_PHONE}
 `
   return new Response(text, { headers: { 'content-type': 'text/plain; charset=utf-8' } })
 }

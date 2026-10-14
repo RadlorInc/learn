@@ -121,7 +121,7 @@ Usted se compromete a indemnizarnos frente a reclamaciones, pérdidas y costos l
 
 Si usted cree que algún material del Servicio infringe sus derechos de autor, comuníquese con nosotros:
 
-**Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com
+**Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · 1-888-812-9373
 
 ## 15. Controversias y ley aplicable
 
@@ -145,3 +145,4 @@ Si una controversia no se resuelve de manera informal, se someterá exclusivamen
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
+1-888-812-9373

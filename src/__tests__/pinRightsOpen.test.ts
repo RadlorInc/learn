@@ -83,7 +83,7 @@ describe('/rights with the PIN locked', () => {
   it('a signed-in parent gets help, withdraw-all and the download — and no way to close the account', async () => {
     const p = await rightsPage()
     const text = p.el.textContent ?? ''
-    expect([...p.el.querySelectorAll('a')].map(a => a.getAttribute('href'))).toEqual(['/parent', '/help', 'mailto:support@radlor.com'])
+    expect([...p.el.querySelectorAll('a')].map(a => a.getAttribute('href'))).toEqual(['/parent', '/help', 'mailto:support@radlor.com', 'tel:+18888129373'])
     expect(text).not.toMatch(/close your account|delete my account/i)
 
     // Download: the same DataRights button, fetching that child's extras.

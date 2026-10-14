@@ -50,7 +50,7 @@ This is a service message about your Radlic account.
 
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
-Questions: support@radlor.com
+Questions: support@radlor.com · 1-888-812-9373
 ```
 
 ## 6. Before any send to more than one person — checklist

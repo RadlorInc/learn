@@ -10,7 +10,7 @@ import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
-import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import { firstNameOf } from '@/features/consent/firstName'
 
 type Mode = 'login' | 'signup'
@@ -504,6 +504,8 @@ export default function AuthPage() {
           <p style={{ textAlign: 'center', fontSize: 13, color: C.ink3, margin: '16px 0 0' }}>
             {t('Need help?')}{' '}
             <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.accent, fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
+            {' · '}
+            <a href={`tel:${SUPPORT_TEL}`} style={{ color: C.accent, fontWeight: 700 }}>{SUPPORT_PHONE}</a>
           </p>
 
           {/* Front door for cold traffic: try the diagnostic before making an account. */}

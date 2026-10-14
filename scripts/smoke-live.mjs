@@ -2,7 +2,7 @@
 // Live smoke for radlic.com — run after every production deploy that touches the app.
 //
 //   node scripts/smoke-live.mjs                      # all checks against https://radlic.com
-//   SMOKE_SW=v239 node scripts/smoke-live.mjs        # after a service-worker bump
+//   SMOKE_SW=v239 node scripts/smoke-live.mjs        # only if the live sw is not this checkout's public/sw.js
 //   SMOKE_BASE=http://localhost:3000 SMOKE_ONLY=email-login node scripts/smoke-live.mjs
 //
 // Exit 0 = looked, every check passed · 1 = a check failed (named) · 2 = could not look (network,
@@ -19,7 +19,9 @@ import { chromium } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
 const BASE = (process.env.SMOKE_BASE ?? 'https://radlic.com').replace(/\/$/, '')
-const SW = process.env.SMOKE_SW ?? 'v242'
+// The expected version is the one in this checkout's public/sw.js, so a bump there needs no edit here
+// (a hard-coded default went stale at v242 while v245 was live).
+const SW = process.env.SMOKE_SW ?? readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8').match(/const VERSION\s*=\s*'([^']+)'/)?.[1]
 const ONLY = process.env.SMOKE_ONLY
 const LANDING = 'https://radlor.com/radlic'
 const cb = () => `cb=${Date.now()}`

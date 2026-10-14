@@ -11,7 +11,7 @@
 
 **Effective date:** 1 October 2026
 
-**Last updated:** 1 October 2026
+**Last updated:** 14 October 2026
 
 ---
 
@@ -130,7 +130,7 @@ You agree to indemnify us against claims, losses and reasonable legal costs aris
 
 If you believe material on the Service infringes your copyright, contact us:
 
-**Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com
+**Radlor Inc.**, 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702 · support@radlor.com · 1-888-812-9373
 
 ## 15. Disputes and governing law
 
@@ -154,6 +154,7 @@ If a dispute is not resolved informally, it will be brought exclusively in the s
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
+1-888-812-9373
 
 ---
 
