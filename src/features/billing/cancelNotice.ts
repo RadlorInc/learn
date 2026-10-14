@@ -24,7 +24,7 @@ export const TRANSACTIONAL_FOOTER = [
   '',
   'Radlor Inc.',
   '254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
-  'Questions: support@radlor.com',
+  'Questions: support@radlor.com · 1-888-812-9373',
 ].join('\n')
 
 export function renderCancelled(endsIso: string | null): { subject: string; html: string; text: string } {
