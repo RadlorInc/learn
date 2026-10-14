@@ -120,7 +120,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                     : { top: 0, transform: 'translateY(-50%)', width: w ? Math.min(210, Math.floor(w / 2)) : 'min(210px, 42vw)', ...(side(i) < 0 ? { left: gap } : { right: gap, textAlign: 'right' }) }
                   return (
                     <li key={l.id} style={{ position: 'absolute', top: y, left: across ? x : `${x}%`, width: 0, height: 0 }}>
-                      <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : `, ${pct}% done`}${isNext ? ', next up' : ''}`}
+                      <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : isNext ? ', next up' : ''}`}
                         style={{ ...stop, width: size, height: size, background: isNext ? '#fbdbba' : '#fff', ...dimStop,
                           ...(isNext ? { animation: 'lp-breathe 2.4s ease-in-out infinite, lp-glow 2.4s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #fbdbba` } : {}) }}>
                         {isNext
