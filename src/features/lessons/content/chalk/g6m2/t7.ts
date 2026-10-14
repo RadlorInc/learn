@@ -26,8 +26,8 @@ export const T7: (ChalkMark[] | undefined)[] = [
   undefined,
   // The packs do not match
   [
-    ...numLine([0, 'Why'], 140, 'hot dogs'), ...jump([0, '6'], 6, 6, 140),
-    ...numLine([1, 'Buns'], 280, 'buns'), ...jump([1, '4'], 4, 4, 280), ...jump([1, '4'], 4, 8, 280),
+    ...numLine([0, 'Why'], 140, 'pencils'), ...jump([0, '6'], 6, 6, 140),
+    ...numLine([1, 'Erasers'], 280, 'erasers'), ...jump([1, '4'], 4, 4, 280), ...jump([1, '4'], 4, 8, 280),
     { ...cross([1, '6'], x(6) - 9, 271, 18, 18), quick: true }, write([1, '6'], 'no 6', x(6), 334, 20, 'r'),
     write([2, 'both'], 'a number on both lines?', 330, 375, 28, 'y'),
   ],
@@ -42,23 +42,23 @@ export const T7: (ChalkMark[] | undefined)[] = [
   ],
   // Count by 6s
   [
-    ...numLine([0, 'hot'], 200, 'hot dogs'),
+    ...numLine([0, 'pencils'], 200, 'pencils'),
     write([1, 'Count'], 'count by 6s', 300, 60, 30, 'b'),
     ...(['6', '12', '18', '24'] as const).flatMap(w => jump([1, w], 6, +w, 200)),
   ],
   // Count by 4s, on a line underneath
   [
-    ...numLine([0, 'Now'], 130, 'hot dogs'), ...count([0, 'Now'], 6, 130),
-    ...numLine([0, 'underneath'], 290, 'buns'),
+    ...numLine([0, 'Now'], 130, 'pencils'), ...count([0, 'Now'], 6, 130),
+    ...numLine([0, 'underneath'], 290, 'erasers'),
     ...(['4', '8', '12', '16', '20', '24'] as const).flatMap(w => jump([1, w], 4, +w, 290)),
   ],
   // The first place both land
   [
-    ...numLine([0, 'Which'], 110, 'hot dogs'), ...count([0, 'Which'], 6, 110),
-    ...numLine([0, 'Which'], 250, 'buns'), ...count([0, 'Which'], 4, 250),
+    ...numLine([0, 'Which'], 110, 'pencils'), ...count([0, 'Which'], 6, 110),
+    ...numLine([0, 'Which'], 250, 'erasers'), ...count([0, 'Which'], 4, 250),
     ring([0, '12'], x(12), 190, 22, 76, 'y'),
     write([1, '12'], '12 of each', 300, 318, 36, 'y'),
-    write([1, 'hot'], '2 packs of hot dogs', 180, 370, 24), write([1, 'buns'], '3 packs of buns', 435, 370, 24),
+    write([1, 'pencils'], '2 packs of pencils', 180, 370, 24), write([1, 'erasers'], '3 packs of erasers', 435, 370, 24),
   ],
   // One thing not to do
   [

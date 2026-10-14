@@ -98,12 +98,17 @@ describe('BUG-01 a queued answer is not deleted because the wrong session flushe
     expect(queued()).toHaveLength(0)
   })
 
-  it('POSITIVE CONTROL: for the owner, a refused learner (deleted, access removed) drops that one item only', async () => {
+  it('POSITIVE CONTROL: for the owner, a refused learner (deleted, access removed) drops that one item only — after its week on the device', async () => {
     world.owns = { family: ['kidB'] }   // kidA was deleted: the owner's own call is refused 42501 'forbidden'
     world.session = 'family'
     syncLesson('kidA', 'g3m1-t1', 'first'); syncLesson('kidB', 'g4m1-t1', 'first')
     await flushLessonSync(); await flushLessonSync()
     expect(world.delivered).toEqual(['kidB:g4m1-t1'])
+    // Since 2026-10-05 a 'drop' refusal is kept 7 days first (lessonSync REFUSED_KEEP_MS; supportSync.test.ts).
+    expect(queued().map(x => x.learnerId)).toEqual(['kidA'])
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 8 * 24 * 60 * 60 * 1000)
+    await flushLessonSync()
+    vi.restoreAllMocks()
     expect(queued()).toHaveLength(0)
   })
 })

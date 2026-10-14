@@ -23,7 +23,7 @@ export function PracticeLayout({ corner, crumb, title, onExit, exitLabel = 'Exit
   return (
     <div className="pr-page" style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 26px', display: 'flex', justifyContent: 'center' }}>
       <style>{LESSON_KEYFRAMES + LAYOUT}</style>
-      <div style={{ ...shell, maxWidth: 1180, alignSelf: 'flex-start', minHeight: 'clamp(520px, calc(100dvh - 48px), 900px)' }}>
+      <div className="pr-wrap" style={{ ...shell, maxWidth: 1180, alignSelf: 'flex-start', minHeight: 'clamp(520px, calc(100dvh - 48px), 900px)' }}>
         <div style={topBar}>
           <span style={{ fontSize: 'clamp(14px, 3.4vw, 18px)' }}>{corner}</span>
           <span style={{ fontSize: 'clamp(14px, 3.6vw, 18px)', textAlign: 'center' }}>{crumb}</span>

@@ -46,6 +46,7 @@ const SAMPLES: [string, Picture][] = [
   ['chips', { kind: 'chips', pos: 3, neg: 5, pairs: 3 }],
   ['balance', { kind: 'balance', left: 'x + 4', right: '9' }],
   ['spinner', { kind: 'spinner', parts: ['A', 'B', 'C', 'D'] }],
+  ['trail', { kind: 'trail', total: '12.5 km', done: 0.31, doneLabel: '3.875 km', left: '?' }],
   ['eq lines', { kind: 'eq', text: '3x + 5 = 20', lines: ['3x = 15', 'x = 5'] }],
 ]
 

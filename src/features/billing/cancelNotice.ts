@@ -34,11 +34,16 @@ export function renderCancelled(endsIso: string | null): { subject: string; html
     'Your account and your children’s profiles stay open. Cancelling does not delete anything; to delete your data, use Close your account in the app or write to support@radlor.com.',
     'Cancelling does not issue a refund by itself. Our Refund and Cancellation Policy explains when one is available: https://radlic.com/legal/refunds',
   ]
+  return transactionalEmail('Your Radlic subscription is cancelled', lines)
+}
+
+/** A plain service message: one paragraph per line, then the §5 footer. Also the PIN-reset notice (/api/parent/pin-reset). */
+export function transactionalEmail(subject: string, lines: string[]): { subject: string; html: string; text: string } {
   const text = [...lines, TRANSACTIONAL_FOOTER].join('\n\n')
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const html =
     `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#083D85;max-width:560px">` +
     lines.map(l => `<p style="margin:0 0 14px">${esc(l)}</p>`).join('') +
     `<p style="margin:22px 0 0;font-size:13px;color:#3D6FB8;white-space:pre-line">${esc(TRANSACTIONAL_FOOTER)}</p></div>`
-  return { subject: 'Your Radlic subscription is cancelled', html, text }
+  return { subject, html, text }
 }

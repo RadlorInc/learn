@@ -25,7 +25,7 @@ import { rint, shuffle, pick } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 import { DirectionsInline } from '@/features/chapters/directions'
 
 
@@ -129,7 +129,7 @@ export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; on
   }
   function wrong(reset: () => void) { erred.current = true; speak(MISS); window.setTimeout(reset, 900) }
 
-  /** A tap only CHOOSES; the grading below is unchanged and simply runs on Ready instead. */
+  /** A tap only CHOOSES; the grading below is unchanged and simply runs on submit (at once: SubmitOnPick). */
   function gradeNum(n: number) {
     if (done.current || pickedNum !== null) return
     setPickedNum(n)
@@ -157,7 +157,7 @@ export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; on
             <Shape name={data.target} size={200} />
           </FitBox>
         </div>
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(14px,4vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
+        <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(14px,4vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
           {data.choices!.map(n => {
             const isPick = pickedNum === n, isOk = n === data.answer
             return (
@@ -168,8 +168,7 @@ export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; on
         </div>
         {/* Beside the chips: this row already owns the bottom strip, and the shape being counted
             sits directly above it. Same measured reason as MarketDay. */}
-        <ReadyBar show={pendingNum !== null} onCommit={() => { const n = pendingNum; if (n == null) return; setPendingNum(null); gradeNum(n) }}
-          align="right" bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '4%'} />
+        <SubmitOnPick show={pendingNum !== null} onCommit={() => { const n = pendingNum; if (n == null) return; setPendingNum(null); gradeNum(n) }} />
       </>
     )
   }
@@ -196,7 +195,7 @@ export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; on
         </FitBox>
       </div>
       {/* The tiles sit mid-screen here, so the bottom strip is empty and the default place is right. */}
-      <ReadyBar show={pendingName !== null} onCommit={() => { const nm = pendingName; if (!nm) return; setPendingName(null); gradeName(nm) }} />
+      <SubmitOnPick show={pendingName !== null} onCommit={() => { const nm = pendingName; if (!nm) return; setPendingName(null); gradeName(nm) }} />
     </>
   )
 }

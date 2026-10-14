@@ -88,6 +88,8 @@ The current list is `07-subprocessors.md`, reviewed 22 September 2026, with the 
 
 Report a suspected incident to support@radlor.com.
 
+The step-by-step procedure (roles, the first hour, preserving evidence, secret rotation, the incident log, the notification questions for counsel and a draft notice to parents) is the runbook [../runbooks/incident.md](../runbooks/incident.md), a draft awaiting counsel's review.
+
 ## 7. People
 
 Anyone with production access reads this program before they get access and at least annually after; that reading is recorded in Radlor Ops alongside the annual review.

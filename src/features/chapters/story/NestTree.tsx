@@ -36,7 +36,7 @@ import { rint, shuffle } from '@/core/rand'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useOnceGuard } from '@/shared/hooks/useOnceGuard'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar from './ReadyBar'
+import SubmitOnPick from './SubmitOnPick'
 
 const SPEAK_LOCK_MS = 600
 const LOOKALIKE: Record<number, number> = { 6: 9, 9: 6, 7: 1, 1: 7, 3: 8, 8: 3, 5: 6, 2: 7 }
@@ -311,7 +311,7 @@ export const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode;
     setPickedIdx(p => (p === i ? null : i))
   }
 
-  /** Ready. NOW it is graded — and a wrong one is still marked wrong and still retried in place,
+  /** Submitted (at once: SubmitOnPick). NOW it is graded — and a wrong one is still marked wrong and still retried in place,
    *  exactly as a wrong tap used to be. The bar itself says nothing about which nest was chosen. */
   function commit() {
     const i = pickedIdx
@@ -337,7 +337,7 @@ export const NestPlay: React.FC<{ world: NestWorld; data: NestRound; mode: Mode;
           left={slots[i].left} top={slots[i].top} onTap={() => tap(i)} aria={`nest ${num}`} />
       ))}
       <Mother at={at} h={Math.round(size * 0.62)} facingLeft={false} />
-      <ReadyBar show={pickedIdx != null} onCommit={commit} />
+      <SubmitOnPick show={pickedIdx != null} onCommit={commit} />
       <span aria-hidden style={{ position: 'fixed', left: `${PERCH.left}%`, top: `${PERCH.top + 7}%`, transform: 'translateX(-50%)', fontSize: Math.max(10, vh * 0.018), color: '#fff', opacity: 0, pointerEvents: 'none' }}>perch</span>
     </>
   )

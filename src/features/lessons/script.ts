@@ -12,6 +12,9 @@
 
 export type Obj = 'cookie' | 'chair' | 'plant' | 'muffin' | 'dot' | 'sock' | 'finger' | 'straw' | 'wheel' | 'apple' | 'sticker' | 'crayon'
 
+/** The things a lesson weighs on a scale (`measure` `on`). */
+export type ScaleItem = 'bag' | 'jar' | 'box' | 'book' | 'watermelon' | 'suitcase' | 'cat'
+
 export type Picture =
   | { kind: 'groups'; groups: number; each: number; obj: Obj; show?: 'count' | 'running' | 'rings'; motion?: boolean }
   | { kind: 'scatter'; n: number; obj: Obj }
@@ -26,12 +29,14 @@ export type Picture =
   | { kind: 'eq'; text: string; lines?: string[] }
   // ── Grades 3–8 diagrams (drawn in ./Diagrams.tsx; every field is documented in docs/product/building-lessons.md) ──
   | { kind: 'bars'; bars: { parts: number; shaded: number; shade2?: number; split?: number; label?: string }[]; motion?: boolean }
-  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean }[]; brace?: string }[]; motion?: boolean }
+  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean; colour?: string }[]; brace?: string }[]; motion?: boolean }
   | { kind: 'numline'; min: number; max: number; ticks: number; labels?: (string | null)[] | 'ends' | 'none';
       points?: { at: number; label?: string; open?: boolean }[]; jumps?: { from: number; to: number; label?: string }[];
       ray?: { from: number; dir: 'left' | 'right'; open: boolean }; motion?: boolean }
   | { kind: 'clock'; h: number; m: number; hands?: boolean; fives?: boolean }
-  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string }
+  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string;
+      /** A scale only: what sits on its pan, always drawn at one size so the picture never hints at the weight. */
+      on?: ScaleItem }
   | { kind: 'blocks'; hundreds: number; tens: number; ones: number; trade?: 'ones' | 'tens'; motion?: boolean }
   | { kind: 'columns'; rows: string[]; op?: '+' | '−' | '×'; carry?: string; places?: string[]; answer?: string | null; motion?: boolean }
   | { kind: 'longdiv'; divisor: string; dividend: string; quotient?: string; work?: string[] }
@@ -54,6 +59,9 @@ export type Picture =
   | { kind: 'chips'; pos: number; neg: number; pairs?: number; motion?: boolean }
   | { kind: 'balance'; left: string; right: string }
   | { kind: 'spinner'; parts: string[]; tones?: (1 | 2 | 3 | 4)[] }
+  /** A winding trail from a start dot to an arrow, a bike `done` (0–1) of the way along; brackets under it: the whole
+   *  trail (`total`) and the part ridden (`doneLabel`); `left` is written over the part still to ride. */
+  | { kind: 'trail'; total: string; done: number; doneLabel: string; left?: string; motion?: boolean }
 
 export type Op =
   | { t: 'mul'; a: number; b: number }                       // a groups of b

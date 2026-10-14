@@ -103,3 +103,26 @@ export async function sinkError(input: ErrorRecord): Promise<void> {
       : null,
   ])
 }
+
+/**
+ * A failure a server route CAUGHT and answered with a 5xx (sign-up, consent, unsubscribe, child logins). Before this,
+ * those only reached `console.error`, so the ops digest's `error_events_24h` could read 0 while sign-ups were failing.
+ *
+ * ⚠️ RECORDED BY ROUTE AND SHAPE ONLY: the error's class, its HTTP status and its code. NEVER its message or stack:
+ * Resend, GoTrue and PostgREST echo the address or the values back in their messages. And NEVER a learnerId: the
+ * consent gate refuses an `error_events` row naming a child whose consent is missing (features/consent/server.ts),
+ * which is the reason these routes stayed on the console. The full error stays in the route's own Vercel log line.
+ * For our own `new Error('<word> <status>: …')` the part before the colon is kept: a fixed word and a number.
+ */
+export function sinkHandled(where: string, e: unknown): Promise<void> {
+  const o = (e && typeof e === 'object' ? e : {}) as { name?: unknown; status?: unknown; code?: unknown; message?: unknown }
+  const parts = [where]
+  if (e instanceof Error) {
+    if (/^\w{1,32}$/.test(e.name)) parts.push(e.name)
+    const lead = e.message.match(/^[a-z_ ]{1,40} \d{3}(?=\D|$)/i)?.[0]
+    if (lead) parts.push(lead)
+  }
+  if (Number.isInteger(o.status)) parts.push(`status ${o.status}`)
+  if (typeof o.code === 'string' && /^\w{1,16}$/.test(o.code)) parts.push(`code ${o.code}`)
+  return sinkError({ at: new Date().toISOString(), source: 'server', message: parts.join(' · ') })
+}

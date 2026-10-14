@@ -65,9 +65,18 @@ The kinds are the `Picture` type in `script.ts`, drawn by `Diagrams.tsx`. See ev
 - Some kinds print values their data does not name: `angle` `parts` draw their degrees, `bars` print their `label`,
   `numline` prints its ticks. Open the preview, do not trust the data alone.
 - One picture kind for the teaching (plus `eq`, `cards`, `table` helpers). Do not mix a number line and a bar model.
+- A `measure` scale whose question weighs a thing shows it on the pan: `on: 'bag' | 'jar' | 'box' | 'book' |
+  'watermelon' | 'suitcase' | 'cat'`, drawn at one size whatever it weighs, and the text says it is on the scale.
+- A long `eq` (over 22 characters) breaks at a label (`Clue 1:`) or a comma, else before its first `=` whose right
+  side fits one row; ratio names, parentheses and an operator with its number stay together
+  (`src/__tests__/eqRows.test.ts`). Write the equation as one line and let it break.
 
 ### Words
 
+- **Halal examples only** (founder, 2026-10-06). No pig, pork, ham, bacon, sausage or pepperoni; no hot dog or
+  hamburger; no dog or puppy; no alcohol (wine, beer…); no gambling (casino, lottery…). Pick a neutral thing instead:
+  pencils, melons, pumpkins, rabbits, cats, juice boxes. `halalExamples.test.ts` reads every lesson, ladder sample,
+  KG–2 spoken line and asset name and fails on the list written there; add a word to it when a new one comes up.
 - US English and units (metric where the curriculum says metric). Short sentences, to the child. No emoji. Warm:
   never "wrong", "fail", "easy". A name in a word problem is fine; no characters talk.
 - **Numbers are numerals** (`It is not 34.`), except counting aloud ("Five, ten, fifteen.").
@@ -100,6 +109,8 @@ Screens 2–7 are spoken by a teacher, one line at a time, while she draws on a 
 - **Each mark hangs on a word of its beat** (`[beat, 'word']`) and goes up as she says it. Draw what she says, at that
   word, and nothing before she says it: a result goes up when it is said. Text size 22–40, nothing overlapping, nothing
   near the edge. Screen 7: the wrong move crossed out in coral, the right one in yellow.
+- The mark goes up when her clip actually says that word (`word-times/`, rebuilt as in
+  [the audio runbook](../runbooks/audio-upload.md)); a new line has the length estimate until then.
 - **Look at every board**: `npx tsx scripts/chalk-shot.tsx <topic id> <out.png>`, then open the PNG.
 
 The examples to copy are `g5m1-t1` and `g5m1-t2` (`content/g5m1.ts`, `content/chalk/g5m1/`, `content/voice/g5m1.ts`).

@@ -47,7 +47,10 @@ export async function readAccountConsent(): Promise<AccountConsent> {
   return granted ? { k: 'reask' } : { k: 'none', fresh: rows.length === 0 }
 }
 
-export type AskResult = { ok: true; email: string; days: number } | { ok: false; error: 'stale' | 'not_ready' | 'failed' }
+export type AskResult =
+  | { ok: true; email: string; days: number }
+  | { ok: false; error: 'undeliverable'; email: string }
+  | { ok: false; error: 'stale' | 'not_ready' | 'failed' }
 
 /** POST /api/consent/request → B1. (The route still accepts an optional `ackAt` from app versions that had the
  *  signup tick; this one never sends it.) */
@@ -60,7 +63,16 @@ export async function requestAccountConsent(lang: Lang): Promise<AskResult> {
   }).catch(() => null)
   const j = await r?.json().catch(() => null)
   if (r?.ok && j?.ok) return { ok: true, email: j.email, days: j.days }
+  if (j?.error === 'undeliverable' && typeof j.email === 'string') return { ok: false, error: 'undeliverable', email: j.email }
   return { ok: false, error: r?.status === 409 ? 'stale' : j?.error === 'not_ready' ? 'not_ready' : 'failed' }
+}
+
+/** Did the signed-in adult's own address hard-bounce or complain (GET /api/email/deliverable)? False when unsure:
+ *  this only chooses between two screens, and "could not ask" keeps the one the parent already has. */
+export async function ownEmailUndeliverable(): Promise<boolean> {
+  const { data } = await createClient().auth.getSession()
+  const r = await fetch('/api/email/deliverable', { headers: { Authorization: `Bearer ${data.session?.access_token ?? ''}` } }).catch(() => null)
+  return (await r?.json().catch(() => null))?.undeliverable === true
 }
 
 /**

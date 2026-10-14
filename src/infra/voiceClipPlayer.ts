@@ -14,6 +14,7 @@
 import { clipKey, clipCheck } from '@/core/voiceClips'
 import { JOSH } from '@/infra/storage/voicePref'
 import { AUDIO_BASE } from '@/core/audioBase'
+import { recordError } from '@/infra/storage/lastError'
 
 // (Clip-only mode — a missing clip stays silent — was removed 2026-09-24 with the fragment stitcher it depended on;
 // its one caller, the teen GameShell, was deleted 2026-09-20. A line with no clip is spoken by the browser.)
@@ -33,6 +34,35 @@ export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>
   _held.clear()
   _onTap.clear()
   _open = 0
+  keepOutputAwake(voiceNow() !== null)
+}
+
+/**
+ * ⚠️ KEEP THE SOUND OUTPUT AWAKE WHILE A VOICED SCENE IS ON (tester, 8 Oct 2026, HP EliteBook, Windows 10, Chrome):
+ * after some seconds on a screen with nothing playing, the next line started late and lost its first one or two words,
+ * and a short line ("Nice!") was not heard at all while the tab showed its audio icon. Moving on at once: no lag. That
+ * is the laptop's output closing after silence and waking slowly. An inaudible tone (20 Hz, -80 dBFS) holds it open
+ * while a lesson or chapter is on, and is suspended when it ends. Not on iPhone/iPad: a running AudioContext there
+ * changes how the page's sound is routed, and nobody reported the lag there.
+ * ponytail: unmeasured on the tester's laptop until she runs a build with it; if the lag stays, this goes.
+ */
+let _ctx: AudioContext | null = null
+function keepOutputAwake(on: boolean): void {
+  try {
+    if (typeof window === 'undefined' || typeof AudioContext === 'undefined') return
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))) return
+    if (!on) { void _ctx?.suspend().catch(() => {}); return }
+    if (!_ctx) {
+      _ctx = new AudioContext()
+      const tone = _ctx.createOscillator()
+      const gain = _ctx.createGain()
+      tone.frequency.value = 20
+      gain.gain.value = 0.0001
+      tone.connect(gain).connect(_ctx.destination)
+      tone.start()
+    }
+    void _ctx.resume().catch(() => {})
+  } catch {}
 }
 
 /**
@@ -154,6 +184,8 @@ const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQ
 /** Unlock clip audio from inside a user gesture (call next to unlockSpeech, e.g. the intro tap). */
 export function unlockVoiceClips(): void {
   const a = audioEl()
+  // In the gesture too: a context made outside one starts suspended on browsers with no earlier tap on the page.
+  keepOutputAwake(voiceNow() !== null)
   try { a.src = SILENT; void a.play().then(() => { a.pause(); a.currentTime = 0 }).catch(() => {}) } catch {}
 }
 
@@ -169,6 +201,18 @@ export function unlockVoiceClips(): void {
  * ⚠️ A FAILED load is not remembered as final (BUG-05, 2026-09-26): it answers empty for this call and is retried by a
  * later call, no sooner than INDEX_RETRY_MS after it, so an offline device does not ask on every line.
  */
+/**
+ * A clip that should have played and did not leaves a breadcrumb for the parent's diagnostic block ("the voice sounds
+ * like a robot"). ONCE per cause per page load: the ring keeps 3 entries, and one lesson's worth of the same miss would
+ * push out the error that matters. A line with no clip (a line carrying a child's name) is by design, not a miss.
+ */
+const _noted = new Set<string>()
+function noteFallback(why: string): void {
+  if (_noted.has(why)) return
+  _noted.add(why)
+  recordError(`voice clip fell back to device voice: ${why}`, 'audio')
+}
+
 const _indexes = new Map<() => Promise<ClipIndex>, Promise<ClipIndex>>()
 const INDEX_RETRY_MS = 10_000
 const _failedAt = new Map<() => Promise<ClipIndex>, number>()
@@ -177,7 +221,7 @@ function loadIndex(load: () => Promise<ClipIndex>): Promise<ClipIndex> {
   const failed = _failedAt.get(load)
   if (!p || (failed !== undefined && Date.now() - failed >= INDEX_RETRY_MS)) {
     _failedAt.delete(load)
-    p = load().catch(() => { _failedAt.set(load, Date.now()); return {} as ClipIndex })   // no index → this line falls back
+    p = load().catch(() => { _failedAt.set(load, Date.now()); noteFallback('clip index did not load'); return {} as ClipIndex })   // no index → this line falls back
     _indexes.set(load, p)
   }
   return p
@@ -264,11 +308,12 @@ export function speakLine(text: string, opts: Opts): () => void {
     onDone?.()
   }
   // Only a line still PENDING falls back to browser speech; one that played its clip just ends.
-  const miss = () => {
+  const miss = (why?: string) => {
     if (cancelled) return
     if (settled === 'clip') { end(); return }
     if (settled === 'tts') return
     settled = 'tts'
+    if (why) noteFallback(why)
     _active = null
     fallback()
   }
@@ -280,7 +325,7 @@ export function speakLine(text: string, opts: Opts): () => void {
     // Held with a question → play it from memory. Not held while a question is open → the device voice, and no
     // request (see openQuestion). Otherwise the bucket, as before.
     const held = _held.get(url)
-    if (held) { void held.src.then(src => { if (!cancelled) { if (src) play(src); else miss() } }); return }
+    if (held) { void held.src.then(src => { if (!cancelled) { if (src) play(src); else miss('held clip did not load') } }); return }
     if (_open > 0 && !_onTap.has(url)) { miss(); return }
     play(url)
   })
@@ -297,7 +342,7 @@ export function speakLine(text: string, opts: Opts): () => void {
       end()
     }
     // Any failure at all → the browser-speech path (or silence under clip-only) — if the clip has not already spoken.
-    audio.onerror = () => miss()
+    audio.onerror = () => miss('clip did not load')
 
     const started = () => {
       if (cancelled) { stopClip(); return }
@@ -332,10 +377,10 @@ export function speakLine(text: string, opts: Opts): () => void {
         // A NEWER line took the element: that one speaks, this one is done. Nothing took it (our own pause raced the
         // play) → play it again, because dropping it silently is worse than the robot voice this used to produce.
         if (cancelled) return
-        audio.play().then(started).catch(() => miss())
+        audio.play().then(started).catch((e2: unknown) => miss(`play refused (${(e2 as DOMException | undefined)?.name ?? 'error'})`))
         return
       }
-      miss()
+      miss(`play refused (${(e as DOMException | undefined)?.name ?? 'error'})`)
     })
   }
 

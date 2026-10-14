@@ -61,7 +61,7 @@ function Modules() {
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   if (!mounted || !mode) return null
   const learner = getActiveLearner()
-  const signOutBtn = { label: 'Sign out', onClick: async () => { knownChild = undefined; await signOut(); router.replace('/auth') } }
+  const signOutBtn = { label: 'Sign out', onClick: async () => { if (!await signOut()) return; knownChild = undefined; router.replace('/auth') } }
   if (mode.mode === 'exercises') return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId} className={mode.className} exercises={mode.exercises}
     back={child ? signOutBtn : undefined} />
   if (showExercises && mode.exercises) return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId ?? null} className={mode.className ?? ''} exercises={mode.exercises}

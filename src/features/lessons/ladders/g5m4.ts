@@ -241,7 +241,7 @@ const T3: Level[] = [
   { style: 'story, round a measurement', make: r => {
     const unit = pick(r, [10, 100])
     const v = toRound(r, unit)
-    const [who, verb, noun] = pick(r, [['A puppy', 'weighs', 'kilogram'], ['A ribbon', 'is', 'meter'], ['A jug', 'holds', 'liter']] as const)
+    const [who, verb, noun] = pick(r, [['A watermelon', 'weighs', 'kilogram'], ['A ribbon', 'is', 'meter'], ['A jug', 'holds', 'liter']] as const)
     const { ans, a, steps } = roundOf(v, unit), x = fmt(dec(v, 3))
     const long = noun === 'meter' ? ' long' : ''
     return { text: `${who} ${verb} ${x} ${noun}s${long}. Round it to the nearest ${NEAREST[unit]} of a ${noun}.`, picture: eq(`${x} ${noun}s`),

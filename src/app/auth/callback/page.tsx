@@ -24,6 +24,12 @@ export default function AuthCallbackPage() {
     }
 
     async function handleCallback() {
+      // Google (or Supabase) refused: it comes back with `error` in the query or, for the implicit flow, the fragment.
+      // Say so on /auth rather than waiting 5 s and bouncing there without a word.
+      if (new URLSearchParams(window.location.search).get('error') || new URLSearchParams(window.location.hash.slice(1)).get('error')) {
+        router.replace('/auth?error=oauth')
+        return
+      }
       // Try existing session first
       const session = await getCurrentSession()
       if (session?.user) {

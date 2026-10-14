@@ -12,7 +12,7 @@
  * makes a child choose before they know what they are choosing, and then gives them ten rounds of
  * one backdrop. Same call chapter 2 took when its three biomes were merged.
  *   🐔 The Farm   — PENS of chicks · ducklings · lambs
- *   🌸 The Garden — PATCHES of bees · ladybugs · ants
+ *   🌸 The Garden — PATCHES of bees · ladybugs · snails · grasshoppers
  *   🌲 The Woods  — NESTS of birds · squirrels · eagles
  * EVERY item is a drawn walk cycle, so a group is made of living creatures rather than stickers.
  * The plan is 9 item+setting pairs, interleaved, so consecutive rounds change setting.
@@ -35,7 +35,7 @@ import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 // Live viewport size — for layouts that must RESERVE room (objects vs. the answer buttons)
 // so they never overlap on a short/landscape screen.
@@ -71,25 +71,25 @@ interface MultWorld {
 const SETTINGS: MultWorld[] = [
   { id: 'farm', ground: 64, group: 'pen', groupPlural: 'pens',
     bgs: [
-      { grad: 'linear-gradient(#cfe6f7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/farm_barnyard.png' },
-      { grad: 'linear-gradient(#d6ebf4 0%, #dfeeca 55%, #c2dc98 100%)', img: '/assets/backgrounds/farm_orchard.png' },
-      { grad: 'linear-gradient(#cfe8f2 0%, #d8ebcc 55%, #b6d6a0 100%)', img: '/assets/backgrounds/farm_pond.png' },
+      { grad: 'linear-gradient(#cfe6f7 0%, #dcecc8 55%, #bcd894 100%)', img: '/assets/backgrounds/farm_veg.jpeg' },
+      { grad: 'linear-gradient(#d6ebf4 0%, #dfeeca 55%, #c2dc98 100%)', img: '/assets/backgrounds/farm_stable.jpeg' },
+      { grad: 'linear-gradient(#cfe8f2 0%, #d8ebcc 55%, #b6d6a0 100%)', img: '/assets/backgrounds/farm_hay.jpeg' },
     ],
     items: [IT('chick', 'chick', 'chicks'), IT('duckling', 'duckling', 'ducklings'), IT('lamb', 'lamb', 'lambs'),
       IT('duck', 'duck', 'ducks'), IT('rabbit', 'rabbit', 'rabbits')] },
   { id: 'garden', ground: 64, group: 'patch', groupPlural: 'patches',
     bgs: [
-      { grad: 'linear-gradient(#cfe6f7 0%, #dcecdb 60%, #c6e0b6 100%)', img: '/assets/backgrounds/garden.png' },
-      { grad: 'linear-gradient(#d3e9f6 0%, #dfeedb 60%, #c8e2b8 100%)', img: '/assets/backgrounds/garden_meadow.png' },
-      { grad: 'linear-gradient(#cfe8f5 0%, #dcecda 60%, #c4dfb4 100%)', img: '/assets/backgrounds/garden_fence.png' },
+      { grad: 'linear-gradient(#cfe6f7 0%, #dcecdb 60%, #c6e0b6 100%)', img: '/assets/backgrounds/garden_pots.jpeg' },
+      { grad: 'linear-gradient(#d3e9f6 0%, #dfeedb 60%, #c8e2b8 100%)', img: '/assets/backgrounds/garden_greenhouse.jpeg' },
+      { grad: 'linear-gradient(#cfe8f5 0%, #dcecda 60%, #c4dfb4 100%)', img: '/assets/backgrounds/garden_hives.jpeg' },
     ],
-    items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('ant', 'ant', 'ants'),
-      IT('butterfly', 'butterfly', 'butterflies'), IT('dragonfly', 'dragonfly', 'dragonflies')] },
+    items: [IT('bee', 'bee', 'bees'), IT('ladybug', 'ladybug', 'ladybugs'), IT('snail', 'snail', 'snails'),
+      IT('grasshopper', 'grasshopper', 'grasshoppers'), IT('dragonfly', 'dragonfly', 'dragonflies')] },
   { id: 'woods', ground: 62, group: 'nest', groupPlural: 'nests',
     bgs: [
-      { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/forest_1.jpeg' },
-      { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/forest_2.jpeg' },
-      { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/forest_4.jpeg' },
+      { grad: 'linear-gradient(#dbeecb 0%, #cfe4b4 55%, #a9cf88 100%)', img: '/assets/backgrounds/woods_mushroom.jpeg' },
+      { grad: 'linear-gradient(#d6ecc6 0%, #cae0ae 55%, #a4ca82 100%)', img: '/assets/backgrounds/woods_pine.jpeg' },
+      { grad: 'linear-gradient(#dcecc8 0%, #cfe2b0 55%, #a8cd86 100%)', img: '/assets/backgrounds/woods_birch.jpeg' },
     ],
     items: [IT('bird', 'bird', 'birds'), IT('squirrel', 'squirrel', 'squirrels'), IT('eagle', 'eagle', 'eagles'),
       IT('firefly', 'firefly', 'fireflies')] },
@@ -427,7 +427,7 @@ export const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (corr
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /** A tap only CHOOSES; nothing is graded and nothing counts out until Ready. */
+  /** A tap only CHOOSES; nothing is graded and nothing counts out until it is submitted (at once: SubmitOnPick). */
   function pick(n: number) {
     if (done.current || picked !== null || !asking) return
     setPending(p => (p === n ? null : n))
@@ -500,8 +500,7 @@ export const MultPlay: React.FC<{ data: MultRound; mode: Mode; onComplete: (corr
           readout and the chips is 14px against a 47px bar — there is no room in that column. The
           chips span x 212–428 of a 640 frame, so the bar shares THEIR band and sits to the right of
           them, which is empty in every chapter here. */}
-      <ReadyBar show={pending !== null} onCommit={commit} align="right"
-        bottom={short ? Math.max(6, Math.round(btn * 0.14)) : '3.5%'} />
+      <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -598,7 +597,7 @@ export default function MarketDay({ onFinish, onExit }: {
   const shown = phase === 'practice' ? { w: scene, bg } : phase === 'guided' ? GUIDED : DEMO[Math.min(demoIdx, DEMO.length - 1)]
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: 46, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: 46, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: '9px 22px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
     </div>
   )

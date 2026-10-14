@@ -61,6 +61,13 @@ export async function POST(req: Request) {
   const preview = { seats, cadence, renewalCents: totalCents(seats, cadence), newRenewalCents: totalCents(seats + 1, cadence) }
   if (!confirm) return NextResponse.json({ ok: true, preview })
 
+  const log = (what: string) => sinkError({
+    at: new Date().toISOString(), source: 'server', message: `billing seats: ${what}`, routePath: '/api/billing/seats',
+  }).catch(() => {})
+  // A seat taken off by a one-child withdrawal (closeRefund.ts marks it `rs_…` on the subscription) makes the same
+  // target quantity reachable again: without the count in the key, re-adding within 24 h would get Stripe's cached
+  // answer to the earlier add and buy nothing.
+  const removed = Object.keys(sub.metadata ?? {}).filter(k => k.startsWith('rs_')).length
   let updated
   try {
     updated = await stripe.subscriptions.update(sub.id, {
@@ -68,10 +75,12 @@ export async function POST(req: Request) {
       proration_behavior: 'always_invoice',
       payment_behavior: 'pending_if_incomplete',
       expand: ['latest_invoice'],
-    }, { idempotencyKey: `seat-${sub.id}-${seats + 1}` })
+    }, { idempotencyKey: `seat-${sub.id}-${seats + 1}${removed ? `-r${removed}` : ''}` })
   } catch (e) {
-    // Stripe refused the request outright: nothing changed there, so nothing is written here either.
-    return NextResponse.json({ error: 'payment_failed', message: e instanceof Error ? e.message : String(e) }, { status: 402 })
+    // Stripe refused the request outright: nothing changed there, so nothing is written here either. Stripe's own text
+    // goes to error_events for the founder; the parent gets the plain sentence SeatsFull shows for `payment_failed`.
+    await log(`stripe refused the seat update for ${sub.id}: ${(e instanceof Error ? e.message : String(e)).slice(0, 300)}`)
+    return NextResponse.json({ error: 'payment_failed' }, { status: 402 })
   }
 
   // Not paid yet (the bank wants the parent's approval, or the card was declined): the quantity is NOT changed until it
@@ -84,9 +93,6 @@ export async function POST(req: Request) {
   }
 
   const row = subscriptionRow(updated)
-  const log = (what: string) => sinkError({
-    at: new Date().toISOString(), source: 'server', message: `billing seats: ${what}`, routePath: '/api/billing/seats',
-  }).catch(() => {})
   // The seat is bought at Stripe; a failed write here only waits for the webhook, which writes the same thing.
   const w = await fetch(mine, {
     method: 'PATCH', cache: 'no-store', headers: { ...headers, Prefer: 'return=minimal' },

@@ -17,6 +17,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/data/supabase/client'
+import { needsSecondStep } from '@/data/auth'
 
 const TABS = [
   { href: '/admin',          label: 'Signups & activity' },
@@ -27,6 +28,9 @@ const TABS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname()
   const [minCohort, setMinCohort] = useState<number | null>(null)
+  // Children render only once the session is known to be enough: signed in and, for an account with an authenticator,
+  // past its code (aal2). Before, a page rendered first and its own fetch redirected a signed-out visitor.
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     // ⚠️ The layout wraps /admin/login too: without this, a signed-out visit to the login page sent itself to the
@@ -36,6 +40,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ;(async () => {
       const { data: { session } } = await createClient().auth.getSession()
       if (!session) { window.location.href = '/admin/login'; return }
+      // Two-step verification: an account with a verified authenticator whose session is still aal1 (password only)
+      // goes back to the code step. The database boundary for this is `admin_assert()` requiring aal2; this is the UX.
+      if (await needsSecondStep()) { window.location.href = '/admin/login'; return }
+      if (!dead) setReady(true)
       const r = await fetch('/api/admin/metrics?page=overview', { headers: { Authorization: `Bearer ${session.access_token}` } })
       if (!dead && r.ok) setMinCohort((await r.json()).minCohort)
     })()
@@ -67,6 +75,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             }}>{t.label}</Link>
           ))}
         </nav>
+        {/* Only once the metrics call answered, i.e. only for an admin: a non-admin is shown nothing about it. */}
+        {minCohort !== null && (
+          <Link href="/admin/mfa" style={{ fontSize: 13, textDecoration: 'none', color: path === '/admin/mfa' ? '#1d2430' : '#3d6fb8' }}>
+            Two-step verification
+          </Link>
+        )}
         <span style={{ marginLeft: 'auto', fontSize: 11, color: '#3d6fb8' }}>
           aggregate only · read-only · US Eastern
           {/* ⚠️ ALWAYS SHOWN, at every threshold. The red banner only appears below 5, so at the
@@ -75,7 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {minCohort !== null && <> · suppressing buckets under {minCohort}</>}
         </span>
       </header>
-      {children}
+      {ready && children}
     </div>
   )
 }

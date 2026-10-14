@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
+import { sinkHandled } from '@/infra/errorSink'
 import { randomUUID } from 'node:crypto'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { SITE_URL } from '@/app/site'
 import { secondNoticeDelayMs } from '@/features/consent/config'
 import { renderB3 } from '@/features/consent/email'
+import { drainBillingCancellations } from '@/features/billing/closeRefund'
 import { ConfigMissing, requireConfig, cancelEmail, drainB3Cancellations, hashToken, learnerName, looksLikeToken, rpc, sendEmail } from '@/features/consent/server'
 
 interface Found {
@@ -57,6 +59,9 @@ export async function POST(req: Request) {
             && new Date(row.second_notice_scheduled_for) > new Date()) {
           await cancelEmail(row.second_email_provider_id)
         }
+        // An ACCOUNT consent's withdrawal queued the plan's cancel and refund (20261008000000); settle it now.
+        // Best-effort too: a row left due is retried by the daily cron and flagged in the ops digest.
+        if (s === 'withdrawn') await drainBillingCancellations().catch(() => null)
         return ok(s)
       }
 
@@ -107,6 +112,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })
     }
     console.error('[consent/respond] failed', e)
+    await sinkHandled('[consent/respond] failed', e)
     return NextResponse.json({ error: 'failed' }, { status: 502 })
   }
 }

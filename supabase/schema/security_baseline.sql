@@ -93,6 +93,29 @@
 --                                                  from public/anon/authenticated/service_role, then SELECT granted to
 --                                                  service_role only. No FK: it outlives what it records.
 --                                                  NOT YET APPLIED TO PRODUCTION.
+--   email_undeliverable        rls=t  policies=0   2026-10-07 (20261007000000): INTENTIONAL deny-all, the
+--                                                  error_events precedent. sha256 of an address that hard-bounced
+--                                                  or complained, reason, first/last time; sendEmail sends nothing
+--                                                  to it. Every privilege revoked from public/anon/authenticated/
+--                                                  service_role, then SELECT/INSERT/UPDATE granted to service_role
+--                                                  (no DELETE: lifting is the founder's SQL-editor write). No FK.
+--                                                  NOT YET APPLIED TO PRODUCTION.
+--   billing_cancellations      rls=t  policies=0   2026-10-08 (20261008000000): INTENTIONAL deny-all, the
+--                                                  consent_b3_cancellations precedent. Stripe subscription ids to
+--                                                  cancel now and refund pro rata after an account close or a
+--                                                  withdraw-all. Rows written ONLY by the DEFINER trigger
+--                                                  billing_queue_cancel_on_delete and consent_withdraw_account. Every
+--                                                  privilege revoked from public/anon/authenticated/service_role, then
+--                                                  SELECT/UPDATE granted to service_role (billing_cancellations_due /
+--                                                  billing_cancellation_record, INVOKER). No FK: it outlives the account.
+--                                                  NOT YET APPLIED TO PRODUCTION.
+--   billing_seat_removals      rls=t  policies=0   2026-10-08 (20261008010000): INTENTIONAL deny-all, the same
+--                                                  shape. One seat to take off a Stripe subscription and refund pro
+--                                                  rata after a one-child withdrawal. Rows written ONLY by the DEFINER
+--                                                  delete_child_data. Every privilege revoked from public/anon/
+--                                                  authenticated/service_role, then SELECT/UPDATE granted to
+--                                                  service_role (billing_seat_removals_due / billing_seat_removal_record,
+--                                                  INVOKER). No FK, no account or child id. NOT YET APPLIED TO PRODUCTION.
 --   consent_notice_versions    rls=t  policies=1   2026-09-24 (20260924100000, consent-once): SELECT for
 --                                                  authenticated (using true — notice versions are not personal
 --                                                  data). All privileges revoked from public/anon/authenticated,
@@ -101,6 +124,11 @@
 --   lesson_feedback            rls=t  policies=2   2026-09-21 (20260921053233): SELECT and INSERT (4 data columns
 --                                                  only) for the learner's creator or a learner_access row. Reasons
 --                                                  are a fixed list (check constraint), no free text. No update/delete.
+--   game_saves                 rls=t  policies=3   2026-10-01 (20261001170000): the /play game's save, one row per
+--                                                  child. SELECT/INSERT/UPDATE for any learner_access row (owner,
+--                                                  viewer, the child's 'self' login); INSERT/UPDATE on
+--                                                  (learner_id, data) only; no DELETE (cascade with the learner).
+--                                                  Not read by anything privileged. No SECURITY DEFINER.
 --   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
 --                                                  or the row of the adult who created my learner. Every write
 --                                                  privilege revoked from public/anon/authenticated and no write

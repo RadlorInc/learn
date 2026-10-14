@@ -222,7 +222,7 @@ const T5: Level[] = [
     const d = int(r, 2, 5), n = int(r, 1, d - 1), w = int(r, 1, 2)
     const fr = less ? f(n, d) : `${w} ${f(n, d)}`
     const [lead, say, unit, how] = pick(r, [
-      [`A puppy weighs ${N} pounds.`, 'The kitten weighs', 'pounds', (x: string) => `A kitten weighs ${x}${less ? '' : ' times'} as much as the puppy. Does the kitten weigh more than ${N} pounds, less than ${N} pounds, or exactly ${N} pounds?`],
+      [`A pumpkin weighs ${N} pounds.`, 'The melon weighs', 'pounds', (x: string) => `A melon weighs ${x}${less ? '' : ' times'} as much as the pumpkin. Does the melon weigh more than ${N} pounds, less than ${N} pounds, or exactly ${N} pounds?`],
       [`A recipe uses ${N} cups of flour.`, 'You use', 'cups', (x: string) => `You make ${x}${less ? ' of the recipe' : ' times the recipe'}. Will you use more than ${N} cups, less than ${N} cups, or exactly ${N} cups?`],
     ] as const)
     const choices = [`more than ${N} ${unit}`, `less than ${N} ${unit}`, `exactly ${N} ${unit}`], right = choices[less ? 1 : 0]

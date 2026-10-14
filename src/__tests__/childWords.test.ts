@@ -85,14 +85,14 @@ describe('child-facing words', () => {
     expect(sentences('src/features/lessons/ModuleHome.tsx').join('\n')).toContain('Keep learning')
     expect(sentences('src/features/lessons/LessonPlayer.tsx').join('\n')).toContain('Here&apos;s how this one works:')
     // A sentence kept as an object's value is read; a CSS value is not.
-    expect(sentences('src/app/play/page.tsx')).toContain('Your points are saved. Nothing is taken away. Keep practicing to earn more!')
+    expect(sentences('src/app/play/page.tsx')).toContain('You need a few more points. Practice a topic to earn them!')
     expect(sentences('src/features/lessons/Frame.tsx').some(t => t.includes('* 100)}%'))).toBe(false)
     for (const w of ['You failed', 'That is wrong', 'Locked', 'Skip the lock', 'Incomplete', 'Not completed', 'Quit', 'Leave now', '23%', '7 %'])
       expect(EN.test(w) || PERCENT.test(w), w).toBe(true)
     for (const w of ['Fallaste', 'Incorrecto', 'Bloqueado', 'Incompleto', 'No completado', 'Salir', 'Abandonar'])
       expect(ES.test(w), w).toBe(true)
     // …and not the ordinary words a child does see.
-    for (const w of ['Keep going', 'Take a break', 'Your spot is saved.', 'Keep practicing', 'Seguir practicando'])
+    for (const w of ['Keep going', 'Take a break', 'Your spot is saved.', 'Keep practicing', 'Seguir practicando', 'One more set', 'Finish for today 🎉', 'Set complete! ⭐ 5 questions solved.', 'You did it! ⭐'])
       expect(EN.test(w) || ES.test(w) || PERCENT.test(w), w).toBe(false)
   })
 })

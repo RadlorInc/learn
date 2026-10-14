@@ -103,7 +103,7 @@ export const G3M6: Lesson[] = [
         answer: 19, steps: ['Monday has 6 stars. Count by 2s: 2, 4, 6, 8, 10, 12.', 'Tuesday has 3 stars and a half star: 6 and 1 more is 7.', '12 + 7 = 19. So 19 cups were sold.'] } },
       { why: 'Still "each star is 2"', problem: {
         text: 'This graph shows our pets. How many fewer birds are there than cats?',
-        picture: { kind: 'chart', type: 'picture', labels: ['Dogs', 'Cats', 'Birds'], values: [9, 14, 5], scale: 2, unit: 'pets' },
+        picture: { kind: 'chart', type: 'picture', labels: ['Fish', 'Cats', 'Birds'], values: [9, 14, 5], scale: 2, unit: 'pets' },
         answer: 9, steps: ['Cats has 7 stars. Count by 2s to 14.', 'Birds has 2 stars and a half star: 4 and 1 more is 5.', '14 − 5 = 9. So there are 9 fewer birds.'] } },
       { why: 'A little harder', problem: {
         text: 'This graph shows the club each child chose. How many children chose a club in all?',

@@ -121,7 +121,7 @@ const GROUPS: Group[] = [
   { group: 'students', trait: 'walk to school', not: 'do not walk to school', short: 'walk', trait2: 'ride a bike to school' },
   { group: 'students', trait: 'play an instrument', not: 'do not play an instrument', short: 'play', trait2: 'sing in a choir' },
   { group: 'fans', trait: 'bought a hat', not: 'did not buy a hat', short: 'hat', trait2: 'bought a scarf' },
-  { group: 'people', trait: 'have a pet cat', not: 'do not have a pet cat', short: 'cat', trait2: 'have a pet dog' },
+  { group: 'people', trait: 'have a pet cat', not: 'do not have a pet cat', short: 'cat', trait2: 'have a pet fish' },
   { group: 'apples', trait: 'have a bruise', not: 'have no bruise', short: 'bruised', trait2: 'have a worm hole' },
   { group: 'light bulbs', trait: 'do not work', not: 'work', short: 'broken', trait2: 'are scratched' },
 ]
@@ -410,7 +410,7 @@ const T5: Level[] = [
 // ── t6 · Two things happening ───────────────────────────────────────────────────────────────────────────────
 const blank = (cols: string[], rows: string[]): Picture => table(['', ...cols], rows.map(x => [x, ...cols.map(() => '')]), true)
 const MENUS = [
-  { row: 'sandwich', rows: ['Turkey', 'Cheese', 'Ham', 'Tuna'], col: 'fruit', cols: ['Apple', 'Banana', 'Grapes', 'Orange', 'Pear'], things: 'lunches' },
+  { row: 'sandwich', rows: ['Chicken', 'Cheese', 'Egg', 'Tuna'], col: 'fruit', cols: ['Apple', 'Banana', 'Grapes', 'Orange', 'Pear'], things: 'lunches' },
   { row: 'shirt', rows: ['Red', 'Blue', 'White', 'Green'], col: 'cap', cols: ['Black', 'Gray', 'Tan'], things: 'outfits' },
   { row: 'drink', rows: ['Milk', 'Juice', 'Water'], col: 'snack', cols: ['Crackers', 'Carrots', 'Pretzels', 'Yogurt', 'Popcorn'], things: 'snack packs' },
   { row: 'ice cream', rows: ['Vanilla', 'Chocolate', 'Mint', 'Mango'], col: 'topping', cols: ['Sprinkles', 'Nuts', 'Fudge', 'Cherries'], things: 'cones' },

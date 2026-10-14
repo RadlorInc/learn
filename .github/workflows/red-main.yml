@@ -13,6 +13,12 @@ name: Red main
 #
 # The third is the one that hides: a gate that has silently stopped promoting looks identical to a
 # quiet week with no pushes. Nothing errors, nothing is red, production just stops moving.
+#
+# ⚠️ IT ALSO CLOSES THEM (2026-10-06). Before, it never closed one: seven went stale, and four "database NOT
+# migrated" issues were false (a staging failure on a push with no migration pending). Every finished Deploy run on
+# main now runs this, red or green: a red run opens or comments on its kind, and any run closes the kinds its own
+# jobs prove fixed. The rules, and why issues are matched on the exact title and never by search, are in
+# scripts/red-main.mjs (driven by src/__tests__/redMain.test.ts).
 
 on:
   workflow_run:
@@ -30,125 +36,32 @@ on:
         default: drift
 
 permissions:
-  issues: write
-  actions: read
-  contents: read
+  issues: write    # open, comment on and close the issues
+  actions: read    # the Deploy run's jobs
+  contents: read   # the checkout of the script, and the release...main compare
 
 jobs:
   notify:
     if: >-
-      ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure' }}
+      ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10 # a few seconds; 10 min floor (ARC-07; GitHub default 360)
-    env:
-      GH_TOKEN: ${{ github.token }}
-      # ⚠️ gh needs a repo context and this job has no checkout — without -R every command dies with
-      # "fatal: not a git repository". Found by DRIVING the first version, which could not have
-      # fired at all: the notifier would have been silent on a real red main, which is the exact
-      # failure it exists to prevent.
-      REPO: ${{ github.repository }}
-      EVENT: ${{ github.event_name }}
-      MODE: ${{ inputs.mode }}
-      RUN_ID: ${{ github.event.workflow_run.id }}
-      RUN_URL: ${{ github.event.workflow_run.html_url }}
-      RUN_SHA: ${{ github.event.workflow_run.head_sha }}
-      RUN_TITLE: ${{ github.event.workflow_run.display_title }}
     steps:
-      - name: Work out what to say
-        id: msg
-        run: |
-          set -euo pipefail
-          TITLE=""; BODY=""
-
-          drift_check() {
-            # How far is main ahead of what production is actually serving?
-            #
-            # ⚠️ THE OBVIOUS SHAPE `$(cmd || echo SENTINEL)` IS BROKEN HERE AND FAILED SILENTLY.
-            # `gh api` prints its error JSON to STDOUT, not stderr, so on a 404 the substitution
-            # captured BOTH the error body and the sentinel:
-            #     ahead_by={"message":"Not Found",...,"status":"404"}NO_RELEASE
-            # which equals neither the sentinel nor an integer, so every branch below was false and
-            # the check reported "nothing to report" while `release` did not exist at all. Ask
-            # explicitly whether the branch is there, and accept ONLY a bare integer as a count.
-            if ! gh api "repos/$REPO/branches/release" >/dev/null 2>&1; then
-              AHEAD="NO_RELEASE"
-            else
-              AHEAD=$(gh api "repos/$REPO/compare/release...main" --jq '.ahead_by' 2>/dev/null || true)
-              printf '%s' "$AHEAD" | grep -qE '^[0-9]+$' || AHEAD="NO_RELEASE"
-            fi
-            echo "ahead_by=$AHEAD"
-            if [ "$AHEAD" = "NO_RELEASE" ]; then
-              TITLE="🔴 release branch is missing — production is not being promoted"
-              BODY="\`release\` does not exist, so the promote job has never successfully run. If Vercel's Production Branch is already set to \`release\`, **production is not receiving any new code at all.**"
-            elif [ "$AHEAD" -gt 2 ]; then
-              TITLE="🔴 main is $AHEAD commits ahead of release"
-              BODY="Production serves \`release\`. It is **$AHEAD commits behind main**, which means the promote job has stopped passing changes through — a gate that quietly refuses everything looks exactly like a quiet week.
-
-          Check the most recent Deploy run: https://github.com/$REPO/actions/workflows/deploy.yml"
-            fi
-          }
-
-          case "${EVENT}:${MODE:-}" in
-            workflow_run:*)
-              # Which half failed? A red CI and a red promote mean opposite things and the message
-              # must not blur them.
-              FAILED=$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" --jq '[.jobs[] | select(.conclusion=="failure") | .name] | join(", ")' 2>/dev/null || echo "unknown")
-              if echo "$FAILED" | grep -qi "promote"; then
-                TITLE="🔴 promote failed — production is NOT updating"
-                BODY="\`$RUN_SHA\` — $RUN_TITLE
-
-          **CI passed but the promote step failed**, so \`release\` did not move and production is still serving the previous commit. Working code is silently not live — the mirror of a broken commit going live.
-
-          Failed job(s): $FAILED
-          $RUN_URL"
-              elif echo "$FAILED" | grep -qi "migrate-"; then
-                # ⚠️ OPS-03. promote does NOT wait for the database: it runs on a green CI, and the
-                # migration runs after it behind the production-db approval. So when a migrate job
-                # fails (or its approval is rejected), the NEW APP IS ALREADY LIVE on the OLD schema.
-                # The "not in production" text below was the opposite of true here (issue #78).
-                TITLE="🔴 app is live, database NOT migrated"
-                BODY="\`$RUN_SHA\` — $RUN_TITLE
-
-          **The app from this commit is already live** (promote runs on a green CI, before the migration). **The production database was NOT migrated**, so live code is running against the old schema.
-
-          That is only safe if the app tolerates both shapes — expand/contract, see CLAUDE.md, \"THE SCHEMA AND THE CODE THAT USES IT MUST NEVER BE APART\". Check the log of the failed job, then re-run it (it needs the production-db approval again) or revert the app.
-
-          Failed job(s): $FAILED
-          $RUN_URL"
-              else
-                TITLE="🔴 main is red"
-                BODY="\`$RUN_SHA\` — $RUN_TITLE
-
-          CI failed on main: $RUN_URL
-          Failed job(s): $FAILED
-
-          \`release\` was not advanced, so this commit is **not** in production. That is the gate working."
-              fi
-              ;;
-            schedule:*|workflow_dispatch:drift) drift_check ;;
-            workflow_dispatch:ci-red)
-              TITLE="🔴 main is red"
-              BODY="**Simulated** (workflow_dispatch, mode=ci-red) — verifying the notification path. Close it." ;;
-            workflow_dispatch:promote-red)
-              TITLE="🔴 promote failed — production is NOT updating"
-              BODY="**Simulated** (workflow_dispatch, mode=promote-red) — verifying the notification path. Close it." ;;
-          esac
-
-          if [ -z "$TITLE" ]; then echo "nothing to report"; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
-          { echo "title<<EOF"; echo "$TITLE"; echo "EOF"; echo "body<<EOF"; echo "$BODY"; echo "EOF"; } >> "$GITHUB_OUTPUT"
-
-      - name: Open or update the issue
-        if: steps.msg.outputs.skip != '1'
-        run: |
-          set -euo pipefail
-          TITLE='${{ steps.msg.outputs.title }}'
-          BODY='${{ steps.msg.outputs.body }}'
-          # One issue per KIND, reused — a new issue per commit would be its own kind of noise.
-          EXISTING=$(gh issue list -R "$REPO" --state open --search "$TITLE in:title" --json number,title \
-                     --jq "[.[] | select(.title==\"$TITLE\")][0].number // empty")
-          if [ -n "$EXISTING" ]; then
-            gh issue comment -R "$REPO" "$EXISTING" --body "$BODY"
-            echo "commented on #$EXISTING"
-          else
-            gh issue create -R "$REPO" --title "$TITLE" --body "$BODY"
-          fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts/red-main.mjs
+          sparse-checkout-cone-mode: false
+      - name: Open, update or close the issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # ⚠️ gh needs a repo context and the checkout is sparse: every call passes -R "$REPO". Found by DRIVING
+          # the first version, which without it could not have fired at all.
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          MODE: ${{ inputs.mode }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_TITLE: ${{ github.event.workflow_run.display_title }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: node scripts/red-main.mjs

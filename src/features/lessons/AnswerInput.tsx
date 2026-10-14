@@ -16,8 +16,12 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
   answer: Answer; value: string; onChange: (v: string) => void; signed?: boolean; mixed?: boolean
 }) {
   if (typeof answer === 'object' && 'choices' in answer) {
+    // Choices with words or sums in them ("8 × 5 = 5 × 8") stack in one even column; wrapped side by side they read as
+    // scattered (tester, 2026-10-05). Single tokens ("<", "acute") stay in a row.
+    const stacked = answer.choices.some(c => c.includes(' '))
     return (
-      <div role="radiogroup" aria-label="Your answer" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <div role="radiogroup" aria-label="Your answer"
+        style={stacked ? { display: 'flex', flexDirection: 'column', gap: 10, flexBasis: '100%', maxWidth: 480 } : { display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {answer.choices.map((c, i) => {
           const on = value === String(i)
           return (

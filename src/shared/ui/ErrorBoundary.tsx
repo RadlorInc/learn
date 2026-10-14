@@ -1,8 +1,8 @@
 'use client'
 
 import React from 'react'
-import { installErrorCapture } from '@/infra/storage/lastError'
-import { reportCrash } from '@/infra/reportCrash'
+import { reportCrash, installErrorCapture } from '@/infra/reportCrash'
+import { CRASH_UI, CrashScreen } from '@/shared/ui/CrashScreen'
 
 interface State {
   hasError:  boolean
@@ -42,40 +42,17 @@ export class MiloErrorBoundary extends React.Component<
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback
 
+      // ⚠️ NOT /parent: that is behind the parent PIN, so a child sent there after a crash could not get back
+      // (2026-10-05). The same two ways out as app/error.tsx: try this screen again, or the child's lessons.
       return (
-        <div style={{
-          minHeight: '100dvh',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          background: 'linear-gradient(180deg, #EAF5FE 0%, #EFF8FF 100%)',
-          padding: 24, gap: 20, textAlign: 'center',
-        }}>
-          <h1 style={{
-            fontSize: 24, fontWeight: 800,
-            color: '#0B4FA8', margin: 0,
-          }}>
-            Oops! Something went wrong
-          </h1>
-          <p style={{
-            fontSize: 16, color: '#3D6FB8',
-            maxWidth: 320, margin: 0, lineHeight: 1.5,
-          }}>
-            Something went wrong. Don&apos;t worry — your progress is saved!
-          </p>
-          <button
-            onClick={() => {
-              this.setState({ hasError: false, error: null, errorInfo: null })
-              window.location.href = '/parent'
-            }}
-            style={{
-              background: 'var(--accent-fill)',
-              color: 'var(--on-accent-fill)', border: 'none', borderRadius: 50,
-              padding: '14px 32px', fontSize: 16, fontWeight: 800,
-              cursor: 'pointer',
-            }}
-          >
-            Go back home
-          </button>
+        <>
+          <CrashScreen
+            title="Oops! Something went wrong"
+            body="Don't worry — your progress is saved!"
+            primary={{ label: 'Try again', onClick: () => window.location.reload() }}
+            secondary={{ label: 'Go back home', href: '/modules' }}
+            style={CRASH_UI.page}
+          />
           {process.env.NODE_ENV === 'development' && this.state.error && (
             <details style={{
               marginTop: 16, textAlign: 'left', maxWidth: 480,
@@ -90,7 +67,7 @@ export class MiloErrorBoundary extends React.Component<
               {this.state.errorInfo?.componentStack}
             </details>
           )}
-        </div>
+        </>
       )
     }
 

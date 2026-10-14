@@ -28,7 +28,7 @@ import { rint, shuffle } from '@/core/rand'
 import { useLatestRef } from '@/shared/hooks/useLatestRef'
 import { SceneBg } from '@/shared/ui/SceneBg'
 import { useChapterPhase } from '@/shared/hooks/useChapterPhase'
-import ReadyBar, { PICKED_RING } from './ReadyBar'
+import SubmitOnPick, { PICKED_RING } from './SubmitOnPick'
 
 // ─── Scenes & Worlds ───────────────────────────────────────────────────────────────
 type Scene =
@@ -214,7 +214,7 @@ export const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode;
   }, [])
 
 
-  /** A tap only CHOOSES; nothing is graded until Ready. Re-tapping the choice unchooses it, so
+  /** A tap only CHOOSES; nothing is graded until it is submitted (at once: SubmitOnPick). Re-tapping the choice unchooses it, so
    *  the bar is never a trap. The grading path below is untouched — it simply runs later. */
   function pick(n: number) {
     if (done.current || picked !== null) return
@@ -257,7 +257,7 @@ export const NumberPlay: React.FC<{ world: NumWorld; data: NumRound; mode: Mode;
           row's own box instead. Measured at 640×320: it landed at y 189–236 across the middle
           door (74–246), i.e. on top of an answer, and on this round that door was the right one.
           Nothing in a type-check or a unit gate can see this; it took looking at the screen. */}
-    <ReadyBar show={pending !== null} onCommit={commit} />
+    <SubmitOnPick show={pending !== null} onCommit={commit} />
     </>
   )
 }
@@ -377,7 +377,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
   const bgScene: Scene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: short ? 44 : 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: short ? 44 : 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
     </div>
   )

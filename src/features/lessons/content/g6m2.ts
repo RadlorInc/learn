@@ -304,7 +304,13 @@ export const G6M2: Lesson[] = [
     bigIdea: 'Change mixed numbers into fractions first, then flip the one you divide by and multiply.',
     screens: [
       { title: 'Burger patties', text: 'You have 2 1/4 pounds of ground beef. Each patty uses 3/4 pound. How many patties can you make?',
-        pictures: [mixed(2, 1, 4)] },
+        // Both amounts, named, in quarter-pound boxes on one scale (a tester, 8 Oct: three unnamed bars did not say which
+        // was the beef and showed no patty). Only filled boxes, so each brace spans exactly its amount. How many patties is
+        // not drawn: that is the question.
+        pictures: [{ kind: 'tape', rows: [
+          { label: 'Beef', cells: Array.from({ length: 9 }, () => ({ w: 1, shade: true, text: '1/4' })), brace: '2 1/4 pounds' },
+          { label: '1 patty', cells: Array.from({ length: 3 }, () => ({ w: 1, shade: true, text: '1/4' })), brace: '3/4 pound' },
+        ] }] },
       { title: 'The rule needs one fraction', text: "Our rule is flip and multiply. But 2 1/4 is a whole number and a fraction stuck together. What would we flip? We can't use the rule yet.",
         beats: [
           { say: 'Our rule is flip and multiply.' },
@@ -565,12 +571,12 @@ export const G6M2: Lesson[] = [
     id: 'g6m2-t7', title: 'Least common multiple', skill: 'Find the least common multiple of two numbers by counting by each',
     bigIdea: 'Count by each number, and the first number both counts land on is the smallest multiple they share.',
     screens: [
-      { title: 'Hot dogs and buns', text: 'Hot dogs come in packs of 6. Buns come in packs of 4. You want the same number of hot dogs and buns. What is the smallest number of each you can buy?',
+      { title: 'Pencils and erasers', text: 'Pencils come in packs of 6. Erasers come in packs of 4. You want the same number of pencils and erasers. What is the smallest number of each you can buy?',
         pictures: [countBy(6, 0), countBy(4, 0)] },
-      { title: 'The packs do not match', text: "Why not buy 6 of each? Buns come in packs of 4, so you can't get exactly 6 buns. You need a number that both pack sizes can make.",
+      { title: 'The packs do not match', text: "Why not buy 6 of each? Erasers come in packs of 4, so you can't get exactly 6 erasers. You need a number that both pack sizes can make.",
         beats: [
           { say: 'Why not buy 6 of each?', pic: 0 },
-          { say: "Buns come in packs of 4, so you can't get exactly 6 buns.", pic: 1 },
+          { say: "Erasers come in packs of 4, so you can't get exactly 6 erasers.", pic: 1 },
           { say: 'You need a number that both pack sizes can make.' },
         ],
         pictures: [countBy(6, 1), countBy(4, 1)] },
@@ -579,22 +585,22 @@ export const G6M2: Lesson[] = [
           { say: 'Count by each number, and the first number both counts land on is the smallest multiple they share.', pic: 0 },
         ],
         pictures: [countBy(6, 4), countBy(4, 6)] },
-      { title: 'Count by 6s', text: 'Start with the hot dogs. Count by 6s with me. 6, 12, 18, 24.',
+      { title: 'Count by 6s', text: 'Start with the pencils. Count by 6s with me. 6, 12, 18, 24.',
         beats: [
-          { say: 'Start with the hot dogs.', pic: 0 },
+          { say: 'Start with the pencils.', pic: 0 },
           { say: 'Count by 6s with me. 6, 12, 18, 24.' },
         ],
         pictures: [countBy(6, 4, true)] },
-      { title: 'Count by 4s', text: 'Now the buns, on a line underneath. Count by 4s. 4, 8, 12, 16, 20, 24.',
+      { title: 'Count by 4s', text: 'Now the erasers, on a line underneath. Count by 4s. 4, 8, 12, 16, 20, 24.',
         beats: [
-          { say: 'Now the buns, on a line underneath.', pic: 1 },
+          { say: 'Now the erasers, on a line underneath.', pic: 1 },
           { say: 'Count by 4s. 4, 8, 12, 16, 20, 24.' },
         ],
         pictures: [countBy(6, 4), countBy(4, 6, true)] },
-      { title: 'The first place both land', text: "Which number do both lines hit first? 12. So buy 12 of each. That's 2 packs of hot dogs and 3 packs of buns.",
+      { title: 'The first place both land', text: "Which number do both lines hit first? 12. So buy 12 of each. That's 2 packs of pencils and 3 packs of erasers.",
         beats: [
           { say: 'Which number do both lines hit first? 12.', pic: 0 },
-          { say: "So buy 12 of each. That's 2 packs of hot dogs and 3 packs of buns.", pic: 1 },
+          { say: "So buy 12 of each. That's 2 packs of pencils and 3 packs of erasers.", pic: 1 },
         ],
         pictures: [countBy(6, 2, false, 12), countBy(4, 3, false, 12)] },
       { title: 'One thing not to do', text: "Here's the part people mix up. Don't just MULTIPLY 6 × 4. 24 works, but 12 comes first. Stop at the first number both counts share. Okay. Your turn.",

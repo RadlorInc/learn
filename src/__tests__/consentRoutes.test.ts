@@ -119,18 +119,18 @@ describe('withdraw', () => {
   it('withdraws, then drains the queue the withdrawal filled — the drain cancels and records B3 (b3Cancel.test.ts)', async () => {
     lookup = b3Ahead()
     expect((await post({ t: TOKEN, action: 'withdraw' })).status).toBe('withdrawn')
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'rpc:billing_cancellations_due'])   // then the plan's cancel and refund (closeRefund.test.ts)
   })
   it('before the queue migration exists (drain → null), cancels the B3 it read directly, as before', async () => {
     lookup = b3Ahead(); drainAnswer = null
     expect((await post({ t: TOKEN, action: 'withdraw' })).status).toBe('withdrawn')
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'cancel:re_b3'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'cancel:re_b3', 'rpc:billing_cancellations_due'])
   })
   it('does not try to cancel a B3 that has already been sent', async () => {
     lookup = pending({ state: 'granted', second_email_provider_id: 're_b3', second_notice_scheduled_for: new Date(Date.now() - 1000).toISOString() })
     drainAnswer = null
     await post({ t: TOKEN, action: 'withdraw' })
-    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain'])
+    expect(log).toEqual(['rpc:consent_lookup', 'rpc:consent_withdraw', 'drain', 'rpc:billing_cancellations_due'])
   })
 })
 
@@ -141,7 +141,7 @@ describe('the cancel route — open, because after "Close your account" the call
       log.length = 0
       const res = await r[m](new Request('http://x/api/consent/cancel-second-notice', { method: m, headers: { 'x-forwarded-for': `10.2.0.${Math.random() * 250 | 0}` } }))
       expect(res.status).toBe(200)
-      expect(log).toEqual(['drain'])
+      expect(log).toEqual(['drain', 'rpc:billing_cancellations_due'])   // B3, then the plans owed a cancel and refund
     }
   })
   it('the daily cron is configured for it', async () => {
@@ -181,6 +181,16 @@ describe('request', () => {
     expect(sent[0].html).toContain('Hi Maya,')
     expect(sent[0].html.match(/\/consent\/respond#t=[A-Za-z0-9_-]{43}"/g), 'exactly one link to the page').toHaveLength(1)
     expect(sent[0].html).not.toContain('choice=decline')
+  })
+  it('an address that bounced or complained: 422 "undeliverable" naming it, and NO "sent" record (20261007000000)', async () => {
+    const real = await vi.importActual<typeof import('@/features/consent/server')>('@/features/consent/server')
+    const { sendEmail } = await import('@/features/consent/server')
+    ;(sendEmail as unknown as { mockImplementationOnce: (f: () => Promise<never>) => void })
+      .mockImplementationOnce(async () => { log.push('send:refused'); throw new real.Undeliverable('bounced') })
+    const r = await req({ noticeVersion: NOTICE_VERSION, lang: 'en' })
+    expect(r.status, 'the parent must be told, not shown "check your email"').toBe(422)
+    expect(await r.json()).toEqual({ error: 'undeliverable', email: 'p@x.test' })
+    expect(log, 'consent_record_request_sent must not run for an email that never went').toEqual(['rpc:consent_request', 'send:refused'])
   })
   // ⚠️ CONSENT-ONCE: needs the request route change. consent_request (20260924100000) takes p_scope and p_ack_at and
   // refuses anything but 'account'; a route still sending the seven old parameters names a function that no longer

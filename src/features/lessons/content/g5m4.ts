@@ -281,9 +281,9 @@ export const G5M4: Lesson[] = [
       { why: 'A little harder', problem: { text: 'Round 6.718 to the nearest whole number.',
         picture: rline(6, 7, 6.718), answer: 7,
         steps: ['6.718 sits between 6 and 7. Halfway is 6.5.', '6.718 is past halfway, so it rounds up.', 'So 6.718 rounds to 7.'] } },
-      { why: 'Same math in a story', problem: { text: 'A puppy weighs 3.462 kilograms. What is its weight to the nearest hundredth of a kilogram?',
+      { why: 'Same math in a story', problem: { text: 'A watermelon weighs 3.462 kilograms. What is its weight to the nearest hundredth of a kilogram?',
         picture: rline(3.46, 3.47, 3.462), answer: 3.46,
-        steps: ['3.462 sits between 3.46 and 3.47. Halfway is 3.465.', '3.462 is before halfway, so it rounds down.', 'So the puppy weighs about 3.46 kilograms.'] } },
+        steps: ['3.462 sits between 3.46 and 3.47. Halfway is 3.465.', '3.462 is before halfway, so it rounds down.', 'So the watermelon weighs about 3.46 kilograms.'] } },
     ],
   },
 

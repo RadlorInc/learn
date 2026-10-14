@@ -280,7 +280,8 @@ const T5: Level[] = [
       const { W, save, sale: s, p } = sale(r), item = pick(r, ITEMS)
       if (new Set([s, save, W - p]).size < 3 || W - p <= 0) continue
       const right = `You pay $${s}`
-      return { text: `A ${item} costs $${W}. It is ${p}% off. Which one is true?`, picture: eq(`$${W}, ${p}% off`), answer: choose(r, right, [`You pay $${save}`, `You pay $${W - p}`]),
+      // The price and the discount on their own named rows (a tester, 8 Oct: "$80, 25% off" on one line).
+      return { text: `A ${item} costs $${W}. It is ${p}% off. Which one is true?`, picture: eq(`Price: $${W}`, [`Discount: ${p}% off`]), answer: choose(r, right, [`You pay $${save}`, `You pay $${W - p}`]),
         steps: [`${p}% of $${W} is $${save}, so you save $${save}. The % is out of 100, not dollars.`, `Take the saving away: ${W} − ${save} = ${s}.`, `So the true one is: ${right}.`] }
     }
   }),

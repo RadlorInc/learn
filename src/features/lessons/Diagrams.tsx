@@ -8,7 +8,7 @@
  * `motion` reveals the parts one after another (bars shading, jumps, points, cubes), the "picture that moves" of Screens 4–6.
  */
 import { useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
-import type { Picture } from './script'
+import type { Picture, ScaleItem } from './script'
 import { INK, ACCENT } from './Pictures'
 // The drawings keep their own teal for the second colour of a figure (a hand, a ray, an answer row): it is
 // content, like the chalk, and Pictures' TEAL is now the pale button fill, which would vanish on a white figure.
@@ -48,6 +48,60 @@ export function wrap(t: string, n: number): string[] {
     else out.push(word)
   }
   return out
+}
+
+/** A row other than the last that ends on an operator, or on a "?" standing for a sign, leaves its operand behind. */
+const dangles = (rows: string[]) => rows.slice(0, -1).some(r => /[=+−×÷:→]$| \?$/.test(r))
+/** Words, with everything inside parentheses kept as one piece and an operator kept with what follows it. */
+function pieces(t: string): string[] {
+  const out: string[] = []
+  let depth = 0, carry = false
+  for (const w of t.split(' ')) {
+    if (depth > 0 || carry) out[out.length - 1] += ' ' + w
+    else out.push(w)
+    depth += (w.match(/\(/g)?.length ?? 0) - (w.match(/\)/g)?.length ?? 0)
+    carry = /^[=+−×÷:→?]$/.test(w)
+  }
+  return out
+}
+const pack = (ps: string[], n: number) => ps.reduce<string[]>((o, p) => {
+  if (o.length && (o[o.length - 1] + ' ' + p).length <= n) o[o.length - 1] += ' ' + p
+  else o.push(p)
+  return o
+}, [])
+/** Rows of an expression: ratio names keep their own row ("red crayons :"); otherwise rows of about equal length,
+ *  never inside parentheses or ending on an operator. Falls back to plain `wrap`. */
+function exprRows(t: string, n: number): string[] {
+  if (t.length <= n) return [t]
+  const names = t.split(' : ')
+  if (names.length > 1 && !names.some(p => /[\d?]/.test(p))) {
+    const chunks = names.map((p, i) => (i < names.length - 1 ? `${p} :` : p))
+    if (chunks.every(c => c.length <= n)) return pack(chunks, n)
+  }
+  const ps = pieces(t)
+  if (ps.some(p => p.length > n)) return wrap(t, n)
+  const k = pack(ps, n).length
+  for (let w = Math.ceil(t.length / k); w <= n; w++) { const o = pack(ps, w); if (o.length === k && !dangles(o)) return o }
+  return wrap(t, n)
+}
+
+/** An equation's rows. A long one breaks before the first "=" (or "→", then a "?" standing for a sign) whose whole
+ *  right side fits one row — a paid tester: "move everything after the equals sign down" — so "= 12 : ?" or "= 52" is
+ *  never split. Otherwise plain `wrap`, unless a row would end on an operator. */
+export function wrapEq(t: string, n: number): string[] {
+  if (t.length <= n) return [t]
+  // A label ("Clue 1:") or a comma ("x = weeks, y = height") already splits it in two: break there when both halves fit.
+  const label = t.match(/^(.*?\S): (.*)$/), comma = t.lastIndexOf(', ')
+  if (label && label[1].length < n && label[2].length <= n) return [`${label[1]}:`, label[2]]
+  const open = (u: string) => (u.match(/\(/g)?.length ?? 0) - (u.match(/\)/g)?.length ?? 0)
+  if (comma > 0 && comma < n && t.length - comma - 2 <= n && open(t.slice(0, comma)) === 0) return [t.slice(0, comma + 1), t.slice(comma + 2)]
+  const at = (sep: string) => [...t.matchAll(new RegExp(sep, 'g'))].map(m => m.index)
+  for (const i of [...at(' [=→] '), ...at(' \\? (?=[\\d(])')]) {
+    const right = t.slice(i + 1)
+    if (i > 0 && right.length <= n) return [...exprRows(t.slice(0, i), n), right]
+  }
+  const rows = wrap(t, n)
+  return dangles(rows) ? exprRows(t, n) : rows
 }
 
 // Text width, for sizing an SVG around its words. Measured on a canvas in the display font once the page is live;
@@ -124,8 +178,43 @@ export function Diagram({ p }: { p: Picture }) {
     case 'chips': return <Chips p={p} />
     case 'balance': return <Balance p={p} />
     case 'spinner': return <Spinner p={p} />
+    case 'trail': return <Trail p={p} />
     default: return null
   }
+}
+
+// ── A trail with a bike on it (drawn here from lines and circles; no outside artwork) ────────────
+function Trail({ p }: { p: P<'trail'> }) {
+  const x0 = 40, x1 = 600, span = x1 - x0, mid = 100, amp = 26
+  const yAt = (x: number) => mid - amp * Math.sin((2 * Math.PI * (x - x0)) / span)
+  const pts = (to: number) => Array.from({ length: 61 }, (_, i) => x0 + ((to - x0) * i) / 60).map(x => `${x.toFixed(1)},${yAt(x).toFixed(1)}`).join(' ')
+  const xb = x0 + span * Math.min(1, Math.max(0, p.done)), yb = yAt(xb)
+  const bracket = (y: number, a: number, b: number, label: string, i: number) => (
+    <g style={reveal(i, p.motion, 500)}>
+      <path d={`M ${a} ${y - 9} V ${y} H ${b} V ${y - 9}`} fill="none" stroke={INK} strokeWidth={3} />
+      <rect x={(a + b) / 2 - label.length * 6 - 8} y={y - 12} width={label.length * 12 + 16} height={24} fill="#fff" />
+      <T x={(a + b) / 2} y={y} s={20}>{label}</T>
+    </g>
+  )
+  // The bike: two wheels, a frame, a seat and handlebars, standing on the trail at xb.
+  return (
+    <Svg w={640} h={250} label={`A trail ${p.total} long; ridden ${p.doneLabel}`}>
+      <polyline points={pts(x1)} fill="none" stroke={INK} strokeWidth={6} strokeDasharray="14 11" strokeLinecap="round" />
+      <polyline points={pts(xb)} fill="none" stroke={TEAL} strokeWidth={9} strokeLinecap="round" style={reveal(0, p.motion)} />
+      <circle cx={x0} cy={yAt(x0)} r={11} fill={INK} />
+      <path d={`M ${x1 + 22} ${yAt(x1)} l -24 -14 v 28 z`} fill={INK} />
+      <g style={reveal(1, p.motion)}>
+        <g transform={`translate(${xb} ${yb}) scale(1.6) translate(0 -16)`} stroke={INK} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx={-17} cy={0} r={13} fill="#fff" />
+          <circle cx={17} cy={0} r={13} fill="#fff" />
+          <path d="M -17 0 L -4 -22 L 11 -22 L 17 0 M -4 -22 L 1 0 L -17 0 M 1 0 L 11 -22 M -8 -28 H 1 M 9 -30 L 13 -30" />
+        </g>
+      </g>
+      {p.left && <T x={(xb + x1) / 2} y={yAt((xb + x1) / 2) - 44} s={34}>{p.left}</T>}
+      {bracket(180, x0, xb, p.doneLabel, 2)}
+      {bracket(228, x0, x1, p.total, 3)}
+    </Svg>
+  )
 }
 
 // ── Fraction bars ──────────────────────────────────────────────────────────────────────────────
@@ -158,6 +247,15 @@ function Bars({ p }: { p: P<'bars'> }) {
 }
 
 // ── Tape diagram ───────────────────────────────────────────────────────────────────────────────
+/** A row named for a colour ("Red", "Blue crayons") is filled in that colour, whatever its `shade`: a "Red" row in
+ *  mint and a "Blue" row in white told a tester the opposite of the words. Only the first word counts ("Oranges" is fruit).
+ *  A cell can name its own `colour` (one row of red and blue beads); that wins over the row. */
+const NAMED: Record<string, string> = {
+  red: '#ffb3a3', blue: '#b9d4ff', green: '#9cf0d8', yellow: '#ffd166', purple: '#d9c6ff', pink: '#ffc6dc',
+  orange: '#ffc68a', brown: '#d9b38c', gray: '#d4d4d4', grey: '#d4d4d4', black: '#6b6b6b', white: '#fff',
+}
+const named = (label?: string) => NAMED[label?.split(' ')[0].toLowerCase() ?? '']
+
 function Tape({ p }: { p: P<'tape'> }) {
   const total = Math.max(...p.rows.map(r => r.cells.reduce((s, c) => s + c.w, 0)))
   const lw = p.rows.some(r => r.label) ? 120 : 0, W = 520, u = W / total, rh = 56, gap = 44
@@ -175,7 +273,7 @@ function Tape({ p }: { p: P<'tape'> }) {
               const cx = x; x += c.w * u
               return (
                 <g key={j} style={reveal(k++, p.motion, 300)}>
-                  <rect x={cx} y={y} width={c.w * u} height={rh} fill={TONE[c.shade ? 1 : 0]} stroke={INK} strokeWidth={4} />
+                  <rect x={cx} y={y} width={c.w * u} height={rh} fill={named(c.colour) ?? named(r.label) ?? TONE[c.shade ? 1 : 0]} stroke={INK} strokeWidth={4} />
                   {c.text && <T x={cx + (c.w * u) / 2} y={y + rh / 2} s={22}>{c.text}</T>}
                 </g>
               )
@@ -265,6 +363,54 @@ function Clock({ p }: { p: P<'clock'> }) {
 }
 
 // ── Measuring tools ────────────────────────────────────────────────────────────────────────────
+/** The thing on a scale's pan, flat and simple, always the same size (about 120 × 100, sitting on `base`):
+ *  a bigger drawing for a heavier thing would let a child read the weight off the picture. */
+function OnPan({ item, cx, base }: { item: ScaleItem; cx: number; base: number }) {
+  const s = { stroke: INK, strokeWidth: 5, strokeLinejoin: 'round' as const }
+  const y = base
+  switch (item) {
+    case 'bag': return <g {...s}>
+      <path d={`M ${cx - 50} ${y} Q ${cx - 58} ${y - 60} ${cx - 26} ${y - 78} L ${cx + 26} ${y - 78} Q ${cx + 58} ${y - 60} ${cx + 50} ${y} Z`} fill="#F1D9A6" />
+      <path d={`M ${cx - 26} ${y - 78} L ${cx - 16} ${y - 96} L ${cx + 16} ${y - 96} L ${cx + 26} ${y - 78}`} fill="#F1D9A6" />
+      <line x1={cx - 24} y1={y - 80} x2={cx + 24} y2={y - 80} strokeWidth={6} />
+    </g>
+    case 'jar': return <g {...s}>
+      <rect x={cx - 42} y={y - 84} width={84} height={84} rx={16} fill="#F2B33D" />
+      <rect x={cx - 34} y={y - 100} width={68} height={18} rx={5} fill="#C98B4A" />
+      <rect x={cx - 26} y={y - 58} width={52} height={30} rx={6} fill="#fff" strokeWidth={3} />
+    </g>
+    case 'box': return <g {...s}>
+      <rect x={cx - 60} y={y - 80} width={120} height={80} rx={4} fill="#D9A066" />
+      <line x1={cx - 60} y1={y - 62} x2={cx + 60} y2={y - 62} strokeWidth={3} />
+      <line x1={cx} y1={y - 80} x2={cx} y2={y - 62} strokeWidth={3} />
+    </g>
+    case 'book': return <g {...s}>
+      <rect x={cx - 60} y={y - 34} width={120} height={34} rx={4} fill="#fff" />
+      <rect x={cx - 64} y={y - 44} width={128} height={14} rx={4} fill="#5B7FD1" />
+      <rect x={cx - 64} y={y - 6} width={128} height={10} rx={4} fill="#5B7FD1" />
+    </g>
+    case 'watermelon': return <g {...s}>
+      <ellipse cx={cx} cy={y - 42} rx={62} ry={42} fill="#3FA56B" />
+      <path d={`M ${cx - 30} ${y - 78} Q ${cx - 42} ${y - 42} ${cx - 30} ${y - 6} M ${cx} ${y - 84} V ${y} M ${cx + 30} ${y - 78} Q ${cx + 42} ${y - 42} ${cx + 30} ${y - 6}`} fill="none" stroke="#1F6B3E" strokeWidth={5} />
+    </g>
+    case 'suitcase': return <g {...s}>
+      <path d={`M ${cx - 20} ${y - 78} V ${y - 96} H ${cx + 20} V ${y - 78}`} fill="none" strokeWidth={7} />
+      <rect x={cx - 62} y={y - 80} width={124} height={80} rx={10} fill="#D6423A" />
+      <line x1={cx - 30} y1={y - 80} x2={cx - 30} y2={y} strokeWidth={3} />
+      <line x1={cx + 30} y1={y - 80} x2={cx + 30} y2={y} strokeWidth={3} />
+    </g>
+    case 'cat': return <g {...s}>
+      <path d={`M ${cx - 48} ${y - 14} Q ${cx - 78} ${y - 30} ${cx - 66} ${y - 62}`} fill="none" strokeWidth={8} strokeLinecap="round" />
+      <ellipse cx={cx - 6} cy={y - 28} rx={44} ry={28} fill="#9AA5B1" />
+      <path d={`M ${cx + 18} ${y - 70} L ${cx + 22} ${y - 100} L ${cx + 38} ${y - 80} L ${cx + 54} ${y - 100} L ${cx + 58} ${y - 70} Z`} fill="#9AA5B1" />
+      <circle cx={cx + 38} cy={y - 62} r={24} fill="#9AA5B1" />
+      <circle cx={cx + 30} cy={y - 64} r={3.5} fill={INK} stroke="none" />
+      <circle cx={cx + 46} cy={y - 64} r={3.5} fill={INK} stroke="none" />
+      <path d={`M ${cx + 34} ${y - 54} L ${cx + 38} ${y - 50} L ${cx + 42} ${y - 54}`} fill="none" strokeWidth={3} />
+    </g>
+  }
+}
+
 function Measure({ p }: { p: P<'measure'> }) {
   const min = p.min ?? 0, every = p.labelEvery ?? p.step
   const n = Math.round((p.max - min) / p.step)
@@ -291,12 +437,19 @@ function Measure({ p }: { p: P<'measure'> }) {
   }
 
   if (p.tool === 'scale') {
-    const cx = 200, cy = 190, r = 150
+    // With something to weigh, a pan sits on top of the dial and the dial moves down to make room.
+    const top = p.on ? 130 : 0
+    const cx = 200, cy = 190 + top, r = 150
     const ang = (v: number) => Math.PI * 1.1 + ((v - min) / (p.max - min)) * Math.PI * 0.8
     const pt = (v: number, len: number) => [cx + len * Math.cos(ang(v)), cy + len * Math.sin(ang(v))]
     const [nx, ny] = pt(has ? p.value! : min, r - 30)
     return (
-      <Svg w={400} h={250} max={320} label={`A weighing scale from ${min} to ${p.max} ${p.unit}`}>
+      <Svg w={400} h={250 + top} max={320 + top} label={`A weighing scale from ${min} to ${p.max} ${p.unit}${p.on ? ` with a ${p.on} on it` : ''}`}>
+        {p.on && <>
+          <rect x={cx - 12} y={top - 4} width={24} height={30} fill={INK} />
+          <rect x={cx - 120} y={top - 18} width={240} height={16} rx={8} fill="#fff" stroke={INK} strokeWidth={5} />
+          <OnPan item={p.on} cx={cx} base={top - 18} />
+        </>}
         <path d={`M ${cx - r - 20} ${cy} A ${r + 20} ${r + 20} 0 0 1 ${cx + r + 20} ${cy} Z`} fill="#fff" stroke={INK} strokeWidth={6} />
         {vals.map((v, i) => {
           const [x1, y1] = pt(v, r), [x2, y2] = pt(v, isLabel(v) ? r - 18 : r - 9), [lx, ly] = pt(v, r - 38)

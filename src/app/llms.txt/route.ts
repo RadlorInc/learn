@@ -1,4 +1,4 @@
-import { APP_NAME, COMPANY, COMPANY_URL, LANDING_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, COMPANY, COMPANY_URL, LANDING_URL, PUBLIC_ROUTES, SITE_URL, SUPPORT_EMAIL, SUPPORT_PHONE } from '@/app/site'
 import { LEGAL_PAGES } from '@/app/legal/registry'
 
 /**
@@ -36,7 +36,8 @@ answer is never marked with a red cross.
 
 A parent chooses what each child sees (whole modules or single topics, from any grade), can set
 due dates, and sees what the child finds hard. Children sign in with a username and password their
-parent sets. Children earn points by practicing; games to spend them on are coming soon.
+parent sets. Children earn points by practicing and spend them on game time in BlockCraft, a calm
+block-building game, within a daily limit the parent sets.
 
 ## Earlier names
 
@@ -55,6 +56,7 @@ ${COMPANY} — ${COMPANY_URL}
 
 ## Contact
 ${SUPPORT_EMAIL}
+${SUPPORT_PHONE}
 `
   return new Response(text, { headers: { 'content-type': 'text/plain; charset=utf-8' } })
 }

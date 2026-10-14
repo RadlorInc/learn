@@ -12,6 +12,7 @@
  * has plenty of room, so it is NOT sent away — only genuinely narrow, upright screens are.
  */
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import { useViewport } from '@/shared/hooks/useViewport'
 
 /**
@@ -31,10 +32,16 @@ export function useNeedsRotate(): boolean {
 }
 
 /** Matches chapter 1's wording and look, so a child moving between chapters sees the same screen. */
+/** ⚠️ It carries its own way out: a child holding the phone upright had no Menu on this screen, so the only exit was
+ *  to turn the phone (e2e/xbrowser-clicks.spec.ts, iPhone portrait). Back returns to the grade tab they came from. */
 export function RotateGate({ line }: { line: string }) {
+  const router = useRouter()
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    <div style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       gap: 18, background: 'linear-gradient(180deg,#bfe6f7,#d6efc0)', padding: 24, textAlign: 'center' }}>
+      <button onClick={() => (history.length > 1 ? router.back() : router.push('/modules'))} style={{ position: 'absolute', top: 12, left: 14,
+        padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)',
+        color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
       <div style={{ fontSize: 64, animation: 'rg_pop .6s ease both' }}>🔄</div>
       <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: 'var(--ink)' }}>Turn your phone sideways</div>
       <div style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--ink-soft)' }}>{line}</div>
