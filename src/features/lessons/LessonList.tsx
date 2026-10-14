@@ -5,6 +5,8 @@
  * The first unfinished topic glows and breathes, says "Click here" and carries its number in a small badge (founder,
  * 2026-09-24); every other stop is dimmed and shows only its number — a done one also gets a green tick. An arrow on
  * each stretch of trail points the way. Nothing is locked: a child may replay or jump ahead.
+ * A ring round each stop fills as the topic's practice goes on (answers out of DONE_AFTER; full once done), so a child
+ * and their parent see how much of each topic is done and how much is left (founder, 2026-10-14).
  */
 import { showDay } from './progressReport'
 import Link from 'next/link'
@@ -12,6 +14,7 @@ import { useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProper
 import type { Module } from './modules'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { loadRun } from '@/infra/storage/lessonRun'
+import { DONE_AFTER } from './adaptive'
 import { C } from './sessionCopy'
 import { INK, TEAL, GOOD, pill, PAGE_BG, shell, topBar } from './Pictures'
 
@@ -100,7 +103,9 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                 {lessons.map((l, i) => {
                   const isDone = done.includes(l.id), isNext = l.id === nextUp
                   const size = isNext ? 84 : 68, { x, y } = pos(i)
-                  const gap = size / 2 + 12
+                  const gap = size / 2 + 22
+                  // Capped below 100 until the topic is really done, so a full ring always means done.
+                  const pct = isDone ? 100 : Math.min(95, Math.round((loadRun(learnerId, l.id)?.asked ?? 0) / DONE_AFTER * 100))
                   // Dimmed with solid muted colours, not opacity: a see-through stop shows the trail running through it.
                   const dim: CSSProperties = isNext ? {} : { opacity: 0.5 }
                   const dimStop: CSSProperties = isNext ? {} : { background: '#eef3f8', borderColor: MUTED, boxShadow: `4px 4px 0 ${MUTED}`, color: MUTED }
@@ -115,14 +120,18 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
                     : { top: 0, transform: 'translateY(-50%)', width: w ? Math.min(210, Math.floor(w / 2)) : 'min(210px, 42vw)', ...(side(i) < 0 ? { left: gap } : { right: gap, textAlign: 'right' }) }
                   return (
                     <li key={l.id} style={{ position: 'absolute', top: y, left: across ? x : `${x}%`, width: 0, height: 0 }}>
-                      <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : isNext ? ', next up' : ''}`}
+                      <Link href={`/lesson?id=${l.id}`} aria-label={`${i + 1}. ${l.title}${isDone ? ', done' : `, ${pct}% done`}${isNext ? ', next up' : ''}`}
                         style={{ ...stop, width: size, height: size, background: isNext ? '#fbdbba' : '#fff', ...dimStop,
                           ...(isNext ? { animation: 'lp-breathe 2.4s ease-in-out infinite, lp-glow 2.4s ease-in-out infinite', boxShadow: `4px 4px 0 ${INK}, 0 0 0 6px #ffd16699, 0 0 18px 6px #fbdbba` } : {}) }}>
                         {isNext
                           ? <b style={{ fontSize: 15, lineHeight: 1.05, textAlign: 'center', fontFamily: 'var(--font-display)' }}>Click here</b>
                           : <b style={{ fontSize: 26, ...faded }}>{i + 1}</b>}
-                        {isNext && <span style={{ ...badge, background: '#0b4fa8', color: '#fff' }}>{i + 1}</span>}
                       </Link>
+                      {/* The progress ring: green for what is done, white for what is left. Over the stop, so the next
+                          topic's glow does not wash it out; the badges come after it so it never covers them. */}
+                      <span aria-hidden style={{ ...ring, width: size + 34, height: size + 34, background: `conic-gradient(${GOOD} ${pct}%, #fff 0)`,
+                        ...(isNext ? { animation: 'lp-breathe 2.4s ease-in-out infinite' } : {}) }} />
+                      {isNext && <span aria-hidden style={{ ...badge, top: -size / 2 - 6, left: size / 2 - 22, background: '#0b4fa8', color: '#fff', pointerEvents: 'none' }}>{i + 1}</span>}
                       {/* Outside the dimmed stop, so the tick itself is not dimmed. */}
                       {isDone && <span aria-hidden style={{ ...badge, top: -size / 2 - 6, left: size / 2 - 22, width: 32, height: 32, fontSize: 18, background: GOOD, color: '#fff', pointerEvents: 'none' }}>✓</span>}
                       <Link href={`/lesson?id=${l.id}`} tabIndex={-1} aria-hidden style={{ position: 'absolute', textDecoration: 'none', color: INK, ...label, ...dim }}>
@@ -150,5 +159,7 @@ export function LessonList({ module, learnerId, back, due }: { module: Module; l
 const MUTED = '#9db3d1'
 const stop: CSSProperties = { position: 'absolute', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', justifyContent: 'center',
   borderRadius: '50%', border: `4px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}`, textDecoration: 'none', color: INK }
+const ring: CSSProperties = { position: 'absolute', transform: 'translate(-50%, -50%)', borderRadius: '50%', pointerEvents: 'none',
+  border: `3px solid ${INK}`, mask: 'radial-gradient(farthest-side, transparent calc(100% - 15px), #000 calc(100% - 14px))' }
 const badge: CSSProperties = { position: 'absolute', top: -6, right: -6, width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center',
   justifyContent: 'center', fontWeight: 900, fontSize: 14, border: `3px solid ${INK}` }
