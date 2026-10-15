@@ -24,6 +24,7 @@ where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> '
 --     (2026-10-15, tester batch B2, tag audio-src-josh-2026-10-15d: 36 objects, 986056 bytes — 16 say-row re-renders,
 --     13 plain re-renders and 7 new or reworded lines. Before this run P5 should read 18606 | 288280107, the batch C
 --     value below; a different "before" means another upload ran, and the after is before + 36.)
+--     (read by the founder after B2's upload, run 38806660628, 2026-10-16: 18642 | 289266163; P6 0)
 --     (2026-10-15, tester batch C, tag audio-src-josh-2026-10-15c: 342 objects, 7143931 bytes — 14 reworded lines and
 --     328 Screen 9 stickers. Before this run P5 should read 18264 | 281136176, the #437 value below; a different
 --     "before" means another upload ran, and the after is before + 342.)
