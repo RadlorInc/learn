@@ -85,10 +85,13 @@ export default function TesterPage() {
   if (!open || !token || (!chapter && !whole)) return <Note>Loading…</Note>
 
   const reviewed = new Set(open.reviewed)
-  const mark = (k: string, level?: number) => setOpen({
-    ...open, reviewed: [...open.reviewed.filter(x => x !== k), k],
-    levels: level ? { ...open.levels, [k]: level } : open.levels,
-  })
+  // From the newest state, never this render's `open`: a review bar's onSaved can outlive the render that made it, and
+  // building on a stale `open` dropped earlier marks — the count read "L1 0/2" after three L1 reviews (tester,
+  // g5m1-t2, 10 Oct 2026).
+  const mark = (k: string, level?: number) => setOpen(o => o && o !== 'bad' ? {
+    ...o, reviewed: [...o.reviewed.filter(x => x !== k), k],
+    levels: level ? { ...o.levels, [k]: level } : o.levels,
+  } : o)
   // Done = the last screen reviewed AND every practice level reviewed PER_LEVEL times (a chapter: its last card).
   const practiceDone = (id: string) => levelCounts(open, id, ladderOf(id)?.length ?? 0).every(c => c >= PER_LEVEL)
   const isDone = (id: string) => reviewed.has(`${id}/9`) && (chapter ? true : practiceDone(id))

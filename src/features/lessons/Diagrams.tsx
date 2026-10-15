@@ -652,8 +652,14 @@ function Poly({ p }: { p: P<'poly'> }) {
             })}
             {s.angles?.map((lab, i) => {
               if (!lab) return null
-              const v = pts[i], d = norm([X(cx) - X(v[0]), Y(cy) - Y(v[1])])
-              return <T key={i} x={X(v[0]) + d[0] * 36} y={Y(v[1]) + d[1] * 30} s={17} fill={TEAL}>{lab}</T>
+              // On the corner's bisector, as far in as its box needs to clear both sides: a sharp corner pushes it
+              // further, where the wedge is wide enough (tester, g8m4-t6: "25°" sat on the lines of a thin corner).
+              const v = pts[i], a = pts[(i + n - 1) % n], b = pts[(i + 1) % n], [vx, vy] = [X(v[0]), Y(v[1])]
+              const ua = norm([X(a[0]) - vx, Y(a[1]) - vy]), ub = norm([X(b[0]) - vx, Y(b[1]) - vy])
+              const d = norm([ua[0] + ub[0], ua[1] + ub[1]]), half = Math.sin(Math.acos(Math.max(-1, Math.min(1, ua[0] * ub[0] + ua[1] * ub[1]))) / 2)
+              const box = (e: number[]) => Math.abs(e[1]) * lab.length * 17 * 0.28 + Math.abs(e[0]) * 17 * 0.5 + 5   // the box's reach across edge e
+              const k = Math.max(30, ...[ua, ub].map(e => box(e) / Math.max(half, 0.15)))
+              return <T key={i} x={vx + d[0] * k} y={vy + d[1] * k} s={17} fill={TEAL}>{lab}</T>
             })}
             {s.names?.map((lab, i) => {
               if (!lab) return null
@@ -839,18 +845,38 @@ function Plot({ p }: { p: P<'plot'> }) {
 
 // ── Coordinate plane ──────────────────────────────────────────────────────────────────────────
 function Coord({ p }: { p: P<'coord'> }) {
-  const step = p.step ?? 1, n = (p.max - p.min) / step, S = Math.min(40, 420 / n), pad = 30
+  const step = p.step ?? 1, n = (p.max - p.min) / step, S = Math.min(40, 420 / n), pad = 30, top = p.names ? 30 : 0, below = p.names ? 26 : 0
   const size = n * S + pad * 2
-  const X = (x: number) => pad + ((x - p.min) / (p.max - p.min)) * n * S, Y = (y: number) => pad + ((p.max - y) / (p.max - p.min)) * n * S
+  const X = (x: number) => pad + ((x - p.min) / (p.max - p.min)) * n * S, Y = (y: number) => top + pad + ((p.max - y) / (p.max - p.min)) * n * S
   const labelEvery = n > 12 ? 2 : 1
   const clip = (a: Pt, b: Pt): [Pt, Pt] => {
     if (a[0] === b[0]) return [[a[0], p.min], [a[0], p.max]]
     const m = (b[1] - a[1]) / (b[0] - a[0]), f = (x: number) => a[1] + m * (x - a[0])
     return [[p.min, f(p.min)], [p.max, f(p.max)]]
   }
+  // What a label must keep clear of, in screen units: every drawn line, the axes, the tick numbers and the points.
+  const segsOf = (skip = -1): [Pt, Pt][] => [
+    ...(p.lines ?? []).filter((_, j) => j !== skip).map(o => (o.extend ? clip(o.a, o.b) : [o.a, o.b]).map(q => [X(q[0]), Y(q[1])] as Pt) as [Pt, Pt]),
+    ...(p.min <= 0 && p.max >= 0 ? [[[X(0), Y(p.min)], [X(0), Y(p.max)]], [[X(p.min), Y(0)], [X(p.max), Y(0)]]] as [Pt, Pt][] : []),
+  ]
+  const ticks: Pt[] = Array.from({ length: n + 1 }, (_, i) => p.min + i * step).filter(v => v !== 0)
+    .flatMap(v => [[X(v), Y(Math.max(p.min, 0)) + 14], [X(Math.max(p.min, 0)) - 12, Y(v)]] as Pt[])
+  const room = (q: Pt, segs: [Pt, Pt][], spots: Pt[]) => Math.min(Infinity, ...segs.map(([e, f]) => toSeg(q, e, f)), ...spots.map(c => Math.hypot(q[0] - c[0], q[1] - c[1])))
+  // A point's label: of the four corners beside it, the one with the most room (tester, g8m2-t1: a label on the line).
+  const ptAt = (pt: { x: number; y: number; label?: string }, i: number): { x: number; y: number; a: 'start' | 'end' } => {
+    const half = (pt.label ?? '').length * 4.7, [px, py] = [X(pt.x), Y(pt.y)]
+    const others = (p.points ?? []).filter((_, j) => j !== i).map(o => [X(o.x), Y(o.y)] as Pt)
+    const opts = ([[1, -1], [-1, -1], [1, 1], [-1, 1]] as const).map(([sx, sy]) => ({ x: px + sx * 12, y: py + sy * 16, a: (sx > 0 ? 'start' : 'end') as 'start' | 'end', c: [px + sx * (12 + half), py + sy * 16] as Pt }))
+    // Up and to the right stays the default unless another corner has clearly more room.
+    return opts.reduce((best, o) => (room(o.c, segsOf(), [...ticks, ...others]) > room(best.c, segsOf(), [...ticks, ...others]) + 6 ? o : best))
+  }
   return (
-    <Svg w={size} h={size} max={400} label={`Coordinate grid from ${p.min} to ${p.max}`}>
-      <defs><clipPath id="coord-clip"><rect x={pad} y={pad} width={n * S} height={n * S} /></clipPath></defs>
+    <Svg w={size} h={size + top + below} max={400} label={p.names ? `Graph: ${p.names[0]} along the bottom, ${p.names[1]} up the side` : `Coordinate grid from ${p.min} to ${p.max}`}>
+      <defs><clipPath id="coord-clip"><rect x={pad} y={top + pad} width={n * S} height={n * S} /></clipPath></defs>
+      {p.names && <>
+        <T x={X((p.min + p.max) / 2)} y={Y(Math.max(p.min, 0)) + 38} s={16}>{p.names[0]} →</T>
+        <T x={X(Math.max(p.min, 0)) - 8} y={top + 12} s={16} a="start">↑ {p.names[1]}</T>
+      </>}
       {Array.from({ length: n + 1 }, (_, i) => p.min + i * step).map(v => <g key={v}>
         <line x1={X(v)} y1={Y(p.min)} x2={X(v)} y2={Y(p.max)} stroke={v === 0 ? INK : '#e4d3b6'} strokeWidth={v === 0 ? 4 : 1.5} />
         <line x1={X(p.min)} y1={Y(v)} x2={X(p.max)} y2={Y(v)} stroke={v === 0 ? INK : '#e4d3b6'} strokeWidth={v === 0 ? 4 : 1.5} />
@@ -866,10 +892,22 @@ function Coord({ p }: { p: P<'coord'> }) {
           return <line key={i} x1={X(a[0])} y1={Y(a[1])} x2={X(b[0])} y2={Y(b[1])} stroke={l.tone === 2 ? ACCENT : TEAL} strokeWidth={l.dashed ? 4 : 5} strokeDasharray={l.dashed ? '9 7' : undefined} style={reveal(i, p.motion, 600)} />
         })}
       </g>
-      {p.lines?.map((l, i) => l.label && <T key={`ll${i}`} x={(X(l.a[0]) + X(l.b[0])) / 2 + 14} y={(Y(l.a[1]) + Y(l.b[1])) / 2 - 14} s={17} fill={l.tone === 2 ? ACCENT : TEAL}>{l.label}</T>)}
+      {p.lines?.map((l, i) => {
+        if (!l.label) return null
+        // Square off the line, clear of it, on whichever side has more room from the other lines, the points and their
+        // labels (tester, g8m2-t1: "rise 6" sat on its own dashed line and "run 2" on the point's label).
+        const [ax, ay, bx, by] = [X(l.a[0]), Y(l.a[1]), X(l.b[0]), Y(l.b[1])], u = norm([-(by - ay), bx - ax])
+        const k = clear(l.label, 17, u), mx = (ax + bx) / 2, my = (ay + by) / 2
+        const spots: Pt[] = [...ticks, ...(p.points ?? []).flatMap((pt, j) => {
+          const at = ptAt(pt, j)
+          return [[X(pt.x), Y(pt.y)], ...(pt.label ? [[at.x + (at.a === 'start' ? 1 : -1) * pt.label.length * 4.7, at.y]] : [])] as Pt[]
+        })]
+        const [x, y] = [1, -1].map(sg => [mx + sg * u[0] * k, my + sg * u[1] * k] as Pt).sort((m, o) => room(o, segsOf(i), spots) - room(m, segsOf(i), spots))[0]
+        return <T key={`ll${i}`} x={x} y={y} s={17} fill={l.tone === 2 ? ACCENT : TEAL}>{l.label}</T>
+      })}
       {p.points?.map((pt, i) => <g key={`p${i}`} style={reveal(i + (p.lines?.length ?? 0), p.motion, 500)}>
         <circle cx={X(pt.x)} cy={Y(pt.y)} r={8} fill={ACCENT} stroke={INK} strokeWidth={2.5} />
-        {pt.label && <T x={X(pt.x) + 12} y={Y(pt.y) - 16} s={17} a="start">{pt.label}</T>}
+        {pt.label && (() => { const at = ptAt(pt, i); return <T x={at.x} y={at.y} s={17} a={at.a}>{pt.label}</T> })()}
       </g>)}
     </Svg>
   )

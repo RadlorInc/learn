@@ -43,6 +43,7 @@ export const G5M4: Lesson[] = [
   {
     id: 'g5m4-t1', title: 'Thousandths', skill: 'Read and write thousandths, and name the value of a digit',
     bigIdea: "The third place after the point is thousandths, so 47 thousandths is 0.047.",
+    hint: "The third place after the point is thousandths. Think how many hundredths and thousandths your number has.",
     screens: [
       { scene: 'g5m4-t1', title: 'A tiny seed', text: 'A seed is so light it weighs 47 thousandths of a gram. How do you write that with a point?',
         pictures: [{ kind: 'eq', text: '47 thousandths of a gram' }] },

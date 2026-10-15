@@ -8,7 +8,7 @@ import { graph, q } from './t1'
 
 type At = [number, string?]
 const { X, Y, axes, dot, seg, stair } = graph(70, 370, 55, 26)
-const grid = (at: At) => axes(at, [1, 2, 3, 4], [2, 4, 6, 8, 10])
+const grid = (at: At) => axes(at, [1, 2, 3, 4], [2, 4, 6, 8, 10], ['miles', 'cost ($)'])
 const taxi = (at: At) => seg(at, [[0, 1], [4.5, 10]])
 const C = 440   // centre of the words column
 /** 'y = 2x + 1' (or any 10-character equation) centred on cx at size s; the x centre of character i. */

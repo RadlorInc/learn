@@ -52,7 +52,9 @@ export type Picture =
   | { kind: 'chart'; type: 'bar' | 'picture' | 'dot' | 'hist'; labels: string[]; /** type 'dot' only: filled dots (a Grade 6+ dot plot) instead of ✕s (a Grade 3–5 line plot). */ dots?: boolean; values: number[]; scale?: number; max?: number; unit?: string; key?: string; xLabel?: string; yLabel?: string; motion?: boolean }
   | { kind: 'plot'; points: [number, number][]; xMax: number; yMax: number; xStep?: number; yStep?: number; fit?: [[number, number], [number, number]]; xLabel?: string; yLabel?: string; motion?: boolean }
   | { kind: 'coord'; min: number; max: number; step?: number; points?: { x: number; y: number; label?: string }[];
-      lines?: { a: [number, number]; b: [number, number]; extend?: boolean; dashed?: boolean; label?: string; tone?: 1 | 2 }[]; motion?: boolean }
+      lines?: { a: [number, number]; b: [number, number]; extend?: boolean; dashed?: boolean; label?: string; tone?: 1 | 2 }[]; motion?: boolean
+      /** What each axis counts, [along the bottom, up the side], written on the graph (tester, g8m2-t3/t4, g8m3-t6). */
+      names?: [string, string] }
   | { kind: 'table'; head?: string[]; rows: string[][]; rowHead?: boolean; mark?: [number, number][]; motion?: boolean }
   | { kind: 'cubes'; l: number; w: number; h: number; layers?: number; motion?: boolean }
   | { kind: 'solid'; shape: 'prism' | 'cylinder' | 'cone' | 'sphere' | 'pyramid'; labels?: { r?: string; h?: string; l?: string; w?: string } }
@@ -124,6 +126,9 @@ export interface Lesson {
   title: string
   skill: string
   bigIdea: string
+  /** What practice's Hint shows, when the big idea quotes the lesson's own example (g5m4-t1: "so 47 thousandths is
+   *  0.047" beside a question about 36 thousandths — tester, 14 Oct 2026). Shown, never spoken. Default: the big idea. */
+  hint?: string
   screens: Screen[]                           // exactly 7
   turn: YourTurn                              // Screen 8
   won: { text: string; sticker: string }      // Screen 9

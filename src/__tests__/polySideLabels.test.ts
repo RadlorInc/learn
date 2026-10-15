@@ -4,6 +4,8 @@
  * shape's centre, which on an L shape's inner corner pushes them onto the shape.
  * Reads what the picture draws (the SVG's <path> and <text>), not the placement code; the label box is a deliberately
  * small estimate of the text (0.4 em a character, 0.6 em tall), written here and not taken from the renderer.
+ * Angle labels too (tester, g8m4-t6, 14 Oct 2026: "25°" on the lines of a thin corner). Watched red on the old renderer
+ * (labels pushed a fixed distance toward the centre): g4m5-t6 and g8m4-t6 pictures failed; green after.
  */
 import { describe, it, expect } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -54,6 +56,25 @@ function crossed(p: Poly): string[] {
   return bad
 }
 
+/** Every angle label whose box a line of its own shape runs through (a "?" twice in one shape: each one is checked). */
+function crossedAngles(p: Poly): string[] {
+  const { outlines, texts } = drawn(p)
+  const bad: string[] = []
+  p.shapes.forEach((sh, si) => {
+    if (!sh.angles) return
+    const edges = outlines[si].map((q, i, all) => [q, all[(i + 1) % all.length]] as [Pt, Pt])
+    for (const lab of new Set(sh.angles.filter((l): l is string => !!l))) {
+      const all = texts.filter(t => t.t === lab)
+      if (!all.length) { bad.push(`${lab}: not drawn`); continue }
+      for (const tx of all) {
+        const hw = lab.length * tx.s * 0.2, hh = tx.s * 0.3
+        if (edges.some(([a, b]) => hits(a, b, tx.x - hw, tx.y - hh, tx.x + hw, tx.y + hh))) bad.push(lab)
+      }
+    }
+  })
+  return bad
+}
+
 describe('poly side labels', () => {
   it('an L shape: every side label, the two inner ones too, is off the lines (written out by hand)', () => {
     // The tester's shape: 8 across, 3 up, then in to 5, up to 8 tall. Inner sides: "3 ft" across and "5 ft" up.
@@ -72,6 +93,18 @@ describe('poly side labels', () => {
     }
     expect(pics.length).toBeGreaterThan(100)
     const bad = pics.map(([where, p]) => [where, crossed(p)] as const).filter(([, b]) => b.length).map(([w, b]) => `${w}: ${b.join(', ')}`)
+    expect(bad).toEqual([])
+  })
+
+  it('every lesson and ladder poly picture keeps its angle labels off its own lines', () => {
+    const pics: [string, Poly][] = []
+    for (const l of MODULES.flatMap(m => m.lessons)) {
+      const all = [...l.screens.flatMap(s => s.pictures), l.turn.picture, l.turn.twin.picture, ...(l.practice ?? []).map(q => q.problem.picture)]
+      all.forEach((p, i) => { if (p?.kind === 'poly' && p.shapes.some(s => s.angles)) pics.push([`${l.id} #${i}`, p]) })
+      LADDERS[l.id]?.forEach((lv, k) => { for (let seed = 1; seed <= 20; seed++) { const p = lv.make(rng(seed)).picture; if (p?.kind === 'poly' && p.shapes.some(s => s.angles)) pics.push([`${l.id} L${k + 1} seed ${seed}`, p]) } })
+    }
+    expect(pics.length).toBeGreaterThan(100)
+    const bad = pics.map(([where, p]) => [where, crossedAngles(p)] as const).filter(([, b]) => b.length).map(([w, b]) => `${w}: ${b.join(', ')}`)
     expect(bad).toEqual([])
   })
 })

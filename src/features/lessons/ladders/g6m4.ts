@@ -329,11 +329,8 @@ const T6: Level[] = [
     return { text: `A ${item} costs $${W}. The sales tax is ${p}%. Which one is true?`, picture: eq(`$${W} + ${p}% tax`), answer: choose(r, right, [`Total: $${W + p}`, `Total: $${W - tax}`]),
       steps: [`${p}% does not mean $${p}. ${p}% of $${W} is $${tax}.`, `Tax is added on top of the price: ${W} + ${tax} = ${W + tax}.`, `So the true one is: ${right}.`] }
   }),
-  lv('work backwards: what is the tax rate', r => {
-    const { p, W, tax, item } = taxed(r)
-    return { text: `A ${item} costs $${W}. With sales tax, the total is $${W + tax}. What percent is the sales tax? ${TYPE_PCT}`, picture: taxTape(`$${W}`, '?%', `Total: $${W + tax}`), answer: p,
-      steps: [`The tax is ${W + tax} − ${W} = $${tax}.`, `1% of $${W} is ${usd(W)}, and $${tax} ÷ ${usd(W)} = ${p}.`, `So the sales tax is ${p}%.`] }
-  }),
+  // The story before working backwards: a tester found finding the rate (dividing by 1% in cents) harder than the
+  // two-item story (g6m4-t6, 8 Oct 2026), so the harder one is the top level.
   lv('two-item story with tax in cents', r => {
     const [name, x, y] = pick(r, [['Nia', 'pair of headphones', 'case'], ['Omar', 'soccer ball', 'pump'], ['Lily', 'paint set', 'sketchbook']] as const)
     const A = int(r, 12, 60), B = int(r, 5, 30), T = A + B, p = int(r, 3, 9), taxC = T * p, totalC = T * 100 + taxC
@@ -341,6 +338,11 @@ const T6: Level[] = [
       picture: { kind: 'tape', rows: [{ cells: [{ w: A, text: `$${A}` }, { w: B, text: `$${B}` }, { w: Math.max(3, Math.round(T / 10)), text: `${p}%`, shade: true }], brace: 'Total: ?' }] },
       answer: dollars(totalC),
       steps: [`The price is $${A} + $${B} = $${T}.`, `1% of $${T} is ${usd(T)}, so ${p}% is ${p} × ${usd(T)} = ${usd(taxC)} of tax.`, `Add it: $${T} + ${usd(taxC)}. So ${name} pays ${usd(totalC)}.`] }
+  }),
+  lv('work backwards: what is the tax rate', r => {
+    const { p, W, tax, item } = taxed(r)
+    return { text: `A ${item} costs $${W}. With sales tax, the total is $${W + tax}. What percent is the sales tax? ${TYPE_PCT}`, picture: taxTape(`$${W}`, '?%', `Total: $${W + tax}`), answer: p,
+      steps: [`The tax is ${W + tax} − ${W} = $${tax}.`, `1% of $${W} is ${usd(W)}, and $${tax} ÷ ${usd(W)} = ${p}.`, `So the sales tax is ${p}%.`] }
   }),
 ]
 

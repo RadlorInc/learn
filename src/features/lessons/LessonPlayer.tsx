@@ -258,6 +258,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
   const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? loadedLesson(run.current.from) ?? null : null
   const bigIdea = from?.bigIdea ?? lesson.bigIdea
+  const hintText = (from ?? lesson).hint ?? bigIdea
   // The answer box's shape is the lesson's, never the problem's (see AnswerInput). A ladder's answers are sampled.
   const sampled = useMemo(() => (ladder ? ladderAnswers(ladder) : []), [ladder])
   const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
@@ -397,7 +398,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
             {box}
           </form>
         )}
-        {s.feedback === 'idea' ? <TryAgain>{bigIdea}</TryAgain> : asked && answering && <p style={idea}>{bigIdea}</p>}
+        {s.feedback === 'idea' ? <TryAgain>{bigIdea}</TryAgain> : asked && answering && <p style={idea}>{hintText}</p>}
         {s.feedback === 'right' && <Cheer k={s.practice} />}
         {worked && <>
           <div style={hint}>
