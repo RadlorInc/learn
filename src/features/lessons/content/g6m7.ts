@@ -7,9 +7,9 @@ import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'
 import { G6M7_CHALK } from './chalk/g6m7'
 
-/** One row of values, with an optional header row. */
-const row = (values: (string | number)[], head?: string[]): Picture =>
-  head ? { kind: 'table', head, rows: [['', ...values.map(String)]], rowHead: true } : { kind: 'table', rows: [values.map(String)] }
+/** One row of values; with a header row, the row is named too (what its numbers count), never left blank. */
+const row = (values: (string | number)[], ...named: [] | [head: string[], label: string]): Picture =>
+  named.length ? { kind: 'table', head: named[0], rows: [[named[1], ...values.map(String)]], rowHead: true } : { kind: 'table', rows: [values.map(String)] }
 
 const TOWERS: Picture = { kind: 'chart', type: 'bar', labels: ['A', 'B', 'C', 'D'], values: [2, 6, 3, 5], max: 6, yLabel: 'Cubes' }
 const EVEN: Picture = { kind: 'chart', type: 'bar', labels: ['A', 'B', 'C', 'D'], values: [4, 4, 4, 4], max: 6, yLabel: 'Cubes' }
@@ -89,7 +89,7 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: 'Four towers have 3, 7, 4 and 6 cubes. If the cubes are shared fairly, how many cubes are in each tower?',
-      picture: row([3, 7, 4, 6], ['Tower', 'A', 'B', 'C', 'D']),
+      picture: row([3, 7, 4, 6], ['Tower', 'A', 'B', 'C', 'D'], 'Cubes'),
       answer: 5,
       steps: ['Put all the cubes together: 3 + 7 + 4 + 6 = 20.', 'There are 4 towers, so share 20 into 4 equal towers.', '20 ÷ 4 = 5. So each tower has 5 cubes.'],
       prompt: 'Add all the cubes. Then share the total into equal towers.',
@@ -97,7 +97,7 @@ export const G6M7: Lesson[] = [
       hint2: 'The total is 20. Now share it into 4 equal towers.',
       twin: {
         text: 'Five towers have 2, 8, 4, 9 and 7 cubes. If the cubes are shared fairly, how many cubes are in each tower?',
-        picture: row([2, 8, 4, 9, 7], ['Tower', 'A', 'B', 'C', 'D', 'E']),
+        picture: row([2, 8, 4, 9, 7], ['Tower', 'A', 'B', 'C', 'D', 'E'], 'Cubes'),
         answer: 6,
         steps: ['Put all the cubes together: 2 + 8 + 4 + 9 + 7 = 30.', 'There are 5 towers, so share 30 into 5 equal towers.', '30 ÷ 5 = 6. So each tower has 6 cubes.'],
         hint1: 'First add up the cubes in all five towers.',
@@ -109,11 +109,11 @@ export const G6M7: Lesson[] = [
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'Four towers have 1, 5, 2 and 8 cubes. Shared fairly, how many cubes are in each tower?',
-        picture: row([1, 5, 2, 8], ['Tower', 'A', 'B', 'C', 'D']),
+        picture: row([1, 5, 2, 8], ['Tower', 'A', 'B', 'C', 'D'], 'Cubes'),
         answer: 4, steps: ['1 + 5 + 2 + 8 = 16.', 'There are 4 towers.', '16 ÷ 4 = 4. So each tower has 4 cubes.'] } },
       { why: 'Same idea, new numbers', problem: {
         text: 'Three jars hold 7, 12 and 11 marbles. Shared fairly, how many marbles are in each jar?',
-        picture: row([7, 12, 11], ['Jar', 'A', 'B', 'C']),
+        picture: row([7, 12, 11], ['Jar', 'A', 'B', 'C'], 'Marbles'),
         answer: 10, steps: ['7 + 12 + 11 = 30.', 'There are 3 jars, so share 30 into 3.', '30 ÷ 3 = 10. So each jar has 10 marbles.'] } },
       { why: 'Still "total ÷ how many"', problem: {
         text: 'Six friends scored 4, 9, 6, 3, 8 and 9 points. What is the mean score?',
@@ -121,11 +121,11 @@ export const G6M7: Lesson[] = [
         answer: 6.5, steps: ['4 + 9 + 6 + 3 + 8 + 9 = 39.', 'There are 6 scores, so divide by 6.', '39 ÷ 6 = 6.5. So the mean is 6.5 points.'] } },
       { why: 'A little harder', problem: {
         text: 'Kai got 82, 90, 76, 88 and 94 on five tests. What is his mean score?',
-        picture: row([82, 90, 76, 88, 94], ['Test', '1', '2', '3', '4', '5']),
+        picture: row([82, 90, 76, 88, 94], ['Test', '1', '2', '3', '4', '5'], 'Score'),
         answer: 86, steps: ['82 + 90 + 76 + 88 + 94 = 430.', 'There are 5 tests, so divide by 5.', '430 ÷ 5 = 86. So the mean is 86.'] } },
       { why: 'Same math in a story', problem: {
         text: 'Mia ran 2.5, 4, 1.5 and 3 miles on four days. What is the mean distance she ran each day?',
-        picture: row([2.5, 4, 1.5, 3], ['Day', 'Mon', 'Tue', 'Wed', 'Thu']),
+        picture: row([2.5, 4, 1.5, 3], ['Day', 'Mon', 'Tue', 'Wed', 'Thu'], 'Miles'),
         answer: 2.75, steps: ['2.5 + 4 + 1.5 + 3 = 11 miles in all.', 'She ran on 4 days, so divide by 4.', '11 ÷ 4 = 2.75. So she ran a mean of 2.75 miles a day.'] } },
     ],
   },
@@ -136,19 +136,19 @@ export const G6M7: Lesson[] = [
     bigIdea: "Put the numbers in order, and the one in the very middle splits them in half.",
     screens: [
       { title: 'Five seedlings', text: 'Five seedlings are 7, 3, 9, 4 and 6 inches tall. Which height is right in the middle?',
-        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'])] },
+        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches')] },
       { title: "The middle spot is not the middle", text: "The middle spot of this list holds 9. But 9 is the tallest seedling. Can the tallest be the middle? No. This list is jumbled.",
         beats: [
           { say: "The middle spot of this list holds 9.", pic: 0 },
           { say: "But 9 is the tallest seedling. Can the tallest be the middle? No." },
           { say: "This list is jumbled." },
         ],
-        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'])] },
+        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches')] },
       { title: "The big idea", text: "Put the numbers in order, and the one in the very middle splits them in half.",
         beats: [
           { say: "Put the numbers in order, and the one in the very middle splits them in half.", pic: 0 },
         ],
-        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'])] },
+        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches')] },
       { title: "Line them up", text: "So the first job, every time, is to sort them. Smallest to biggest, that's 3, 4, 6, 7, 9.",
         beats: [
           { say: "So the first job, every time, is to sort them." },
@@ -181,7 +181,7 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: 'Five seedlings are 8, 2, 5, 9 and 4 inches tall. What is the middle height?',
-      picture: row([8, 2, 5, 9, 4], ['Seedling', 'A', 'B', 'C', 'D', 'E']),
+      picture: row([8, 2, 5, 9, 4], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches'),
       answer: 5,
       steps: ['Sort the heights: 2, 4, 5, 8, 9.', 'Cross off 2 and 9, then 4 and 8.', 'The one left is 5. So the middle height is 5 inches.'],
       prompt: 'Sort the heights first. Then find the one in the middle.',
@@ -360,7 +360,7 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: 'Leo scored 6, 13, 8, 17 and 10 points in five games. What is the biggest score minus the smallest score?',
-      picture: row([6, 13, 8, 17, 10], ['Game', '1', '2', '3', '4', '5']),
+      picture: row([6, 13, 8, 17, 10], ['Game', '1', '2', '3', '4', '5'], 'Points'),
       answer: 11,
       steps: ['The smallest score is 6.', 'The biggest score is 17.', '17 − 6 = 11. So the spread is 11 points.'],
       prompt: 'Find the smallest and the biggest. Then subtract.',

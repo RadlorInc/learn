@@ -3,6 +3,9 @@
  * WHAT SHE SAYS, piece by piece, each piece at the word that names it. A screen's `chalk` is a list of marks; each
  * mark belongs to one beat and goes up when that beat reaches its `at` word. Marks of one beat go up one after
  * another (a mark never starts before the one above it in the list has finished), so a list reads as a hand at work.
+ * ⚠️ So a mark listed above one with an EARLIER word holds that one back to its own word: g6m7-t5 Screen 4's ring at
+ *  "person" (the line's last word) held the jump at "jumps" to the end of the line (a tester, 11 Oct 2026). On 12 Oct a
+ *  scan of every lesson found 209 such pairs; many are a deliberate drawing order, none was checked one by one.
  *
  * The board is always 600 × 400. Pure data and timing here; drawing is ./Chalkboard.tsx.
  */

@@ -25,8 +25,9 @@ const distinctInts = (r: Rng, k: number, lo: number, hi: number) => shuffle(r, A
 const choose = (r: Rng, right: string, wrong: string[]) => { const choices = shuffle(r, [right, ...wrong]); return { choices, correct: choices.indexOf(right) } }
 
 const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lines })
-const row = (values: (string | number)[], head?: string[]): Picture =>
-  head ? { kind: 'table', head, rows: [['', ...values.map(String)]], rowHead: true } : { kind: 'table', rows: [values.map(String)] }
+/** One row of values; with a header row, the row is named too (what its numbers count), never left blank. */
+const row = (values: (string | number)[], ...named: [] | [head: string[], label: string]): Picture =>
+  named.length ? { kind: 'table', head: named[0], rows: [[named[1], ...values.map(String)]], rowHead: true } : { kind: 'table', rows: [values.map(String)] }
 const dotsOn = (max: number, ticks: number, pts: number[]): Picture => ({ kind: 'numline', min: 0, max, ticks, points: pts.map(at => ({ at })) })
 
 // ── The reveal guard (mirrors the gate's reader) ─────────────────────────────────────────────────────────────────
@@ -98,7 +99,7 @@ const T1: Level[] = [
       const known = Array.from({ length: n - 1 }, () => m + int(r, -6, 6)), s = sum(known), x = m * n - s
       if (x < 1 || x > 30 || Math.abs(x - m) > 12) continue
       return { text: `The mean of ${n} quiz scores is ${m}. ${n - 1} of the scores are ${and(known)}. What is the missing score?`,
-        picture: row([...known, '?'], ['Quiz', ...Array.from({ length: n }, (_, i) => String(i + 1))]), answer: x,
+        picture: row([...known, '?'], ['Quiz', ...Array.from({ length: n }, (_, i) => String(i + 1))], 'Score'), answer: x,
         steps: [`The mean is ${m} and there are ${n} scores, so they must add to ${m} × ${n} = ${m * n}.`, `The ${n - 1} scores you know add to ${plus(known)} = ${s}.`, `${m * n} − ${s} = ${x}. So the missing score is ${x}.`] }
     }
   }),
@@ -280,7 +281,7 @@ const T4: Level[] = [
       const at = int(r, 0, 4), shown: (number | string)[] = [...known]
       shown.splice(at, 0, '?')
       return { text: `The range of these 5 scores is ${R}. The missing score is the ${big ? 'biggest' : 'smallest'} one. What is it?`,
-        picture: row(shown, ['Game', '1', '2', '3', '4', '5']), answer: x,
+        picture: row(shown, ['Game', '1', '2', '3', '4', '5'], 'Score'), answer: x,
         steps: big
           ? [`The smallest score you can see is ${mn}.`, `The biggest must be ${R} more than the smallest.`, `${mn} + ${R} = ${x}. So the missing score is ${x}.`]
           : [`The biggest score you can see is ${mx}.`, `The smallest must be ${R} less than the biggest.`, `${mx} − ${R} = ${x}. So the missing score is ${x}.`] }
