@@ -204,7 +204,8 @@ export const G7M5: Lesson[] = [
           { say: "12 is out of the 40 you asked. Scale it up to 600, and you get 180." },
           { say: "Okay. Your turn." },
         ],
-        pictures: [{ kind: 'cards', wrong: '600 kids: 12 like pizza', right: '600 kids: 180 like pizza' }] },
+        // The fraction is out of the 40 asked, never out of the 600 (a tester, g7m5-t2, 16 Oct).
+        pictures: [{ kind: 'cards', wrong: '12/600 like pizza', right: '12/40 of 600 = 180' }] },
     ],
     turn: {
       text: 'You ask 40 students, picked by chance. 10 of them walk to school. Predict how many of all 600 students walk to school.',
