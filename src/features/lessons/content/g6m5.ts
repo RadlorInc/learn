@@ -440,7 +440,8 @@ export const G6M5: Lesson[] = [
     bigIdea: 'The number outside the parentheses multiplies every part inside, so 3(x + 2) is the same amount as 3x + 6.',
     screens: [
       { title: 'Three gift bags', text: 'Each gift bag holds x pens and 2 erasers. You pack 3 bags. How can you write how many things you packed?',
-        pictures: [bags('3', '2')] },
+        // The three bags, one row each, as the boards draw them: one "3" beside a block read as an area (tester feedback).
+        pictures: [{ kind: 'tape', rows: [1, 2, 3].map(n => ({ label: `Bag ${n}`, cells: [{ w: 3, text: 'x' }, { w: 1, text: '2' }] })) }] },
       { title: 'x and 2 do not join', text: "One bag holds x pens and 2 erasers. That's x + 2. You don't know x, so x and 2 can't join into one number. So how do you write three bags?",
         beats: [
           { say: "One bag holds x pens and 2 erasers. That's x + 2.", pic: 0 },
