@@ -20,8 +20,8 @@ import { C } from '@/features/lessons/sessionCopy'
  */
 /**
  * `take`: the sitting ended after this many questions with the run NOT finished (KG–2, 5 a take — StoryWorld's
- * CHAPTER_TAKE). Then the card is the lessons' break screen, word for word: a celebration, the spot is saved, one way
- * out — no Play again and no Keep going (founder, 2026-09-25).
+ * CHAPTER_TAKE). Then the card is a win: "You did it!", how many were solved, getting stronger — never "saved" or
+ * "unfinished" (founder, 2026-10-12) — and one way out, no Play again and no Keep going (founder, 2026-09-25).
  */
 export default function ChapterDone({ open, take, childName, onPlayAgain, onExit, exitLabel = 'Back to modules' }: {
   open: boolean
@@ -58,10 +58,10 @@ export default function ChapterDone({ open, take, childName, onPlayAgain, onExit
         margin: 'auto', boxShadow: '0 8px 0 var(--outline)',
       }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--t-h1)', color: 'var(--ink)', margin: '0 0 4px' }}>
-          {take ? C.breakTitle(take) : '🎉 All done!'}
+          {take ? C.breakTitle : '🎉 All done!'}
         </h2>
         <p style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--t-body-lg)', color: 'var(--ink-soft)', margin: '0 0 20px' }}>
-          {take ? C.spotSaved : 'Nice work — that one is finished.'}
+          {take ? C.solvedStronger(take) : 'Nice work — that one is finished.'}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {!take && <button onClick={onPlayAgain} style={btn('#0B4FA8', '#fff')}>▶ Play again</button>}
@@ -80,5 +80,5 @@ const btn = (background: string, color: string) => ({
 
 /** What the card says aloud. Exported so a question can hold its clip before the child answers (StoryWorld). */
 export function doneLine(take?: number, childName?: string): string {
-  return take ? `${C.breakTitle(take).replace(' ⭐', '')} ${C.spotSaved}` : childName ? `All done, ${childName}! Nice work.` : 'All done! Nice work.'
+  return take ? `${C.breakTitle.replace(' ⭐', '')} ${C.solvedStronger(take)}` : childName ? `All done, ${childName}! Nice work.` : 'All done! Nice work.'
 }

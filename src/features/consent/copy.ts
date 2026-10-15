@@ -28,7 +28,7 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v7'
+export const NOTICE_VERSION = 'notice-v8'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
@@ -112,7 +112,7 @@ export const NOTICE = {
   details: { en: 'Our Privacy Policy at https://radlic.com/legal/privacy has the complete picture, including how to reach us.',
              es: 'Nuestra Política de privacidad en https://radlic.com/legal/privacy (en inglés) ofrece la información completa, incluida la forma de contactarnos.' },
   contactHeading: { en: 'Contact us', es: 'Contáctenos' },
-  contact: ['Radlor Inc.', '254 Chapman Rd, Ste 208 #28608, Newark, DE 19702', 'support@radlor.com'],
+  contact: ['Radlor Inc.', '254 Chapman Rd, Ste 208 #28608, Newark, DE 19702', 'support@radlor.com', '1-888-812-9373'],
   primary:   { en: "I'm the parent or legal guardian — continue", es: 'Soy el padre, la madre o el tutor legal — continuar' },
   secondary: { en: 'Read the full Privacy Policy', es: 'Leer la Política de privacidad completa (en inglés)' },
   tertiary:  { en: 'Not now', es: 'Ahora no' },

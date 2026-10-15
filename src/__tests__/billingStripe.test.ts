@@ -595,7 +595,7 @@ describe('the Stripe webhook sends the acknowledgement and the annual renewal re
     expect(body.text).toContain('Plan: Radlic Family, for 2 children.')
     expect(body.text).toContain('Charged today: $12.98.')
     expect(body.text).toContain('Renews: automatically, every month, next on February 1, 2026. Renewal amount: $12.98 (we do not charge sales tax).')
-    expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, or email support@radlor.com')
+    expect(body.text).toContain('Account → Plan & billing → See plans → Cancel subscription, email support@radlor.com or call 1-888-812-9373')
     expect(body.text).toContain('https://radlic.com/legal/refunds')
     expect(body.text).not.toContain('permission')   // consent is the email-plus flow, not checkout
     expect(mails[0].headers['Idempotency-Key']).toBe('billing-ack-sub_123')
@@ -620,7 +620,7 @@ describe('the Stripe webhook sends the acknowledgement and the annual renewal re
     expect(body.subject).toBe('Your Radlic annual subscription renews soon')
     expect(body.text).toContain('Your Radlic annual subscription for 2 children renews automatically on February 1, 2026.')
     expect(body.text).toContain('You will be charged $123.99 for the next 12 months.')
-    expect(body.text).toContain('Cancel subscription, or email support@radlor.com')
+    expect(body.text).toContain('Cancel subscription, email support@radlor.com or call 1-888-812-9373')
     // One reminder per renewal: the key carries the period, so next year's is a new message.
     expect(mails[0].headers['Idempotency-Key']).toBe('billing-renewal-sub_123-2026-02-01T00:00:00.000Z')
   })
@@ -1018,17 +1018,26 @@ const session_has_trial = (calls: Call[]) =>
 // ─────────────────────────────────────────────────────────────────────────────
 //  5. THE ONE THING A DRIVEN TEST CANNOT SEE: that the refusal still exists.
 // ─────────────────────────────────────────────────────────────────────────────
-describe('test mode is enforced in code, not in discipline', () => {
+describe('the key mode is pinned to the deployment, in code', () => {
   beforeEach(() => { __resetStripe() })
   afterEach(() => { process.env = { ...ENV }; __resetStripe() })
 
-  it('C9 — a LIVE secret key is refused outright', () => {
-    // ⚠️ DRIVEN, not a grep for the prefix. This is the whole of the founder's hard constraint for
-    // Stage 2: nothing in this stage may be able to take a real card. B12 (no backup of the
-    // children's data) is open, and `billing_config.enforced` gates ACCESS, not PAYMENT — so it is
-    // not a safety net here and must not be sold as one.
+  it('C9 — a LIVE secret key is refused everywhere but Vercel Production', () => {
+    // ⚠️ DRIVEN, not a grep for the prefix. A live key on a preview, staging or a laptop would charge
+    // a real card from code nobody reviewed for production.
     process.env.STRIPE_SECRET_KEY = 'sk_live_realmoney'
-    expect(() => stripeClient()).toThrow(/test mode only/i)
+    delete process.env.VERCEL_ENV
+    expect(() => stripeClient()).toThrow(/sk_test_/)
+    process.env.VERCEL_ENV = 'preview'
+    expect(() => stripeClient()).toThrow(/sk_test_/)
+  })
+
+  it('C9b — Production takes ONLY a live key: a test key there sells access for test cards', () => {
+    process.env.VERCEL_ENV = 'production'
+    process.env.STRIPE_SECRET_KEY = 'sk_test_free'
+    expect(() => stripeClient()).toThrow(/sk_live_/)
+    process.env.STRIPE_SECRET_KEY = 'sk_live_ok'
+    expect(stripeClient()).toBeTruthy()
   })
 
   it('a test key is accepted, and no key at all is a quiet null', () => {

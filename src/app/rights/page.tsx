@@ -22,7 +22,7 @@ import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 import { usePaidSeats } from '@/features/billing/SeatsFull'
 import { PROPOSED } from '@/features/consent/copy'
 import { LangContext, makeT, useSavedLang } from '@/features/dashboard/i18n'
-import { SUPPORT_EMAIL } from '@/app/site'
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import type { Learner, Session } from '@/data/supabase/types'
 
 type State = { stage: 'loading' | 'error' } | { stage: 'open'; teacher: boolean; kids: { learner: Learner; sessions: Session[] }[] }
@@ -65,6 +65,8 @@ export default function RightsPage() {
               <Link href="/help" style={a}>{t('Open the help page')}</Link>
               {' · '}
               <a href={`mailto:${SUPPORT_EMAIL}`} style={a}>{SUPPORT_EMAIL}</a>
+              {' · '}
+              <a href={`tel:${SUPPORT_TEL}`} style={a}>{SUPPORT_PHONE}</a>
             </p>
           </section>
 

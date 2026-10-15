@@ -24,6 +24,13 @@
     <canvas id="mapview" class="hidden" width="128" height="128"></canvas>
     <div id="compass" class="hidden"><div id="needle"></div></div>
     <div id="effectsHud"></div>
+    <!-- the keys while playing, on a computer; H hides and shows them -->
+    <div id="keys" class="hidden">
+      <b>Move</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · <b>Jump</b> <kbd>Space</kbd> · <b>Sprint</b> <kbd>Ctrl</kbd> · <b>Sneak</b> <kbd>Shift</kbd><br>
+      <b>Break</b> hold left mouse · <b>Place / use</b> right mouse · <b>Pick block</b> middle mouse<br>
+      <b>Items</b> <kbd>1</kbd>–<kbd>9</kbd> or scroll · <b>Inventory</b> <kbd>E</kbd> · <b>Drop</b> <kbd>Q</kbd> · <b>Fly</b> <kbd>Space</kbd><kbd>Space</kbd> · <b>Pause</b> <kbd>Esc</kbd><br>
+      <small><kbd>H</kbd> hide these keys</small>
+    </div>
   </div>
 
   <div id="touch" class="hidden">
@@ -61,6 +68,12 @@
 
   <div id="pause" class="screen menu hidden">
     <h2>Game paused</h2>
+    <p class="keyslist">
+      <b>Move</b> <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · <b>Jump</b> <kbd>Space</kbd> · <b>Sprint</b> <kbd>Ctrl</kbd> · <b>Sneak</b> <kbd>Shift</kbd><br>
+      <b>Break</b> hold left mouse · <b>Place / use</b> right mouse · <b>Pick block</b> middle mouse<br>
+      <b>Items</b> <kbd>1</kbd>–<kbd>9</kbd> or scroll · <b>Inventory</b> <kbd>E</kbd> · <b>Drop</b> <kbd>Q</kbd> · <b>Fly</b> <kbd>Space</kbd><kbd>Space</kbd> · <b>Pause</b> <kbd>Esc</kbd><br>
+      <b>Show / hide the keys while playing</b> <kbd>H</kbd>
+    </p>
     <button id="bResume">Back to game</button>
     <label class="slider">Render distance <input id="rd" type="range" min="2" max="12" /> <span id="rdv"></span></label>
     <label class="slider">Field of view <input id="fov" type="range" min="50" max="110" /> <span id="fovv"></span></label>

@@ -154,6 +154,9 @@ describe('the consent copy is the documents, verbatim', () => {
       // v7, 2026-09-28 (KG–2 live, #305): the grade band row names Kindergarten and Grades 1–2, stored as the age
       // ranges 3–5 and 6–8. Registered with reconsent_required = true (20260928100000): every parent is asked again.
       'notice-v7': '2d4b510f469a',
+      // v8, 2026-10-14: "Contact us" adds the toll-free line 1-888-812-9373. Registered with reconsent_required = false
+      // (20261014120000): notice-v7 consents stay current.
+      'notice-v8': '9097aa087874',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()

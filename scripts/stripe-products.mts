@@ -1,12 +1,14 @@
 /**
- * Create (or verify) the Stripe product and its two graduated prices. **TEST MODE ONLY.**
+ * Create (or verify) the Stripe product and its two graduated prices.
  *
- *   npx tsx scripts/stripe-products.mts [--dry]
+ *   npx tsx scripts/stripe-products.mts [--dry]            # test mode: sk_test_ from env or .env.local
+ *   read -rs STRIPE_SECRET_KEY && export STRIPE_SECRET_KEY && npx tsx scripts/stripe-products.mts --live [--dry]
  *
- * Reads STRIPE_SECRET_KEY from the environment or .env.local (gitignored), so the key never goes on
- * a command line or into shell history. `stripeClient()` REFUSES a live key — that refusal is the
- * whole of Stage 2's hard constraint and it is deliberately the same one the routes use, so there
- * is a single definition of "test mode" rather than a copy here that can drift.
+ * The key never goes on a command line or into shell history. `stripeClient()` decides which key is
+ * allowed — the same check the routes use, so "test" and "live" are defined once. `--live` is the
+ * one deliberate way to make the live product from a laptop: it asks for Production's mode (`sk_live_`
+ * only) and reads the key from the environment ONLY, never .env.local, so a live key is never left in
+ * a file.
  *
  * IDEMPOTENT: a fixed product id and a `lookup_key` per price mean re-running finds what exists
  * instead of creating a second one. ⚠️ And it VERIFIES what it finds rather than assuming it — a
@@ -25,20 +27,25 @@ import { stripeClient } from '../src/infra/stripe.ts'
 import { CURRENCY, LADDER, graduatedTiers, type Cadence } from '../src/core/billing.ts'
 
 const DRY = process.argv.includes('--dry')
+const LIVE = process.argv.includes('--live')
+if (LIVE) process.env.VERCEL_ENV = 'production'   // stripeClient() then accepts sk_live_ and nothing else
 
-/** Env first, then .env.local — the same shape scripts/voice-generate.mts uses. */
-if (!process.env.STRIPE_SECRET_KEY) {
+/** Env first, then .env.local (test mode only) — the same shape scripts/voice-generate.mts uses. */
+if (!process.env.STRIPE_SECRET_KEY && !LIVE) {
   try {
     const m = readFileSync('.env.local', 'utf8').match(/^STRIPE_SECRET_KEY\s*=\s*(.+)$/m)
     if (m) process.env.STRIPE_SECRET_KEY = m[1].trim().replace(/^["']|["']$/g, '')
   } catch { /* no .env.local — the check below reports it */ }
 }
 
-const stripe = stripeClient()          // throws on a live key; null when none is set
+const stripe = stripeClient()          // throws when the key's mode is not the one asked for; null when none is set
 if (!stripe) {
-  console.error('STRIPE_SECRET_KEY is not set (env or .env.local). It must be an sk_test_ key.')
+  console.error(LIVE
+    ? 'STRIPE_SECRET_KEY is not set. With --live it is read from the environment only (read -rs, see the header).'
+    : 'STRIPE_SECRET_KEY is not set (env or .env.local). It must be an sk_test_ key.')
   process.exit(1)
 }
+console.log(LIVE ? '⚠️  LIVE MODE — real product and prices\n' : 'test mode\n')
 
 const PRODUCT_ID = 'milo_family'
 const PRODUCT_NAME = 'Radlic — family plan'
@@ -148,7 +155,7 @@ for (const c of ['monthly', 'annual'] as Cadence[]) {
   console.log(`  ${c.padEnd(7)} seat 1 ${usd(t[0].unit_amount)} · each further seat ${usd(t[1].unit_amount)}`)
 }
 if (monthly && annual) {
-  console.log('\nput these in the environment (Vercel + .env.local):')
+  console.log(LIVE ? '\nput these in Vercel → Production only:' : '\nput these in the environment (Vercel previews + .env.local):')
   console.log(`  STRIPE_PRICE_MONTHLY=${monthly}`)
   console.log(`  STRIPE_PRICE_ANNUAL=${annual}`)
 }

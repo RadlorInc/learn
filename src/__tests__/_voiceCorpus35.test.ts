@@ -26,7 +26,7 @@ import { it, vi, expect } from 'vitest'
 import { writeFileSync } from 'node:fs'
 import { PRAISE } from '@/core/praise'
 import { ENCOURAGEMENT } from '@/shared/hooks/useAdaptive'
-import { C } from '@/features/lessons/sessionCopy'
+import { doneLine } from '@/shared/ui/ChapterDone'
 import { CHAPTER_TAKE } from '@/features/chapters/story/take'
 import { CAST, HABITATS } from '@/features/chapters/story/critters'
 import { STORYTELLINGS, COUNTING_WORLDS } from '@/features/chapters/story/biomes'
@@ -58,7 +58,7 @@ export async function build35(c: Corpus) {
   add('counting', 'scored', ...range(0, 20).map(String))
   add('counting', 'teach', 'All done! Nice work.')      // ChapterDone, every chapter's end card
   // ChapterDone's end-of-take card (KG–2: 5 questions a sitting) — the same string ChapterDone builds.
-  add('counting', 'teach', `${C.breakTitle(CHAPTER_TAKE).replace(' ⭐', '')} ${C.spotSaved}`)
+  add('counting', 'teach', doneLine(CHAPTER_TAKE))
 
   // ── counting ────────────────────────────────────────────────────────────────
   for (const story of STORYTELLINGS) {
