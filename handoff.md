@@ -6,45 +6,42 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (11 October 2026)
+## Where things stand (15 October 2026)
 
-- **Production** is on `539bfc20e` (#422, 11 Oct); `smoke:live` passed on it except its known stale service-worker
-  check (expects v242; live and repo are v252 — agent work below). The repo `learn` is public again (see
-  the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
-  billing is off.
+- **Production** is on `cba25c698` (#439, 15 Oct). The repo `learn` is public again (see the Vercel item below). A
+  private beta with families the founder knows has run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
-  KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
-  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy game time
-  on `/play`; six legal pages as beta versions; nightly backups green.
-- **Games on `/play`** (one paid time; the child picks, and can switch while it lasts): BlockCraft (#352, 1 Oct;
-  migrations proved; save on the account; not yet played signed in by a real child on production) and BeatHop (#422,
-  11 Oct; a one-button runner, 10 levels, `beathop/` copied to `public/beathop`; save on the device only). Branches:
-  `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
+  KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket (P5 read 15 Oct:
+  18606 objects); email-plus consent on notice-v8 with the database gate; parent and teacher dashboards (teacher
+  rosters paused); points buy game time on `/play` (BlockCraft, BeatHop, Peak Rider, Rescue Rush — #424, merged
+  12 Oct; not yet played at real speed or on a tablet); six legal pages as beta versions; nightly backups green.
+- Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship as is); local `learner-grade` has
   its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
-- **Draft PR #424 (`game-racer`): Peak Rider + Rescue Rush on `/play`, keys shown in every game.** Peak (`peak/`):
-  open 3D world, no road (arrow, map, light columns), missions — chests, beacons, deliveries; 2 worlds. Rush (`rush/`):
-  rescue calls through traffic, auto-speed, a siren; 8 calls. Inspired by Crash Drive 2 / Traffic Racer, nothing
-  copied; drawn in code, shared vendored three.js. `node peak/check.mjs` 22/22, `node rush/check.mjs` 24/24 (not in CI).
-  Preview tested 11 Oct in the founder's Chrome: all 4 games open, keys show, no errors, files = the commit. Not yet:
-  real-speed play, a tablet. Also on #424: BeatHop pad traps fixed (gate in `beathop/check.mjs`); the end time comes
-  from the database (`/api/game-time`), not the URL — locally seen only on "no answer → back to /play", so the founder
-  plays one signed-in game on the preview to time's up. Next: more Peak worlds.
-  `PK.auto(fn)` / `RR.auto(fn)` drive the games on localhost (screenshots: headed Chromium off screen).
 - The pre-rewrite handoff and old-doc extracts are outside the repo on the founder's machine (owner-only).
+
+## Paid testers' notes (the loop, 15 Oct)
+
+Testers review every screen through `/test` (links and reviews live in Radlor Ops, the separate ops app; its own
+`review.radlic_tester_reviews` table, not this database). The founder keeps a Corrections Tracker outside the repo.
+Every note with "Something is wrong" up to 15 Oct (125) is fixed or decided: #421, #426, #423, #436, #437 (#416 and
+#435 inside it), #438, #439. How a batch goes:
+- **Split by kind.** Code-only fixes (pictures, hints, answer boxes) ship on their own. Anything that changes a spoken
+  line, or a line misread, waits for ONE voice batch built on top of the last voice branch (conflicts are only ever in
+  the generated corpus, manifest and voice-index files; merge them key by key, then rebuild the corpus).
+- **Render:** `python3 scripts/kaggle-josh-notebook.py redo <branch> <keys.txt>`; it always clones the branch fresh and
+  prints the commit (a reused clone rendered old text, 15 Oct). Check every clip with `scripts/audio/check-numbers.py`
+  AND read the transcripts: it reads line and audio the same way, so "one hundred and one thousand" (heard as
+  101,000) passed it. Words the model gets wrong are fixed with a `say` row, never by retrying: a lone "A" → "Ay",
+  "x" after a digit → "ex", a pair → "3 comma 5", lists of sizes repeat (put the last size last).
+- **Ship:** clip folder matched to the branch's manifest by SHA-256, `build-manifest.mjs`, word times, an orphan tag of
+  only the new mp3s, P5 pre-registered in `audio-bucket-proof.sql`, then `upload-audio.yml` dry run → upload (the
+  founder approves `production-db` and revokes the keys), P5, merge.
 
 ## Open — Draft PRs waiting for the founder
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
-1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
-3. #386 — scale pictures show what they weigh, halal examples only (gate `halalExamples.test.ts`), 142 new clips.
-   The upload ran (run 37453122387: 142 uploaded, all 16,985 manifest objects present). Founder: revoke the S3 key and
-   both `production-db` secrets, run `docs/legal/sql/audio-bucket-proof.sql` (P5 expects 18026 | 274803288), merge;
-   agent: `npm run smoke:live` after the deploy.
-2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
-   #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
-3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
-   the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
+1. Enrol two authenticators at `/admin/mfa` (#324 is live), then #325 as built (migration; its SQL is in the PR).
 
 ## Open — the founder decides
 
@@ -103,6 +100,7 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
 ## Open — live checks on production (the founder)
 
 Consent and sign-up checks are in READINESS. The step lists below are in git history; `git show <path>` prints them.
+- Batch C (#439) in the real player: Screen 9 speaks its line then the sticker; g6m1-t2 L5 Hint; a stressed word bold.
 - Deep-review fixes #235, #239, #242, #251, #262, #268, #269, #275, #246 — steps in
   `fbf193280:docs/review/ROUND2.md` §3. Then read the first deletion-log rows and the prune check with
   `docs/review/sql/fix-FND-15-proof.sql` and `docs/review/sql/fix-BUG-09-proof.sql`. Once both have run, delete
@@ -118,6 +116,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 
 ## Open — agent work
 
+- Testers: ask what g5m2-t1 Screen 2 "Confusion" meant; close the KG–2 "Chapter testing" notes in Ops (3 open, 9 to
+  re-check by playing); triage notes newer than 15 Oct the same way (see the loop above).
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
