@@ -3,8 +3,10 @@
  * distance on a grid. Practice ladders, easiest style first (see ../adaptive.ts and the reference ladders ./g5m1.ts, ./g7m4.ts).
  * ⚠️ Every level runs through `lv`, which re-rolls a problem whose picture prints its own answer (a label equal to it, or
  * the right choice's text) or whose choices repeat. Axis tick numbers (size 13) are a scale, not a label, and are skipped.
- * ⚠️ A "?" element is never drawn at its answer's size: a missing side, leg or angle is drawn off by a neutral factor
- * (`OFF`, or a few degrees), so the picture cannot be measured for the answer while the known parts stay roughly to scale.
+ * ⚠️ A "?" element is never drawn at its answer's size: a missing leg or angle is drawn off by a neutral factor or a few
+ * degrees, so the picture cannot be measured for the answer while the known parts stay roughly to scale. EXCEPT similar
+ * triangles (t5): they are drawn with the same angles, because the shape is the lesson — a "?" side drawn off gave the
+ * pair different angles (tester, 14 Oct 2026; the founder's call, 15 Oct). The labels carry the numbers.
  * On a coordinate grid the positions ARE the question (read a move, count a leg), exactly as in the lessons.
  * The picture helpers are copies of the ones in ../content/g8m4.ts, so a question draws the way its lesson does.
  */
@@ -303,8 +305,6 @@ const T4: Level[] = [
 // ── t5 · Similar triangles ──────────────────────────────────────────────────────────────────────────────────
 const UNITS = [{ u: 'cm', w: 'cm' }, { u: 'in', w: 'inches' }, { u: 'ft', w: 'feet' }, { u: 'm', w: 'meters' }] as const
 const SMALL = [[4, 3, 2], [5, 4, 2], [6, 5, 3], [7, 6, 3], [8, 6, 4], [6, 4, 3], [5, 4, 3], [7, 5, 4], [9, 7, 4], [8, 7, 5], [6, 5, 4]]
-/** "Off" factors for a "?" side: far enough from its real length that the drawing cannot be measured for the answer. */
-const OFF = [0.72, 1.3]
 const r3 = (v: number) => Math.round(v * 1000) / 1000
 /** Corners of a triangle with sides [bottom, right, left]; null if the sides cannot close. */
 function corners(s: number[]): Pt[] | null {
@@ -312,12 +312,6 @@ function corners(s: number[]): Pt[] | null {
   if (a >= b + c || b >= a + c || c >= a + b) return null
   const x = (a * a + c * c - b * b) / (2 * a)
   return [[0, 0], [a, 0], [r3(x), r3(Math.sqrt(c * c - x * x))]]
-}
-/** The drawn lengths: the real ones, with the "?" side (index `miss`) pushed off its real length. */
-const drawn = (r: Rng, s: number[], miss: number | null) => {
-  if (miss === null) return corners(s)
-  for (const f of shuffle(r, OFF)) { const d = corners(s.map((v, i) => (i === miss ? v * f : v))); if (d) return d }
-  return null
 }
 function pairPic(small: Pt[], big: Pt[], ls: (string | null)[], lb: (string | null)[]): Picture {
   // The gap grows with the drawing: a fixed 2 units shrank to a few pixels beside a big triangle, and the two facing
@@ -334,7 +328,7 @@ const similar = (r: Rng) => {
 
 const T5: Level[] = [
   lv('missing side on the big triangle: multiply', r => {
-    const { s, k, m, j, big, u, w } = similar(r), sd = corners(s), bd = drawn(r, big, m)
+    const { s, k, m, j, big, u, w } = similar(r), sd = corners(s), bd = corners(big)
     if (!sd || !bd) return null
     const lb = big.map((v, i) => (i === m ? `? ${u}` : `${v} ${u}`))
     return { text: `These two triangles have the same angles. The small one has sides ${list(s.map(String))} ${u}. The big one has sides ${list(big.map((v, i) => (i === m ? '?' : String(v))))} ${u}. How long is the missing side, in ${w}?`,
@@ -342,14 +336,14 @@ const T5: Level[] = [
       steps: [`Match a pair you know: ${big[j]} ÷ ${s[j]} = ${k}, so the scale factor is ${k}.`, `The missing side matches the ${s[m]} ${u} side: ${s[m]} × ${k}.`, `So the missing side is ${big[m]} ${u}.`] }
   }),
   lv('missing side on the small triangle: divide', r => {
-    const { s, k, m, j, big, u, w } = similar(r), sd = drawn(r, s, m), bd = corners(big)
+    const { s, k, m, j, big, u, w } = similar(r), sd = corners(s), bd = corners(big)
     if (!sd || !bd) return null
     return { text: `These two triangles have the same angles. The big one has sides ${list(big.map(String))} ${u}. The small one has sides ${list(s.map((v, i) => (i === m ? '?' : String(v))))} ${u}. How long is the missing side, in ${w}?`,
       picture: pairPic(sd, bd, s.map((v, i) => (i === m ? `? ${u}` : `${v} ${u}`)), big.map(v => `${v} ${u}`)), answer: s[m],
       steps: [`Match a pair you know: ${big[j]} ÷ ${s[j]} = ${k}, so the big sides are ${k} times as long.`, `Go back down: the missing side matches the ${big[m]} ${u} side, so ${big[m]} ÷ ${k}.`, `So the missing side is ${s[m]} ${u}.`] }
   }),
   lv('spot the mistake: added the difference', r => {
-    const { s, k, m, j, big, u } = similar(r), sd = corners(s), bd = drawn(r, big, m)
+    const { s, k, m, j, big, u } = similar(r), sd = corners(s), bd = corners(big)
     if (!sd || !bd) return null
     const name = pick(r, NAMES), ok = r() < 0.35, added = s[m] + big[j] - s[j]
     if (added === big[m] || s.includes(big[m])) return null
@@ -375,7 +369,7 @@ const T5: Level[] = [
     const [a, b] = pick(r, [['pole', 'tree'], ['fence post', 'flagpole'], ['mailbox', 'lamppost']] as const)
     const h = int(r, 2, 8), s = int(r, 2, 6), k = int(r, 2, 6)
     if (h === s) return null
-    const H = h * k, S = s * k, o = s + 2, dh = H * pick(r, OFF)
+    const H = h * k, S = s * k, o = s + 2, dh = H
     return { text: `A ${a} ${h} ft tall casts a shadow ${s} ft long. At the same time, a ${b} casts a shadow ${S} ft long. The two right triangles have the same angles. How tall is the ${b}, in feet?`,
       picture: { kind: 'poly', shapes: [
         { pts: [[0, 0], [s, 0], [0, h]], sides: [`${s} ft`, null, `${h} ft`], right: [0], tone: 1 },

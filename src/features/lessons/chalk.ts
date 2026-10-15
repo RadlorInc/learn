@@ -74,6 +74,13 @@ export const span = ([beat, at]: At, x1: number, x2: number, y: number, c: Chalk
 /** A hop over a number line, from x1 to x2. */
 export const hop = ([beat, at]: At, x1: number, x2: number, y: number, c: ChalkColor = 'w'): ChalkMark =>
   ({ beat, at, c, d: `M${x1} ${y} Q${(x1 + x2) / 2} ${y - Math.abs(x2 - x1) * 0.6} ${x2} ${y} M${x2 - 9} ${y - 10} L${x2} ${y} L${x2 + 3} ${y - 12}` })
+/** A jump arc from x1 to x2 whose arrowhead points the way the arc lands (`hop`'s small V points down), so the
+ *  direction of each jump reads at a glance (g8m1-t5: a tester read a row of hops the other way, 14 Oct 2026). */
+export const hopArrow = ([beat, at]: At, x1: number, x2: number, y: number, c: ChalkColor = 'w'): ChalkMark => {
+  const cx = (x1 + x2) / 2, cy = y - Math.abs(x2 - x1) * 0.6, l = Math.hypot(x2 - cx, y - cy), ux = (x2 - cx) / l, uy = (y - cy) / l
+  const wing = (a: number) => `${x2 - 13 * (ux * Math.cos(a) - uy * Math.sin(a))} ${y - 13 * (ux * Math.sin(a) + uy * Math.cos(a))}`
+  return { beat, at, c, d: `M${x1} ${y} Q${cx} ${cy} ${x2} ${y} M${wing(0.45)} L${x2} ${y} L${wing(-0.45)}` }
+}
 export const cross = ([beat, at]: At, x: number, y: number, w: number, h: number, c: ChalkColor = 'r'): ChalkMark =>
   ({ beat, at, c, w: 4.5, d: `M${x} ${y} L${x + w} ${y + h} M${x + w} ${y} L${x} ${y + h}` })
 export const ring = ([beat, at]: At, x: number, y: number, rx: number, ry: number, c: ChalkColor = 'y'): ChalkMark =>

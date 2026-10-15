@@ -45,6 +45,15 @@ const HOLD_MS = 1500
  *  one: "10 − 5 = 5. 9 − 7 = 2." on one row reads as "5.9" (a tester, g6m3-t1, 8 Oct). Only how it is shown changes;
  *  what she says, its clip and the text a screen reader reads (the space stays) are the same line. */
 const sumLines = (say: string) => say.split(/(?<=\d\.) (?=[\d−])/)
+/** A word in capitals is the line's stress ("Don't take 25% OF the $15"). The voice says it lowercase (styles.ts); on
+ *  screen it is bold lowercase, capitalised only at the start of a sentence: capitals read as shouting, and a tester took
+ *  "OF" for a typo (g6m4-t4, 8 Oct 2026; the founder's call, 15 Oct). Display only: the line, and so its clip key, is
+ *  unchanged. AM and PM stay as they are, as in the voice. */
+export const emphasis = (t: string): ReactNode[] => t.split(/\b([A-Z]{2,})\b/).map((part, i, all) => {
+  if (i % 2 === 0 || part === 'AM' || part === 'PM') return part
+  const low = part.toLowerCase(), first = i === 1 && all[0].trim() === '' || /[.!?]\s*$/.test(all[i - 1])
+  return <b key={i}>{first ? low[0].toUpperCase() + low.slice(1) : low}</b>
+})
 
 /** The Screen 9 sticker, one sentence a row: "The fair share is called the mean. Mean = total ÷ how many." run on
  *  as one line hid the rule in the middle of it (a tester, g6m7-t1, 11 Oct). The text a screen reader reads is the same. */
@@ -510,9 +519,9 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     words = sc.beats
       ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sc.beats.slice(0, shown).map((b, i) =>
-            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{sumLines(b.say).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : ''}{t}</span>)}</p>)}
+            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{sumLines(b.say).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : ''}{emphasis(t)}</span>)}</p>)}
         </div>
-      : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
+      : <p style={bubble}>{emphasis(ask ? ask[1] : sc.text)}</p>
     action = <button type="button" data-tour={review ? 'tester-next' : undefined} style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
       setAutoOn(true)
       const n = next(s)
