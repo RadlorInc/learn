@@ -46,11 +46,12 @@ REDO = set({REDO!r})
 VOICE = 'nzFihrBIvB34imQBuxub'   # Josh
 WORK = pathlib.Path('/kaggle/working' if os.path.isdir('/kaggle/working') else '/content')
 REPO = WORK / 'learn'
-# A Kaggle session outlives a notebook: a copy cloned by ANOTHER grade's notebook would be read as this one's (0 lines).
-if REPO.exists() and subprocess.run(['git', '-C', str(REPO), 'rev-parse', '--abbrev-ref', 'HEAD'], capture_output=True, text=True).stdout.strip() != BRANCH:
-    shutil.rmtree(REPO)
-if not REPO.exists():
-    subprocess.run(['git', 'clone', '--depth', '1', '--branch', BRANCH, 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
+# A Kaggle session outlives a notebook, so a copy left by the last run is never trusted: another branch's copy rendered 0
+# lines, and the SAME branch's copy rendered the old text of every line changed since (15 Oct 2026: a reworded line came
+# back saying its old words). Always a fresh clone of the branch tip, and its commit printed to compare with GitHub.
+shutil.rmtree(REPO, ignore_errors=True)
+subprocess.run(['git', 'clone', '--depth', '1', '--branch', BRANCH, 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
+print('rendering from', BRANCH, subprocess.run(['git', '-C', str(REPO), 'log', '-1', '--format=%h %s'], capture_output=True, text=True).stdout.strip())
 rows = json.load(open(REPO / 'scripts/.voice-corpus-lessons-josh.json'))
 HAVE = set(json.load(open(REPO / 'scripts/audio/manifest.json'))['keys'])   # rendered = in the bucket's manifest (not on disk)
 todo = [r for r in rows if r['key'] in REDO] if REDO else [r for r in rows if any(s.startswith(PREFIX) and not any(s.startswith(k + '-') for k in SKIP) for s in r['sources'])
