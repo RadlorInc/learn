@@ -224,8 +224,8 @@ export const G7M5: Lesson[] = [
         hint2: 'Take that fraction of 2,000. Divide by the bottom number, then multiply by the top.',
       },
     },
-    won: { text: 'You found the fraction in the sample and scaled it up to the whole school.', sticker: 'The whole group is the population. Using a sample to predict it is called making an inference.' },
-    twinWon: { text: 'You found 20 out of 50, then scaled it up to all 2,000 fans.', sticker: 'The whole group is the population. Using a sample to predict it is called making an inference.' },
+    won: { text: 'You found the fraction in the sample and scaled it up to the whole school.', sticker: 'The whole group is the population. It can be any group you want to know about, like students or plants, not just the people of a country. Using a sample to predict it is called making an inference.' },
+    twinWon: { text: 'You found 20 out of 50, then scaled it up to all 2,000 fans.', sticker: 'The whole group is the population. It can be any group you want to know about, like students or plants, not just the people of a country. Using a sample to predict it is called making an inference.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'You ask 40 students, picked by chance. 8 play an instrument. Predict how many of all 600 students play an instrument.',
@@ -257,12 +257,12 @@ export const G7M5: Lesson[] = [
     screens: [
       { title: 'Which class grew taller plants?', text: 'Two classes each grew 9 bean plants. Each dot is one plant. Did one class grow taller plants?',
         pictures: [CLASS_A, CLASS_B] },
-      { title: "One plant does not tell you", text: "Careful. Class A has a plant that is only 5 inches. Class B has one that is 7. So is Class B taller? No. Pick two other plants, and A wins. We need one number for a whole class.",
+      { title: "One plant does not tell you", text: "Careful. Class A has a plant that is only 5 inches. Class B has one that is 7. Can one plant each tell us? No. Pick two other plants, and A could win. So we need one number for each whole class.",
         beats: [
           { say: "Careful. Class A has a plant that is only 5 inches.", pic: 0 },
           { say: "Class B has one that is 7.", pic: 1 },
-          { say: "So is Class B taller? No. Pick two other plants, and A wins." },
-          { say: "We need one number for a whole class." },
+          { say: "Can one plant each tell us? No. Pick two other plants, and A could win." },
+          { say: "So we need one number for each whole class." },
         ],
         pictures: [CLASS_A, CLASS_B] },
       { title: "The big idea", text: "To compare two groups, find the gap between their means, then check it against the spread.",

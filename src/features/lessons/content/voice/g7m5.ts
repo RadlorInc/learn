@@ -23,6 +23,8 @@ export const G7M5_VOICE: Record<string, VoiceLine> = {
   "Don't call a sample fair just because it's BIG.": { style: 'B+' },
   "100 fans at a basketball game is a lot, but they still pick basketball.": { style: 'B+' },
   "Ask who is left out, not how many you asked.": { style: 'B+' },
+  // "leaves" was heard as "leave" (a tester, g7m5-t1, 16 Oct).
+  'The whole group is the population. A sample picked by chance is a random sample. A sample that leaves people out is biased.': { style: 'A', say: 'The whole group is the population. A sample picked by chance is a random sample. A sample that leaves out some people is biased.' },
   // ── g7m5-t2 ── ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
   "12 of the kids you asked like pizza best.": { style: 'B' },
   "So do just 12 kids in the whole school like pizza? No.": { style: 'B' },
@@ -42,8 +44,9 @@ export const G7M5_VOICE: Record<string, VoiceLine> = {
   // ── g7m5-t3 ── ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
   "Careful. Class A has a plant that is only 5 inches.": { style: 'B' },
   "Class B has one that is 7.": { style: 'B' },
-  "So is Class B taller? No. Pick two other plants, and A wins.": { style: 'B' },
-  "We need one number for a whole class.": { style: 'B' },
+  // Reworded: "Is Class B taller? No." read as if B were shorter (a tester, g7m5-t3, 16 Oct).
+  "Can one plant each tell us? No. Pick two other plants, and A could win.": { style: 'B' },
+  "So we need one number for each whole class.": { style: 'B' },
   "To compare two groups, find the gap between their means, then check it against the spread.": { style: 'B' },
   "Add up Class A. 5 + 6 + 6 + 7 + 7 + 7 + 8 + 8 + 9 = 63.": { style: 'B' },
   "Class B adds up to 45.": { style: 'B' },
