@@ -203,6 +203,18 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     return () => ids.forEach(clearTimeout)
   }, [beats, audio, replay, autoNext])
 
+  // Screen 9, once practice is complete: Screen 8's sentence (the big idea for a child who needed the worked steps) and
+  // the math-word sticker. It says both, the sentence then the sticker: the page was silent, and the sticker is the
+  // thing to remember (testers, g6m1-t1/t7/t8, 7 Oct 2026; the founder's call, 15 Oct). A break card says nothing.
+  const nine = s.mode === 'finish' && (!!review || !ladder || doneHere || lessonDone(learnerId, lesson.id))
+    ? wonAt ?? { title: 'You got it', ...lesson.won, helped: false } : null
+  const nineSaid = nine ? [nine.helped ? lesson.bigIdea : nine.text, nine.sticker] : null
+  const nineKey = nineSaid?.join('\n') ?? ''
+  useEffect(() => {
+    if (!nineKey || !audio) return
+    return speakSteps(nineKey.split('\n'), { gapMs: GAP_MS })
+  }, [nineKey, audio])
+
   // Screen 8 solved (or the twin's worked steps seen): straight on to practice with the green check. Screen 9 (its sentence
   // and the math-word sticker) comes AFTER practice (founder, 2026-09-24).
   const startPractice = () => {
@@ -267,7 +279,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
   const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? loadedLesson(run.current.from) ?? null : null
   const bigIdea = from?.bigIdea ?? lesson.bigIdea
-  const hintText = (from ?? lesson).hint ?? bigIdea
+  const hintText = problem?.hint ?? (from ?? lesson).hint ?? bigIdea
   // The answer box's shape is the lesson's, never the problem's (see AnswerInput). A ladder's answers are sampled.
   const sampled = useMemo(() => (ladder ? ladderAnswers(ladder) : []), [ladder])
   const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
@@ -542,12 +554,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     crumb = 'Done!'; at = 8
     // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
     // A tester reviews the real Screen 9 (the sticker and Screen 8's sentence), not the child's break card.
-    const topicDone = !!review || !ladder || doneHere || lessonDone(learnerId, lesson.id)
-    const allDone = topicDone && (moduleDone?.() ?? false)
+    const allDone = !!nine && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
     // Screen 9, once practice is complete: Screen 8's sentence and the math word (README: the math word appears ONLY
     // here). A child who needed the worked steps on the twin never hears "You got it" — the big idea instead.
-    const w = topicDone ? wonAt ?? { title: 'You got it', ...lesson.won, helped: false } : null
+    const w = nine
     picture = <div style={stage}>
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
       {w

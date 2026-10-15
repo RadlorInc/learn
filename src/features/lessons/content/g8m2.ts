@@ -277,7 +277,7 @@ export const G8M2: Lesson[] = [
         hint1: 'On the y-axis, what is x?',
         hint2: 'Put 0 in for x. What is left?' },
     },
-    won: { text: 'You picked out the number in front of x: that is the slope.', sticker: 'b, where the line crosses the y-axis, is the y-intercept. y = mx + b is called slope-intercept form.' },
+    won: { text: 'You picked out the number in front of x, called its coefficient: that is the slope.', sticker: 'b, where the line crosses the y-axis, is the y-intercept. y = mx + b is called slope-intercept form.' },
     twinWon: { text: 'You found the plain number in y = −2x + 7: the line crosses at 7.', sticker: 'b, where the line crosses the y-axis, is the y-intercept. y = mx + b is called slope-intercept form.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'A line has the equation y = 5x + 2. What is its slope?',

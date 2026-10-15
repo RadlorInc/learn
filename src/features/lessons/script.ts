@@ -91,6 +91,9 @@ export interface Problem {
   answer?: Answer
   steps?: string[]
   picture: Picture        // Screen 8 / practice picture: it must not show the answer
+  /** Practice only: what Hint shows for THIS level when the lesson's big idea does not fit it (a level that works
+   *  backwards, or one the lesson never shows). Shown, never spoken. Tester notes g6m1-t2 L5 and g8m1-t1 L4, 7–8 Oct. */
+  hint?: string
 }
 
 export interface YourTurn extends Problem {

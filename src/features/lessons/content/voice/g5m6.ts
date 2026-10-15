@@ -109,4 +109,7 @@ export const G5M6_VOICE: Record<string, VoiceLine> = {
   "Now you try. On the map, the school is at (2, 3) and the pool is at (2, 9). How many blocks apart are they? Find the number they share. Subtract the other two.":
     { style: 'A', say: "Now you try. On the map, the school is at 2 comma 3 and the pool is at 2 comma 9. How many blocks apart are they? Find the number they share. Subtract the other two." },
   "Try a new one. Which place is at (5, 4)?": { style: 'A', say: "Try a new one. Which place is at 5 comma 4?" },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "A pair like (3, 5) is an ordered pair. The order matters: across first, then up.": { style: 'A', say: "A pair like the point 3, 5 is an ordered pair. The order matters: across first, then up." },
+  "In (3, 8), 3 is the x-coordinate and 8 is the y-coordinate.": { style: 'A', say: "In the point 3, 8, 3 is the x-coordinate and 8 is the y-coordinate." },
 }

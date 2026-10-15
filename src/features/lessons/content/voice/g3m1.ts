@@ -132,4 +132,6 @@ export const G3M1_VOICE: Record<string, VoiceLine> = {
   "20 ÷ 4 = 5, and 20 ÷ 5 = 4.": { style: 'B' },
   "When you divide, don't put the 20 LAST.": { style: 'B+' },
   "The biggest number is the total, and it comes first, like 20 ÷ 5 = 4.": { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "÷ means share into equal groups.": { style: 'A', say: "The divide sign means share into equal groups." },
 }

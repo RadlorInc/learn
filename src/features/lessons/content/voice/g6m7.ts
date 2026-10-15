@@ -34,7 +34,7 @@ export const G6M7_VOICE: Record<string, VoiceLine> = {
   "What if there's no single middle?": { style: 'B' },
   "Add a seedling that's 10 inches tall.": { style: 'B' },
   "Now two numbers share the middle, 6 and 7.": { style: 'B' },
-  "Halfway between them is 6.5.": { style: 'B', say: "Halfway between them is six and a half." },
+  "Halfway between them is 6.5: add them and halve, (6 + 7) ÷ 2.": { style: 'B', say: "Halfway between them is six and a half: add them and halve, 6 plus 7, divided by 2." },
   "Don't grab the middle spot BEFORE you sort. That gives 9.": { style: 'B+' },
   "Sort first, and the middle is 6.": { style: 'B+' },
   // ── g6m7-t3 ── ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)

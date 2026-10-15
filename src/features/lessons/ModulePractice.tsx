@@ -118,7 +118,7 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
       </form>
     )}
 
-    {feedback === 'idea' ? <TryAgain>{lesson.bigIdea}</TryAgain> : asked && answering && <p style={idea}>{lesson.hint ?? lesson.bigIdea}</p>}
+    {feedback === 'idea' ? <TryAgain>{lesson.bigIdea}</TryAgain> : asked && answering && <p style={idea}>{problem.hint ?? lesson.hint ?? lesson.bigIdea}</p>}
     {feedback === 'right' && <Cheer k={i} />}
     {feedback === 'worked' && <>
       <div style={hint}>

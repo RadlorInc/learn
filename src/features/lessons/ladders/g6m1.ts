@@ -157,6 +157,7 @@ const T2: Level[] = [
   L('story: scale down, then up', r => {
     const P = pick(r, PLANS), a = int(r, 2, 5), b = until(() => int(r, 4, 9), v => v >= a + 2), k = int(r, 3, 6), m = until(() => int(r, 2, 9), v => v !== k)
     return { text: `${P.what} ${a * k} ${P.a} for ${b * k} ${P.b}. Keep the same plan. How many ${P.a} do ${b * m} ${P.b} ${P.need}?`,
+      hint: 'Go down first: divide both numbers by the same number to get a small ratio. Then multiply up.',
       picture: table([[P.A, a * k, '?'], [P.B, b * k, b * m]]), answer: a * m,
       steps: [`Divide both by ${k}: ${a} ${P.a} for ${b} ${P.b}.`, `${b * m} ${P.b} is ${b} × ${m}, so multiply the ${P.a} by ${m} too: ${a} × ${m}.`, `So ${b * m} ${P.b} ${P.need} ${a * m} ${P.a}.`] }
   }),

@@ -118,4 +118,6 @@ export const G6M4_VOICE: Record<string, VoiceLine> = {
     { style: 'A', say: 'Now you try. You put $600 in a bank that pays 3% a year. How many dollars does the bank pay you in 2 years? Just what the bank pays, not the $600. Find one year first. Then multiply by the years.' },
   'Try a new one. You put $200 in a bank that pays 6% a year. How many dollars does the bank pay you in 4 years? (Just what the bank pays.)':
     { style: 'A', say: 'Try a new one. You put $200 in a bank that pays 6% a year. How many dollars does the bank pay you in 4 years? Just what the bank pays.' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "Percent means \"out of 100\". Its sign is %.": { style: 'A', say: "Percent means out of 100. Its sign is the percent sign." },
 }
