@@ -320,7 +320,10 @@ const drawn = (r: Rng, s: number[], miss: number | null) => {
   return null
 }
 function pairPic(small: Pt[], big: Pt[], ls: (string | null)[], lb: (string | null)[]): Picture {
-  const off = Math.max(...small.map(p => p[0])) + 2
+  // The gap grows with the drawing: a fixed 2 units shrank to a few pixels beside a big triangle, and the two facing
+  // side labels ran into each other (tester, g8m4-t5, 14 Oct 2026).
+  // Measured from the big one's leftmost corner: its top can lean out past its own base, over the small one.
+  const off = Math.max(...small.map(p => p[0])) - Math.min(...big.map(p => p[0])) + Math.max(2, 0.3 * Math.max(...big.map(p => p[0])))
   return { kind: 'poly', shapes: [{ pts: small, sides: ls, tone: 1 }, { pts: big.map(([x, y]) => [r3(x + off), y] as Pt), sides: lb, tone: 2 }] }
 }
 const list = (xs: string[]) => `${xs[0]}, ${xs[1]} and ${xs[2]}`

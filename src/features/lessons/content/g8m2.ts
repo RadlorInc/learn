@@ -15,8 +15,10 @@ const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lin
 const cards = (wrong: string, right: string): Picture => ({ kind: 'cards', wrong, right })
 const bal = (left: string, right: string): Picture => ({ kind: 'balance', left, right })
 const sides = (rows: string[][], motion = false): Picture => ({ kind: 'table', head: ['Left side', '', 'Right side'], rows, motion })
-const plane = (max: number, points: Pt[] = [], lines: Line[] = [], motion = false, min = 0): Picture =>
-  ({ kind: 'coord', min, max, points, lines, motion })
+const plane = (max: number, points: Pt[] = [], lines: Line[] = [], motion = false, min = 0, names?: [string, string]): Picture =>
+  ({ kind: 'coord', min, max, points, lines, motion, ...(names ? { names } : {}) })
+/** The growing plant's axes (g8m2-t4), written on the graph as the lesson says them. */
+const PLANT: [string, string] = ['weeks', 'height (cm)']
 const P = (x: number, y: number, label = true): Pt => ({ x, y, label: label ? `(${x}, ${y})`.replace(/-/g, '−') : undefined })
 /** A line through two labelled lattice points: the question picture for t1 and t3. */
 const twoPts = (x1: number, y1: number, x2: number, y2: number): Picture =>
@@ -302,40 +304,40 @@ export const G8M2: Lesson[] = [
     bigIdea: "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.",
     screens: [
       { title: 'A growing plant', text: 'A plant is 3 cm tall and grows 2 cm each week: y = 2x + 3. You want to draw its line. Where do you start?',
-        pictures: [plane(10)] },
+        pictures: [plane(10, [], [], false, 0, PLANT)] },
       { title: "A table is slow", text: "You could work out y for x = 0, then 1, then 2, and keep going. That works, but it's slow. Is there a faster way? Yes. The equation already tells you where to start, and how to step.",
         beats: [
           { say: "You could work out y for x = 0, then 1, then 2, and keep going.", pic: 0 },
           { say: "That works, but it's slow. Is there a faster way? Yes." },
           { say: "The equation already tells you where to start, and how to step." },
         ],
-        pictures: [plane(10)] },
+        pictures: [plane(10, [], [], false, 0, PLANT)] },
       { title: "The big idea", text: "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.",
         beats: [
           { say: "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.", pic: 0 },
         ],
-        pictures: [plane(10, [P(0, 3)]), eq('y = 2x + 3')] },
+        pictures: [plane(10, [P(0, 3)], [], false, 0, PLANT), eq('y = 2x + 3')] },
       { title: "Start at b", text: "In y = 2x + 3, the plain number is 3. So the first dot goes at (0, 3), right on the y-axis. That is the plant before any weeks have passed, 3 cm tall.",
         beats: [
           { say: "In y = 2x + 3, the plain number is 3." },
           { say: "So the first dot goes at (0, 3), right on the y-axis.", pic: 0 },
           { say: "That is the plant before any weeks have passed, 3 cm tall." },
         ],
-        pictures: [plane(10, [P(0, 3)], [], true)] },
+        pictures: [plane(10, [P(0, 3)], [], true, 0, PLANT)] },
       { title: "Step by the slope", text: "The slope is 2. That means 2 up for every 1 across. So from (0, 3), go 1 across and 2 up. You land on (1, 5). Step again the same way. Now you are at (2, 7).",
         beats: [
           { say: "The slope is 2. That means 2 up for every 1 across." },
           { say: "So from (0, 3), go 1 across and 2 up. You land on (1, 5).", pic: 0 },
           { say: "Step again the same way. Now you are at (2, 7)." },
         ],
-        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [run([0, 3], [1, 3]), rise([1, 3], [1, 5], 'rise 2'), run([1, 5], [2, 5]), rise([2, 5], [2, 7])], true)] },
+        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [run([0, 3], [1, 3]), rise([1, 3], [1, 5], 'rise 2'), run([1, 5], [2, 5]), rise([2, 5], [2, 7])], true, 0, PLANT)] },
       { title: "Join the dots", text: "Now draw one straight line through the dots. Is (2, 7) really on it? Put x = 2 into the equation. 2 × 2 + 3 = 7. Yes, it matches.",
         beats: [
           { say: "Now draw one straight line through the dots.", pic: 0 },
           { say: "Is (2, 7) really on it? Put x = 2 into the equation.", pic: 1 },
           { say: "2 × 2 + 3 = 7. Yes, it matches." },
         ],
-        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [{ a: [0, 3], b: [3, 9], extend: true }], true), eq('2 × 2 + 3 = 7')] },
+        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [{ a: [0, 3], b: [3, 9], extend: true }], true, 0, PLANT), eq('2 × 2 + 3 = 7')] },
       { title: "One thing not to do", text: "Here's the part people mix up. Don't start at the SLOPE. (0, 2) is not where y = 2x + 3 begins. The first dot goes at the plain number, (0, 3). The 2 is only for stepping. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
