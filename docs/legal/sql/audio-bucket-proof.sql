@@ -20,7 +20,10 @@ select count(*) from supabase_migrations.schema_migrations where version = '2026
 select count(*) as badly_named from storage.objects
 where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> 'anon-probe-canary.mp3';
 
--- P5. After the upload run: every manifest object is there.     expected: 18042 | 275193411
+-- P5. After the upload run: every manifest object is there.     expected: 18264 | 281136176
+--     (2026-10-15, #416 + tester batch B, tag audio-src-josh-2026-10-15: 222 objects, 5942765 bytes — #416's number
+--     re-renders and batch B's 39 new or re-rendered lines. Before this run P5 should read the 12 Oct value below,
+--     18042 | 275193411, if no upload ran since; a different "before" means one did, and the after is before + 222.)
 --     (read by the founder after #425's upload, 2026-10-12: 18042 | 275193411, so before it 18041 | 275178138; P7: 1 | 1 | no-store)
 --     (2026-10-12, #425: its dry run (run 38195871791) listed 18042 objects = 16984 of the manifest + 1057 older ones +
 --     the canary, so before this run P5 reads 18041 (uploads ran after #413); this run adds 1 object, 15273 bytes: the KG–2 take line "You did it! 5 questions solved. You're
