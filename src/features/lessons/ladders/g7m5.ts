@@ -300,7 +300,7 @@ const spinner = (r: Rng, n: number, k: number, color: string) => {
 const T4: Level[] = [
   lv('spinner: the probability of a color', r => {
     const n = pick(r, [4, 5, 6, 8, 10, 12]), k = int(r, 1, n - 1), color = pick(r, COLORS)
-    return { text: `This spinner has ${n} equal parts. What is the probability of landing on ${color}? Write a fraction or a decimal.`,
+    return { text: `This spinner has ${n} equal parts. What is the probability of landing on ${color}? Write it as a fraction.`,
       picture: spinner(r, n, k, color).picture, answer: { frac: [k, n] },
       steps: [`Count the ${color} parts: there ${plural(k, 'is', 'are')} ${k}.`, `Count all the parts: there are ${n}.`, `So the probability is ${frac(k, n)}.`] }
   }),
@@ -452,7 +452,8 @@ const T6: Level[] = [
     const kind = pick(r, ['right', 'added', 'rows'] as const)
     const claim = kind === 'right' ? `there are 2 × ${n} = ${2 * n} pairs, so it is 1/${2 * n}`
       : kind === 'added' ? `1/2 + 1/${n} = ${n + 2}/${2 * n}` : `there are 2 + ${n} = ${n + 2} pairs, so it is 1/${n + 2}`
-    const yes = `${who} is right`, added = `${who} added the two chances`, rows = `${who} added the rows and columns instead of multiplying`
+    // Each wrong choice names its own sum: "added the two chances" alone also fit the 2 + n pairs (a tester, g7m5-t6, 16 Oct).
+    const yes = `${who} is right`, added = `${who} added the two chances, 1/2 + 1/${n}`, rows = `${who} counted 2 + ${n} pairs instead of 2 × ${n}`
     const right = kind === 'right' ? yes : kind === 'added' ? added : rows
     return { text: `You flip a coin and ${thing}. ${who} finds the probability of ${side} and a ${x} like this: "${claim}." Which is true?`,
       picture: blank(nums(n), ['Heads', 'Tails']), answer: choose(r, right, [yes, added, rows].filter(c => c !== right)),
