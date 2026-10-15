@@ -58,7 +58,7 @@ it('g6m7-t1 Screen 9: the sticker\'s two sentences are two rows, and it still re
   const wrong = String((solutionOf(problem) as number) + 1)
   await type(wrong); await type(wrong)                             // the 12th answer: the topic is done
   await click('Next problem')
-  await click('Take a break')
+  await click('Finish for today 🎉')
   expect(host.textContent).toContain('Screen 9 of 9')
   const sticker = host.querySelector('[data-sticker]')!
   expect([...sticker.children].map(c => [c.textContent, getComputedStyle(c).display])).toEqual([
