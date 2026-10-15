@@ -52,6 +52,7 @@ export const T4: (ChalkMark[] | undefined)[] = [
     span([0, 'far'], X(4), X(15), 110, 'y'),
     write([1, '15'], '15 − 4', 270, 300, 36), write([1, '11'], '= 11', 370, 300, 36, 'y'),
     write([2, 'points'], '11 points', X(9.5), 76, 28, 'y'),
+    write([3, 'range'], 'range = 11', 320, 360, 30, 'y'),
   ],
   // A small gap: Kim's scores huddle
   [

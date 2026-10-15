@@ -86,7 +86,7 @@ export const G6M3_VOICE: Record<string, VoiceLine> = {
   "Bring down the 6 to make 16. 4 fits four times, with nothing left.": { style: 'B' },
   "So 9.6 ÷ 0.4 = 24. You get 24 pieces of ribbon.": { style: 'B', say: "So nine point six divided by zero point four equals 24. You get 24 pieces of ribbon." },
   "Don't grow ONLY the 0.4. That gives 2.4, far too few.": { style: 'B+', say: "Don't grow only the zero point four. That gives two point four, far too few." },
-  "Grow both numbers. 96 ÷ 4 = 24.": { style: 'B+' },
+  "Grow both numbers by the same amount, × 10 each. 96 ÷ 4 = 24.": { style: 'B+', say: "Grow both numbers by the same amount, times 10 each. 96 divided by 4 is 24." },
   "Ribbon pieces. A ribbon is 9.6 meters long. You cut it into pieces that are 0.4 meters long. How many pieces do you get?": { style: 'A', say: "Ribbon pieces. A ribbon is nine point six meters long. You cut it into pieces that are zero point four meters long. How many pieces do you get?" },
   "Now you try. Divide. 7.2 ÷ 0.3 = ? Multiply both numbers by 10 or 100 until the outside number is whole. Then divide.": { style: 'A', say: "Now you try. Divide. Seven point two divided by zero point three equals what? Multiply both numbers by 10 or 100 until the outside number is whole. Then divide." },
   "Try a new one. Divide. 1.56 ÷ 0.12 = ?": { style: 'A', say: "Try a new one. Divide. One point five six divided by zero point one two equals what?" },

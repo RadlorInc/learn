@@ -56,8 +56,8 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "It climbs 2. From (0, 1) to (1, 3), then to (2, 5).": { style: 'B', say: "It climbs 2. From the point 0, 1 to the point 1, 3, then to the point 2, 5." },
   "So the slope is 2, the $2 for each mile.": { style: 'B' },
   "Now you can read any equation this way.": { style: 'B' },
-  "y = 3x + 4 climbs 3 each step and crosses at 4.": { style: 'B', say: "y equals 3 x plus 4 climbs 3 each step and crosses at 4." },
-  "And y = x + 5? A lone x means 1x, so it climbs 1 and crosses at 5.": { style: 'B', say: "And y equals x plus 5? A lone x means 1 x, so it climbs 1 and crosses at 5." },
+  "y = 3x + 4 climbs 3 each step and crosses the y-axis at 4.": { style: 'B', say: "y equals 3 x plus 4 climbs 3 each step and crosses the y-axis at 4." },
+  "And y = x + 5? A lone x means 1x, so it climbs 1 and crosses the y-axis at 5.": { style: 'B', say: "And y equals x plus 5? A lone x means 1 x, so it climbs 1 and crosses the y-axis at 5." },
   "Don't SWAP the two jobs. In y = 2x + 1 the line does not cross at 2.": { style: 'B+', say: "Don't swap the two jobs. In y equals 2 x plus 1 the line does not cross at 2." },
   "The number stuck to x is the slope, 2. The plain number is the crossing, 1.": { style: 'B+' },
   "You found the plain number in y = −2x + 7: the line crosses at 7.": { style: 'A', say: "You found the plain number in y equals negative 2 x plus 7. The line crosses at 7." },
@@ -66,7 +66,7 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "That works, but it's slow. Is there a faster way? Yes.": { style: 'B' },
   "The equation already tells you where to start, and how to step.": { style: 'B' },
   "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.": { style: 'B' },
-  "In y = 2x + 3, the plain number is 3.": { style: 'B', say: "In y equals 2 x plus 3, the plain number is 3." },
+  "In y = mx + b, b is the plain number. In y = 2x + 3, b is 3.": { style: 'B', say: "In y equals m x plus b, b is the plain number. In y equals 2 x plus 3, b is 3." },
   "So the first dot goes at (0, 3), right on the y-axis.": { style: 'B', say: "So the first dot goes at the point 0, 3, right on the y-axis." },
   "That is the plant before any weeks have passed, 3 cm tall.": { style: 'B' },
   "The slope is 2. That means 2 up for every 1 across.": { style: 'B' },
@@ -78,6 +78,8 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Don't start at the SLOPE. (0, 2) is not where y = 2x + 3 begins.": { style: 'B+', say: "Don't start at the slope. The point 0, 2 is not where y equals 2 x plus 3 begins." },
   "The first dot goes at the plain number, (0, 3). The 2 is only for stepping.": { style: 'B+', say: "The first dot goes at the plain number, the point 0, 3. The 2 is only for stepping." },
   // ── g8m2-t5 ──
+  // "ex": a digit then x ran together — "six x" was heard as "six dx" (tester, g8m2-t5 Screen 8; heard again 15 Oct).
+  "Now you try. Solve 6x + 5 = 3x + 20. What is x? Take the smaller x part off both sides. Then solve what is left.": { style: 'A', say: "Now you try. Solve 6 ex plus 5 equals 3 ex plus 20. What is ex? Take the smaller ex part off both sides. Then solve what is left." },
   "Before, x was only ever on one side.": { style: 'B' },
   "Now there are bags on both sides. Which bags do you undo first?": { style: 'B' },
   "Taking off loose marbles won't help yet. The bags are still on both sides.": { style: 'B' },
@@ -94,6 +96,9 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Don't ADD 5x and 3x across the equals sign. That makes 8x, and the scale tips.": { style: 'B+', say: "Don't add 5 x and 3 x across the equals sign. That makes 8 x, and the scale tips." },
   "Take 3x off BOTH sides instead. 5x + 2 = 3x + 10 becomes 2x + 2 = 10.": { style: 'B+', say: "Take 3 x off both sides instead. 5 x plus 2 equals 3 x plus 10 becomes 2 x plus 2 equals 10." },
   // ── g8m2-t6 ── ("Here's the part people mix up.", "Okay. Your turn." and "Is there a faster way? Yes." have rows elsewhere)
+  // "ex": "two x" was heard as "two Ike's" (tester, g8m2-t6 Screen 1; heard again 15 Oct). "Ay", "Bee": a render said
+  // "Shop A" for both shops (15 Oct).
+  "Two bike rentals. Shop A charges $3 plus $2 an hour. Shop B charges $5 plus $2 an hour. When do they cost the same? 2x + 3 = 2x + 5.": { style: 'A', say: "Two bike rentals. Shop Ay charges $3 plus $2 an hour. Shop Bee charges $5 plus $2 an hour. When do they cost the same? 2 ex plus 3 equals 2 ex plus 5." },
   "Try some hours. At 1 hour it is $5 and $7.": { style: 'B' },
   "At 10 hours it is $23 and $25.": { style: 'B' },
   "Shop B is always $2 more. So will they ever cost the same?": { style: 'B' },
@@ -101,7 +106,7 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Take 2x off both sides and watch.": { style: 'B', say: "Take 2 x off both sides and watch." },
   "Every x is gone, and what is left is 3 = 5.": { style: 'B' },
   "Is 3 ever equal to 5? Never, for any number of hours.": { style: 'B' },
-  "So there is no answer. The two prices never meet.": { style: 'B' },
+  "So there is no answer. On a graph, the two prices are two parallel lines that never meet.": { style: 'B' },
   "Now try 2(x + 3) = 2x + 6.": { style: 'B', say: "Now try 2 times x plus 3, all together, equals 2 x plus 6." },
   "Multiply out the parentheses. The left side becomes 2x + 6 too.": { style: 'B', say: "Multiply out the parentheses. The left side becomes 2 x + 6 too." },
   "Take 2x off both sides, and you get 6 = 6.": { style: 'B', say: "Take 2 x off both sides, and you get 6 = 6." },
@@ -126,7 +131,7 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Ana: 2 + 2 = 4. Ben: −2 + 6 = 4.": { style: 'B', say: "For Ana, 2 plus 2 equals 4. For Ben, negative 2 plus 6 equals 4." },
   "Both give 4, so the point fits both at once.": { style: 'B' },
   "A point on just ONE line is not enough. (1, 3) is on Ana's line.": { style: 'B+', say: "A point on just one line is not enough. The point 1, 3 is on Ana's line." },
-  "But Ben's rule gives 5 there, not 3. Only the crossing fits both.": { style: 'B+' },
+  "But Ben's equation gives 5 there, not 3. Only the crossing fits both.": { style: 'B+' },
   // ── g8m2-t8 ── ("Here's the part people mix up.", "Okay. Your turn." and "Is there a faster way? Yes." have rows elsewhere)
   "Look at clue 2 on its own: x + y = 12.": { style: 'B' },
   "Lots of pairs fit it: 1 and 11, 5 and 7, 6 and 6.": { style: 'B' },

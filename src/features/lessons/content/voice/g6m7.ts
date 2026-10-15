@@ -64,6 +64,7 @@ export const G6M7_VOICE: Record<string, VoiceLine> = {
   "How far is it from 4 up to 15?": { style: 'B' },
   "15 − 4 = 11.": { style: 'B' },
   "So his scores are spread over 11 points.": { style: 'B' },
+  "This gap is called the range.": { style: 'B' },
   "Now Kim. She scored 9, 10, 8, 11 and 10.": { style: 'B' },
   "Her gap is 11 − 8 = 3.": { style: 'B' },
   "See how her scores huddle close together?": { style: 'B' },
