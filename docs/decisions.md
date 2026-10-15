@@ -153,4 +153,6 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-10-14 · Stripe live: the key's mode is pinned to the deployment (Production `sk_live_` only, everywhere else `sk_test_` only); prices confirmed as $7.99/$4.99 monthly, $75.99/$48 annual · a test key in Production would sell plans for test cards, a live key elsewhere charges from unreviewed code · #351
 - 2026-10-14 · notice-v8: the consent notice's "Contact us" adds the toll-free line; registered with reconsent_required = false (notice-v7 consents stay current) · founder: the number goes everywhere the email is · #432
 - 2026-10-14 · The support phone is a way to cancel (Refund policy §4): the caller gives the account's email, the confirmation goes only to it · founder · #432
+- 2026-10-15 · Similar triangles (g8m4-t5) are drawn truly similar; elsewhere a "?" is still drawn off its size · the shape is the lesson, and an off-length side gave the pair different angles (tester) · founder · this PR
+- 2026-10-15 · A word in capitals in a lesson line shows as bold lowercase on screen (the voice already says it lowercase) · capitals read as shouting, "OF" read as a typo (tester) · founder · this PR
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —
