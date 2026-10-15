@@ -781,12 +781,14 @@ function Chart({ p }: { p: P<'chart'> }) {
   if (p.type === 'dot') {
     const W = Math.max(420, p.labels.length * 70), lx = 30, span = W - 60, y = 230, dx = span / Math.max(p.labels.length - 1, 1)
     return (
-      <Svg w={W} h={290} label="Line plot">
+      <Svg w={W} h={290} label={p.dots ? 'Dot plot' : 'Line plot'}>
         <line x1={lx - 10} y1={y} x2={lx + span + 10} y2={y} stroke={INK} strokeWidth={4} />
         {p.labels.map((l, i) => <g key={i}>
           <line x1={lx + i * dx} y1={y - 8} x2={lx + i * dx} y2={y + 8} stroke={INK} strokeWidth={3} />
           <T x={lx + i * dx} y={y + 30} s={18}>{l}</T>
-          {Array.from({ length: p.values[i] }, (_, j) => <T key={j} x={lx + i * dx} y={y - 24 - j * 30} s={28} fill={TEAL} style={reveal(i, p.motion, 350)}>✕</T>)}
+          {Array.from({ length: p.values[i] }, (_, j) => p.dots
+            ? <circle key={j} cx={lx + i * dx} cy={y - 24 - j * 30} r={10} fill={TEAL} style={reveal(i, p.motion, 350)} />
+            : <T key={j} x={lx + i * dx} y={y - 24 - j * 30} s={28} fill={TEAL} style={reveal(i, p.motion, 350)}>✕</T>)}
         </g>)}
         {p.xLabel && <T x={W / 2} y={y + 56} s={17} w={700}>{p.xLabel}</T>}
       </Svg>

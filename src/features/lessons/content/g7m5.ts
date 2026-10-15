@@ -30,8 +30,8 @@ const predict = (what: string, sample: string, all: string): Picture =>
 
 // ── Topic 3 pictures ──
 const HEIGHTS = ['3', '4', '5', '6', '7', '8', '9']
-const CLASS_A: Picture = { kind: 'chart', type: 'dot', labels: HEIGHTS, values: [0, 0, 1, 2, 3, 2, 1], xLabel: 'Class A plants (inches)' }
-const CLASS_B: Picture = { kind: 'chart', type: 'dot', labels: HEIGHTS, values: [1, 2, 3, 2, 1, 0, 0], xLabel: 'Class B plants (inches)' }
+const CLASS_A: Picture = { kind: 'chart', type: 'dot', dots: true, labels: HEIGHTS, values: [0, 0, 1, 2, 3, 2, 1], xLabel: 'Class A plants (inches)' }
+const CLASS_B: Picture = { kind: 'chart', type: 'dot', dots: true, labels: HEIGHTS, values: [1, 2, 3, 2, 1, 0, 0], xLabel: 'Class B plants (inches)' }
 const two = (col: string, a: [string, number[]], b: [string, number[]]): Picture => ({
   kind: 'table', head: [col, ...a[1].map((_, i) => String(i + 1))],
   rows: [[a[0], ...a[1].map(String)], [b[0], ...b[1].map(String)]], rowHead: true,
@@ -254,7 +254,7 @@ export const G7M5: Lesson[] = [
     id: 'g7m5-t3', title: 'Compare two groups', skill: 'Compare two data sets by the gap between their means and how spread out each one is',
     bigIdea: "To compare two groups, find the gap between their means, then check it against the spread.",
     screens: [
-      { title: 'Which class grew taller plants?', text: 'Two classes each grew 9 bean plants. Each ✕ is one plant. Did one class grow taller plants?',
+      { title: 'Which class grew taller plants?', text: 'Two classes each grew 9 bean plants. Each dot is one plant. Did one class grow taller plants?',
         pictures: [CLASS_A, CLASS_B] },
       { title: "One plant does not tell you", text: "Careful. Class A has a plant that is only 5 inches. Class B has one that is 7. So is Class B taller? No. Pick two other plants, and A wins. We need one number for a whole class.",
         beats: [

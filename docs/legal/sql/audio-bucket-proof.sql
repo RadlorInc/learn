@@ -25,6 +25,9 @@ where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> '
 --     (2026-10-12, #425: its dry run (run 38195871791) listed 18042 objects = 16984 of the manifest + 1057 older ones +
 --     the canary, so before this run P5 reads 18041 (uploads ran after #413); this run adds 1 object, 15273 bytes: the KG–2 take line "You did it! 5 questions solved. You're
 --     getting stronger!" (1g6guhs → 99106db90a5e9e79.mp3). The old line's clip stays in the bucket.)
+--     (2026-10-11, #423: run 38140569672 added 13 objects, 261236 bytes: the dot-plot lines of g6m7 (12) and g7m5 (1).
+--     P5 went from 18028 | 274916902 to 18041 | 275178138, the "before" #425 derives from the founder's read. The dry run's
+--     18029 / 18042 counts include the canary, which P5 leaves out. The 13 old clips stay in the bucket.)
 --     (2026-10-09, #413: before this run the bucket should read 18027 | 274844265; this run adds 1 object, 72637
 --     bytes, g6m4-t7's Screen 1 with what interest is. The old line's clip stays in the bucket.)
 --     (2026-10-08, #407: the bucket read 18026 | 274803288 after #386's 142-clip upload (6 Oct); this run adds 1 object,
