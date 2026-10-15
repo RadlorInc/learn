@@ -30899,11 +30899,11 @@
     ]
   },
   {
-    "key": "5hm1g6",
-    "check": "q3ne29ktgq",
-    "text": "Each kid puts one X above their number of pets.",
+    "key": "1pv7qkq",
+    "check": "2avsngw47nf",
+    "text": "Each kid puts one dot above their number of pets.",
     "style": "B",
-    "chars": 47,
+    "chars": 49,
     "kind": "beat",
     "sources": [
       "g6m7-t3 s4 b2"
@@ -30943,11 +30943,11 @@
     ]
   },
   {
-    "key": "bkz79o",
-    "check": "1el97f15nwa",
-    "text": "The tallest has five Xs, more than any other.",
+    "key": "1oxc2sw",
+    "check": "zc6d0it4v0",
+    "text": "The tallest has five dots, more than any other.",
     "style": "B",
-    "chars": 45,
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g6m7-t3 s5 b3"
@@ -31372,22 +31372,22 @@
     ]
   },
   {
-    "key": "ejl0ih",
-    "check": "2de6elrzb43",
-    "text": "Each X stands for one thing, and each bar counts everything in its group.",
+    "key": "x7w9d",
+    "check": "gy5rxvrg0q",
+    "text": "Each dot stands for one thing, and each bar counts everything in its group.",
     "style": "B",
-    "chars": 73,
+    "chars": 75,
     "kind": "beat",
     "sources": [
       "g6m7-t6 s3 b1 + g6m7-t6 bigIdea"
     ]
   },
   {
-    "key": "gchbuw",
-    "check": "1r7g6pj2zcv",
-    "text": "Look. Every X here is one kid.",
+    "key": "la7oqg",
+    "check": "2e57q35c5gt",
+    "text": "Look. Every dot here is one kid.",
     "style": "B",
-    "chars": 30,
+    "chars": 32,
     "kind": "beat",
     "sources": [
       "g6m7-t6 s4 b1"
@@ -31482,11 +31482,11 @@
     ]
   },
   {
-    "key": "1hfhki",
-    "check": "1iathdu4ha2",
-    "text": "thirty, forty and fifty give you three. Count the X's instead, and you get nine.",
+    "key": "1l0szoi",
+    "check": "1mirrwc508r",
+    "text": "thirty, forty and fifty give you three. Count the dots instead, and you get nine.",
     "style": "B+",
-    "chars": 80,
+    "chars": 81,
     "kind": "beat",
     "sources": [
       "g6m7-t6 s7 b3"
@@ -47740,11 +47740,11 @@
     ]
   },
   {
-    "key": "82d36",
-    "check": "1jgnrvb7y2y",
-    "text": "How many pets?. twelve kids said how many pets they have. Each X is one kid. Which number of pets is the most common?",
+    "key": "1kkrv6e",
+    "check": "2cvcc1jn9x1",
+    "text": "How many pets?. twelve kids said how many pets they have. Each dot is one kid. Which number of pets is the most common?",
     "style": "A",
-    "chars": 117,
+    "chars": 119,
     "kind": "screen1",
     "sources": [
       "g6m7-t3 s1"
@@ -48180,11 +48180,11 @@
     ]
   },
   {
-    "key": "9sywih",
-    "check": "1wa39poi0x9",
-    "text": "Which class grew taller plants?. Two classes each grew nine bean plants. Each X is one plant. Did one class grow taller plants?",
+    "key": "128npo1",
+    "check": "1p0v6fe9jgv",
+    "text": "Which class grew taller plants?. Two classes each grew nine bean plants. Each dot is one plant. Did one class grow taller plants?",
     "style": "A",
-    "chars": 127,
+    "chars": 129,
     "kind": "screen1",
     "sources": [
       "g7m5-t3 s1"
@@ -50875,11 +50875,11 @@
     ]
   },
   {
-    "key": "1759l1k",
-    "check": "orhmtp312w",
-    "text": "Now you try. Kids marked how many books they read this month. How many kids read three or more books? Find the stacks you need. Count their Xs and add.",
+    "key": "rzl1mo",
+    "check": "1vbpf9cubhf",
+    "text": "Now you try. Kids marked how many books they read this month. How many kids read three or more books? Find the stacks you need. Count their dots and add.",
     "style": "A",
-    "chars": 151,
+    "chars": 153,
     "kind": "turn",
     "sources": [
       "g6m7-t6 turn"
@@ -60049,11 +60049,11 @@
     ]
   },
   {
-    "key": "1mtlgyq",
-    "check": "16x64rc5fff",
-    "text": "Which stack of Xs is the tallest?",
+    "key": "1xzaoki",
+    "check": "10qyg1ufb8m",
+    "text": "Which stack of dots is the tallest?",
     "style": "A",
-    "chars": 33,
+    "chars": 35,
     "kind": "hint",
     "sources": [
       "g6m7-t3 hint1 + g6m7-t3 twin hint1"
@@ -60071,11 +60071,11 @@
     ]
   },
   {
-    "key": "74elpp",
-    "check": "bhqgholxyd",
-    "text": "Say the shoe size under that stack, not how many Xs it has.",
+    "key": "z350rp",
+    "check": "1s6ljyt5pbl",
+    "text": "Say the shoe size under that stack, not how many dots it has.",
     "style": "A",
-    "chars": 59,
+    "chars": 61,
     "kind": "hint",
     "sources": [
       "g6m7-t3 twin hint2"
@@ -60181,11 +60181,11 @@
     ]
   },
   {
-    "key": "9yjul9",
-    "check": "1029l6rtcks",
-    "text": "Count the Xs above three, four and five, then add them.",
+    "key": "xhdy5",
+    "check": "qe0suap0r1",
+    "text": "Count the dots above three, four and five, then add them.",
     "style": "A",
-    "chars": 55,
+    "chars": 57,
     "kind": "hint",
     "sources": [
       "g6m7-t6 hint2"
@@ -60203,11 +60203,11 @@
     ]
   },
   {
-    "key": "19lpvis",
-    "check": "yqz4gvvfdi",
-    "text": "Each X is one game. Count the Xs in those stacks and add.",
+    "key": "1627vl4",
+    "check": "1z6uq6w926z",
+    "text": "Each dot is one game. Count the dots in those stacks and add.",
     "style": "A",
-    "chars": 57,
+    "chars": 61,
     "kind": "hint",
     "sources": [
       "g6m7-t6 twin hint2"
@@ -71170,11 +71170,11 @@
     ]
   },
   {
-    "key": "8705nh",
-    "check": "l87g6jv9mc",
-    "text": "You found the stacks you needed and added their Xs.",
+    "key": "38p97h",
+    "check": "3iqeuc6jva",
+    "text": "You found the stacks you needed and added their dots.",
     "style": "A",
-    "chars": 51,
+    "chars": 53,
     "kind": "won",
     "sources": [
       "g6m7-t6 won"

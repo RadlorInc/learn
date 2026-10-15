@@ -1,8 +1,8 @@
 /**
  * g6m7-t6's chalkboards: index = screen index (0 is Screen 1, which has none).
- * The band's practice times: 2 kids at 10 minutes, 4 at 20, 5 at 30, 3 at 40, 1 at 50 (15 kids) — every ✕ drawn, one a kid.
+ * The band's practice times: 2 kids at 10 minutes, 4 at 20, 5 at 30, 3 at 40, 1 at 50 (15 kids) — every dot drawn, one a kid.
  * The groups: 0–9: 3, 10–19: 6, 20–29: 8, 30–39: 4, 40–49: 2 — every bar at its true height.
- * Colours across t6: white = the ✕s and bars, yellow = the count that answers, coral = the mistake, dim = labels.
+ * Colours across t6: white = the dots and bars, yellow = the count that answers, coral = the mistake, dim = labels.
  */
 import type { ChalkColor, ChalkMark } from '../../../chalk'
 import { write, line, box, wash, ring, cross, clock } from '../../../chalk'
@@ -13,12 +13,12 @@ const q = (m: ChalkMark): ChalkMark => ({ ...m, quick: true })
 const TIMES = ['10', '20', '30', '40', '50']
 const COUNT = [2, 4, 5, 3, 1]
 
-/** A plot of ✕s: the line at y, the times under it at xs, ✕s stacked `gap` apart. */
+/** A plot of dots: the line at y, the times under it at xs, dots stacked `gap` apart. */
 const plot = (xs: number[], y: number, gap: number, s = 24) => {
   const cy = (k: number) => y - gap * (k + 1) + gap * 0.2
   const x1 = (at: At, x: number, k: number, c: ChalkColor = 'w'): ChalkMark => {
-    const h = gap * 0.32, m = cy(k)
-    return q({ beat: at[0], at: at[1], c, d: `M${x - h} ${m - h} L${x + h} ${m + h} M${x + h} ${m - h} L${x - h} ${m + h}` })
+    const r = gap * 0.12, m = cy(k)
+    return q({ beat: at[0], at: at[1], c, w: r * 2.6, d: `M${x - r} ${m} a${r} ${r} 0 1 0 ${r * 2} 0 a${r} ${r} 0 1 0 ${-r * 2} 0` })
   }
   return {
     cy, x1,
@@ -46,7 +46,7 @@ export const T6: (ChalkMark[] | undefined)[] = [
     clock([1, 'slow'], 300, 110, 26), write([1, 'lose'], 'lost count?', 450, 110, 28, 'r'),
     ...(() => { const S = plot([160, 230, 300, 370, 440], 350, 22, 20); return [...S.axis([2, 'picture']), ...S.all([2, 'picture'])] })(),
   ],
-  // The big idea: one ✕ = one thing; one bar counts its whole group
+  // The big idea: one dot = one thing; one bar counts its whole group
   [
     ...(() => {
       const S = plot([110, 210], 330, 30)
@@ -54,17 +54,17 @@ export const T6: (ChalkMark[] | undefined)[] = [
         q({ beat: 0, at: 'Each', d: 'M50 330 H270 M110 330 v10 M210 330 v10' }),
         q(write([0, 'Each'], '30', 110, 358, 24, 'd')), q(write([0, 'Each'], '40', 210, 358, 24, 'd')),
         ...[0, 1, 2, 3, 4].map(k => S.x1([0, 'Each'], 110, k)), ...[0, 1, 2].map(k => S.x1([0, 'Each'], 210, k)),
-        ring([0, 'stands'], 110, S.cy(0), 18, 16, 'y'), write([0, 'thing'], '1 ✕ = 1 thing', 160, 90, 28, 'y'),
+        ring([0, 'stands'], 110, S.cy(0), 18, 16, 'y'), write([0, 'thing'], '1 dot = 1 thing', 160, 90, 28, 'y'),
       ]
     })(),
     line([0, 'bar'], [[330, 330], [560, 330]]), box([0, 'bar'], 395, 330 - 8 * 20, 100, 8 * 20),
     write([0, 'counts'], '8', 445, 145, 30, 'y'), write([0, 'group'], '20–29', 445, 358, 24, 'd'),
     wash([0, 'everything'], 395, 170, 100, 160, 'y'),
   ],
-  // Count the ✕s
+  // Count the dots
   [
     ...BIG.axis([0, 'Look']), ...BIG.all([0, 'Look']),
-    ring([0, 'kid'], 120, BIG.cy(0), 18, 16, 'y'), write([0, 'kid'], '1 ✕ = 1 kid', 300, 60, 30, 'y'),
+    ring([0, 'kid'], 120, BIG.cy(0), 18, 16, 'y'), write([0, 'kid'], '1 dot = 1 kid', 300, 60, 30, 'y'),
     BIG.top([1, '5'], 2), BIG.top([1, '3'], 3), BIG.top([1, '1'], 4),
   ],
   // Add the stacks you need

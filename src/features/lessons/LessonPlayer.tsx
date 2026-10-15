@@ -45,6 +45,10 @@ const HOLD_MS = 1500
  *  one: "10 − 5 = 5. 9 − 7 = 2." on one row reads as "5.9" (a tester, g6m3-t1, 8 Oct). Only how it is shown changes;
  *  what she says, its clip and the text a screen reader reads (the space stays) are the same line. */
 const sumLines = (say: string) => say.split(/(?<=\d\.) (?=[\d−])/)
+
+/** The Screen 9 sticker, one sentence a row: "The fair share is called the mean. Mean = total ÷ how many." run on
+ *  as one line hid the rule in the middle of it (a tester, g6m7-t1, 11 Oct). The text a screen reader reads is the same. */
+const stickerRows = (sticker: string) => sticker.split(/(?<=[.!?]) (?=\S)/)
 /** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.65 s.
  * History: ~0.8 s sounded generated, none at all (2026-09-19) ran the sentences together, ~0.45 s (300) was still
  * too quick for the founder (2026-09-24: "add a small pause between the sentences"). */
@@ -537,7 +541,8 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     picture = <div style={stage}>
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
       {w
-        ? <p data-sticker style={{ ...idea, alignSelf: 'center', boxShadow: `4px 4px 0 ${INK}`, transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' }}>⭐ {w.sticker}</p>
+        ? <p data-sticker style={{ ...idea, alignSelf: 'center', boxShadow: `4px 4px 0 ${INK}`, transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' }}>
+          {stickerRows(w.sticker).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : '⭐ '}{t}</span>)}</p>
         : <p style={idea}>{lesson.bigIdea}</p>}
     </div>
     if (w) { crumb = 'Screen 9 of 9'; if (!allDone) title = w.helped ? KEEP_GOING.title : w.title }

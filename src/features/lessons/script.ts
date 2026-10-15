@@ -49,7 +49,7 @@ export type Picture =
       circles?: { c: [number, number]; r: number; label?: string; show?: 'r' | 'd' }[]
       labels?: { at: [number, number]; text: string; size?: number; tone?: 1 | 2 }[] }
   | { kind: 'angle'; deg: number; parts?: number[]; partLabels?: (string | null)[]; protractor?: boolean; label?: string; motion?: boolean }
-  | { kind: 'chart'; type: 'bar' | 'picture' | 'dot' | 'hist'; labels: string[]; values: number[]; scale?: number; max?: number; unit?: string; key?: string; xLabel?: string; yLabel?: string; motion?: boolean }
+  | { kind: 'chart'; type: 'bar' | 'picture' | 'dot' | 'hist'; labels: string[]; /** type 'dot' only: filled dots (a Grade 6+ dot plot) instead of ✕s (a Grade 3–5 line plot). */ dots?: boolean; values: number[]; scale?: number; max?: number; unit?: string; key?: string; xLabel?: string; yLabel?: string; motion?: boolean }
   | { kind: 'plot'; points: [number, number][]; xMax: number; yMax: number; xStep?: number; yStep?: number; fit?: [[number, number], [number, number]]; xLabel?: string; yLabel?: string; motion?: boolean }
   | { kind: 'coord'; min: number; max: number; step?: number; points?: { x: number; y: number; label?: string }[];
       lines?: { a: [number, number]; b: [number, number]; extend?: boolean; dashed?: boolean; label?: string; tone?: 1 | 2 }[]; motion?: boolean }
