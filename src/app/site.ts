@@ -62,6 +62,9 @@ export function oldDomainRedirects(siteUrl: string = SITE_URL) {
  * file is `'use client'` and three of the four consumers are Server Components.
  */
 export const SUPPORT_EMAIL = 'support@radlor.com'
+/** Toll-free support line (founder, 2026-10-14). `SUPPORT_TEL` is the same number for `tel:` links. */
+export const SUPPORT_PHONE = '1-888-812-9373'
+export const SUPPORT_TEL = '+18888129373'
 
 /**
  * The company, and the ONE `@id` both properties use for it.

@@ -86,7 +86,7 @@ export default function AccountPage() {
       // ⚠️ A HONEST MESSAGE AND A SECOND DOOR, not a shrug. If the function is not in the database
       // yet the promise still stands — it is just being kept by a person instead of a button.
       : out.reason === 'not_deployed'   ? 'Account deletion is not switched on yet. Nothing has been deleted — '
-                                        + 'email support@radlor.com and we will delete it for you.'
+                                        + 'email support@radlor.com or call 1-888-812-9373 and we will delete it for you.'
       : `Something went wrong and nothing has been deleted. ${out.detail}`,
     )
   }

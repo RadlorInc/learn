@@ -111,10 +111,10 @@ for (const v of [{ name: 'desktop', phone: false, reduce: false }, { name: 'phon
     await expect.poll(() => onScreen(page).then(r => r?.asked)).toBe(1)   // moved on by itself
     for (let k = 2; k <= 4; k++) { await answerNotRight(page); expect(await filled(page)).toBe(k) }
     await answerNotRight(page)
-    await expect(page.getByRole('dialog')).toContainText('5 questions done!')
+    await expect(page.getByRole('dialog')).toContainText('Set complete! ⭐ 5 questions solved.')
     expect(await filled(page)).toBe(5)
     await page.screenshot({ path: `${SHOTS}/q1-checkpoint-${v.name}.png` })
-    await page.getByRole('dialog').getByRole('button', { name: 'Keep going' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'One more set' }).click()
     await expect(dots(page)).toHaveAttribute('aria-label', '0 questions done in this set')
     await dots(page).scrollIntoViewIfNeeded()
     await page.screenshot({ path: `${SHOTS}/q1-new-set-${v.name}.png` })

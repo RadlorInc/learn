@@ -30,7 +30,7 @@ import { CHAPTERS, type ChapterType } from '@/core/chapters'
 import { clipKey, clipCheck } from '@/core/voiceClips'
 import { PRAISE } from '@/core/praise'
 import { ENCOURAGEMENT } from '@/shared/hooks/useAdaptive'
-import { C } from '@/features/lessons/sessionCopy'
+import { doneLine } from '@/shared/ui/ChapterDone'
 import { CHAPTER_TAKE } from '@/features/chapters/story/take'
 import { speakable } from '@/features/lessons/content/voice/styles'
 import { Corpus, ORDER } from './_voiceCorpusKit'
@@ -64,7 +64,7 @@ it('builds the KG–2 chapter corpus for Josh', async () => {
   // enumerate them — so Home Time and Number Order counted in the device voice (review, 2026-09-27). MeasureIt's lay has
   // no cap: past 20 laid blocks there is no clip.
   const EVERYWHERE = new Set([...PRAISE, ...ENCOURAGEMENT.flat(), 'All done! Nice work.',
-    `${C.breakTitle(CHAPTER_TAKE).replace(' ⭐', '')} ${C.spotSaved}`, ...statics.map(l => l.text),
+    doneLine(CHAPTER_TAKE), ...statics.map(l => l.text),
     ...Array.from({ length: 21 }, (_, n) => String(n))].map(clipKey))
   for (const k of EVERYWHERE) if (!c.lines.has(k)) throw new Error(`EVERYWHERE line ${k} is not in the corpus`)
   const gradeOf = (id: string) => CHAPTERS.find(ch => ch.id === id)?.grade

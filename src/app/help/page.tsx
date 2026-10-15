@@ -10,7 +10,7 @@
  *
  * A Server Component — it is text and links.
  */
-import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
@@ -213,7 +213,8 @@ export default function HelpPage() {
         <div style={{ marginTop: 24, fontSize: 15, lineHeight: 1.6, color: P.ink2 }}>
           Still stuck? <SupportPanel label="Report a problem" /> — it opens an email to us with technical details about
           this device attached. Or write to{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>.
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>, or call{' '}
+          <a href={`tel:${SUPPORT_TEL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_PHONE}</a>.
         </div>
       </div>
       <HelpJsonLd />

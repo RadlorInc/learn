@@ -52,7 +52,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 
 | Who | Routes |
 |---|---|
-| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/` or BeatHop at `/beathop/`; [product/points.md](product/points.md)) |
+| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
@@ -83,6 +83,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
 | `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
+| `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open and every 30 s (`public/play-time.js`; [product/points.md](product/points.md)) |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -394,13 +395,14 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
 - **Seats fill themselves** (20261001150000): a new paid seat goes to the family's oldest child without one, and a
   child added later takes an empty seat; `reassign_learner_seat` (once per period) is still the only way to MOVE one.
 - **State (2026-10-01):** `BILLING_LIVE = true` (`src/app/legal/registry.ts`, the paid launch with beta legal pages):
-  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). On `main`, `src/infra/stripe.ts`
-  still accepts only `sk_test_` keys, so no deployment can take a real payment; Draft PR #351 pins the mode to the
-  deployment instead (live keys on Vercel Production only). `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
+  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). `src/infra/stripe.ts` pins the
+  key's mode to the deployment (#351): Vercel Production (`VERCEL_ENV=production`) accepts only `sk_live_`, everywhere
+  else only `sk_test_`; any other key throws. `scripts/stripe-products.mts --live` makes the live product and prices
+  (key from the environment only). `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
   topic through while off (`chapterGateOff`).
 - **On:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`; to gate
-  access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments also need the test-key guard
-  changed, a deliberate code change. Rollback: `billing_config.enforced = false` (no deploy), then `BILLING_LIVE = false`.
+  access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments need the live values of all four
+  in Vercel Production. Rollback: `billing_config.enforced = false` (no deploy), then `BILLING_LIVE = false`.
 
 ## 9. External services
 

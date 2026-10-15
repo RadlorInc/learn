@@ -69,7 +69,7 @@ Parent creates account
 > - Plan: Radlic Family
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
-> - You can cancel any time at **Account → Plan & billing** or by emailing support@radlor.com. Cancelling stops all future charges.
+> - You can cancel any time at **Account → Plan & billing** by emailing support@radlor.com or by calling 1-888-812-9373. Cancelling stops all future charges.
 > - Full terms: [Refund and Cancellation Policy](https://radlic.com/legal/refunds)
 
 **Checkbox — unticked by default, and the button must stay disabled until it is ticked:**

@@ -6,7 +6,7 @@
  * ⚠️ A SERVER COMPONENT, and exempt from `StorageGate`, so the fallback and the structured data are in the HTML with
  * no JavaScript. The `SoftwareApplication` block stays: the landing page declares the SAME `@id`, and the two merge.
  */
-import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, LANDING_URL, SUPPORT_EMAIL } from '@/app/site'
+import { APP_ID, APP_NAME, COMPANY, COMPANY_ID, COMPANY_URL, LANDING_URL, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import ResumeSignedIn from './ResumeSignedIn'
@@ -41,7 +41,7 @@ function AppJsonLd() {
         brand: { '@id': COMPANY_ID },
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       },
-      { '@type': 'Organization', '@id': COMPANY_ID, name: COMPANY, url: COMPANY_URL },
+      { '@type': 'Organization', '@id': COMPANY_ID, name: COMPANY, url: COMPANY_URL, telephone: SUPPORT_TEL },
     ],
   }
   return <script type="application/ld+json">{JSON.stringify(json)}</script>
@@ -78,6 +78,7 @@ export default function RootPage() {
         <Link href="/legal/privacy" style={tapRow}>Privacy</Link>
         <Link href="/legal/terms" style={tapRow}>Terms</Link>
         <a href={`mailto:${SUPPORT_EMAIL}`} style={tapRow}>{SUPPORT_EMAIL}</a>
+        <a href={`tel:${SUPPORT_TEL}`} style={tapRow}>{SUPPORT_PHONE}</a>
         <a href={COMPANY_URL} style={tapRow}>{APP_NAME} is made by {COMPANY}</a>
       </footer>
       <AppJsonLd />
