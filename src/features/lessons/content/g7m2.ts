@@ -353,10 +353,10 @@ export const G7M2: Lesson[] = [
     screens: [
       { title: 'Losing points every round', text: 'You lose 2 points in each round, for 3 rounds. How much has your score changed?',
         pictures: [{ kind: 'table', head: ['Round 1', 'Round 2', 'Round 3', 'Total'], rows: [['−2', '−2', '−2', '?']] }] },
-      { title: "What about two minus signs?", text: "Losing 2 points, 3 times, is 3 × (−2). That's 3 groups of −2. Now make the FIRST number negative too. What could −3 × (−2) mean? You can't make −3 groups of anything.",
+      { title: "What about two minus signs?", text: "Losing 2 points, 3 times, is 3 × (−2). That's 3 groups of −2. Now make the first number negative too. What could −3 × (−2) mean? You can't make −3 groups of anything.",
         beats: [
           { say: "Losing 2 points, 3 times, is 3 × (−2). That's 3 groups of −2.", pic: 0 },
-          { say: "Now make the FIRST number negative too. What could −3 × (−2) mean?" },
+          { say: "Now make the first number negative too. What could −3 × (−2) mean?" },
           { say: "You can't make −3 groups of anything." },
         ],
         pictures: [eq('3 × (−2) = ?', ['−3 × (−2) = ?'])] },
