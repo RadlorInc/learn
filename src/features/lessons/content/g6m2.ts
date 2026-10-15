@@ -53,9 +53,9 @@ export const G6M2: Lesson[] = [
     screens: [
       { title: 'Serving the lasagna', text: 'You have 3/4 of a pan of lasagna left. Each serving is 1/8 of the pan. How many servings can you cut?',
         pictures: [bars([frac(4, 3, '3/4')])] },
-      { title: 'Not a sharing problem', text: "Dividing usually means sharing. But you can't share lasagna with 1/8 of a person. So what does 3/4 ÷ 1/8 ask? How many 1/8 servings fit in 3/4.",
+      { title: 'Not a sharing problem', text: "Dividing usually means sharing. But does ÷ 1/8 mean sharing with 1/8 of a person? No, that makes no sense. So what does 3/4 ÷ 1/8 ask? How many 1/8 servings fit in 3/4.",
         beats: [
-          { say: "Dividing usually means sharing. But you can't share lasagna with 1/8 of a person.", pic: 0 },
+          { say: "Dividing usually means sharing. But does ÷ 1/8 mean sharing with 1/8 of a person? No, that makes no sense.", pic: 0 },
           { say: 'So what does 3/4 ÷ 1/8 ask? How many 1/8 servings fit in 3/4.' },
         ],
         pictures: [bars([frac(4, 3, '3/4'), frac(8, 1, '1/8')])] },

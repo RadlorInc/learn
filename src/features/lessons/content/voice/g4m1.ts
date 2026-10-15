@@ -135,4 +135,6 @@ export const G4M1_VOICE: Record<string, VoiceLine> = {
   'The library has 2,930 books now.': { style: 'B' },
   "Don't STOP after step 1.": { style: 'B+' },
   '3,750 is the count before any books go out. Keep going, to 2,930.': { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "> means greater than. < means less than.": { style: 'A', say: "The greater than sign means greater than. The less than sign means less than." },
 }

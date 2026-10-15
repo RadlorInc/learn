@@ -69,6 +69,7 @@ const T1: Level[] = [
   { style: 'missing exponent, work backwards', make: r => hidden(() => {
     const b = pick(r, BASES), a = int(r, 2, 9), m = int(r, 2, 9), t = a + m
     return { text: `Fill in the missing exponent: ${pw(b, a)} × ${b}^? = ${pw(b, t)}. What number goes in place of the ?`,
+      hint: 'Work backwards: the two exponents add up to the one on the right, so take away the one you know.',
       picture: eq(`${pw(b, a)} × ${b}^? = ${pw(b, t)}`), answer: m,
       steps: [`Same base, so the exponents add: ${a} + ? = ${t}.`, `Work backwards: ${t} − ${a} = ${m}.`, `So the missing exponent is ${m}.`] }
   }) },

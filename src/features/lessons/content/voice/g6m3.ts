@@ -9,11 +9,12 @@ import type { VoiceLine } from './styles'
 
 export const G6M3_VOICE: Record<string, VoiceLine> = {
   // ── g6m3-t1 ──
+  "To find how far is left, you subtract 3.875 from 12.5. But how do you line them up?": { style: 'B' },
   "Can you just line up the last digits? No.": { style: 'B' },
   "The 5 tenths would sit on top of the 5 thousandths.": { style: 'B' },
   "Those are different places.": { style: 'B' },
   "Line up the points, fill each empty place with a 0, then add or take away like whole numbers.": { style: 'B', say: "Line up the points, fill each empty place with a zero, then add or take away like whole numbers." },
-  "Give 12.5 three places, like 3.875. Write it 12.500.": { style: 'B', say: "Give twelve point five three places, like three point eight seven five. Write it twelve point five zero zero." },
+  "Put the points right above each other. 12.5 now has two empty places after its point, so fill them with zeros: 12.500.": { style: 'B', say: "Put the points right above each other. twelve point five now has two empty places after its point, so fill them with zeros: twelve point five zero zero." },
   "The zeros don't change how much it is.": { style: 'B' },
   "Start at the right. 0 − 5 won't go.": { style: 'B', say: "Start at the right. Zero minus 5 won't go." },
   "So trade 1 tenth. It makes 9 hundredths and 10 thousandths.": { style: 'B' },
@@ -60,7 +61,7 @@ export const G6M3_VOICE: Record<string, VoiceLine> = {
   "Put it straight above the point in 8.52.": { style: 'B', say: "Put it straight above the point in eight point five two." },
   "Do it first, and it can't get lost.": { style: 'B' },
   "Start on the left. How many 4s fit into 8? 2.": { style: 'B', say: "Start on the left. How many fours fit into 8? 2." },
-  "Write the 2 on top. 2 × 4 = 8, and 8 − 8 = 0.": { style: 'B' },
+  "Write the 2 on top. It goes before the point, because 8 is before the point. 2 × 4 = 8, and 8 − 8 = 0.": { style: 'B' },
   "Bring down the 5.": { style: 'B' },
   "4 fits into 5 one time. 5 − 4 = 1.": { style: 'B' },
   "Bring down the 2 to make 12. 4 fits into 12 three times, with nothing left.": { style: 'B' },
@@ -97,7 +98,7 @@ export const G6M3_VOICE: Record<string, VoiceLine> = {
   "Nobody knows 5,184 ÷ 24 by heart.": { style: 'B' },
   "And 24 isn't in the times tables.": { style: 'B' },
   "So how do we start? One small piece at a time.": { style: 'B' },
-  "Go one digit at a time: guess with a round number, then multiply, take away and bring down.": { style: 'B' },
+  "Go one digit at a time: round the number you divide by to the nearest ten to guess, then multiply, take away and bring down.": { style: 'B' },
   "24 won't fit into 5, so start with 51.": { style: 'B' },
   "Here's the trick: 24 is about 20, and 51 holds two 20s. So try 2.": { style: 'B', say: "Here's the trick, 24 is about 20, and 51 holds two twenties. So try 2." },
   "2 × 24 = 48, which fits.": { style: 'B' },

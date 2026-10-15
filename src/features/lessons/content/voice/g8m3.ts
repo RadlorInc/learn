@@ -121,4 +121,6 @@ export const G8M3_VOICE: Record<string, VoiceLine> = {
   'Then from hour 6 to hour 10 it goes down to 0, because Sam is riding home.': { style: 'B' },
   'The graph is NOT a picture of a hill.': { style: 'B+' },
   'Going down does not mean Sam rides downhill. It means he is getting closer to home.': { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "Writing a rule as f(x) is called function notation. Say it \"f of x\".": { style: 'A', say: "Writing a rule as f of x is called function notation. Say it f of x." },
 }

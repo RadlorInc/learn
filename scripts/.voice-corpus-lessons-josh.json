@@ -25003,11 +25003,11 @@
     ]
   },
   {
-    "key": "4wep36",
-    "check": "6mt7jty2gh",
-    "text": "Dividing usually means sharing. But you can't share lasagna with one eighth of a person.",
+    "key": "12pj1k0",
+    "check": "vd8lo1ohyo",
+    "text": "Dividing usually means sharing. But does dividing by one eighth mean sharing with one eighth of a person? No, that makes no sense.",
     "style": "B",
-    "chars": 88,
+    "chars": 130,
     "kind": "beat",
     "sources": [
       "g6m2-t1 s2 b1"
@@ -26048,6 +26048,17 @@
     ]
   },
   {
+    "key": "rg3gr0",
+    "check": "1c3ixkunien",
+    "text": "To find how far is left, you subtract three point eight seven five from twelve point five. But how do you line them up?",
+    "style": "B",
+    "chars": 119,
+    "kind": "beat",
+    "sources": [
+      "g6m3-t1 s2 b1"
+    ]
+  },
+  {
     "key": "18v970",
     "check": "k6bltn05ti",
     "text": "Can you just line up the last digits? No.",
@@ -26055,7 +26066,7 @@
     "chars": 41,
     "kind": "beat",
     "sources": [
-      "g6m3-t1 s2 b1"
+      "g6m3-t1 s2 b2"
     ]
   },
   {
@@ -26066,7 +26077,7 @@
     "chars": 57,
     "kind": "beat",
     "sources": [
-      "g6m3-t1 s2 b2"
+      "g6m3-t1 s2 b3"
     ]
   },
   {
@@ -26077,7 +26088,7 @@
     "chars": 27,
     "kind": "beat",
     "sources": [
-      "g6m3-t1 s2 b3"
+      "g6m3-t1 s2 b4"
     ]
   },
   {
@@ -26092,11 +26103,11 @@
     ]
   },
   {
-    "key": "hoqz28",
-    "check": "29p66a1qnnz",
-    "text": "Give twelve point five three places, like three point eight seven five. Write it twelve point five zero zero.",
+    "key": "173sk2h",
+    "check": "1jdxu6tutd1",
+    "text": "Put the points right above each other. twelve point five now has two empty places after its point, so fill them with zeros, twelve point five zero zero.",
     "style": "B",
-    "chars": 109,
+    "chars": 152,
     "kind": "beat",
     "sources": [
       "g6m3-t1 s4 b1"
@@ -26444,11 +26455,11 @@
     ]
   },
   {
-    "key": "1rzm41f",
-    "check": "1a3xcuskezv",
-    "text": "Write the two on top. two times four equals eight, and eight minus eight equals zero.",
+    "key": "12j1k10",
+    "check": "ccg9r6hrrg",
+    "text": "Write the two on top. It goes before the point, because eight is before the point. two times four equals eight, and eight minus eight equals zero.",
     "style": "B",
-    "chars": 85,
+    "chars": 146,
     "kind": "beat",
     "sources": [
       "g6m3-t3 s5 b2"
@@ -26719,11 +26730,11 @@
     ]
   },
   {
-    "key": "152fuvz",
-    "check": "e4p265b6c6",
-    "text": "Go one digit at a time, guess with a round number, then multiply, take away and bring down.",
+    "key": "1sw91l4",
+    "check": "287uf8snr5h",
+    "text": "Go one digit at a time, round the number you divide by to the nearest ten to guess, then multiply, take away and bring down.",
     "style": "B",
-    "chars": 91,
+    "chars": 124,
     "kind": "beat",
     "sources": [
       "g6m3-t5 s3 b1 + g6m3-t5 bigIdea"
@@ -28226,11 +28237,11 @@
     ]
   },
   {
-    "key": "1c2ilzc",
-    "check": "bwc616c27v",
-    "text": "n is a number, how many are in the bag.",
+    "key": "mql5ny",
+    "check": "blvek9jp0c",
+    "text": "n stands for a number, how many are in the bag. A letter like this is called a variable.",
     "style": "B+",
-    "chars": 39,
+    "chars": 88,
     "kind": "beat",
     "sources": [
       "g6m5-t1 s7 b3"
@@ -28391,11 +28402,11 @@
     ]
   },
   {
-    "key": "ej7zw8",
-    "check": "27nyciderzw",
-    "text": "No. While n is a letter, three n is not a number you know.",
+    "key": "2e58ed",
+    "check": "1dhqorbt3t",
+    "text": "No. While n is a letter, we don't know the value of three n yet.",
     "style": "B",
-    "chars": 58,
+    "chars": 64,
     "kind": "beat",
     "sources": [
       "g6m5-t3 s2 b2"
@@ -28633,11 +28644,11 @@
     ]
   },
   {
-    "key": "117yo29",
-    "check": "1lv0rb32zhk",
-    "text": "Two have names.",
+    "key": "2eqc3h",
+    "check": "1sp52d3m5l3",
+    "text": "Two powers have their own names.",
     "style": "B",
-    "chars": 15,
+    "chars": 32,
     "kind": "beat",
     "sources": [
       "g6m5-t4 s6 b1"
@@ -28677,11 +28688,11 @@
     ]
   },
   {
-    "key": "d88jfp",
-    "check": "27iil704gml",
-    "text": "It means four times four times four, which is sixty-four.",
+    "key": "1mb1jmt",
+    "check": "1e1hw2asw7m",
+    "text": "It means four multiplied by itself three times, four times four times four, which is sixty-four.",
     "style": "B+",
-    "chars": 57,
+    "chars": 96,
     "kind": "beat",
     "sources": [
       "g6m5-t4 s7 b3"
@@ -28699,14 +28710,25 @@
     ]
   },
   {
-    "key": "8vyvfo",
-    "check": "qfxp405z1s",
-    "text": "But is that right?",
+    "key": "174o79v",
+    "check": "ip4kucr9xp",
+    "text": "The other multiplies first, four squared is sixteen, three times sixteen is forty-eight, and two plus forty-eight is fifty.",
     "style": "B",
-    "chars": 18,
+    "chars": 123,
     "kind": "beat",
     "sources": [
       "g6m5-t5 s2 b2"
+    ]
+  },
+  {
+    "key": "1bj41k2",
+    "check": "lxppnqgs86",
+    "text": "Which way is right?",
+    "style": "B",
+    "chars": 19,
+    "kind": "beat",
+    "sources": [
+      "g6m5-t5 s2 b3"
     ]
   },
   {
@@ -28717,7 +28739,7 @@
     "chars": 22,
     "kind": "beat",
     "sources": [
-      "g6m5-t5 s2 b3"
+      "g6m5-t5 s2 b4"
     ]
   },
   {
@@ -28798,11 +28820,11 @@
     ]
   },
   {
-    "key": "1t15tlq",
-    "check": "24u4d12qyxm",
-    "text": "Now put parentheses around two plus three. They go first, five.",
+    "key": "z378l",
+    "check": "lwdklket90",
+    "text": "What if we put parentheses around two plus three? Does the answer change? They go first, five.",
     "style": "B",
-    "chars": 63,
+    "chars": 94,
     "kind": "beat",
     "sources": [
       "g6m5-t5 s6 b1"
@@ -30811,11 +30833,11 @@
     ]
   },
   {
-    "key": "1hiagkw",
-    "check": "11m0g0ufgwq",
-    "text": "Halfway between them is six and a half.",
+    "key": "9gokji",
+    "check": "1mgyhjhw8av",
+    "text": "Halfway between them is six and a half, add them and halve, six plus seven, divided by two.",
     "style": "B",
-    "chars": 39,
+    "chars": 91,
     "kind": "beat",
     "sources": [
       "g6m7-t2 s6 b4"
@@ -66902,6 +66924,28 @@
     ]
   },
   {
+    "key": "jwdeq2",
+    "check": "1zgkwm20ra3",
+    "text": "Equal groups equals multiplication. three times five means three groups of five.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g3m1-t1 sticker"
+    ]
+  },
+  {
+    "key": "q409xi",
+    "check": "2e5z7m3k0z6",
+    "text": "Equal groups equals multiplication. five times two means five groups of two.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g3m1-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "3y7qd5",
     "check": "1pr3vex29db",
     "text": "You counted the rows and one row, then multiplied. That is the whole trick.",
@@ -66910,6 +66954,17 @@
     "kind": "won",
     "sources": [
       "g3m1-t2 won + g3m1-t2 twinWon"
+    ]
+  },
+  {
+    "key": "jave07",
+    "check": "24uvmlqg9dj",
+    "text": "Equal rows equals an array.",
+    "style": "A",
+    "chars": 27,
+    "kind": "won",
+    "sources": [
+      "g3m1-t2 sticker + g3m1-t2 twinWon sticker"
     ]
   },
   {
@@ -66924,6 +66979,17 @@
     ]
   },
   {
+    "key": "1nuz3lw",
+    "check": "1pacg7wv2nq",
+    "text": "Turn-around facts equals the commutative property.",
+    "style": "A",
+    "chars": 50,
+    "kind": "won",
+    "sources": [
+      "g3m1-t3 sticker + g3m1-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "uah46k",
     "check": "159dsodak6u",
     "text": "You jumped a whole group at a time. Counting by jumps is multiplying.",
@@ -66932,6 +66998,28 @@
     "kind": "won",
     "sources": [
       "g3m1-t4 won + g3m1-t4 twinWon"
+    ]
+  },
+  {
+    "key": "2nsw0s",
+    "check": "mmo08pt8ak",
+    "text": "Skip counting by five equals the five times table.",
+    "style": "A",
+    "chars": 50,
+    "kind": "won",
+    "sources": [
+      "g3m1-t4 sticker"
+    ]
+  },
+  {
+    "key": "1wh840e",
+    "check": "1td3jsnfqs7",
+    "text": "Skip counting by ten equals the ten times table.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g3m1-t4 twinWon sticker"
     ]
   },
   {
@@ -66946,6 +67034,28 @@
     ]
   },
   {
+    "key": "1xk1v0a",
+    "check": "cy1ozvjswu",
+    "text": "Counting by threes and fours equals the three and four times tables.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g3m1-t5 sticker"
+    ]
+  },
+  {
+    "key": "1w6tehw",
+    "check": "23etufq90i0",
+    "text": "Counting by threes equals the three times table.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g3m1-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "bkeeup",
     "check": "1xs6wct8ejy",
     "text": "You shared the total fairly. That is division.",
@@ -66954,6 +67064,17 @@
     "kind": "won",
     "sources": [
       "g3m1-t6 won + g3m1-t6 twinWon"
+    ]
+  },
+  {
+    "key": "mfb55x",
+    "check": "1vv901qkqo8",
+    "text": "The divide sign means share into equal groups.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g3m1-t6 sticker + g3m1-t6 twinWon sticker"
     ]
   },
   {
@@ -66979,6 +67100,17 @@
     ]
   },
   {
+    "key": "aiyxnx",
+    "check": "oyxl9i5z8k",
+    "text": "Division also means, how many groups?",
+    "style": "A",
+    "chars": 37,
+    "kind": "won",
+    "sources": [
+      "g3m1-t7 sticker + g3m1-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "evbd1y",
     "check": "u87mlp9lyx",
     "text": "You used a times fact to find the missing number. That is the whole trick.",
@@ -66987,6 +67119,28 @@
     "kind": "won",
     "sources": [
       "g3m1-t8 won + g3m1-t8 twinWon"
+    ]
+  },
+  {
+    "key": "bqaf9t",
+    "check": "1ud927sr2j8",
+    "text": "three numbers, four facts equals a fact family.",
+    "style": "A",
+    "chars": 47,
+    "kind": "won",
+    "sources": [
+      "g3m1-t8 sticker"
+    ]
+  },
+  {
+    "key": "mr40rc",
+    "check": "29i2ko4y9lg",
+    "text": "Numbers that go together, like five, three and fifteen equals a fact family.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g3m1-t8 twinWon sticker"
     ]
   },
   {
@@ -67012,6 +67166,17 @@
     ]
   },
   {
+    "key": "bmjbk3",
+    "check": "2463jhz4e7q",
+    "text": "The long hand is the minute hand. It counts by fives.",
+    "style": "A",
+    "chars": 53,
+    "kind": "won",
+    "sources": [
+      "g3m2-t1 sticker + g3m2-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1xu9dqm",
     "check": "1kilo6gm117",
     "text": "You counted by fives, then by ones, to the exact minute.",
@@ -67031,6 +67196,17 @@
     "kind": "won",
     "sources": [
       "g3m2-t2 twinWon"
+    ]
+  },
+  {
+    "key": "m2d2ko",
+    "check": "1p0n24oe7z2",
+    "text": "Each little mark on the clock is one minute.",
+    "style": "A",
+    "chars": 44,
+    "kind": "won",
+    "sources": [
+      "g3m2-t2 sticker + g3m2-t2 twinWon sticker"
     ]
   },
   {
@@ -67056,6 +67232,17 @@
     ]
   },
   {
+    "key": "17ijfm9",
+    "check": "8hky4slzxu",
+    "text": "The time from start to end is called elapsed time.",
+    "style": "A",
+    "chars": 50,
+    "kind": "won",
+    "sources": [
+      "g3m2-t3 sticker + g3m2-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "kp1v5b",
     "check": "qrk1na9ihw",
     "text": "You found what one mark is worth and counted to the needle.",
@@ -67075,6 +67262,17 @@
     "kind": "won",
     "sources": [
       "g3m2-t4 twinWon"
+    ]
+  },
+  {
+    "key": "ug3g0j",
+    "check": "1x5qwqbddpi",
+    "text": "How heavy something is is called its mass.",
+    "style": "A",
+    "chars": 42,
+    "kind": "won",
+    "sources": [
+      "g3m2-t4 sticker + g3m2-t4 twinWon sticker"
     ]
   },
   {
@@ -67100,6 +67298,17 @@
     ]
   },
   {
+    "key": "5veh1h",
+    "check": "12tcctgav3s",
+    "text": "How much liquid a container holds is called its liquid volume.",
+    "style": "A",
+    "chars": 62,
+    "kind": "won",
+    "sources": [
+      "g3m2-t5 sticker + g3m2-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "1oxetf5",
     "check": "2cwqjkv05gz",
     "text": "You found the two tens and picked the closer one.",
@@ -67119,6 +67328,17 @@
     "kind": "won",
     "sources": [
       "g3m2-t6 twinWon"
+    ]
+  },
+  {
+    "key": "7uly8u",
+    "check": "i2qrrtg9ox",
+    "text": "The middle between two tens is called the halfway point. It rounds up.",
+    "style": "A",
+    "chars": 70,
+    "kind": "won",
+    "sources": [
+      "g3m2-t6 sticker + g3m2-t6 twinWon sticker"
     ]
   },
   {
@@ -67144,6 +67364,17 @@
     ]
   },
   {
+    "key": "xtb1gt",
+    "check": "284zsoj7tjr",
+    "text": "A rounded number is an estimate, close to the real number, and easy to use.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g3m2-t7 sticker + g3m2-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "14j1mci",
     "check": "86cq4se3va",
     "text": "You added the ones first and traded ten ones for a ten.",
@@ -67163,6 +67394,17 @@
     "kind": "won",
     "sources": [
       "g3m2-t8 twinWon"
+    ]
+  },
+  {
+    "key": "q9cofo",
+    "check": "cplao9l9q0",
+    "text": "Trading ten ones for one ten is called regrouping.",
+    "style": "A",
+    "chars": 50,
+    "kind": "won",
+    "sources": [
+      "g3m2-t8 sticker + g3m2-t8 twinWon sticker"
     ]
   },
   {
@@ -67188,6 +67430,17 @@
     ]
   },
   {
+    "key": "1oub0b2",
+    "check": "178vw3q8um0",
+    "text": "Breaking one ten into ten ones is also called regrouping.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g3m2-t9 sticker + g3m2-t9 twinWon sticker"
+    ]
+  },
+  {
     "key": "137ddlf",
     "check": "1e4pndwwh6",
     "text": "You saw that empty plates hold no cookies, however many plates there are.",
@@ -67207,6 +67460,17 @@
     "kind": "won",
     "sources": [
       "g3m3-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1yptx4r",
+    "check": "tuz3zj9qp0",
+    "text": "Any number times zero equals zero. This is the zero property of multiplication.",
+    "style": "A",
+    "chars": 79,
+    "kind": "won",
+    "sources": [
+      "g3m3-t1 sticker + g3m3-t1 twinWon sticker"
     ]
   },
   {
@@ -67232,6 +67496,17 @@
     ]
   },
   {
+    "key": "2wjw46",
+    "check": "29erk1203lu",
+    "text": "Any number times one equals that number. This is the identity property of multiplication.",
+    "style": "A",
+    "chars": 89,
+    "kind": "won",
+    "sources": [
+      "g3m3-t2 sticker + g3m3-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "gqy0d3",
     "check": "cekuas89at",
     "text": "You used a fives fact you know, then added one more group.",
@@ -67251,6 +67526,28 @@
     "kind": "won",
     "sources": [
       "g3m3-t3 twinWon"
+    ]
+  },
+  {
+    "key": "103j2gy",
+    "check": "22wtzb8ikm",
+    "text": "six groups equals five groups and one more group. That is the six times table.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g3m3-t3 sticker"
+    ]
+  },
+  {
+    "key": "13r7qk4",
+    "check": "qmzgndpvg5",
+    "text": "six groups equals five groups and one more group.",
+    "style": "A",
+    "chars": 49,
+    "kind": "won",
+    "sources": [
+      "g3m3-t3 twinWon sticker"
     ]
   },
   {
@@ -67276,6 +67573,28 @@
     ]
   },
   {
+    "key": "3oc89i",
+    "check": "15vd3aeo44p",
+    "text": "seven groups equals five groups plus two groups. That is the seven times table.",
+    "style": "A",
+    "chars": 79,
+    "kind": "won",
+    "sources": [
+      "g3m3-t4 sticker"
+    ]
+  },
+  {
+    "key": "1rddz33",
+    "check": "26ap6dg2pnv",
+    "text": "seven groups equals five groups plus two groups.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g3m3-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "8v2b7g",
     "check": "1unc65e5k5h",
     "text": "You found four groups, then doubled it to get eight groups.",
@@ -67295,6 +67614,28 @@
     "kind": "won",
     "sources": [
       "g3m3-t5 twinWon"
+    ]
+  },
+  {
+    "key": "16t2ts1",
+    "check": "qmqcdrq5ze",
+    "text": "Double the fours to get the eights. That is the eight times table.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g3m3-t5 sticker"
+    ]
+  },
+  {
+    "key": "g9upjc",
+    "check": "fqfweg4b1r",
+    "text": "eight times five is double four times five.",
+    "style": "A",
+    "chars": 43,
+    "kind": "won",
+    "sources": [
+      "g3m3-t5 twinWon sticker"
     ]
   },
   {
@@ -67320,6 +67661,28 @@
     ]
   },
   {
+    "key": "75h7b3",
+    "check": "tq0l8f92ir",
+    "text": "nine groups equals ten groups take away one group. That is the nine times table.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g3m3-t6 sticker"
+    ]
+  },
+  {
+    "key": "1n1qrxu",
+    "check": "27fmx6lng49",
+    "text": "nine times six is ten times six take away six.",
+    "style": "A",
+    "chars": 46,
+    "kind": "won",
+    "sources": [
+      "g3m3-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1ore80y",
     "check": "2273rod1lsl",
     "text": "You broke a big fact into two smaller facts and added them.",
@@ -67339,6 +67702,17 @@
     "kind": "won",
     "sources": [
       "g3m3-t7 twinWon"
+    ]
+  },
+  {
+    "key": "2bspdi",
+    "check": "kvxhe2iqg7",
+    "text": "Breaking a fact apart is called the distributive property.",
+    "style": "A",
+    "chars": 58,
+    "kind": "won",
+    "sources": [
+      "g3m3-t7 sticker + g3m3-t7 twinWon sticker"
     ]
   },
   {
@@ -67364,6 +67738,28 @@
     ]
   },
   {
+    "key": "d1zn6o",
+    "check": "1ewa742ie0y",
+    "text": "Numbers like forty and fifty are called multiples of ten.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g3m3-t8 sticker"
+    ]
+  },
+  {
+    "key": "9xg6k1",
+    "check": "mlifjzpwr4",
+    "text": "Numbers like twenty and eighty are called multiples of ten.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g3m3-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "18of29c",
     "check": "sawd96pewa",
     "text": "You answered the hidden question first, then the real one.",
@@ -67383,6 +67779,17 @@
     "kind": "won",
     "sources": [
       "g3m3-t9 twinWon"
+    ]
+  },
+  {
+    "key": "1xaq6mw",
+    "check": "1giwtltixou",
+    "text": "A story with two steps is called a two-step word problem.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g3m3-t9 sticker + g3m3-t9 twinWon sticker"
     ]
   },
   {
@@ -67408,6 +67815,17 @@
     ]
   },
   {
+    "key": "y3qcou",
+    "check": "1ut7ep53xqr",
+    "text": "The space a shape covers is its area. Each tile is a square unit.",
+    "style": "A",
+    "chars": 65,
+    "kind": "won",
+    "sources": [
+      "g3m4-t1 sticker + g3m4-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1dwwmjt",
     "check": "9vpfd1we4k",
     "text": "You multiplied the rows by the tiles in a row. That is the area.",
@@ -67427,6 +67845,17 @@
     "kind": "won",
     "sources": [
       "g3m4-t2 twinWon"
+    ]
+  },
+  {
+    "key": "f4rer9",
+    "check": "25nuryvsyeq",
+    "text": "For a rectangle, area equals length times width.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g3m4-t2 sticker + g3m4-t2 twinWon sticker"
     ]
   },
   {
@@ -67452,6 +67881,17 @@
     ]
   },
   {
+    "key": "12p0064",
+    "check": "29pjitqt3pu",
+    "text": "Breaking a times fact into two easier facts is called the distributive property.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g3m4-t3 sticker + g3m4-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "14c15q2",
     "check": "bubi97k0jx",
     "text": "You cut the L into two rectangles, found each area, and added.",
@@ -67471,6 +67911,17 @@
     "kind": "won",
     "sources": [
       "g3m4-t4 twinWon"
+    ]
+  },
+  {
+    "key": "1d42wwc",
+    "check": "hyqwxm8d9p",
+    "text": "A shape made of smaller shapes is a composite shape. Its area is the parts added together.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g3m4-t4 sticker + g3m4-t4 twinWon sticker"
     ]
   },
   {
@@ -67496,6 +67947,17 @@
     ]
   },
   {
+    "key": "1od6m2z",
+    "check": "fyz2apupfa",
+    "text": "Pieces that are all the same size are called equal parts.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g3m5-t1 sticker + g3m5-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1qey76d",
     "check": "1uf53cg7sgv",
     "text": "You counted the equal pieces for the bottom and the shaded piece for the top.",
@@ -67515,6 +67977,28 @@
     "kind": "won",
     "sources": [
       "g3m5-t2 twinWon"
+    ]
+  },
+  {
+    "key": "e8qrb8",
+    "check": "1d65ml3mbrg",
+    "text": "One equal piece, like one sixth, is called a unit fraction.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g3m5-t2 sticker"
+    ]
+  },
+  {
+    "key": "5xdbkb",
+    "check": "1h074078biu",
+    "text": "One equal piece, like one third, is called a unit fraction.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g3m5-t2 twinWon sticker"
     ]
   },
   {
@@ -67540,6 +68024,17 @@
     ]
   },
   {
+    "key": "1l9ovf",
+    "check": "1y9sfs41qww",
+    "text": "The top number is called the numerator. It counts the pieces you have.",
+    "style": "A",
+    "chars": 70,
+    "kind": "won",
+    "sources": [
+      "g3m5-t3 sticker + g3m5-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "r3nrsv",
     "check": "jz4nnhgo6f",
     "text": "You counted the equal jumps in the whole, then the jumps to the dot.",
@@ -67559,6 +68054,17 @@
     "kind": "won",
     "sources": [
       "g3m5-t4 twinWon"
+    ]
+  },
+  {
+    "key": "e0z6xj",
+    "check": "8qbww8fv18",
+    "text": "A fraction is a number. It has its own place on the number line.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g3m5-t4 sticker + g3m5-t4 twinWon sticker"
     ]
   },
   {
@@ -67584,6 +68090,17 @@
     ]
   },
   {
+    "key": "y1p955",
+    "check": "1z5jxmvz34y",
+    "text": "Fractions that cover the same amount are called equivalent fractions.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g3m5-t5 sticker + g3m5-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "mj62u4",
     "check": "h37p7xb0lp",
     "text": "You saw that all six of the six pieces make one whole.",
@@ -67603,6 +68120,28 @@
     "kind": "won",
     "sources": [
       "g3m5-t6 twinWon"
+    ]
+  },
+  {
+    "key": "12cyjmc",
+    "check": "1jg5gtlah4j",
+    "text": "A fraction with the same top and bottom number is equal to one whole.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g3m5-t6 sticker"
+    ]
+  },
+  {
+    "key": "wkl3ma",
+    "check": "286xus1nfxs",
+    "text": "A fraction like three thirds, with the same top and bottom number, is equal to one whole.",
+    "style": "A",
+    "chars": 89,
+    "kind": "won",
+    "sources": [
+      "g3m5-t6 twinWon sticker"
     ]
   },
   {
@@ -67628,6 +68167,28 @@
     ]
   },
   {
+    "key": "o5durd",
+    "check": "1k0pq7n2plp",
+    "text": "The greater than sign means is greater than. five sixths is greater than two sixths.",
+    "style": "A",
+    "chars": 84,
+    "kind": "won",
+    "sources": [
+      "g3m5-t7 sticker"
+    ]
+  },
+  {
+    "key": "1ip0zyc",
+    "check": "20infde47gd",
+    "text": "When the bottom numbers match, the bigger top number is the bigger fraction.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g3m5-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "v7utec",
     "check": "1fkbp6rhjd6",
     "text": "You took the same number of pieces and picked the bigger pieces.",
@@ -67647,6 +68208,17 @@
     "kind": "won",
     "sources": [
       "g3m5-t8 twinWon"
+    ]
+  },
+  {
+    "key": "1ilcbk3",
+    "check": "2cxmrv44jex",
+    "text": "Same top number, the smaller bottom number is the bigger fraction.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g3m5-t8 sticker + g3m5-t8 twinWon sticker"
     ]
   },
   {
@@ -67672,6 +68244,17 @@
     ]
   },
   {
+    "key": "mbdcfv",
+    "check": "zaf4abjgkw",
+    "text": "Each picture stands for two. That number is the scale of the graph.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g3m6-t1 sticker + g3m6-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "axxbv1",
     "check": "ye7d699uwy",
     "text": "You read each bar across to the side, then found how many more.",
@@ -67691,6 +68274,17 @@
     "kind": "won",
     "sources": [
       "g3m6-t2 twinWon"
+    ]
+  },
+  {
+    "key": "1n0ldsf",
+    "check": "1zs2gl9j908",
+    "text": "The numbers up the side are the scale of a bar graph.",
+    "style": "A",
+    "chars": 53,
+    "kind": "won",
+    "sources": [
+      "g3m6-t2 sticker + g3m6-t2 twinWon sticker"
     ]
   },
   {
@@ -67716,6 +68310,28 @@
     ]
   },
   {
+    "key": "rbm79",
+    "check": "2b156c3hj4v",
+    "text": "Half inch and quarter inch marks let us measure between whole inches.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g3m6-t3 sticker"
+    ]
+  },
+  {
+    "key": "cyijfu",
+    "check": "1gvfwvw8oxg",
+    "text": "A quarter inch is one fourth of an inch.",
+    "style": "A",
+    "chars": 40,
+    "kind": "won",
+    "sources": [
+      "g3m6-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "1set8r",
     "check": "21cqn9xoaud",
     "text": "You found the lengths shorter than two inches, then counted their Xs.",
@@ -67735,6 +68351,17 @@
     "kind": "won",
     "sources": [
       "g3m6-t4 twinWon"
+    ]
+  },
+  {
+    "key": "clj2f2",
+    "check": "1y8gud039jy",
+    "text": "A number line with an X for each measurement is called a line plot.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g3m6-t4 sticker + g3m6-t4 twinWon sticker"
     ]
   },
   {
@@ -67760,6 +68387,28 @@
     ]
   },
   {
+    "key": "1c18j05",
+    "check": "juqsq6sbln",
+    "text": "Any shape with four sides is a quadrilateral. A shape with four equal sides is a rhombus.",
+    "style": "A",
+    "chars": 89,
+    "kind": "won",
+    "sources": [
+      "g3m6-t5 sticker"
+    ]
+  },
+  {
+    "key": "yzl1ny",
+    "check": "1d3qieng21i",
+    "text": "A shape with four equal sides is a rhombus. Squares, rectangles and rhombuses are all quadrilaterals.",
+    "style": "A",
+    "chars": 101,
+    "kind": "won",
+    "sources": [
+      "g3m6-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "1gybw4b",
     "check": "17s4727lsqy",
     "text": "You walked all the way around and added every side.",
@@ -67779,6 +68428,17 @@
     "kind": "won",
     "sources": [
       "g3m6-t6 twinWon"
+    ]
+  },
+  {
+    "key": "btl3fk",
+    "check": "1jt6hf2dlfj",
+    "text": "The distance around a shape is called its perimeter.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g3m6-t6 sticker + g3m6-t6 twinWon sticker"
     ]
   },
   {
@@ -67804,6 +68464,17 @@
     ]
   },
   {
+    "key": "8y1uq9",
+    "check": "1opdnjewrkd",
+    "text": "The fence around is the perimeter. The squares inside are the area.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g3m6-t7 sticker + g3m6-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "mibpz7",
     "check": "1w6lu5jat8i",
     "text": "You wrote the thousands group, then three digits after the comma.",
@@ -67823,6 +68494,17 @@
     "kind": "won",
     "sources": [
       "g4m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "ylugea",
+    "check": "1ntaz2dhenv",
+    "text": "What a digit is worth depends on its place. That is called place value.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g4m1-t1 sticker + g4m1-t1 twinWon sticker"
     ]
   },
   {
@@ -67848,6 +68530,17 @@
     ]
   },
   {
+    "key": "1qzr0fq",
+    "check": "gp0dgjjhtq",
+    "text": "Each place is worth ten times the place to its right. That is how place value works.",
+    "style": "A",
+    "chars": 84,
+    "kind": "won",
+    "sources": [
+      "g4m1-t2 sticker + g4m1-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1e55rob",
     "check": "18dslghcaxz",
     "text": "You lined up the places and let the first different digit decide.",
@@ -67867,6 +68560,17 @@
     "kind": "won",
     "sources": [
       "g4m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1v06kc6",
+    "check": "1u5u7ney0i3",
+    "text": "The greater than sign means greater than. The less than sign means less than.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g4m1-t3 sticker + g4m1-t3 twinWon sticker"
     ]
   },
   {
@@ -67892,6 +68596,17 @@
     ]
   },
   {
+    "key": "1g2ohm3",
+    "check": "23epffirmrl",
+    "text": "Rounding means going to the closer round number. The digit to the right decides.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g4m1-t4 sticker + g4m1-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1nifvjs",
     "check": "1zftib5022x",
     "text": "You added one place at a time and carried when you had to.",
@@ -67911,6 +68626,17 @@
     "kind": "won",
     "sources": [
       "g4m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "2a4ab1",
+    "check": "281a903g9hw",
+    "text": "Carrying to the next place is called regrouping. This way of adding is the standard algorithm.",
+    "style": "A",
+    "chars": 94,
+    "kind": "won",
+    "sources": [
+      "g4m1-t5 sticker + g4m1-t5 twinWon sticker"
     ]
   },
   {
@@ -67936,6 +68662,17 @@
     ]
   },
   {
+    "key": "2n363u",
+    "check": "1zksane2cog",
+    "text": "Breaking a bigger place into smaller ones is called regrouping.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g4m1-t6 sticker + g4m1-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "l1rc0x",
     "check": "255at8hoijf",
     "text": "You rounded first, so the math was easy to do in your head.",
@@ -67955,6 +68692,17 @@
     "kind": "won",
     "sources": [
       "g4m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "cxoej8",
+    "check": "n6f988bes4",
+    "text": "An answer that is about right is called an estimate.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g4m1-t7 sticker + g4m1-t7 twinWon sticker"
     ]
   },
   {
@@ -67980,6 +68728,17 @@
     ]
   },
   {
+    "key": "1snqp9f",
+    "check": "29k6vidvx89",
+    "text": "A story that needs two steps is a two-step problem. The bar drawing is a tape diagram.",
+    "style": "A",
+    "chars": 86,
+    "kind": "won",
+    "sources": [
+      "g4m1-t8 sticker + g4m1-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1jpg2la",
     "check": "17corgwlzqa",
     "text": "You made copies of the smaller amount, then multiplied.",
@@ -67999,6 +68758,17 @@
     "kind": "won",
     "sources": [
       "g4m2-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1utvj73",
+    "check": "1qglc9phwsb",
+    "text": "Times as many is a multiplying comparison. You multiply, you do not add.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g4m2-t1 sticker + g4m2-t1 twinWon sticker"
     ]
   },
   {
@@ -68024,6 +68794,17 @@
     ]
   },
   {
+    "key": "ixs7uf",
+    "check": "10p197noimy",
+    "text": "Numbers that multiply to make a number are its factors. Each rectangle shows a factor pair.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g4m2-t2 sticker + g4m2-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1pwpz1g",
     "check": "uak3gkryew",
     "text": "You tried rows until you found a second rectangle.",
@@ -68043,6 +68824,17 @@
     "kind": "won",
     "sources": [
       "g4m2-t3 twinWon"
+    ]
+  },
+  {
+    "key": "uwc1eg",
+    "check": "1t1sxg7l63y",
+    "text": "A number whose only factors are one and itself is prime. A number with more factors is composite.",
+    "style": "A",
+    "chars": 97,
+    "kind": "won",
+    "sources": [
+      "g4m2-t3 sticker + g4m2-t3 twinWon sticker"
     ]
   },
   {
@@ -68068,6 +68860,28 @@
     ]
   },
   {
+    "key": "19h3xbp",
+    "check": "adsknvgcu",
+    "text": "The numbers you land on when you count by three are the multiples of three.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g4m2-t4 sticker"
+    ]
+  },
+  {
+    "key": "1cab6gf",
+    "check": "ga4skvor1p",
+    "text": "The numbers you land on when you count by six are the multiples of six.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g4m2-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "4owj7k",
     "check": "eyhgwvvoht",
     "text": "You moved each digit two places to the left.",
@@ -68087,6 +68901,17 @@
     "kind": "won",
     "sources": [
       "g4m2-t5 twinWon"
+    ]
+  },
+  {
+    "key": "jmk59l",
+    "check": "1c5mpy36jtw",
+    "text": "Each place is ten times the place to its right. That is why the digits move left.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g4m2-t5 sticker + g4m2-t5 twinWon sticker"
     ]
   },
   {
@@ -68112,6 +68937,28 @@
     ]
   },
   {
+    "key": "12a55ll",
+    "check": "1xcmorasw2a",
+    "text": "Numbers like thirty and forty are multiples of ten. Multiply the tens, then say how many tens.",
+    "style": "A",
+    "chars": 94,
+    "kind": "won",
+    "sources": [
+      "g4m2-t6 sticker"
+    ]
+  },
+  {
+    "key": "1y4yjow",
+    "check": "1cd6rawmpfp",
+    "text": "Think in tens, forty is four tens, so multiply the four, then write the tens.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g4m2-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1xgly5t",
     "check": "2awbzm9omzk",
     "text": "You shared the tens, then wrote the tens as a number.",
@@ -68131,6 +68978,17 @@
     "kind": "won",
     "sources": [
       "g4m2-t7 twinWon"
+    ]
+  },
+  {
+    "key": "15mh23s",
+    "check": "1ict0phihnr",
+    "text": "The answer to a division is called the quotient.",
+    "style": "A",
+    "chars": 48,
+    "kind": "won",
+    "sources": [
+      "g4m2-t7 sticker + g4m2-t7 twinWon sticker + g5m3-t7 sticker + g5m3-t7 twinWon sticker + g6m2-t4 sticker + g6m2-t4 twinWon sticker"
     ]
   },
   {
@@ -68156,6 +69014,17 @@
     ]
   },
   {
+    "key": "18pm27n",
+    "check": "ijwkf3zdmq",
+    "text": "What is left over is called the remainder. The number of full groups is the quotient.",
+    "style": "A",
+    "chars": 85,
+    "kind": "won",
+    "sources": [
+      "g4m2-t8 sticker + g4m2-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1efci1j",
     "check": "1wm82e9qcuk",
     "text": "You broke the big number into tens and ones, multiplied each part, and added.",
@@ -68175,6 +69044,17 @@
     "kind": "won",
     "sources": [
       "g4m3-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1kwge3m",
+    "check": "y1pq2271rb",
+    "text": "Breaking a number apart to multiply is called the distributive property.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g4m3-t1 sticker + g4m3-t1 twinWon sticker"
     ]
   },
   {
@@ -68200,6 +69080,17 @@
     ]
   },
   {
+    "key": "p9ns9a",
+    "check": "rmtnhjqhaz",
+    "text": "Each part you multiply and add is called a partial product.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g4m3-t2 sticker + g4m3-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "19ry957",
     "check": "1kqyl7afaug",
     "text": "You went place by place from the ones, and you added every carry.",
@@ -68219,6 +69110,17 @@
     "kind": "won",
     "sources": [
       "g4m3-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1nayg5e",
+    "check": "22csa8llueh",
+    "text": "This step-by-step way to multiply in columns is called the standard algorithm.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g4m3-t3 sticker + g4m3-t3 twinWon sticker"
     ]
   },
   {
@@ -68244,6 +69146,17 @@
     ]
   },
   {
+    "key": "1be91co",
+    "check": "1viqwqnzz8w",
+    "text": "Each of the four pieces is a partial product. This drawing is called an area model.",
+    "style": "A",
+    "chars": 83,
+    "kind": "won",
+    "sources": [
+      "g4m3-t4 sticker + g4m3-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1juhffi",
     "check": "1chj2c6u09f",
     "text": "You broke the number into easy parts, shared each one, and added.",
@@ -68263,6 +69176,28 @@
     "kind": "won",
     "sources": [
       "g4m3-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1qli4m4",
+    "check": "26xn8mu0itf",
+    "text": "In ninety-six divided by three equals thirty-two, ninety-six is the dividend, three is the divisor and thirty-two is the quotient.",
+    "style": "A",
+    "chars": 130,
+    "kind": "won",
+    "sources": [
+      "g4m3-t5 sticker"
+    ]
+  },
+  {
+    "key": "1kul4im",
+    "check": "14xi6qld5el",
+    "text": "In sixty-eight divided by two equals thirty-four, sixty-eight is the dividend, two is the divisor and thirty-four is the quotient.",
+    "style": "A",
+    "chars": 130,
+    "kind": "won",
+    "sources": [
+      "g4m3-t5 twinWon sticker"
     ]
   },
   {
@@ -68288,6 +69223,17 @@
     ]
   },
   {
+    "key": "v8z0bc",
+    "check": "1u66uvu3zns",
+    "text": "Dividing one place at a time like this is called long division.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g4m3-t6 sticker + g4m3-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "bvo9j1",
     "check": "21xvg0xmkh2",
     "text": "You divided, then read the question to decide what the leftover meant.",
@@ -68307,6 +69253,17 @@
     "kind": "won",
     "sources": [
       "g4m3-t7 twinWon"
+    ]
+  },
+  {
+    "key": "1x45bbf",
+    "check": "1eyn1m1v5iw",
+    "text": "What is left over after you divide is called the remainder.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g4m3-t7 sticker + g4m3-t7 twinWon sticker"
     ]
   },
   {
@@ -68332,6 +69289,17 @@
     ]
   },
   {
+    "key": "6v4baz",
+    "check": "xqpagdfqus",
+    "text": "A story that needs more than one step is a multi-step problem.",
+    "style": "A",
+    "chars": 62,
+    "kind": "won",
+    "sources": [
+      "g4m3-t8 sticker + g4m3-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1sred76",
     "check": "rav3se695a",
     "text": "You cut every piece the same way and multiplied the top and the bottom.",
@@ -68351,6 +69319,17 @@
     "kind": "won",
     "sources": [
       "g4m4-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1pavqcz",
+    "check": "afufxmzsuq",
+    "text": "Fractions that name the same amount are called equivalent fractions.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g4m4-t1 sticker + g4m4-t1 twinWon sticker"
     ]
   },
   {
@@ -68376,6 +69355,17 @@
     ]
   },
   {
+    "key": "18kmlvz",
+    "check": "1zszbhzrt3w",
+    "text": "A number you compare against, like one half, is called a benchmark.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g4m4-t2 sticker + g4m4-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "v028v5",
     "check": "14re8gtwbgp",
     "text": "You made the pieces match, then compared the tops.",
@@ -68395,6 +69385,17 @@
     "kind": "won",
     "sources": [
       "g4m4-t3 twinWon"
+    ]
+  },
+  {
+    "key": "gl9u3o",
+    "check": "1lxsi54ex5g",
+    "text": "Making the bottom numbers match is finding a common denominator.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g4m4-t3 sticker + g4m4-t3 twinWon sticker"
     ]
   },
   {
@@ -68420,6 +69421,17 @@
     ]
   },
   {
+    "key": "fkpn3d",
+    "check": "f85ey2d954",
+    "text": "Breaking a number into parts that add back up is called decomposing.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g4m4-t4 sticker + g4m4-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "j8hxjv",
     "check": "fpl21k9ved",
     "text": "You added the pieces and kept the piece size.",
@@ -68439,6 +69451,17 @@
     "kind": "won",
     "sources": [
       "g4m4-t5 twinWon"
+    ]
+  },
+  {
+    "key": "11mywe5",
+    "check": "2fzxzy2pq0v",
+    "text": "The bottom number is called the denominator. It stays the same when you add same-size pieces.",
+    "style": "A",
+    "chars": 93,
+    "kind": "won",
+    "sources": [
+      "g4m4-t5 sticker + g4m4-t5 twinWon sticker"
     ]
   },
   {
@@ -68464,6 +69487,17 @@
     ]
   },
   {
+    "key": "1s5kkwa",
+    "check": "1xomqhy0097",
+    "text": "When the denominators match, you only take away the top numbers.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g4m4-t6 sticker + g4m4-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "19h7pbh",
     "check": "1s923amis5n",
     "text": "You counted the pieces in the wholes and added the extra pieces.",
@@ -68483,6 +69517,17 @@
     "kind": "won",
     "sources": [
       "g4m4-t7 twinWon"
+    ]
+  },
+  {
+    "key": "6td14r",
+    "check": "1fwpbvr4shv",
+    "text": "Wholes with a fraction is a mixed number. A fraction with a top bigger than its bottom is an improper fraction.",
+    "style": "A",
+    "chars": 111,
+    "kind": "won",
+    "sources": [
+      "g4m4-t7 sticker + g4m4-t7 twinWon sticker"
     ]
   },
   {
@@ -68508,6 +69553,17 @@
     ]
   },
   {
+    "key": "1rksj1d",
+    "check": "nktanhh7n3",
+    "text": "A whole number with a fraction is a mixed number. Add the wholes and the fractions.",
+    "style": "A",
+    "chars": 83,
+    "kind": "won",
+    "sources": [
+      "g4m4-t8 sticker + g4m4-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "31boxc",
     "check": "ew3vyes58x",
     "text": "You counted copies of the same piece and kept the piece size.",
@@ -68527,6 +69583,17 @@
     "kind": "won",
     "sources": [
       "g4m4-t9 twinWon"
+    ]
+  },
+  {
+    "key": "ifvdd6",
+    "check": "2ajutewkylt",
+    "text": "A fraction with a top of one is a unit fraction. Times a whole number counts copies of it.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g4m4-t9 sticker + g4m4-t9 twinWon sticker"
     ]
   },
   {
@@ -68552,6 +69619,28 @@
     ]
   },
   {
+    "key": "1pkfyya",
+    "check": "1qzi2rx2b5o",
+    "text": "A path that starts at a point and goes on forever one way is a ray.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g4m5-t1 sticker"
+    ]
+  },
+  {
+    "key": "jij2en",
+    "check": "whx28dssn",
+    "text": "A line goes on forever both ways. A ray goes on forever one way.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g4m5-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "13dxwk6",
     "check": "gudouqpy21",
     "text": "You compared the angle with a square corner.",
@@ -68571,6 +69660,17 @@
     "kind": "won",
     "sources": [
       "g4m5-t2 twinWon"
+    ]
+  },
+  {
+    "key": "15h135v",
+    "check": "175y1hy5l8t",
+    "text": "An angle less than a right angle is acute. An angle more than a right angle is obtuse.",
+    "style": "A",
+    "chars": 86,
+    "kind": "won",
+    "sources": [
+      "g4m5-t2 sticker + g4m5-t2 twinWon sticker"
     ]
   },
   {
@@ -68596,6 +69696,28 @@
     ]
   },
   {
+    "key": "1t66v39",
+    "check": "284g4tx31um",
+    "text": "Angles are measured in degrees. A right angle is ninety degrees.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g4m5-t3 sticker"
+    ]
+  },
+  {
+    "key": "18au3es",
+    "check": "2axb4gjtav8",
+    "text": "Angles are measured in degrees.",
+    "style": "A",
+    "chars": 31,
+    "kind": "won",
+    "sources": [
+      "g4m5-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "1few26n",
     "check": "1m83xuf4pgv",
     "text": "You took the part you know away from the whole.",
@@ -68615,6 +69737,28 @@
     "kind": "won",
     "sources": [
       "g4m5-t4 twinWon"
+    ]
+  },
+  {
+    "key": "1oq4a8",
+    "check": "jtvtrbf0kj",
+    "text": "Angle measures are additive, the parts add up to the whole angle.",
+    "style": "A",
+    "chars": 65,
+    "kind": "won",
+    "sources": [
+      "g4m5-t4 sticker"
+    ]
+  },
+  {
+    "key": "8ysrmc",
+    "check": "1793ifswmzw",
+    "text": "Angle measures are additive. A straight angle is one hundred eighty degrees.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g4m5-t4 twinWon sticker"
     ]
   },
   {
@@ -68640,6 +69784,28 @@
     ]
   },
   {
+    "key": "us0w68",
+    "check": "1o4ya6hf842",
+    "text": "Lines that cross at a right angle are perpendicular.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g4m5-t5 sticker"
+    ]
+  },
+  {
+    "key": "kbn4vl",
+    "check": "kfj3xlom5p",
+    "text": "Lines that never meet and stay the same distance apart are parallel.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g4m5-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "lyd20b",
     "check": "2sshnt8sq3",
     "text": "You sorted the triangle by its biggest angle.",
@@ -68659,6 +69825,28 @@
     "kind": "won",
     "sources": [
       "g4m5-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1214d6z",
+    "check": "14w6ta35h48",
+    "text": "Triangles are sorted by angles, acute, right or obtuse. A triangle with two sides the same length is isosceles.",
+    "style": "A",
+    "chars": 111,
+    "kind": "won",
+    "sources": [
+      "g4m5-t6 sticker"
+    ]
+  },
+  {
+    "key": "1vrwuek",
+    "check": "27sjbu3tmuh",
+    "text": "A triangle with all its angles narrower than a right angle is acute. A triangle with two sides the same length is isosceles.",
+    "style": "A",
+    "chars": 124,
+    "kind": "won",
+    "sources": [
+      "g4m5-t6 twinWon sticker"
     ]
   },
   {
@@ -68684,6 +69872,28 @@
     ]
   },
   {
+    "key": "18kspri",
+    "check": "t54edxlir0",
+    "text": "A four-sided shape with two pairs of parallel sides is a parallelogram. With only one pair, it is a trapezoid.",
+    "style": "A",
+    "chars": 110,
+    "kind": "won",
+    "sources": [
+      "g4m5-t7 sticker"
+    ]
+  },
+  {
+    "key": "1413hdu",
+    "check": "28pz94j5063",
+    "text": "A four-sided shape with only one pair of parallel sides is a trapezoid.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g4m5-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "1ax64bw",
     "check": "1y5w8zxwpfy",
     "text": "You folded the shape in your head and checked that the halves match.",
@@ -68703,6 +69913,17 @@
     "kind": "won",
     "sources": [
       "g4m5-t8 twinWon"
+    ]
+  },
+  {
+    "key": "jvawpz",
+    "check": "114sx8pc08j",
+    "text": "A fold line where both halves match exactly is a line of symmetry.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g4m5-t8 sticker + g4m5-t8 twinWon sticker"
     ]
   },
   {
@@ -68728,6 +69949,17 @@
     ]
   },
   {
+    "key": "7yp8pn",
+    "check": "209wdvpigx2",
+    "text": "A number with a point in it is a decimal. The first place after the point is the tenths place.",
+    "style": "A",
+    "chars": 94,
+    "kind": "won",
+    "sources": [
+      "g4m6-t1 sticker + g4m6-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1btgl3g",
     "check": "6a0wjogpto",
     "text": "You counted hundredths and wrote them with two places after the point.",
@@ -68747,6 +69979,17 @@
     "kind": "won",
     "sources": [
       "g4m6-t2 twinWon"
+    ]
+  },
+  {
+    "key": "1yhd0nz",
+    "check": "26hfdzsuq11",
+    "text": "The second place after the point is the hundredths place.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g4m6-t2 sticker + g4m6-t2 twinWon sticker"
     ]
   },
   {
@@ -68772,6 +70015,28 @@
     ]
   },
   {
+    "key": "1yxnwaq",
+    "check": "s7oi9h0bcs",
+    "text": "Decimals that name the same amount, like zero point five and zero point five zero, are equivalent decimals.",
+    "style": "A",
+    "chars": 107,
+    "kind": "won",
+    "sources": [
+      "g4m6-t3 sticker"
+    ]
+  },
+  {
+    "key": "uahd47",
+    "check": "19ej93e0ea2",
+    "text": "Decimals that name the same amount are called equivalent decimals.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g4m6-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "ozymq5",
     "check": "23q0jjqoh66",
     "text": "You found what one jump is worth, then counted the jumps.",
@@ -68791,6 +70056,28 @@
     "kind": "won",
     "sources": [
       "g4m6-t4 twinWon"
+    ]
+  },
+  {
+    "key": "v316q2",
+    "check": "19cvvt24636",
+    "text": "The marks between two whole numbers name decimals. Each of the ten equal jumps is one tenth.",
+    "style": "A",
+    "chars": 92,
+    "kind": "won",
+    "sources": [
+      "g4m6-t4 sticker"
+    ]
+  },
+  {
+    "key": "1pyfru2",
+    "check": "2cy50j5q7i2",
+    "text": "The marks between two whole numbers name decimals. Each equal jump is one tenth.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g4m6-t4 twinWon sticker"
     ]
   },
   {
@@ -68816,6 +70103,17 @@
     ]
   },
   {
+    "key": "1t60dfi",
+    "check": "ovtxj1dvgo",
+    "text": "The tenths place is worth more than the hundredths place, so compare it first.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g4m6-t5 sticker + g4m6-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "glixf",
     "check": "2o7f4da8zj",
     "text": "You changed the tenths into hundredths, then added.",
@@ -68835,6 +70133,17 @@
     "kind": "won",
     "sources": [
       "g4m6-t6 twinWon"
+    ]
+  },
+  {
+    "key": "odkb9o",
+    "check": "je1fbaz1c7",
+    "text": "The top number is the numerator and the bottom is the denominator. Add numerators only when the denominators match.",
+    "style": "A",
+    "chars": 115,
+    "kind": "won",
+    "sources": [
+      "g4m6-t6 sticker + g4m6-t6 twinWon sticker"
     ]
   },
   {
@@ -68860,6 +70169,17 @@
     ]
   },
   {
+    "key": "1t9oxuv",
+    "check": "9jfez7etj",
+    "text": "The point between dollars and cents is the decimal point. Cents are hundredths of a dollar.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g4m6-t7 sticker + g4m6-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "1rp04ti",
     "check": "224hjnumlaf",
     "text": "You did it! You slid the seven one place to the left, and now it's worth ten times as much.",
@@ -68879,6 +70199,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "6ni60f",
+    "check": "lhtezb3e8k",
+    "text": "What a digit is worth in its place is its place value. Each place is worth ten times the place to its right.",
+    "style": "A",
+    "chars": 108,
+    "kind": "won",
+    "sources": [
+      "g5m1-t1 sticker + g5m1-t1 twinWon sticker"
     ]
   },
   {
@@ -68904,6 +70235,17 @@
     ]
   },
   {
+    "key": "1uczyhc",
+    "check": "289440t29ez",
+    "text": "The answer to a multiplication is the product. The answer to a division is the quotient.",
+    "style": "A",
+    "chars": 88,
+    "kind": "won",
+    "sources": [
+      "g5m1-t2 sticker + g5m1-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "tgeii0",
     "check": "1hcmf3yeloi",
     "text": "You counted four tens and wrote one zero for each.",
@@ -68923,6 +70265,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "13lwstl",
+    "check": "1hxbd8ev6z8",
+    "text": "The small number up top is called the exponent. ten with an exponent is called a power of ten.",
+    "style": "A",
+    "chars": 94,
+    "kind": "won",
+    "sources": [
+      "g5m1-t3 sticker + g5m1-t3 twinWon sticker"
     ]
   },
   {
@@ -68948,6 +70301,17 @@
     ]
   },
   {
+    "key": "11kiqig",
+    "check": "23gx6cjgur1",
+    "text": "An answer found with round numbers is an estimate. It tells you about how big the exact answer is.",
+    "style": "A",
+    "chars": 98,
+    "kind": "won",
+    "sources": [
+      "g5m1-t4 sticker + g5m1-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1278h8y",
     "check": "108yl6r2a1o",
     "text": "You saw that meters are smaller, so you multiplied.",
@@ -68967,6 +70331,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1alen31",
+    "check": "li75y5g6sk",
+    "text": "Changing a measure from one unit to another is called converting. Kilo means one thousand.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g5m1-t5 sticker + g5m1-t5 twinWon sticker"
     ]
   },
   {
@@ -68992,6 +70367,17 @@
     ]
   },
   {
+    "key": "aee3ot",
+    "check": "ll5jeovyhv",
+    "text": "A story that takes two or more steps is a multi-step problem.",
+    "style": "A",
+    "chars": 61,
+    "kind": "won",
+    "sources": [
+      "g5m1-t6 sticker + g5m1-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1b7ogo8",
     "check": "o38jplsh1r",
     "text": "You broke the big number into hundreds, tens and ones, multiplied each part, and added.",
@@ -69011,6 +70397,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "133i939",
+    "check": "1i9y7i3klye",
+    "text": "Each part you multiply and then add is called a partial product.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g5m1-t7 sticker + g5m1-t7 twinWon sticker"
     ]
   },
   {
@@ -69036,6 +70433,17 @@
     ]
   },
   {
+    "key": "1uuklqg",
+    "check": "gwl1i2nrz2",
+    "text": "Multiplying by each part and then adding is called the distributive property.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g5m1-t8 sticker + g5m1-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1c21sfm",
     "check": "16bgu6p3uaz",
     "text": "You made a row for the ones and a row for the tens, then added them.",
@@ -69055,6 +70463,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t9 twinWon"
+    ]
+  },
+  {
+    "key": "14y1n18",
+    "check": "1keznoo52ko",
+    "text": "Each row is a partial product. Adding the partial products gives the product.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g5m1-t9 sticker + g5m1-t9 twinWon sticker"
     ]
   },
   {
@@ -69080,6 +70499,17 @@
     ]
   },
   {
+    "key": "100pg8o",
+    "check": "1b7s73miu93",
+    "text": "The numbers you multiply are called factors. The answer is called the product.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g5m1-t10 sticker + g5m1-t10 twinWon sticker"
+    ]
+  },
+  {
     "key": "12fsei7",
     "check": "rn6g55iybb",
     "text": "You estimated first, multiplied the standard way, and checked that your answer was close.",
@@ -69099,6 +70529,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t11 twinWon"
+    ]
+  },
+  {
+    "key": "141c8gk",
+    "check": "1wti66jnzan",
+    "text": "When a product is close to its estimate, we say the answer is reasonable.",
+    "style": "A",
+    "chars": 73,
+    "kind": "won",
+    "sources": [
+      "g5m1-t11 sticker + g5m1-t11 twinWon sticker"
     ]
   },
   {
@@ -69124,6 +70565,17 @@
     ]
   },
   {
+    "key": "1ykft8p",
+    "check": "1tx4b4yqwox",
+    "text": "The numbers you say when you count by tens are called multiples of ten.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g5m1-t12 sticker + g5m1-t12 twinWon sticker"
+    ]
+  },
+  {
     "key": "1s5143p",
     "check": "3w83ld0e8j",
     "text": "You guessed with a round number, multiplied to check, and added one when a whole team still fit.",
@@ -69143,6 +70595,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t13 twinWon"
+    ]
+  },
+  {
+    "key": "1emey7u",
+    "check": "hdsatm36qi",
+    "text": "The number you divide by is called the divisor.",
+    "style": "A",
+    "chars": 47,
+    "kind": "won",
+    "sources": [
+      "g5m1-t13 sticker + g5m1-t13 twinWon sticker"
     ]
   },
   {
@@ -69168,6 +70631,17 @@
     ]
   },
   {
+    "key": "1qiva9g",
+    "check": "1aqldjopdqy",
+    "text": "The answer to a division is called the quotient. What is left over is called the remainder.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g5m1-t14 sticker + g5m1-t14 twinWon sticker"
+    ]
+  },
+  {
     "key": "1btxqdl",
     "check": "2rcpl0v652",
     "text": "You divided the tens, brought down the ones, and divided again.",
@@ -69187,6 +70661,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t15 twinWon"
+    ]
+  },
+  {
+    "key": "1nwjhpu",
+    "check": "1ta4t1kfxdk",
+    "text": "The number you divide is called the dividend.",
+    "style": "A",
+    "chars": 45,
+    "kind": "won",
+    "sources": [
+      "g5m1-t15 sticker + g5m1-t15 twinWon sticker"
     ]
   },
   {
@@ -69212,6 +70697,17 @@
     ]
   },
   {
+    "key": "dxyz1e",
+    "check": "12q74ayad0d",
+    "text": "Dividing one digit at a time, bringing the next digit down each time, is called long division.",
+    "style": "A",
+    "chars": 94,
+    "kind": "won",
+    "sources": [
+      "g5m1-t16 sticker + g5m1-t16 twinWon sticker"
+    ]
+  },
+  {
     "key": "1rp83lb",
     "check": "1anrizmuivp",
     "text": "You kept each bag together with parentheses, then showed how many bags.",
@@ -69231,6 +70727,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t17 twinWon"
+    ]
+  },
+  {
+    "key": "11xzft2",
+    "check": "xxzvqt9oi9",
+    "text": "A number sentence with no equals sign is called an expression. The round brackets are called parentheses.",
+    "style": "A",
+    "chars": 105,
+    "kind": "won",
+    "sources": [
+      "g5m1-t17 sticker + g5m1-t17 twinWon sticker"
     ]
   },
   {
@@ -69256,6 +70763,17 @@
     ]
   },
   {
+    "key": "qqmprs",
+    "check": "1527gnz1dk",
+    "text": "Doing the part in parentheses first is part of the order of operations.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g5m1-t18 sticker + g5m1-t18 twinWon sticker"
+    ]
+  },
+  {
     "key": "1oo0idi",
     "check": "1g5opavtr9p",
     "text": "You found all the brushes with sixteen times forty-five first, then shared them among twenty-four tables, thirty each.",
@@ -69264,6 +70782,17 @@
     "kind": "won",
     "sources": [
       "g5m1-t19 twinWon"
+    ]
+  },
+  {
+    "key": "6umdw0",
+    "check": "1krxe3fa6zz",
+    "text": "The answer to a multiplication is called the product. The answer to a division is called the quotient.",
+    "style": "A",
+    "chars": 102,
+    "kind": "won",
+    "sources": [
+      "g5m1-t19 sticker + g5m1-t19 twinWon sticker"
     ]
   },
   {
@@ -69289,6 +70818,17 @@
     ]
   },
   {
+    "key": "1qnk3ry",
+    "check": "in1pdd0cd9",
+    "text": "The answers have names, adding gives a sum, taking away a difference, multiplying a product, dividing a quotient.",
+    "style": "A",
+    "chars": 113,
+    "kind": "won",
+    "sources": [
+      "g5m1-t20 sticker + g5m1-t20 twinWon sticker"
+    ]
+  },
+  {
     "key": "zmk5yl",
     "check": "2et0o3lbe7p",
     "text": "You made the pieces match, then added. That is the whole trick.",
@@ -69308,6 +70848,17 @@
     "kind": "won",
     "sources": [
       "g5m2-t1 twinWon"
+    ]
+  },
+  {
+    "key": "6hngg6",
+    "check": "nt39xwzb2z",
+    "text": "When the bottom numbers match, the fractions have a common denominator.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g5m2-t1 sticker + g5m2-t1 twinWon sticker"
     ]
   },
   {
@@ -69333,6 +70884,17 @@
     ]
   },
   {
+    "key": "1r3ykd3",
+    "check": "1vl989ni864",
+    "text": "A bottom number two fractions can share is called a common denominator.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g5m2-t2 sticker + g5m2-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1dllfue",
     "check": "1reyo45izzp",
     "text": "You made the pieces match, then took away.",
@@ -69352,6 +70914,17 @@
     "kind": "won",
     "sources": [
       "g5m2-t3 twinWon"
+    ]
+  },
+  {
+    "key": "3e9tne",
+    "check": "10jjmjaezev",
+    "text": "Take away only when the fractions have a common denominator.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g5m2-t3 sticker + g5m2-t3 twinWon sticker"
     ]
   },
   {
@@ -69377,6 +70950,17 @@
     ]
   },
   {
+    "key": "1dz2ufx",
+    "check": "286bizm6rnz",
+    "text": "A whole number and a fraction together make a mixed number.",
+    "style": "A",
+    "chars": 59,
+    "kind": "won",
+    "sources": [
+      "g5m2-t4 sticker + g5m2-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1uto282",
     "check": "1omzq69wtjg",
     "text": "You broke a whole into pieces, then took away.",
@@ -69396,6 +70980,17 @@
     "kind": "won",
     "sources": [
       "g5m2-t5 twinWon"
+    ]
+  },
+  {
+    "key": "tjb8ry",
+    "check": "ujuuf01421",
+    "text": "Breaking a whole into smaller pieces is called regrouping.",
+    "style": "A",
+    "chars": 58,
+    "kind": "won",
+    "sources": [
+      "g5m2-t5 sticker + g5m2-t5 twinWon sticker"
     ]
   },
   {
@@ -69421,6 +71016,17 @@
     ]
   },
   {
+    "key": "1tmzcm2",
+    "check": "28dvxts2jim",
+    "text": "A friendly number you compare to, like one half, is called a benchmark.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g5m2-t6 sticker + g5m2-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1axtf6w",
     "check": "o5g5mnam3k",
     "text": "You drew the story, saw it was a gap, and took away.",
@@ -69440,6 +71046,17 @@
     "kind": "won",
     "sources": [
       "g5m2-t7 twinWon"
+    ]
+  },
+  {
+    "key": "1aruvxe",
+    "check": "wigzgn9z3x",
+    "text": "Putting parts together gives a sum. The gap between two amounts is a difference.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g5m2-t7 sticker + g5m2-t7 twinWon sticker"
     ]
   },
   {
@@ -69465,6 +71082,17 @@
     ]
   },
   {
+    "key": "1kqzh1z",
+    "check": "13m9vc23815",
+    "text": "A chart that shows each measurement as an X above a number line is a line plot.",
+    "style": "A",
+    "chars": 79,
+    "kind": "won",
+    "sources": [
+      "g5m2-t8 sticker + g5m2-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "31cq6z",
     "check": "je364yjavx",
     "text": "You turned a sharing problem into a fraction.",
@@ -69484,6 +71112,17 @@
     "kind": "won",
     "sources": [
       "g5m3-t1 twinWon"
+    ]
+  },
+  {
+    "key": "djfg3w",
+    "check": "1k2cz7cg5ur",
+    "text": "The top number (the numerator) is divided by the bottom number (the denominator).",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g5m3-t1 sticker + g5m3-t1 twinWon sticker"
     ]
   },
   {
@@ -69509,6 +71148,28 @@
     ]
   },
   {
+    "key": "18kn123",
+    "check": "12ds5noxzki",
+    "text": "three fourths of twenty means three fourths times twenty. In math, of means times.",
+    "style": "A",
+    "chars": 82,
+    "kind": "won",
+    "sources": [
+      "g5m3-t2 sticker"
+    ]
+  },
+  {
+    "key": "oeudzv",
+    "check": "1rudt55iih8",
+    "text": "two fifths of thirty means two fifths times thirty. In math, of means times.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g5m3-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "pdowvo",
     "check": "219a2ph4twr",
     "text": "You took a piece of a piece and found it on the whole pan.",
@@ -69528,6 +71189,17 @@
     "kind": "won",
     "sources": [
       "g5m3-t3 twinWon"
+    ]
+  },
+  {
+    "key": "g6hgko",
+    "check": "104ioyaoa3l",
+    "text": "The answer when you multiply is called the product.",
+    "style": "A",
+    "chars": 51,
+    "kind": "won",
+    "sources": [
+      "g5m3-t3 sticker + g5m3-t3 twinWon sticker"
     ]
   },
   {
@@ -69553,6 +71225,17 @@
     ]
   },
   {
+    "key": "ps9yvx",
+    "check": "jm92dvywjc",
+    "text": "Area is length times width, even when the sides are fractions.",
+    "style": "A",
+    "chars": 62,
+    "kind": "won",
+    "sources": [
+      "g5m3-t4 sticker + g5m3-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1y41tll",
     "check": "187f302h673",
     "text": "You looked at the fraction first and knew the answer would be smaller.",
@@ -69575,6 +71258,17 @@
     ]
   },
   {
+    "key": "mds8gw",
+    "check": "14qiof92vtx",
+    "text": "Making a number bigger or smaller by multiplying is called scaling.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g5m3-t5 sticker + g5m3-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "4vl437",
     "check": "1jc4k3aoiam",
     "text": "You counted how many little pieces fit.",
@@ -69594,6 +71288,28 @@
     "kind": "won",
     "sources": [
       "g5m3-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1pnkx14",
+    "check": "1dwmohsv020",
+    "text": "A fraction with one on top, like one half, is called a unit fraction.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g5m3-t6 sticker"
+    ]
+  },
+  {
+    "key": "h8xwzf",
+    "check": "1g9frlc878e",
+    "text": "A fraction with one on top, like one third, is called a unit fraction.",
+    "style": "A",
+    "chars": 70,
+    "kind": "won",
+    "sources": [
+      "g5m3-t6 twinWon sticker"
     ]
   },
   {
@@ -69641,6 +71357,28 @@
     ]
   },
   {
+    "key": "bwnf1b",
+    "check": "22ebgh2jobq",
+    "text": "Multiplication and division are inverse operations, each one undoes the other.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g5m3-t8 sticker"
+    ]
+  },
+  {
+    "key": "1hp4gu8",
+    "check": "11hmpjwf5q2",
+    "text": "Of in a story means multiply. How many fit means divide.",
+    "style": "A",
+    "chars": 56,
+    "kind": "won",
+    "sources": [
+      "g5m3-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "pk2s43",
     "check": "zqiqffkcaa",
     "text": "You put thousandths in the third place after the point.",
@@ -69660,6 +71398,17 @@
     "kind": "won",
     "sources": [
       "g5m4-t1 twinWon"
+    ]
+  },
+  {
+    "key": "yue28q",
+    "check": "2hm2nly6mi",
+    "text": "The third place after the point is the thousandths place.",
+    "style": "A",
+    "chars": 57,
+    "kind": "won",
+    "sources": [
+      "g5m4-t1 sticker + g5m4-t1 twinWon sticker"
     ]
   },
   {
@@ -69685,6 +71434,17 @@
     ]
   },
   {
+    "key": "yb378b",
+    "check": "1vop9u4q43r",
+    "text": "The places after the point are decimal places. Compare them from the left.",
+    "style": "A",
+    "chars": 74,
+    "kind": "won",
+    "sources": [
+      "g5m4-t2 sticker + g5m4-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "lm55od",
     "check": "1mm0t5pucap",
     "text": "You found the two tenths and picked the closer one.",
@@ -69704,6 +71464,17 @@
     "kind": "won",
     "sources": [
       "g5m4-t3 twinWon"
+    ]
+  },
+  {
+    "key": "auck30",
+    "check": "27f0n6g2ue8",
+    "text": "Rounding finds the closest simpler number. Halfway or past it rounds up.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g5m4-t3 sticker + g5m4-t3 twinWon sticker"
     ]
   },
   {
@@ -69729,6 +71500,17 @@
     ]
   },
   {
+    "key": "1wl4gai",
+    "check": "13halsvdpuv",
+    "text": "Lining up the decimal points puts each place value under the same place value.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g5m4-t4 sticker + g5m4-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1el3pj2",
     "check": "1s8xrzt5txd",
     "text": "You filled the empty place with a zero, traded, and took away.",
@@ -69748,6 +71530,17 @@
     "kind": "won",
     "sources": [
       "g5m4-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1nw7811",
+    "check": "1o05i5exla0",
+    "text": "Taking away is subtraction. Line up the decimal points before you subtract.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g5m4-t5 sticker + g5m4-t5 twinWon sticker"
     ]
   },
   {
@@ -69773,6 +71566,17 @@
     ]
   },
   {
+    "key": "lfuiiq",
+    "check": "rrizav2f7h",
+    "text": "Multiplying each part and adding is called the distributive property.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g5m4-t6 sticker + g5m4-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "u64758",
     "check": "xo3ll16a05",
     "text": "You moved every digit two places left.",
@@ -69792,6 +71596,17 @@
     "kind": "won",
     "sources": [
       "g5m4-t7 twinWon"
+    ]
+  },
+  {
+    "key": "1v7dpcl",
+    "check": "5drie5df0q",
+    "text": "Ten, one hundred, and one thousand are powers of ten. Each one moves the digits one more place.",
+    "style": "A",
+    "chars": 95,
+    "kind": "won",
+    "sources": [
+      "g5m4-t7 sticker + g5m4-t7 twinWon sticker"
     ]
   },
   {
@@ -69817,6 +71632,17 @@
     ]
   },
   {
+    "key": "1yh99ij",
+    "check": "1htzcue4u1c",
+    "text": "The answer to a division is the quotient. Its point sits right above the point in the number you share.",
+    "style": "A",
+    "chars": 103,
+    "kind": "won",
+    "sources": [
+      "g5m4-t8 sticker + g5m4-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1jslj3",
     "check": "1uw0vl2qau4",
     "text": "You chose to multiply because meters are smaller than kilometers.",
@@ -69836,6 +71662,17 @@
     "kind": "won",
     "sources": [
       "g5m4-t9 twinWon"
+    ]
+  },
+  {
+    "key": "1vi9jsq",
+    "check": "1kn61d4zwcm",
+    "text": "Kilo means a thousand. Changing between units like these is a metric conversion.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g5m4-t9 sticker + g5m4-t9 twinWon sticker"
     ]
   },
   {
@@ -69861,6 +71698,17 @@
     ]
   },
   {
+    "key": "10veeog",
+    "check": "1cn1zozlq67",
+    "text": "The number of unit cubes that fill a box is its volume.",
+    "style": "A",
+    "chars": 55,
+    "kind": "won",
+    "sources": [
+      "g5m5-t1 sticker + g5m5-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1r83tk7",
     "check": "pp96hxn7i7",
     "text": "You found one layer, then multiplied by the layers.",
@@ -69880,6 +71728,17 @@
     "kind": "won",
     "sources": [
       "g5m5-t2 twinWon"
+    ]
+  },
+  {
+    "key": "1waxrpe",
+    "check": "1fo8artsfnq",
+    "text": "Volume equals cubes in one layer times number of layers. Each cube is a cubic unit.",
+    "style": "A",
+    "chars": 83,
+    "kind": "won",
+    "sources": [
+      "g5m5-t2 sticker + g5m5-t2 twinWon sticker"
     ]
   },
   {
@@ -69905,6 +71764,17 @@
     ]
   },
   {
+    "key": "5c9omt",
+    "check": "22zwu2km349",
+    "text": "A box shape is called a rectangular prism. Its volume equals length times width times height.",
+    "style": "A",
+    "chars": 93,
+    "kind": "won",
+    "sources": [
+      "g5m5-t3 sticker + g5m5-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "kkd771",
     "check": "88khi0urtt",
     "text": "You found the volume of each box, then added them.",
@@ -69924,6 +71794,17 @@
     "kind": "won",
     "sources": [
       "g5m5-t4 twinWon"
+    ]
+  },
+  {
+    "key": "sl3lnn",
+    "check": "up0zzblfox",
+    "text": "A solid made of smaller boxes is a composite solid. Its volume is the boxes added together.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g5m5-t4 sticker + g5m5-t4 twinWon sticker"
     ]
   },
   {
@@ -69949,6 +71830,17 @@
     ]
   },
   {
+    "key": "yirio7",
+    "check": "1k2u67i8dv",
+    "text": "To find area with fraction sides, multiply the fractions. A tile one half by one half is one fourth of a square unit.",
+    "style": "A",
+    "chars": 117,
+    "kind": "won",
+    "sources": [
+      "g5m5-t5 sticker + g5m5-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "127930u",
     "check": "jw4eyxuu3i",
     "text": "You checked the family rule to see which names fit.",
@@ -69968,6 +71860,17 @@
     "kind": "won",
     "sources": [
       "g5m5-t6 twinWon"
+    ]
+  },
+  {
+    "key": "f98d7y",
+    "check": "1p88ukps76e",
+    "text": "Sorting shapes into families inside families is called a hierarchy.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g5m5-t6 sticker + g5m5-t6 twinWon sticker"
     ]
   },
   {
@@ -69993,6 +71896,17 @@
     ]
   },
   {
+    "key": "ki3ak0",
+    "check": "t5gvx7333i",
+    "text": "A cube one unit on every edge is a cubic unit. one cubic centimeter is written one centimeter cubed.",
+    "style": "A",
+    "chars": 100,
+    "kind": "won",
+    "sources": [
+      "g5m5-t7 sticker + g5m5-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "1p4ijc3",
     "check": "24kmwsho1r2",
     "text": "You went across first, then up.",
@@ -70012,6 +71926,17 @@
     "kind": "won",
     "sources": [
       "g5m6-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1xvrkns",
+    "check": "13b6w1oi0e7",
+    "text": "A pair like three comma five is an ordered pair. The order matters, across first, then up.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g5m6-t1 sticker + g5m6-t1 twinWon sticker"
     ]
   },
   {
@@ -70037,6 +71962,17 @@
     ]
   },
   {
+    "key": "10brx48",
+    "check": "284lavbqbg3",
+    "text": "Putting a point on a grid is called plotting the point.",
+    "style": "A",
+    "chars": 55,
+    "kind": "won",
+    "sources": [
+      "g5m6-t2 sticker + g5m6-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "3j4tp",
     "check": "1qo0braza1l",
     "text": "You followed both rules, one step at a time.",
@@ -70056,6 +71992,17 @@
     "kind": "won",
     "sources": [
       "g5m6-t3 twinWon"
+    ]
+  },
+  {
+    "key": "g87jsw",
+    "check": "1y5c8aw2sz1",
+    "text": "Each number in a pattern is called a term. The rule tells you how to get the next term.",
+    "style": "A",
+    "chars": 87,
+    "kind": "won",
+    "sources": [
+      "g5m6-t3 sticker + g5m6-t3 twinWon sticker"
     ]
   },
   {
@@ -70081,6 +72028,17 @@
     ]
   },
   {
+    "key": "x6u54c",
+    "check": "1nnogvwuuyk",
+    "text": "The line along the bottom is the x-axis. The line up the side is the y-axis.",
+    "style": "A",
+    "chars": 76,
+    "kind": "won",
+    "sources": [
+      "g5m6-t4 sticker + g5m6-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "crryvc",
     "check": "1f5mywklnij",
     "text": "You found the number they share and subtracted the other two.",
@@ -70100,6 +72058,17 @@
     "kind": "won",
     "sources": [
       "g5m6-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1meofah",
+    "check": "uaygjpljhf",
+    "text": "In three comma eight, three is the x-coordinate and eight is the y-coordinate.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g5m6-t5 sticker + g5m6-t5 twinWon sticker"
     ]
   },
   {
@@ -70125,6 +72094,28 @@
     ]
   },
   {
+    "key": "p55rw3",
+    "check": "18qarwf4ir",
+    "text": "The corner of the grid where you start, at zero across and zero up, is called the origin.",
+    "style": "A",
+    "chars": 89,
+    "kind": "won",
+    "sources": [
+      "g5m6-t6 sticker"
+    ]
+  },
+  {
+    "key": "1mzeo59",
+    "check": "1skx277gwrw",
+    "text": "The corner of the grid where you start is called the origin.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g5m6-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1o7w4df",
     "check": "1wjz60ntc02",
     "text": "You compared one part to the whole set.",
@@ -70144,6 +72135,28 @@
     "kind": "won",
     "sources": [
       "g6m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "13nkqiv",
+    "check": "12z3bqbxpak",
+    "text": "A comparison like four to three is called a ratio. It can compare part to part, or part to whole.",
+    "style": "A",
+    "chars": 97,
+    "kind": "won",
+    "sources": [
+      "g6m1-t1 sticker"
+    ]
+  },
+  {
+    "key": "59l3u1",
+    "check": "5yve894mpc",
+    "text": "A comparison like five to four is called a ratio. It can compare part to part, or part to whole.",
+    "style": "A",
+    "chars": 96,
+    "kind": "won",
+    "sources": [
+      "g6m1-t1 twinWon sticker"
     ]
   },
   {
@@ -70169,6 +72182,28 @@
     ]
   },
   {
+    "key": "vtj2i9",
+    "check": "stm9wy9xph",
+    "text": "Ratios that make the same mix, like two to five and six to fifteen, are called equivalent ratios.",
+    "style": "A",
+    "chars": 97,
+    "kind": "won",
+    "sources": [
+      "g6m1-t2 sticker"
+    ]
+  },
+  {
+    "key": "1g9j0v3",
+    "check": "r9o8mrbk8a",
+    "text": "Ratios that make the same mix, like three to four and twelve to sixteen, are called equivalent ratios.",
+    "style": "A",
+    "chars": 102,
+    "kind": "won",
+    "sources": [
+      "g6m1-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "g08ct8",
     "check": "1lajvh479xg",
     "text": "You split the price into equal parts and found the cost of one.",
@@ -70188,6 +72223,28 @@
     "kind": "won",
     "sources": [
       "g6m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1r1qx0p",
+    "check": "160drguxkez",
+    "text": "How much for one, like one dollar and seventy-five cents per pen, is called a unit rate.",
+    "style": "A",
+    "chars": 88,
+    "kind": "won",
+    "sources": [
+      "g6m1-t3 sticker"
+    ]
+  },
+  {
+    "key": "th1swx",
+    "check": "25gpfe50jga",
+    "text": "How much for one, like thirty-seven point five miles per gallon, is called a unit rate.",
+    "style": "A",
+    "chars": 87,
+    "kind": "won",
+    "sources": [
+      "g6m1-t3 twinWon sticker"
     ]
   },
   {
@@ -70213,6 +72270,17 @@
     ]
   },
   {
+    "key": "787r9i",
+    "check": "7if8fdpv2z",
+    "text": "Once you know the unit rate, multiply it to find any amount.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g6m1-t4 sticker + g6m1-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "74ov2h",
     "check": "2pxpyc5e3j",
     "text": "You added two columns you already had to make the one you needed.",
@@ -70232,6 +72300,17 @@
     "kind": "won",
     "sources": [
       "g6m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "t1mrw6",
+    "check": "1t2dsg09d6e",
+    "text": "A table of equivalent ratios is called a ratio table.",
+    "style": "A",
+    "chars": 53,
+    "kind": "won",
+    "sources": [
+      "g6m1-t5 sticker + g6m1-t5 twinWon sticker"
     ]
   },
   {
@@ -70257,6 +72336,28 @@
     ]
   },
   {
+    "key": "uax5b4",
+    "check": "12vwj8cnx4y",
+    "text": "In a ratio, the parts add up to the whole. Here three plus four parts make the whole club.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g6m1-t6 sticker"
+    ]
+  },
+  {
+    "key": "hrvj52",
+    "check": "eh7o8cc2bs",
+    "text": "In a ratio, the parts add up to the whole. Here five plus two parts make the whole bag.",
+    "style": "A",
+    "chars": 87,
+    "kind": "won",
+    "sources": [
+      "g6m1-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "c1wdxk",
     "check": "1651p3w7bjs",
     "text": "You started from one yard and multiplied to get feet.",
@@ -70276,6 +72377,28 @@
     "kind": "won",
     "sources": [
       "g6m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "99gne5",
+    "check": "1hdwshaggoh",
+    "text": "A rate like three feet per one yard is called a conversion factor.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g6m1-t7 sticker"
+    ]
+  },
+  {
+    "key": "otxsdn",
+    "check": "214q7td18yc",
+    "text": "A rate like sixty minutes per one hour is called a conversion factor.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g6m1-t7 twinWon sticker"
     ]
   },
   {
@@ -70301,6 +72424,28 @@
     ]
   },
   {
+    "key": "vcptzl",
+    "check": "nu6e8zbul",
+    "text": "Speed is a rate, distance divided by time, like fifty miles per hour.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g6m1-t8 sticker"
+    ]
+  },
+  {
+    "key": "rytca",
+    "check": "1fcl7ufza6b",
+    "text": "Speed is a rate, distance divided by time, like fifty-five miles per hour.",
+    "style": "A",
+    "chars": 74,
+    "kind": "won",
+    "sources": [
+      "g6m1-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "ez55xa",
     "check": "5t0e2yriot",
     "text": "You made the pieces the same size and counted how many fit.",
@@ -70320,6 +72465,28 @@
     "kind": "won",
     "sources": [
       "g6m2-t1 twinWon"
+    ]
+  },
+  {
+    "key": "wsdpl9",
+    "check": "bv1lnmvalj",
+    "text": "In two thirds divided by one sixth, the number you divide by (one sixth) is called the divisor.",
+    "style": "A",
+    "chars": 95,
+    "kind": "won",
+    "sources": [
+      "g6m2-t1 sticker"
+    ]
+  },
+  {
+    "key": "4u3ny1",
+    "check": "s980ydno96",
+    "text": "In one half divided by one tenth, the number you divide by (one tenth) is called the divisor.",
+    "style": "A",
+    "chars": 93,
+    "kind": "won",
+    "sources": [
+      "g6m2-t1 twinWon sticker"
     ]
   },
   {
@@ -70345,6 +72512,17 @@
     ]
   },
   {
+    "key": "1wyq5zy",
+    "check": "1gtgrlemj3a",
+    "text": "A flipped fraction is called the reciprocal. three fourths and four thirds are reciprocals.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g6m2-t2 sticker + g6m2-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "nwpv5j",
     "check": "bvpzsqphpl",
     "text": "You changed to fractions, multiplied, and changed back.",
@@ -70364,6 +72542,17 @@
     "kind": "won",
     "sources": [
       "g6m2-t3 twinWon"
+    ]
+  },
+  {
+    "key": "vl21h2",
+    "check": "xgwrxocn95",
+    "text": "A fraction whose top is bigger than its bottom, like three halves, is called an improper fraction.",
+    "style": "A",
+    "chars": 98,
+    "kind": "won",
+    "sources": [
+      "g6m2-t3 sticker + g6m2-t3 twinWon sticker"
     ]
   },
   {
@@ -70411,6 +72600,17 @@
     ]
   },
   {
+    "key": "1oewt3b",
+    "check": "23desyc11b9",
+    "text": "In a division, the amount you start with is the dividend. The size of each piece is the divisor.",
+    "style": "A",
+    "chars": 96,
+    "kind": "won",
+    "sources": [
+      "g6m2-t5 sticker + g6m2-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "13j1ru9",
     "check": "fh3iz072au",
     "text": "You listed both sets of factors and took the biggest one they share.",
@@ -70430,6 +72630,17 @@
     "kind": "won",
     "sources": [
       "g6m2-t6 twinWon"
+    ]
+  },
+  {
+    "key": "w7pjbz",
+    "check": "r160sx4fca",
+    "text": "The biggest factor two numbers share is their greatest common factor, G, C, F.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g6m2-t6 sticker + g6m2-t6 twinWon sticker"
     ]
   },
   {
@@ -70455,6 +72666,17 @@
     ]
   },
   {
+    "key": "mvsn4p",
+    "check": "688sqk0hh8",
+    "text": "The smallest multiple two numbers share is their least common multiple, L, C, M.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g6m2-t7 sticker + g6m2-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "1mn489y",
     "check": "4q6xq5u7d1",
     "text": "You lined up the points, filled the empty places with zeros, and took away.",
@@ -70474,6 +72696,17 @@
     "kind": "won",
     "sources": [
       "g6m3-t1 twinWon"
+    ]
+  },
+  {
+    "key": "voslm7",
+    "check": "k0f5ckwei7",
+    "text": "Each place after the point is a decimal place. Give both numbers the same decimal places before you start.",
+    "style": "A",
+    "chars": 106,
+    "kind": "won",
+    "sources": [
+      "g6m3-t1 sticker + g6m3-t1 twinWon sticker"
     ]
   },
   {
@@ -70499,6 +72732,17 @@
     ]
   },
   {
+    "key": "spkhed",
+    "check": "1tz1dm1cbzb",
+    "text": "The places after the point are decimal places. The answer has as many as both numbers together.",
+    "style": "A",
+    "chars": 95,
+    "kind": "won",
+    "sources": [
+      "g6m3-t2 sticker + g6m3-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "24nw04",
     "check": "oiseit1a9t",
     "text": "You put the point on top first, then divided like whole numbers.",
@@ -70518,6 +72762,17 @@
     "kind": "won",
     "sources": [
       "g6m3-t3 twinWon"
+    ]
+  },
+  {
+    "key": "oswzbo",
+    "check": "1ugg0p5z26e",
+    "text": "The number you divide up is the dividend. The answer is the quotient, and its point sits right above.",
+    "style": "A",
+    "chars": 101,
+    "kind": "won",
+    "sources": [
+      "g6m3-t3 sticker + g6m3-t3 twinWon sticker"
     ]
   },
   {
@@ -70543,6 +72798,17 @@
     ]
   },
   {
+    "key": "nszcvd",
+    "check": "2fu7ka2vjx3",
+    "text": "The number you divide by is the divisor. Make it whole, and move the dividend the same way.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g6m3-t4 sticker + g6m3-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1qw3tfd",
     "check": "1lggp6jq9r9",
     "text": "You divided one digit at a time, divide, multiply, take away, bring down.",
@@ -70562,6 +72828,17 @@
     "kind": "won",
     "sources": [
       "g6m3-t5 twinWon"
+    ]
+  },
+  {
+    "key": "uj617h",
+    "check": "1440k6wztu8",
+    "text": "In a division, the dividend is shared, the divisor is the size of each group, and the answer is the quotient.",
+    "style": "A",
+    "chars": 109,
+    "kind": "won",
+    "sources": [
+      "g6m3-t5 sticker + g6m3-t5 twinWon sticker"
     ]
   },
   {
@@ -70587,6 +72864,17 @@
     ]
   },
   {
+    "key": "1j42rrj",
+    "check": "2dsjl4s8fvo",
+    "text": "The price for one is the unit price. The lowest unit price is the better buy.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g6m3-t6 sticker + g6m3-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "bqpta8",
     "check": "nsxpf606xd",
     "text": "You counted the shaded squares out of one hundred.",
@@ -70606,6 +72894,17 @@
     "kind": "won",
     "sources": [
       "g6m4-t1 twinWon"
+    ]
+  },
+  {
+    "key": "12n1nd4",
+    "check": "2fpqndjqkrj",
+    "text": "Percent means out of one hundred. Its sign is the percent sign.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g6m4-t1 sticker + g6m4-t1 twinWon sticker"
     ]
   },
   {
@@ -70631,6 +72930,17 @@
     ]
   },
   {
+    "key": "1dzqt08",
+    "check": "1c4u7vf3vx7",
+    "text": "A fraction, a decimal and a percent that name the same amount are equivalent.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g6m4-t2 sticker + g6m4-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "15dfztk",
     "check": "1xq6g7x8un3",
     "text": "You found ten percent first, then took four parts.",
@@ -70650,6 +72960,17 @@
     "kind": "won",
     "sources": [
       "g6m4-t3 twinWon"
+    ]
+  },
+  {
+    "key": "jxv2yt",
+    "check": "1mh1atzn8oz",
+    "text": "In math, of means times. A percent of a number is a part of that number.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g6m4-t3 sticker + g6m4-t3 twinWon sticker"
     ]
   },
   {
@@ -70675,6 +72996,17 @@
     ]
   },
   {
+    "key": "1q1qawg",
+    "check": "rep4mi9yyq",
+    "text": "The whole is always one hundred percent. A percent of it is a part.",
+    "style": "A",
+    "chars": 67,
+    "kind": "won",
+    "sources": [
+      "g6m4-t4 sticker + g6m4-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1dbjjj2",
     "check": "17rcsralt6d",
     "text": "You found the money you save, then took it away.",
@@ -70694,6 +73026,17 @@
     "kind": "won",
     "sources": [
       "g6m4-t5 twinWon"
+    ]
+  },
+  {
+    "key": "bt54cs",
+    "check": "2fijwuv3zbh",
+    "text": "Money taken off a price is called a discount. The price you pay is the sale price.",
+    "style": "A",
+    "chars": 82,
+    "kind": "won",
+    "sources": [
+      "g6m4-t5 sticker + g6m4-t5 twinWon sticker"
     ]
   },
   {
@@ -70719,6 +73062,17 @@
     ]
   },
   {
+    "key": "ydwnun",
+    "check": "139i2ug6p6o",
+    "text": "Sales tax is extra money added to a price. It is a percent of the price.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g6m4-t6 sticker + g6m4-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1ck06w1",
     "check": "1fnpx33fswl",
     "text": "You found one year, then multiplied by the years.",
@@ -70738,6 +73092,17 @@
     "kind": "won",
     "sources": [
       "g6m4-t7 twinWon"
+    ]
+  },
+  {
+    "key": "1s2836i",
+    "check": "1nt7iz0g7ag",
+    "text": "Money a bank pays you is interest. Simple interest equals principal (the money you put in) times rate (the percent) times time (the years).",
+    "style": "A",
+    "chars": 139,
+    "kind": "won",
+    "sources": [
+      "g6m4-t7 sticker + g6m4-t7 twinWon sticker"
     ]
   },
   {
@@ -70763,6 +73128,17 @@
     ]
   },
   {
+    "key": "188ukzv",
+    "check": "1hkdv2dexug",
+    "text": "A letter that stands for a number is called a variable.",
+    "style": "A",
+    "chars": 55,
+    "kind": "won",
+    "sources": [
+      "g6m5-t1 sticker + g6m5-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1vnokcy",
     "check": "8vo8o7umci",
     "text": "You found the action word and wrote it with n.",
@@ -70782,6 +73158,17 @@
     "kind": "won",
     "sources": [
       "g6m5-t2 twinWon"
+    ]
+  },
+  {
+    "key": "147tbmv",
+    "check": "fdl39xqzcr",
+    "text": "Letters and numbers joined by plus, minus, times or divide, like four n, make an expression.",
+    "style": "A",
+    "chars": 92,
+    "kind": "won",
+    "sources": [
+      "g6m5-t2 sticker + g6m5-t2 twinWon sticker"
     ]
   },
   {
@@ -70807,6 +73194,17 @@
     ]
   },
   {
+    "key": "ff9ut7",
+    "check": "9tjued12j3",
+    "text": "Working out an expression for a given number is called evaluating it.",
+    "style": "A",
+    "chars": 69,
+    "kind": "won",
+    "sources": [
+      "g6m5-t3 sticker + g6m5-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "18s2w0i",
     "check": "g0oqi44ryp",
     "text": "You multiplied the number by itself as many times as the small number said.",
@@ -70826,6 +73224,28 @@
     "kind": "won",
     "sources": [
       "g6m5-t4 twinWon"
+    ]
+  },
+  {
+    "key": "rvh2jf",
+    "check": "tc8rxr9l6r",
+    "text": "In four cubed, four is the base and three is the exponent.",
+    "style": "A",
+    "chars": 58,
+    "kind": "won",
+    "sources": [
+      "g6m5-t4 sticker"
+    ]
+  },
+  {
+    "key": "1xmbhwx",
+    "check": "1cpj4o1yjxv",
+    "text": "In two to the fifth, two is the base and the small raised number is the exponent.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g6m5-t4 twinWon sticker"
     ]
   },
   {
@@ -70851,6 +73271,17 @@
     ]
   },
   {
+    "key": "dlv172",
+    "check": "ab31bp70sk",
+    "text": "This agreed order is called the order of operations.",
+    "style": "A",
+    "chars": 52,
+    "kind": "won",
+    "sources": [
+      "g6m5-t5 sticker + g6m5-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "1rm0oup",
     "check": "1ypt42fj82b",
     "text": "You multiplied the number outside by every part inside.",
@@ -70870,6 +73301,17 @@
     "kind": "won",
     "sources": [
       "g6m5-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1kwyspw",
+    "check": "e18f9ooyk4",
+    "text": "three times x plus two, all together, and three x plus six are equivalent expressions. Multiplying every part is the distributive property.",
+    "style": "A",
+    "chars": 139,
+    "kind": "won",
+    "sources": [
+      "g6m5-t6 sticker + g6m5-t6 twinWon sticker"
     ]
   },
   {
@@ -70895,6 +73337,17 @@
     ]
   },
   {
+    "key": "1mkgzzl",
+    "check": "2c5gf6ivr0n",
+    "text": "The number that makes both sides balance is called the solution.",
+    "style": "A",
+    "chars": 64,
+    "kind": "won",
+    "sources": [
+      "g6m5-t7 sticker + g6m5-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "vfgqe0",
     "check": "qyqg2k8d42",
     "text": "You divided both sides to find one x.",
@@ -70914,6 +73367,17 @@
     "kind": "won",
     "sources": [
       "g6m5-t8 twinWon"
+    ]
+  },
+  {
+    "key": "xe8w0n",
+    "check": "2bts9fsh7xd",
+    "text": "In three x, the three is called the coefficient. Divide by it to get x alone.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g6m5-t8 sticker + g6m5-t8 twinWon sticker"
     ]
   },
   {
@@ -70939,6 +73403,17 @@
     ]
   },
   {
+    "key": "1hmoqiu",
+    "check": "8i6t2f0ggt",
+    "text": "x is greater than three is called an inequality. Every number that makes it true is a solution.",
+    "style": "A",
+    "chars": 95,
+    "kind": "won",
+    "sources": [
+      "g6m5-t9 sticker + g6m5-t9 twinWon sticker"
+    ]
+  },
+  {
     "key": "1kalh6w",
     "check": "htomcgk51w",
     "text": "You used the base and the straight-up height, and skipped the slanted side.",
@@ -70958,6 +73433,17 @@
     "kind": "won",
     "sources": [
       "g6m6-t1 twinWon"
+    ]
+  },
+  {
+    "key": "d3h5a1",
+    "check": "neu6nudrer",
+    "text": "A four-sided shape with two pairs of parallel sides is a parallelogram. Its area equals base times height.",
+    "style": "A",
+    "chars": 106,
+    "kind": "won",
+    "sources": [
+      "g6m6-t1 sticker + g6m6-t1 twinWon sticker"
     ]
   },
   {
@@ -70983,6 +73469,17 @@
     ]
   },
   {
+    "key": "vzdzl6",
+    "check": "1n96umrfdwk",
+    "text": "The area of a triangle equals one half times base times height.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g6m6-t2 sticker + g6m6-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1wisao3",
     "check": "fk2bveegw0",
     "text": "You cut the shape into a rectangle and a triangle, then added their areas.",
@@ -71002,6 +73499,17 @@
     "kind": "won",
     "sources": [
       "g6m6-t3 twinWon"
+    ]
+  },
+  {
+    "key": "sqstk7",
+    "check": "169scnzbu63",
+    "text": "A shape made of simpler pieces is a composite figure. Its area is the pieces added together.",
+    "style": "A",
+    "chars": 92,
+    "kind": "won",
+    "sources": [
+      "g6m6-t3 sticker + g6m6-t3 twinWon sticker"
     ]
   },
   {
@@ -71027,6 +73535,17 @@
     ]
   },
   {
+    "key": "gyhrck",
+    "check": "28t5wxchqhv",
+    "text": "A box unfolded flat is a net. The total area of all its faces is the surface area.",
+    "style": "A",
+    "chars": 82,
+    "kind": "won",
+    "sources": [
+      "g6m6-t4 sticker + g6m6-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "14ypzmg",
     "check": "ztkk4nt70x",
     "text": "You changed the edges to fractions and multiplied all three.",
@@ -71046,6 +73565,17 @@
     "kind": "won",
     "sources": [
       "g6m6-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1xxah2i",
+    "check": "1mh2glsm28c",
+    "text": "The volume of a box shape (a rectangular prism) is V equals l times w times h, for fraction edges too.",
+    "style": "A",
+    "chars": 102,
+    "kind": "won",
+    "sources": [
+      "g6m6-t5 sticker + g6m6-t5 twinWon sticker"
     ]
   },
   {
@@ -71071,6 +73601,17 @@
     ]
   },
   {
+    "key": "1cr6zo4",
+    "check": "1b8625vfz1i",
+    "text": "Two angles that add up to one hundred eighty degrees are called supplementary angles.",
+    "style": "A",
+    "chars": 85,
+    "kind": "won",
+    "sources": [
+      "g6m6-t6 sticker + g6m6-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1fvm7jc",
     "check": "2acvgfopgfj",
     "text": "You put all the cubes together, then shared them out fairly.",
@@ -71090,6 +73631,17 @@
     "kind": "won",
     "sources": [
       "g6m7-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1sxjtem",
+    "check": "2e1b633sff1",
+    "text": "The fair share is called the mean. Mean equals total divided by how many.",
+    "style": "A",
+    "chars": 73,
+    "kind": "won",
+    "sources": [
+      "g6m7-t1 sticker + g6m7-t1 twinWon sticker"
     ]
   },
   {
@@ -71115,6 +73667,17 @@
     ]
   },
   {
+    "key": "46ykoh",
+    "check": "qhk0obmwpq",
+    "text": "The middle number of a sorted list is called the median.",
+    "style": "A",
+    "chars": 56,
+    "kind": "won",
+    "sources": [
+      "g6m7-t2 sticker + g6m7-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1aq32e4",
     "check": "rswyvghguq",
     "text": "You found the tallest stack and read the number under it.",
@@ -71134,6 +73697,17 @@
     "kind": "won",
     "sources": [
       "g6m7-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1uw02l1",
+    "check": "1bgzx9w0e1p",
+    "text": "The value that shows up most often is called the mode.",
+    "style": "A",
+    "chars": 54,
+    "kind": "won",
+    "sources": [
+      "g6m7-t3 sticker + g6m7-t3 twinWon sticker"
     ]
   },
   {
@@ -71159,6 +73733,17 @@
     ]
   },
   {
+    "key": "k6yb1y",
+    "check": "73pumbggkh",
+    "text": "The biggest minus the smallest is called the range.",
+    "style": "A",
+    "chars": 51,
+    "kind": "won",
+    "sources": [
+      "g6m7-t4 sticker + g6m7-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1rt626w",
     "check": "4lcgngvvn",
     "text": "You spotted the far-away number and chose the middle it does not pull.",
@@ -71178,6 +73763,17 @@
     "kind": "won",
     "sources": [
       "g6m7-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1prr2ok",
+    "check": "1ckqnd2e1qj",
+    "text": "A number far from the rest is called an outlier. It pulls the mean, not the median.",
+    "style": "A",
+    "chars": 83,
+    "kind": "won",
+    "sources": [
+      "g6m7-t5 sticker + g6m7-t5 twinWon sticker"
     ]
   },
   {
@@ -71203,6 +73799,17 @@
     ]
   },
   {
+    "key": "13hx03b",
+    "check": "2cfwf9wvbas",
+    "text": "A plot of dots is a dot plot. A bar graph of groups with no gaps is a histogram.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g6m7-t6 sticker + g6m7-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "k6jgyb",
     "check": "1sbuq9lj4od",
     "text": "You put the ways to win over all the ways.",
@@ -71222,6 +73829,17 @@
     "kind": "won",
     "sources": [
       "g6m7-t7 twinWon"
+    ]
+  },
+  {
+    "key": "imig7q",
+    "check": "wxvsup9637",
+    "text": "Each way it can land is an outcome. The chance written as a number is the probability.",
+    "style": "A",
+    "chars": 86,
+    "kind": "won",
+    "sources": [
+      "g6m7-t7 sticker + g6m7-t7 twinWon sticker"
     ]
   },
   {
@@ -71247,6 +73865,17 @@
     ]
   },
   {
+    "key": "kucgb9",
+    "check": "1qwbq9zpq3l",
+    "text": "Probability goes from zero, impossible, to one, certain.",
+    "style": "A",
+    "chars": 56,
+    "kind": "won",
+    "sources": [
+      "g6m7-t8 sticker + g6m7-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "lz4z4b",
     "check": "3g3tggzh42",
     "text": "Every cost divided by tickets came out the same, so the table keeps one steady rate.",
@@ -71266,6 +73895,17 @@
     "kind": "won",
     "sources": [
       "g7m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "h19jed",
+    "check": "5ozfqs49hz",
+    "text": "When every y divided by x is the same number, the relationship is called proportional.",
+    "style": "A",
+    "chars": 86,
+    "kind": "won",
+    "sources": [
+      "g7m1-t1 sticker + g7m1-t1 twinWon sticker"
     ]
   },
   {
@@ -71291,6 +73931,17 @@
     ]
   },
   {
+    "key": "1r2k5no",
+    "check": "1vi81rqfczb",
+    "text": "In y equals kx, the number k is called the constant of proportionality.",
+    "style": "A",
+    "chars": 71,
+    "kind": "won",
+    "sources": [
+      "g7m1-t2 sticker + g7m1-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "csveji",
     "check": "1eq0o084vw8",
     "text": "You read y at x equals one on a line through the point zero, zero.",
@@ -71310,6 +73961,17 @@
     "kind": "won",
     "sources": [
       "g7m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1ken9rb",
+    "check": "k032hc3ggv",
+    "text": "On a proportional graph, the y-value at x equals one is the constant of proportionality, k.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g7m1-t3 sticker + g7m1-t3 twinWon sticker"
     ]
   },
   {
@@ -71335,6 +73997,28 @@
     ]
   },
   {
+    "key": "1h4qgkl",
+    "check": "1n1l45g9sx8",
+    "text": "A rate like three fourths mile per one fourth hour, a fraction over a fraction, is called a complex fraction.",
+    "style": "A",
+    "chars": 109,
+    "kind": "won",
+    "sources": [
+      "g7m1-t4 sticker"
+    ]
+  },
+  {
+    "key": "10suqt",
+    "check": "1kljrje6nzg",
+    "text": "A rate like two thirds mile per one sixth hour, a fraction over a fraction, is called a complex fraction.",
+    "style": "A",
+    "chars": 105,
+    "kind": "won",
+    "sources": [
+      "g7m1-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1fffht",
     "check": "27d0c7zub8g",
     "text": "You found the factor and used it on the miles too.",
@@ -71354,6 +74038,28 @@
     "kind": "won",
     "sources": [
       "g7m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "53gj6x",
+    "check": "2uiznm4bvf",
+    "text": "An equation like three twentieths equals twelve eightieths, saying two ratios are equal, is called a proportion.",
+    "style": "A",
+    "chars": 112,
+    "kind": "won",
+    "sources": [
+      "g7m1-t5 sticker"
+    ]
+  },
+  {
+    "key": "bg45uc",
+    "check": "17pz3ayw6n4",
+    "text": "An equation like four tenths equals six fifteenths, saying two ratios are equal, is called a proportion.",
+    "style": "A",
+    "chars": 104,
+    "kind": "won",
+    "sources": [
+      "g7m1-t5 twinWon sticker"
     ]
   },
   {
@@ -71379,6 +74085,28 @@
     ]
   },
   {
+    "key": "xe5u59",
+    "check": "24ur24t26sd",
+    "text": "Change divided by original times one hundred is the percent change. When the amount grows, it is a percent increase.",
+    "style": "A",
+    "chars": 116,
+    "kind": "won",
+    "sources": [
+      "g7m1-t6 sticker"
+    ]
+  },
+  {
+    "key": "1e9jm2j",
+    "check": "2e2v37ou72b",
+    "text": "Change divided by original times one hundred is the percent change. When the amount shrinks, it is a percent decrease.",
+    "style": "A",
+    "chars": 118,
+    "kind": "won",
+    "sources": [
+      "g7m1-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "udnpsd",
     "check": "y0ig2x9t4i",
     "text": "You found the extra, then added it to what the shop paid.",
@@ -71398,6 +74126,28 @@
     "kind": "won",
     "sources": [
       "g7m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "px91qv",
+    "check": "1wkpmnvv4dn",
+    "text": "The amount a store adds to what it paid is called a markup. Tax and tips are added on the same way.",
+    "style": "A",
+    "chars": 99,
+    "kind": "won",
+    "sources": [
+      "g7m1-t7 sticker"
+    ]
+  },
+  {
+    "key": "16f9kax",
+    "check": "1tubz1zlg9k",
+    "text": "Money you add for good service is a tip. It is added on the same way as a markup.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g7m1-t7 twinWon sticker"
     ]
   },
   {
@@ -71423,6 +74173,17 @@
     ]
   },
   {
+    "key": "f0d9oz",
+    "check": "x4yvi3etcg",
+    "text": "How far off a guess is, as a percent of the real amount, is called percent error.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g7m1-t8 sticker + g7m1-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "72d4bf",
     "check": "24xssw13n5s",
     "text": "You went the same distance from zero, on the other side.",
@@ -71442,6 +74203,17 @@
     "kind": "won",
     "sources": [
       "g7m2-t1 twinWon"
+    ]
+  },
+  {
+    "key": "9p1lyz",
+    "check": "bujg3p421p",
+    "text": "Whole numbers and their opposites are called integers.",
+    "style": "A",
+    "chars": 54,
+    "kind": "won",
+    "sources": [
+      "g7m2-t1 sticker + g7m2-t1 twinWon sticker"
     ]
   },
   {
@@ -71467,6 +74239,17 @@
     ]
   },
   {
+    "key": "nkyy8n",
+    "check": "2bo1nabe5nz",
+    "text": "How far a number is from zero is called its absolute value. It is written with two bars.",
+    "style": "A",
+    "chars": 88,
+    "kind": "won",
+    "sources": [
+      "g7m2-t2 sticker + g7m2-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "13yor9g",
     "check": "f0bh27obye",
     "text": "You made pairs, took them away, and counted what was left.",
@@ -71486,6 +74269,17 @@
     "kind": "won",
     "sources": [
       "g7m2-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1dxbcev",
+    "check": "1dy5100fa39",
+    "text": "A plus and a minus that cancel out are called a zero pair.",
+    "style": "A",
+    "chars": 58,
+    "kind": "won",
+    "sources": [
+      "g7m2-t3 sticker + g7m2-t3 twinWon sticker"
     ]
   },
   {
@@ -71511,6 +74305,17 @@
     ]
   },
   {
+    "key": "koaaj8",
+    "check": "1z0wt2179jb",
+    "text": "The opposite of a number is also called its additive inverse, because together they add to zero.",
+    "style": "A",
+    "chars": 96,
+    "kind": "won",
+    "sources": [
+      "g7m2-t4 sticker + g7m2-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1fl3x8",
     "check": "14te33z3gfr",
     "text": "You multiplied, then used the signs.",
@@ -71530,6 +74335,17 @@
     "kind": "won",
     "sources": [
       "g7m2-t5 twinWon"
+    ]
+  },
+  {
+    "key": "188yd0v",
+    "check": "c8j7bkg2dx",
+    "text": "The answer to a multiplication is the product. Same signs, a positive product. Different signs, a negative product.",
+    "style": "A",
+    "chars": 115,
+    "kind": "won",
+    "sources": [
+      "g7m2-t5 sticker + g7m2-t5 twinWon sticker"
     ]
   },
   {
@@ -71555,6 +74371,17 @@
     ]
   },
   {
+    "key": "6zldtd",
+    "check": "2bb9h71ju4c",
+    "text": "The answer to a division is the quotient. Its sign follows the same rule as a product.",
+    "style": "A",
+    "chars": 86,
+    "kind": "won",
+    "sources": [
+      "g7m2-t6 sticker + g7m2-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "q6t1lc",
     "check": "ccd59tws63",
     "text": "You kept the minus sign and jumped on the line.",
@@ -71574,6 +74401,17 @@
     "kind": "won",
     "sources": [
       "g7m2-t7 twinWon"
+    ]
+  },
+  {
+    "key": "k3j1ma",
+    "check": "13823leslpn",
+    "text": "Whole numbers, fractions and decimals, positive or negative, are all rational numbers.",
+    "style": "A",
+    "chars": 86,
+    "kind": "won",
+    "sources": [
+      "g7m2-t7 sticker + g7m2-t7 twinWon sticker"
     ]
   },
   {
@@ -71599,6 +74437,17 @@
     ]
   },
   {
+    "key": "8x8ds8",
+    "check": "20vwc1bkxkz",
+    "text": "Numbers with a plus or minus sign are called signed numbers.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g7m2-t8 sticker + g7m2-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "7zzba",
     "check": "jjgn07x7xu",
     "text": "You put the x parts together and the plain numbers together.",
@@ -71618,6 +74467,17 @@
     "kind": "won",
     "sources": [
       "g7m3-t1 twinWon"
+    ]
+  },
+  {
+    "key": "mrzn7b",
+    "check": "12f5ehfgp76",
+    "text": "Parts with the same letter, like three x and two x, are called like terms. Putting them together is combining like terms.",
+    "style": "A",
+    "chars": 121,
+    "kind": "won",
+    "sources": [
+      "g7m3-t1 sticker + g7m3-t1 twinWon sticker"
     ]
   },
   {
@@ -71643,6 +74503,17 @@
     ]
   },
   {
+    "key": "1k9f8mb",
+    "check": "u83ij8kf1z",
+    "text": "Multiplying every part inside is the distributive property. Writing it without parentheses is called expanding.",
+    "style": "A",
+    "chars": 111,
+    "kind": "won",
+    "sources": [
+      "g7m3-t2 sticker + g7m3-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1aauuuu",
     "check": "4ff0f3uvht",
     "text": "You found the biggest number that divides every part and put it outside.",
@@ -71662,6 +74533,17 @@
     "kind": "won",
     "sources": [
       "g7m3-t3 twinWon"
+    ]
+  },
+  {
+    "key": "3wwyif",
+    "check": "iitnefit2m",
+    "text": "A number that divides every part is a common factor. Putting it outside the parentheses is called factoring.",
+    "style": "A",
+    "chars": 108,
+    "kind": "won",
+    "sources": [
+      "g7m3-t3 sticker + g7m3-t3 twinWon sticker"
     ]
   },
   {
@@ -71687,6 +74569,17 @@
     ]
   },
   {
+    "key": "1nkb6cb",
+    "check": "f18pdt8uq5",
+    "text": "An equation that takes two steps to solve is called a two-step equation.",
+    "style": "A",
+    "chars": 72,
+    "kind": "won",
+    "sources": [
+      "g7m3-t4 sticker + g7m3-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "r781",
     "check": "t2dadztg1x",
     "text": "You divided by the number outside, then solved what was left.",
@@ -71706,6 +74599,17 @@
     "kind": "won",
     "sources": [
       "g7m3-t5 twinWon"
+    ]
+  },
+  {
+    "key": "ilhg9",
+    "check": "9n0zz166dr",
+    "text": "Both ways work, divide first, or use the distributive property to multiply out first.",
+    "style": "A",
+    "chars": 85,
+    "kind": "won",
+    "sources": [
+      "g7m3-t5 sticker + g7m3-t5 twinWon sticker"
     ]
   },
   {
@@ -71731,6 +74635,17 @@
     ]
   },
   {
+    "key": "1y1hlvs",
+    "check": "2bls8ky5saz",
+    "text": "An inequality has a whole set of answers. Together they are called the solution set.",
+    "style": "A",
+    "chars": 84,
+    "kind": "won",
+    "sources": [
+      "g7m3-t6 sticker + g7m3-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1obrvpp",
     "check": "4lwf2665tk",
     "text": "You flipped the sign because you divided by a negative.",
@@ -71750,6 +74665,17 @@
     "kind": "won",
     "sources": [
       "g7m3-t7 twinWon"
+    ]
+  },
+  {
+    "key": "1xsbtq9",
+    "check": "2710yp9qbvy",
+    "text": "Flipping the sign keeps an inequality true. It is called reversing the inequality.",
+    "style": "A",
+    "chars": 82,
+    "kind": "won",
+    "sources": [
+      "g7m3-t7 sticker + g7m3-t7 twinWon sticker"
     ]
   },
   {
@@ -71775,6 +74701,17 @@
     ]
   },
   {
+    "key": "1j7uw6t",
+    "check": "2dkbb6vfz4c",
+    "text": "Turning a story into an equation is called modeling. The letter you choose is the variable.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g7m3-t8 sticker + g7m3-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1m41210",
     "check": "p02khsbdyj",
     "text": "You multiplied the map length by what each centimeter stands for.",
@@ -71794,6 +74731,28 @@
     "kind": "won",
     "sources": [
       "g7m4-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1k3mye7",
+    "check": "2e8zxefudlz",
+    "text": "A rule like one centimeter equals fifty meters is called the scale of a drawing.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g7m4-t1 sticker"
+    ]
+  },
+  {
+    "key": "1arh9t9",
+    "check": "6ujgxk36ta",
+    "text": "A rule like one centimeter equals three meters is called the scale of a drawing.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g7m4-t1 twinWon sticker"
     ]
   },
   {
@@ -71819,6 +74778,17 @@
     ]
   },
   {
+    "key": "1cyxb79",
+    "check": "pwbuvxnt1b",
+    "text": "The distance around a circle is its circumference. C equals pi times d, and pi is about three point one four.",
+    "style": "A",
+    "chars": 109,
+    "kind": "won",
+    "sources": [
+      "g7m4-t2 sticker + g7m4-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "w5cbfe",
     "check": "1oh1yq4oxa2",
     "text": "You multiplied the radius by itself, then by three point one four.",
@@ -71838,6 +74808,17 @@
     "kind": "won",
     "sources": [
       "g7m4-t3 twinWon"
+    ]
+  },
+  {
+    "key": "u3rz3t",
+    "check": "25je3aid9tv",
+    "text": "The area of a circle is A equals pi times r times r, and pi is about three point one four.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g7m4-t3 sticker + g7m4-t3 twinWon sticker"
     ]
   },
   {
@@ -71863,6 +74844,17 @@
     ]
   },
   {
+    "key": "j41mk8",
+    "check": "2een1wkjiul",
+    "text": "Angles that add up to ninety degrees are complementary. Angles that add up to one hundred eighty degrees are supplementary.",
+    "style": "A",
+    "chars": 123,
+    "kind": "won",
+    "sources": [
+      "g7m4-t4 sticker + g7m4-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1cg567g",
     "check": "29on57uri9m",
     "text": "You saw the angle was straight across, so it matched.",
@@ -71882,6 +74874,17 @@
     "kind": "won",
     "sources": [
       "g7m4-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1y9db3w",
+    "check": "96j26ya4c7",
+    "text": "Angles straight across from each other at a crossing are vertical angles. They are always equal.",
+    "style": "A",
+    "chars": 96,
+    "kind": "won",
+    "sources": [
+      "g7m4-t5 sticker + g7m4-t5 twinWon sticker"
     ]
   },
   {
@@ -71907,6 +74910,17 @@
     ]
   },
   {
+    "key": "1ouiypb",
+    "check": "1q56msd7zw7",
+    "text": "The rule that the two shorter sides must add to more than the longest is the triangle inequality.",
+    "style": "A",
+    "chars": 97,
+    "kind": "won",
+    "sources": [
+      "g7m4-t6 sticker + g7m4-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1dhi5k9",
     "check": "2ek60klrses",
     "text": "You added both triangle ends and all three sides.",
@@ -71926,6 +74940,17 @@
     "kind": "won",
     "sources": [
       "g7m4-t7 twinWon"
+    ]
+  },
+  {
+    "key": "n18s4f",
+    "check": "1dzxin9rtge",
+    "text": "The total area of all the faces of a prism is its surface area.",
+    "style": "A",
+    "chars": 63,
+    "kind": "won",
+    "sources": [
+      "g7m4-t7 sticker + g7m4-t7 twinWon sticker"
     ]
   },
   {
@@ -71951,6 +74976,17 @@
     ]
   },
   {
+    "key": "bp68bz",
+    "check": "fg1ixk15t7",
+    "text": "The volume of any prism is V equals B times h, the base area times the height.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g7m4-t8 sticker + g7m4-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "1wdjp0d",
     "check": "1hjsyhm31wa",
     "text": "You checked whether anyone was left with no chance to be picked.",
@@ -71970,6 +75006,17 @@
     "kind": "won",
     "sources": [
       "g7m5-t1 twinWon"
+    ]
+  },
+  {
+    "key": "pgg2xr",
+    "check": "24e8fh4ner3",
+    "text": "The whole group is the population. A sample picked by chance is a random sample. A sample that leaves people out is biased.",
+    "style": "A",
+    "chars": 123,
+    "kind": "won",
+    "sources": [
+      "g7m5-t1 sticker + g7m5-t1 twinWon sticker"
     ]
   },
   {
@@ -71995,6 +75042,17 @@
     ]
   },
   {
+    "key": "1ssx676",
+    "check": "4sex8wo06n",
+    "text": "The whole group is the population. Using a sample to predict it is called making an inference.",
+    "style": "A",
+    "chars": 94,
+    "kind": "won",
+    "sources": [
+      "g7m5-t2 sticker + g7m5-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1ganntn",
     "check": "128pyveuhtl",
     "text": "You found both means and the gap between them.",
@@ -72014,6 +75072,17 @@
     "kind": "won",
     "sources": [
       "g7m5-t3 twinWon"
+    ]
+  },
+  {
+    "key": "16veu65",
+    "check": "15jxohfadh1",
+    "text": "How far values sit from the mean, on average, is the mean absolute deviation. It measures spread.",
+    "style": "A",
+    "chars": 97,
+    "kind": "won",
+    "sources": [
+      "g7m5-t3 sticker + g7m5-t3 twinWon sticker"
     ]
   },
   {
@@ -72039,6 +75108,28 @@
     ]
   },
   {
+    "key": "9orj5p",
+    "check": "vkxzbnjdtk",
+    "text": "Something that can happen, like landing on green, is an event. Its probability is always from zero to one.",
+    "style": "A",
+    "chars": 106,
+    "kind": "won",
+    "sources": [
+      "g7m5-t4 sticker"
+    ]
+  },
+  {
+    "key": "89k1sd",
+    "check": "a7vvolbfke",
+    "text": "Something that can happen, like landing on red, is an event. Its probability is always from zero to one.",
+    "style": "A",
+    "chars": 104,
+    "kind": "won",
+    "sources": [
+      "g7m5-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "gmbq53",
     "check": "1k1i1wxd73l",
     "text": "You multiplied the chance by the number of tries.",
@@ -72058,6 +75149,17 @@
     "kind": "won",
     "sources": [
       "g7m5-t5 twinWon"
+    ]
+  },
+  {
+    "key": "hejwei",
+    "check": "ad68olycj0",
+    "text": "A chance found from real tries is an experimental probability. A chance found by counting equal ways is a theoretical probability.",
+    "style": "A",
+    "chars": 130,
+    "kind": "won",
+    "sources": [
+      "g7m5-t5 sticker + g7m5-t5 twinWon sticker"
     ]
   },
   {
@@ -72083,6 +75185,17 @@
     ]
   },
   {
+    "key": "1y0fntz",
+    "check": "6x7oe73zfn",
+    "text": "The list of all outcomes is the sample space. Two things happening together is a compound event.",
+    "style": "A",
+    "chars": 96,
+    "kind": "won",
+    "sources": [
+      "g7m5-t6 sticker + g7m5-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "1co5qi",
     "check": "14f2siq1oxb",
     "text": "You kept the base and added the exponents.",
@@ -72102,6 +75215,28 @@
     "kind": "won",
     "sources": [
       "g8m1-t1 twinWon"
+    ]
+  },
+  {
+    "key": "19vglf",
+    "check": "1avntjhi4zs",
+    "text": "A number with an exponent, like two to the fifth, is called a power. Same base, add the exponents.",
+    "style": "A",
+    "chars": 98,
+    "kind": "won",
+    "sources": [
+      "g8m1-t1 sticker"
+    ]
+  },
+  {
+    "key": "fuo4wi",
+    "check": "5zpboht68u",
+    "text": "A number with an exponent, like seven to the fifth, is called a power. Same base, add the exponents.",
+    "style": "A",
+    "chars": 100,
+    "kind": "won",
+    "sources": [
+      "g8m1-t1 twinWon sticker"
     ]
   },
   {
@@ -72127,6 +75262,17 @@
     ]
   },
   {
+    "key": "v54z0g",
+    "check": "h79eham75p",
+    "text": "Same base, multiplying powers adds the exponents, dividing powers subtracts them.",
+    "style": "A",
+    "chars": 81,
+    "kind": "won",
+    "sources": [
+      "g8m1-t2 sticker + g8m1-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "19rmxfl",
     "check": "8hv6sq1gpa",
     "text": "You kept the base and multiplied the exponents.",
@@ -72146,6 +75292,28 @@
     "kind": "won",
     "sources": [
       "g8m1-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1aq82kc",
+    "check": "zuw7blnev9",
+    "text": "Raising a power to a power, keep the base, multiply the exponents. two cubed, all squared, equals two to the sixth.",
+    "style": "A",
+    "chars": 115,
+    "kind": "won",
+    "sources": [
+      "g8m1-t3 sticker"
+    ]
+  },
+  {
+    "key": "1l5qkax",
+    "check": "11tm3v2p2du",
+    "text": "Raising a power to a power, keep the base, multiply the exponents.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g8m1-t3 twinWon sticker"
     ]
   },
   {
@@ -72171,6 +75339,28 @@
     ]
   },
   {
+    "key": "10xciyr",
+    "check": "txwirojuay",
+    "text": "Any base except zero, raised to the exponent zero, is one. A negative exponent means one over, two to the negative two equals one over two squared.",
+    "style": "A",
+    "chars": 147,
+    "kind": "won",
+    "sources": [
+      "g8m1-t4 sticker"
+    ]
+  },
+  {
+    "key": "j7h4yj",
+    "check": "1vq2965p8w3",
+    "text": "Any base except zero, raised to the exponent zero, is one. A negative exponent means one over, four to the negative two equals one over four squared.",
+    "style": "A",
+    "chars": 149,
+    "kind": "won",
+    "sources": [
+      "g8m1-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "gbhbd",
     "check": "1nzh675lft0",
     "text": "You made a number from one to ten and counted the jumps.",
@@ -72190,6 +75380,28 @@
     "kind": "won",
     "sources": [
       "g8m1-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1vp8q5m",
+    "check": "1b3o13bm0w1",
+    "text": "A number from one up to ten times a power of ten, like one point five times ten to the eighth, is in scientific notation.",
+    "style": "A",
+    "chars": 121,
+    "kind": "won",
+    "sources": [
+      "g8m1-t5 sticker"
+    ]
+  },
+  {
+    "key": "1gwbwol",
+    "check": "d7kn4mj127",
+    "text": "A number like seven point two times ten to the seventh is written in scientific notation.",
+    "style": "A",
+    "chars": 89,
+    "kind": "won",
+    "sources": [
+      "g8m1-t5 twinWon sticker"
     ]
   },
   {
@@ -72215,6 +75427,17 @@
     ]
   },
   {
+    "key": "xy0jl9",
+    "check": "1ifdzmuhqup",
+    "text": "In scientific notation, a negative exponent means the number is less than one.",
+    "style": "A",
+    "chars": 78,
+    "kind": "won",
+    "sources": [
+      "g8m1-t6 sticker + g8m1-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "p2elwz",
     "check": "17vvikb8kkr",
     "text": "You multiplied the front numbers and added the exponents.",
@@ -72234,6 +75457,17 @@
     "kind": "won",
     "sources": [
       "g8m1-t7 twinWon"
+    ]
+  },
+  {
+    "key": "krjr82",
+    "check": "xn0sdj4v75",
+    "text": "Multiplying in scientific notation uses the rule for powers, same base, add the exponents.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g8m1-t7 sticker + g8m1-t7 twinWon sticker"
     ]
   },
   {
@@ -72259,6 +75493,28 @@
     ]
   },
   {
+    "key": "xdmm68",
+    "check": "16ijqgvckh8",
+    "text": "The root sign means square root, and the root sign with a small three means cube root. forty-nine is a perfect square, because seven times seven equals forty-nine.",
+    "style": "A",
+    "chars": 163,
+    "kind": "won",
+    "sources": [
+      "g8m1-t8 sticker"
+    ]
+  },
+  {
+    "key": "gvolbs",
+    "check": "1tupga5ubsu",
+    "text": "The root sign means square root, and the root sign with a small three means cube root. sixty-four is a perfect square, because eight times eight equals sixty-four.",
+    "style": "A",
+    "chars": 163,
+    "kind": "won",
+    "sources": [
+      "g8m1-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "16ciwqd",
     "check": "13t6qkd2c98",
     "text": "You found the perfect squares on either side, and the root between them.",
@@ -72278,6 +75534,17 @@
     "kind": "won",
     "sources": [
       "g8m1-t9 twinWon"
+    ]
+  },
+  {
+    "key": "uxi7q5",
+    "check": "2b2kpcssbg8",
+    "text": "The square root of a whole number that is not a perfect square is irrational, its decimal never ends and never repeats.",
+    "style": "A",
+    "chars": 119,
+    "kind": "won",
+    "sources": [
+      "g8m1-t9 sticker + g8m1-t9 twinWon sticker"
     ]
   },
   {
@@ -72303,6 +75570,17 @@
     ]
   },
   {
+    "key": "9s0yzw",
+    "check": "27wy545ococ",
+    "text": "How steep a line is, rise divided by run, is called its slope.",
+    "style": "A",
+    "chars": 62,
+    "kind": "won",
+    "sources": [
+      "g8m2-t1 sticker + g8m2-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "9nho3f",
     "check": "4imj9p7rhm",
     "text": "You subtracted the y-values and the x-values in the same order, then divided.",
@@ -72325,11 +75603,22 @@
     ]
   },
   {
-    "key": "10dks50",
-    "check": "2gncpngcxff",
-    "text": "You picked out the number in front of x, that is the slope.",
+    "key": "1tecmzz",
+    "check": "z7j41u43fz",
+    "text": "The rule y two minus y one, divided by x two minus x one, is called the slope formula. It works for any two points on a line.",
     "style": "A",
-    "chars": 59,
+    "chars": 125,
+    "kind": "won",
+    "sources": [
+      "g8m2-t2 sticker + g8m2-t2 twinWon sticker"
+    ]
+  },
+  {
+    "key": "z37jj6",
+    "check": "19zfq5da5bm",
+    "text": "You picked out the number in front of x, called its coefficient, that is the slope.",
+    "style": "A",
+    "chars": 83,
     "kind": "won",
     "sources": [
       "g8m2-t3 won"
@@ -72344,6 +75633,17 @@
     "kind": "won",
     "sources": [
       "g8m2-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1nq31t5",
+    "check": "2uvsfgoaot",
+    "text": "b, where the line crosses the y-axis, is the y-intercept. y equals mx plus b is called slope-intercept form.",
+    "style": "A",
+    "chars": 108,
+    "kind": "won",
+    "sources": [
+      "g8m2-t3 sticker + g8m2-t3 twinWon sticker"
     ]
   },
   {
@@ -72369,6 +75669,17 @@
     ]
   },
   {
+    "key": "13zra4a",
+    "check": "1nbwebl8ef7",
+    "text": "The graph of an equation is every point whose x and y make the equation true.",
+    "style": "A",
+    "chars": 77,
+    "kind": "won",
+    "sources": [
+      "g8m2-t4 sticker + g8m2-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "n1zl6p",
     "check": "18mq2olmem5",
     "text": "You took the smaller x part off both sides, then solved what was left.",
@@ -72388,6 +75699,17 @@
     "kind": "won",
     "sources": [
       "g8m2-t5 twinWon"
+    ]
+  },
+  {
+    "key": "11d1rgr",
+    "check": "1vmgdw7qvv3",
+    "text": "Moving every x to one side is called collecting like terms. Use it whenever x is on both sides of the equals sign.",
+    "style": "A",
+    "chars": 114,
+    "kind": "won",
+    "sources": [
+      "g8m2-t5 sticker + g8m2-t5 twinWon sticker"
     ]
   },
   {
@@ -72413,6 +75735,17 @@
     ]
   },
   {
+    "key": "7kjdwr",
+    "check": "2ebwuz2mojq",
+    "text": "When the x parts vanish and leave something never true, there is no solution. When it is always true, there are infinitely many solutions.",
+    "style": "A",
+    "chars": 138,
+    "kind": "won",
+    "sources": [
+      "g8m2-t6 sticker + g8m2-t6 twinWon sticker"
+    ]
+  },
+  {
     "key": "39g7ol",
     "check": "24wpt43mfc8",
     "text": "You found the one point that is on both lines.",
@@ -72432,6 +75765,17 @@
     "kind": "won",
     "sources": [
       "g8m2-t7 twinWon"
+    ]
+  },
+  {
+    "key": "153yqcu",
+    "check": "1vs7oqgynx6",
+    "text": "Two equations about the same x and y are a system of equations. The crossing point is its solution.",
+    "style": "A",
+    "chars": 99,
+    "kind": "won",
+    "sources": [
+      "g8m2-t7 sticker + g8m2-t7 twinWon sticker"
     ]
   },
   {
@@ -72457,6 +75801,17 @@
     ]
   },
   {
+    "key": "16mz4mg",
+    "check": "25ven1ghg61",
+    "text": "Putting what a letter equals in its place is called substitution.",
+    "style": "A",
+    "chars": 65,
+    "kind": "won",
+    "sources": [
+      "g8m2-t8 sticker + g8m2-t8 twinWon sticker"
+    ]
+  },
+  {
     "key": "dwk6fr",
     "check": "20w5io827w1",
     "text": "You wrote one equation for each fact and solved them together.",
@@ -72476,6 +75831,17 @@
     "kind": "won",
     "sources": [
       "g8m2-t9 twinWon"
+    ]
+  },
+  {
+    "key": "alnlnr",
+    "check": "f76kge3sie",
+    "text": "A story with two unknowns and two facts becomes a system of equations. You can solve it by substitution.",
+    "style": "A",
+    "chars": 104,
+    "kind": "won",
+    "sources": [
+      "g8m2-t9 sticker + g8m2-t9 twinWon sticker"
     ]
   },
   {
@@ -72501,6 +75867,17 @@
     ]
   },
   {
+    "key": "x8m28d",
+    "check": "1dhk1noomj8",
+    "text": "All the inputs of a function are called its domain. All the outputs are called its range.",
+    "style": "A",
+    "chars": 89,
+    "kind": "won",
+    "sources": [
+      "g8m3-t1 sticker + g8m3-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "1aa47oh",
     "check": "1d6zo9c3z62",
     "text": "You put six into the rule, multiplied, then subtracted.",
@@ -72520,6 +75897,17 @@
     "kind": "won",
     "sources": [
       "g8m3-t2 twinWon"
+    ]
+  },
+  {
+    "key": "rk7fcb",
+    "check": "4z3j0ehmi3",
+    "text": "Writing a rule as f of x is called function notation. Say it f of x.",
+    "style": "A",
+    "chars": 68,
+    "kind": "won",
+    "sources": [
+      "g8m3-t2 sticker + g8m3-t2 twinWon sticker"
     ]
   },
   {
@@ -72545,6 +75933,17 @@
     ]
   },
   {
+    "key": "1ojuv17",
+    "check": "1msxlo4vp48",
+    "text": "A function whose graph is a straight line is a linear function. Any other function is nonlinear.",
+    "style": "A",
+    "chars": 96,
+    "kind": "won",
+    "sources": [
+      "g8m3-t3 sticker + g8m3-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "12jtiuv",
     "check": "2478s41atz9",
     "text": "The table went up four each step and the rule only three, so function A grows faster.",
@@ -72564,6 +75963,17 @@
     "kind": "won",
     "sources": [
       "g8m3-t4 twinWon"
+    ]
+  },
+  {
+    "key": "1xmpsc9",
+    "check": "17it1ylegov",
+    "text": "How much y changes for each one in x is called the rate of change.",
+    "style": "A",
+    "chars": 66,
+    "kind": "won",
+    "sources": [
+      "g8m3-t4 sticker + g8m3-t4 twinWon sticker"
     ]
   },
   {
@@ -72589,6 +75999,17 @@
     ]
   },
   {
+    "key": "hga4nc",
+    "check": "1po1ps4kw0v",
+    "text": "In y equals mx plus b, the starting amount b is called the initial value.",
+    "style": "A",
+    "chars": 73,
+    "kind": "won",
+    "sources": [
+      "g8m3-t5 sticker + g8m3-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "14vv345",
     "check": "5r3kc4v9km",
     "text": "The graph was flat between hour three and hour five, so Mia stayed put.",
@@ -72608,6 +76029,17 @@
     "kind": "won",
     "sources": [
       "g8m3-t6 twinWon"
+    ]
+  },
+  {
+    "key": "1bkn9k8",
+    "check": "1alw1uwfdnp",
+    "text": "Where a graph goes up, the function is increasing. Down is decreasing. Flat is constant.",
+    "style": "A",
+    "chars": 88,
+    "kind": "won",
+    "sources": [
+      "g8m3-t6 sticker + g8m3-t6 twinWon sticker"
     ]
   },
   {
@@ -72633,6 +76065,17 @@
     ]
   },
   {
+    "key": "lxwvvk",
+    "check": "z9ny940gli",
+    "text": "A slide is called a translation. The new shape has the same size and shape.",
+    "style": "A",
+    "chars": 75,
+    "kind": "won",
+    "sources": [
+      "g8m4-t1 sticker + g8m4-t1 twinWon sticker"
+    ]
+  },
+  {
     "key": "gt9urr",
     "check": "2bdtwva9xya",
     "text": "You kept the x and changed the sign of the y.",
@@ -72652,6 +76095,17 @@
     "kind": "won",
     "sources": [
       "g8m4-t2 twinWon"
+    ]
+  },
+  {
+    "key": "32e4ip",
+    "check": "w1jt219pvc",
+    "text": "A flip is called a reflection. The axis you flip over is the line of reflection.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g8m4-t2 sticker + g8m4-t2 twinWon sticker"
     ]
   },
   {
@@ -72677,6 +76131,17 @@
     ]
   },
   {
+    "key": "1rcfnm8",
+    "check": "458o2bn5ae",
+    "text": "A turn is called a rotation. Slides, flips and turns keep size and shape, so the new shape is congruent to the old one.",
+    "style": "A",
+    "chars": 119,
+    "kind": "won",
+    "sources": [
+      "g8m4-t3 sticker + g8m4-t3 twinWon sticker"
+    ]
+  },
+  {
     "key": "1bf1qx2",
     "check": "1p9g0murhd5",
     "text": "You multiplied the coordinate by the stretch number.",
@@ -72696,6 +76161,17 @@
     "kind": "won",
     "sources": [
       "g8m4-t4 twinWon"
+    ]
+  },
+  {
+    "key": "17nhjgs",
+    "check": "erm7n5xi7e",
+    "text": "A stretch from a point is called a dilation. The number you multiply by is the scale factor.",
+    "style": "A",
+    "chars": 92,
+    "kind": "won",
+    "sources": [
+      "g8m4-t4 sticker + g8m4-t4 twinWon sticker"
     ]
   },
   {
@@ -72721,6 +76197,17 @@
     ]
   },
   {
+    "key": "1tc2tfc",
+    "check": "uw6cay7qlj",
+    "text": "Triangles with the same angles are called similar triangles.",
+    "style": "A",
+    "chars": 60,
+    "kind": "won",
+    "sources": [
+      "g8m4-t5 sticker + g8m4-t5 twinWon sticker"
+    ]
+  },
+  {
     "key": "42avpz",
     "check": "12ifuoc4w5j",
     "text": "You took the two angles you know away from one hundred eighty degrees.",
@@ -72740,6 +76227,17 @@
     "kind": "won",
     "sources": [
       "g8m4-t6 twinWon"
+    ]
+  },
+  {
+    "key": "12ht86n",
+    "check": "1hgf1qhvsr0",
+    "text": "The angles inside are interior angles, and they add to one hundred eighty degrees. The angle outside a corner is an exterior angle.",
+    "style": "A",
+    "chars": 131,
+    "kind": "won",
+    "sources": [
+      "g8m4-t6 sticker + g8m4-t6 twinWon sticker"
     ]
   },
   {
@@ -72765,6 +76263,17 @@
     ]
   },
   {
+    "key": "cu10s2",
+    "check": "1td0dec85xw",
+    "text": "This is the Pythagorean theorem, a squared plus b squared equals c squared. The long side c is the hypotenuse, and the short sides are the legs.",
+    "style": "A",
+    "chars": 144,
+    "kind": "won",
+    "sources": [
+      "g8m4-t7 sticker + g8m4-t7 twinWon sticker"
+    ]
+  },
+  {
     "key": "1uczkf",
     "check": "1recf23w7pl",
     "text": "You took the square of the short side away from the square of the long side.",
@@ -72784,6 +76293,17 @@
     "kind": "won",
     "sources": [
       "g8m4-t8 twinWon"
+    ]
+  },
+  {
+    "key": "110jzxt",
+    "check": "1pe2m8qh6o4",
+    "text": "To find a missing leg, leg squared equals hypotenuse squared minus other leg squared.",
+    "style": "A",
+    "chars": 85,
+    "kind": "won",
+    "sources": [
+      "g8m4-t8 sticker + g8m4-t8 twinWon sticker"
     ]
   },
   {
@@ -72809,6 +76329,17 @@
     ]
   },
   {
+    "key": "1qok2wx",
+    "check": "7913o972co",
+    "text": "The distance between two points is the hypotenuse of the right triangle drawn between them.",
+    "style": "A",
+    "chars": 91,
+    "kind": "won",
+    "sources": [
+      "g8m4-t9 sticker + g8m4-t9 twinWon sticker"
+    ]
+  },
+  {
     "key": "8sgsly",
     "check": "1sczce91kyk",
     "text": "You found the area of the circle, then stacked it up the height.",
@@ -72828,6 +76359,17 @@
     "kind": "won",
     "sources": [
       "g8m5-t1 twinWon"
+    ]
+  },
+  {
+    "key": "1j8erim",
+    "check": "6f13lc2lf6",
+    "text": "The volume of a cylinder is V equals pi times r times r times h, and pi is about three point one four.",
+    "style": "A",
+    "chars": 102,
+    "kind": "won",
+    "sources": [
+      "g8m5-t1 sticker + g8m5-t1 twinWon sticker"
     ]
   },
   {
@@ -72853,6 +76395,17 @@
     ]
   },
   {
+    "key": "5fp025",
+    "check": "w0folkrfrs",
+    "text": "The volume of a cone is V equals one third times pi times r times r times h, and pi is about three point one four.",
+    "style": "A",
+    "chars": 114,
+    "kind": "won",
+    "sources": [
+      "g8m5-t2 sticker + g8m5-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "qbgpeo",
     "check": "1txmgrd9fo5",
     "text": "You used the radius three times, took four thirds, and multiplied by three point one four.",
@@ -72872,6 +76425,17 @@
     "kind": "won",
     "sources": [
       "g8m5-t3 twinWon"
+    ]
+  },
+  {
+    "key": "1x6bmgu",
+    "check": "gjb41z6y1c",
+    "text": "The volume of a sphere is V equals four thirds times pi times r times r times r, and pi is about three point one four.",
+    "style": "A",
+    "chars": 118,
+    "kind": "won",
+    "sources": [
+      "g8m5-t3 sticker + g8m5-t3 twinWon sticker"
     ]
   },
   {
@@ -72897,6 +76461,17 @@
     ]
   },
   {
+    "key": "11rnvhq",
+    "check": "1ers877dkmp",
+    "text": "Half of a ball is called a hemisphere. Volume is always measured in cubic units.",
+    "style": "A",
+    "chars": 80,
+    "kind": "won",
+    "sources": [
+      "g8m5-t4 sticker + g8m5-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "1sw0pvv",
     "check": "5v5gfjfgsy",
     "text": "You read the whole cloud, not just one dot.",
@@ -72916,6 +76491,17 @@
     "kind": "won",
     "sources": [
       "g8m6-t1 twinWon"
+    ]
+  },
+  {
+    "key": "2q9pm6",
+    "check": "qkv80lzkz4",
+    "text": "A pattern between two sets of data is a correlation, or association, positive or negative. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.",
+    "style": "A",
+    "chars": 165,
+    "kind": "won",
+    "sources": [
+      "g8m6-t1 sticker + g8m6-t1 twinWon sticker"
     ]
   },
   {
@@ -72941,6 +76527,17 @@
     ]
   },
   {
+    "key": "15a8d4n",
+    "check": "2185y2p4nye",
+    "text": "A straight line through the middle of a scatter plot is a line of best fit, or trend line.",
+    "style": "A",
+    "chars": 90,
+    "kind": "won",
+    "sources": [
+      "g8m6-t2 sticker + g8m6-t2 twinWon sticker"
+    ]
+  },
+  {
     "key": "1ymkpc9",
     "check": "t605mhusck",
     "text": "You put the hours into the equation and got a prediction.",
@@ -72960,6 +76557,17 @@
     "kind": "won",
     "sources": [
       "g8m6-t3 twinWon"
+    ]
+  },
+  {
+    "key": "zbk2cm",
+    "check": "xfolfksg9p",
+    "text": "In y equals mx plus b, m is the slope and b is the y-intercept. Predicting inside the data is interpolation, beyond it is extrapolation.",
+    "style": "A",
+    "chars": 136,
+    "kind": "won",
+    "sources": [
+      "g8m6-t3 sticker + g8m6-t3 twinWon sticker"
     ]
   },
   {
@@ -72985,6 +76593,17 @@
     ]
   },
   {
+    "key": "9ys572",
+    "check": "2f88a84cvr5",
+    "text": "A table that sorts people by two questions at once is a two-way table. Its row and column totals are marginal totals.",
+    "style": "A",
+    "chars": 117,
+    "kind": "won",
+    "sources": [
+      "g8m6-t4 sticker + g8m6-t4 twinWon sticker"
+    ]
+  },
+  {
     "key": "kmqnzl",
     "check": "v3ezk3plzi",
     "text": "You divided by the right row total and wrote a percent.",
@@ -73004,6 +76623,17 @@
     "kind": "won",
     "sources": [
       "g8m6-t5 twinWon"
+    ]
+  },
+  {
+    "key": "1yf7mga",
+    "check": "k9ucxlnt4a",
+    "text": "A count divided by a total is a relative frequency. Dividing by one row or column total gives a conditional relative frequency.",
+    "style": "A",
+    "chars": 127,
+    "kind": "won",
+    "sources": [
+      "g8m6-t5 sticker + g8m6-t5 twinWon sticker"
     ]
   },
   {

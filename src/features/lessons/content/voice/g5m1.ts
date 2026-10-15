@@ -330,4 +330,7 @@ export const G5M1_VOICE: Record<string, VoiceLine> = {
   "So 614 seats are still empty.": { style: 'B' },
   "Don't ADD the sold seats.": { style: 'B+' },
   "They're part of the 800, so take them away.": { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "A number sentence with no = sign is called an expression. The ( ) are called parentheses.": { style: 'A', say: "A number sentence with no equals sign is called an expression. The round brackets are called parentheses." },
+  "Doing the part in ( ) first is part of the order of operations.": { style: 'A', say: "Doing the part in parentheses first is part of the order of operations." },
 }
