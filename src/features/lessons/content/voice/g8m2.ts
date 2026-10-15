@@ -96,8 +96,9 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Don't ADD 5x and 3x across the equals sign. That makes 8x, and the scale tips.": { style: 'B+', say: "Don't add 5 x and 3 x across the equals sign. That makes 8 x, and the scale tips." },
   "Take 3x off BOTH sides instead. 5x + 2 = 3x + 10 becomes 2x + 2 = 10.": { style: 'B+', say: "Take 3 x off both sides instead. 5 x plus 2 equals 3 x plus 10 becomes 2 x plus 2 equals 10." },
   // ── g8m2-t6 ── ("Here's the part people mix up.", "Okay. Your turn." and "Is there a faster way? Yes." have rows elsewhere)
-  // "ex": "two x" was heard as "two Ike's" (tester, g8m2-t6 Screen 1; heard again 15 Oct).
-  "Two bike rentals. Shop A charges $3 plus $2 an hour. Shop B charges $5 plus $2 an hour. When do they cost the same? 2x + 3 = 2x + 5.": { style: 'A', say: "Two bike rentals. Shop A charges $3 plus $2 an hour. Shop B charges $5 plus $2 an hour. When do they cost the same? 2 ex plus 3 equals 2 ex plus 5." },
+  // "ex": "two x" was heard as "two Ike's" (tester, g8m2-t6 Screen 1; heard again 15 Oct). "Ay", "Bee": a render said
+  // "Shop A" for both shops (15 Oct).
+  "Two bike rentals. Shop A charges $3 plus $2 an hour. Shop B charges $5 plus $2 an hour. When do they cost the same? 2x + 3 = 2x + 5.": { style: 'A', say: "Two bike rentals. Shop Ay charges $3 plus $2 an hour. Shop Bee charges $5 plus $2 an hour. When do they cost the same? 2 ex plus 3 equals 2 ex plus 5." },
   "Try some hours. At 1 hour it is $5 and $7.": { style: 'B' },
   "At 10 hours it is $23 and $25.": { style: 'B' },
   "Shop B is always $2 more. So will they ever cost the same?": { style: 'B' },
