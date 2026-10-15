@@ -26675,11 +26675,11 @@
     ]
   },
   {
-    "key": "1grri88",
-    "check": "26otrs1lfra",
-    "text": "Grow both numbers. ninety-six divided by four equals twenty-four.",
+    "key": "2d85i7",
+    "check": "15gljrrpwn2",
+    "text": "Grow both numbers by the same amount, times ten each. ninety-six divided by four is twenty-four.",
     "style": "B+",
-    "chars": 65,
+    "chars": 96,
     "kind": "beat",
     "sources": [
       "g6m3-t4 s7 b3"
@@ -40238,22 +40238,22 @@
     ]
   },
   {
-    "key": "1737i0f",
-    "check": "2gg6uh95hvg",
-    "text": "y equals three x plus four climbs three each step and crosses at four.",
+    "key": "1ivj8od",
+    "check": "hwway2wnha",
+    "text": "y equals three x plus four climbs three each step and crosses the y-axis at four.",
     "style": "B",
-    "chars": 70,
+    "chars": 81,
     "kind": "beat",
     "sources": [
       "g8m2-t3 s6 b2"
     ]
   },
   {
-    "key": "kti36w",
-    "check": "10lqimv6e9c",
-    "text": "And y equals x plus five? A lone x means one x, so it climbs one and crosses at five.",
+    "key": "9um2y6",
+    "check": "nkp95ziwmf",
+    "text": "And y equals x plus five? A lone x means one x, so it climbs one and crosses the y-axis at five.",
     "style": "B",
-    "chars": 85,
+    "chars": 96,
     "kind": "beat",
     "sources": [
       "g8m2-t3 s6 b3"
@@ -40326,11 +40326,11 @@
     ]
   },
   {
-    "key": "1vr4xqp",
-    "check": "1kqzhrl0iev",
-    "text": "In y equals two x plus three, the plain number is three.",
+    "key": "1gutxii",
+    "check": "2c5p2w9h3so",
+    "text": "In y equals m x plus b, b is the plain number. In y equals two x plus three, b is three.",
     "style": "B",
-    "chars": 56,
+    "chars": 88,
     "kind": "beat",
     "sources": [
       "g8m2-t4 s4 b1"
@@ -40689,11 +40689,11 @@
     ]
   },
   {
-    "key": "bbuljq",
-    "check": "10veiyczjzp",
-    "text": "So there is no answer. The two prices never meet.",
+    "key": "2s68a9",
+    "check": "e1t7l49z2g",
+    "text": "So there is no answer. On a graph, the two prices are two parallel lines that never meet.",
     "style": "B",
-    "chars": 49,
+    "chars": 89,
     "kind": "beat",
     "sources": [
       "g8m2-t6 s4 b4"
@@ -40953,11 +40953,11 @@
     ]
   },
   {
-    "key": "2hrgrk",
-    "check": "2ejopjpya28",
-    "text": "But Ben's rule gives five there, not three. Only the crossing fits both.",
+    "key": "cxc7k",
+    "check": "syxupcyps3",
+    "text": "But Ben's equation gives five there, not three. Only the crossing fits both.",
     "style": "B+",
-    "chars": 72,
+    "chars": 76,
     "kind": "beat",
     "sources": [
       "g8m2-t7 s7 b3"
@@ -41811,9 +41811,9 @@
     ]
   },
   {
-    "key": "lahqfo",
-    "check": "1v8k19r0dbu",
-    "text": "A table like that has a name.",
+    "key": "1ovcdpw",
+    "check": "vqkvdzhi84",
+    "text": "A graph like that has a name.",
     "style": "B",
     "chars": 29,
     "kind": "beat",
@@ -47698,9 +47698,9 @@
   {
     "key": "1ug5k3c",
     "check": "14cms1t16hg",
-    "text": "Wrapping a gift. A gift box is four centimeters long, three centimeters wide, and two centimeters tall. How much paper covers the outside, with no overlap?",
+    "text": "Wrapping a gift. A gift box is four centimeters long. It is three centimeters wide. It is two centimeters tall. How much paper covers the outside, with no overlap?",
     "style": "A",
-    "chars": 155,
+    "chars": 163,
     "kind": "screen1",
     "sources": [
       "g6m6-t4 s1"
@@ -72347,11 +72347,11 @@
     ]
   },
   {
-    "key": "mi9n94",
-    "check": "1hf91hdkjpb",
-    "text": "You put the x into the equation and checked that it gave the y.",
+    "key": "1nvznil",
+    "check": "85s6op5kpc",
+    "text": "You put the point’s x into the equation, and it gave the point’s y. So the point is on the line.",
     "style": "A",
-    "chars": 63,
+    "chars": 96,
     "kind": "won",
     "sources": [
       "g8m2-t4 won"

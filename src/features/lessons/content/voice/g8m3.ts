@@ -62,7 +62,7 @@ export const G8M3_VOICE: Record<string, VoiceLine> = {
   "Is that the same step each week? No.": { style: 'B' },
   "It goes up 1, then up 3, then up 5, so the points bend upward.": { style: 'B' },
   "Plant A grew by the same amount every week, so its points make a straight line.": { style: 'B' },
-  "A table like that has a name.": { style: 'B' },
+  "A graph like that has a name.": { style: 'B' },
   "We call it linear. Plant B is not linear.": { style: 'B' },
   "Don't compare the y changes before you CHECK the x steps.": { style: 'B+' },
   "If x goes up 1 and then up 2, y should go up twice as far the second time. That is still a straight line.": { style: 'B+' },
