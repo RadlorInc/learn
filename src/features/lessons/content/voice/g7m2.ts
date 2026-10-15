@@ -78,7 +78,7 @@ export const G7M2_VOICE: Record<string, VoiceLine> = {
   "You added the opposite and found 4 − (−3) = 7.": { style: 'A', say: "You added the opposite and found 4 minus negative 3 equals 7." },
   // ── g7m2-t5 ── ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
   "Losing 2 points, 3 times, is 3 × (−2). That's 3 groups of −2.": { style: 'B', say: "Losing 2 points, 3 times, is 3 times negative 2. That's 3 groups of negative 2." },
-  "But what could −3 × (−2) mean?": { style: 'B', say: "But what could negative 3 times negative 2 mean?" },
+  "Now make the first number negative as well. What could −3 × (−2) mean?": { style: 'B', say: "Now make the first number negative as well. What could negative 3 times negative 2 mean?" },
   "You can't make −3 groups of anything.": { style: 'B' },
   "Multiply the numbers, then check the signs: same signs make a positive answer, and different signs make a negative one.": { style: 'B' },
   "Look at a pattern instead. 3 × 2 is 6, and 3 × 1 is 3.": { style: 'B' },

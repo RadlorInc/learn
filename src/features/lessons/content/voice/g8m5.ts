@@ -8,7 +8,8 @@ export const G8M5_VOICE: Record<string, VoiceLine> = {
   // ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
   // ── g8m5-t1 ──
   "In a box, you could stack little cubes and just count them.": { style: 'B' },
-  "A can is round, though.": { style: 'B' },
+  // The lone "A" at the start was misread (a tester, g8m5-t1, 15 Oct).
+  "A can is round, though.": { style: 'B', say: "But a can is round." },
   "Push cubes against the curved side, and you get gaps.": { style: 'B' },
   "So how do you measure a space that is round?": { style: 'B' },
   "A cylinder is a stack of circles, so find the area of one circle and multiply by the height.": { style: 'B' },
@@ -61,7 +62,8 @@ export const G8M5_VOICE: Record<string, VoiceLine> = {
   "So the can rule has nothing to hold on to.": { style: 'B' },
   "How do we find what fits inside, then? We get help from a can.": { style: 'B' },
   "A ball holds 2/3 of the can that fits snugly around it, so its volume is 4/3 × 3.14 × radius × radius × radius.": { style: 'B', say: "A ball holds two thirds of the can that fits snugly around it, so its volume is four thirds times three point one four times radius times radius times radius." },
-  "Look. Picture the smallest can this ball fits inside.": { style: 'B' },
+  // Read as "the smallest. Can this ball fits inside?" (a tester, g8m5-t3, 15 Oct).
+  "Look. Picture the smallest can this ball fits inside.": { style: 'B', say: "Look. Picture the smallest can that this ball fits inside." },
   "Its radius is the same as the ball's, 3 in.": { style: 'B', say: "Its radius is the same as the ball's, 3 inches." },
   "And how tall is it? The whole way across the ball, so 3 × 2 = 6 in.": { style: 'B', say: "And how tall is it? The whole way across the ball, so 3 times 2 equals 6 inches." },
   "Fill the can with water, then push the ball in.": { style: 'B' },

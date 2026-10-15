@@ -6,6 +6,8 @@ import type { VoiceLine } from './styles'
 
 export const G8M6_VOICE: Record<string, VoiceLine> = {
   // ── g8m6-t1 ── ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
+  // Past tense, said "red" (a tester heard "reed", 15 Oct).
+  "You read the whole cloud, not just one dot.": { style: 'A', say: "You red the whole cloud, not just one dot." },
   "Can two students settle it? Look at these two.": { style: 'B' },
   "This one studied 2 hours and got 70. This one studied an hour more and got 68.": { style: 'B' },
   "So two dots can show almost anything.": { style: 'B' },

@@ -183,7 +183,7 @@
     "chars": 16,
     "kind": "beat",
     "sources": [
-      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g3m2-t1 s7 b4 + g3m2-t2 s7 b4 + g3m2-t3 s7 b4 + g3m2-t4 s7 b4 + g3m2-t5 s7 b4 + g3m2-t6 s7 b4 + g3m2-t7 s7 b4 + g3m2-t8 s7 b4 + g3m2-t9 s7 b4 + g3m3-t1 s7 b4 + g3m3-t2 s7 b4 + g3m3-t3 s7 b4 + g3m3-t4 s7 b4 + g3m3-t5 s7 b4 + g3m3-t6 s7 b4 + g3m3-t7 s7 b4 + g3m3-t8 s7 b4 + g3m3-t9 s7 b4 + g3m4-t1 s7 b4 + g3m4-t2 s7 b4 + g3m4-t3 s7 b4 + g3m4-t4 s7 b4 + g3m5-t1 s7 b4 + g3m5-t2 s7 b4 + g3m5-t3 s7 b4 + g3m5-t4 s7 b4 + g3m5-t5 s7 b4 + g3m5-t6 s7 b4 + g3m5-t7 s7 b4 + g3m5-t8 s7 b4 + g3m6-t1 s7 b4 + g3m6-t2 s7 b4 + g3m6-t3 s7 b4 + g3m6-t4 s7 b4 + g3m6-t5 s7 b4 + g3m6-t6 s7 b4 + g3m6-t7 s7 b4 + g4m1-t1 s7 b4 + g4m1-t2 s7 b4 + g4m1-t3 s7 b5 + g4m1-t4 s7 b4 + g4m1-t5 s7 b4 + g4m1-t6 s7 b4 + g4m1-t7 s7 b4 + g4m1-t8 s7 b4 + g4m2-t1 s7 b4 + g4m2-t2 s7 b4 + g4m2-t3 s7 b4 + g4m2-t4 s7 b4 + g4m2-t5 s7 b4 + g4m2-t6 s7 b4 + g4m2-t7 s7 b4 + g4m2-t8 s7 b4 + g4m3-t1 s7 b4 + g4m3-t2 s7 b4 + g4m3-t3 s7 b4 + g4m3-t4 s7 b4 + g4m3-t5 s7 b4 + g4m3-t6 s7 b4 + g4m3-t7 s7 b4 + g4m3-t8 s7 b4 + g4m4-t1 s7 b4 + g4m4-t2 s7 b4 + g4m4-t3 s7 b4 + g4m4-t4 s7 b4 + g4m4-t5 s7 b4 + g4m4-t6 s7 b4 + g4m4-t7 s7 b4 + g4m4-t8 s7 b4 + g4m4-t9 s7 b4 + g4m5-t1 s7 b4 + g4m5-t2 s7 b4 + g4m5-t3 s7 b4 + g4m5-t4 s7 b4 + g4m5-t5 s7 b4 + g4m5-t6 s7 b4 + g4m5-t7 s7 b4 + g4m5-t8 s7 b4 + g4m6-t1 s7 b4 + g4m6-t2 s7 b4 + g4m6-t3 s7 b4 + g4m6-t4 s7 b4 + g4m6-t5 s7 b4 + g4m6-t6 s7 b4 + g4m6-t7 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4 + g5m2-t1 s7 b4 + g5m2-t2 s7 b4 + g5m2-t3 s7 b4 + g5m2-t4 s7 b4 + g5m2-t5 s7 b4 + g5m2-t6 s7 b4 + g5m2-t7 s7 b4 + g5m2-t8 s7 b4 + g5m3-t1 s7 b4 + g5m3-t2 s7 b4 + g5m3-t3 s7 b4 + g5m3-t4 s7 b4 + g5m3-t5 s7 b4 + g5m3-t6 s7 b4 + g5m3-t7 s7 b4 + g5m3-t8 s7 b4 + g5m4-t1 s7 b4 + g5m4-t2 s7 b4 + g5m4-t3 s7 b4 + g5m4-t4 s7 b4 + g5m4-t5 s7 b4 + g5m4-t6 s7 b4 + g5m4-t7 s7 b4 + g5m4-t8 s7 b4 + g5m4-t9 s7 b4 + g5m5-t1 s7 b4 + g5m5-t2 s7 b4 + g5m5-t3 s7 b4 + g5m5-t4 s7 b4 + g5m5-t5 s7 b4 + g5m5-t6 s7 b5 + g5m5-t7 s7 b5 + g5m6-t1 s7 b4 + g5m6-t2 s7 b4 + g5m6-t3 s7 b4 + g5m6-t4 s7 b4 + g5m6-t5 s7 b4 + g5m6-t6 s7 b4 + g6m1-t1 s7 b4 + g6m1-t2 s7 b4 + g6m1-t3 s7 b4 + g6m1-t4 s7 b4 + g6m1-t5 s7 b4 + g6m1-t6 s7 b4 + g6m1-t7 s7 b4 + g6m1-t8 s7 b4 + g6m2-t1 s7 b4 + g6m2-t2 s7 b4 + g6m2-t3 s7 b4 + g6m2-t4 s7 b4 + g6m2-t5 s7 b4 + g6m2-t6 s7 b4 + g6m2-t7 s7 b4 + g6m3-t1 s7 b4 + g6m3-t2 s7 b4 + g6m3-t3 s7 b4 + g6m3-t4 s7 b4 + g6m3-t5 s7 b4 + g6m3-t6 s7 b4 + g6m4-t1 s7 b4 + g6m4-t2 s7 b4 + g6m4-t3 s7 b4 + g6m4-t4 s7 b4 + g6m4-t5 s7 b4 + g6m4-t6 s7 b4 + g6m4-t7 s7 b4 + g6m5-t1 s7 b4 + g6m5-t2 s7 b4 + g6m5-t3 s7 b4 + g6m5-t4 s7 b4 + g6m5-t5 s7 b4 + g6m5-t6 s7 b4 + g6m5-t7 s7 b5 + g6m5-t8 s7 b5 + g6m5-t9 s7 b4 + g6m6-t1 s7 b4 + g6m6-t2 s7 b4 + g6m6-t3 s7 b4 + g6m6-t4 s7 b5 + g6m6-t5 s7 b5 + g6m6-t6 s7 b4 + g6m7-t1 s7 b4 + g6m7-t2 s7 b4 + g6m7-t3 s7 b4 + g6m7-t4 s7 b4 + g6m7-t5 s7 b4 + g6m7-t6 s7 b4 + g6m7-t7 s7 b4 + g6m7-t8 s7 b4 + g7m1-t1 s7 b4 + g7m1-t2 s7 b4 + g7m1-t3 s7 b4 + g7m1-t4 s7 b4 + g7m1-t5 s7 b4 + g7m1-t6 s7 b4 + g7m1-t7 s7 b4 + g7m1-t8 s7 b4 + g7m2-t1 s7 b4 + g7m2-t2 s7 b4 + g7m2-t3 s7 b4 + g7m2-t4 s7 b4 + g7m2-t5 s7 b4 + g7m2-t6 s7 b4 + g7m2-t7 s7 b4 + g7m2-t8 s7 b4 + g7m3-t1 s7 b4 + g7m3-t2 s7 b4 + g7m3-t3 s7 b4 + g7m3-t4 s7 b4 + g7m3-t5 s7 b4 + g7m3-t6 s7 b4 + g7m3-t7 s7 b4 + g7m3-t8 s7 b4 + g7m4-t1 s7 b4 + g7m4-t2 s7 b4 + g7m4-t3 s7 b4 + g7m4-t4 s7 b4 + g7m4-t5 s7 b4 + g7m4-t6 s7 b4 + g7m4-t7 s7 b4 + g7m4-t8 s7 b4 + g7m5-t1 s7 b5 + g7m5-t2 s7 b4 + g7m5-t3 s7 b5 + g7m5-t4 s7 b4 + g7m5-t5 s7 b4 + g7m5-t6 s7 b4 + g8m1-t1 s7 b4 + g8m1-t2 s7 b4 + g8m1-t3 s7 b4 + g8m1-t4 s7 b4 + g8m1-t5 s7 b4 + g8m1-t6 s7 b4 + g8m1-t7 s7 b4 + g8m1-t8 s7 b4 + g8m1-t9 s7 b4 + g8m2-t1 s7 b4 + g8m2-t2 s7 b4 + g8m2-t3 s7 b4 + g8m2-t4 s7 b4 + g8m2-t5 s7 b4 + g8m2-t6 s7 b4 + g8m2-t7 s7 b4 + g8m2-t8 s7 b4 + g8m2-t9 s7 b4 + g8m3-t1 s7 b4 + g8m3-t2 s7 b4 + g8m3-t3 s7 b4 + g8m3-t4 s7 b4 + g8m3-t5 s7 b4 + g8m3-t6 s7 b4 + g8m4-t1 s7 b5 + g8m4-t2 s7 b5 + g8m4-t3 s7 b5 + g8m4-t4 s7 b5 + g8m4-t5 s7 b5 + g8m4-t6 s7 b4 + g8m4-t7 s7 b4 + g8m4-t8 s7 b4 + g8m4-t9 s7 b4 + g8m5-t1 s7 b4 + g8m5-t2 s7 b4 + g8m5-t3 s7 b4 + g8m5-t4 s7 b4 + g8m6-t1 s7 b4 + g8m6-t2 s7 b4 + g8m6-t3 s7 b4 + g8m6-t4 s7 b5 + g8m6-t5 s7 b4"
+      "g3m1-t1 s7 b4 + g3m1-t2 s7 b4 + g3m1-t3 s7 b4 + g3m1-t4 s7 b4 + g3m1-t5 s7 b4 + g3m1-t6 s7 b4 + g3m1-t7 s7 b4 + g3m1-t8 s7 b4 + g3m2-t1 s7 b4 + g3m2-t2 s7 b4 + g3m2-t3 s7 b4 + g3m2-t4 s7 b4 + g3m2-t5 s7 b4 + g3m2-t6 s7 b4 + g3m2-t7 s7 b4 + g3m2-t8 s7 b4 + g3m2-t9 s7 b4 + g3m3-t1 s7 b4 + g3m3-t2 s7 b4 + g3m3-t3 s7 b4 + g3m3-t4 s7 b4 + g3m3-t5 s7 b4 + g3m3-t6 s7 b4 + g3m3-t7 s7 b4 + g3m3-t8 s7 b4 + g3m3-t9 s7 b4 + g3m4-t1 s7 b4 + g3m4-t2 s7 b4 + g3m4-t3 s7 b4 + g3m4-t4 s7 b4 + g3m5-t1 s7 b4 + g3m5-t2 s7 b4 + g3m5-t3 s7 b4 + g3m5-t4 s7 b4 + g3m5-t5 s7 b4 + g3m5-t6 s7 b4 + g3m5-t7 s7 b4 + g3m5-t8 s7 b4 + g3m6-t1 s7 b4 + g3m6-t2 s7 b4 + g3m6-t3 s7 b4 + g3m6-t4 s7 b4 + g3m6-t5 s7 b4 + g3m6-t6 s7 b4 + g3m6-t7 s7 b4 + g4m1-t1 s7 b4 + g4m1-t2 s7 b4 + g4m1-t3 s7 b5 + g4m1-t4 s7 b4 + g4m1-t5 s7 b4 + g4m1-t6 s7 b4 + g4m1-t7 s7 b4 + g4m1-t8 s7 b4 + g4m2-t1 s7 b4 + g4m2-t2 s7 b4 + g4m2-t3 s7 b4 + g4m2-t4 s7 b4 + g4m2-t5 s7 b4 + g4m2-t6 s7 b4 + g4m2-t7 s7 b4 + g4m2-t8 s7 b4 + g4m3-t1 s7 b4 + g4m3-t2 s7 b4 + g4m3-t3 s7 b4 + g4m3-t4 s7 b4 + g4m3-t5 s7 b4 + g4m3-t6 s7 b4 + g4m3-t7 s7 b4 + g4m3-t8 s7 b4 + g4m4-t1 s7 b4 + g4m4-t2 s7 b4 + g4m4-t3 s7 b4 + g4m4-t4 s7 b4 + g4m4-t5 s7 b4 + g4m4-t6 s7 b4 + g4m4-t7 s7 b4 + g4m4-t8 s7 b4 + g4m4-t9 s7 b4 + g4m5-t1 s7 b4 + g4m5-t2 s7 b4 + g4m5-t3 s7 b4 + g4m5-t4 s7 b4 + g4m5-t5 s7 b4 + g4m5-t6 s7 b4 + g4m5-t7 s7 b4 + g4m5-t8 s7 b4 + g4m6-t1 s7 b4 + g4m6-t2 s7 b4 + g4m6-t3 s7 b4 + g4m6-t4 s7 b4 + g4m6-t5 s7 b4 + g4m6-t6 s7 b4 + g4m6-t7 s7 b4 + g5m1-t1 s7 b4 + g5m1-t2 s7 b4 + g5m1-t3 s7 b4 + g5m1-t4 s7 b4 + g5m1-t5 s7 b4 + g5m1-t6 s7 b4 + g5m1-t7 s7 b4 + g5m1-t8 s7 b4 + g5m1-t9 s7 b4 + g5m1-t10 s7 b4 + g5m1-t11 s7 b4 + g5m1-t12 s7 b4 + g5m1-t13 s7 b4 + g5m1-t14 s7 b4 + g5m1-t15 s7 b4 + g5m1-t16 s7 b4 + g5m1-t17 s7 b4 + g5m1-t18 s7 b4 + g5m1-t19 s7 b4 + g5m1-t20 s7 b4 + g5m2-t1 s7 b4 + g5m2-t2 s7 b4 + g5m2-t3 s7 b4 + g5m2-t4 s7 b4 + g5m2-t5 s7 b4 + g5m2-t6 s7 b4 + g5m2-t7 s7 b4 + g5m2-t8 s7 b4 + g5m3-t1 s7 b4 + g5m3-t2 s7 b4 + g5m3-t3 s7 b4 + g5m3-t4 s7 b4 + g5m3-t5 s7 b4 + g5m3-t6 s7 b4 + g5m3-t7 s7 b4 + g5m3-t8 s7 b4 + g5m4-t1 s7 b4 + g5m4-t2 s7 b4 + g5m4-t3 s7 b4 + g5m4-t4 s7 b4 + g5m4-t5 s7 b4 + g5m4-t6 s7 b4 + g5m4-t7 s7 b4 + g5m4-t8 s7 b4 + g5m4-t9 s7 b4 + g5m5-t1 s7 b4 + g5m5-t2 s7 b4 + g5m5-t3 s7 b4 + g5m5-t4 s7 b4 + g5m5-t5 s7 b4 + g5m5-t6 s7 b5 + g5m5-t7 s7 b5 + g5m6-t1 s7 b4 + g5m6-t2 s7 b4 + g5m6-t3 s7 b4 + g5m6-t4 s7 b4 + g5m6-t5 s7 b4 + g5m6-t6 s7 b4 + g6m1-t1 s7 b4 + g6m1-t2 s7 b4 + g6m1-t3 s7 b4 + g6m1-t4 s7 b4 + g6m1-t5 s7 b4 + g6m1-t6 s7 b4 + g6m1-t7 s7 b4 + g6m1-t8 s7 b4 + g6m2-t1 s7 b4 + g6m2-t2 s7 b4 + g6m2-t3 s7 b4 + g6m2-t4 s7 b4 + g6m2-t5 s7 b4 + g6m2-t6 s7 b4 + g6m2-t7 s7 b4 + g6m3-t1 s7 b4 + g6m3-t2 s7 b4 + g6m3-t3 s7 b4 + g6m3-t4 s7 b4 + g6m3-t5 s7 b4 + g6m3-t6 s7 b4 + g6m4-t1 s7 b4 + g6m4-t2 s7 b4 + g6m4-t3 s7 b4 + g6m4-t4 s7 b4 + g6m4-t5 s7 b4 + g6m4-t6 s7 b4 + g6m4-t7 s7 b4 + g6m5-t1 s7 b4 + g6m5-t2 s7 b4 + g6m5-t3 s7 b4 + g6m5-t4 s7 b4 + g6m5-t5 s7 b4 + g6m5-t6 s7 b4 + g6m5-t7 s7 b5 + g6m5-t8 s7 b5 + g6m5-t9 s7 b4 + g6m6-t1 s7 b4 + g6m6-t2 s7 b4 + g6m6-t3 s7 b4 + g6m6-t4 s7 b5 + g6m6-t5 s7 b5 + g6m6-t6 s7 b4 + g6m7-t1 s7 b4 + g6m7-t2 s7 b4 + g6m7-t3 s7 b4 + g6m7-t4 s7 b4 + g6m7-t5 s7 b4 + g6m7-t6 s7 b4 + g6m7-t7 s7 b4 + g6m7-t8 s7 b4 + g7m1-t1 s7 b4 + g7m1-t2 s7 b4 + g7m1-t3 s7 b4 + g7m1-t4 s7 b4 + g7m1-t5 s7 b4 + g7m1-t6 s7 b4 + g7m1-t7 s7 b4 + g7m1-t8 s7 b4 + g7m2-t1 s7 b4 + g7m2-t2 s7 b4 + g7m2-t3 s7 b4 + g7m2-t4 s7 b4 + g7m2-t5 s7 b4 + g7m2-t6 s7 b4 + g7m2-t7 s7 b4 + g7m2-t8 s7 b4 + g7m3-t1 s7 b4 + g7m3-t2 s7 b4 + g7m3-t3 s7 b4 + g7m3-t4 s7 b4 + g7m3-t5 s7 b4 + g7m3-t6 s7 b4 + g7m3-t7 s7 b5 + g7m3-t8 s7 b4 + g7m4-t1 s7 b4 + g7m4-t2 s7 b4 + g7m4-t3 s7 b4 + g7m4-t4 s7 b4 + g7m4-t5 s7 b4 + g7m4-t6 s7 b4 + g7m4-t7 s7 b4 + g7m4-t8 s7 b4 + g7m5-t1 s7 b5 + g7m5-t2 s7 b4 + g7m5-t3 s7 b5 + g7m5-t4 s7 b4 + g7m5-t5 s7 b4 + g7m5-t6 s7 b4 + g8m1-t1 s7 b4 + g8m1-t2 s7 b4 + g8m1-t3 s7 b4 + g8m1-t4 s7 b4 + g8m1-t5 s7 b4 + g8m1-t6 s7 b4 + g8m1-t7 s7 b4 + g8m1-t8 s7 b4 + g8m1-t9 s7 b4 + g8m2-t1 s7 b4 + g8m2-t2 s7 b4 + g8m2-t3 s7 b4 + g8m2-t4 s7 b4 + g8m2-t5 s7 b4 + g8m2-t6 s7 b4 + g8m2-t7 s7 b4 + g8m2-t8 s7 b4 + g8m2-t9 s7 b4 + g8m3-t1 s7 b4 + g8m3-t2 s7 b4 + g8m3-t3 s7 b4 + g8m3-t4 s7 b4 + g8m3-t5 s7 b4 + g8m3-t6 s7 b4 + g8m4-t1 s7 b5 + g8m4-t2 s7 b5 + g8m4-t3 s7 b5 + g8m4-t4 s7 b5 + g8m4-t5 s7 b5 + g8m4-t6 s7 b4 + g8m4-t7 s7 b4 + g8m4-t8 s7 b4 + g8m4-t9 s7 b4 + g8m5-t1 s7 b4 + g8m5-t2 s7 b4 + g8m5-t3 s7 b4 + g8m5-t4 s7 b4 + g8m6-t1 s7 b4 + g8m6-t2 s7 b4 + g8m6-t3 s7 b4 + g8m6-t4 s7 b5 + g8m6-t5 s7 b4"
     ]
   },
   {
@@ -33891,11 +33891,11 @@
     ]
   },
   {
-    "key": "1gcpes",
-    "check": "jvp0umuc6l",
-    "text": "But what could negative three times negative two mean?",
+    "key": "1x20pp4",
+    "check": "37xdf9654o",
+    "text": "Now make the first number negative as well. What could negative three times negative two mean?",
     "style": "B",
-    "chars": 54,
+    "chars": 94,
     "kind": "beat",
     "sources": [
       "g7m2-t5 s2 b2"
@@ -35026,9 +35026,9 @@
   {
     "key": "smaruc",
     "check": "p50xoevnk0",
-    "text": "three times two x equals six x, and three times three equals nine.",
+    "text": "three times two ex equals six ex, and three times three equals nine.",
     "style": "B",
-    "chars": 66,
+    "chars": 68,
     "kind": "beat",
     "sources": [
       "g7m3-t3 s6 b2"
@@ -35059,9 +35059,9 @@
   {
     "key": "ti8zvf",
     "check": "1mn3xnbvghx",
-    "text": "The nine gets divided by three as well. It's three times two x plus three, all together, not three times two x plus nine.",
+    "text": "The nine gets divided by three as well. It's three times two ex plus three, all together, not three times two ex plus nine.",
     "style": "B+",
-    "chars": 121,
+    "chars": 123,
     "kind": "beat",
     "sources": [
       "g7m3-t3 s7 b3"
@@ -35772,6 +35772,17 @@
     ]
   },
   {
+    "key": "16fqw3s",
+    "check": "o756rihoo2",
+    "text": "Adding or taking away never flips it.",
+    "style": "B+",
+    "chars": 37,
+    "kind": "beat",
+    "sources": [
+      "g7m3-t7 s7 b4"
+    ]
+  },
+  {
     "key": "13cu6xd",
     "check": "c0d1gqu13t",
     "text": "You could guess. Try three gigabytes.",
@@ -35818,9 +35829,9 @@
   {
     "key": "1qno3yg",
     "check": "1ee04lnwrop",
-    "text": "Let g be the number of gigabytes.",
+    "text": "Let gee be the number of gigabytes.",
     "style": "B",
-    "chars": 33,
+    "chars": 35,
     "kind": "beat",
     "sources": [
       "g7m3-t8 s4 b1"
@@ -35829,9 +35840,9 @@
   {
     "key": "1mordn8",
     "check": "qhdn4br5um",
-    "text": "Each one costs five dollars, so the data part is five grams.",
+    "text": "Each one costs five dollars, so the data part is five gee.",
     "style": "B",
-    "chars": 60,
+    "chars": 58,
     "kind": "beat",
     "sources": [
       "g7m3-t8 s4 b2"
@@ -35840,9 +35851,9 @@
   {
     "key": "15m8nqm",
     "check": "2eeqmld4cdz",
-    "text": "Add the twenty for the plan. The whole bill is twenty plus five grams equals forty-five.",
+    "text": "Add the twenty for the plan. The whole bill is twenty plus five gee equals forty-five.",
     "style": "B",
-    "chars": 88,
+    "chars": 86,
     "kind": "beat",
     "sources": [
       "g7m3-t8 s4 b3"
@@ -35862,9 +35873,9 @@
   {
     "key": "usoq3f",
     "check": "23akx6d9hbz",
-    "text": "Take twenty off both sides. forty-five minus twenty equals twenty-five, so five grams equals twenty-five.",
+    "text": "Take twenty off both sides. forty-five minus twenty equals twenty-five, so five gee equals twenty-five.",
     "style": "B",
-    "chars": 105,
+    "chars": 103,
     "kind": "beat",
     "sources": [
       "g7m3-t8 s5 b2"
@@ -35873,9 +35884,9 @@
   {
     "key": "12a4w0h",
     "check": "e8tlthd349",
-    "text": "Divide both sides by five, and g equals five.",
+    "text": "Divide both sides by five, and gee equals five.",
     "style": "B",
-    "chars": 45,
+    "chars": 47,
     "kind": "beat",
     "sources": [
       "g7m3-t8 s5 b3"
@@ -35939,9 +35950,9 @@
   {
     "key": "12sqndy",
     "check": "w083iyaje6",
-    "text": "That's the five, not the twenty. So it's twenty plus five grams, not five plus twenty grams.",
+    "text": "That's the five, not the twenty. So it's twenty plus five gee, not five plus twenty gee.",
     "style": "B+",
-    "chars": 92,
+    "chars": 88,
     "kind": "beat",
     "sources": [
       "g7m3-t8 s7 b3"
@@ -36366,6 +36377,17 @@
     ]
   },
   {
+    "key": "13qklby",
+    "check": "2fi0jjp9j3r",
+    "text": "All the way around is three point one four times twenty, which is sixty-two point eight meters, and half of that is thirty-one point four.",
+    "style": "B",
+    "chars": 138,
+    "kind": "beat",
+    "sources": [
+      "g7m4-t3 s5 b3"
+    ]
+  },
+  {
     "key": "1xvto4v",
     "check": "24xx7aed4v6",
     "text": "And the short side is the height of one slice. That's the radius, ten meters.",
@@ -36373,7 +36395,7 @@
     "chars": 77,
     "kind": "beat",
     "sources": [
-      "g7m4-t3 s5 b3"
+      "g7m4-t3 s5 b4"
     ]
   },
   {
@@ -36729,6 +36751,17 @@
     ]
   },
   {
+    "key": "148q2ds",
+    "check": "21m7jq7k1ax",
+    "text": "All four add up to three hundred sixty degrees.",
+    "style": "B",
+    "chars": 47,
+    "kind": "beat",
+    "sources": [
+      "g7m4-t5 s6 b4"
+    ]
+  },
+  {
     "key": "xbp3v7",
     "check": "hy1er8tk4g",
     "text": "Don't take the angle away from one hundred eighty. That gives you the angle next door, not the one across.",
@@ -36764,9 +36797,9 @@
   {
     "key": "zjc9t1",
     "check": "1x2ckjqivvd",
-    "text": "Lay the nine centimeters stick down, and stand the other two up at its ends.",
+    "text": "Lay the nine centimeter stick down, and stand the other two up at its ends.",
     "style": "B",
-    "chars": 76,
+    "chars": 75,
     "kind": "beat",
     "sources": [
       "g7m4-t6 s2 b2"
@@ -36797,9 +36830,9 @@
   {
     "key": "3luk5b",
     "check": "13rre6fi7bg",
-    "text": "Why not? Lay both short sticks flat on the nine centimeters one.",
+    "text": "Why not? Lay both short sticks flat on the nine centimeter one.",
     "style": "B",
-    "chars": 64,
+    "chars": 63,
     "kind": "beat",
     "sources": [
       "g7m4-t6 s4 b1"
@@ -36830,9 +36863,9 @@
   {
     "key": "g15iq7",
     "check": "bouu4qpj02",
-    "text": "Now swap the nine centimeters stick for a five centimeters one.",
+    "text": "Now swap the nine centimeter stick for a five centimeter one.",
     "style": "B",
-    "chars": 63,
+    "chars": 61,
     "kind": "beat",
     "sources": [
       "g7m4-t6 s5 b1"
@@ -36874,9 +36907,9 @@
   {
     "key": "1ptpcpg",
     "check": "1qx58xo2tor",
-    "text": "three plus four equals seven. The sticks meet, but only lying flat on the seven centimeters one.",
+    "text": "three plus four equals seven. The sticks meet, but only lying flat on the seven centimeter one.",
     "style": "B",
-    "chars": 96,
+    "chars": 95,
     "kind": "beat",
     "sources": [
       "g7m4-t6 s6 b2"
@@ -44002,9 +44035,9 @@
   {
     "key": "1spmv4t",
     "check": "6i22jlgixw",
-    "text": "A can is round, though.",
+    "text": "But a can is round.",
     "style": "B",
-    "chars": 23,
+    "chars": 19,
     "kind": "beat",
     "sources": [
       "g8m5-t1 s2 b2"
@@ -44442,9 +44475,9 @@
   {
     "key": "x0zlvh",
     "check": "21pzi0sjagk",
-    "text": "Look. Picture the smallest can this ball fits inside.",
+    "text": "Look. Picture the smallest can that this ball fits inside.",
     "style": "B",
-    "chars": 53,
+    "chars": 58,
     "kind": "beat",
     "sources": [
       "g8m5-t3 s4 b1"
@@ -48708,11 +48741,11 @@
     ]
   },
   {
-    "key": "2pirmu",
-    "check": "lte67kfgg8",
-    "text": "Which grade likes pizza more?. twelve grade seven students like pizza, and fifteen grade eight students do. Does that mean grade eight likes pizza more?",
+    "key": "1wuosy7",
+    "check": "1ra3wtsf8t8",
+    "text": "Which grade likes pizza more?. In grade seven, twelve students like pizza. In grade eight, fifteen do. Does that mean grade eight likes pizza more?",
     "style": "A",
-    "chars": 152,
+    "chars": 147,
     "kind": "screen1",
     "sources": [
       "g8m6-t5 s1"
@@ -51141,9 +51174,9 @@
   {
     "key": "a63acg",
     "check": "rudyylniyy",
-    "text": "Now you try. Which is the same as eight x plus twelve? Find the biggest number that divides every part. Put it outside.",
+    "text": "Now you try. Which is the same as eight ex plus twelve? Find the biggest number that divides every part. Put it outside.",
     "style": "A",
-    "chars": 119,
+    "chars": 120,
     "kind": "turn",
     "sources": [
       "g7m3-t3 turn"
@@ -74778,11 +74811,11 @@
     ]
   },
   {
-    "key": "1cyxb79",
-    "check": "pwbuvxnt1b",
-    "text": "The distance around a circle is its circumference. C equals pi times d, and pi is about three point one four.",
+    "key": "17dl4pu",
+    "check": "17euqnxtecb",
+    "text": "The distance around a circle is its circumference. See equals pi times dee, where dee is the diameter, and pi is about three point one four.",
     "style": "A",
-    "chars": 109,
+    "chars": 140,
     "kind": "won",
     "sources": [
       "g7m4-t2 sticker + g7m4-t2 twinWon sticker"
@@ -76474,9 +76507,9 @@
   {
     "key": "1sw0pvv",
     "check": "5v5gfjfgsy",
-    "text": "You read the whole cloud, not just one dot.",
+    "text": "You red the whole cloud, not just one dot.",
     "style": "A",
-    "chars": 43,
+    "chars": 42,
     "kind": "won",
     "sources": [
       "g8m6-t1 won"
@@ -76494,11 +76527,11 @@
     ]
   },
   {
-    "key": "2q9pm6",
-    "check": "qkv80lzkz4",
-    "text": "A pattern between two sets of data is a correlation, or association, positive or negative. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.",
+    "key": "50xgph",
+    "check": "ihkd1cyfjv",
+    "text": "A pattern between two sets of data is a correlation, or association, positive or negative. Positive means both go up together, and negative means one goes up as the other goes down. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.",
     "style": "A",
-    "chars": 165,
+    "chars": 256,
     "kind": "won",
     "sources": [
       "g8m6-t1 sticker + g8m6-t1 twinWon sticker"
