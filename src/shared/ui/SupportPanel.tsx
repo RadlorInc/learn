@@ -15,6 +15,7 @@ import { useState } from 'react'
 import {
   collectDiagnostics, formatDiagnostics, supportMailto, SUPPORT_EMAIL,
 } from '@/infra/diagnostics'
+import { SUPPORT_PHONE } from '@/app/site'
 
 /** `firstLine`: one more line at the top of the technical details (the crash screen's error code). */
 export function SupportPanel({ learnerId, label = 'Need help?', firstLine }: { learnerId?: string; label?: string; firstLine?: string }) {
@@ -158,7 +159,7 @@ export function SupportPanel({ learnerId, label = 'Need help?', firstLine }: { l
             </div>
 
             <p style={{ margin: 0, fontSize: 12, color: '#3d6fb8', textAlign: 'center' }}>
-              Or write to {SUPPORT_EMAIL} — we reply within 2 working days.
+              Or write to {SUPPORT_EMAIL} — we reply within 2 working days — or call {SUPPORT_PHONE}.
             </p>
           </div>
         </div>

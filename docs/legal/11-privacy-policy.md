@@ -14,7 +14,7 @@
 
 **Effective date:** 25 September 2026
 
-**Last updated:** 1 October 2026
+**Last updated:** 14 October 2026
 
 ---
 
@@ -35,6 +35,7 @@ This summary is here to be useful, not to replace what follows.
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
+1-888-812-9373
 
 We are the operator of Radlic, and the only one. No other company operates any part of the service in a way that collects information through it.
 
@@ -81,7 +82,7 @@ At any time, you can:
 
 Using any of these is free. We will confirm that the request comes from you before we act on it — usually by sending a link to the email address on the account — and we will not demand a government ID or any sensitive document for a routine request.
 
-**How to ask:** in the app — your parent dashboard → your child's card → **Login & data**, where you can correct your child's name or nickname, avatar and grade band, download a copy of everything we hold, and delete the profile; and **Account → Close your account** to delete everything. Or write to support@radlor.com, or to 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
+**How to ask:** in the app — your parent dashboard → your child's card → **Login & data**, where you can correct your child's name or nickname, avatar and grade band, download a copy of everything we hold, and delete the profile; and **Account → Close your account** to delete everything. Or write to support@radlor.com, call 1-888-812-9373, or write to 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
 **How long we take:** 10 days.
 
@@ -162,6 +163,7 @@ If we make a material change to how we handle a child's information, we will not
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 support@radlor.com
+1-888-812-9373
 
 We answer privacy questions within 10 days.
 

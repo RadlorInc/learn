@@ -63,12 +63,14 @@ charged; they start checkout again.
    too (next section). The agent never chooses an amount the policy does not fix.
 4. **Agent.** Draft the reply: what is refunded, up to 10 business days to reach their card.
 
-## Cancel request by email or post
+## Cancel request by email, phone or post
 
 Doc 01 §4 promises to act **within 2 business days** of receipt and confirm by email.
 
 1. **Founder.** Check it comes from the account's own email (or, by post, matches the account). If it does not, reply
-   to the account's email only.
+   to the account's email only. **By phone:** ask for the account's email address and look it up; the confirmation in
+   step 4 goes to that address only, never to an address or number the caller gives, so a wrong caller is seen by the
+   real owner (who can undo it: **Don't cancel**, below).
 2. **Founder.** In Stripe: the subscription → **Cancel** → **at the end of the current period** (what the in-app button
    does). Cancel *immediately* only when you are also refunding the whole period.
 3. Stripe's event updates the app; run block 1 again and see `cancel_at_period_end` true.

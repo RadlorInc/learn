@@ -48,6 +48,8 @@ Puede cancelar su suscripción en cualquier momento, y la cancelación está dis
 
 **Por correo electrónico:** escriba a support@radlor.com. Tramitaremos la cancelación en un plazo de 2 días hábiles desde su recepción y se lo confirmaremos por correo electrónico.
 
+**Por teléfono:** llame al 1-888-812-9373 (gratuito). Le pediremos la dirección de correo electrónico de la cuenta, tramitaremos la cancelación en un plazo de 2 días hábiles y se lo confirmaremos por correo electrónico a esa dirección.
+
 **Por correo postal:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
 Para cancelar no necesita llamarnos, chatear con un agente ni explicar por qué cancela.
@@ -96,4 +98,4 @@ Cancelar su suscripción no es lo mismo que eliminar los datos de su hijo. Si qu
 
 Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 Correo electrónico: support@radlor.com
-Actualmente no ofrecemos contacto telefónico.
+Teléfono: 1-888-812-9373

@@ -542,11 +542,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     </div>
     if (w) { crumb = 'Screen 9 of 9'; if (!allDone) title = w.helped ? KEEP_GOING.title : w.title }
     if (run && !w) {
-      // The break (founder, 2026-09-24): a celebration, never a verdict — no count of a total, no "unfinished".
-      crumb = C.takeBreak
-      title = session.mastered ? C.breakMastered : C.breakTitle(session.answered)
+      // The stop (founder, 2026-09-24; reworded 2026-10-12): a win, never a verdict — no count of a total, nothing
+      // "unfinished" or "saved"; what the child got stronger at.
+      crumb = lesson.title
+      title = session.mastered ? C.breakMastered : C.breakTitle
       words = <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <p style={bubble}>{C.spotSaved}</p>
+        {!session.mastered && <p style={bubble}>{C.stronger(lesson.title)}</p>}
         {session.points > 0 && <p style={{ ...right, alignSelf: 'flex-start' }}>{C.points(session.points)}</p>}
       </div>
     } else words = <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

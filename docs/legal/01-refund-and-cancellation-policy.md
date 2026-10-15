@@ -7,7 +7,7 @@
 **Company:** Radlor Inc., a Delaware corporation
 **Product:** Radlic
 **Effective date:** 1 October 2026
-**Last updated:** 6 October 2026
+**Last updated:** 14 October 2026
 
 ---
 
@@ -50,6 +50,8 @@ You can cancel your subscription at any time, and cancelling is designed to take
 **Online, in the app:** sign in, open **Account → Plan & billing → See plans**, choose **Cancel subscription** under *Your subscription*, then **Yes, cancel my subscription**. The screen then shows the date your plan ends, and we email you a confirmation with that date.
 
 **By email:** Write to support@radlor.com. We will action the cancellation within 2 business days of receipt and confirm by email.
+
+**By phone:** Call 1-888-812-9373 (toll-free). We will ask for the email address on the account, action the cancellation within 2 business days and confirm by email to that address.
 
 **By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702.
 
@@ -99,7 +101,7 @@ Cancelling your subscription is not the same as deleting your child's data. If y
 
 Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 Email: support@radlor.com
-We do not currently offer a telephone contact.
+Phone: 1-888-812-9373
 
 ---
 
