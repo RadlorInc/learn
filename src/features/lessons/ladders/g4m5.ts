@@ -66,7 +66,8 @@ const T1: Level[] = [
     return { text: `${name} says the ${short ? 'short path is a line segment, because it is so short' : 'long path is a line, because it is so long'}. Which is true?`,
       picture: { kind: 'poly', shapes: [], segs: [...path(top, [0, 2], [2, 2]), ...path(bottom, [0, 0], [7, 0])] },
       answer: choose(r, right, [`${name} is right`, `No, it is ${art(other)}`]),
-      steps: ["Don't go by how long a path looks. Look at its ends.", endSteps(actual).slice(0, 2).join(' '), `So the answer is: ${right}.`] }
+      // Short lines a Grade 4 child can follow: the two-sentence middle step was too much (a tester, g4m5-t1, 15 Oct).
+      steps: ['Long or short does not matter. Look at the ends.', endSteps(actual)[0], `So the answer is: ${right}.`] }
   } },
   { style: 'count the rays among other paths', make: r => {
     const n = int(r, 3, 6), rays = int(r, 1, n)
@@ -105,7 +106,8 @@ const T2: Level[] = [
     return { text: 'Is this angle acute, right or obtuse?', picture: { kind: 'angle', deg: d }, answer: openChoices(r, kindOf(d)), steps: openSteps(d) }
   } },
   { style: 'close to a square corner', make: r => {
-    const d = pick(r, [70, 75, 80, 85, 90, 95, 100, 105, 110])
+    // 85° and 95° could not be told from a square corner by eye on a phone (a tester, g4m5-t2, 15 Oct).
+    const d = pick(r, [70, 75, 80, 90, 100, 105, 110])
     const steps = d === 90 ? openSteps(d) : ['There is no little square, so it is not a square corner.', `The rays open a little ${d < 90 ? 'less' : 'more'} than a square corner.`, `So the angle is ${kindOf(d)}.`]
     return { text: 'This one is close. Look carefully. Is this angle acute, right or obtuse?', picture: { kind: 'angle', deg: d }, answer: openChoices(r, kindOf(d)), steps }
   } },
@@ -500,7 +502,8 @@ const fold = (a: Pt, b: Pt) => ({ a, b, dashed: true, tone: 2 as const })
 type Shape = { name: string; pts: Pt[]; lines: number; w: number; h: number; ticks?: number[]; right?: number[] }
 const sRect = (r: Rng): Shape => { let w = 0, h = 0; do { w = int(r, 4, 7); h = int(r, 2, 4) } while (w === h || w < h + 2); return { name: 'rectangle', pts: [[0, 0], [w, 0], [w, h], [0, h]], lines: 2, w, h } }
 const sSquare = (r: Rng): Shape => { const s = int(r, 3, 5); return { name: 'square', pts: [[0, 0], [s, 0], [s, s], [0, s]], lines: 4, w: s, h: s, ticks: ALL4, right: ALL4 } }
-const sTri = (r: Rng): Shape => { const w = pick(r, [4, 6]), h = pick(r, [2, 6]); return { name: 'triangle', pts: [[0, 0], [w, 0], [w / 2, h]], lines: 1, w, h, ticks: [1, 2] } }
+// Never 6 wide and 6 tall: that one looks equilateral, so a child counts 3 fold lines, not 1 (a tester, g4m5-t8, 15 Oct).
+const sTri = (r: Rng): Shape => { const [w, h] = pick(r, [[4, 2], [4, 6], [6, 2]] as const); return { name: 'triangle', pts: [[0, 0], [w, 0], [w / 2, h]], lines: 1, w, h, ticks: [1, 2] } }
 const sKite = (r: Rng): Shape => { const k = int(r, 2, 3), t = int(r, 1, 2), u = t + int(r, 2, 3); return { name: 'kite', pts: [[k, 0], [2 * k, u], [k, u + t], [0, u]], lines: 1, w: 2 * k, h: u + t } }
 const sHouse = (r: Rng): Shape => { const w = pick(r, [4, 6]), wall = int(r, 2, 3); return { name: 'house', pts: [[0, 0], [w, 0], [w, wall], [w / 2, wall + 2], [0, wall]], lines: 1, w, h: wall + 2 } }
 const drawn = (s: Shape, dx = 0, tone: 1 | 2 | 3 | 4 = 1) =>

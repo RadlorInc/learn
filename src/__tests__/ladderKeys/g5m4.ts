@@ -229,6 +229,11 @@ export const SOLVE: Record<string, (q: Q) => string> = {
       if (p?.kind === 'area') { same(q, p.cols.map((c: string) => dec(c)).reduce((a: D, b: D) => a + b), dec(r[2]), 'area columns'); same(q, dec(p.rows[0]), dec(r[1]), 'area row') }
       return str(dec(r[1]) * dec(r[2]) / S)
     }
+    r = t.match(/^Which one makes ([\d.]+)\? \? × ([\d.]+) = ([\d.]+)$/)
+    if (r) {
+      if (r[1] !== r[3]) fail(q, 'text and equation disagree')
+      return pick(q, c => { const m = c.match(/^(\d+) × ([\d.]+)$/); return !!m && m[2] === r![2] && mul(dec(m[1]), dec(m[2])) === dec(r![1]) })
+    }
     r = t.match(/^Find ([\d.]+) × ([\d.]+)\.$/)
     if (r) { eqText(q, `${r[1]} × ${r[2]} = ?`); return str(mul(dec(r[1]), dec(r[2]))) }
     r = t.match(/^([\d,.]+) × ([\d,.]+) = ([\d,.]+)\. So what is ([\d.]+) × ([\d.]+)\?$/)
