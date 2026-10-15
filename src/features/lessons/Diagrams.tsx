@@ -981,8 +981,9 @@ function Cubes({ p }: { p: P<'cubes'> }) {
 function Solid({ p }: { p: P<'solid'> }) {
   const L = p.labels ?? {}, st = { stroke: INK, strokeWidth: 5, fill: TONE[1] }
   const dash = { stroke: INK, strokeWidth: 3, fill: 'none', strokeDasharray: '9 7' }
+  const rim = p.shape === 'icecream' ? 125 : 95, tip = rim + 165, down = p.shape === 'cup' || p.shape === 'icecream'
   return (
-    <Svg w={360} h={300} max={320} label={`A ${p.shape}`}>
+    <Svg w={360} h={300} max={320} label={p.shape === 'icecream' ? 'An ice-cream cone with half a ball on top' : `A ${p.shape}`}>
       {p.shape === 'cylinder' && <>
         <path d="M 90 70 V 230 A 90 28 0 0 0 270 230 V 70" {...st} />
         <ellipse cx={180} cy={70} rx={90} ry={28} {...st} fill={TONE[2]} />
@@ -994,6 +995,15 @@ function Solid({ p }: { p: P<'solid'> }) {
         <path d="M 90 230 A 90 28 0 0 1 270 230" {...dash} />
         <line x1={180} y1={40} x2={180} y2={230} {...dash} />
         <line x1={180} y1={230} x2={270} y2={230} stroke={ACCENT} strokeWidth={4} />
+      </>}
+      {/* A cone the right way up for a paper cup or an ice-cream cone: point down, open circle on top (a tester,
+          g8m5-t2, 15 Oct). The ice-cream cone carries its half ball on the rim. */}
+      {(p.shape === 'cup' || p.shape === 'icecream') && <>
+        {p.shape === 'icecream' && <path d={`M 90 ${rim} A 90 90 0 0 1 270 ${rim}`} {...st} fill={TONE[3]} />}
+        <path d={`M 90 ${rim} L 180 ${tip} L 270 ${rim}`} {...st} />
+        <ellipse cx={180} cy={rim} rx={90} ry={28} {...st} fill={TONE[2]} />
+        <line x1={180} y1={rim} x2={180} y2={tip} {...dash} />
+        <line x1={180} y1={rim} x2={270} y2={rim} stroke={ACCENT} strokeWidth={4} /><circle cx={180} cy={rim} r={4} fill={INK} />
       </>}
       {p.shape === 'sphere' && <>
         <circle cx={180} cy={150} r={110} {...st} />
@@ -1011,8 +1021,11 @@ function Solid({ p }: { p: P<'solid'> }) {
         <path d="M 180 40 L 200 260" stroke={INK} strokeWidth={5} />
         <path d="M 60 220 L 170 180 L 300 200 M 170 180 L 180 40" {...dash} />
       </>}
-      {L.r && <T x={p.shape === 'sphere' ? 235 : 225} y={p.shape === 'sphere' ? 132 : p.shape === 'cone' ? 252 : 56} s={18} fill={ACCENT}>{L.r}</T>}
-      {L.h && <T x={p.shape === 'cone' ? 200 : p.shape === 'prism' ? 312 : 290} y={150} s={20} a="start">{L.h}</T>}
+      {/* A cone's r sits just past the end of its radius line: on the base it sat on the curve (g8m5-t2, 15 Oct). */}
+      {L.r && (p.shape === 'cone' || down
+        ? <T x={278} y={p.shape === 'cone' ? 230 : rim} s={18} fill={ACCENT} a="start">{L.r}</T>
+        : <T x={p.shape === 'sphere' ? 235 : 225} y={p.shape === 'sphere' ? 132 : 56} s={18} fill={ACCENT}>{L.r}</T>)}
+      {L.h && <T x={down ? 186 : p.shape === 'cone' ? 200 : p.shape === 'prism' ? 312 : 290} y={down ? rim + 60 : 150} s={down ? 18 : 20} a="start">{L.h}</T>}
       {L.l && <T x={150} y={272} s={20}>{L.l}</T>}
       {L.w && <T x={290} y={240} s={20} a="start">{L.w}</T>}
     </Svg>

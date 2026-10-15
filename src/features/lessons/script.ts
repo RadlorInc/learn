@@ -57,7 +57,7 @@ export type Picture =
       names?: [string, string] }
   | { kind: 'table'; head?: string[]; rows: string[][]; rowHead?: boolean; mark?: [number, number][]; motion?: boolean }
   | { kind: 'cubes'; l: number; w: number; h: number; layers?: number; motion?: boolean }
-  | { kind: 'solid'; shape: 'prism' | 'cylinder' | 'cone' | 'sphere' | 'pyramid'; labels?: { r?: string; h?: string; l?: string; w?: string } }
+  | { kind: 'solid'; shape: 'prism' | 'cylinder' | 'cone' | 'cup' | 'icecream' | 'sphere' | 'pyramid'; labels?: { r?: string; h?: string; l?: string; w?: string } }
   | { kind: 'chips'; pos: number; neg: number; pairs?: number; motion?: boolean }
   | { kind: 'balance'; left: string; right: string }
   | { kind: 'spinner'; parts: string[]; tones?: (1 | 2 | 3 | 4)[] }

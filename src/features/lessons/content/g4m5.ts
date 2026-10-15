@@ -48,7 +48,8 @@ export const G4M5: Lesson[] = [
           { say: 'Cover the ends, and the middles look the same.' },
           { say: 'How do we tell them apart?' },
         ],
-        pictures: [{ kind: 'poly', shapes: [], segs: [{ a: [0, 2], b: [5, 2] }, { a: [0, 0], b: [6, 0] }] }] },
+        // Same length: "the middles look the same", and a 5 and a 6 did not (a tester, g4m5-t1, 15 Oct).
+        pictures: [{ kind: 'poly', shapes: [], segs: [{ a: [0, 2], b: [5, 2] }, { a: [0, 0], b: [5, 0] }] }] },
       { title: 'The big idea', text: 'Look at the ends: a dot means the path stops there, and an arrow means it goes on forever.',
         beats: [
           { say: 'Look at the ends: a dot means the path stops there, and an arrow means it goes on forever.', pic: 0 },

@@ -58,6 +58,8 @@ export const emphasis = (t: string): ReactNode[] => t.split(/\b([A-Z]{2,})\b/).m
 /** The Screen 9 sticker, one sentence a row: "The fair share is called the mean. Mean = total ÷ how many." run on
  *  as one line hid the rule in the middle of it (a tester, g6m7-t1, 11 Oct). The text a screen reader reads is the same. */
 const stickerRows = (sticker: string) => sticker.split(/(?<=[.!?]) (?=\S)/)
+/** A formula wraps as one piece, never "V = π × r ×" / "r × h" (a tester, g8m5-t1, 15 Oct). The text is unchanged. */
+const keepFormula = (t: string) => t.split(/((?:\S+ [=×÷+−] )+\S+)/).map((s, i) => i % 2 ? <span key={i} style={{ whiteSpace: 'nowrap' }}>{s}</span> : s)
 /** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.65 s.
  * History: ~0.8 s sounded generated, none at all (2026-09-19) ran the sentences together, ~0.45 s (300) was still
  * too quick for the founder (2026-09-24: "add a small pause between the sentences"). */
@@ -563,7 +565,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
       {w
         ? <p data-sticker style={{ ...idea, alignSelf: 'center', boxShadow: `4px 4px 0 ${INK}`, transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' }}>
-          {stickerRows(w.sticker).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : '⭐ '}{t}</span>)}</p>
+          {stickerRows(w.sticker).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : '⭐ '}{keepFormula(t)}</span>)}</p>
         : <p style={idea}>{lesson.bigIdea}</p>}
     </div>
     if (w) { crumb = 'Screen 9 of 9'; if (!allDone) title = w.helped ? KEEP_GOING.title : w.title }

@@ -246,12 +246,14 @@ const T4: Level[] = [
       picture: split(r, whole, a), answer: whole - a,
       steps: [whole === 90 ? 'The two angles fill a square corner, so they add up to 90°.' : 'The two angles sit on a straight line, so they add up to 180°.', `Take away the part you know: ${whole} − ${a}.`, `So the missing angle is ${whole - a}°.`] }
   }),
+  // The lesson's screens never say the words (only Screen 9's sticker), so the picture says what each adds up to, as the
+  // two-step level does (a tester, g7m4-t4, 15 Oct).
   lv('the words: complementary or supplementary', r => {
     const comp = r() < 0.5, whole = comp ? 90 : 180
     let a = int(r, 5, whole - 5)
     while (a === 90) a = int(r, 5, whole - 5)
     const word = comp ? 'complementary' : 'supplementary'
-    return { text: `Two angles are ${word}. One is ${a}°. How many degrees is the other?`, picture: eq(`${a}° and ?`, [word]), answer: whole - a,
+    return { text: `Two angles are ${word}. One is ${a}°. How many degrees is the other?`, picture: eq(`${a}° and ?`, [`${word}: they add up to ${whole}°`]), answer: whole - a,
       steps: [`${comp ? 'Complementary' : 'Supplementary'} angles add up to ${whole}°.`, `Take away the part you know: ${whole} − ${a}.`, `So the other angle is ${whole - a}°.`] }
   }),
   lv('spot the mistake: started from the wrong whole', r => {
