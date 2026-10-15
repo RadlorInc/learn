@@ -11,6 +11,7 @@
   - `/auth` and the consent-link pages (`/consent/...`), which show the address for a parent who is signed out;
   - the legal pages;
   - replies to the app's own emails, whose Reply-To is the support address (`EMAIL_REPLY_TO` in `src/features/consent/config.ts`).
+- **Phone**, the toll-free line `SUPPORT_PHONE` in `src/app/site.ts` (1-888-812-9373, since 14 Oct 2026). It is on the landing page footer, `/auth`, `/rights`, `/help`, the Report a problem panel, the consent page's "Need help?", every legal page's footer, the plan page, the account page's deletion fallback, the "switching your plan on" note, the cancellation email's footer, the Privacy Policy, Terms, Refund policy, Parent Rights and Cookies pages, and radlor.com's Contact page. The consent notice carries it since notice-v8 (doc 02, `consent/copy.ts`, migration 20261014120000). The founder decides who answers it. It is also a way to cancel (Refund policy §4, since 14 Oct 2026): follow [billing.md](billing.md) → "Cancel request by email, phone or post".
 - **Post**, to the address in [../legal/06-parent-rights-procedure.md](../legal/06-parent-rights-procedure.md).
 - **Automatic:**
   - GitHub issues from `red-main.yml`, `daily-smoke.yml`, `nightly-e2e.yml` and `backup.yml` ("Nightly backup is red");

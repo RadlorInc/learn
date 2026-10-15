@@ -24,7 +24,7 @@ function fakeNetwork(input: unknown, init: RequestInit = {}): Response {
   }
   if (u.pathname === '/rest/v1/parental_consents') {
     // The filter the route must send: this adult, account scope, the current notice, granted or pending.
-    expect(Object.fromEntries(u.searchParams)).toMatchObject({ parent_id: `eq.${PARENT}`, scope: 'eq.account', notice_version: 'eq.notice-v7', state: 'in.(granted,pending)' })
+    expect(Object.fromEntries(u.searchParams)).toMatchObject({ parent_id: `eq.${PARENT}`, scope: 'eq.account', notice_version: 'eq.notice-v8', state: 'in.(granted,pending)' })
     return json(w.open)
   }
   const fn = u.pathname.match(/^\/rest\/v1\/rpc\/(.+)$/)?.[1]
@@ -56,27 +56,27 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
 
 describe('a refused child → the adult who added them gets the consent email', () => {
-  it('the child\'s own login asks: B1 goes to the PARENT, with one consent link, on notice-v7, recording no "I agree"', async () => {
+  it('the child\'s own login asks: B1 goes to the PARENT, with one consent link, on notice-v8, recording no "I agree"', async () => {
     expect(await ask(CHILD)).toEqual({ status: 200, body: { ok: true, sent: true } })
     expect(emails.map(e => [e.to, e.subject])).toEqual([['parent@x.test', 'Please confirm: permission for your children to use Radlic']])
     expect(emails[0].html.match(/\/consent\/respond#t=[A-Za-z0-9_-]{43}"/g), 'exactly one consent link').toHaveLength(1)
-    expect(called('consent_request')[0][1]).toMatchObject({ p_parent: PARENT, p_notice_version: 'notice-v7', p_scope: 'account', p_acked: false })
+    expect(called('consent_request')[0][1]).toMatchObject({ p_parent: PARENT, p_notice_version: 'notice-v8', p_scope: 'account', p_acked: false })
     expect(called('consent_record_request_sent')).toHaveLength(1)
   })
 
-  it('a link is already open on notice-v7: nothing is sent (one working link, not a pile)', async () => {
+  it('a link is already open on notice-v8: nothing is sent (one working link, not a pile)', async () => {
     w.open = [{ state: 'pending', expires_at: new Date(Date.now() + 86_400_000).toISOString() }]
     expect(await ask(CHILD)).toEqual({ status: 200, body: { ok: true, sent: false, pending: true } })
     expect(emails).toEqual([]); expect(called('consent_request')).toEqual([])
   })
 
-  it('an EXPIRED link on notice-v7 does not count: a fresh one is sent', async () => {
+  it('an EXPIRED link on notice-v8 does not count: a fresh one is sent', async () => {
     w.open = [{ state: 'pending', expires_at: new Date(Date.now() - 1000).toISOString() }]
     expect((await ask(CHILD)).body).toEqual({ ok: true, sent: true })
     expect(emails).toHaveLength(1)
   })
 
-  it('the parent already agreed to notice-v7: nothing is sent', async () => {
+  it('the parent already agreed to notice-v8: nothing is sent', async () => {
     w.open = [{ state: 'granted', expires_at: new Date(Date.now() - 86_400_000).toISOString() }]
     expect((await ask(CHILD)).body).toEqual({ ok: true, sent: false })
     expect(emails).toEqual([])

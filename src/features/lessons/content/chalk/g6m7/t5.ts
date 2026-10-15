@@ -50,7 +50,7 @@ export const T5: (ChalkMark[] | undefined)[] = [
     write([0, '9'], '9 + 10 + 10 + 11', 220, 265, 30), write([0, '40'], '= 40', 380, 265, 30),
     write([1, '40'], '40 ÷ 4', 220, 320, 30), write([1, '10'], '= 10', 330, 320, 30, 'b'),
     ...pin([1, 'mean'], 10, 85, 128, 'mean 10', 'b'),
-    dot([2, 'grown-up'], 40, 170), ring([2, 'person'], X(40), 158, 22, 22, 'w'),
+    dot([2, 'grown-up'], 40, 170), ring([2, 'grown-up'], X(40), 158, 22, 22, 'w'),
     hop([2, 'jumps'], X(10), X(16), 148, 'b'), write([2, '16'], 'mean 16', X(16) + 70, 110, 26, 'b'),
   ],
   // The median stays put

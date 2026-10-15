@@ -39,6 +39,7 @@ You are never charged for exercising a privacy right.
 
 **In the app:** parent dashboard → your child's card → **Login & data** → *Download a copy* or *Delete name's profile*. To delete everything: **Account → Close your account**, which asks you to type your email address to confirm and requires a recent sign-in.
 **By email:** support@radlor.com, from the email address on the account
+**By phone:** 1-888-812-9373
 **By post:** 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
 **How we check it's really you.** Before we show or delete anything, we confirm the request came from the parent on the account. We will send a confirmation link to the email address on the account, and act only once you click it. Deleting an account inside the app additionally requires you to have signed in within the last ten minutes. We ask for this to protect your child — it stops anyone else getting their information. We will not ask you for a government ID or any sensitive document to make a routine request.
