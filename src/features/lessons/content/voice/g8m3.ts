@@ -20,7 +20,8 @@ export const G8M3_VOICE: Record<string, VoiceLine> = {
   "Now watch this one.": { style: 'B' },
   "Input 2 shows up twice.": { style: 'B' },
   "Once it gives 6, and once it gives 8.": { style: 'B' },
-  "That is button A giving chips today and a cookie tomorrow. Not a function.": { style: 'B' },
+  // "Ay": a lone capital A was read as the word "a" (tester, g8m3-t1 Screen 5, 14 Oct 2026).
+  "That is button A giving chips today and a cookie tomorrow. Not a function.": { style: 'B', say: "That is button Ay giving chips today and a cookie tomorrow. Not a function." },
   "Here is one that looks strange. Every input gives 5.": { style: 'B' },
   "Is that allowed? Yes. Two buttons can give you the same snack.": { style: 'B' },
   "Each input still has just one output, so this is a function.": { style: 'B' },
