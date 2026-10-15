@@ -47698,9 +47698,9 @@
   {
     "key": "1ug5k3c",
     "check": "14cms1t16hg",
-    "text": "Wrapping a gift. A gift box is four centimeters long. It is three centimeters wide. It is two centimeters tall. How much paper covers the outside, with no overlap?",
+    "text": "Wrapping a gift. A gift box is two centimeters tall, four centimeters long and three centimeters wide. How much paper covers the outside, with no overlap?",
     "style": "A",
-    "chars": 163,
+    "chars": 154,
     "kind": "screen1",
     "sources": [
       "g6m6-t4 s1"
@@ -48391,9 +48391,9 @@
   {
     "key": "cja0r",
     "check": "wi1203sjzf",
-    "text": "Two bike rentals. Shop A charges three dollars plus two dollars an hour. Shop B charges five dollars plus two dollars an hour. When do they cost the same? two x plus three equals two x plus five.",
+    "text": "Two bike rentals. Shop A charges three dollars plus two dollars an hour. Shop B charges five dollars plus two dollars an hour. When do they cost the same? two ex plus three equals two ex plus five.",
     "style": "A",
-    "chars": 195,
+    "chars": 197,
     "kind": "screen1",
     "sources": [
       "g8m2-t6 s1"
@@ -51482,9 +51482,9 @@
   {
     "key": "ufq9fm",
     "check": "n0p1jdut8c",
-    "text": "Now you try. Solve six x plus five equals three x plus twenty. What is x? Take the smaller x part off both sides. Then solve what is left.",
+    "text": "Now you try. Solve six ex plus five equals three ex plus twenty. What is ex? Take the smaller ex part off both sides. Then solve what is left.",
     "style": "A",
-    "chars": 138,
+    "chars": 142,
     "kind": "turn",
     "sources": [
       "g8m2-t5 turn"

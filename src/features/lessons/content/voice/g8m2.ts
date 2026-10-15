@@ -78,6 +78,8 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Don't start at the SLOPE. (0, 2) is not where y = 2x + 3 begins.": { style: 'B+', say: "Don't start at the slope. The point 0, 2 is not where y equals 2 x plus 3 begins." },
   "The first dot goes at the plain number, (0, 3). The 2 is only for stepping.": { style: 'B+', say: "The first dot goes at the plain number, the point 0, 3. The 2 is only for stepping." },
   // ── g8m2-t5 ──
+  // "ex": a digit then x ran together — "six x" was heard as "six dx" (tester, g8m2-t5 Screen 8; heard again 15 Oct).
+  "Now you try. Solve 6x + 5 = 3x + 20. What is x? Take the smaller x part off both sides. Then solve what is left.": { style: 'A', say: "Now you try. Solve 6 ex plus 5 equals 3 ex plus 20. What is ex? Take the smaller ex part off both sides. Then solve what is left." },
   "Before, x was only ever on one side.": { style: 'B' },
   "Now there are bags on both sides. Which bags do you undo first?": { style: 'B' },
   "Taking off loose marbles won't help yet. The bags are still on both sides.": { style: 'B' },
@@ -94,6 +96,8 @@ export const G8M2_VOICE: Record<string, VoiceLine> = {
   "Don't ADD 5x and 3x across the equals sign. That makes 8x, and the scale tips.": { style: 'B+', say: "Don't add 5 x and 3 x across the equals sign. That makes 8 x, and the scale tips." },
   "Take 3x off BOTH sides instead. 5x + 2 = 3x + 10 becomes 2x + 2 = 10.": { style: 'B+', say: "Take 3 x off both sides instead. 5 x plus 2 equals 3 x plus 10 becomes 2 x plus 2 equals 10." },
   // ── g8m2-t6 ── ("Here's the part people mix up.", "Okay. Your turn." and "Is there a faster way? Yes." have rows elsewhere)
+  // "ex": "two x" was heard as "two Ike's" (tester, g8m2-t6 Screen 1; heard again 15 Oct).
+  "Two bike rentals. Shop A charges $3 plus $2 an hour. Shop B charges $5 plus $2 an hour. When do they cost the same? 2x + 3 = 2x + 5.": { style: 'A', say: "Two bike rentals. Shop A charges $3 plus $2 an hour. Shop B charges $5 plus $2 an hour. When do they cost the same? 2 ex plus 3 equals 2 ex plus 5." },
   "Try some hours. At 1 hour it is $5 and $7.": { style: 'B' },
   "At 10 hours it is $23 and $25.": { style: 'B' },
   "Shop B is always $2 more. So will they ever cost the same?": { style: 'B' },
