@@ -37642,22 +37642,22 @@
     ]
   },
   {
-    "key": "if92j5",
-    "check": "26vru1ltwto",
-    "text": "So is Class B taller? No. Pick two other plants, and A wins.",
+    "key": "h13vx2",
+    "check": "1ueb6nidsu9",
+    "text": "Can one plant each tell us? No. Pick two other plants, and A could win.",
     "style": "B",
-    "chars": 60,
+    "chars": 71,
     "kind": "beat",
     "sources": [
       "g7m5-t3 s2 b3"
     ]
   },
   {
-    "key": "csuft7",
-    "check": "2cv7rcnw3ct",
-    "text": "We need one number for a whole class.",
+    "key": "ij3zan",
+    "check": "1dt80d308kj",
+    "text": "So we need one number for each whole class.",
     "style": "B",
-    "chars": 37,
+    "chars": 43,
     "kind": "beat",
     "sources": [
       "g7m5-t3 s2 b4"
@@ -75044,9 +75044,9 @@
   {
     "key": "pgg2xr",
     "check": "24e8fh4ner3",
-    "text": "The whole group is the population. A sample picked by chance is a random sample. A sample that leaves people out is biased.",
+    "text": "The whole group is the population. A sample picked by chance is a random sample. A sample that leaves out some people is biased.",
     "style": "A",
-    "chars": 123,
+    "chars": 128,
     "kind": "won",
     "sources": [
       "g7m5-t1 sticker + g7m5-t1 twinWon sticker"
@@ -75075,11 +75075,11 @@
     ]
   },
   {
-    "key": "1ssx676",
-    "check": "4sex8wo06n",
-    "text": "The whole group is the population. Using a sample to predict it is called making an inference.",
+    "key": "c30idw",
+    "check": "1m1pwkcqcix",
+    "text": "The whole group is the population. It can be any group you want to know about, like students or plants, not just the people of a country. Using a sample to predict it is called making an inference.",
     "style": "A",
-    "chars": 94,
+    "chars": 197,
     "kind": "won",
     "sources": [
       "g7m5-t2 sticker + g7m5-t2 twinWon sticker"

@@ -30,7 +30,7 @@ export const T3: (ChalkMark[] | undefined)[] = [
     ring([0, '5'], nx(5), dy(150, 0), 14, 14, 'r'),
     ring([1, '7'], nx(7), dy(300, 0), 14, 14, 'r'),
     ring([2, 'other'], nx(9), dy(150, 0), 14, 14, 'y'), ring([2, 'other'], nx(3), dy(300, 0), 14, 14, 'y'),
-    write([2, 'wins'], 'either class can win', 300, 362, 26, 'r'),
+    write([2, 'win'], 'either class can win', 300, 362, 26, 'r'),
     write([3, 'number'], 'one number for each class', 300, 40, 26, 'y'),
   ],
   // The big idea: a mean for each plot, the gap between them, the spread of each
