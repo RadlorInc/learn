@@ -8,7 +8,7 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (15 October 2026)
 
-- **Production** is on `cba25c698` (#439, 15 Oct). The repo `learn` is public again (see the Vercel item below). A
+- **Production** is on `e2f68a2e9` (#442 after #441, 16 Oct; `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
   private beta with families the founder knows has run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
   KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket (P5 read 15 Oct:
@@ -25,7 +25,9 @@ fixed yet are tracked outside this public repo; ask the founder.
 Testers review every screen through `/test` (links and reviews live in Radlor Ops, the separate ops app; its own
 `review.radlic_tester_reviews` table, not this database). The founder keeps a Corrections Tracker outside the repo.
 Every note with "Something is wrong" up to 15 Oct (125) is fixed or decided: #421, #426, #423, #436, #437 (#416 and
-#435 inside it), #438, #439. How a batch goes:
+#435 inside it), #438, #439. The 46 that came in later on 15 Oct are too: #441 (code), #442 (voice, 36 clips, tag
+`audio-src-josh-2026-10-15d`, P5 18642 | 289266163). Word times are keyed by clip key, so drop a re-rendered key's old
+timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 - **Split by kind.** Code-only fixes (pictures, hints, answer boxes) ship on their own. Anything that changes a spoken
   line, or a line misread, waits for ONE voice batch built on top of the last voice branch (conflicts are only ever in
   the generated corpus, manifest and voice-index files; merge them key by key, then rebuild the corpus).
