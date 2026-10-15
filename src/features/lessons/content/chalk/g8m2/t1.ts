@@ -98,7 +98,11 @@ export const T1: (ChalkMark[] | undefined)[] = [
   [
     ...warn([0, 'mix']),
     write([1, 'DOWN'], '2 ÷ 3 = 2/3', 300, 150, 34, 'r'), cross([1, 'gentler'], 414, 132, 36, 36),
+    // The two ramps side by side, 30 a unit (tester, g8m2-t1 Screen 7: "a gentler ramp" was said but never drawn):
+    // 2/3 climbs 2 over 3 across, low and long; 3/2 climbs 3 over 2 across, steep.
+    line([1, 'gentler'], [[478, 180], [568, 180], [568, 120], [478, 180]], 'r'),
     write([2, 'Up'], 'up on top: rise ÷ run', 300, 240, 30),
     write([2, '3'], '3 ÷ 2 = 3/2', 300, 310, 40, 'y'),
+    line([2, '3'], [[498, 345], [558, 345], [558, 255], [498, 345]], 'y'),
   ],
 ]
