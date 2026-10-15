@@ -325,11 +325,11 @@ export const G6M3: Lesson[] = [
           { say: 'So 9.6 ÷ 0.4 = 24. You get 24 pieces of ribbon.', pic: 1 },
         ],
         pictures: [{ kind: 'longdiv', divisor: '4', dividend: '96', quotient: '24', work: ['−8 ', '16', '−16', ' 0'] }, { kind: 'eq', text: '9.6 ÷ 0.4 = 24' }] },
-      { title: 'One thing not to do', text: "Here's the part people mix up. Don't grow ONLY the 0.4. That gives 2.4, far too few. Grow both numbers. 96 ÷ 4 = 24. Okay. Your turn.",
+      { title: 'One thing not to do', text: "Here's the part people mix up. Don't grow ONLY the 0.4. That gives 2.4, far too few. Grow both numbers by the same amount, × 10 each. 96 ÷ 4 = 24. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "Don't grow ONLY the 0.4. That gives 2.4, far too few.", pic: 0 },
-          { say: 'Grow both numbers. 96 ÷ 4 = 24.' },
+          { say: 'Grow both numbers by the same amount, × 10 each. 96 ÷ 4 = 24.' },
           { say: 'Okay. Your turn.' },
         ],
         pictures: [{ kind: 'cards', wrong: '9.6 ÷ 0.4 → 9.6 ÷ 4', right: '9.6 ÷ 0.4 → 96 ÷ 4' }] },

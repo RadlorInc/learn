@@ -238,10 +238,10 @@ export const G8M3: Lesson[] = [
           { say: "It goes up 1, then up 3, then up 5, so the points bend upward.", pic: 0 },
         ],
         pictures: [dots([[0, 0], [1, 1], [2, 4], [3, 9]], [{ a: [0, 0], b: [1, 1], dashed: true }, { a: [1, 1], b: [2, 4], dashed: true }, { a: [2, 4], b: [3, 9], dashed: true }], true), eq('1 − 0 = 1', ['4 − 1 = 3', '9 − 4 = 5'])] },
-      { title: "Give it a name", text: "Plant A grew by the same amount every week, so its points make a straight line. A table like that has a name. We call it linear. Plant B is not linear.",
+      { title: "Give it a name", text: "Plant A grew by the same amount every week, so its points make a straight line. A graph like that has a name. We call it linear. Plant B is not linear.",
         beats: [
           { say: "Plant A grew by the same amount every week, so its points make a straight line.", pic: 0 },
-          { say: "A table like that has a name." },
+          { say: "A graph like that has a name." },
           { say: "We call it linear. Plant B is not linear." },
         ],
         pictures: [dots([[0, 1], [1, 3], [2, 5], [3, 7]], [{ a: [0, 1], b: [3, 7], extend: true }])] },
