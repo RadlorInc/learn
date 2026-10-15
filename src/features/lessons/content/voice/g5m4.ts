@@ -194,4 +194,6 @@ export const G5M4_VOICE: Record<string, VoiceLine> = {
   "Now you try. How many meters is 4.2 kilometers? Smaller unit: multiply. Bigger unit: divide.": { style: 'A', say: "Now you try. How many meters is four point two kilometers? Smaller unit, multiply. Bigger unit, divide." },
   "1 kilometer is 1,000 meters. Multiply 4.2 by 1,000.": { style: 'A', say: "1 kilometer is 1,000 meters. Multiply four point two by 1,000." },
   "You changed 3,400 grams into 3.4 kilograms.": { style: 'A', say: "You changed 3,400 grams into three point four kilograms." },
+  // Screen 9 sticker: "one hundred and one thousand" was heard as 101,000 (15 Oct); a comma and "and" keep them apart.
+  "10, 100 and 1,000 are powers of ten. Each one moves the digits one more place.": { style: 'A', say: "Ten, one hundred, and one thousand are powers of ten. Each one moves the digits one more place." },
 }
