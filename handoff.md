@@ -15,8 +15,8 @@ fixed yet are tracked outside this public repo; ask the founder.
   the database gate; parent and teacher dashboards (rosters paused); points buy game time on `/play` (four games,
   #424); six legal pages as beta versions; nightly backups green.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship as is); local `learner-grade` has
-  its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
+  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship); local `learner-grade` has
+  its own "notice-v7" (clashes).
 - The pre-rewrite handoff and old-doc extracts are outside the repo on the founder's machine (owner-only).
 
 ## Paid testers' notes (the loop, 15 Oct)
@@ -35,8 +35,8 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
   101,000) passed it. Words the model gets wrong are fixed with a `say` row, never by retrying: a lone "A" → "Ay",
   "x" after a digit → "ex", a pair → "3 comma 5", lists of sizes repeat (put the last size last).
 - **Ship:** clip folder matched to the branch's manifest by SHA-256, `build-manifest.mjs`, word times, an orphan tag of
-  only the new mp3s, P5 pre-registered in `audio-bucket-proof.sql`, then `upload-audio.yml` dry run → upload (the
-  founder approves `production-db` and revokes the keys), P5, merge.
+  only the new mp3s, P5 pre-registered in `audio-bucket-proof.sql`, then `upload-audio.yml` from `main` with
+  `manifest_ref=<branch>` (#447), dry run → upload (the founder approves `production-db`, revokes the keys), P5, merge.
 
 ## Open — Draft PRs waiting for the founder
 
@@ -72,6 +72,7 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
   pushed, and `release` is pushed by GitHub Actions. Unmeasured: whether the block checks the commit's author (→ link
   the founder's GitHub to Vercel) or the pusher (→ a Vercel deploy hook called by `promote`; the agent builds it).
   After switching, watch the first production deploy reach READY.
+- After #447 merges: GitHub → Environments → `production-db` → Deployment branches → Selected → `main`.
 - Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
 - **If `learn` goes private, Actions minutes cost money**: ~5,400 min in 30 days (28 Sep) vs 2,000 free — about US$20
@@ -79,8 +80,7 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
   (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
-  before 6 Oct, all closed): close them on the next green run.
+- red-main opens an issue per red run and never closes it: close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
