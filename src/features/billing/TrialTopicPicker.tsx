@@ -46,10 +46,35 @@ export function canAdd(picked: readonly string[], id: string): boolean {
   return isStory(id) || moduleOf(id)?.id === moduleOf(picked[0])?.id
 }
 
+/**
+ * Two topics of one module, picked at random, for a parent who has chosen nothing yet (founder, 2026-10-17). An
+ * empty picker asks a parent who has not seen a lesson to judge which two matter, and most pick nothing at all. A
+ * filled one is a suggestion they can change: every box still works, and the line above says they may.
+ *
+ * Taken from the grade the picker opens on, from one module with at least two topics, so it always satisfies
+ * `canAdd` (and `choose_free_topics`, which is what really decides).
+ */
+export function suggestTwo(grade: number, rand: () => number = Math.random): string[] {
+  const mods = MODULES.filter(m => m.grade === grade && !m.story && m.lessons.length >= FREE_TOPICS)
+  if (!mods.length) return []
+  const m = mods[Math.floor(rand() * mods.length) % mods.length]
+  const start = Math.floor(rand() * (m.lessons.length - FREE_TOPICS + 1)) % (m.lessons.length - FREE_TOPICS + 1)
+  return m.lessons.slice(start, start + FREE_TOPICS).map(l => l.id)
+}
+
 export function TrialTopicPicker({ value, onChange }: { value: string[]; onChange?: (ids: string[]) => void }) {
   const locked = !onChange
-  const [grade, setGrade] = useState(() => (value[0] && moduleOf(value[0])?.grade) ?? 3)
+  // Typed: `value[0] && …` used to widen this to `number | ''`, which no caller can mean.
+  const [grade, setGrade] = useState<number>(() => (value[0] ? moduleOf(value[0])?.grade : undefined) ?? 3)
   const [offer, setOffer] = useState(false)
+  const [suggested, setSuggested] = useState(false)
+  // Suggest once, only into an empty picker a parent can still change. Never over a choice, never when locked.
+  useEffect(() => {
+    if (locked || suggested || value.length) return
+    const two = suggestTwo(grade)
+    setSuggested(true)
+    if (two.length) onChange(two)
+  }, [locked, suggested, value.length, grade, onChange])
   const tap = (id: string) => {
     if (locked) { if (!value.includes(id)) setOffer(true); return }
     if (value.includes(id)) onChange(value.filter(x => x !== id))
@@ -62,7 +87,9 @@ export function TrialTopicPicker({ value, onChange }: { value: string[]; onChang
     <div>
       <p style={{ margin: '0 0 10px', lineHeight: 1.5, color: 'var(--ink)' }}>
         <b>Free trial: {value.length} of {FREE_TOPICS} topics chosen.</b>{' '}
-        {locked ? 'These are your family’s free topics.' : 'Pick two topics from one module (for KG to Grade 2, two stories). They cannot be changed later.'}
+        {locked ? 'These are your family’s free topics.'
+          : suggested ? 'We picked two to start you off — change them to any two from one module (for KG to Grade 2, two stories). They cannot be changed after you save.'
+          : 'Pick two topics from one module (for KG to Grade 2, two stories). They cannot be changed later.'}
       </p>
       <div role="group" aria-label="Grade" style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
         {GRADES.map(g => {
