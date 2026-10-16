@@ -6,15 +6,14 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (15 October 2026)
+## Where things stand (16 October 2026)
 
-- **Production** is on `11cf0196c` (#444 after #443, 16 Oct; `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
+- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
   private beta with families the founder knows has run since 25 September; it is free and billing is off.
-- **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
-  KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket (P5 read 15 Oct:
-  18606 objects); email-plus consent on notice-v8 with the database gate; parent and teacher dashboards (teacher
-  rosters paused); points buy game time on `/play` (BlockCraft, BeatHop, Peak Rider, Rescue Rush — #424, merged
-  12 Oct; not yet played at real speed or on a tablet); six legal pages as beta versions; nightly backups green.
+- **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
+  and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
+  the database gate; parent and teacher dashboards (rosters paused); points buy game time on `/play` (four games,
+  #424); six legal pages as beta versions; nightly backups green.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship as is); local `learner-grade` has
   its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
@@ -24,10 +23,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 Testers review every screen through `/test` (links and reviews live in Radlor Ops, the separate ops app; its own
 `review.radlic_tester_reviews` table, not this database). The founder keeps a Corrections Tracker outside the repo.
-Every note with "Something is wrong" up to 15 Oct (125) is fixed or decided: #421, #426, #423, #436, #437 (#416 and
-#435 inside it), #438, #439. The 46 that came in later on 15 Oct are too: #441 (code), #442 (voice, 36 clips, tag
-`audio-src-josh-2026-10-15d`, P5 18642 | 289266163). The 8 from 15 Oct evening: #443 (code), #444 (voice, 4 clips,
-tag `audio-src-josh-2026-10-16`, P5 18646 | 289376154). Word times are keyed by clip key, so drop a re-rendered key's old
+Every "Something is wrong" note up to 15 Oct evening is fixed or decided (#421–#444; the last voice batch #444, tag
+`audio-src-josh-2026-10-16`, P5 18646 | 289376154). Word times are keyed by clip key, so drop a re-rendered key's old
 timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 - **Split by kind.** Code-only fixes (pictures, hints, answer boxes) ship on their own. Anything that changes a spoken
   line, or a line misread, waits for ONE voice batch built on top of the last voice branch (conflicts are only ever in
@@ -77,16 +74,11 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
   After switching, watch the first production deploy reach READY.
 - Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
   ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
-- Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - **If `learn` goes private, Actions minutes cost money**: ~5,400 min in 30 days (28 Sep) vs 2,000 free — about US$20
   a month over; with no budget Actions (and deploys) stop at 2,000. Set a budget first, or have the agent cut minutes
   (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
-  unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
-- Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
-  `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
 - GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
   before 6 Oct, all closed): close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
@@ -94,9 +86,8 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
   who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
-- Hard spend caps, not alerts (the "surprise bill" reel, 28 Sep): Vercel Spend Management with "pause production
-  deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
-  Vercel connector does not show it.
+- The Resend plan: the free plan's daily cap (about 50 sign-ups a day) blocks a launch. Vercel's budget (pause on) and
+  Supabase's spend cap are on (founder, 16 Oct).
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
   27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
 
@@ -149,8 +140,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
-- Performance: re-measure child-screen first paint and the lesson bundle sizes; the teacher dashboard makes one
-  request per child (needs one RPC); the admin user list reads only the first page.
+- Performance (audit 16 Oct; #445 fixed the ledger, one request per answer, /modules): measure #445's request counts
+  in a signed-in browser (code-derived: /modules 8→5, an answer 2→1); the teacher dashboard and `child-login` GET make
+  calls per child (one RPC); `admin_learning`/`admin_overview` scan `learner_events` unindexed; the daily cron has no
+  LIMIT; the game heartbeat polls every 30 s with no visibility pause; the signup cooldown lists auth users by filter.
 - SEO: signed-out visitors wait about 2.5 s before the redirect to the landing page (kept client-side by choice); a
   JSON-LD `@id`/publisher parity check across both sites; the stale comment in `src/app/site.ts`.
 - Small: `/ui-preview` shows a fox; the vertical number line's targets are 26 px (app: 44); the chalk "speck" in
@@ -165,9 +158,12 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   server also holds DELETE/TRUNCATE by default privilege (measured on a local supabase/postgres container, 6 Oct; the
   baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
 - Bounce suppression: a B3 refused as undeliverable shows the respond page's generic error (nothing is granted).
+- Backups are age-encrypted to the founder's offline key since #446 (16 Oct; first dump verified with it). The old
+  `BACKUP_PASSPHRASE` is off GitHub; dumps before 16 Oct open only with the founder's copy until they expire (16 Nov).
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
-- Never recorded, so check or drop: Vercel firewall rules; a timed Instant Rollback; the classroom AR demo (labs)
+- Vercel firewall (16 Oct, dashboard): per-IP rate limits on signup/consent, consent respond, child login, PIN reset and
+  report-error — not in the repo; re-check after any route rename. Never recorded, so check or drop: a timed Instant Rollback; the classroom AR demo (labs)
   track; the id-free event rollup decided on 5 September and never built.
