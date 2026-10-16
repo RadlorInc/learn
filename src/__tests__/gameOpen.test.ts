@@ -66,8 +66,8 @@ describe('BeatHop, the second game on /play', () => {
     expect(beat).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'beathop.save'")
     expect(beat).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
     expect(beat).toContain("const BACK = '/play?game=beathop', STOP = '/play?stop=1&game=beathop'")
-    expect(beat).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
-    expect(beat).toMatch(/import\('\/play-time\.js'\)\.then\(\(\{ playTime \}\) => playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
+    expect(beat).toMatch(/\$\('bLeave'\)\.onclick = \$\('bLeave2'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
+    expect(beat).toMatch(/import\('\/play-time\.js'\)\.then\(\(\{ playTime \}\) => \(time = playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
     expect(beat).toMatch(/done: \(\) => \{ persist\(\);/)
   })
   it('the build copies it into public/beathop, where gameUrl points', () => {
@@ -89,8 +89,8 @@ describe('Peak Rider, the third game on /play', () => {
     expect(peak).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'peak.save'")
     expect(peak).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
     expect(peak).toContain("const BACK = '/play?game=peak', STOP = '/play?stop=1&game=peak'")
-    expect(peak).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
-    expect(peak).toMatch(/import\('\/play-time\.js'\)\.then\(\(\{ playTime \}\) => playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
+    expect(peak).toMatch(/\$\('bLeave'\)\.onclick = \$\('bLeave2'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
+    expect(peak).toMatch(/import\('\/play-time\.js'\)\.then\(\(\{ playTime \}\) => \(time = playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
     expect(peak).toMatch(/done: \(\) => \{ persist\(\);/)
   })
   it('the build copies it (and the three.js it imports) into public/peak, where gameUrl points', () => {
@@ -111,8 +111,8 @@ describe('Rescue Rush, the fourth game on /play', () => {
     expect(rush).toContain("const SAVE_KEY = PLAY ? PLAY.key : 'rush.save'")
     expect(rush).toMatch(/localStorage\.setItem\(SAVE_KEY, /)
     expect(rush).toContain("const BACK = '/play?game=rush', STOP = '/play?stop=1&game=rush'")
-    expect(rush).toMatch(/\$\('bLeave'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
-    expect(rush).toMatch(/import\('\/play-time\.js'\)\.then\(\(\{ playTime \}\) => playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
+    expect(rush).toMatch(/\$\('bLeave'\)\.onclick = \$\('bLeave2'\)\.onclick = \(\) => \{ persist\(\); location\.replace\(STOP\); \}/)
+    expect(rush).toMatch(/import\('\/play-time\.js'\)\.then\(\(\{ playTime \}\) => \(time = playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
     expect(rush).toMatch(/done: \(\) => \{ persist\(\);/)
   })
   it('the build copies it into public/rush, next to the public/peak whose three.js it imports', () => {
@@ -127,7 +127,7 @@ describe('the game keeps its half of the wire', () => {
   const game = readFileSync(resolve(__dirname, '../../blockcraft/src/main.js'), 'utf8')
   it('reads the key and child id from the URL, saves under that key, and goes back to /play', () => {
     expect(game).toMatch(/Q\.has\('key'\) && Q\.has\('learner'\)/)
-    expect(game).toMatch(/import\(\/\* @vite-ignore \*\/ '\/play-time\.js'\)\.then\(\(\{ playTime \}\) => playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
+    expect(game).toMatch(/import\(\/\* @vite-ignore \*\/ '\/play-time\.js'\)\.then\(\(\{ playTime \}\) => \(time = playTime\(\{\s*learner: PLAY\?\.learner, back: BACK,/)
     expect(game).toMatch(/localStorage\.setItem\(saveKey\(\), JSON\.stringify\(data\)\)/)
     expect(game).toContain("const BACK = '/play'")
   })
@@ -148,5 +148,34 @@ describe('the game keeps its half of the wire', () => {
   })
   it('when the time is up it saves before leaving', () => {
     expect(game).toMatch(/done: \(\) => \{ if \(G\.world\) save\(\);/)
+  })
+})
+
+describe('"Paused" pauses the paid time, in all four games (20261017120000)', () => {
+  const src = (f: string) => readFileSync(resolve(__dirname, '../..', f), 'utf8')
+  const games = { beathop: 'beathop/src/main.js', peak: 'peak/src/main.js', rush: 'rush/src/main.js', blockcraft: 'blockcraft/src/main.js' }
+  for (const [name, file] of Object.entries(games)) {
+    it(`${name}: showing the Pause screen pauses the clock, any other screen resumes it; "Time's up" does not pause`, () => {
+      const code = src(file)
+      const show = code.match(/function show\(name\) \{\n([^\n]*)\n/)
+      expect(show?.[1].trim()).toBe("time?.[name === 'pause' ? 'pause' : 'resume']();")
+      const done = code.match(/ {2}done: \(\) => \{[^\n]*/)?.[0] ?? ''
+      expect(done, 'no done handler found').not.toBe('')
+      expect(done).not.toMatch(/pause\(|show\('pause'\)/)
+    })
+  }
+  for (const name of ['beathop', 'peak', 'rush']) {
+    it(`${name}: the Pause screen has "Stop and keep my minutes", shown only inside the app`, () => {
+      const html = src(`${name}/index.html`)
+      const pause = html.slice(html.indexOf('<div id="pause"'), html.indexOf('</div>\n</div>', html.indexOf('<div id="pause"')))
+      expect(pause).toContain('<button class="plain hidden" id="bLeave2">Stop and keep my minutes</button>')
+      expect(src(`${name}/src/main.js`)).toMatch(/if \(PLAY\) \{[^}]*\$\('bLeave2'\)\.classList\.remove\('hidden'\)/)
+    })
+  }
+  it('blockcraft: its Pause screen already has it (bQuit, renamed inside the app)', () => {
+    const html = src('blockcraft/index.html'), code = src('blockcraft/src/main.js')
+    const at = html.indexOf('<div id="pause"'), next = html.indexOf('class="screen', html.indexOf('>', at))
+    expect(html.slice(at, next)).toContain('<button id="bQuit">')
+    expect(code).toContain("$('bQuit').textContent = 'Stop and keep my minutes'")
   })
 })

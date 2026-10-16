@@ -127,3 +127,13 @@ it('control: an ordinary page show (not from the cache) does not read the wallet
   await act(async () => { pageshow(false) })
   expect(reads).toBe(before)
 })
+
+it('a game left paused: /play shows its paused seconds with Play and Stop — not the buy buttons (no second purchase)', async () => {
+  wallet = { ...base, playing_until: null, paused_left: 83 }
+  await show()
+  expect(host.textContent).toContain('⏸ 1:23 left · paused')
+  expect([...host.querySelectorAll('button')].some(b => b.textContent?.startsWith('Play 5 minutes')), 'offered to buy more').toBe(false)
+  button('Stop and keep my minutes')
+  await act(async () => { button('Play 🧱 BlockCraft').click() })
+  expect(openGame).toHaveBeenCalledWith('kid-1', 'blockcraft')
+})

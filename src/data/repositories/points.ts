@@ -10,6 +10,8 @@ export interface LessonRow { lesson_id: string; done: boolean; level: number; st
 export interface Wallet {
   balance: number; points_per_minute: number; enabled: boolean; minutes_per_day: number; time_zone: string
   minutes_used_today: number; playing_until: string | null
+  /** seconds left on a game paused from its Pause screen (20261017120000); absent before that migration */
+  paused_left?: number | null
 }
 export type GameStart = { ok: true; playing_until: string; balance: number } | { ok: false; error: 'off' | 'daily_limit' | 'not_enough_points' | 'bad_minutes' | 'failed' }
 

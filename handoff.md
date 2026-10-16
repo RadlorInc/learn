@@ -40,6 +40,9 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
+- Game time "Paused" really pauses (2026-10-17, branch `game-time-real-pause`): migration 20261017120000 is a SECURITY
+  change (two new DEFINER functions). Before/after SQL: `docs/legal/sql/game-pause-before.sql`, `game-pause-proof.sql`.
+
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
 Admin data requires the authenticator code since #325 (16 Oct). None waiting.
 
@@ -140,7 +143,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Performance (audit 16 Oct; #445 fixed the ledger, one request per answer, /modules): measure #445's request counts
   in a signed-in browser (code-derived: /modules 8→5, an answer 2→1); the teacher dashboard and `child-login` GET make
   calls per child (one RPC); `admin_learning`/`admin_overview` scan `learner_events` unindexed; the daily cron has no
-  LIMIT; the game heartbeat polls every 30 s with no visibility pause; the signup cooldown lists auth users by filter.
+  LIMIT; the signup cooldown lists auth users by filter.
 - SEO: signed-out visitors wait about 2.5 s before the redirect to the landing page (kept client-side by choice); a
   JSON-LD `@id`/publisher parity check across both sites; the stale comment in `src/app/site.ts`.
 - Small: `/ui-preview` shows a fox; the vertical number line's targets are 26 px (app: 44); the chalk "speck" in
