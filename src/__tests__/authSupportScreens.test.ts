@@ -186,8 +186,22 @@ describe('a password Supabase refuses, on the screens that set one', () => {
     await m.done()
   })
 
-  // The right-hand side of isWeakPassword's `||`: the same refusal arriving with no `code`, which the code arm
-  // short-circuits past in the test above. Without this the fallback would be an inert clause.
+  // ⚠️ ONE ASSERTION PER ARM OF isWeakPassword's `||`. The refusal above carries BOTH a code and a matching
+  // message, so either arm alone satisfies it and deleting one would not show up. These two each leave only one
+  // arm able to match: without them one side could be deleted and every test here would stay green.
+  it('/auth/set-password: a weak_password code with wording we have never seen still gets our words', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: { message: 'Contraseña rechazada por el servidor.', code: 'weak_password' } })
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')
+    await press(m.host, /^Set password/)
+    expect(setPwd, 'control: the password really was sent').toHaveBeenCalledTimes(1)
+    expect(m.host.querySelector('[role="alert"]')?.textContent)
+      .toBe('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+    await m.done()
+  })
+
   it('/auth/set-password: the same refusal with no error code still gets our words, not the auth server’s', async () => {
     session.mockResolvedValue({ user: { email: 'pat@example.test' } })
     setPwd.mockResolvedValueOnce({ error: { message: WEAK.message } })        // no `code`
