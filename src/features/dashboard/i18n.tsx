@@ -475,7 +475,10 @@ export const ES: Record<string, string> = {
   'Too many tries. Wait a minute and try again.': 'Demasiados intentos. Espere un minuto e inténtelo de nuevo.',
   'Please sign in again': 'Vuelva a iniciar sesión',
   'This child needs a parent’s permission first': 'Este niño necesita primero el permiso de uno de sus padres',
-  'This password is too easy to guess. Choose a different one: longer, and not a common one like 123456.': 'Esta contraseña es demasiado fácil de adivinar. Elija otra: más larga y que no sea común, como 123456.',
+  // Supabase's refusal, on every adult screen that sets a password (sign-up, the reset page, a child's login):
+  // never "longer", because the password it refused may already be long.
+  'This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.': 'Esta contraseña es demasiado fácil de adivinar, o ha aparecido en una filtración de datos. Elija otra.',
+  'We could not sign you up with that email address. Please check it for a typo and try again.': 'No pudimos crear su cuenta con ese correo electrónico. Revise que no tenga errores e inténtelo de nuevo.',
   'Could not save. Check your connection and try again.': 'No se pudo guardar. Revise su conexión e inténtelo de nuevo.',
 
   // ── A child's data (shared/ui/DataRights.tsx) ──

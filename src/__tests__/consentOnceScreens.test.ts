@@ -198,6 +198,66 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
   })
 })
 
+/**
+ * A PASSWORD SUPABASE REFUSES IS NOT A SHORT PASSWORD (production, 2026-10-17: a parent's 10-character password was
+ * answered "Password must be at least 8 characters"; with leaked-password protection on, Supabase had refused it as
+ * breached). The form's own length check runs BEFORE anything is sent, so a server `weak_password` can never be about
+ * length — and `invalid` is the route's own refusal, of which only the email address is reachable from this form.
+ * ⚠️ Every expected sentence is written out here by hand, and each refusal is read back AFTER the click that caused
+ * it. The length wording has its positive twin below, or "never says the length wording" would also pass on a form
+ * that had lost the length check altogether.
+ */
+describe('sign-up: a refused password says why, and never the length message', () => {
+  /** A complete, valid sign-up form, then the Create-account click. `password` is 10 characters: long enough. */
+  async function submitSignup(password = 'horsebeach') {
+    const { default: AuthPage } = await import('@/app/auth/page')
+    const m = await mount(createElement(AuthPage))
+    await click(button(m.host, /^Create account$/))
+    await type(m.host.querySelector('#auth-email'), 'pat@example.test')
+    await type(m.host.querySelector('#auth-password'), password)
+    await type(m.host.querySelector('#auth-confirm'), password)
+    await type(m.host.querySelector('#auth-first-name'), 'Pat')
+    await click(m.host.querySelector('[data-auth="adult"] input[type="checkbox"]'))
+    await click(m.host.querySelector('[data-auth="email"]'))
+    return { ...m, alert: () => m.host.querySelector('[role="alert"]')?.textContent ?? '' }
+  }
+
+  it('weak_password on a 10-character password: the breach wording, and no claim about the length', async () => {
+    signUp.mockResolvedValueOnce('weak_password')
+    const s = await submitSignup('horsebeach')
+    expect(signUp, 'control: 10 characters passed the form and really was sent').toHaveBeenCalledTimes(1)
+    expect(String(signUp.mock.calls[0][0].password), 'control: the password under test is longer than the minimum').toHaveLength(10)
+    expect(s.alert()).toBe('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+    expect(s.alert(), 'the length message is back on a password that is long enough').not.toMatch(/at least/)
+    expect(s.alert(), 'the length message is back on a password that is long enough').not.toMatch(/characters/)
+    await s.done()
+  })
+
+  it('invalid: about the email address, not the password length', async () => {
+    signUp.mockResolvedValueOnce('invalid')
+    const s = await submitSignup('horsebeach')
+    expect(signUp, 'control: the sign-up really was sent').toHaveBeenCalledTimes(1)
+    expect(s.alert()).toBe('We could not sign you up with that email address. Please check it for a typo and try again.')
+    expect(s.alert(), 'a route refusal is still read as a short password').not.toMatch(/at least/)
+    await s.done()
+  })
+
+  it('POSITIVE TWIN: a password really too short still gets the length message, and is never sent', async () => {
+    const s = await submitSignup('short1')          // 6 characters, under MIN_PASSWORD
+    expect(signUp, 'a password under the minimum left the browser').not.toHaveBeenCalled()
+    expect(s.alert()).toBe('Password must be at least 8 characters')
+    await s.done()
+  })
+
+  it('POSITIVE TWIN: nothing refused — the form says to check the email, not a password complaint', async () => {
+    const s = await submitSignup('horsebeach')      // signUp's default answer is 'ok'
+    expect(signUp).toHaveBeenCalledTimes(1)
+    expect(s.alert(), 'a successful sign-up showed an error').toBe('')
+    expect(s.host.textContent).toContain('Check your email: one message confirms your address and asks for your permission.')
+    await s.done()
+  })
+})
+
 // ─────────────────────────────── C3 — add a child ───────────────────────────────
 const granted = (over: Record<string, unknown> = {}) => ({
   id: 'acct-1', state: 'granted', notice_version: 'notice-v4', confirmed_at: '2026-09-20T12:00:00Z',

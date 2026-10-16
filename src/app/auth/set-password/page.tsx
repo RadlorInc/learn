@@ -18,7 +18,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import type { EmailOtpType } from '@supabase/supabase-js'
-import { getCurrentSession, verifyEmailToken, setPassword } from '@/data/auth'
+import { getCurrentSession, verifyEmailToken, setPassword, isWeakPassword } from '@/data/auth'
 import { getMyRole, homeForRole } from '@/data/repositories'
 import { APP_NAME } from '@/app/site'
 import { makeT, useSavedLang } from '@/features/dashboard/i18n'
@@ -162,7 +162,15 @@ function SetPasswordForm() {
     setLoading(true); setError(null)
     try {
       const { error } = await setPassword(password)
-      if (error) { setError(error.message); setLoading(false); return }
+      // A password Supabase refuses is the person's to fix, in our words and in their language — `error.message`
+      // is the auth server's own English ("Password is known to be weak and easy to guess…"). The length check
+      // above already ran, so this refusal is not about length: say what it is.
+      if (error) {
+        setError(isWeakPassword(error)
+          ? t('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+          : error.message)
+        setLoading(false); return
+      }
       // logged by the global listener (infra/AuthEventLogger) — see auth.ts
       router.replace(homeForRole(await getMyRole()))
     } catch {

@@ -65,6 +65,20 @@ sign-ups and consent emails (rows tagged `[auth/signup] failed`, `[consent/reque
 6. **Agent.** If it is a bug, write the fix with a test that fails on the bug, as a Draft PR ([deploy.md](deploy.md)). Draft the reply.
 7. **Founder.** Sends the reply and, when it is fixed, a second line saying so.
 
+## "It says my password is too easy to guess"
+
+Supabase Auth has leaked-password protection on (the founder confirmed it in the dashboard, 16 Oct 2026), so it
+refuses a password that appears in a known breach list **whatever its length**. Every adult screen that sets a
+password says so in those words — sign-up (`/auth`), the reset page (`/auth/set-password`) and a child's login sheet
+in the dashboard; a child's own first-password screen (`/auth/new-password`) says "too easy to guess" without the
+breach wording.
+
+The answer is to pick a different password; nothing is wrong with the account. Until 17 Oct 2026 the sign-up form
+answered this with "Password must be at least 8 characters", which sent parents off to lengthen a password that was
+already long enough — if a message from before that date quotes the length wording, this is what they hit.
+
+A password **really** too short never reaches the server: the form checks `MIN_PASSWORD` first and says so itself.
+
 ## Email bounces (Resend webhook)
 
 `/api/email/resend-webhook` turns each bounce or spam complaint into one `error_events` row (`[resend] email.bounced`

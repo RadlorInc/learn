@@ -15,7 +15,9 @@ import { useT } from '@/features/dashboard/i18n'
 const SAYS: Record<ChildLoginError, string> = {
   bad_username:    'Use 3–20 letters or numbers (a dot or _ is fine), starting with a letter or number.',
   weak_password:   'Make the password at least {n} characters.',
-  password_rejected: 'This password is too easy to guess. Choose a different one: longer, and not a common one like 123456.',
+  // ⚠️ Supabase's own refusal (leaked-password protection on), which the route reports separately from its length
+  // check above — so these words must not say "longer": the password it refused may be long already.
+  password_rejected: 'This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.',
   username_taken:  'That username is already taken. Try adding a number.',
   not_owner:       'Only the adult who added this learner can set their login.',
   not_configured:  'Child logins are not switched on yet on this server.',

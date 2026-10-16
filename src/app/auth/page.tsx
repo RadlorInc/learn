@@ -129,8 +129,15 @@ export default function AuthPage() {
           setError(t('This email already has an account. Sign in below, or tap “Forgot password?”'))
         } else if (r === 'adult_required') {
           setError(t('Please confirm you are 18 or older'))
-        } else if (r === 'weak_password' || r === 'invalid') {
-          setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD }))
+        // ⚠️ NOT THE LENGTH MESSAGE. The length check above runs before anything is sent, so a server
+        // `weak_password` is never about length — with leaked-password protection on it is Supabase's
+        // HaveIBeenPwned refusal (a 10-character password read "must be at least 8 characters" on
+        // production, 2026-10-17). `invalid` is the route's own refusal, and of its causes only the
+        // email address is reachable from this form (the rest are checked above).
+        } else if (r === 'weak_password') {
+          setError(t('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.'))
+        } else if (r === 'invalid') {
+          setError(t('We could not sign you up with that email address. Please check it for a typo and try again.'))
         } else if (r === 'undeliverable') {
           setError(t('We cannot send email to this address: earlier emails to it bounced or were marked as spam. Check it for a typo, or use another address. If it is right, write to {support}.', { support: SUPPORT_EMAIL }))
         } else if (r !== 'ok') {
