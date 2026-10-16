@@ -64,7 +64,12 @@ describe('4 — opening a grade ticks its modules, once', () => {
     document.body.appendChild(host)
     const root = createRoot(host)
     const state = { grade: startGrade, pick: new Set<string>() }
+    // A grade filled on EVERY render instead of once is an endless render loop, not a wrong value: this harness
+    // re-renders on every setPick, so without the component's `filled` guard it never settles. Counting renders
+    // turns that into an assertion with a sentence, instead of a worker crash eight minutes later.
+    let renders = 0
     const draw = async () => {
+      expect(++renders, 'ModuleChecklist keeps re-filling the grade: it fills on every render, not once').toBeLessThan(40)
       await act(async () => {
         root.render(createElement(ModuleChecklist, {
           grade: state.grade,
