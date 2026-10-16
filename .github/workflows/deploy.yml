@@ -175,7 +175,7 @@ jobs:
           project-ref: ${{ vars.PROD_PROJECT_REF }}
           access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           db-password: ${{ secrets.PROD_DB_PASSWORD }}
-          passphrase: ${{ secrets.BACKUP_PASSPHRASE }}
+          recipient: ${{ vars.BACKUP_AGE_RECIPIENT }}
           artifact-name: milo-db-backup-premigrate-${{ github.run_id }}
       - name: Apply migrations to prod
         env:
