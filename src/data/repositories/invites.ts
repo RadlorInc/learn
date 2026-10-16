@@ -20,7 +20,7 @@ export async function sendInvite(
   invitedEmail: string
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return { ok: false, error: 'Not logged in' }
 
   // Check sender has access to this learner
@@ -61,7 +61,7 @@ export async function sendInvite(
 /** Get all pending invites sent by the current user */
 export async function getSentInvites(learnerId: string): Promise<InviteWithLearner[]> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return []
 
   const { data } = await supabase
@@ -77,7 +77,7 @@ export async function getSentInvites(learnerId: string): Promise<InviteWithLearn
 /** Get all pending invites received by the current user's email */
 export async function getReceivedInvites(): Promise<InviteWithLearner[]> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return []
 
   const email = user.email?.toLowerCase().trim()
@@ -100,7 +100,7 @@ export async function acceptInvite(
   inviteId: string
 ): Promise<{ ok: boolean; error?: string; accessGranted?: boolean }> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return { ok: false, error: 'Not logged in' }
 
   // Get the invite. Enforce the 7-day TTL here too (V8) — without the expires_at filter an

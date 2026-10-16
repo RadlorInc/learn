@@ -25,6 +25,7 @@ vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchCli
 const ledger: { lesson_id: string | null; reason: string; points: number; created_at: string }[] = []
 vi.mock('@/data/repositories/points', () => ({
   sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
+  syncBatch: async (c: unknown[]) => c.map(() => 'ok'), lessonCall: () => ({}), moduleCall: () => ({}), runCall: () => ({}),   // the queue's one request (sync_batch)
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
   getRecentPoints: async () => ledger,
 }))

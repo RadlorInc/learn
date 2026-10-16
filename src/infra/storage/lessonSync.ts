@@ -12,7 +12,8 @@ import { lessonDone, markLessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding, saveStanding, standingAt } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { FRESH, type Outcome, type SavedRun } from '@/features/lessons/adaptive'
-import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows, sessionUserId, lastSyncErrorCode, type LessonRow } from '@/data/repositories/points'
+import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows, sessionUserId, lastSyncErrorCode, syncBatch, lessonCall, moduleCall, runCall, type LessonRow, type SyncCall } from '@/data/repositories/points'
+import type { SyncOutcome } from '@/data/repositories/_shared'
 import { markConsentBlocked, clearConsentBlocked } from '@/features/consent/childPause'
 import { recordError } from '@/infra/storage/lastError'
 import { noteSync } from '@/infra/storage/syncStatus'
@@ -98,43 +99,66 @@ async function send(): Promise<void> {
   const tried = new Set<string>(), held = new Set<string>()
   let left = false
   for (;;) {
-    // Re-read each time: something may have been queued while the last one was sending. A learner with an item to
+    // Re-read each time: something may have been queued while the last request was out. A learner with an item to
     // retry is held, so that learner's order is kept, but nobody else's uploads wait behind it (BUG-04).
-    const item = read().find(x => !tried.has(x.id) && (x.owner ?? who) === who && !held.has(x.learnerId))
+    const batch = read().filter(x => !tried.has(x.id) && (x.owner ?? who) === who && !held.has(x.learnerId)).slice(0, BATCH)
     // Tried already = the queue could not be written (storage full): stop rather than send it forever.
-    if (!item) break
-    tried.add(item.id)
-    const r = 'runOf' in item
-      ? await recordPracticeRun(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
-      : 'moduleId' in item
-      ? await recordModulePractice(item.learnerId, item.moduleId, item.event)
-      : await recordLessonProgress(item.learnerId, item.lessonId,
-          { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH),
-            at: standingAt(item.learnerId, item.lessonId) },
-          item.outcome, item.event)
-    noteSync(r === 'ok' ? undefined : r === 'blocked' ? 'P0C01' : lastSyncErrorCode())
-    // 'blocked' (no consent the gate accepts yet) is held like a retry — the answer waits on this device, never deleted —
-    // and the child's screen is told, which asks the adult who added them for consent (features/consent/childPause).
-    if (r === 'retry' || r === 'blocked') { left = true; held.add(item.learnerId); if (r === 'blocked') markConsentBlocked(item.learnerId); continue }
-    if (r === 'drop') {
-      // Refused for good: kept and retried for REFUSED_KEEP_MS (see there), without holding the learner's later items
-      // (each re-reads the device when it sends, so order does not matter for them). Reported both times, so a bad
-      // migration shows up in error_events while the answers are still on the devices.
-      const code = lastSyncErrorCode()
-      if (!item.refusedAt) {
-        write(read().map(x => x.id === item.id ? { ...x, refusedAt: Date.now() } : x))
-        reportCrash(new Error(`upload refused ${code}: kept on the device, retrying`), 'sync')
-        left = true
-        continue
+    if (!batch.length) break
+    // ONE request for the whole batch (sync_batch, 20261016120000): it stops at the first refusal, so `outcomes` covers
+    // the items up to and including it, and the rest go in the next round — the order one-at-a-time sending had. Before
+    // that migration (null), one item per round, as before.
+    const outcomes = await syncBatch(batch.map(callOf)) ?? [await sendOne(batch[0])]
+    const done = new Set<string>(), refused = new Set<string>()
+    outcomes.forEach((r, i) => {
+      const item = batch[i]
+      tried.add(item.id)
+      noteSync(r === 'ok' ? undefined : r === 'blocked' ? 'P0C01' : lastSyncErrorCode())
+      // 'blocked' (no consent the gate accepts yet) is held like a retry — the answer waits on this device, never
+      // deleted — and the child's screen is told, which asks the adult who added them for consent (features/consent/childPause).
+      if (r === 'retry' || r === 'blocked') { left = true; held.add(item.learnerId); if (r === 'blocked') markConsentBlocked(item.learnerId); return }
+      if (r === 'drop') {
+        // Refused for good: kept and retried for REFUSED_KEEP_MS (see there), without holding the learner's later items
+        // (each re-reads the device when it sends, so order does not matter for them). Reported both times, so a bad
+        // migration shows up in error_events while the answers are still on the devices.
+        const code = lastSyncErrorCode()
+        if (!item.refusedAt) {
+          refused.add(item.id)
+          reportCrash(new Error(`upload refused ${code}: kept on the device, retrying`), 'sync')
+          left = true
+          return
+        }
+        if (Date.now() - item.refusedAt < REFUSED_KEEP_MS) { left = true; return }
+        reportCrash(new Error(`upload refused ${code} for 7 days: deleted from the device`), 'sync')
       }
-      if (Date.now() - item.refusedAt < REFUSED_KEEP_MS) { left = true; continue }
-      reportCrash(new Error(`upload refused ${code} for 7 days: deleted from the device`), 'sync')
+      done.add(item.id)
+      if (r === 'ok') clearConsentBlocked(item.learnerId)
+    })
+    // One rewrite of the queue per request, not one per item.
+    if (done.size || refused.size) {
+      const now = Date.now()
+      write(read().flatMap(x => done.has(x.id) ? [] : refused.has(x.id) ? [{ ...x, refusedAt: now }] : [x]))
     }
-    write(read().filter(x => x.id !== item.id))
-    if (r === 'ok') clearConsentBlocked(item.learnerId)
   }
   retryLater(left)
 }
+
+// Under sync_batch's limit of 200 items a request.
+const BATCH = 100
+
+// What an item uploads is read from the device as it is NOW (the newest standing, done and run), never from the queue.
+const standingNow = (learnerId: string, lessonId: string) =>
+  ({ done: lessonDone(learnerId, lessonId), ...(loadStanding(learnerId, lessonId) ?? FRESH), at: standingAt(learnerId, lessonId) })
+
+const callOf = (item: Item): SyncCall =>
+  'runOf' in item ? runCall(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
+  : 'moduleId' in item ? moduleCall(item.learnerId, item.moduleId, item.event)
+  : lessonCall(item.learnerId, item.lessonId, standingNow(item.learnerId, item.lessonId), item.outcome, item.event)
+
+/** One item, one request: a database without sync_batch yet. */
+const sendOne = (item: Item): Promise<SyncOutcome> =>
+  'runOf' in item ? recordPracticeRun(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
+  : 'moduleId' in item ? recordModulePractice(item.learnerId, item.moduleId, item.event)
+  : recordLessonProgress(item.learnerId, item.lessonId, standingNow(item.learnerId, item.lessonId), item.outcome, item.event)
 
 /**
  * While this account has uploads that did not go through, try again on a timer: 30 s, doubling to 10 min, and stop when

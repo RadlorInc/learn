@@ -10,9 +10,11 @@ const rpc = vi.fn()
 let rows: unknown = []
 // A database without `lesson_progress.run` (migration 20260925100000 not applied) refuses a select naming it, 42703.
 const db = vi.hoisted(() => ({ noRunColumn: false, noAnsweredAt: false, selects: [] as string[] }))
+const seen = vi.hoisted(() => ({ batches: 0 }))
 vi.mock('@/data/repositories/_shared', async (orig) => {
   const actual = await orig<typeof import('@/data/repositories/_shared')>()
-  return { ...actual, db: () => ({ rpc, auth: { getSession: async () => ({ data: { session: { user: { id: 'parent' } } } }) }, from: () => ({ select: (cols: string) => ({ eq: async () => {
+  const { unbatch } = await import('./_syncBatch')
+  return { ...actual, db: () => ({ rpc: unbatch(rpc, seen), auth: { getSession: async () => ({ data: { session: { user: { id: 'parent' } } } }) }, from: () => ({ select: (cols: string) => ({ eq: async () => {
     db.selects.push(cols)
     if (db.noRunColumn && /\brun\b/.test(cols)) return { error: { code: '42703', message: 'column lesson_progress.run does not exist' } }
     if (db.noAnsweredAt && /\banswered_at\b/.test(cols)) return { error: { code: '42703', message: 'column lesson_progress.answered_at does not exist' } }
@@ -28,7 +30,7 @@ const { loadStanding, saveStanding } = await import('@/infra/storage/lessonStand
 const PGRST202 = { code: 'PGRST202', message: 'Could not find the function public.record_lesson_progress in the schema cache' }
 const calls = () => rpc.mock.calls.map(c => c[1] as Record<string, unknown>)
 
-beforeEach(() => { rpc.mockReset(); localStorage.clear(); rows = []; db.noRunColumn = false; db.noAnsweredAt = false; db.selects.length = 0 })
+beforeEach(() => { rpc.mockReset(); seen.batches = 0; localStorage.clear(); rows = []; db.noRunColumn = false; db.noAnsweredAt = false; db.selects.length = 0 })
 
 describe('uploads', () => {
   it('keep waiting while the database lacks the function, then go up with the device\'s state and the SAME event id', async () => {
@@ -37,9 +39,8 @@ describe('uploads', () => {
     syncLesson('L', 'g3m2-t1', 'first')
     await flushLessonSync()
     await flushLessonSync()
-    // Each flush asks twice: with p_answered_at, then (PGRST202) in the older shape without it.
-    expect(rpc).toHaveBeenCalledTimes(4)
-    const [a, , b] = calls()
+    expect(rpc).toHaveBeenCalledTimes(2)
+    const [a, b] = calls()
     expect(a.p_event).toBeTruthy()
     expect(b.p_event).toBe(a.p_event)
 
@@ -181,19 +182,37 @@ describe('answer time (BUG-02)', () => {
     expect(calls()[0]).toMatchObject({ p_level: 3, p_answered_at: '2026-09-20T10:00:00.000Z' })
   })
 
-  it('a database before the migration: the same call is repeated without p_answered_at, and nothing waits', async () => {
-    rpc.mockImplementation(async (_fn: string, args: Record<string, unknown>) => ({ error: 'p_answered_at' in args ? PGRST202 : null }))
-    saveStanding('L', 'g3m2-t1', { level: 1, streak: 0, mastered: false })
-    syncLesson('L', 'g3m2-t1', 'first')
-    await flushLessonSync()
-    expect(calls().map(c => 'p_answered_at' in c)).toEqual([true, false])
-    expect(calls()[1]).toMatchObject({ p_level: 1, p_outcome: 'first', p_event: calls()[0].p_event })
-    expect(pendingLessonUploads()).toBe(0)
-  })
-
   it('a signed-out device stores no time with its standing (doc 08 describes that key\'s contents)', async () => {
     saveStanding(null, 'g3m2-t1', { level: 1, streak: 0, mastered: false })
     const { kv } = await import('@/infra/storage/kv')
     expect(JSON.parse(kv.get('milo-newflow-standing-device-g3m2-t1') ?? 'null')).toEqual({ level: 1, streak: 0, mastered: false })
+  })
+})
+
+/** Perf, 2026-10-16: an answer used to go up as one request per queued item, one after another (~250 ms each from India). */
+describe('one request per answer (sync_batch)', () => {
+  it("a practice answer that moves two standings and the run is ONE request, its items in the order they were queued", async () => {
+    rpc.mockResolvedValue({ error: null })
+    // What LessonPlayer's nextProblem does for an answer that also moves a review topic: two standings, then the run.
+    saveStanding('L', 'g3m2-t1', { level: 2, streak: 0, mastered: false }); syncLesson('L', 'g3m2-t1', 'first')
+    saveStanding('L', 'g3m1-t4', { level: 1, streak: 0, mastered: false }); syncLesson('L', 'g3m1-t4', 'first')
+    saveRun('L', 'g3m2-t1', { asked: 1, recent: [], current: null, review: null } as never); syncRun('L', 'g3m2-t1')
+    await flushLessonSync()
+    expect(seen.batches).toBe(1)
+    expect(rpc.mock.calls.map(c => [c[0], c[1].p_lesson])).toEqual([
+      ['record_lesson_progress', 'g3m2-t1'], ['record_lesson_progress', 'g3m1-t4'], ['save_practice_run', 'g3m2-t1']])
+    expect(pendingLessonUploads()).toBe(0)
+  })
+
+  it('a refusal mid-batch keeps that child\'s later items queued and sends them, in order, once it goes through', async () => {
+    rpc.mockImplementation(async (_fn: string, a: Record<string, unknown>) => ({ error: a.p_lesson === 'g3m2-t2' ? { code: '57014', message: 'timeout' } : null }))
+    syncLesson('L', 'g3m2-t1', 'first'); syncLesson('L', 'g3m2-t2', 'first'); syncLesson('L', 'g3m2-t3', 'first')
+    await flushLessonSync()
+    expect(calls().map(c => c.p_lesson)).toEqual(['g3m2-t1', 'g3m2-t2'])   // stopped at the refusal; t3 not sent past it
+    expect(pendingLessonUploads()).toBe(2)
+    rpc.mockReset(); rpc.mockResolvedValue({ error: null })
+    await flushLessonSync()
+    expect(calls().map(c => c.p_lesson)).toEqual(['g3m2-t2', 'g3m2-t3'])
+    expect(pendingLessonUploads()).toBe(0)
   })
 })

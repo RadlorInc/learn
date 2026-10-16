@@ -19,7 +19,7 @@ const settle = () => next.throws ? Promise.reject(next.throws) : Promise.resolve
 const fake = {
   from: () => ({ update: () => ({ eq: () => ({ select: settle }) }) }),
   rpc: settle,
-  auth: { getUser: async () => ({ data: { user: null } }) },
+  auth: { getSession: async () => ({ data: { session: null } }) },
 }
 vi.mock('@/data/repositories/_shared', async orig => ({ ...await orig<object>(), db: () => fake }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, replace() {} }), usePathname: () => '/parent', useSearchParams: () => new URLSearchParams() }))
