@@ -14,7 +14,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { IDLE_LOCK_MS } from '@/shared/ui/ParentPinGate'
 import { suggestTwo, canAdd, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
-import { ALL_MODULES as MODULES, modulesOf } from '@/features/lessons/modules'
+import { ALL_MODULES as MODULES, modulesOf, gradeName } from '@/features/lessons/modules'
+import { createElement, act } from 'react'
+import { createRoot } from 'react-dom/client'
+
+;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+vi.mock('@/data/supabase/client', () => ({ createClient: () => ({}) }))
+vi.mock('@/data/repositories', () => ({}))
 
 describe('2 — the idle lock', () => {
   it('locks after a quarter of an hour, which is the number the screen is built around', () => {
@@ -50,54 +56,82 @@ function readGate() {
 }
 
 describe('4 — opening a grade ticks its modules, once', () => {
-  // The component's rule, driven here as the component drives it: fill a grade the first time it is opened, and
-  // never again. Written as the same two steps the component takes, so unticking survives a second visit.
-  function checklist() {
-    const filled = new Set<number>()
-    let pick = new Set<string>()
-    const playable = (g: number) => modulesOf(g).filter(m => m.lessons.length > 0)
+  // The REAL ModuleChecklist, rendered, with its grade chips clicked the way an adult clicks them. An earlier
+  // version of this test re-implemented the rule here and passed while the component did the opposite.
+  async function checklist(startGrade = 3) {
+    const { ModuleChecklist } = await import('@/features/classes/Classes')
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const root = createRoot(host)
+    const state = { grade: startGrade, pick: new Set<string>() }
+    const draw = async () => {
+      await act(async () => {
+        root.render(createElement(ModuleChecklist, {
+          grade: state.grade,
+          setGrade: (g: number) => { state.grade = g; void draw() },
+          pick: state.pick,
+          setPick: (f: (p: Set<string>) => Set<string>) => { state.pick = f(state.pick); void draw() },
+        }))
+      })
+    }
+    await draw()
+    const chip = (g: number) => [...host.querySelectorAll('button')].find(b => b.textContent === gradeName(g))
     return {
-      get picked() { return [...pick].sort() },
-      open(g: number) {
-        if (filled.has(g)) return
-        filled.add(g)
-        const ids = playable(g).map(m => m.id)
-        pick = ids.some(id => pick.has(id)) ? pick : new Set([...pick, ...ids])
+      host,
+      get picked() { return [...state.pick].sort() },
+      openGrade: async (g: number) => { await act(async () => { chip(g)!.click() }); await draw() },
+      untick: async (id: string) => {
+        const box = host.querySelectorAll('input[type="checkbox"]')
+        const labels = [...host.querySelectorAll('label')]
+        const i = labels.findIndex(l => l.textContent?.includes(titleOf(id)))
+        expect(i, `no row on screen for ${id}`).toBeGreaterThanOrEqual(0)
+        await act(async () => { (box[i] as HTMLInputElement).click() })
+        await draw()
       },
-      untick(id: string) { const n = new Set(pick); n.delete(id); pick = n },
+      done: async () => { await act(async () => root.unmount()); host.remove() },
     }
   }
+  const titleOf = (id: string) => { const m = MODULES.find(x => x.id === id)!; return `Module ${m.n} · ${m.title}` }
+  const playableOf = (g: number) => modulesOf(g).filter(m => m.lessons.length > 0).map(m => m.id).sort()
 
-  it('opening Grade 3 ticks every module in Grade 3 that has lessons', () => {
-    const c = checklist()
-    c.open(3)
-    expect(c.picked).toEqual(modulesOf(3).filter(m => m.lessons.length > 0).map(m => m.id).sort())
-    expect(c.picked.length, 'Grade 3 has no playable modules — the fixture moved').toBeGreaterThan(1)
+  it('the grade it opens on is already ticked, and the screen says so', async () => {
+    const c = await checklist(3)
+    expect(c.picked).toEqual(playableOf(3))
+    expect(c.picked.length, 'Grade 3 has no playable modules — the catalogue moved').toBeGreaterThan(1)
+    expect(c.host.querySelector('[data-testid="grade-all-ticked"]')?.textContent).toContain('Untick any')
+    await c.done()
   })
 
-  it('a "coming soon" module (no lessons) is never ticked for them', () => {
+  it('clicking another grade ticks that grade too, and keeps the first', async () => {
+    const c = await checklist(3)
+    await c.openGrade(5)
+    expect(c.picked).toEqual([...playableOf(3), ...playableOf(5)].sort())
+    await c.done()
+  })
+
+  it('a "coming soon" module (no lessons) is never ticked for them', async () => {
     const empty = MODULES.find(m => m.lessons.length === 0)
-    if (!empty) return // none in the catalogue today; the rule still holds
-    const c = checklist()
-    c.open(empty.grade)
+    if (!empty) return
+    const c = await checklist(empty.grade)
     expect(c.picked).not.toContain(empty.id)
+    await c.done()
   })
 
-  it('going back to a grade does NOT undo what the adult unticked there', () => {
-    const c = checklist()
-    c.open(3)
+  it('going back to a grade does NOT undo what the adult unticked there', async () => {
+    const c = await checklist(3)
     const dropped = c.picked[0]
-    c.untick(dropped)
-    c.open(4)       // look at another grade
-    c.open(3)       // and come back
+    await c.untick(dropped)
+    expect(c.picked, 'the untick did not register').not.toContain(dropped)
+    await c.openGrade(5)
+    await c.openGrade(3)
     expect(c.picked, 'the unticked module came back').not.toContain(dropped)
+    await c.done()
   })
 
-  it('positive control: a grade never opened has nothing of its own ticked', () => {
-    const c = checklist()
-    c.open(3)
-    const g5 = modulesOf(5).filter(m => m.lessons.length > 0).map(m => m.id)
-    expect(g5.some(id => c.picked.includes(id))).toBe(false)
+  it('positive control: a grade never opened has nothing of its own ticked', async () => {
+    const c = await checklist(3)
+    expect(playableOf(5).some(id => c.picked.includes(id))).toBe(false)
+    await c.done()
   })
 })
 
