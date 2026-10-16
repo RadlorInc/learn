@@ -69,7 +69,7 @@ describe('OPS-08: migrate-prod backs up production before db push', () => {
 
   it('the backup is encrypted and uploaded with 30-day retention, and the nightly job uses the same one', () => {
     const backup = steps.find((s) => stepRuns(s, /supabase db dump/))!
-    expect(stepRuns(backup, /openssl enc -aes-256-cbc/)).toBe(true)
+    expect(stepRuns(backup, /\bage -r "\$RECIPIENT"/)).toBe(true) // to the founder's age public key (backupEncryption.test.ts)
     const action = load(join(backup.uses!, 'action.yml'))
     const upload = (action.runs.steps as Step[]).find((s) => s.uses?.startsWith('actions/upload-artifact'))!
     expect(upload.with!['retention-days']).toBe(30)

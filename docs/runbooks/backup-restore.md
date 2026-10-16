@@ -7,20 +7,26 @@
 - **When.**
   - 02:30 UTC daily. GitHub started scheduled runs 5–6 h late (07:41–08:49 UTC on 23–28 Sep, measured 2026-09-28), so "no run yet" before ~09:00 UTC is normal.
   - Manual at any time: Actions → *Backup (prod database)* → Run workflow, or `gh workflow run backup.yml`.
-  - The job runs in the GitHub environment `prod-backup` (only `main` may use it). Its three secrets live there and in
+  - The job runs in the GitHub environment `prod-backup` (only `main` may use it). Its secrets live there and in
     `production-db`, never as repository secrets: `secretsInEnvironments.test.ts` fails on a job that reads one outside an
-    environment. Keep every old `BACKUP_PASSPHRASE` in the password manager with its dates: a dump opens only with the
-    passphrase it was made with.
+    environment.
+  - **Encrypted to the founder's age key (since 2026-10-16).** GitHub holds only the PUBLIC key, the repository variable
+    `BACKUP_AGE_RECIPIENT` (`age1…`), which can lock a dump and cannot open one. The private key is in the founder's
+    password manager with an offline copy, and nowhere on GitHub: `backupEncryption.test.ts` fails if a workflow or the
+    action references anything that decrypts. Lose the private key and every `.age` artifact is noise.
   - `migrate-prod` runs the same `.github/actions/prod-backup` steps before applying a migration (artifact `milo-db-backup-premigrate-<run id>`).
 - **Steps, stopping at the first failure:**
-  1. Fail and name what is missing if any of these is empty: `SUPABASE_ACCESS_TOKEN`, `BACKUP_PASSPHRASE`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF`.
+  1. Fail and name what is missing if any of these is empty: `SUPABASE_ACCESS_TOKEN`, `BACKUP_AGE_RECIPIENT`, `PROD_DB_PASSWORD`, `PROD_PROJECT_REF`.
   2. Refuse unless the ref equals the literal in `scripts/assert-prod-ref.sh`.
   3. Pull pg_dump's image from ghcr.io, signed in with the run's token, with backoff; fall back to public.ecr.aws with a warning.
   4. Dump `schema.sql` and `data.sql` (COPY format). pg_dump is read-only against production. Fail if either file is empty.
   5. Log **rows and bytes per schema** (`scripts/backup-row-counts.sh`), never per table, because the logs are public. Its exit 2 ("could not count") is only a warning.
-  6. Encrypt: `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` with `BACKUP_PASSPHRASE`. Refuse an empty passphrase, and check the output is **not** a readable tarball before it leaves the runner.
+  6. Install `age` from Ubuntu's archive, then encrypt: `age -r "$BACKUP_AGE_RECIPIENT"` → `milo-backup.tar.gz.age`. Refuse a recipient that is not an `age1…` public key, and check the output starts with `age-encryption.org/v1` and is **not** a readable tarball before it leaves the runner.
   7. Upload the artifact `milo-db-backup-<run id>`, **kept 30 days**.
-- **What it holds.** Every table, including children's data and parents' session tokens. The passphrase lives only in the founder's password manager and the GitHub secret. Lose it and every artifact is noise.
+- **What it holds.** Every table, including children's data and parents' session tokens.
+- **Older dumps** (before 2026-10-16) are `milo-backup.tar.gz.enc`, encrypted with the old `BACKUP_PASSPHRASE`
+  (openssl). Artifacts expire after 30 days, so after **2026-11-16** none is left: then delete the
+  `BACKUP_PASSPHRASE` secret. Until then keep it, and keep it in the password manager with its dates.
 - **Not in it:** pg_cron jobs, which are recreated from migrations, and the Storage bucket's audio files. The files are rebuilt from their git tag ([audio-upload.md](audio-upload.md)); their Storage rows are in the dump.
 
 ## Check last night's run (agent)
@@ -45,7 +51,7 @@ That table explains a size change (2026-09-28: tens of KB → ~1.8 MB when the a
 
 Never restore into production from this runbook ([rollback.md](rollback.md) covers that decision). The decrypted files are children's data. Keep them in a scratch directory outside any repo and delete them at the end.
 
-**Who:** the founder, who holds the passphrase. The agent can prepare the scratch stack and the commands.
+**Who:** the founder, who holds the age private key. The agent can prepare the scratch stack and the commands.
 
 1. **Founder.** Run these read-only queries in the SQL editor and note the two answers:
    ```sql
@@ -55,11 +61,13 @@ Never restore into production from this runbook ([rollback.md](rollback.md) cove
 2. **Download** the artifact into a scratch directory: `gh run download <run id> -n milo-db-backup-<run id> -D <scratch>`.
 3. **Decrypt.** Run `scripts/verify-backup.sh` for a first check:
    ```bash
-   BACKUP_PASSPHRASE=… scripts/verify-backup.sh <scratch>/milo-backup.tar.gz.enc
-   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE \
-     -in <scratch>/milo-backup.tar.gz.enc | tar xz -C <scratch>
+   BACKUP_AGE_KEY=<key file> scripts/verify-backup.sh <scratch>/milo-backup.tar.gz.age
+   age -d -i <key file> <scratch>/milo-backup.tar.gz.age | tar xz -C <scratch>
    ```
-   `verify-backup.sh` fails on an unencrypted, undecryptable or COPY-less file. Its per-table counts stay in your terminal.
+   The key file is the private key copied out of the password manager into the scratch directory; delete it in step 7.
+   An older `.enc` dump: `BACKUP_PASSPHRASE=… scripts/verify-backup.sh <file>.enc` (the script tells the two apart
+   by the file's first bytes). It fails on an unencrypted, undecryptable or COPY-less file. Its per-table counts stay
+   in your terminal.
 4. **Local stack at production's service versions.** Work in a scratch directory (`supabase init`). Write GoTrue and storage-api tags at least as new as step 1's answers into `supabase/.temp/gotrue-version` and `supabase/.temp/storage-version`. Then start the stack with auth and storage running, excluding the rest: `supabase start -x <every other service>`. Run `supabase start --help` for the names.
 
    Run step 1's queries locally and confirm the same answers. If the local images are older, the restore dies on the first missing table and rolls back.

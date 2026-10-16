@@ -52,8 +52,9 @@ Report a suspected incident to the support address (`SUPPORT_EMAIL` in `src/app/
   Draft PR. A security fix that is not yet live stays out of the public repo's text — the PR describes it in general
   terms until it ships.
 - **Rotate everything the incident could have reached**, not only what was confirmed leaked: the service-role key,
-  `CRON_SECRET`, `STRIPE_*`, `RESEND_API_KEY`, database password, `BACKUP_PASSPHRASE` (keep the old one: older dumps
-  open only with it). After each rotation, check the next deploy reaches READY and `npm run smoke:live` passes.
+  `CRON_SECRET`, `STRIPE_*`, `RESEND_API_KEY`, database password. The backup key needs rotating only if the
+  founder's age PRIVATE key could have been reached (GitHub holds only the public half): make a new pair, put the new
+  public key in `BACKUP_AGE_RECIPIENT`, and keep the old private key, since older dumps open only with it. After each rotation, check the next deploy reaches READY and `npm run smoke:live` passes.
 - **Re-measure**: `ci / rls-tests` on `main`; the four catalog queries of `security_posture.sql` diffed against
   `supabase/schema/security_baseline.sql`.
 - **Record** in 05 §8 (the evaluation table) what happened and what changed, in general terms; one line in
