@@ -23,6 +23,7 @@ vi.mock('@/data/repositories/points', () => ({ getWallet: async () => { n.wallet
 vi.mock('@/infra/storage/lessonSync', () => ({ pullLessonProgress: async () => { n.pulls++; return [] }, pendingLessonUploads: () => 0 }))
 
 const { default: ModulesPage } = await import('@/app/modules/page')
+;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 let host: HTMLDivElement
 beforeEach(() => { Object.assign(n, { learners: 0, classMode: 0, wallet: 0, pulls: 0 }); host = document.createElement('div'); document.body.append(host) })
