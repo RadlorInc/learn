@@ -54,6 +54,16 @@ export function sendPasswordReset(email: string, redirectTo: string) {
   return createClient().auth.resetPasswordForEmail(email, { redirectTo })
 }
 
+/**
+ * Did Supabase refuse this password as weak? With leaked-password protection on it answers `weak_password` for a
+ * breached or guessable password WHATEVER ITS LENGTH, so a caller must not report it as a length problem. The code is
+ * what auth-js sets on an `AuthWeakPasswordError`; the message test is the fallback for an older error shape, and both
+ * sides are driven in `src/__tests__/weakPasswordWording.test.ts`.
+ */
+export function isWeakPassword(error: { code?: string; message?: string } | null | undefined): boolean {
+  return error?.code === 'weak_password' || /known to be weak/i.test(error?.message ?? '')
+}
+
 /** Set the signed-in user's password. Requires a session (from an invite link or a sign-in). */
 export function setPassword(password: string) {
   return createClient().auth.updateUser({ password })
