@@ -13,6 +13,8 @@ const PLAY = Q.has('key') && Q.has('learner') ? { key: Q.get('key'), learner: Q.
 const SAVE_KEY = PLAY ? PLAY.key : 'rush.save';
 // `game=rush` keeps Rescue Rush picked on /play when the child comes back
 const BACK = '/play?game=rush', STOP = '/play?stop=1&game=rush';
+// the paid clock's { pause, resume } (public/play-time.js): the Pause screen stops it, leaving that screen starts it
+let time = null;
 const SLOW = 0.75; // slow mode: the whole game at 75% — the same calls, more time to think
 
 // vehicles change the feel a little; upgrades make the calls easier (every call can be done without any — check.mjs)
@@ -106,6 +108,7 @@ function hud() {
   $('bSiren').classList.toggle('empty', r.siren < 0.3 && r.sirenT <= 0);
 }
 function show(name) {
+  time?.[name === 'pause' ? 'pause' : 'resume']();
   for (const id of ['title', 'pause', 'end']) $(id).classList.toggle('hidden', id !== name);
   $('hud').classList.toggle('hidden', name === 'title');
   $('pads').classList.toggle('hidden', name !== null);
@@ -184,14 +187,15 @@ document.addEventListener('visibilitychange', () => document.hidden && pause());
 // how long is decided by the database (public/play-time.js), never by the URL or this device's clock
 if (PLAY) {
   $('bLeave').classList.remove('hidden');
-  $('bLeave').onclick = () => { persist(); location.replace(STOP); };
+  $('bLeave2').classList.remove('hidden');
+  $('bLeave').onclick = $('bLeave2').onclick = () => { persist(); location.replace(STOP); };
   $('timer').classList.remove('hidden');
 }
-import('/play-time.js').then(({ playTime }) => playTime({
+import('/play-time.js').then(({ playTime }) => (time = playTime({
   learner: PLAY?.learner, back: BACK,
   show: (left) => { $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; },
   done: () => { persist(); state = 'paused'; toast("Time's up! Your coins are saved."); },
-}), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
+})), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
 
 // for poking at the game from the console while building it; never on a real host
 if (['localhost', '127.0.0.1'].includes(location.hostname)) window.RR = { run: () => run, start: startLevel, keys, save: () => save, LEVELS, auto: (f) => (autopilot = f) };

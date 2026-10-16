@@ -6,45 +6,45 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (11 October 2026)
+## Where things stand (16 October 2026)
 
-- **Production** is on `539bfc20e` (#422, 11 Oct); `smoke:live` passed on it except its known stale service-worker
-  check (expects v242; live and repo are v252 — agent work below). The repo `learn` is public again (see
-  the Vercel item below). A private beta with families the founder knows has run since 25 September; it is free and
-  billing is off.
-- **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice, short sessions);
-  KG, Grade 1 and Grade 2 (23 voiced story chapters); lesson audio from the `lesson-audio` bucket; email-plus consent
-  on notice-v7 with the database gate; parent and teacher dashboards (teacher rosters paused); points buy game time
-  on `/play`; six legal pages as beta versions; nightly backups green.
-- **Games on `/play`** (one paid time; the child picks, and can switch while it lasts): BlockCraft (#352, 1 Oct;
-  migrations proved; save on the account; not yet played signed in by a real child on production) and BeatHop (#422,
-  11 Oct; a one-button runner, 10 levels, `beathop/` copied to `public/beathop`; save on the device only). Branches:
-  `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship as is); local `learner-grade` has
-  its own "notice-v7" (clashes). The founder's main checkout has a local `git stash`.
-- **Draft PR #424 (`game-racer`): Peak Rider + Rescue Rush on `/play`, keys shown in every game.** Peak (`peak/`):
-  open 3D world, no road (arrow, map, light columns), missions — chests, beacons, deliveries; 2 worlds. Rush (`rush/`):
-  rescue calls through traffic, auto-speed, a siren; 8 calls. Inspired by Crash Drive 2 / Traffic Racer, nothing
-  copied; drawn in code, shared vendored three.js. `node peak/check.mjs` 22/22, `node rush/check.mjs` 24/24 (not in CI).
-  Preview tested 11 Oct in the founder's Chrome: all 4 games open, keys show, no errors, files = the commit. Not yet:
-  real-speed play, a tablet. Also on #424: BeatHop pad traps fixed (gate in `beathop/check.mjs`); the end time comes
-  from the database (`/api/game-time`), not the URL — locally seen only on "no answer → back to /play", so the founder
-  plays one signed-in game on the preview to time's up. Next: more Peak worlds.
-  `PK.auto(fn)` / `RR.auto(fn)` drive the games on localhost (screenshots: headed Chromium off screen).
+- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
+  private beta with families the founder knows has run since 25 September; it is free and billing is off.
+- **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
+  and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
+  the database gate; parent dashboard (teacher sign-up hidden); points buy game time on `/play` (four games,
+  #424); six legal pages as beta versions; nightly backups green.
+- Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
+  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship); local `learner-grade` has
+  its own "notice-v7" (clashes).
 - The pre-rewrite handoff and old-doc extracts are outside the repo on the founder's machine (owner-only).
+
+## Paid testers' notes (the loop, 15 Oct)
+
+Testers review every screen through `/test` (links and reviews live in Radlor Ops, the separate ops app; its own
+`review.radlic_tester_reviews` table, not this database). The founder keeps a Corrections Tracker outside the repo.
+Every "Something is wrong" note up to 15 Oct evening is fixed or decided (#421–#444; the last voice batch #444, tag
+`audio-src-josh-2026-10-16`, P5 18646 | 289376154). Word times are keyed by clip key, so drop a re-rendered key's old
+timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
+- **Split by kind.** Code-only fixes (pictures, hints, answer boxes) ship on their own. Anything that changes a spoken
+  line, or a line misread, waits for ONE voice batch built on top of the last voice branch (conflicts are only ever in
+  the generated corpus, manifest and voice-index files; merge them key by key, then rebuild the corpus).
+- **Render:** `python3 scripts/kaggle-josh-notebook.py redo <branch> <keys.txt>`; it always clones the branch fresh and
+  prints the commit (a reused clone rendered old text, 15 Oct). Check every clip with `scripts/audio/check-numbers.py`
+  AND read the transcripts: it reads line and audio the same way, so "one hundred and one thousand" (heard as
+  101,000) passed it. Words the model gets wrong are fixed with a `say` row, never by retrying: a lone "A" → "Ay",
+  "x" after a digit → "ex", a pair → "3 comma 5", lists of sizes repeat (put the last size last).
+- **Ship:** clip folder matched to the branch's manifest by SHA-256, `build-manifest.mjs`, word times, an orphan tag of
+  only the new mp3s, P5 pre-registered in `audio-bucket-proof.sql`, then `upload-audio.yml` from `main` with
+  `manifest_ref=<branch>` (#447), dry run → upload (the founder approves `production-db`, revokes the keys), P5, merge.
 
 ## Open — Draft PRs waiting for the founder
 
+- Game time "Paused" really pauses (2026-10-17, branch `game-time-real-pause`): migration 20261017120000 is a SECURITY
+  change (two new DEFINER functions). Before/after SQL: `docs/legal/sql/game-pause-before.sql`, `game-pause-proof.sql`.
+
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
-1. #322 — passwords at least 8 characters: merge only after Supabase Auth's minimum is 8.
-3. #386 — scale pictures show what they weigh, halal examples only (gate `halalExamples.test.ts`), 142 new clips.
-   The upload ran (run 37453122387: 142 uploaded, all 16,985 manifest objects present). Founder: revoke the S3 key and
-   both `production-db` secrets, run `docs/legal/sql/audio-bucket-proof.sql` (P5 expects 18026 | 274803288), merge;
-   agent: `npm run smoke:live` after the deploy.
-2. #324 (admin two-step verification, runbook `admin-access.md`), then enrol two authenticators at `/admin/mfa`, then
-   #325 as built (migration; its SQL is in the PR) — decided 29 Sep.
-3. #396 — close / withdraw-all cancels the plan now and refunds the unused part (migration, DEFINER change): run
-   the PR's Stripe test-mode steps and `cancel-refund-before.sql`, then merge; attorney reviews doc 01 §4–5 next round.
+Admin data requires the authenticator code since #325 (16 Oct). None waiting.
 
 ## Open — the founder decides
 
@@ -56,7 +56,7 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
 - Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
-- Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
+- Teachers (sign-up hidden since 16 Oct, `TEACHER_SIGNUP_OPEN`; reopen with a school consent route): due dates, moving a student between classes, bulk password reset, class
   exercise due dates, teacher billing; confirm "the first attempt is the class-exercise result" (decided without the
   founder); a free teacher can sign up as a parent to get lessons free.
 - A way to mute the lesson voice (classrooms).
@@ -75,34 +75,26 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
   pushed, and `release` is pushed by GitHub Actions. Unmeasured: whether the block checks the commit's author (→ link
   the founder's GitHub to Vercel) or the pusher (→ a Vercel deploy hook called by `promote`; the agent builds it).
   After switching, watch the first production deploy reach READY.
-- Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
-  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
-- Vercel: `CRON_SECRET` and `OPS_DIGEST_TO` — the daily ops digest is off until both exist.
 - **If `learn` goes private, Actions minutes cost money**: ~5,400 min in 30 days (28 Sep) vs 2,000 free — about US$20
   a month over; with no budget Actions (and deploys) stop at 2,000. Set a budget first, or have the agent cut minutes
   (Deploy re-runs the whole CI on every merge).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
-- An uptime checker that alerts a phone, on `/api/health` (the app), `/api/health/db` (the database; 503 when
-  unreachable) and `/auth` ([deploy.md](docs/runbooks/deploy.md) → uptime checker).
-- Resend bounces: add `RESEND_WEBHOOK_SECRET` in Vercel, then a Resend webhook to `/api/email/resend-webhook` for
-  `email.bounced` and `email.complained` ([support.md](docs/runbooks/support.md)). Until then the route answers 503.
-- GitHub: the "allowed actions" setting. red-main opens an issue per red run and never closes it (five went stale
-  before 6 Oct, all closed): close them on the next green run.
+- red-main opens an issue per red run and never closes it: close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
   who owns its Cloud project.
 - A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
-- Hard spend caps, not alerts (the "surprise bill" reel, 28 Sep): Vercel Spend Management with "pause production
-  deployment" on; Supabase Cost Control → Spend Cap on; the Resend plan stops at its quota. Not measured — the
-  Vercel connector does not show it.
+- The Resend plan: the free plan's daily cap (about 50 sign-ups a day) blocks a launch. Vercel's budget (pause on) and
+  Supabase's spend cap are on (founder, 16 Oct).
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
   27 Sep), the audio runner rehearsal folder, the stopped local Supabase stack, the local `part-*` branches.
 
 ## Open — live checks on production (the founder)
 
 Consent and sign-up checks are in READINESS. The step lists below are in git history; `git show <path>` prints them.
+- Batch C (#439) in the real player: Screen 9 speaks its line then the sticker; g6m1-t2 L5 Hint; a stressed word bold.
 - Deep-review fixes #235, #239, #242, #251, #262, #268, #269, #275, #246 — steps in
   `fbf193280:docs/review/ROUND2.md` §3. Then read the first deletion-log rows and the prune check with
   `docs/review/sql/fix-FND-15-proof.sql` and `docs/review/sql/fix-BUG-09-proof.sql`. Once both have run, delete
@@ -118,6 +110,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 
 ## Open — agent work
 
+- Testers: ask what g5m2-t1 Screen 2 "Confusion" meant; close the KG–2 "Chapter testing" notes in Ops (3 open, 9 to
+  re-check by playing); triage notes newer than 15 Oct the same way (see the loop above).
 - The KG–2 child pause screen (`ConsentPause`) has only been seen in jsdom; see it in a browser.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
@@ -146,8 +140,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
-- Performance: re-measure child-screen first paint and the lesson bundle sizes; the teacher dashboard makes one
-  request per child (needs one RPC); the admin user list reads only the first page.
+- Performance (audit 16 Oct; #445 fixed the ledger, one request per answer, /modules): measure #445's request counts
+  in a signed-in browser (code-derived: /modules 8→5, an answer 2→1); the teacher dashboard and `child-login` GET make
+  calls per child (one RPC); `admin_learning`/`admin_overview` scan `learner_events` unindexed; the daily cron has no
+  LIMIT; the signup cooldown lists auth users by filter.
 - SEO: signed-out visitors wait about 2.5 s before the redirect to the landing page (kept client-side by choice); a
   JSON-LD `@id`/publisher parity check across both sites; the stale comment in `src/app/site.ts`.
 - Small: `/ui-preview` shows a fox; the vertical number line's targets are 26 px (app: 44); the chalk "speck" in
@@ -162,9 +158,12 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   server also holds DELETE/TRUNCATE by default privilege (measured on a local supabase/postgres container, 6 Oct; the
   baseline says SELECT/INSERT/UPDATE). Fix like `email_undeliverable`: revoke from service_role, then grant.
 - Bounce suppression: a B3 refused as undeliverable shows the respond page's generic error (nothing is granted).
+- Backups are age-encrypted to the founder's offline key since #446 (16 Oct; first dump verified with it). The old
+  `BACKUP_PASSPHRASE` is off GitHub; dumps before 16 Oct open only with the founder's copy until they expire (16 Nov).
 - Ops: the next restore drill by about 23 December (the first since the dump gained the storage schema);
   regenerate `supabase/schema/security_baseline.sql` (the founder runs `supabase/tests/security_posture.sql`); try
   `require-trusted-types-for` now that AR is gone; promote the schema baseline to migration zero (known debt).
 - A test-coverage report for the founder's reviewer needs `@vitest/coverage-v8` — the founder decides.
-- Never recorded, so check or drop: Vercel firewall rules; a timed Instant Rollback; the classroom AR demo (labs)
+- Vercel firewall (16 Oct, dashboard): per-IP rate limits on signup/consent, consent respond, child login, PIN reset and
+  report-error — not in the repo; re-check after any route rename. Never recorded, so check or drop: a timed Instant Rollback; the classroom AR demo (labs)
   track; the id-free event rollup decided on 5 September and never built.

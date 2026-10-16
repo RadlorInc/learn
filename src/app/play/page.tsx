@@ -79,7 +79,9 @@ export default function PlayPage() {
   }
 
   const until = wallet && wallet !== 'unavailable' && wallet.playing_until ? new Date(wallet.playing_until).getTime() : 0
-  const playing = until > now
+  // a game left on its Pause screen keeps its seconds; opening any game goes on with them (start_game_time resumes it)
+  const pausedLeft = wallet && wallet !== 'unavailable' ? wallet.paused_left ?? null : null
+  const playing = until > now || pausedLeft !== null
   // ponytail: the clock is the device's; a device clock minutes off the server's shortens or stretches one game by that much.
   useEffect(() => {
     if (!until) return
@@ -118,9 +120,9 @@ export default function PlayPage() {
   else if (!wallet) body = <><p style={bubble}>We couldn&apos;t load your points. Check the internet and try again.</p>
     <button type="button" style={primary} onClick={() => load(learnerId)}>Try again</button></>
   else if (playing) {
-    const left = Math.max(0, Math.ceil((until - now) / 1000))
+    const left = pausedLeft ?? Math.max(0, Math.ceil((until - now) / 1000))
     body = <>
-      <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>⏱ {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left</p>
+      <p style={{ ...idea, fontVariantNumeric: 'tabular-nums' }}>{pausedLeft !== null ? '⏸' : '⏱'} {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')} left{pausedLeft !== null && ' · paused'}</p>
       {picker}
       <button type="button" style={primary} onClick={() => play()}>Play {gameName}</button>
       <button type="button" style={{ ...primary, background: '#fff' }} onClick={stop}>Stop and keep my minutes</button>

@@ -7,7 +7,9 @@
  *   · refusing to run against anything but this repo's production ref BEFORE it touches a key;
  *   · reading the S3 keys by NAME from secrets, and never the service-role key;
  *   · installing its Python dependencies by hash only;
- *   · refusing a source_ref that is not a plain git ref (it is interpolated into a shell).
+ *   · refusing a source_ref that is not a plain git ref (it is interpolated into a shell);
+ *   · running only main's code (2026-10-16): a non-main run is refused, and a PR branch contributes ONLY its manifest
+ *     file, through `manifest_ref`.
  * Expected values are written out by hand.
  */
 import { describe, expect, it } from 'vitest'
@@ -71,5 +73,28 @@ describe('upload-audio workflow', () => {
     expect(run.indexOf('^[A-Za-z0-9._/-]+$')).toBeLessThan(run.indexOf('git fetch'))
     // the input reaches the shell through env, never by ${{ }} interpolation inside run:
     expect(steps.map(s => s.run ?? '').join('\n')).not.toMatch(/\$\{\{\s*inputs\./)
+  })
+
+  it('refuses a run that is not main\'s code, before it reads a branch, the audio or a key', () => {
+    const guard = at(/"\$GITHUB_REF" != "refs\/heads\/main"/)
+    expect(guard, 'no main-only guard step').toBeGreaterThanOrEqual(0)
+    expect(steps[guard].run).toMatch(/exit 2/)
+    expect(guard).toBeLessThan(at(/manifest-source/))
+    expect(guard).toBeLessThan(at(/git archive/))
+    expect(guard).toBeLessThan(at(/scripts\/audio\/upload\.py/))
+  })
+
+  it('takes only scripts/audio/manifest.json from manifest_ref, a branch, checked before it is fetched', () => {
+    expect(WF.on.workflow_dispatch.inputs.manifest_ref.default).toBe('')
+    const i = at(/manifest-source/)
+    const run = steps[i].run!
+    expect(steps[i].env!.MANIFEST_REF).toBe('${{ inputs.manifest_ref }}')
+    expect(run.indexOf('^[A-Za-z0-9._/-]+$')).toBeGreaterThanOrEqual(0)
+    expect(run.indexOf('^[A-Za-z0-9._/-]+$')).toBeLessThan(run.indexOf('git fetch'))
+    expect(run).toContain('"+refs/heads/${MANIFEST_REF}:refs/remotes/origin/manifest-source"')
+    expect(run).toContain('git show refs/remotes/origin/manifest-source:scripts/audio/manifest.json')
+    // nothing else from the branch: no checkout, archive, merge or reset of it
+    expect(run).not.toMatch(/git (checkout|switch|archive|merge|reset|restore)/)
+    expect(i).toBeLessThan(at(/scripts\/audio\/upload\.py/))
   })
 })

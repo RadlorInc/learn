@@ -4,17 +4,27 @@
 # production: file sizes, the table count in schema.sql, the row count of every COPY block in
 # data.sql, and one row you recognise.
 #
-#   BACKUP_PASSPHRASE=… scripts/verify-backup.sh milo-backup.tar.gz.enc
+#   BACKUP_AGE_KEY=~/radlic-backup.key scripts/verify-backup.sh milo-backup.tar.gz.age   # since 2026-10-16
+#   BACKUP_PASSPHRASE=… scripts/verify-backup.sh milo-backup.tar.gz.enc                  # older dumps (openssl)
 #
-# Exits non-zero if the file is not encrypted, will not decrypt, or holds no COPY blocks at all.
+# Which one is decided by the file's own first bytes, not its name. Exits non-zero if the file is not
+# encrypted, will not decrypt, or holds no COPY blocks at all.
 set -euo pipefail
-enc="${1:?usage: BACKUP_PASSPHRASE=… $0 <milo-backup.tar.gz.enc>}"
-: "${BACKUP_PASSPHRASE:?BACKUP_PASSPHRASE is not set}"
+enc="${1:?usage: BACKUP_AGE_KEY=<key file> $0 <milo-backup.tar.gz.age>  (or BACKUP_PASSPHRASE=… for an older .enc)}"
 work="$(mktemp -d)"; trap 'rm -rf "$work"' EXIT
 
 echo "artifact: $enc ($(wc -c < "$enc") bytes)"
 if tar tzf "$enc" >/dev/null 2>&1; then echo "✗ artifact is a readable tarball — it is NOT encrypted"; exit 1; fi
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in "$enc" | tar xz -C "$work"
+if [ "$(head -c 21 "$enc")" = "age-encryption.org/v1" ]; then
+  : "${BACKUP_AGE_KEY:?this is an age dump: set BACKUP_AGE_KEY to the path of the founder age key file}"
+  command -v age >/dev/null || { echo "✗ age is not installed (brew install age)"; exit 2; }
+  age -d -i "$BACKUP_AGE_KEY" "$enc" | tar xz -C "$work"
+elif [ "$(head -c 8 "$enc")" = "Salted__" ]; then
+  : "${BACKUP_PASSPHRASE:?this is an older openssl dump: set BACKUP_PASSPHRASE to the passphrase it was made with}"
+  openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE -in "$enc" | tar xz -C "$work"
+else
+  echo "✗ neither an age file nor an openssl-salted file — not a backup.yml artifact"; exit 1
+fi
 echo "decrypted: $(ls "$work" | tr '\n' ' ')"
 for f in schema.sql data.sql; do test -s "$work/$f" || { echo "✗ $f missing or empty"; exit 1; }; echo "$f: $(wc -c < "$work/$f") bytes"; done
 

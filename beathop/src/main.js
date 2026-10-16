@@ -13,6 +13,8 @@ const PLAY = Q.has('key') && Q.has('learner') ? { key: Q.get('key'), learner: Q.
 const SAVE_KEY = PLAY ? PLAY.key : 'beathop.save';
 // `game=beathop` keeps BeatHop picked on /play when the child comes back
 const BACK = '/play?game=beathop', STOP = '/play?stop=1&game=beathop';
+// the paid clock's { pause, resume } (public/play-time.js): the Pause screen stops it, leaving that screen starts it
+let time = null;
 const COLORS = ['#ff7a1a', '#2f9bff', '#22c55e', '#e64ba0', '#8b5cf6', '#f5c400'];
 
 // kind: 'day' = clouds (and a sun if `sun`), 'dark' = twinkling dots in the deco colour (and a moon if `sun`),
@@ -481,6 +483,7 @@ function hud() {
   $('tries').textContent = 'Try ' + run.tries;
 }
 function show(name) {
+  time?.[name === 'pause' ? 'pause' : 'resume']();
   for (const id of ['title', 'pause', 'win']) $(id).classList.toggle('hidden', id !== name);
   $('hud').classList.toggle('hidden', name === 'title');
   $('keys').classList.toggle('hidden', name !== null); // the keys while playing (computers only: see the CSS)
@@ -563,14 +566,15 @@ document.addEventListener('visibilitychange', () => document.hidden && pause());
 // how long is decided by the database (public/play-time.js), never by the URL or this device's clock
 if (PLAY) {
   $('bLeave').classList.remove('hidden');
-  $('bLeave').onclick = () => { persist(); location.replace(STOP); };
+  $('bLeave2').classList.remove('hidden');
+  $('bLeave').onclick = $('bLeave2').onclick = () => { persist(); location.replace(STOP); };
   $('timer').classList.remove('hidden');
 }
-import('/play-time.js').then(({ playTime }) => playTime({
+import('/play-time.js').then(({ playTime }) => (time = playTime({
   learner: PLAY?.learner, back: BACK,
   show: (left) => { $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; },
   done: () => { persist(); state = 'paused'; toast("Time's up! Your stars are saved."); },
-}), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
+})), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
 
 // for poking at the game from the console while building it; never on a real host
 if (['localhost', '127.0.0.1'].includes(location.hostname)) window.BH = { run: () => run, hold: (v) => (held = v), start: startLevel };

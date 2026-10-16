@@ -83,7 +83,8 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
 | `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
-| `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open and every 30 s (`public/play-time.js`; [product/points.md](product/points.md)) |
+| `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
+| `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -113,6 +114,9 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Parents** sign up with email and password or with Google. A Google account ticks "I'm 18 or older" and picks
   Parent or Teacher on its first visit to `/parent`. `profiles` is created on email confirmation (`handle_new_user`);
   `profiles.role` is a label its owner can write and grants nothing.
+- **New teacher accounts are closed** (`TEACHER_SIGNUP_OPEN = false` in `src/app/site.ts`, 2026-10-16): neither the
+  sign-up form nor the first-login picker offers Teacher, so every new account is a parent. Existing teacher accounts
+  and every teacher screen are unchanged; the API still accepts `role: 'teacher'` from a hand-built request.
 - **Teachers** sign up the same way (B0t), make classes (`grades`), pick modules and write class exercises
   (`teacher_plans.paid` decides modules vs exercises only). Adding students is paused on screen while the consent gate
   is live, as there is no school consent route yet (`rosterPaused.test.ts`).
@@ -136,9 +140,9 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   with `admin_assert()`; `/admin` shows aggregates and writes nothing. **Two-step verification:** an admin sets up
   an authenticator app (TOTP, Supabase Auth MFA) at `/admin/mfa`; from then on `/admin/login` asks for its 6-digit
   code after the password, and the `/admin` layout sends a password-only (`aal1`) session back to that step. An
-  account without an authenticator signs in as before and is shown nothing about it. The database does not require
-  the code until `admin_assert()` also checks the token's `aal`, a separate migration merged only after the founder
-  has enrolled ([runbooks/admin-access.md](runbooks/admin-access.md)).
+  account without an authenticator signs in as before and is shown nothing about it. The database requires it:
+  `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261016150000, applied only once every admin
+  has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
   out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
   data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
@@ -189,9 +193,9 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 
 - **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run` (and `sync_batch`, INVOKER,
   which runs those three in order as the caller — the upload queue's one request, §7), `game_wallet`,
-  `set_game_settings`, `start_game_time`, `end_game_time` (stop early, unused time back); `delete_learner`, `delete_my_account`,
+  `set_game_settings`, `start_game_time` (resumes a paused game), `end_game_time` (stop early, unused time back), `pause_game_time` / `resume_game_time` (the game's Pause screen stops the paid clock); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
-  `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
+  `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`: listed in `admin_users` and an `aal2` token).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
   `consent_lookup`, `consent_grant`, `consent_decline`, `consent_withdraw`, `consent_ok`, `consent_expire_stale`,
   `materialize_seats`, `ops_digest`, `billing_cancellations_due`, `billing_cancellation_record`, `billing_seat_removals_due` and `billing_seat_removal_record` (INVOKER). **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
@@ -323,7 +327,7 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 |---|---|---|
 | `learners` | the creating adult; `delete_child_data` | the child's adults and login; consent routes (name) |
 | `learner_access` | new-learner trigger, `/api/child-login`, invite acceptance | RLS policies, `/api/child-login` |
-| `lesson_progress`, `point_events` | the three progress RPCs; game time: `start_game_time`, `end_game_time` | device, dashboard, `game_wallet`, export, `admin_activation` |
+| `lesson_progress`, `point_events` | the three progress RPCs; game time: `start_game_time`, `end_game_time`, `pause_game_time`, `resume_game_time` | device, dashboard, `game_wallet`, export, `admin_activation` |
 | `game_settings` | `set_game_settings` | `game_wallet`, export |
 | `game_saves` | `/play` (the child's adults and login, RLS) | `/play`, export |
 | `learner_events` | `track()` in a story chapter | export, admin aggregates |
