@@ -186,6 +186,32 @@ describe('a password Supabase refuses, on the screens that set one', () => {
     await m.done()
   })
 
+  // The right-hand side of isWeakPassword's `||`: the same refusal arriving with no `code`, which the code arm
+  // short-circuits past in the test above. Without this the fallback would be an inert clause.
+  it('/auth/set-password: the same refusal with no error code still gets our words, not the auth server’s', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: { message: WEAK.message } })        // no `code`
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')
+    await press(m.host, /^Set password/)
+    expect(setPwd, 'control: the password really was sent').toHaveBeenCalledTimes(1)
+    expect(m.host.querySelector('[role="alert"]')?.textContent)
+      .toBe('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+    await m.done()
+  })
+
+  it('POSITIVE TWIN: an error that is NOT about the password is still passed through as it was', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: { message: 'New password should be different from the old password.', code: 'same_password' } })
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')
+    await press(m.host, /^Set password/)
+    expect(m.host.querySelector('[role="alert"]')?.textContent).toBe('New password should be different from the old password.')
+    await m.done()
+  })
+
   it('POSITIVE TWIN: /auth/set-password still says the length itself for a short password, and sends nothing', async () => {
     session.mockResolvedValue({ user: { email: 'pat@example.test' } })
     const { default: SetPassword } = await import('@/app/auth/set-password/page')
