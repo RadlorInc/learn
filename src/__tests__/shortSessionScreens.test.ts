@@ -20,6 +20,7 @@ vi.mock('@/infra/useMiloSpeaker', () => ({ speak: () => {}, speakSteps: () => ()
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/data/repositories/points', () => ({
   sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
+  syncBatch: async (c: unknown[]) => c.map(() => 'ok'), lessonCall: () => ({}), moduleCall: () => ({}), runCall: () => ({}),   // the queue's one request (sync_batch)
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
 }))
 

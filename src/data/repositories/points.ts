@@ -37,33 +37,62 @@ let lastCode = ''
 export const lastSyncErrorCode = () => lastCode
 const noted = (e: { code?: string; message?: string }) => { lastCode = e.code || (e.message ?? '').slice(0, 80) || 'unknown'; return e }
 
-async function send(fn: string, args: Record<string, unknown>, older?: Record<string, unknown>): Promise<SyncOutcome> {
+// Not applied yet (or a chapter id before 20260920120000): keep it queued, so nothing earned before the migration is lost.
+const outcomeOf = (e: { code?: string; message?: string }, args: Record<string, unknown>): SyncOutcome =>
+  missing(noted(e)) || awaitingChapterIds(e, args) ? 'retry' : classifySyncError(e)
+
+async function send(fn: string, args: Record<string, unknown>): Promise<SyncOutcome> {
   try {
     const { error } = await db().rpc(fn, args)
-    // `older`: the same call in the shape a database without the newest migration takes (PostgREST matches by names).
-    if (error && older && missing(error)) return send(fn, older)
-    // Not applied yet: keep it queued, so nothing earned before the migration is lost.
-    return !error ? 'ok'
-      : missing(noted(error)) || awaitingChapterIds(error, args) ? 'retry'
-      : classifySyncError(error)
+    return !error ? 'ok' : outcomeOf(error, args)
   } catch { lastCode = 'network'; return 'retry' }
 }
 
 /**
  * `s.at`: when the standing was produced (ms; 0/absent = unknown). The database keeps the newest answered standing, so a
- * stale device cannot roll the account back (BUG-02, migration 20260926100200). Before that migration the function has
- * no p_answered_at and answers PGRST202 — the call is repeated without it.
+ * stale device cannot roll the account back (BUG-02, migration 20260926100200 — on production since September, so the
+ * call no longer repeats itself without p_answered_at).
  */
-export function recordLessonProgress(learnerId: string, lessonId: string, s: Omit<LessonRow, 'lesson_id'> & { at?: number }, outcome?: string, event?: string) {
-  const args = {
-    p_learner: learnerId, p_lesson: lessonId, p_done: s.done, p_level: s.level, p_streak: s.streak, p_mastered: s.mastered,
-    p_outcome: outcome ?? null, p_event: event ?? null,
-  }
-  return send('record_lesson_progress', { ...args, p_answered_at: new Date(s.at ?? 0).toISOString() }, args)
-}
+const lessonArgs = (learnerId: string, lessonId: string, s: Omit<LessonRow, 'lesson_id'> & { at?: number }, outcome?: string, event?: string) => ({
+  p_learner: learnerId, p_lesson: lessonId, p_done: s.done, p_level: s.level, p_streak: s.streak, p_mastered: s.mastered,
+  p_outcome: outcome ?? null, p_event: event ?? null, p_answered_at: new Date(s.at ?? 0).toISOString(),
+})
+const moduleArgs = (learnerId: string, moduleId: string, event: string) => ({ p_learner: learnerId, p_module: moduleId, p_event: event })
 
-export const recordModulePractice = (learnerId: string, moduleId: string, event: string) =>
-  send('record_module_practice', { p_learner: learnerId, p_module: moduleId, p_event: event })
+export const recordLessonProgress = (...p: Parameters<typeof lessonArgs>) => send('record_lesson_progress', lessonArgs(...p))
+export const recordModulePractice = (...p: Parameters<typeof moduleArgs>) => send('record_module_practice', moduleArgs(...p))
+
+/** One queued upload as `sync_batch` takes it: which function, and its named arguments. */
+export type SyncCall = { k: 'lesson' | 'module' | 'run'; a: Record<string, unknown> }
+export const lessonCall = (...p: Parameters<typeof lessonArgs>): SyncCall => ({ k: 'lesson', a: lessonArgs(...p) })
+export const moduleCall = (...p: Parameters<typeof moduleArgs>): SyncCall => ({ k: 'module', a: moduleArgs(...p) })
+export const runCall = (learnerId: string, lessonId: string, run: unknown): SyncCall => ({ k: 'run', a: { p_learner: learnerId, p_lesson: lessonId, p_run: run } })
+
+// Set once the database answers that sync_batch is not there (code deployed before 20261016120000): this page then
+// sends one item per request, as before, instead of asking twice for every item.
+let noBatch = false
+/**
+ * The upload queue in ONE request (migration 20261016120000). The database runs the items in order and stops at the
+ * first it refuses, so the answer is an outcome per item it got to: 'ok' for each that went through, then the refused
+ * one's — what sending them one at a time would have said. null = no sync_batch yet: send them one at a time.
+ */
+export async function syncBatch(calls: SyncCall[]): Promise<SyncOutcome[] | null> {
+  if (noBatch) return null
+  try {
+    const { data, error } = await db().rpc('sync_batch', { p_items: calls })
+    if (error && missing(error)) { noBatch = true; return null }
+    // The whole request refused (an expired sign-in, a server error): the first item's outcome, as its own call's would be.
+    if (error) return [classifySyncError(noted(error))]
+    const r = data as { done: number; code?: string; message?: string }
+    const out: SyncOutcome[] = Array(r.done).fill('ok')
+    if (r.code) {
+      const e = { code: r.code, message: r.message }, c = calls[r.done]
+      // A run behind a database without save_practice_run is 'ok', as recordPracticeRun answers (below).
+      out.push(c.k === 'run' ? (missing(noted(e)) ? 'ok' : classifySyncError(e)) : outcomeOf(e, c.a))
+    }
+    return out
+  } catch { lastCode = 'network'; return ['retry'] }
+}
 
 /**
  * Where the child is in a topic's practice (migration 20260925100000). A database without the function answers 'ok',

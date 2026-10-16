@@ -155,5 +155,6 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-10-14 · The support phone is a way to cancel (Refund policy §4): the caller gives the account's email, the confirmation goes only to it · founder · #432
 - 2026-10-15 · Similar triangles (g8m4-t5) are drawn truly similar; elsewhere a "?" is still drawn off its size · the shape is the lesson, and an off-length side gave the pair different angles (tester) · founder · this PR
 - 2026-10-15 · A word in capitals in a lesson line shows as bold lowercase on screen (the voice already says it lowercase) · capitals read as shouting, "OF" read as a typo (tester) · founder · this PR
+- 2026-10-16 · Performance: the points ledger is read by range in the family's day, a practice answer is one upload request (`sync_batch`), /modules reads learners once and the user id from the local session · users in India are ~250 ms from the database per request · founder · #445
 - 2026-10-16 · The production dump is encrypted to the founder's age public key (`BACKUP_AGE_RECIPIENT`), not a GitHub-held passphrase · the key that opens a backup should never be on GitHub · founder · this PR
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —

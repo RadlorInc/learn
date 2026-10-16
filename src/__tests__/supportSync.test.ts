@@ -20,7 +20,8 @@ vi.mock('@/data/repositories/_shared', async (orig) => {
     getSession: async () => ({ data: { session: { user: { id: 'parent' } } } }),
     signOut: async () => { world.signedOut++; return { error: null } },
   }
-  return { ...actual, db: () => ({ rpc: (fn: string, a: Record<string, unknown>) => world.rpc(fn, a), auth }) }
+  const { unbatch } = await import('./_syncBatch')
+  return { ...actual, db: () => ({ rpc: unbatch((fn, a) => world.rpc(fn, a) as never), auth }) }
 })
 vi.mock('@/data/auth', () => ({ logAuthEvent: async () => {}, getCurrentSession: async () => null }))
 
