@@ -11,6 +11,7 @@ import './fonts.css'
 import './globals.css'
 import { ToastProvider } from '@/shared/ui/Toast'
 import OutageNotice from '@/shared/ui/OutageNotice'
+import SpeedInsights from '@/infra/SpeedInsights'
 
 /**
  * ⚠️ THE FONTS ARE SELF-HOSTED FROM THE REPO — `public/fonts/` + `./fonts.css` — AND NOTHING FETCHES THEM FROM GOOGLE,
@@ -148,6 +149,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ConsentPause />
           </StorageGate>
           <ToastProvider />
+          <SpeedInsights />
         </MiloErrorBoundary>
         {/* SW registration lives in a static /public file (not inline) so the app ships no
             inline scripts of its own — a prerequisite for a strict script-src CSP. See next.config.ts.

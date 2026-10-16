@@ -187,7 +187,8 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 `anon` and grants it only to its caller's role; those a client can call check ownership against `auth.uid()`
 (`securityDefinerDrift.test.ts` fails on an undeclared change).
 
-- **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run`, `game_wallet`,
+- **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run` (and `sync_batch`, INVOKER,
+  which runs those three in order as the caller — the upload queue's one request, §7), `game_wallet`,
   `set_game_settings`, `start_game_time`, `end_game_time` (stop early, unused time back); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
   `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`).
@@ -305,7 +306,8 @@ Tests are `src/__tests__/<name>.test.ts`; parent requests follow [runbooks/data-
 
 **The upload queue** (`infra/storage/lessonSync.ts`, IndexedDB `milo`/`kv`) holds each answer with the account that
 queued it, sends it only while that account is signed in, in order per learner, and flushes on each new item, page
-load and reconnect, and on a timer while online and anything is left (30 s, doubling to 10 min). A refusal
+load and reconnect — everything waiting in ONE request (`sync_batch`, 20261016120000: it stops at the first refusal, and
+the rest go in the next request; on a database without it, one request per item), and on a timer while online and anything is left (30 s, doubling to 10 min). A refusal
 `classifySyncError` calls `'drop'` (23503, 42501, 23502, 23514, 22P02, an RLS message) keeps the item on the device
 for 7 days, retried without holding that learner's later items, and reports it to `/api/report-error` when first
 refused and when deleted — a broken migration answers those codes for every row. Each upload records the last success

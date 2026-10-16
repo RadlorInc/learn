@@ -30,7 +30,8 @@ vi.mock('@/data/repositories/_shared', async (orig) => {
     world.delivered.push(`${L}:${a.p_lesson}`); return { error: null }
   }
   const auth = { getSession: async () => ({ data: { session: world.session ? { user: { id: world.session } } : null } }) }
-  return { ...actual, db: () => ({ rpc, auth }) }
+  const { unbatch } = await import('./_syncBatch')
+  return { ...actual, db: () => ({ rpc: unbatch(rpc), auth }) }
 })
 const { syncLesson, flushLessonSync } = await import('@/infra/storage/lessonSync')
 const { consentPause } = await import('@/features/consent/childPause')
