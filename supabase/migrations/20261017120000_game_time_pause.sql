@@ -19,7 +19,8 @@
 -- (the child's own login, the owning parent, a viewer), refused with 42501 otherwise.
 --
 -- ⚠️ SECURITY CHANGE: two NEW SECURITY DEFINER functions (search_path pinned to public, owner the migration's role),
--- EXECUTE revoked from public, anon and authenticated, then granted to authenticated only; they write only the caller's child's own
+-- EXECUTE revoked from public, anon and authenticated, then granted to authenticated only (service_role keeps
+-- Supabase's default grant, as on every function); they write only the caller's child's own
 -- point_events row, which no client can write directly (point_events: select only). The three replaced functions keep
 -- DEFINER, search_path and owner (CREATE OR REPLACE), and their grants are re-stated. All checked at the bottom.
 --
@@ -175,7 +176,10 @@ begin
   if exists (select 1 from pg_proc p, aclexplode(p.proacl) a
               where p.oid in ('public.pause_game_time(uuid)'::regprocedure, 'public.resume_game_time(uuid)'::regprocedure)
                 and a.privilege_type = 'EXECUTE'
-                and a.grantee not in ((select oid from pg_roles where rolname = 'authenticated'), p.proowner)) then
+                -- service_role: Supabase's default privileges grant it on every new function (the server's key, which
+                -- bypasses RLS anyway); seen on staging 2026-10-17, absent on a bare Postgres
+                and a.grantee not in (select oid from pg_roles where rolname in ('authenticated', 'service_role'))
+                and a.grantee <> p.proowner) then
     raise exception 'pause/resume_game_time: EXECUTE granted to someone other than authenticated (proacl)';
   end if;
   if not has_function_privilege('authenticated', 'public.pause_game_time(uuid)', 'EXECUTE')

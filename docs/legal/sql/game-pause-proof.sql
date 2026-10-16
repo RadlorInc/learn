@@ -20,10 +20,11 @@ union all select 'all five: authenticated may call, anon may not',
        case when (select bool_and(has_function_privilege('authenticated', f, 'EXECUTE') and not has_function_privilege('anon', f, 'EXECUTE'))
                   from unnest(array['public.pause_game_time(uuid)', 'public.resume_game_time(uuid)', 'public.game_wallet(uuid)',
                                     'public.start_game_time(uuid,int)', 'public.end_game_time(uuid)']) f) then 'PASS' else 'FAIL' end
-union all select 'pause/resume proacl: EXECUTE only for authenticated and the owner (no PUBLIC entry)',
+union all select 'pause/resume proacl: EXECUTE only for authenticated, service_role and the owner (no PUBLIC entry)',
        case when not exists (select 1 from pg_proc p, aclexplode(p.proacl) a
                               where p.oid in ('public.pause_game_time(uuid)'::regprocedure, 'public.resume_game_time(uuid)'::regprocedure)
-                                and a.grantee not in ((select oid from pg_roles where rolname = 'authenticated'), p.proowner))
+                                and a.grantee not in (select oid from pg_roles where rolname in ('authenticated', 'service_role'))
+                                and a.grantee <> p.proowner)
              and (select bool_and(proacl is not null) from pg_proc
                   where oid in ('public.pause_game_time(uuid)'::regprocedure, 'public.resume_game_time(uuid)'::regprocedure)) then 'PASS' else 'FAIL' end
 union all select 'each body checks learner_access against auth.uid() and takes the learner lock',
