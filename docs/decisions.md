@@ -157,4 +157,5 @@ its pull request, or in git history (`git log -S "<words>"`).
 - 2026-10-15 · A word in capitals in a lesson line shows as bold lowercase on screen (the voice already says it lowercase) · capitals read as shouting, "OF" read as a typo (tester) · founder · this PR
 - 2026-10-16 · Performance: the points ledger is read by range in the family's day, a practice answer is one upload request (`sync_batch`), /modules reads learners once and the user id from the local session · users in India are ~250 ms from the database per request · founder · #445
 - 2026-10-16 · The production dump is encrypted to the founder's age public key (`BACKUP_AGE_RECIPIENT`), not a GitHub-held passphrase · the key that opens a backup should never be on GitHub · founder · this PR
+- 2026-10-16 · Teacher sign-up hidden (form + first-login picker); teacher code kept · adding students is paused until a school consent route exists, so a new teacher saw only an empty dashboard · founder · this PR
 - standing · The founder does Vercel rollbacks; before a runtime merge the agent hands over the rollback target · —

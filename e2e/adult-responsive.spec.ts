@@ -170,19 +170,15 @@ test('the role picker commits on Continue, not on the first tap', async ({ page 
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/ui-preview?p=role')
 
+  // Teacher sign-up is closed (TEACHER_SIGNUP_OPEN, site.ts, 2026-10-16): Parent is the only card and is already chosen,
+  // so the commit is gated by the "I'm 18 or older" tick alone — Continue stays inert until it is ticked.
   const cont = page.getByRole('button', { name: /Continue/ })
   await expect(cont).toBeDisabled()
-
-  await page.getByRole('button', { name: /I'm a Parent/ }).click()
-  await expect(cont).toBeEnabled()
-  // and the choice is visible as a choice, which is what makes the second step readable
+  await expect(page.getByRole('button', { name: /I'm a Teacher/ })).toHaveCount(0)
   expect(await page.evaluate(() => [...document.querySelectorAll('button')]
     .find(b => b.textContent!.includes("I'm a Parent"))!.getAttribute('aria-pressed'))).toBe('true')
-
-  // re-tappable: the other card takes the selection, so the first tap was not a commit
-  await page.getByRole('button', { name: /I'm a Teacher/ }).click()
-  expect(await page.evaluate(() => [...document.querySelectorAll('button')]
-    .find(b => b.textContent!.includes("I'm a Parent"))!.getAttribute('aria-pressed'))).toBe('false')
+  await page.locator('[data-role="adult"] input[type="checkbox"]').check()
+  await expect(cont).toBeEnabled()
 })
 
 test('every standalone control on /auth clears the 44px tap floor', async ({ page }) => {

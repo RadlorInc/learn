@@ -12,7 +12,7 @@ fixed yet are tracked outside this public repo; ask the founder.
   private beta with families the founder knows has run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
   and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
-  the database gate; parent and teacher dashboards (rosters paused); points buy game time on `/play` (four games,
+  the database gate; parent dashboard (teacher sign-up hidden); points buy game time on `/play` (four games,
   #424); six legal pages as beta versions; nightly backups green.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship); local `learner-grade` has
@@ -41,7 +41,7 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 ## Open — Draft PRs waiting for the founder
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
-1. Enrol two authenticators at `/admin/mfa` (#324 is live), then #325 as built (migration; its SQL is in the PR).
+Admin data requires the authenticator code since #325 (16 Oct). None waiting.
 
 ## Open — the founder decides
 
@@ -53,7 +53,7 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
 - Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
-- Teachers: due dates (so a teacher can assign), moving a student between classes, bulk password reset, class
+- Teachers (sign-up hidden since 16 Oct, `TEACHER_SIGNUP_OPEN`; reopen with a school consent route): due dates, moving a student between classes, bulk password reset, class
   exercise due dates, teacher billing; confirm "the first attempt is the class-exercise result" (decided without the
   founder); a free teacher can sign up as a parent to get lessons free.
 - A way to mute the lesson voice (classrooms).
@@ -72,9 +72,6 @@ The repo's migration chain builds a `get_parent_dashboard()` one comment differe
   pushed, and `release` is pushed by GitHub Actions. Unmeasured: whether the block checks the commit's author (→ link
   the founder's GitHub to Vercel) or the pusher (→ a Vercel deploy hook called by `promote`; the agent builds it).
   After switching, watch the first production deploy reach READY.
-- After #447 merges: GitHub → Environments → `production-db` → Deployment branches → Selected → `main`.
-- Admin two-step verification: set up an authenticator at `/admin/mfa` and check a fresh sign-in asks for the code
-  ([runbooks/admin-access.md](docs/runbooks/admin-access.md)); only then the database requirement (its own Draft PR).
 - **If `learn` goes private, Actions minutes cost money**: ~5,400 min in 30 days (28 Sep) vs 2,000 free — about US$20
   a month over; with no budget Actions (and deploys) stop at 2,000. Set a budget first, or have the agent cut minutes
   (Deploy re-runs the whole CI on every merge).

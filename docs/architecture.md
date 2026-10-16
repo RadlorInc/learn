@@ -113,6 +113,9 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Parents** sign up with email and password or with Google. A Google account ticks "I'm 18 or older" and picks
   Parent or Teacher on its first visit to `/parent`. `profiles` is created on email confirmation (`handle_new_user`);
   `profiles.role` is a label its owner can write and grants nothing.
+- **New teacher accounts are closed** (`TEACHER_SIGNUP_OPEN = false` in `src/app/site.ts`, 2026-10-16): neither the
+  sign-up form nor the first-login picker offers Teacher, so every new account is a parent. Existing teacher accounts
+  and every teacher screen are unchanged; the API still accepts `role: 'teacher'` from a hand-built request.
 - **Teachers** sign up the same way (B0t), make classes (`grades`), pick modules and write class exercises
   (`teacher_plans.paid` decides modules vs exercises only). Adding students is paused on screen while the consent gate
   is live, as there is no school consent route yet (`rosterPaused.test.ts`).

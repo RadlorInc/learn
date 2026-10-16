@@ -61,6 +61,14 @@ export function oldDomainRedirects(siteUrl: string = SITE_URL) {
  * drift this module was created to stop. It lives HERE rather than in `diagnostics.ts` because that
  * file is `'use client'` and three of the four consumers are Server Components.
  */
+/**
+ * Whether a new account can choose "Teacher" (the sign-up form and the first-login picker). OFF since 2026-10-16:
+ * adding students to a class is paused until there is a school consent route (attorney item A3), so a new teacher
+ * only ever saw an empty dashboard. Existing teacher accounts are untouched, and every teacher screen stays in the
+ * code; turning this back on is the whole switch.
+ */
+export const TEACHER_SIGNUP_OPEN = false
+
 export const SUPPORT_EMAIL = 'support@radlor.com'
 /** Toll-free support line (founder, 2026-10-14). `SUPPORT_TEL` is the same number for `tel:` links. */
 export const SUPPORT_PHONE = '1-888-812-9373'

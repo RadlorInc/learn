@@ -10,7 +10,7 @@ import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
-import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL, TEACHER_SIGNUP_OPEN } from '@/app/site'
 import { firstNameOf } from '@/features/consent/firstName'
 
 type Mode = 'login' | 'signup'
@@ -75,7 +75,8 @@ export default function AuthPage() {
   const [firstName, setFirstName] = useState('')   // signup only: the name the consent email greets
   const [confirm,  setConfirm]  = useState('')     // signup only: typed twice, compared before anything is sent
   // signup only: a parent's sign-up email also asks for consent, a teacher's only confirms (founder, 2026-09-25)
-  const [role,     setRole]     = useState<'parent' | 'teacher' | null>(null)
+  // With teacher sign-up closed (TEACHER_SIGNUP_OPEN, site.ts) every new account is a parent and there is no choice to make.
+  const [role,     setRole]     = useState<'parent' | 'teacher' | null>(TEACHER_SIGNUP_OPEN ? null : 'parent')
   const [adult,    setAdult]    = useState(false)   // signup only: "I'm 18 or older", unticked until they tick it
   const [loading,  setLoading]  = useState(false)
   const [error,    setError]    = useState<string | null>(null)
@@ -312,7 +313,7 @@ export default function AuthPage() {
               }}>{success}</div>
             )}
 
-            {mode === 'signup' && (
+            {mode === 'signup' && TEACHER_SIGNUP_OPEN && (
               <div role="radiogroup" aria-label={t('I am a…')} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.ink2 }}>{t('I am a…')}</span>
                 <div style={{ display: 'flex', gap: 8 }}>
