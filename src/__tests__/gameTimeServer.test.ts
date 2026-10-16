@@ -76,9 +76,16 @@ describe('public/play-time.js, in every game', () => {
     return { shown, done }
   }
   const left = (s: number) => () => Promise.resolve(Response.json({ left: s }))
+  // A server like the real one: the time is up at a fixed moment, and "left" shrinks with its clock.
+  const until = (s: number) => { const at = Date.now() + s * 1000; return () => Promise.resolve(Response.json({ left: Math.max(0, Math.ceil((at - Date.now()) / 1000)) })) }
+  const hidden = (h: boolean) => { Object.defineProperty(document, 'hidden', { configurable: true, get: () => h }); document.dispatchEvent(new Event('visibilitychange')) }
+  const asks = () => vi.mocked(fetch).mock.calls.length
+  // Games started by earlier tests still listen on `document`, so a visibility test counts only its own child's asks.
+  const KID2 = '22222222-2222-4222-8222-222222222222'
+  const asksFor = (id: string) => vi.mocked(fetch).mock.calls.filter(([u]) => String(u).endsWith(id)).length
 
   it('plays exactly the seconds the server gave, then saves (done) and goes back to /play', async () => {
-    server = left(5)
+    server = until(5)
     const { shown, done } = await start(KID)
     await vi.advanceTimersByTimeAsync(4000)
     expect(done).not.toHaveBeenCalled()
@@ -97,20 +104,57 @@ describe('public/play-time.js, in every game', () => {
     expect((init.headers as Record<string, string>).authorization).toBe('Bearer adult-token')
   })
   it('moving the device\'s clock forward or back changes nothing: it counts on performance.now()', async () => {
-    server = left(5)
+    server = () => Promise.resolve(Response.json({ left: asks() === 1 ? 5 : 0 })) // the server's own clock, not the device's
     const { done } = await start(KID)
     await vi.advanceTimersByTimeAsync(1000)
     vi.setSystemTime(Date.now() - 3_600_000) // the child sets the clock an hour back
     await vi.advanceTimersByTimeAsync(4000)
     expect(done).toHaveBeenCalledOnce()
   })
-  it('the server is asked again every 30 s and its answer wins (a stop from /play ends the game here too)', async () => {
+  it('on screen, the server is asked every 3 minutes (not every 30 s) and its answer wins: a stop elsewhere ends it', async () => {
     let s = 600
     server = () => Promise.resolve(Response.json({ left: s }))
-    const { done } = await start(KID)
-    await vi.advanceTimersByTimeAsync(10_000)
+    const KID3 = '33333333-3333-4333-8333-333333333333'
+    const { done } = await start(KID3)
+    await vi.advanceTimersByTimeAsync(10 * 60_000 - 1)
+    expect(asksFor(KID3), 'asks in 10 minutes on screen: open + one every 3 min').toBe(1 + 3)
     s = 0 // stopped elsewhere
-    await vi.advanceTimersByTimeAsync(21_000)
+    await vi.advanceTimersByTimeAsync(3 * 60_000)
+    expect(done).toHaveBeenCalledOnce()
+  })
+  it('a hidden tab asks nothing, and asks at once when it is shown again (a sleeping device may have paused its clock)', async () => {
+    let s = 900
+    server = () => Promise.resolve(Response.json({ left: s }))
+    const { done } = await start(KID2)
+    hidden(true)
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(asksFor(KID2), 'asked while hidden').toBe(1)
+    s = 0 // the server's clock ran out while the tab was hidden
+    hidden(false)
+    expect(asksFor(KID2), 'not asked the moment it was shown').toBe(2)
+    await vi.advanceTimersByTimeAsync(1000)
+    expect(done).toHaveBeenCalledOnce()
+    hidden(false)
+  })
+  it('at 0 it asks once more: time bought meanwhile elsewhere keeps the game going instead of being cut off', async () => {
+    let bought = false
+    server = () => Promise.resolve(Response.json({ left: asks() === 1 ? 5 : bought ? 60 : 0 }))
+    const { done } = await start(KID)
+    bought = true // more minutes bought on another tab before the 5 s ran out
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(done, 'cut off although the server had more time').not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(55_000)
+    expect(done).not.toHaveBeenCalled()
+    bought = false
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(done).toHaveBeenCalledOnce()
+  })
+  it('a failed ask at 0 ends the game (it never grows)', async () => {
+    let ok = true
+    server = () => ok ? left(5)() : Promise.reject(new Error('offline'))
+    const { done } = await start(KID)
+    ok = false
+    await vi.advanceTimersByTimeAsync(5000)
     expect(done).toHaveBeenCalledOnce()
   })
   it('a later failed ask keeps the last answer: the time runs out, it never grows', async () => {

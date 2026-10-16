@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 
 /**
  * GET /api/game-time?learner=<id> with the signed-in adult's token: how many seconds of paid game time this child has
- * left, by the server's clock. The games (public/play-time.js) ask this when they open and every 30 s, and play only
+ * left, by the server's clock. The games (public/play-time.js) ask this when they open, when shown again, every 3 min on screen and at 0, and play only
  * that long — the end time is never taken from the game's URL or the device's clock, so editing either plays no longer.
  *
  * The token goes straight to `game_wallet`, which refuses a caller who is not one of this child's adults (42501): this

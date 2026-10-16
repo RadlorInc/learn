@@ -51,7 +51,7 @@ mode only, built from `blockcraft/` into `public/blockcraft` — as a full page 
 
 **How long a game plays is the database's, not the URL's (2026-10-11).** `/play` opens a game with the child's save
 key and id only (`?key=…&learner=…`). The game (`public/play-time.js`, shared by every game) asks `GET /api/game-time`
-when it opens and every 30 s; the route passes the adult's own token to `game_wallet` and answers the seconds left by
+when it opens, when its tab is shown again, every 3 minutes while on screen, and once more at 0 (2026-10-16; it was every 30 s); the route passes the adult's own token to `game_wallet` and answers the seconds left by
 the server's clock, and the game counts them on `performance.now()`. Editing the URL or the device's clock plays no
 longer; no first answer sends the child back to `/play`, and a later failed ask keeps the last answer (it only runs
 out). A game opened without `/play` plays only on localhost. Until 11 Oct the end time rode in the URL (`&until=`), so
