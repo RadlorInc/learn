@@ -83,7 +83,8 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
 | `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
-| `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
+| `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
+| `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -192,7 +193,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 
 - **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run` (and `sync_batch`, INVOKER,
   which runs those three in order as the caller — the upload queue's one request, §7), `game_wallet`,
-  `set_game_settings`, `start_game_time`, `end_game_time` (stop early, unused time back); `delete_learner`, `delete_my_account`,
+  `set_game_settings`, `start_game_time` (resumes a paused game), `end_game_time` (stop early, unused time back), `pause_game_time` / `resume_game_time` (the game's Pause screen stops the paid clock); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
   `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`: listed in `admin_users` and an `aal2` token).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
@@ -326,7 +327,7 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 |---|---|---|
 | `learners` | the creating adult; `delete_child_data` | the child's adults and login; consent routes (name) |
 | `learner_access` | new-learner trigger, `/api/child-login`, invite acceptance | RLS policies, `/api/child-login` |
-| `lesson_progress`, `point_events` | the three progress RPCs; game time: `start_game_time`, `end_game_time` | device, dashboard, `game_wallet`, export, `admin_activation` |
+| `lesson_progress`, `point_events` | the three progress RPCs; game time: `start_game_time`, `end_game_time`, `pause_game_time`, `resume_game_time` | device, dashboard, `game_wallet`, export, `admin_activation` |
 | `game_settings` | `set_game_settings` | `game_wallet`, export |
 | `game_saves` | `/play` (the child's adults and login, RLS) | `/play`, export |
 | `learner_events` | `track()` in a story chapter | export, admin aggregates |

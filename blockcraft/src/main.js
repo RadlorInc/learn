@@ -201,8 +201,11 @@ function findSpawn(w) {
 }
 
 // ------------------------------------------------------------------ menus
+// the paid clock's { pause, resume } (public/play-time.js): the Pause screen stops it, leaving that screen starts it
+let time = null;
 const screens = ['title', 'pause', 'loading', 'inventory'];
 function show(name) {
+  time?.[name === 'pause' ? 'pause' : 'resume']();
   for (const s of screens) $(s).classList.toggle('hidden', s !== name);
   $('hud').classList.toggle('hidden', !['playing', 'paused', 'dead'].includes(G.state) && name !== 'inventory');
   $('touch').classList.toggle('hidden', !isTouch || G.state !== 'playing' || name === 'inventory');
@@ -214,12 +217,12 @@ if (PLAY) {
   // after the rest of this module has run, as the old message-driven start was
   show('loading'); setTimeout(() => startWorld(safeParse(localStorage.getItem(PLAY.key)) || { seed: (Math.random() * 2 ** 31) | 0 }));
 } else show('title');
-import(/* @vite-ignore */ '/play-time.js').then(({ playTime }) => playTime({
+import(/* @vite-ignore */ '/play-time.js').then(({ playTime }) => (time = playTime({
   learner: PLAY?.learner, back: BACK,
   show: (left) => { $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; },
   // time is up: save, freeze, say so; play-time.js then goes back to /play, which uploads the save
   done: () => { if (G.world) save(); G.state = 'title'; document.exitPointerLock?.(); keys.clear(); toast("Time's up! Your world is saved."); },
-}), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
+})), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
 
 $('bNew').onclick = () => { audio.unlock(); $('newWorld').classList.toggle('hidden'); $('help').classList.add('hidden'); $('overwriteWarn').classList.toggle('hidden', !hasSave()); };
 $('bHelp').onclick = () => { $('help').classList.toggle('hidden'); $('newWorld').classList.add('hidden'); };

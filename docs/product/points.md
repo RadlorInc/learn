@@ -81,8 +81,18 @@ over; it needs time to fill again. A crash costs one of the patient's three hear
 second; not in CI) proves every call can be done in time, that a steady 54 km/h runs out of time, and that driving straight
 down one lane crashes out. The vehicle speeds up by itself: the child steers, brakes and sounds the siren. Same paid time, URL, clock, stop and device-only save as the other games.
 
+**"Paused" pauses the paid time (2026-10-17).** Until then the clock was wall-clock: the game showed "Paused" (and
+paused by itself when its tab was hidden) while the paid minutes ran on. Now the game's Pause screen calls
+`pause_game_time` (through `POST /api/game-time`): the ticket keeps the seconds it had left and stops; leaving the Pause
+screen (Keep playing, start again, another level) calls `resume_game_time` and it goes on from there. "Time's up" does
+not pause. A game left paused (tab closed, Back) shows "⏸ … left · paused" on `/play`; opening any game, or
+`start_game_time`, resumes it — never a second purchase — and "Stop and keep my minutes" refunds it by the seconds
+played. A paused ticket waits for ever: its minutes were counted against the daily limit on the day it was bought, as
+before. The game's count stands still while paused; a failed call keeps it as it is and the next answer wins, and an
+answer that disagrees with the screen sends the pause or resume again (`public/play-time.js`).
+
 **Stopping early gives the unused minutes back.** The clock is the database's and keeps running while the child is off
-the game, so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the
+the game (except on its Pause screen, above), so the game's pause menu and `/play` both offer "Stop and keep my minutes": `end_game_time` shrinks the
 purchase to the time played and ends it. Points follow the seconds (1 point per 7.5 s, rounded up, at least 1 point),
 so the rest come back; the daily limit counts minutes, a started one in full (at least 1). Stopping at 1:17 of 2 minutes
 pays 11 points and gives 5 back.
@@ -106,6 +116,7 @@ child's data is deleted (the child's profile or the account deleted, or the pare
 | only real lessons, chapters and modules pay | the database (`lesson_catalog`, `P0L01` for anything else) |
 | only the owning adult changes game time | the database (`set_game_settings`) |
 | the daily limit, the on/off switch, the balance, one game at a time | the database (`start_game_time`; `end_game_time` stops early) |
+| a paused game's clock stands still; a paused ticket is resumed, never bought twice | the database (`pause_game_time`, `resume_game_time`, `start_game_time`) |
 | answers wait when offline, and upload later with the same event id | the app (`src/infra/storage/lessonSync.ts`) |
 | a child whose consent is not on record: answers wait on the device, never deleted | the database refuses the write; the app holds it |
 
