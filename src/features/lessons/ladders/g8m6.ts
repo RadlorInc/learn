@@ -59,7 +59,7 @@ const CLOUDS: Cloud[] = [
   C('student', 'students', 'Shoe size', 'Test score', 'shoe size and test score', [4, 11, 1, 12, 1], [55, 95, 100, 10], 'no pattern'),
   C('student', 'students', 'Letters in first name', 'Height (inches)', 'letters in first name and height', [3, 9, 1, 10, 1], [55, 70, 80, 10], 'no pattern'),
   C('student', 'students', 'Birth month', 'Math score', 'birth month and math score', [1, 12, 1, 12, 1], [50, 98, 100, 10], 'no pattern'),
-  C('dog', 'dogs', 'Letters in its name', 'Weight (pounds)', 'letters in its name and weight', [3, 8, 1, 10, 1], [10, 70, 80, 10], 'no pattern'),
+  C('cat', 'cats', 'Letters in its name', 'Weight (pounds)', 'letters in its name and weight', [3, 8, 1, 10, 1], [6, 18, 20, 2], 'no pattern'),
 ]
 const corr = (xs: number[], ys: number[]) => {
   const n = xs.length, mx = sum(xs) / n, my = sum(ys) / n

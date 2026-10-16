@@ -24,7 +24,7 @@ export const G8M4_VOICE: Record<string, VoiceLine> = {
   "So for 4 right and 2 up, every point (x, y) becomes (x + 4, y + 2).": { style: 'B', say: "So for 4 right and 2 up, every point x, y becomes x + 4, y + 2." },
   "Don't add the right move to y. Right and left change x, the FIRST number.": { style: 'B+' },
   "Up and down change y, the second one.": { style: 'B+' },
-  "So 4 right and 2 up takes (1, 1) to (5, 3). Not to (3, 5).": { style: 'B+', say: "So 4 right and 2 up takes 1, 1 to 5, 3. Not to 3, 5." },
+  "So 4 right and 2 up takes (1, 1) to (5, 3). Not to (3, 5).": { style: 'B+', say: "So 4 right and 2 up takes the point 1, 1 to the point 5, 3. Not to 3, 5." },   // "the point": bare pairs ran together (tester, g8m4-t1 Screen 7)
   "Now you try. Point A is at (2, 1). The triangle slides 5 right and 3 up. What is the x-coordinate of A′? Right and left change x. Up and down change y.": { style: 'A', say: "Now you try. Point A is at 2, 1. The triangle slides 5 right and 3 up. What is the x-coordinate of A prime? Right and left change x. Up and down change y." },
   "Try a new one. Point B is at (6, 5). The triangle slides 4 left and 2 down. What is the y-coordinate of B′?": { style: 'A', say: "Try a new one. Point B is at 6, 5. The triangle slides 4 left and 2 down. What is the y-coordinate of B prime?" },
   // ── g8m4-t2 ── ("Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
@@ -76,13 +76,13 @@ export const G8M4_VOICE: Record<string, VoiceLine> = {
   "To stretch a shape from (0, 0), multiply both coordinates of every point by the same number.": { style: 'B', say: "To stretch a shape from the point 0, 0, multiply both coordinates of every point by the same number." },
   "Start with corner A, at (2, 1).": { style: 'B', say: "Start with corner A, at 2, 1." },
   "Multiply both numbers by 2, and you get (4, 2).": { style: 'B', say: "Multiply both numbers by 2, and you get 4, 2." },
-  "A′ lands on the same straight line out from (0, 0), just twice as far along it.": { style: 'B', say: "A prime lands on the same straight line out from the point 0, 0, just twice as far along it." },
+  "A′ lands on the same straight line out from (0, 0), just twice as far along it.": { style: 'B', say: "Ay prime lands on the same straight line out from the point 0, 0, just twice as far along it." },   // "Ay": tester heard "a prime" (g8m4-t4 Screen 4)
   "Do the same to the other two.": { style: 'B' },
   "B at (4, 1) doubles to (8, 2). C at (2, 3) doubles to (4, 6).": { style: 'B', say: "B at 4, 1 doubles to 8, 2. C at 2, 3 doubles to 4, 6." },
   "Now measure a side. The bottom was 2 squares long, and now it is 4.": { style: 'B' },
   "Every side is twice as long.": { style: 'B' },
   "Can the same move shrink a shape? Yes.": { style: 'B' },
-  "Multiply by 1/2, and (8, 2) goes right back to (4, 1).": { style: 'B', say: "Multiply by 1/2, and 8, 2 goes right back to 4, 1." },
+  "Multiply by 1/2, and (8, 2) goes right back to (4, 1).": { style: 'B', say: "Multiply by 1/2, and the point 8, 2 goes right back to the point 4, 1." },   // a pause fell inside the pairs (tester, g8m4-t4 Screen 6)
   "A number bigger than 1 grows the shape. A number smaller than 1 shrinks it.": { style: 'B' },
   "Twice as big does NOT mean add 2.": { style: 'B+' },
   "Adding 2 to (2, 1) gives (4, 3), and that only slides it.": { style: 'B+', say: "Adding 2 to 2, 1 gives 4, 3, and that only slides it." },

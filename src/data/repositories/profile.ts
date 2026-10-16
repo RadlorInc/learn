@@ -4,7 +4,7 @@
 import { db } from '@/data/repositories/_shared'
 import { logAuthEvent } from '@/data/auth'
 import { clearActiveLearner } from '@/data/supabase/useLearnerSession'
-import { clearChildrenFromDevice } from '@/infra/storage/lessonSync'
+import { clearChildrenFromDevice, unsentOnDevice } from '@/infra/storage/lessonSync'
 import type { UserRole } from '@/data/supabase/types'
 
 /**
@@ -17,8 +17,10 @@ import type { UserRole } from '@/data/supabase/types'
  */
 export async function getMyRole(): Promise<UserRole | null> {
   const supabase = db()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError && authError.name !== 'AuthSessionMissingError') throw authError
+  // The id from the local session (no network): RLS on profiles checks it against the token on the read below.
+  const { data: { session }, error: authError } = await supabase.auth.getSession()
+  if (authError) throw authError
+  const user = session?.user
   if (!user) return null
   const { data, error } = await supabase
     .from('profiles')
@@ -37,7 +39,7 @@ export async function getMyRole(): Promise<UserRole | null> {
  */
 export async function setMyRole(role: UserRole): Promise<boolean> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return false
   const { error } = await supabase.from('profiles').update({ role }).eq('id', user.id).is('role', null)
   return !error
@@ -47,7 +49,18 @@ export async function setMyRole(role: UserRole): Promise<boolean> {
 export const homeForRole = (role: UserRole | null): string =>
   role === 'learner' ? '/modules' : '/parent'
 
-export async function signOut() {
+/**
+ * Returns false when the person chose to stay signed in. With uploads still waiting on this device it asks first: they
+ * are not lost by signing out (the queue keeps them for their owner), but they leave only when this account signs in
+ * HERE again — on a shared or school computer that may be never. `unsentOk`: the caller knows they no longer matter
+ * (the account was just deleted).
+ */
+export async function signOut(opts?: { unsentOk?: boolean }): Promise<boolean> {
+  const unsent = opts?.unsentOk === true ? 0 : unsentOnDevice()
+  if (unsent > 0 && !window.confirm(
+    `${unsent} update${unsent === 1 ? ' has' : 's have'} not reached your account yet. ` +
+    'If you sign out now, they wait on this device and are sent the next time this account signs in here. Sign out anyway?',
+  )) return false
   const supabase = db()
   // Log the logout BEFORE revoking the token (an insert after signOut would 401).
   // Race against a short timeout so a dead network can never hang the sign-out —
@@ -65,4 +78,5 @@ export async function signOut() {
   clearActiveLearner()        // else the next account (same tab) briefly sees the previous child's profile
   clearChildrenFromDevice()   // every child's keys leave the device with the account (N16); a child with unsent work keeps them
   window.location.href = '/auth'
+  return true
 }

@@ -86,7 +86,7 @@ export default function AccountPage() {
       // ⚠️ A HONEST MESSAGE AND A SECOND DOOR, not a shrug. If the function is not in the database
       // yet the promise still stands — it is just being kept by a person instead of a button.
       : out.reason === 'not_deployed'   ? 'Account deletion is not switched on yet. Nothing has been deleted — '
-                                        + 'email support@radlor.com and we will delete it for you.'
+                                        + 'email support@radlor.com or call 1-888-812-9373 and we will delete it for you.'
       : `Something went wrong and nothing has been deleted. ${out.detail}`,
     )
   }
@@ -100,7 +100,7 @@ export default function AccountPage() {
         </p>
         <p style={p}>Thank you for trying Radlic.</p>
         <button style={{ ...btn, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none' }}
-          onClick={async () => { await signOut(); router.replace('/') }}>Close</button>
+          onClick={async () => { await signOut({ unsentOk: true }); router.replace('/') }}>Close</button>
       </Shell>
     )
   }
@@ -120,6 +120,11 @@ export default function AccountPage() {
         Deleting your account removes it and <strong>every child profile you created</strong>, with all of
         their lessons, practice results, points, game-time settings and logins — permanently, straight away.
         There is no grace period and nothing kept in case you change your mind.
+      </p>
+      <p style={p}>
+        If you have a paid plan, closing the account <strong>cancels it straight away</strong> and refunds the part
+        you have not used — all of it if you paid in the last 14 days. We email the amount to the address you paid
+        with. Refunds reach your card within 10 business days.
       </p>
 
       {/* ⚠️ THE EXPORT, ABOVE THE CONFIRM. Once this is done there is nothing to come back for. */}
@@ -154,7 +159,7 @@ export default function AccountPage() {
             that it cannot be done by someone who simply picked up an unlocked device. Nothing has been
             deleted.
           </p>
-          <button style={{ ...btn, marginTop: 12 }} onClick={async () => { await signOut(); router.replace('/auth') }}>
+          <button style={{ ...btn, marginTop: 12 }} onClick={async () => { if (await signOut()) router.replace('/auth') }}>
             Sign in again
           </button>
         </div>

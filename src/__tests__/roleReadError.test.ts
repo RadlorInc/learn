@@ -26,10 +26,12 @@ vi.mock('@/data/repositories/_shared', async (orig) => ({
   ...(await orig<typeof import('@/data/repositories/_shared')>()),
   db: () => ({
     auth: {
-      getUser: async () =>
-        s.auth === 'fail' ? { data: { user: null }, error: Object.assign(new Error('Failed to fetch'), { name: 'AuthRetryableFetchError', status: 0 }) }
-        : s.auth === 'nosession' ? { data: { user: null }, error: Object.assign(new Error('Auth session missing!'), { name: 'AuthSessionMissingError', status: 400 }) }
-        : { data: { user: { id: 'u1' } }, error: null },
+      // getSession (a local read): it fails only when an expired token's refresh cannot reach the server; signed out
+      // is no session and no error.
+      getSession: async () =>
+        s.auth === 'fail' ? { data: { session: null }, error: Object.assign(new Error('Failed to fetch'), { name: 'AuthRetryableFetchError', status: 0 }) }
+        : s.auth === 'nosession' ? { data: { session: null }, error: null }
+        : { data: { session: { user: { id: 'u1' } } }, error: null },
     },
     from: () => ({
       select: () => ({ eq: () => ({ single: async () =>

@@ -30,8 +30,8 @@ const predict = (what: string, sample: string, all: string): Picture =>
 
 // ── Topic 3 pictures ──
 const HEIGHTS = ['3', '4', '5', '6', '7', '8', '9']
-const CLASS_A: Picture = { kind: 'chart', type: 'dot', labels: HEIGHTS, values: [0, 0, 1, 2, 3, 2, 1], xLabel: 'Class A plants (inches)' }
-const CLASS_B: Picture = { kind: 'chart', type: 'dot', labels: HEIGHTS, values: [1, 2, 3, 2, 1, 0, 0], xLabel: 'Class B plants (inches)' }
+const CLASS_A: Picture = { kind: 'chart', type: 'dot', dots: true, labels: HEIGHTS, values: [0, 0, 1, 2, 3, 2, 1], xLabel: 'Class A plants (inches)' }
+const CLASS_B: Picture = { kind: 'chart', type: 'dot', dots: true, labels: HEIGHTS, values: [1, 2, 3, 2, 1, 0, 0], xLabel: 'Class B plants (inches)' }
 const two = (col: string, a: [string, number[]], b: [string, number[]]): Picture => ({
   kind: 'table', head: [col, ...a[1].map((_, i) => String(i + 1))],
   rows: [[a[0], ...a[1].map(String)], [b[0], ...b[1].map(String)]], rowHead: true,
@@ -204,7 +204,8 @@ export const G7M5: Lesson[] = [
           { say: "12 is out of the 40 you asked. Scale it up to 600, and you get 180." },
           { say: "Okay. Your turn." },
         ],
-        pictures: [{ kind: 'cards', wrong: '600 kids: 12 like pizza', right: '600 kids: 180 like pizza' }] },
+        // The fraction is out of the 40 asked, never out of the 600 (a tester, g7m5-t2, 16 Oct).
+        pictures: [{ kind: 'cards', wrong: '12/600 like pizza', right: '12/40 of 600 = 180' }] },
     ],
     turn: {
       text: 'You ask 40 students, picked by chance. 10 of them walk to school. Predict how many of all 600 students walk to school.',
@@ -223,8 +224,8 @@ export const G7M5: Lesson[] = [
         hint2: 'Take that fraction of 2,000. Divide by the bottom number, then multiply by the top.',
       },
     },
-    won: { text: 'You found the fraction in the sample and scaled it up to the whole school.', sticker: 'The whole group is the population. Using a sample to predict it is called making an inference.' },
-    twinWon: { text: 'You found 20 out of 50, then scaled it up to all 2,000 fans.', sticker: 'The whole group is the population. Using a sample to predict it is called making an inference.' },
+    won: { text: 'You found the fraction in the sample and scaled it up to the whole school.', sticker: 'The whole group is the population. It can be any group you want to know about, like students or plants, not just the people of a country. Using a sample to predict it is called making an inference.' },
+    twinWon: { text: 'You found 20 out of 50, then scaled it up to all 2,000 fans.', sticker: 'The whole group is the population. It can be any group you want to know about, like students or plants, not just the people of a country. Using a sample to predict it is called making an inference.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'You ask 40 students, picked by chance. 8 play an instrument. Predict how many of all 600 students play an instrument.',
@@ -254,14 +255,14 @@ export const G7M5: Lesson[] = [
     id: 'g7m5-t3', title: 'Compare two groups', skill: 'Compare two data sets by the gap between their means and how spread out each one is',
     bigIdea: "To compare two groups, find the gap between their means, then check it against the spread.",
     screens: [
-      { title: 'Which class grew taller plants?', text: 'Two classes each grew 9 bean plants. Each ✕ is one plant. Did one class grow taller plants?',
+      { title: 'Which class grew taller plants?', text: 'Two classes each grew 9 bean plants. Each dot is one plant. Did one class grow taller plants?',
         pictures: [CLASS_A, CLASS_B] },
-      { title: "One plant does not tell you", text: "Careful. Class A has a plant that is only 5 inches. Class B has one that is 7. So is Class B taller? No. Pick two other plants, and A wins. We need one number for a whole class.",
+      { title: "One plant does not tell you", text: "Careful. Class A has a plant that is only 5 inches. Class B has one that is 7. Can one plant each tell us? No. Pick two other plants, and A could win. So we need one number for each whole class.",
         beats: [
           { say: "Careful. Class A has a plant that is only 5 inches.", pic: 0 },
           { say: "Class B has one that is 7.", pic: 1 },
-          { say: "So is Class B taller? No. Pick two other plants, and A wins." },
-          { say: "We need one number for a whole class." },
+          { say: "Can one plant each tell us? No. Pick two other plants, and A could win." },
+          { say: "So we need one number for each whole class." },
         ],
         pictures: [CLASS_A, CLASS_B] },
       { title: "The big idea", text: "To compare two groups, find the gap between their means, then check it against the spread.",

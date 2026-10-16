@@ -241,7 +241,7 @@ const T3: Level[] = [
   { style: 'story, round a measurement', make: r => {
     const unit = pick(r, [10, 100])
     const v = toRound(r, unit)
-    const [who, verb, noun] = pick(r, [['A puppy', 'weighs', 'kilogram'], ['A ribbon', 'is', 'meter'], ['A jug', 'holds', 'liter']] as const)
+    const [who, verb, noun] = pick(r, [['A watermelon', 'weighs', 'kilogram'], ['A ribbon', 'is', 'meter'], ['A jug', 'holds', 'liter']] as const)
     const { ans, a, steps } = roundOf(v, unit), x = fmt(dec(v, 3))
     const long = noun === 'meter' ? ' long' : ''
     return { text: `${who} ${verb} ${x} ${noun}s${long}. Round it to the nearest ${NEAREST[unit]} of a ${noun}.`, picture: eq(`${x} ${noun}s`),
@@ -390,10 +390,12 @@ const T6: Level[] = [
       answer: choose(r, right, [fmt(dec(o.P, 1)), fmt(o.P)]),
       steps: [`${o.x} is between ${o.w} and ${o.w + 1}, so ${o.m} × ${o.x} is between ${o.m * o.w} and ${o.m * (o.w + 1)}.`, `Only one choice is in that range.`, `So ${o.m} × ${o.x} = ${right}.`] }
   } },
-  { style: 'missing whole number, work backwards', make: r => {
-    const o = mulOf(r, 3)
-    return { text: `What number goes in the box? ? × ${o.x} = ${fmt(o.ans)}`, picture: eq(`? × ${o.x} = ${fmt(o.ans)}`), answer: o.m,
-      steps: [`Think: how many groups of ${o.x} make ${fmt(o.ans)}?`, `${o.split} ${o.each} ${o.added}.`, `So the missing number is ${o.m}.`] }
+  // Choices, so it is solved by multiplying each one: typed, it was decimal ÷ decimal, not taught yet (a tester, g5m4-t6, 15 Oct).
+  { style: 'missing whole number, try the choices', make: r => {
+    const o = mulOf(r, 3), near = o.m > 2 ? [o.m - 1, o.m + 1] : [o.m + 1, o.m + 2], as = (k: number) => `${k} × ${o.x}`
+    return { text: `Which one makes ${fmt(o.ans)}? ? × ${o.x} = ${fmt(o.ans)}`, picture: eq(`? × ${o.x} = ${fmt(o.ans)}`),
+      answer: choose(r, as(o.m), near.map(as)),
+      steps: [`Try a choice: how many groups of ${o.x} make ${fmt(o.ans)}?`, `${o.split} ${o.each} ${o.added}.`, `So ${o.m} × ${o.x} = ${fmt(o.ans)}, and the missing number is ${o.m}.`] }
   } },
   { style: 'two-step story, buy two things', make: r => {
     const m = int(r, 2, 5), n = int(r, 2, 4), x = int(r, 1, 4) * 100 + notTen(r, 1, 99), y = int(r, 1, 3) * 100 + int(r, 1, 9) * 10
@@ -541,6 +543,8 @@ const bigAmount = (r: Rng, k: number) => {
 /** A small-unit amount that is not a whole number of big units. */
 const smallAmount = (r: Rng, k: number) => (k === 100 ? notTen(r, 101, 999) : until(() => int(r, 11, 999) * 10, n => n % 1000 !== 0))
 
+// The lesson works only km and m, so every bare level shows its unit fact, and the story says to make the units the
+// same first (a tester, g5m4-t9, 15 Oct). The table levels already show it.
 const T9: Level[] = [
   { style: 'to the smaller unit, with the table', make: r => {
     const u = pick(r, UNITS), { x, smallN } = bigAmount(r, u.k)
@@ -556,23 +560,23 @@ const T9: Level[] = [
     const u = pick(r, UNITS)
     if (r() < 0.5) {
       const { x, smallN } = bigAmount(r, u.k)
-      return { text: `Change the units. ${x} ${u.bs} = ? ${u.ss}`, picture: eq(`${x} ${u.bs} = ? ${u.ss}`), answer: smallN,
+      return { text: `Change the units. ${x} ${u.bs} = ? ${u.ss}`, picture: eq(`${x} ${u.bs} = ? ${u.ss}`, [`1 ${u.bs} = ${fmt(u.k)} ${u.ss}`]), answer: smallN,
         steps: [`${u.ss} is the smaller unit, so multiply by ${fmt(u.k)}.`, `Every digit moves ${placesW(Math.log10(u.k))} to the left.`, `So ${x} ${u.bs} = ${fmt(smallN)} ${u.ss}.`] }
     }
     const n = smallAmount(r, u.k), ans = Math.round((n / u.k) * 1e6) / 1e6
-    return { text: `Change the units. ${fmt(n)} ${u.ss} = ? ${u.bs}`, picture: eq(`${fmt(n)} ${u.ss} = ? ${u.bs}`), answer: ans,
+    return { text: `Change the units. ${fmt(n)} ${u.ss} = ? ${u.bs}`, picture: eq(`${fmt(n)} ${u.ss} = ? ${u.bs}`, [`1 ${u.bs} = ${fmt(u.k)} ${u.ss}`]), answer: ans,
       steps: [`${u.bs} is the bigger unit, so divide by ${fmt(u.k)}.`, `Every digit moves ${placesW(Math.log10(u.k))} to the right.`, `So ${fmt(n)} ${u.ss} = ${fmt(ans)} ${u.bs}.`] }
   } },
   { style: 'pick the one that is the same (spot multiply vs divide)', make: r => {
     const u = pick(r, UNITS)
     if (r() < 0.5) {
       const { h, x, smallN } = bigAmount(r, u.k), right = `${fmt(smallN)} ${u.small}s`
-      return { text: `${u.has(`${x} ${u.big}s`)} Which is the same ${u.same}?`, picture: eq(`${x} ${u.bs} = ? ${u.ss}`),
+      return { text: `${u.has(`${x} ${u.big}s`)} Which is the same ${u.same}?`, picture: eq(`${x} ${u.bs} = ? ${u.ss}`, [`1 ${u.bs} = ${fmt(u.k)} ${u.ss}`]),
         answer: choose(r, right, [`${fmt(dec(h, u.k === 100 ? 4 : 5))} ${u.small}s`, `${fmt(smallN / 10)} ${u.small}s`]),
         steps: [`${cap(u.small)}s are smaller, so there are more of them. Multiply by ${fmt(u.k)}.`, `${x} × ${fmt(u.k)} = ${fmt(smallN)}.`, `So it is ${right}.`] }
     }
     const n = smallAmount(r, u.k), ans = Math.round((n / u.k) * 1e6) / 1e6, right = `${fmt(ans)} ${u.big}s`
-    return { text: `${u.has(`${fmt(n)} ${u.small}s`)} Which is the same ${u.same}?`, picture: eq(`${fmt(n)} ${u.ss} = ? ${u.bs}`),
+    return { text: `${u.has(`${fmt(n)} ${u.small}s`)} Which is the same ${u.same}?`, picture: eq(`${fmt(n)} ${u.ss} = ? ${u.bs}`, [`1 ${u.bs} = ${fmt(u.k)} ${u.ss}`]),
       answer: choose(r, right, [`${fmt(n * u.k)} ${u.big}s`, `${fmt(Math.round(ans * 10 * 1e6) / 1e6)} ${u.big}s`]),
       steps: [`${cap(u.big)}s are bigger, so there are fewer of them. Divide by ${fmt(u.k)}.`, `${fmt(n)} ÷ ${fmt(u.k)} = ${fmt(ans)}.`, `So it is ${right}.`] }
   } },
@@ -585,7 +589,7 @@ const T9: Level[] = [
     const ans = smallN - used, walk = u.k === 1000 && u.small === 'meter'
     const leftWords = walk ? `${u.small}s are left to walk` : `${u.small}s are left`
     return { text: `${u.has(`${x} ${u.big}s`)} ${u.used} ${fmt(used)} ${u.small}s. How many ${leftWords.replace(`${u.small}s `, `${u.small}s `)}?`,
-      picture: eq(`${x} ${u.bs} − ${fmt(used)} ${u.ss}`), answer: ans,
+      picture: eq(`${x} ${u.bs} − ${fmt(used)} ${u.ss}`, [`1 ${u.bs} = ${fmt(u.k)} ${u.ss}`, `First change ${u.bs} to ${u.ss}`]), answer: ans,
       steps: [`First change to ${u.small}s: ${x} × ${fmt(u.k)} = ${fmt(smallN)}.`, `Then take away: ${fmt(smallN)} − ${fmt(used)} = ${fmt(ans)}.`, `So ${fmt(ans)} ${leftWords}.`] }
   } },
 ]

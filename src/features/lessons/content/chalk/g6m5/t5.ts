@@ -9,14 +9,18 @@ const R = (ms: ChalkMark[]) => ms.map(m => ({ ...m, c: 'r' as const }))
 // the add-first answer coral once it is shown up · labels dim.
 export const T5: (ChalkMark[] | undefined)[] = [
   undefined,
-  // Which step goes first? One friend adds first
+  // Which step goes first? Both friends side by side (tester, g6m5-t5: only the wrong way was shown): adding first
+  // on the left, multiplying first on the right, then "which way is right?"
   [
-    ...expr([0, 'friend'], ['2', '+', '3', '×', '4^2'], 300, 60, 44), line([0, 'adds'], [[215, 98], [312, 98]], 'd'),
-    ...expr([0, '5'], ['=', '5', '×', '4^2'], 300, 150, 40),
-    ...expr([0, '16'], ['=', '5', '×', '16'], 300, 215, 40),
-    ...expr([0, '80'], ['=', '80'], 290, 280, 44),
-    write([1, 'right'], '?', 370, 280, 50, 'r'),
-    write([2, 'order'], 'one order for everyone', 300, 355, 30, 'y'),
+    ...expr([0, 'friend'], ['2', '+', '3', '×', '4^2'], 300, 55, 44),
+    write([0, 'adds'], 'add first', 160, 120, 24, 'd'),
+    ...expr([0, '16'], ['=', '5', '×', '16'], 160, 175, 36),
+    ...expr([0, '80'], ['=', '80'], 160, 240, 42),
+    write([1, 'multiplies'], 'multiply first', 440, 120, 24, 'd'),
+    ...expr([1, '48'], ['=', '2', '+', '48'], 440, 175, 36),
+    ...expr([1, '50'], ['=', '50'], 440, 240, 42),
+    write([2, 'right'], '?', 300, 240, 56, 'r'),
+    write([3, 'order'], 'one order for everyone', 300, 340, 30, 'y'),
   ],
   // The big idea: the order, top to bottom
   [

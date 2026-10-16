@@ -16,8 +16,12 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
   answer: Answer; value: string; onChange: (v: string) => void; signed?: boolean; mixed?: boolean
 }) {
   if (typeof answer === 'object' && 'choices' in answer) {
+    // Choices with words or sums in them ("8 × 5 = 5 × 8") stack in one even column; wrapped side by side they read as
+    // scattered (tester, 2026-10-05). Single tokens ("<", "acute") stay in a row.
+    const stacked = answer.choices.some(c => c.includes(' '))
     return (
-      <div role="radiogroup" aria-label="Your answer" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      <div role="radiogroup" aria-label="Your answer"
+        style={stacked ? { display: 'flex', flexDirection: 'column', gap: 10, flexBasis: '100%', maxWidth: 480 } : { display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         {answer.choices.map((c, i) => {
           const on = value === String(i)
           return (
@@ -56,8 +60,13 @@ export function AnswerInput({ answer, value, onChange, signed, mixed }: {
     return (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
         {signed && signKey(neg, () => write(!neg, w, n, d))}
-        {mixed && <input aria-label="Whole number" inputMode="numeric" maxLength={3} value={w} style={{ ...box, height: 64 }}
-          onChange={e => set(e.target.value.replace(/\D/g, ''), n, d)} />}
+        {/* Named, because an unnamed box beside 2/3 read as a mistake (tester, g5m3-t1, 15 Oct 2026). "if any" says it
+            may stay empty without saying whether this answer has a whole part. */}
+        {mixed && <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+          <input aria-label="Whole number, if any" inputMode="numeric" maxLength={3} value={w} style={{ ...box, height: 64 }}
+            onChange={e => set(e.target.value.replace(/\D/g, ''), n, d)} />
+          <small style={{ fontSize: 15, fontWeight: 700, color: INK }}>whole (if any)</small>
+        </span>}
         <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <input aria-label="Top number" inputMode="numeric" maxLength={4} value={n} style={box}
             onChange={e => set(w, e.target.value.replace(/\D/g, ''), d)} />

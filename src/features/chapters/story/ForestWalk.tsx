@@ -6,13 +6,14 @@
  * "stations" to demonstrate counting, to talk, and to practice (SkillBeat:
  * adaptive + re-teach + voice). One chapter = one ForestWalk. See a18c2ba54^:docs/story-mode-3-5.md.
  */
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react'
 import { useRouter } from 'next/navigation'
 import { speakAfterCurrent, speak, speakSeq, stopSpeech } from '@/infra/useMiloSpeaker'
 import { SkillBeat, type Beat } from './StoryWorld'
+import { ChapterReviewContext } from '@/shared/chapterReview'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { hasChapterResume } from '@/infra/storage/chapterResume'
-import { useNeedsRotate } from './RotateGate'
+import { RotateGate, useNeedsRotate } from './RotateGate'
 import { type CountKind } from './art'
 import { FlyingCountDemo, FlyingCountPlay, GUIDE_ASK } from './world1'
 import { BIOMES, BIOME_ORDER, type BiomeId } from './biomes'
@@ -141,6 +142,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
 }) {
   const router = useRouter()
   const needsRotate = useNeedsRotate()
+  const review = useContext(ChapterReviewContext)   // a paid tester reviews each spoken line before the walk goes on
   // ?skip jumps straight to the catch/practice beat (dev shortcut to preview biome changes)
   const skipToPractice = typeof window !== 'undefined' && window.location.search.includes('skip')
   // This chapter has no Phase union — it is a LIST OF BEATS walked in order — so `useChapterPhase`'s
@@ -155,7 +157,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
     if (skipToPractice) return practiceIdx
     const b = chapter.beats[practiceIdx]
     const skill = 'beat' in b ? b.beat.skillId : null
-    return skill && hasChapterResume(getActiveLearner()?.id ?? null, skill) ? practiceIdx : 0
+    return skill && !review && hasChapterResume(getActiveLearner()?.id ?? null, skill) ? practiceIdx : 0
   })
   const [forceWalk, setForceWalk] = useState(false)   // brief walk interlude during practice
   const [biome, setBiome] = useState<BiomeId>(chapter.biomes?.[0] ?? 'forest')   // current place (bg + spawn band)
@@ -211,7 +213,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
       // (Chrome with no voice + a wedged clip/manifest fetch). Walk beats already
       // have this guarantee; say beats didn't, so the intro could freeze forever.
       let done = false
-      const go = () => { if (done) return; done = true; advance() }
+      const go = () => { if (done) return; done = true; if (review) void review(`s${idx + 1}`, '').then(advance); else advance() }
       const cancel = speakSeq([beat.text], { onDone: () => window.setTimeout(go, 700) })
       const cap = window.setTimeout(go, Math.max(4500, beat.text.length * 90))
       return () => { cancel(); window.clearTimeout(cap) }
@@ -221,16 +223,7 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])
 
-  if (needsRotate) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18, background: 'linear-gradient(180deg,#bfe6f7,#d6efc0)', padding: 24, textAlign: 'center' }}>
-        <div style={{ fontSize: 64, animation: 'fw_pop .6s ease both' }}>🔄</div>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 22, color: 'var(--ink)' }}>Turn your phone sideways</div>
-        <div style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--ink-soft)' }}>This adventure plays in landscape!</div>
-        <style>{CSS}</style>
-      </div>
-    )
-  }
+  if (needsRotate) return <RotateGate line="This adventure plays in landscape!" />
 
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#bfe6f7' }}>
@@ -242,8 +235,10 @@ export default function ForestWalk({ chapter, onFinish, onExit }: {
           blend in until the child finds and taps each one (then it pops + glows). */}
 
       {/* Top bar */}
-      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 10, zIndex: 20 }}>
-        <button onClick={exit} style={{ padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
+      {/* ⚠️ z 42: above the station (z 20, later in the DOM) and the demo/guided parade (35/36): a creature crossing the top strip on a short
+          landscape phone otherwise took the Menu tap (e2e/xbrowser-clicks.spec.ts). The strip itself lets taps through. */}
+      <div style={{ position: 'absolute', top: 12, left: 14, right: 14, display: 'flex', alignItems: 'center', gap: 10, zIndex: 42, pointerEvents: 'none' }}>
+        <button onClick={exit} style={{ pointerEvents: 'auto', padding: '7px 14px', minHeight: 44, borderRadius: 50, background: 'var(--paper)', border: '3px solid var(--milo-orange)', color: 'var(--milo-orange)', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, cursor: 'pointer' }}>← Menu</button>
         <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'center' }}>
           {chapter.beats.map((_, i) => (
             <div key={i} style={{ width: i === idx ? 18 : 7, height: 7, borderRadius: 4, transition: 'all .3s', background: i < idx ? 'var(--garden-green)' : i === idx ? 'var(--milo-orange)' : 'rgba(61,37,22,.18)' }} />

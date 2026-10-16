@@ -82,13 +82,47 @@ export const speakable = (t: string) =>
     .replace(/\$(\d+(?:,\d{3})*)\b/g, (_, d) => `${d} ${d === '1' ? 'dollar' : 'dollars'}`)
     .replace(/(^|[\s(])[−-](\d)/g, '$1negative $2')
     .replace(/ × /g, ' times ').replace(/ · /g, ' times ').replace(/ ÷ /g, ' divided by ').replace(/ \+ /g, ' plus ').replace(/ [−–] /g, ' minus ')
-    .replace(/ = \?/g, ' equals what?').replace(/ = /g, ' equals ').replace(/ ≈ /g, ' is about ')
+    .replace(/ = \?/g, ' equals what?')
+    .replace(/(^|\s)\?(?=\s|$)/g, '$1blank')   // a ? standing for a missing number or sign: the model read it as a number (9 Oct)
+    .replace(/ = /g, ' equals ').replace(/ ≈ /g, ' is about ')
     .replace(/ < /g, ' is less than ').replace(/ > /g, ' is greater than ').replace(/ ≤ /g, ' is less than or equal to ').replace(/ ≥ /g, ' is greater than or equal to ')
     .replace(/(\d) : (\d)/g, '$1 to $2')   // a ratio, 3 : 2 — before the prose colon below turns it into "3, 2"
     .replace(/["“”]/g, '').replace(/([^\d]):\s/g, '$1, ').replace(/;\s/g, ', ')
     .replace(/✕s\b/g, 'Xs').replace(/✕/g, 'X')
     .replace(/\b[A-Z]{2,}\b/g, w => (w === 'AM' || w === 'PM' ? w : w.toLowerCase()))   // Chatterbox SPELLS a word in caps: ADD -> A-D-D
     .replace(/π/g, 'pi').replace(/√(\d+)/g, 'the square root of $1')
+    .replace(/[\s\S]*/, numbersAsWords)
+
+/** Whole numbers as words, the way she says them: 184 → "one hundred eighty-four", 36,420 → "thirty-six thousand four
+ *  hundred twenty". ⚠️ WHY (9 Oct 2026): given digits, the voice model dropped a word inside a number — 184 came out "one
+ *  hundred four", 180 "one hundred", 2,450 "two thousand four hundred" — in about 180 of 6,830 lesson clips (heard back
+ *  with two whisper models; a tester found the first). Words leave it nothing to guess. */
+const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
+const BELOW20 = [...ONES.slice(0, 20)]
+const under1000 = (n: number): string => {
+  const h = Math.floor(n / 100), r = n % 100
+  const rest = r < 20 ? BELOW20[r] : TENS[Math.floor(r / 10)] + (r % 10 ? '-' + BELOW20[r % 10] : '')
+  return h ? BELOW20[h] + ' hundred' + (r ? ' ' + rest : '') : rest
+}
+export const numberWords = (n: number): string => {
+  if (n === 0) return 'zero'
+  const parts: string[] = []
+  for (const [size, name] of [[1e9, 'billion'], [1e6, 'million'], [1e3, 'thousand'], [1, '']] as const) {
+    const k = Math.floor(n / size) % 1000
+    if (k) parts.push(under1000(k) + (name ? ' ' + name : ''))
+  }
+  return parts.join(' ')
+}
+const ORD: Record<string, string> = { one: 'first', two: 'second', three: 'third', five: 'fifth', eight: 'eighth', nine: 'ninth', twelve: 'twelfth' }
+const ordinal = (w: string) => w.replace(/(\w+)$/, last => ORD[last] ?? (last.endsWith('y') ? last.slice(0, -1) + 'ieth' : last + 'th'))
+const plural = (w: string) => w.replace(/(\w+)$/, last => (last === 'six' ? 'sixes' : last.endsWith('y') ? last.slice(0, -1) + 'ies' : last + 's'))
+const whole = (d: string) => numberWords(Number(d.replace(/,/g, '')))
+/** Digits → words, run last, after every rule above has had the digits it reads. */
+export const numbersAsWords = (t: string) =>
+  t.replace(/\b(\d{1,3}(?:,\d{3})+|\d+)\.(\d+)\b/g, (_, w, f) => `${whole(w)} point ${[...f].map(c => BELOW20[+c]).join(' ')}`)
+    .replace(/\b(\d{1,3}(?:,\d{3})+|\d+)(st|nd|rd|th)\b/g, (_, d) => ordinal(whole(d)))
+    .replace(/\b(\d{1,3}(?:,\d{3})+|\d+)s\b/g, (_, d) => plural(whole(d)))
+    .replace(/\b(\d{1,3}(?:,\d{3})+|\d+)\b/g, (_, d) => whole(d))
 
 /** What the voice model may be given, and nothing else: words, digits, and the punctuation that is the performance. */
 export const SPEAKABLE = /^[A-Za-z0-9 ,.?!'’—-]*$/

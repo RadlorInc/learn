@@ -15,8 +15,10 @@ const eq = (text: string, lines?: string[]): Picture => ({ kind: 'eq', text, lin
 const cards = (wrong: string, right: string): Picture => ({ kind: 'cards', wrong, right })
 const bal = (left: string, right: string): Picture => ({ kind: 'balance', left, right })
 const sides = (rows: string[][], motion = false): Picture => ({ kind: 'table', head: ['Left side', '', 'Right side'], rows, motion })
-const plane = (max: number, points: Pt[] = [], lines: Line[] = [], motion = false, min = 0): Picture =>
-  ({ kind: 'coord', min, max, points, lines, motion })
+const plane = (max: number, points: Pt[] = [], lines: Line[] = [], motion = false, min = 0, names?: [string, string]): Picture =>
+  ({ kind: 'coord', min, max, points, lines, motion, ...(names ? { names } : {}) })
+/** The growing plant's axes (g8m2-t4), written on the graph as the lesson says them. */
+const PLANT: [string, string] = ['weeks', 'height (cm)']
 const P = (x: number, y: number, label = true): Pt => ({ x, y, label: label ? `(${x}, ${y})`.replace(/-/g, '−') : undefined })
 /** A line through two labelled lattice points: the question picture for t1 and t3. */
 const twoPts = (x1: number, y1: number, x2: number, y2: number): Picture =>
@@ -243,11 +245,11 @@ export const G8M2: Lesson[] = [
           { say: "So the slope is 2, the $2 for each mile." },
         ],
         pictures: [plane(10, [P(0, 1), P(1, 3)], [{ a: [0, 1], b: [4, 9], extend: true }, run([0, 1], [1, 1], 'run 1'), rise([1, 1], [1, 3], 'rise 2')], true)] },
-      { title: "Read any equation", text: "Now you can read any equation this way. y = 3x + 4 climbs 3 each step and crosses at 4. And y = x + 5? A lone x means 1x, so it climbs 1 and crosses at 5.",
+      { title: "Read any equation", text: "Now you can read any equation this way. y = 3x + 4 climbs 3 each step and crosses the y-axis at 4. And y = x + 5? A lone x means 1x, so it climbs 1 and crosses the y-axis at 5.",
         beats: [
           { say: "Now you can read any equation this way.", pic: 1 },
-          { say: "y = 3x + 4 climbs 3 each step and crosses at 4.", pic: 0 },
-          { say: "And y = x + 5? A lone x means 1x, so it climbs 1 and crosses at 5." },
+          { say: "y = 3x + 4 climbs 3 each step and crosses the y-axis at 4.", pic: 0 },
+          { say: "And y = x + 5? A lone x means 1x, so it climbs 1 and crosses the y-axis at 5." },
         ],
         pictures: [plane(10, [P(0, 4), P(0, 5)], [{ a: [0, 4], b: [2, 10], extend: true }, { a: [0, 5], b: [5, 10], extend: true, tone: 2 }]),
           eq('y = 3x + 4: slope 3, crosses at 4', ['y = x + 5: slope 1, crosses at 5'])] },
@@ -275,7 +277,7 @@ export const G8M2: Lesson[] = [
         hint1: 'On the y-axis, what is x?',
         hint2: 'Put 0 in for x. What is left?' },
     },
-    won: { text: 'You picked out the number in front of x: that is the slope.', sticker: 'b, where the line crosses the y-axis, is the y-intercept. y = mx + b is called slope-intercept form.' },
+    won: { text: 'You picked out the number in front of x, called its coefficient: that is the slope.', sticker: 'b, where the line crosses the y-axis, is the y-intercept. y = mx + b is called slope-intercept form.' },
     twinWon: { text: 'You found the plain number in y = −2x + 7: the line crosses at 7.', sticker: 'b, where the line crosses the y-axis, is the y-intercept. y = mx + b is called slope-intercept form.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'A line has the equation y = 5x + 2. What is its slope?',
@@ -302,40 +304,40 @@ export const G8M2: Lesson[] = [
     bigIdea: "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.",
     screens: [
       { title: 'A growing plant', text: 'A plant is 3 cm tall and grows 2 cm each week: y = 2x + 3. You want to draw its line. Where do you start?',
-        pictures: [plane(10)] },
+        pictures: [plane(10, [], [], false, 0, PLANT)] },
       { title: "A table is slow", text: "You could work out y for x = 0, then 1, then 2, and keep going. That works, but it's slow. Is there a faster way? Yes. The equation already tells you where to start, and how to step.",
         beats: [
           { say: "You could work out y for x = 0, then 1, then 2, and keep going.", pic: 0 },
           { say: "That works, but it's slow. Is there a faster way? Yes." },
           { say: "The equation already tells you where to start, and how to step." },
         ],
-        pictures: [plane(10)] },
+        pictures: [plane(10, [], [], false, 0, PLANT)] },
       { title: "The big idea", text: "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.",
         beats: [
           { say: "Put the first dot at b on the y-axis, then step by the slope again and again, across the bottom number and up the top number.", pic: 0 },
         ],
-        pictures: [plane(10, [P(0, 3)]), eq('y = 2x + 3')] },
-      { title: "Start at b", text: "In y = 2x + 3, the plain number is 3. So the first dot goes at (0, 3), right on the y-axis. That is the plant before any weeks have passed, 3 cm tall.",
+        pictures: [plane(10, [P(0, 3)], [], false, 0, PLANT), eq('y = 2x + 3')] },
+      { title: "Start at b", text: "In y = mx + b, b is the plain number. In y = 2x + 3, b is 3. So the first dot goes at (0, 3), right on the y-axis. That is the plant before any weeks have passed, 3 cm tall.",
         beats: [
-          { say: "In y = 2x + 3, the plain number is 3." },
+          { say: "In y = mx + b, b is the plain number. In y = 2x + 3, b is 3." },
           { say: "So the first dot goes at (0, 3), right on the y-axis.", pic: 0 },
           { say: "That is the plant before any weeks have passed, 3 cm tall." },
         ],
-        pictures: [plane(10, [P(0, 3)], [], true)] },
+        pictures: [plane(10, [P(0, 3)], [], true, 0, PLANT)] },
       { title: "Step by the slope", text: "The slope is 2. That means 2 up for every 1 across. So from (0, 3), go 1 across and 2 up. You land on (1, 5). Step again the same way. Now you are at (2, 7).",
         beats: [
           { say: "The slope is 2. That means 2 up for every 1 across." },
           { say: "So from (0, 3), go 1 across and 2 up. You land on (1, 5).", pic: 0 },
           { say: "Step again the same way. Now you are at (2, 7)." },
         ],
-        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [run([0, 3], [1, 3]), rise([1, 3], [1, 5], 'rise 2'), run([1, 5], [2, 5]), rise([2, 5], [2, 7])], true)] },
+        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [run([0, 3], [1, 3]), rise([1, 3], [1, 5], 'rise 2'), run([1, 5], [2, 5]), rise([2, 5], [2, 7])], true, 0, PLANT)] },
       { title: "Join the dots", text: "Now draw one straight line through the dots. Is (2, 7) really on it? Put x = 2 into the equation. 2 × 2 + 3 = 7. Yes, it matches.",
         beats: [
           { say: "Now draw one straight line through the dots.", pic: 0 },
           { say: "Is (2, 7) really on it? Put x = 2 into the equation.", pic: 1 },
           { say: "2 × 2 + 3 = 7. Yes, it matches." },
         ],
-        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [{ a: [0, 3], b: [3, 9], extend: true }], true), eq('2 × 2 + 3 = 7')] },
+        pictures: [plane(10, [P(0, 3), P(1, 5), P(2, 7)], [{ a: [0, 3], b: [3, 9], extend: true }], true, 0, PLANT), eq('2 × 2 + 3 = 7')] },
       { title: "One thing not to do", text: "Here's the part people mix up. Don't start at the SLOPE. (0, 2) is not where y = 2x + 3 begins. The first dot goes at the plain number, (0, 3). The 2 is only for stepping. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
@@ -360,7 +362,7 @@ export const G8M2: Lesson[] = [
         hint1: 'Put 4 in place of x.',
         hint2: 'Multiply 3 by 4 first, then add 2.' },
     },
-    won: { text: 'You put the x into the equation and checked that it gave the y.', sticker: 'The graph of an equation is every point whose x and y make the equation true.' },
+    won: { text: 'You put the point’s x into the equation, and it gave the point’s y. So the point is on the line.', sticker: 'The graph of an equation is every point whose x and y make the equation true.' },
     twinWon: { text: 'You put x = 4 into y = 3x + 2 and found y = 14.', sticker: 'The graph of an equation is every point whose x and y make the equation true.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'Which point is on the line y = 2x + 1?',
@@ -445,8 +447,8 @@ export const G8M2: Lesson[] = [
         hint1: 'This time the smaller x part is on the left. Take it off both sides.',
         hint2: 'You get 12 = 3x + 3. Take 3 off both sides, then divide.' },
     },
-    won: { text: 'You took the smaller x part off both sides, then solved what was left.', sticker: 'Moving every x to one side is called collecting like terms. It works whenever the variable is on both sides.' },
-    twinWon: { text: 'You took 2x off both sides of 2x + 12 = 5x + 3 and found x = 3.', sticker: 'Moving every x to one side is called collecting like terms. It works whenever the variable is on both sides.' },
+    won: { text: 'You took the smaller x part off both sides, then solved what was left.', sticker: 'Moving every x to one side is called collecting like terms. Use it whenever x is on both sides of the equals sign.' },
+    twinWon: { text: 'You took 2x off both sides of 2x + 12 = 5x + 3 and found x = 3.', sticker: 'Moving every x to one side is called collecting like terms. Use it whenever x is on both sides of the equals sign.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'Solve 4x + 3 = 2x + 11. What is x?',
         picture: bal('4x + 3', '2x + 11'), answer: 4,
@@ -485,12 +487,12 @@ export const G8M2: Lesson[] = [
           { say: "Take the x parts off both sides, then read what is left: an x means one answer, something never true means none, and something always true means every number works.", pic: 0 },
         ],
         pictures: [bal('2x + 3', '2x + 5')] },
-      { title: "Nothing works", text: "Take 2x off both sides and watch. Every x is gone, and what is left is 3 = 5. Is 3 ever equal to 5? Never, for any number of hours. So there is no answer. The two prices never meet.",
+      { title: "Nothing works", text: "Take 2x off both sides and watch. Every x is gone, and what is left is 3 = 5. Is 3 ever equal to 5? Never, for any number of hours. So there is no answer. On a graph, the two prices are two parallel lines that never meet.",
         beats: [
           { say: "Take 2x off both sides and watch.", pic: 1 },
           { say: "Every x is gone, and what is left is 3 = 5.", pic: 0 },
           { say: "Is 3 ever equal to 5? Never, for any number of hours." },
-          { say: "So there is no answer. The two prices never meet." },
+          { say: "So there is no answer. On a graph, the two prices are two parallel lines that never meet." },
         ],
         pictures: [bal('3', '5'), sides([['2x + 3', '=', '2x + 5'], ['3', '=', '5']], true)] },
       { title: "Everything works", text: "Now try 2(x + 3) = 2x + 6. Multiply out the parentheses. The left side becomes 2x + 6 too. Take 2x off both sides, and you get 6 = 6. Is that ever false? No. So every number works.",
@@ -593,14 +595,14 @@ export const G8M2: Lesson[] = [
           { say: "Both give 4, so the point fits both at once." },
         ],
         pictures: [plane(8, [P(2, 4)], [T7A, T7B]), eq('y = x + 2 → 2 + 2 = 4', ['y = −x + 6 → −2 + 6 = 4'])] },
-      { title: "One thing not to do", text: "Here's the part people mix up. A point on just ONE line is not enough. (1, 3) is on Ana's line. But Ben's rule gives 5 there, not 3. Only the crossing fits both. Okay. Your turn.",
+      { title: "One thing not to do", text: "Here's the part people mix up. A point on just ONE line is not enough. (1, 3) is on Ana's line. But Ben's equation gives 5 there, not 3. Only the crossing fits both. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "A point on just ONE line is not enough. (1, 3) is on Ana's line.", pic: 0 },
-          { say: "But Ben's rule gives 5 there, not 3. Only the crossing fits both." },
+          { say: "But Ben's equation gives 5 there, not 3. Only the crossing fits both." },
           { say: "Okay. Your turn." },
         ],
-        pictures: [cards('(1, 3): true for one rule', '(2, 4): true for both rules')] },
+        pictures: [cards('(1, 3): true for one equation', '(2, 4): true for both equations')] },
     ],
     turn: {
       text: 'The lines y = x + 1 and y = −x + 7 cross at one point. What is the x-value of that point?',

@@ -54,7 +54,7 @@ export const G6M1: Lesson[] = [
           { say: "How many beads are in one set? 3 + 2 is 5." },
           { say: "So 3 out of every 5 beads are red.", pic: 1 },
         ],
-        pictures: [{ kind: 'tape', rows: [{ cells: [{ w: 1, shade: true }, { w: 1, shade: true }, { w: 1, shade: true }, { w: 1 }, { w: 1 }], brace: '5 beads' }], motion: true },
+        pictures: [{ kind: 'tape', rows: [{ cells: [{ w: 1, colour: 'red' }, { w: 1, colour: 'red' }, { w: 1, colour: 'red' }, { w: 1, colour: 'blue' }, { w: 1, colour: 'blue' }], brace: '5 beads' }], motion: true },
           { kind: 'eq', text: 'red out of all = 3 out of 5' }] },
       { title: "Order matters", text: "Wait. The order of the words sets the order of the numbers. Red to blue is 3 : 2. Blue to red is 2 : 3.",
         beats: [
@@ -366,7 +366,7 @@ export const G6M1: Lesson[] = [
   // ── Topic 5 ──────────────────────────────────────────────────────────────────────────────────
   {
     id: 'g6m1-t5', title: 'Ratio tables', skill: 'Solve a ratio problem with a table: scale up, scale down, add columns',
-    bigIdea: "Every column is the same mix, so you can multiply, divide or add whole columns to make a new one.",
+    bigIdea: "Every column is the same mix, so you can multiply, divide or add two whole columns to make a new one, but adding 1 to each number still changes the mix.",
     screens: [
       { title: 'Trail mix for a camp trip', text: 'Trail mix uses 3 cups of nuts for every 5 cups of cereal. For a camp trip you have 15 cups of nuts. How much cereal do you need?',
         pictures: [table([['Nuts (cups)', '3', '15'], ['Cereal (cups)', '5', '?']])] },
@@ -376,9 +376,9 @@ export const G6M1: Lesson[] = [
           { say: "Going from 3 and 5 straight to 15 is a big jump. So take small steps, in a table." },
         ],
         pictures: [table([['Nuts (cups)', '3', '15'], ['Cereal (cups)', '5', '?']])] },
-      { title: "The big idea", text: "Every column is the same mix, so you can multiply, divide or add whole columns to make a new one.",
+      { title: "The big idea", text: "Every column is the same mix, so you can multiply, divide or add two whole columns to make a new one, but adding 1 to each number still changes the mix.",
         beats: [
-          { say: "Every column is the same mix, so you can multiply, divide or add whole columns to make a new one.", pic: 0 },
+          { say: "Every column is the same mix, so you can multiply, divide or add two whole columns to make a new one, but adding 1 to each number still changes the mix.", pic: 0 },
         ],
         pictures: [table([['Nuts (cups)', '3', '6', '9'], ['Cereal (cups)', '5', '10', '15']])] },
       { title: "Double it", text: "Start with 3 cups of nuts and 5 cups of cereal. Double both. 3 × 2 = 6, and 5 × 2 = 10. Same mix, just twice as much.",

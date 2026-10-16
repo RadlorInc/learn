@@ -87,7 +87,9 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
         // plainly rather than showing a parent a crash.
         setError(body.error === 'billing_not_configured'
           ? 'Checkout is not switched on yet. Nothing has been charged.'
-          : 'Something went wrong starting checkout. Nothing has been charged.')
+          : body.error === 'already_subscribed'
+            ? 'You already have a subscription, so nothing has been charged. To add a child, add them from your dashboard.'
+            : 'Something went wrong starting checkout. Nothing has been charged.')
         return
       }
       window.location.href = body.url
@@ -113,8 +115,8 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
           One subscription covers up to {MAX_SEATS} children.
         </p>
 
-        <SubscriptionCard />
-
+        {/* The checkout below is the card's child: it is not shown beside a live plan, or just after paying. */}
+        <SubscriptionCard>
         <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
           {(['monthly', 'annual'] as Cadence[]).map(c => (
             <button key={c} onClick={() => setCadence(c)} style={{
@@ -164,7 +166,7 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
           <ul style={{ margin: '8px 0 12px', paddingLeft: 20 }}>
             <li>You will be charged <strong>{usd(totalCents(seats, cadence))} today</strong>.</li>
             <li>After that, you will be charged <strong>{usd(totalCents(seats, cadence))} every {cadence === 'monthly' ? 'month' : 'year'}</strong> until you cancel.</li>
-            <li>You can cancel any time at <strong>Account → Plan &amp; billing</strong>, or by emailing support@radlor.com. Cancelling stops all future charges.</li>
+            <li>You can cancel any time at <strong>Account → Plan &amp; billing</strong>, by emailing support@radlor.com or by calling 1-888-812-9373. Cancelling stops all future charges.</li>
             <li>Full terms: <Link href="/legal/refunds" style={{ color: '#0B4FA8', fontWeight: 700 }}>Refund and Cancellation Policy</Link>,{' '}
               <Link href="/legal/terms" style={{ color: '#0B4FA8', fontWeight: 700 }}>Terms of Service</Link> and{' '}
               <Link href="/legal/privacy" style={{ color: '#0B4FA8', fontWeight: 700 }}>Privacy Policy</Link>.</li>
@@ -187,6 +189,7 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
         <p style={{ fontSize: 12, color: '#3d6fb8', margin: '14px 0 0', lineHeight: 1.5, textAlign: 'center' }}>
           Payment is handled by Stripe. We never see your card details.
         </p>
+        </SubscriptionCard>
       </div>
     </main>
   )

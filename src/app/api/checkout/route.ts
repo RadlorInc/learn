@@ -1,13 +1,18 @@
 import { NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { callerKey, overLimit } from '../_rateLimit'
 import { stripeClient } from '@/infra/stripe'
-import { MAX_SEATS, clampSeats, type Cadence } from '@/core/billing'
+import { HOLDS_SEATS, MAX_SEATS, clampSeats, type Cadence } from '@/core/billing'
 import { SITE_URL } from '@/app/site'
 import { sinkError } from '@/infra/errorSink'
 
 /**
- * Start a Stripe Checkout Session for N seats. **TEST MODE ONLY** — `stripeClient()` refuses a live
- * key outright, which is the whole of the stage's hard constraint (fbf193280:docs/billing-stage-2.md §0).
+ * Start a Stripe Checkout Session for N seats. Which Stripe mode (test or live) a deployment may use is decided in
+ * one place, `stripeClient()` in src/infra/stripe.ts — not here.
+ *
+ * ⚠️ ONE SUBSCRIPTION PER ACCOUNT. The webhook keeps one row per account, so a second live subscription would charge
+ * the family twice and overwrite the first one's row. A family whose plan still holds seats is refused (409); a
+ * second child is added with /api/billing/seats instead. Before any row exists (two tabs), Stripe is asked — below.
  *
  * ⚠️ THE ACCOUNT COMES FROM THE TOKEN, NEVER FROM THE BODY. This is the trust boundary of the whole
  * billing surface: a caller who can name the account they are buying for can seat a child on
@@ -27,6 +32,9 @@ export const dynamic = 'force-dynamic'
 /** Ten a minute per IP. Buying is a once-a-year action; the headroom is for a card retry. */
 const LIMIT = 10
 const WINDOW_MS = 60_000
+
+/** A subscription that holds seats, or whose first payment is still in progress (`incomplete`, up to 23 h). */
+const LIVE = new Set([...HOLDS_SEATS, 'incomplete'])
 
 const PRICE_ENV: Record<Cadence, string> = {
   monthly: 'STRIPE_PRICE_MONTHLY',
@@ -83,11 +91,15 @@ export async function POST(req: Request) {
    * return their own row — and checkout needs no service-role key at all, which keeps the one key
    * that bypasses every policy out of the request path a logged-in stranger can reach.
    */
+  // ⚠️ FAILS CLOSED: this read is also the double-subscription check, so "could not look" is not "has none".
   const owned = await fetch(
-    `${supabaseUrl}/rest/v1/subscriptions?account_id=eq.${user.id}&select=stripe_customer_id`,
+    `${supabaseUrl}/rest/v1/subscriptions?account_id=eq.${user.id}&select=stripe_customer_id,status`,
     { headers: { apikey: anon, Authorization: `Bearer ${token}` } },
-  ).then(r => (r.ok ? r.json() : [])).catch(() => [])
-  const customer = (owned as { stripe_customer_id?: string | null }[])[0]?.stripe_customer_id || null
+  ).then(r => (r.ok ? r.json() : null)).catch(() => null)
+  if (!Array.isArray(owned)) return NextResponse.json({ error: 'lookup_failed' }, { status: 503 })
+  const [mine] = owned as { stripe_customer_id?: string | null; status?: string }[]
+  if (mine?.status && HOLDS_SEATS.has(mine.status)) return NextResponse.json({ error: 'already_subscribed' }, { status: 409 })
+  const stored = mine?.stripe_customer_id || null
 
   const params = {
     mode: 'subscription' as const,
@@ -96,33 +108,83 @@ export async function POST(req: Request) {
     // The consent's time travels with the subscription, so Stripe holds the record of when they agreed.
     subscription_data: { metadata: { account_id: user.id, renewal_consent_at: renewalConsentAt } },
     // No trial — founder's call, Stage 1 §1.
-    success_url: `${SITE_URL}/parent?billing=success`,
+    // Back to the plan screen, which reads `billing=success` to say "activating" until the webhook has written the row.
+    success_url: `${SITE_URL}/parent/plan?billing=success`,
     cancel_url: `${SITE_URL}/parent?billing=cancelled`,
   }
 
+  /**
+   * ⚠️ TWO TABS. The row above is written by the webhook AFTER payment, so two tabs — or a double click across a slow
+   * return — both pass it, and each used to get its own payable Checkout Session: pay both, two subscriptions. So
+   * Stripe itself is asked, on ONE customer per account:
+   *   1. No stored customer → create one under an idempotency key derived from the account, so two concurrent first
+   *      checkouts get the SAME customer (Stripe replays the first answer; the SDK retries the 409 Stripe gives while
+   *      the first is still in flight). ponytail: Stripe keeps a key about 24 h, so an account with no row that comes
+   *      back a day later gets a second, empty customer — store the id at creation if that clutter ever matters.
+   *   2. Create the session, THEN list the customer's subscriptions and sessions. After, not before: a check made
+   *      before the create misses a tab that pays in between.
+   *   3. A live subscription (with `incomplete`: a first payment still going through) → expire ours, 409.
+   *   4. Of the OPEN sessions, keep the NEWEST and expire the rest. Every request agrees on "newest", and the last
+   *      request to list sees every session, so at most one stays payable — the latest plan asked for. Expired, not
+   *      reused: reusing an open one would hand tab 2 tab 1's seat count. A tab left holding an expired session gets
+   *      Stripe's "expired" page and starts again; it cannot pay.
+   *   5. An expire Stripe refuses for a session that is not then `expired` (it was just paid, or Stripe did not
+   *      answer) → expire the keeper too, 409. Already expired by the other tab's request is fine.
+   * A Stripe read that fails → expire ours, 503: "could not look" is not "has none".
+   */
+  const accountId = user.id
+  const newCustomer = () => stripe.customers.create(
+    { email: user.email, metadata: { account_id: accountId } },
+    { idempotencyKey: `checkout-customer-${accountId}` },
+  ).then(c => c.id)
+  let customer = stored || await newCustomer()
+
   let session
   try {
-    // ⚠️ `customer` and `customer_email` are MUTUALLY EXCLUSIVE — Stripe rejects a session carrying
-    // both, so this is a branch rather than two fields.
-    session = await stripe.checkout.sessions.create(
-      customer ? { ...params, customer } : { ...params, customer_email: user.email },
-    )
+    session = await stripe.checkout.sessions.create({ ...params, customer })
   } catch (e) {
     // ⚠️ A STORED CUSTOMER ID CAN GO STALE — deleted in the dashboard, or belonging to the other
     // mode after a test/live switch. Stripe answers `resource_missing`, and without this the parent
-    // simply cannot buy, with the reason visible only in a server log. Retry once as a new customer:
+    // simply cannot buy, with the reason visible only in a server log. Retry once on a new customer:
     // a duplicate customer is the thing this block exists to avoid, and it is still far better than
     // a checkout that is dead for one family and healthy for everyone else.
-    const missing = customer && (e as { code?: string })?.code === 'resource_missing'
-    if (!missing) throw e
+    if (!stored || (e as { code?: string })?.code !== 'resource_missing') throw e
     await sinkError({
       at: new Date().toISOString(),
       source: 'server',
-      message: `checkout: stored stripe_customer_id ${customer} is gone — starting a new customer`,
+      message: `checkout: stored stripe_customer_id ${stored} is gone — starting a new customer`,
       routePath: '/api/checkout',
     }).catch(() => {})
-    session = await stripe.checkout.sessions.create({ ...params, customer_email: user.email })
+    customer = await newCustomer()
+    session = await stripe.checkout.sessions.create({ ...params, customer })
   }
 
-  return NextResponse.json({ url: session.url })
+  const own = session
+  const refuse = async (error: string, status: number, id = own.id) => {
+    await stripe.checkout.sessions.expire(id).catch(() => {})
+    return NextResponse.json({ error }, { status })
+  }
+  let subs: Stripe.Subscription[], listed: Stripe.Checkout.Session[]
+  try {
+    const [s, l] = await Promise.all([
+      stripe.subscriptions.list({ customer, status: 'all', limit: 100 }),
+      stripe.checkout.sessions.list({ customer, limit: 100 }),
+    ])
+    subs = s.data
+    listed = l.data
+  } catch {
+    return refuse('lookup_failed', 503)
+  }
+  if (subs.some(s => LIVE.has(s.status))) return refuse('already_subscribed', 409)
+
+  const open = listed.filter(s => s.status === 'open')
+  if (!open.some(s => s.id === own.id)) open.push(own)
+  const keep = open.reduce((a, b) => (b.created > a.created || (b.created === a.created && b.id > a.id) ? b : a))
+  // A refused expire is fine only if the session is now expired (the other tab's request got there first).
+  const gone = (id: string) => stripe.checkout.sessions.expire(id).then(() => true,
+    () => stripe.checkout.sessions.retrieve(id).then(s => s.status === 'expired', () => false))
+  const done = await Promise.all(open.filter(s => s.id !== keep.id).map(s => gone(s.id)))
+  if (done.includes(false)) return refuse('checkout_conflict', 409, keep.id)
+
+  return NextResponse.json({ url: keep.url })
 }

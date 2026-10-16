@@ -7,9 +7,9 @@
 import Link from 'next/link'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { lessonDone } from '@/infra/storage/lessonProgress'
-import { pullLessonProgress } from '@/infra/storage/lessonSync'
+import { pullLessonProgress, pendingLessonUploads } from '@/infra/storage/lessonSync'
 import { getWallet } from '@/data/repositories/points'
-import { getMyLearners } from '@/data/repositories/learners'
+import type { LearnerWithRole } from '@/data/repositories/learners'
 import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { trialTopics } from '@/data/repositories/billing'
 import { PAYWALL_ENABLED } from '@/features/billing/useTopicGate'
@@ -28,6 +28,8 @@ const LANDSCAPE = '(orientation: landscape) and (min-width: 700px)'
 type Props = {
   learnerId: string | null; back?: { href: string; label: string } | { onClick: () => void; label: string }; grade?: number; lessonIds?: readonly string[] | null
   exercises?: { count: number; onOpen: () => void }
+  /** The account's row for this child, as /modules read it (undefined = not read): the newest assigned lessons. */
+  account?: LearnerWithRole
 }
 
 /**
@@ -63,12 +65,12 @@ function BeingChosen({ back }: { back: Props['back'] }) {
   )
 }
 
-function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exercises, trial }: Props & { trial: string[] | null }) {
+function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exercises, account, trial }: Props & { trial: string[] | null }) {
   // The assigned lessons as of the latest read: the copy saved at sign-in, replaced by the account's own on mount, so a
   // lesson the parent assigns while the child is signed in reaches them the next time they open this screen.
-  const [fresh, setFresh] = useState<{ ids: string[] | null; due: Record<string, string> | null } | null>(null)
-  const lessonIds = trial ?? (fresh ? fresh.ids : savedIds)
-  const due = fresh ? fresh.due : getActiveLearner()?.lesson_due ?? null
+  const me = account?.id === learnerId ? account : undefined
+  const lessonIds = trial ?? (me ? me.lesson_ids ?? null : savedIds)
+  const due = me ? me.lesson_due ?? null : getActiveLearner()?.lesson_due ?? null
   const all = chooseFrom([...STORY_CATALOGUE, ...CATALOGUE], lessonIds)
   // KG–2 story modules get their own layout (one Play card each); Grades 3–8 are the lesson modules.
   const storyMods = all.filter(x => x.story), mods = all.filter(x => !x.story)
@@ -80,22 +82,24 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
   const [, redraw] = useState(0)
   const [points, setPoints] = useState<number | null>(null)
   useEffect(() => {
+    if (!me) return   // not read (offline): the saved copy stands
+    const active = getActiveLearner()
+    // During the trial the saved copy holds the two free topics, so the topic path (/lesson) shows only those.
+    if (active?.id === me.id) setActiveLearner({ ...active, lesson_ids: trial ?? me.lesson_ids ?? null, lesson_due: me.lesson_due ?? null })
+  }, [me, trial])
+  useEffect(() => {
     if (!learnerId) return
     let live = true
-    getMyLearners().then(all => {
-      const me = all.find(l => l.id === learnerId)
-      if (!live || !me) return
-      const active = getActiveLearner()
-      // During the trial the saved copy holds the two free topics, so the topic path (/lesson) shows only those.
-      if (active?.id === me.id) setActiveLearner({ ...active, lesson_ids: trial ?? me.lesson_ids ?? null, lesson_due: me.lesson_due ?? null })
-      setFresh({ ids: me.lesson_ids ?? null, due: me.lesson_due ?? null })
-    }).catch(() => { /* offline: the saved copy stands */ })
-    // The wallet after the pull, so points earned by uploads it just sent are counted.
+    const showWallet = () => getWallet(learnerId).then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
+    // The wallet alongside the pull (one round trip, not two in a row) — and again after it when uploads were waiting,
+    // so points they earn are counted. ponytail: progress only this device has (from before sync existed) is uploaded
+    // by the pull without a second wallet read; its points show on the next visit.
+    const waiting = pendingLessonUploads() > 0
+    void showWallet()
     pullLessonProgress(learnerId, [...STORY_CATALOGUE, ...CATALOGUE].flatMap(x => x.lessons.map(l => l.id)))
-      .then(ok => { if (live && ok) redraw(n => n + 1); return getWallet(learnerId) })
-      .then(w => { if (live && w && w !== 'unavailable') setPoints(w.balance) })
+      .then(ok => { if (live && ok) redraw(n => n + 1); if (waiting) void showWallet() })
     return () => { live = false }
-  }, [learnerId, trial])
+  }, [learnerId])
   const [picked, setPicked] = useState(() => GRADES.length ? firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]) : '')
   // A story tab is open when the child asked for KG–2, or when the parent chose nothing from Grades 3–8.
   const [storyTab, setStoryTab] = useState<number | null>(() => STORY_TABS.includes(startGrade) ? startGrade : GRADES.length ? null : STORY_TABS[0] ?? null)
@@ -232,7 +236,7 @@ function StoryChapters({ modules, learnerId }: { modules: ModuleMeta[]; learnerI
             <strong style={cardTitle}>Story</strong>
             {isDone(c.id) ? 'Done! Play it again any time.' : 'Watch first, then it is your turn.'}
           </div>
-          <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{c.emoji}</span>
+          <CardArt src={c.asset} emoji={c.emoji} />
           <Link href={`/game?c=${c.id}`} style={primary}>{isDone(c.id) ? 'Play again' : 'Play'}</Link>
         </div>
       </section>
@@ -269,3 +273,12 @@ const num: CSSProperties = { width: 34, height: 34, borderRadius: '50%', flexShr
 const card: CSSProperties = { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', border: `4px solid ${INK}`, borderRadius: 20, padding: '14px 16px',
   fontSize: 18, fontWeight: 600, color: INK }
 const cardTitle: CSSProperties = { display: 'block', fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 900 }
+
+/** A chapter's picture on its Play card. Decorative (the title is beside it), so alt="" — and if the file fails to load
+ *  the chapter's emoji stands in, so the card is never left with an empty gap. */
+function CardArt({ src, emoji }: { src: string; emoji: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) return <span aria-hidden style={{ fontSize: 40, lineHeight: 1 }}>{emoji}</span>
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} alt="" width={72} height={72} decoding="async" onError={() => setFailed(true)} style={{ width: 72, height: 72, objectFit: 'contain', flexShrink: 0 }} />
+}

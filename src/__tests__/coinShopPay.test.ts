@@ -321,14 +321,14 @@ describe('the walk', () => {
     expect(Math.max(...SHOPPERS.map(k => k.scale))).toBeGreaterThan(Math.min(...SHOPPERS.map(k => k.scale)) * 1.5)
   })
 
-  it('the buyer is the foreman bear, with a REGISTERED drawn cycle, and no mascot is drawn', () => {
+  it('the buyer is the bear cub, with a REGISTERED drawn cycle, and no mascot is drawn', () => {
     // Without one `SheetCell` silently falls back to a still, and a still that travels is a sticker
     // being dragged — invisible in a screenshot. He walks in and out of every round.
     // The path is written out HERE, not imported: the product has no mascot (2026-09-25), and the
     // camouflage check below is calibrated to THIS sprite's colour, so a swap must go red here.
-    expect(src()).toContain("'/assets/objects/foreman_bear_side.png'")
+    expect(src()).toContain("'/assets/objects/bearcub_side.png'")
     expect(src()).not.toMatch(/characters\/milo|MiloSprite|🦊/)
-    expect(hasSheet('/assets/objects/foreman_bear_side.png')).toBe(true)
+    expect(hasSheet('/assets/objects/bearcub_side.png')).toBe(true)
   })
 
   it('every coin sprite exists', () => {
@@ -487,6 +487,10 @@ describe('the ground is open, and nothing on it is camouflaged', () => {
    * over 43% (the rest of the bear is his blue overalls, ~195°, and his hat). Same dominant cluster,
    * so 22° stays the reference. ⚠️ The 0.53 saturation reference was NOT re-derived for the bear (the
    * method that produced it is not recorded here; this instrument gives him 0.53, the old walker 0.76).
+   * ⚠️ **AND AGAIN 2026-09-29: THE BUYER IS NOW `bearcub_side.png`.** Re-measured 2026-10-02 with the same
+   * instrument (it reproduces the foreman: 23.7° over 43%, in-band HSV saturation 0.54): the cub is 23.4° over
+   * **90%** of him — all brown, no overalls — so 22° stays the reference. His in-band saturation is **0.62**, and
+   * that IS re-derived: BUYER_SAT below follows him.
    * The history below is the OLD walker's and is kept for the reasoning.
    *
    * ⚠️ **THE INSTRUMENT WAS WRONG BEFORE THE THRESHOLD WAS, AND THAT IS THE FINDING.** The previous
@@ -506,14 +510,14 @@ describe('the ground is open, and nothing on it is camouflaged', () => {
    * ever says the buyer is hard to pick out on the pottery stall.
    */
   it('the buyer is never camouflaged by the ground he stands on', async () => {
-    const BUYER_HUE = 22, BUYER_SAT = 0.53, MIN_SEP = 35
+    const BUYER_HUE = 22, BUYER_SAT = 0.62, MIN_SEP = 35
     for (const st of STALLS) {
       const { rgb } = await measure(st)
       const h = hue(...rgb), sa = sat(...rgb)
       const hueOk = h == null ? true : sep(h, BUYER_HUE) >= MIN_SEP
       const satOk = Math.abs(sa - BUYER_SAT) >= 0.22
       expect(hueOk || satOk,
-        `${st.key}: ground hue ${h?.toFixed(0)}° sat ${sa.toFixed(2)} against the buyer 22°/0.53 — separated by neither`,
+        `${st.key}: ground hue ${h?.toFixed(0)}° sat ${sa.toFixed(2)} against the buyer 22°/0.62 — separated by neither`,
       ).toBe(true)
     }
   })

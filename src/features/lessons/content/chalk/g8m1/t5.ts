@@ -2,7 +2,7 @@
  *  The number written digit by digit, 52 apart, so the point and its jumps can be drawn between digits.
  *  Colours: the point, the jumps' count and the result yellow · each × 10 blue · the mix-up coral · labels dim. */
 import type { ChalkColor, ChalkMark } from '../../../chalk'
-import { write, line, arrow, hop } from '../../../chalk'
+import { write, line, arrow, hopArrow } from '../../../chalk'
 import { expr, warn, strike } from './t1'
 
 type At = [beat: number, at?: string]
@@ -37,13 +37,14 @@ export const T5: (ChalkMark[] | undefined)[] = [
     write([1, 'first'], 'after the first digit', 230, 215, 24, 'd'),
     arrow([2, 'becomes'], [300, 250], [300, 280], 'd'), write([2, '1.5.'], '1.5', 300, 330, 56, 'y'),
   ],
-  // Count the jumps: 8 places, each one × 10
+  // Count the jumps: 8 places, each one × 10. Each hop stops short of the next with an arrowhead along its landing, so its way reads
+  // left to right, × 10 a jump (a tester read the joined arcs the other way, 14 Oct 2026).
   [
     ...quick([...digits([0, 'Now'], '150000000', 90, 150), ...point([0, 'Now'], 116, 170)]),
     write([0, 'end'], 'end', 545, 200, 22, 'd'),
     ...Array.from({ length: 8 }, (_, i) => {
       const n = String(i + 1), x = 116 + 52 * i
-      return [hop([1, n], x, x + 52, 118, 'y'), write([1, n], n, x + 26, 70, 24, 'y')]
+      return [hopArrow([1, n], x + 4, x + 48, 118, 'y'), write([1, n], n, x + 26, 70, 24, 'y')]
     }).flat(),
     write([1, 'places'], '8 places', 150, 235, 28, 'y'), write([1, '10.'], '× 10 each jump', 420, 235, 28, 'b'),
     ...expr([2, 'So'], ['150,000,000', '=', ['1.5', 'y'], ['×', 'y'], ['10^8', 'y']], 300, 320, 40),
@@ -52,7 +53,7 @@ export const T5: (ChalkMark[] | undefined)[] = [
   [
     ...digits([0, '4,200.'], '4200', 222, 120),
     ...point([1, 'point'], 248, 140), write([1, '4.2.'], '4.2', 300, 210, 44, 'y'),
-    ...[0, 1, 2].map(i => hop([2, 'jumps'], 248 + 52 * i, 300 + 52 * i, 88, 'y')),
+    ...[0, 1, 2].map(i => hopArrow([2, 'jumps'], 252 + 52 * i, 296 + 52 * i, 88, 'y')),
     write([2, '3'], '3 places', 480, 70, 26, 'y'),
     ...expr([2, 'so'], ['4,200', '=', ['4.2', 'y'], ['×', 'y'], ['10^3', 'y']], 300, 310, 44),
   ],

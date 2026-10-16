@@ -53,8 +53,9 @@ export const T3: (ChalkMark[] | undefined)[] = [
     row([0, 'rectangle'], 140, 70, 80, 100), box([0, 'rectangle'], 160, 70, 320, 100, 'y'),
     span([1, 'long'], 160, 480, 200), write([1, 'half'], 'half the way around', 320, 235, 22, 'd'),
     write([1, '3.14'], '3.14 × 10', 262, 280, 28), write([1, '31.4'], '= 31.4 m', 392, 280, 28, 'y'),
-    line([2, 'short'], [[110, 70], [110, 170]], 'b'), line([2, 'short'], [[100, 70], [120, 70]], 'b'), line([2, 'short'], [[100, 170], [120, 170]], 'b'),
-    write([2, 'radius'], '10 m', 60, 120, 26, 'b'), write([2, 'radius'], 'the radius, 10 m', 320, 340, 28, 'b'),
+    write([2, '62.8'], 'all the way: 3.14 × 20 = 62.8 m', 320, 310, 20, 'd'),
+    line([3, 'short'], [[110, 70], [110, 170]], 'b'), line([3, 'short'], [[100, 70], [120, 70]], 'b'), line([3, 'short'], [[100, 170], [120, 170]], 'b'),
+    write([3, 'radius'], '10 m', 60, 120, 26, 'b'), write([3, 'radius'], 'the radius, 10 m', 320, 340, 28, 'b'),
   ],
   // Multiply the sides
   [

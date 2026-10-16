@@ -12,6 +12,9 @@
 
 export type Obj = 'cookie' | 'chair' | 'plant' | 'muffin' | 'dot' | 'sock' | 'finger' | 'straw' | 'wheel' | 'apple' | 'sticker' | 'crayon'
 
+/** The things a lesson weighs on a scale (`measure` `on`). */
+export type ScaleItem = 'bag' | 'jar' | 'box' | 'book' | 'watermelon' | 'suitcase' | 'cat'
+
 export type Picture =
   | { kind: 'groups'; groups: number; each: number; obj: Obj; show?: 'count' | 'running' | 'rings'; motion?: boolean }
   | { kind: 'scatter'; n: number; obj: Obj }
@@ -26,12 +29,14 @@ export type Picture =
   | { kind: 'eq'; text: string; lines?: string[] }
   // ── Grades 3–8 diagrams (drawn in ./Diagrams.tsx; every field is documented in docs/product/building-lessons.md) ──
   | { kind: 'bars'; bars: { parts: number; shaded: number; shade2?: number; split?: number; label?: string }[]; motion?: boolean }
-  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean }[]; brace?: string }[]; motion?: boolean }
+  | { kind: 'tape'; rows: { label?: string; cells: { w: number; text?: string; shade?: boolean; colour?: string }[]; brace?: string }[]; motion?: boolean }
   | { kind: 'numline'; min: number; max: number; ticks: number; labels?: (string | null)[] | 'ends' | 'none';
       points?: { at: number; label?: string; open?: boolean }[]; jumps?: { from: number; to: number; label?: string }[];
       ray?: { from: number; dir: 'left' | 'right'; open: boolean }; motion?: boolean }
   | { kind: 'clock'; h: number; m: number; hands?: boolean; fives?: boolean }
-  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string }
+  | { kind: 'measure'; tool: 'ruler' | 'scale' | 'jug' | 'thermometer'; min?: number; max: number; step: number; labelEvery?: number; value?: number | null; unit: string;
+      /** A scale only: what sits on its pan, always drawn at one size so the picture never hints at the weight. */
+      on?: ScaleItem }
   | { kind: 'blocks'; hundreds: number; tens: number; ones: number; trade?: 'ones' | 'tens'; motion?: boolean }
   | { kind: 'columns'; rows: string[]; op?: '+' | '−' | '×'; carry?: string; places?: string[]; answer?: string | null; motion?: boolean }
   | { kind: 'longdiv'; divisor: string; dividend: string; quotient?: string; work?: string[] }
@@ -44,16 +49,21 @@ export type Picture =
       circles?: { c: [number, number]; r: number; label?: string; show?: 'r' | 'd' }[]
       labels?: { at: [number, number]; text: string; size?: number; tone?: 1 | 2 }[] }
   | { kind: 'angle'; deg: number; parts?: number[]; partLabels?: (string | null)[]; protractor?: boolean; label?: string; motion?: boolean }
-  | { kind: 'chart'; type: 'bar' | 'picture' | 'dot' | 'hist'; labels: string[]; values: number[]; scale?: number; max?: number; unit?: string; key?: string; xLabel?: string; yLabel?: string; motion?: boolean }
+  | { kind: 'chart'; type: 'bar' | 'picture' | 'dot' | 'hist'; labels: string[]; /** type 'dot' only: filled dots (a Grade 6+ dot plot) instead of ✕s (a Grade 3–5 line plot). */ dots?: boolean; values: number[]; scale?: number; max?: number; unit?: string; key?: string; xLabel?: string; yLabel?: string; motion?: boolean }
   | { kind: 'plot'; points: [number, number][]; xMax: number; yMax: number; xStep?: number; yStep?: number; fit?: [[number, number], [number, number]]; xLabel?: string; yLabel?: string; motion?: boolean }
   | { kind: 'coord'; min: number; max: number; step?: number; points?: { x: number; y: number; label?: string }[];
-      lines?: { a: [number, number]; b: [number, number]; extend?: boolean; dashed?: boolean; label?: string; tone?: 1 | 2 }[]; motion?: boolean }
+      lines?: { a: [number, number]; b: [number, number]; extend?: boolean; dashed?: boolean; label?: string; tone?: 1 | 2 }[]; motion?: boolean
+      /** What each axis counts, [along the bottom, up the side], written on the graph (tester, g8m2-t3/t4, g8m3-t6). */
+      names?: [string, string] }
   | { kind: 'table'; head?: string[]; rows: string[][]; rowHead?: boolean; mark?: [number, number][]; motion?: boolean }
   | { kind: 'cubes'; l: number; w: number; h: number; layers?: number; motion?: boolean }
-  | { kind: 'solid'; shape: 'prism' | 'cylinder' | 'cone' | 'sphere' | 'pyramid'; labels?: { r?: string; h?: string; l?: string; w?: string } }
+  | { kind: 'solid'; shape: 'prism' | 'cylinder' | 'cone' | 'cup' | 'icecream' | 'sphere' | 'pyramid'; labels?: { r?: string; h?: string; l?: string; w?: string } }
   | { kind: 'chips'; pos: number; neg: number; pairs?: number; motion?: boolean }
   | { kind: 'balance'; left: string; right: string }
   | { kind: 'spinner'; parts: string[]; tones?: (1 | 2 | 3 | 4)[] }
+  /** A winding trail from a start dot to an arrow, a bike `done` (0–1) of the way along; brackets under it: the whole
+   *  trail (`total`) and the part ridden (`doneLabel`); `left` is written over the part still to ride. */
+  | { kind: 'trail'; total: string; done: number; doneLabel: string; left?: string; motion?: boolean }
 
 export type Op =
   | { t: 'mul'; a: number; b: number }                       // a groups of b
@@ -81,6 +91,9 @@ export interface Problem {
   answer?: Answer
   steps?: string[]
   picture: Picture        // Screen 8 / practice picture: it must not show the answer
+  /** Practice only: what Hint shows for THIS level when the lesson's big idea does not fit it (a level that works
+   *  backwards, or one the lesson never shows). Shown, never spoken. Tester notes g6m1-t2 L5 and g8m1-t1 L4, 7–8 Oct. */
+  hint?: string
 }
 
 export interface YourTurn extends Problem {
@@ -116,6 +129,9 @@ export interface Lesson {
   title: string
   skill: string
   bigIdea: string
+  /** What practice's Hint shows, when the big idea quotes the lesson's own example (g5m4-t1: "so 47 thousandths is
+   *  0.047" beside a question about 36 thousandths — tester, 14 Oct 2026). Shown, never spoken. Default: the big idea. */
+  hint?: string
   screens: Screen[]                           // exactly 7
   turn: YourTurn                              // Screen 8
   won: { text: string; sticker: string }      // Screen 9

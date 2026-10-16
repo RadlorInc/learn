@@ -63,7 +63,7 @@ export const G3M2_VOICE: Record<string, VoiceLine> = {
   "One more mark is 100 more. That makes 700.": { style: 'B' },
   "So the apples weigh 700 grams.": { style: 'B' },
   "Light things, like apples, are weighed in grams.": { style: 'B' },
-  "What about a dog? A dog is heavy, so we use kilograms.": { style: 'B' },
+  "What about a watermelon? A watermelon is heavy, so we use kilograms.": { style: 'B' },
   "And 1 kilogram is 1,000 grams.": { style: 'B' },
   "Each mark is NOT 1 gram. That would make 601.": { style: 'B+' },
   "On this scale, each mark is 100 grams. So it's 700.": { style: 'B+' },

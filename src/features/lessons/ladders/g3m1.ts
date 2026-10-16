@@ -177,7 +177,7 @@ const T4: Level[] = [
   { style: 'two-step story (nickels and dimes)', make: r => {
     const n = int(r, 2, 6), d = int(r, 2, 5), t = n * 5 + d * 10
     return { text: `A nickel is worth 5 cents. A dime is worth 10 cents. Mia has ${n} nickels and ${d} dimes. How many cents does she have?`,
-      picture: eq(`${n} × 5 = ?`, [`${d} × 10 = ?`]), answer: t,
+      picture: eq(`${n} × 5 = ?`, [`${d} × 10 = ?`, '? + ? = ?']), answer: t,
       steps: [`Nickels: count by 5s ${n} times: ${count(5, n)}. That is ${n * 5} cents.`, `Dimes: count by 10s ${d} times: ${count(10, d)}. That is ${d * 10} cents.`, `${n * 5} + ${d * 10} = ${t}, so Mia has ${t} cents.`] }
   } },
 ]
@@ -217,7 +217,7 @@ const T5: Level[] = [
   { style: 'two-step story (3s and 4s together)', make: r => {
     const a = int(r, 2, 6), b = int(r, 2, 6), t = a * 3 + b * 4
     return { text: `A park has ${a} tricycles and ${b} cars. A tricycle has 3 wheels and a car has 4. How many wheels are there in all?`,
-      picture: eq(`${a} × 3 = ?`, [`${b} × 4 = ?`]), answer: t,
+      picture: eq(`${a} × 3 = ?`, [`${b} × 4 = ?`, '? + ? = ?']), answer: t,
       steps: [`Tricycles: ${count(3, a)}. That is ${a * 3} wheels.`, `Cars: ${count(4, b)}. That is ${b * 4} wheels.`, `${a * 3} + ${b * 4} = ${t} wheels in all.`] }
   } },
 ]

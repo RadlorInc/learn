@@ -1,9 +1,13 @@
 /**
  * What the public surfaces PROMISE — founder's decision N21, 2026-09-26, and the KG flip of 2026-09-28.
  *
- * `/play` says games are "coming soon" and spends no points; teachers adding students is paused until a
- * school-consent route exists. So the titles, descriptions, share card, JSON-LD, manifest, llms.txt, /help and /auth
- * must not sell game time or class rosters. Flip this gate in the SAME change that ships either of them.
+ * Teachers adding students is paused until a school-consent route exists, so the titles, descriptions, share card,
+ * JSON-LD, manifest, llms.txt, /help and /auth must not claim class rosters. Flip that gate in the SAME change that
+ * ships them.
+ *
+ * ⚠️ GAME TIME FLIPPED ON 2026-10-01 (#352, live): points buy BlockCraft time on /play. Until then this gate forbade
+ * selling game time; now /help and llms.txt must SAY that points buy game time, and no surface may still call games
+ * "coming soon".
  *
  * ⚠️ THE GRADES FLIPPED ON 2026-09-28 (founder): KG, Grade 1 and Grade 2 are live (#305), so every surface says
  * "grades K–8" (short places) or "kindergarten through grade 8" (prose), and none still says the old "3 to 8" —
@@ -45,6 +49,8 @@ const authSpanish = (): [string, string] => [`${AUTH} in Spanish`, authKeys().ma
 const K8 = /\bK–8\b|kindergarten through grade 8/i
 const OLD_RANGE = /\b3 to 8\b|3\.º a 8\.º/i
 const GAME_TIME = /game[ -]?time|minutes of (a |the )?(building )?game|spend (them|points|it) on (game|minutes)/i
+// One sentence, as ROSTER below: games (or game time) named as not here yet.
+const GAMES_SOON = /\bgames?\b[^.]*\bcoming soon\b/i
 // One sentence (`[^.]*` cannot cross a full stop): a teacher doing something with classes/students, or any roster.
 const ROSTER = /\bteachers?\b[^.]*\b(class(es)?|students?)\b|\brosters?\b/i
 
@@ -71,8 +77,14 @@ describe('public claims match what ships (N21)', () => {
     for (const [name, text] of all) expect(text, `${name} still says 3 to 8`).not.toMatch(OLD_RANGE)
   })
 
-  it('no marketing surface sells game time', async () => {
-    for (const [name, text] of await surfaces()) expect(text, `${name} sells game time`).not.toMatch(GAME_TIME)
+  it('/help and llms.txt say points buy game time, and no surface still calls games "coming soon"', async () => {
+    const all = await surfaces()
+    for (const name of ['src/app/help/page.tsx', 'GET /llms.txt'])
+      expect(all.find(([n]) => n === name)![1], `${name} does not say points buy game time`).toMatch(GAME_TIME)
+    for (const [name, text] of all) expect(text, `${name} still says games are coming soon`).not.toMatch(GAMES_SOON)
+    // the pattern catches the sentence it replaced, and not the one that replaced it
+    expect('Games to spend them on are coming soon; until then').toMatch(GAMES_SOON)
+    expect('spends them on game time: minutes of BlockCraft').not.toMatch(GAMES_SOON)
   })
 
   it('no marketing surface claims teacher classes / rosters', async () => {

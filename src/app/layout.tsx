@@ -10,6 +10,8 @@ import AuthEventLogger from '@/infra/AuthEventLogger'
 import './fonts.css'
 import './globals.css'
 import { ToastProvider } from '@/shared/ui/Toast'
+import OutageNotice from '@/shared/ui/OutageNotice'
+import SpeedInsights from '@/infra/SpeedInsights'
 
 /**
  * ⚠️ THE FONTS ARE SELF-HOSTED FROM THE REPO — `public/fonts/` + `./fonts.css` — AND NOTHING FETCHES THEM FROM GOOGLE,
@@ -137,6 +139,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <MiloErrorBoundary>
+          {/* First in the flow: the founder's outage notice (OUTAGE_NOTICE), outside StorageGate so it shows during its splash. */}
+          <OutageNotice />
           <StorageGate>
             {/* One listener for the whole app: every sign-in, every provider, every route. */}
             <AuthEventLogger />
@@ -145,6 +149,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ConsentPause />
           </StorageGate>
           <ToastProvider />
+          <SpeedInsights />
         </MiloErrorBoundary>
         {/* SW registration lives in a static /public file (not inline) so the app ships no
             inline scripts of its own — a prerequisite for a strict script-src CSP. See next.config.ts.

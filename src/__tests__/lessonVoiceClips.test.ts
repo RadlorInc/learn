@@ -27,6 +27,7 @@ const spoken = (l: Lesson): string[] => [
   ...hintsFor(l, { ...START, mode: 'turn' }), ...hintsFor(l, { ...START, mode: 'turn', twin: true }),
   wonFor(l, { ...START, mode: 'won' }).text, wonFor(l, { ...START, mode: 'won', twin: true }).text,
   wonFor(l, { ...START, mode: 'won', twin: true, misses: 3 }).text,
+  l.won.sticker, l.twinWon.sticker,   // Screen 9 says the sticker after its sentence (15 Oct)
 ]
 
 it("every line a lesson speaks reaches its clip through its own module's index, by key AND check", async () => {

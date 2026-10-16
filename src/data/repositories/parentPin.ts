@@ -34,7 +34,14 @@ async function call(fn: string, args: Record<string, unknown>): Promise<PinResul
 
 export const verifyPin = (pin: string) => call('verify_parent_pin', { p_pin: pin })
 export const setPin = (pin: string, current?: string) => call('set_parent_pin', { p_pin: pin, p_current: current ?? null })
+/** "Forgot PIN?" goes through the server, which runs the same RPC as the caller and emails the account that a reset
+ *  was asked for (app/api/parent/pin-reset). */
 export async function requestPinReset(): Promise<{ ok: boolean; reset_at?: string }> {
-  const r = await call('request_parent_pin_reset', {}) as unknown as { ok: boolean; reset_at?: string }
-  return r
+  try {
+    const { data: { session } } = await db().auth.getSession()
+    if (!session) return { ok: false }
+    const r = await fetch('/api/parent/pin-reset', { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` } })
+    const j = (await r.json().catch(() => null)) as { ok?: boolean; reset_at?: string } | null
+    return j?.ok === true && typeof j.reset_at === 'string' ? { ok: true, reset_at: j.reset_at } : { ok: false }
+  } catch { return { ok: false } }
 }

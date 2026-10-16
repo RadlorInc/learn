@@ -5,6 +5,11 @@
 import type { VoiceLine } from './styles'
 
 export const G6M6_VOICE: Record<string, VoiceLine> = {
+  // Tall first, wide last (15 Oct 2026): as one list the model repeated a piece every time — "2 centimeters wide and 2
+  // centimeters tall" three times, with a comma (round 4) and as three sentences (batch B) it still repeated "two centimeters
+  // wide". So "tall" comes first and "wide" last, with nothing after it to loop back from.
+  'Wrapping a gift. A gift box is 4 cm long, 3 cm wide and 2 cm tall. How much paper covers the outside, with no overlap?':
+    { style: 'A', say: 'Wrapping a gift. A gift box is 2 cm tall, 4 cm long and 3 cm wide. How much paper covers the outside, with no overlap?' },
   // Each topic's "Here's the part people mix up." and "Okay. Your turn." share g5m1's rows.
   // ── g6m6-t1 ──
   "Could you count square tiles?": { style: 'B' },

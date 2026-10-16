@@ -157,7 +157,7 @@ export const ShapePlay: React.FC<{ world: ShWorld; data: ShRound; mode: Mode; on
             <Shape name={data.target} size={200} />
           </FitBox>
         </div>
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(14px,4vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
+        <div className="tap-through" style={{ position: 'fixed', left: 0, right: 0, bottom: short ? Math.max(6, Math.round(btn * 0.14)) : '4%', zIndex: 33, display: 'flex', justifyContent: 'center', gap: short ? Math.round(btn * 0.24) : 'clamp(14px,4vw,28px)', flexWrap: 'wrap', padding: '0 12px' }}>
           {data.choices!.map(n => {
             const isPick = pickedNum === n, isOk = n === data.answer
             return (

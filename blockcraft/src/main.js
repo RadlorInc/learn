@@ -10,14 +10,12 @@ import { Audio } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
 const SAVE_KEY = 'blockcraft.save.v2';
-// Opened from the learning app's /play page (?key=…&until=…): /play bought the game time, put the child's newest save on
+// Opened from the learning app's /play page (?key=…&learner=…): /play bought the game time, put the child's newest save on
 // this device under `key`, and gets the child back when the time is up — it uploads that save to the account then.
-// The game only plays until `until` (ms), saves under `key`, and returns to /play. Standalone, it keeps its own save
-// and shows the title screen.
-// ponytail: `until` comes from the URL, so a child who edits it plays longer; the points were already spent by the
-// database either way. Move the check into the game (read game_wallet) if that ever matters.
+// The game plays only as long as the database says (public/play-time.js, never the URL), saves under `key`, and
+// returns to /play. Standalone (on localhost only), it keeps its own save and shows the title screen.
 const Q = new URLSearchParams(location.search);
-const PLAY = Q.has('key') && Q.has('until') ? { key: Q.get('key'), until: +Q.get('until') } : null;
+const PLAY = Q.has('key') && Q.has('learner') ? { key: Q.get('key'), learner: Q.get('learner') } : null;
 const BACK = '/play';
 const STOP = '/play?stop=1'; // /play stops the game time there and gives back the minutes not played
 const SETTINGS_KEY = 'blockcraft.settings';
@@ -25,6 +23,8 @@ const DAY = 1200; // seconds per full day
 const REACH = 5;
 const P_HW = 0.3, P_H = 1.8, EYE = 1.62;
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+document.querySelectorAll('.keyslist').forEach((el) => el.classList.toggle('hidden', isTouch)); // a touch screen has its own buttons, not keys
+let keysHidden = (() => { try { return localStorage.getItem('blockcraft.keysHidden') === '1'; } catch { return false; } })(); // H hides the keys list
 const FACING = (yaw) => { const fx = -Math.sin(yaw), fz = -Math.cos(yaw); return Math.abs(fx) > Math.abs(fz) ? (fx > 0 ? 1 : 3) : (fz > 0 ? 2 : 0); };
 
 // ------------------------------------------------------------------ renderer / scene
@@ -170,7 +170,7 @@ function makeWorld(dim) {
 
 function startWorld(data) {
   clearEntities();
-  G.seed = data.seed; G.mode = 'creative'; // creative only: a calm break for kids, no survival G.time = data.time ?? 0.02; G.enchantSeed = data.enchantSeed || 0;
+  G.seed = data.seed; G.mode = data.mode === 'survival' ? 'survival' : 'creative'; G.time = data.time ?? 0.02; G.enchantSeed = data.enchantSeed || 0;
   G.dims = { overworld: unpackDim(data.dims?.overworld), nether: unpackDim(data.dims?.nether), end: unpackDim(data.dims?.end) };
   G.spawnedVillages = new Set();
   const w = makeWorld(data.dim || 'overworld');
@@ -206,23 +206,20 @@ function show(name) {
   for (const s of screens) $(s).classList.toggle('hidden', s !== name);
   $('hud').classList.toggle('hidden', !['playing', 'paused', 'dead'].includes(G.state) && name !== 'inventory');
   $('touch').classList.toggle('hidden', !isTouch || G.state !== 'playing' || name === 'inventory');
+  $('keys').classList.toggle('hidden', isTouch || keysHidden || G.state !== 'playing' || name === 'inventory');
   if (name === 'title') $('bContinue').classList.toggle('hidden', !hasSave());
 }
 if (PLAY) {
   $('bQuit').textContent = 'Stop and keep my minutes';
-  if (Date.now() >= PLAY.until) location.replace(BACK);
   // after the rest of this module has run, as the old message-driven start was
-  else { show('loading'); setTimeout(() => startWorld(safeParse(localStorage.getItem(PLAY.key)) || { seed: (Math.random() * 2 ** 31) | 0 })); }
-  const tick = setInterval(() => {
-    const left = Math.max(0, Math.ceil((PLAY.until - Date.now()) / 1000));
-    $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
-    // time is up: save, freeze, say so, and go back to /play, which uploads the save
-    if (left === 0 && G.world) {
-      clearInterval(tick); save(); G.state = 'title'; document.exitPointerLock?.(); keys.clear();
-      toast("Time's up! Your world is saved."); setTimeout(() => location.replace(BACK), 2500);
-    }
-  }, 1000);
+  show('loading'); setTimeout(() => startWorld(safeParse(localStorage.getItem(PLAY.key)) || { seed: (Math.random() * 2 ** 31) | 0 }));
 } else show('title');
+import(/* @vite-ignore */ '/play-time.js').then(({ playTime }) => playTime({
+  learner: PLAY?.learner, back: BACK,
+  show: (left) => { $('timer').textContent = `⏱ ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; },
+  // time is up: save, freeze, say so; play-time.js then goes back to /play, which uploads the save
+  done: () => { if (G.world) save(); G.state = 'title'; document.exitPointerLock?.(); keys.clear(); toast("Time's up! Your world is saved."); },
+}), () => { if (!['localhost', '127.0.0.1'].includes(location.hostname)) location.replace(BACK); });
 
 $('bNew').onclick = () => { audio.unlock(); $('newWorld').classList.toggle('hidden'); $('help').classList.add('hidden'); $('overwriteWarn').classList.toggle('hidden', !hasSave()); };
 $('bHelp').onclick = () => { $('help').classList.toggle('hidden'); $('newWorld').classList.add('hidden'); };
@@ -235,6 +232,9 @@ $('bCreate').onclick = () => {
   startWorld({ seed });
 };
 $('bResume').onclick = () => resume();
+// survival here has no health or damage: blocks must be mined and items run out, nothing more
+const modeLabel = () => ($('bMode').textContent = G.mode === 'creative' ? 'Switch to Survival' : 'Switch to Creative');
+$('bMode').onclick = () => { G.mode = G.mode === 'creative' ? 'survival' : 'creative'; if (G.mode === 'survival') player.flying = false; modeLabel(); updateHUD(true); save(); };
 $('bQuit').onclick = () => { save(); if (PLAY) return location.replace(STOP); G.state = 'title'; clearEntities(); show('title'); };
 for (const [id, k, fmt] of [['rd', 'rd', (v) => v + ' chunks'], ['fov', 'fov', (v) => v + '°'], ['vol', 'vol', (v) => v + '%']]) {
   const el = $(id);
@@ -252,7 +252,7 @@ function pause() {
   if (G.state !== 'playing') return;
   if (invUI.open) invUI.hide();
   G.state = 'paused'; keys.clear(); mouse.left = mouse.right = false;
-  show('pause'); save();
+  show('pause'); modeLabel(); save();
 }
 function resume() {
   audio.unlock();
@@ -289,6 +289,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyE') openInventory(G.mode === 'creative' ? 'creative' : 'inv');
   if (e.code === 'KeyQ') dropHeld(e.ctrlKey);
   if (e.code === 'F3') { $('debug').classList.toggle('hidden'); e.preventDefault(); }
+  if (e.code === 'KeyH') { keysHidden = !keysHidden; try { localStorage.setItem('blockcraft.keysHidden', keysHidden ? '1' : '0'); } catch { /* private mode */ } $('keys').classList.toggle('hidden', keysHidden); }
   if (e.code === 'Escape') pause();
 });
 addEventListener('keyup', (e) => {

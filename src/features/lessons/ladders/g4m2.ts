@@ -278,7 +278,7 @@ const T6: Level[] = [
     const a = int(r, 2, 9), t1 = int(r, 2, 9), b = int(r, 2, 9), t2 = until(() => int(r, 2, 9), v => v !== t1)
     const x = a * t1 * 10, y = b * t2 * 10
     return { text: `A game shop has ${a} packs of ${t1 * 10} cards and ${b} packs of ${t2 * 10} cards. How many cards is that in all?`,
-      picture: eq(`${a} × ${t1 * 10} = ?`, [`${b} × ${t2 * 10} = ?`]), answer: x + y,
+      picture: eq(`${a} × ${t1 * 10} = ?`, [`${b} × ${t2 * 10} = ?`, '? + ? = ?']), answer: x + y,
       steps: [`${a} × ${t1 * 10} is ${tensWord(a * t1)}, which is ${fmt(x)}.`, `${b} × ${t2 * 10} is ${tensWord(b * t2)}, which is ${fmt(y)}.`, `${fmt(x)} + ${fmt(y)} = ${fmt(x + y)}, so there are ${fmt(x + y)} cards.`] }
   }) },
 ]

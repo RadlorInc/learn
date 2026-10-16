@@ -61,11 +61,11 @@ export const G6M5: Lesson[] = [
           { say: "And 5 + 3 is 8. You have 8 marbles." },
         ],
         pictures: [eq('n + 3', ['5 + 3', '8'])] },
-      { title: "One thing not to do", text: "Here's the part people mix up. n does NOT mean marbles. n is a number: how many are in the bag. Okay. Your turn.",
+      { title: "One thing not to do", text: "Here's the part people mix up. n does NOT mean marbles. n stands for a number: how many are in the bag. A letter like this is called a variable. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "n does NOT mean marbles.", pic: 0 },
-          { say: "n is a number: how many are in the bag." },
+          { say: "n stands for a number: how many are in the bag. A letter like this is called a variable." },
           { say: "Okay. Your turn." },
         ],
         pictures: [{ kind: 'cards', wrong: 'n = marbles', right: 'n = how many marbles' }] },
@@ -194,10 +194,10 @@ export const G6M5: Lesson[] = [
     screens: [
       { title: 'Party shopping', text: 'Cupcakes cost 3 dollars each, and a card costs 2 dollars. For n cupcakes and a card you pay 3n + 2 dollars. What do you pay for 4 cupcakes?',
         pictures: [tape(['n', 'n', 'n', '2'], '3n + 2')] },
-      { title: "The letter is in the way", text: "Look at 3n + 2. Can you work it out yet? No. While n is a letter, 3n is not a number you know. So first, find n.",
+      { title: "The letter is in the way", text: "Look at 3n + 2. Can you work it out yet? No. While n is a letter, we don't know the value of 3n yet. So first, find n.",
         beats: [
           { say: "Look at 3n + 2. Can you work it out yet?", pic: 0 },
-          { say: "No. While n is a letter, 3n is not a number you know." },
+          { say: "No. While n is a letter, we don't know the value of 3n yet." },
           { say: "So first, find n." },
         ],
         pictures: [tape(['n', 'n', 'n', '2'], '3n + 2')] },
@@ -301,18 +301,18 @@ export const G6M5: Lesson[] = [
           { say: "Then 16 × 4 is 64. So the shop has 64 toys." },
         ],
         pictures: [eq('4 × 4 × 4', ['16 × 4', '64'])] },
-      { title: "Squared and cubed", text: "Two have names. 5² is 5 × 5, or 25. We say five squared. 2³ is 2 × 2 × 2, or 8. We say two cubed.",
+      { title: "Squared and cubed", text: "Two powers have their own names. 5² is 5 × 5, or 25. We say five squared. 2³ is 2 × 2 × 2, or 8. We say two cubed.",
         beats: [
-          { say: "Two have names.", pic: 0 },
+          { say: "Two powers have their own names.", pic: 0 },
           { say: "5² is 5 × 5, or 25. We say five squared." },
           { say: "2³ is 2 × 2 × 2, or 8. We say two cubed." },
         ],
         pictures: [{ kind: 'table', head: ['', 'means', 'is'], rows: [['5²', '5 × 5', '25'], ['2³', '2 × 2 × 2', '8']], rowHead: true, motion: true }] },
-      { title: "One thing not to do", text: "Here's the part people mix up. 4³ does NOT mean 4 × 3. It means 4 × 4 × 4, which is 64. Okay. Your turn.",
+      { title: "One thing not to do", text: "Here's the part people mix up. 4³ does NOT mean 4 × 3. It means 4 multiplied by itself 3 times: 4 × 4 × 4, which is 64. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "4³ does NOT mean 4 × 3.", pic: 0 },
-          { say: "It means 4 × 4 × 4, which is 64." },
+          { say: "It means 4 multiplied by itself 3 times: 4 × 4 × 4, which is 64." },
           { say: "Okay. Your turn." },
         ],
         pictures: [{ kind: 'cards', wrong: '4³ = 4 × 3 = 12', right: '4³ = 4 × 4 × 4 = 64' }] },
@@ -358,10 +358,11 @@ export const G6M5: Lesson[] = [
     screens: [
       { title: 'Two different answers', text: 'Two friends work out 2 + 3 × 4². One gets 80. The other gets 50. They cannot both be right. Who is?',
         pictures: [eq('2 + 3 × 4²')] },
-      { title: "Which step goes first?", text: "One friend adds first: 2 + 3 is 5, 4² is 16, and 5 × 16 is 80. But is that right? We all need one order.",
+      { title: "Which step goes first?", text: "One friend adds first: 2 + 3 is 5, 4² is 16, and 5 × 16 is 80. The other multiplies first: 4² is 16, 3 × 16 is 48, and 2 + 48 is 50. Which way is right? We all need one order.",
         beats: [
           { say: "One friend adds first: 2 + 3 is 5, 4² is 16, and 5 × 16 is 80.", pic: 0 },
-          { say: "But is that right?" },
+          { say: "The other multiplies first: 4² is 16, 3 × 16 is 48, and 2 + 48 is 50." },
+          { say: "Which way is right?" },
           { say: "We all need one order." },
         ],
         pictures: [eq('2 + 3 × 4²')] },
@@ -384,9 +385,9 @@ export const G6M5: Lesson[] = [
           { say: "The friend with 50 is right." },
         ],
         pictures: [ORDER([[0, 2], [0, 3]], true), eq('2 + 3 × 16', ['2 + 48', '50'])] },
-      { title: "Parentheses come first", text: "Now put parentheses around 2 + 3. They go first: 5. Then 4² is 16, and 5 × 16 is 80. Same numbers, new answer.",
+      { title: "Parentheses come first", text: "What if we put parentheses around 2 + 3? Does the answer change? They go first: 5. Then 4² is 16, and 5 × 16 is 80. Same numbers, new answer.",
         beats: [
-          { say: "Now put parentheses around 2 + 3. They go first: 5.", pic: 0 },
+          { say: "What if we put parentheses around 2 + 3? Does the answer change? They go first: 5.", pic: 0 },
           { say: "Then 4² is 16, and 5 × 16 is 80.", pic: 1 },
           { say: "Same numbers, new answer." },
         ],
@@ -440,7 +441,8 @@ export const G6M5: Lesson[] = [
     bigIdea: 'The number outside the parentheses multiplies every part inside, so 3(x + 2) is the same amount as 3x + 6.',
     screens: [
       { title: 'Three gift bags', text: 'Each gift bag holds x pens and 2 erasers. You pack 3 bags. How can you write how many things you packed?',
-        pictures: [bags('3', '2')] },
+        // The three bags, one row each, as the boards draw them: one "3" beside a block read as an area (tester feedback).
+        pictures: [{ kind: 'tape', rows: [1, 2, 3].map(n => ({ label: `Bag ${n}`, cells: [{ w: 3, text: 'x' }, { w: 1, text: '2' }] })) }] },
       { title: 'x and 2 do not join', text: "One bag holds x pens and 2 erasers. That's x + 2. You don't know x, so x and 2 can't join into one number. So how do you write three bags?",
         beats: [
           { say: "One bag holds x pens and 2 erasers. That's x + 2.", pic: 0 },

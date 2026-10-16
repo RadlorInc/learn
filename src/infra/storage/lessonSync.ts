@@ -12,12 +12,17 @@ import { lessonDone, markLessonDone } from '@/infra/storage/lessonProgress'
 import { loadStanding, saveStanding, standingAt } from '@/infra/storage/lessonStanding'
 import { loadRun, saveRun } from '@/infra/storage/lessonRun'
 import { FRESH, type Outcome, type SavedRun } from '@/features/lessons/adaptive'
-import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows, sessionUserId, type LessonRow } from '@/data/repositories/points'
+import { recordLessonProgress, recordModulePractice, recordPracticeRun, getLessonRows, sessionUserId, lastSyncErrorCode, syncBatch, lessonCall, moduleCall, runCall, type LessonRow, type SyncCall } from '@/data/repositories/points'
+import type { SyncOutcome } from '@/data/repositories/_shared'
 import { markConsentBlocked, clearConsentBlocked } from '@/features/consent/childPause'
+import { recordError } from '@/infra/storage/lastError'
+import { noteSync } from '@/infra/storage/syncStatus'
+import { reportCrash } from '@/infra/reportCrash'
 
 // `owner` = the account that queued it (stamped by the first flush after it was queued, which is the flush the enqueue
 // itself starts). The queue is one per DEVICE, so it can hold items of an account that is not signed in right now.
-type Item = { id: string; learnerId: string; owner?: string } & (
+// `refusedAt` = when the database first refused it for good ('drop', below); absent until then.
+type Item = { id: string; learnerId: string; owner?: string; refusedAt?: number } & (
   | { lessonId: string; outcome?: Outcome; event?: string }
   | { moduleId: string; event: string }
   | { runOf: string })
@@ -27,8 +32,22 @@ const QUEUE = 'milo-lesson-sync-queue'
 // (progress is re-read from the device on every upload, so the newest item for a topic carries it).
 const MAX = 2000
 
+/**
+ * How long an item the database refuses "for good" (classifySyncError's 'drop': 23503, 42501, 23502, 23514, 22P02, an
+ * RLS message) stays on the device, retried, before it is deleted. Those codes are right for one bad row, but a bad
+ * migration or policy answers them for EVERY row — and deleting on the first refusal would erase every family's
+ * waiting answers before anyone saw a report. A week is time to see the reports (below) and ship a fix; a row that
+ * truly can never succeed (its learner was deleted) still leaves, so nothing waits for ever.
+ */
+const REFUSED_KEEP_MS = 7 * 24 * 60 * 60 * 1000
+
 const read = (): Item[] => { try { return JSON.parse(kv.get(QUEUE) ?? '[]') } catch { return [] } }
-const write = (q: Item[]) => { try { kv.set(QUEUE, JSON.stringify(q.slice(-MAX))) } catch { /* best-effort */ } }
+const write = (q: Item[]) => {
+  try {
+    if (q.length > MAX) recordError(`upload queue full: ${q.length - MAX} oldest dropped`, 'sync')
+    kv.set(QUEUE, JSON.stringify(q.slice(-MAX)))
+  } catch (e) { recordError(e, 'sync-queue-write') }
+}
 const uuid = () => crypto.randomUUID()
 
 /** A topic changed on this device (a problem answered, the lesson finished). `outcome` = a problem was answered. */
@@ -78,27 +97,85 @@ async function send(): Promise<void> {
   const who = me
   if (read().some(x => !x.owner)) write(read().map(x => x.owner ? x : { ...x, owner: who }))
   const tried = new Set<string>(), held = new Set<string>()
+  let left = false
   for (;;) {
-    // Re-read each time: something may have been queued while the last one was sending. A learner with an item to
+    // Re-read each time: something may have been queued while the last request was out. A learner with an item to
     // retry is held, so that learner's order is kept, but nobody else's uploads wait behind it (BUG-04).
-    const item = read().find(x => !tried.has(x.id) && (x.owner ?? who) === who && !held.has(x.learnerId))
+    const batch = read().filter(x => !tried.has(x.id) && (x.owner ?? who) === who && !held.has(x.learnerId)).slice(0, BATCH)
     // Tried already = the queue could not be written (storage full): stop rather than send it forever.
-    if (!item) return
-    tried.add(item.id)
-    const r = 'runOf' in item
-      ? await recordPracticeRun(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
-      : 'moduleId' in item
-      ? await recordModulePractice(item.learnerId, item.moduleId, item.event)
-      : await recordLessonProgress(item.learnerId, item.lessonId,
-          { done: lessonDone(item.learnerId, item.lessonId), ...(loadStanding(item.learnerId, item.lessonId) ?? FRESH),
-            at: standingAt(item.learnerId, item.lessonId) },
-          item.outcome, item.event)
-    // 'blocked' (no consent the gate accepts yet) is held like a retry — the answer waits on this device, never deleted —
-    // and the child's screen is told, which asks the adult who added them for consent (features/consent/childPause).
-    if (r === 'retry' || r === 'blocked') { held.add(item.learnerId); if (r === 'blocked') markConsentBlocked(item.learnerId); continue }
-    write(read().filter(x => x.id !== item.id))
-    if (r === 'ok') clearConsentBlocked(item.learnerId)
+    if (!batch.length) break
+    // ONE request for the whole batch (sync_batch, 20261016120000): it stops at the first refusal, so `outcomes` covers
+    // the items up to and including it, and the rest go in the next round — the order one-at-a-time sending had. Before
+    // that migration (null), one item per round, as before.
+    const outcomes = await syncBatch(batch.map(callOf)) ?? [await sendOne(batch[0])]
+    const done = new Set<string>(), refused = new Set<string>()
+    outcomes.forEach((r, i) => {
+      const item = batch[i]
+      tried.add(item.id)
+      noteSync(r === 'ok' ? undefined : r === 'blocked' ? 'P0C01' : lastSyncErrorCode())
+      // 'blocked' (no consent the gate accepts yet) is held like a retry — the answer waits on this device, never
+      // deleted — and the child's screen is told, which asks the adult who added them for consent (features/consent/childPause).
+      if (r === 'retry' || r === 'blocked') { left = true; held.add(item.learnerId); if (r === 'blocked') markConsentBlocked(item.learnerId); return }
+      if (r === 'drop') {
+        // Refused for good: kept and retried for REFUSED_KEEP_MS (see there), without holding the learner's later items
+        // (each re-reads the device when it sends, so order does not matter for them). Reported both times, so a bad
+        // migration shows up in error_events while the answers are still on the devices.
+        const code = lastSyncErrorCode()
+        if (!item.refusedAt) {
+          refused.add(item.id)
+          reportCrash(new Error(`upload refused ${code}: kept on the device, retrying`), 'sync')
+          left = true
+          return
+        }
+        if (Date.now() - item.refusedAt < REFUSED_KEEP_MS) { left = true; return }
+        reportCrash(new Error(`upload refused ${code} for 7 days: deleted from the device`), 'sync')
+      }
+      done.add(item.id)
+      if (r === 'ok') clearConsentBlocked(item.learnerId)
+    })
+    // One rewrite of the queue per request, not one per item.
+    if (done.size || refused.size) {
+      const now = Date.now()
+      write(read().flatMap(x => done.has(x.id) ? [] : refused.has(x.id) ? [{ ...x, refusedAt: now }] : [x]))
+    }
   }
+  retryLater(left)
+}
+
+// Under sync_batch's limit of 200 items a request.
+const BATCH = 100
+
+// What an item uploads is read from the device as it is NOW (the newest standing, done and run), never from the queue.
+const standingNow = (learnerId: string, lessonId: string) =>
+  ({ done: lessonDone(learnerId, lessonId), ...(loadStanding(learnerId, lessonId) ?? FRESH), at: standingAt(learnerId, lessonId) })
+
+const callOf = (item: Item): SyncCall =>
+  'runOf' in item ? runCall(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
+  : 'moduleId' in item ? moduleCall(item.learnerId, item.moduleId, item.event)
+  : lessonCall(item.learnerId, item.lessonId, standingNow(item.learnerId, item.lessonId), item.outcome, item.event)
+
+/** One item, one request: a database without sync_batch yet. */
+const sendOne = (item: Item): Promise<SyncOutcome> =>
+  'runOf' in item ? recordPracticeRun(item.learnerId, item.runOf, loadRun(item.learnerId, item.runOf))
+  : 'moduleId' in item ? recordModulePractice(item.learnerId, item.moduleId, item.event)
+  : recordLessonProgress(item.learnerId, item.lessonId, standingNow(item.learnerId, item.lessonId), item.outcome, item.event)
+
+/**
+ * While this account has uploads that did not go through, try again on a timer: 30 s, doubling to 10 min, and stop when
+ * nothing is left. Before this, a failed upload waited for the next answer, an `online` event or a reload — a family
+ * that stopped playing kept its work on the device until it came back. Offline, the `online` event retries instead.
+ */
+const RETRY_FIRST = 30_000, RETRY_MAX = 600_000
+let retryIn = RETRY_FIRST
+let retryTimer: ReturnType<typeof setTimeout> | undefined
+function retryLater(left: boolean): void {
+  clearTimeout(retryTimer)
+  retryTimer = undefined
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('lesson-sync'))   // the offline bar re-counts
+  if (!left) { retryIn = RETRY_FIRST; return }
+  if (typeof navigator !== 'undefined' && !navigator.onLine) return
+  retryTimer = setTimeout(() => { retryTimer = undefined; void flushLessonSync() }, retryIn)
+  retryIn = Math.min(retryIn * 2, RETRY_MAX)
 }
 
 /**
@@ -134,6 +211,14 @@ export async function pullLessonProgress(learnerId: string, lessonIds: readonly 
 /** Class-exercise answers that could not be sent yet (features/classes/ExerciseHome), in localStorage — the device's
  *  second upload queue. Named here because sign-out must know who is still waiting in it. */
 export const EXERCISE_PENDING = 'exercise-results-pending'
+
+/** Uploads waiting on this device for the signed-in account: the lesson queue plus the class-exercise answers.
+ *  Sign-out warns when this is above 0 (data/repositories/profile.ts). */
+export function unsentOnDevice(): number {
+  let exercises = 0
+  try { const p: unknown = JSON.parse(localStorage.getItem(EXERCISE_PENDING) ?? '[]'); exercises = Array.isArray(p) ? p.length : 0 } catch { /* unreadable */ }
+  return pendingLessonUploads() + exercises
+}
 
 /**
  * EVERY key on this device that belongs to one child; group 1 is the child. The one place that knows these shapes — a

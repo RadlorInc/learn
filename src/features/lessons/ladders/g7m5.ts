@@ -121,7 +121,7 @@ const GROUPS: Group[] = [
   { group: 'students', trait: 'walk to school', not: 'do not walk to school', short: 'walk', trait2: 'ride a bike to school' },
   { group: 'students', trait: 'play an instrument', not: 'do not play an instrument', short: 'play', trait2: 'sing in a choir' },
   { group: 'fans', trait: 'bought a hat', not: 'did not buy a hat', short: 'hat', trait2: 'bought a scarf' },
-  { group: 'people', trait: 'have a pet cat', not: 'do not have a pet cat', short: 'cat', trait2: 'have a pet dog' },
+  { group: 'people', trait: 'have a pet cat', not: 'do not have a pet cat', short: 'cat', trait2: 'have a pet fish' },
   { group: 'apples', trait: 'have a bruise', not: 'have no bruise', short: 'bruised', trait2: 'have a worm hole' },
   { group: 'light bulbs', trait: 'do not work', not: 'work', short: 'broken', trait2: 'are scratched' },
 ]
@@ -241,7 +241,7 @@ const T3: Level[] = [
     while (mB === mA) mB = int(r, lo, lo + 8)
     const labels = Array.from({ length: 7 }, (_, i) => String(lo + i)), gap = Math.abs(mA - mB)
     return { text: `The dot plot shows the heights of Class A's ${n} plants. Each dot is one plant. Class B's plants have a mean height of ${mB} inches. What is the difference between the two means, in inches?`,
-      picture: { kind: 'chart', type: 'dot', labels, values: labels.map(l => A.filter(x => x === +l).length), xLabel: 'Class A plants (inches)' },
+      picture: { kind: 'chart', type: 'dot', dots: true, labels, values: labels.map(l => A.filter(x => x === +l).length), xLabel: 'Class A plants (inches)' },
       answer: gap,
       steps: [`Add up Class A: ${A.join(' + ')} = ${sum(A)}.`, `${sum(A)} ÷ ${n} = ${mA}, so Class A's mean is ${mA}.`, `${Math.max(mA, mB)} − ${Math.min(mA, mB)} = ${gap}. So the difference is ${gap} ${plural(gap, 'inch', 'inches')}.`] }
   }),
@@ -300,7 +300,7 @@ const spinner = (r: Rng, n: number, k: number, color: string) => {
 const T4: Level[] = [
   lv('spinner: the probability of a color', r => {
     const n = pick(r, [4, 5, 6, 8, 10, 12]), k = int(r, 1, n - 1), color = pick(r, COLORS)
-    return { text: `This spinner has ${n} equal parts. What is the probability of landing on ${color}? Write a fraction or a decimal.`,
+    return { text: `This spinner has ${n} equal parts. What is the probability of landing on ${color}? Write it as a fraction.`,
       picture: spinner(r, n, k, color).picture, answer: { frac: [k, n] },
       steps: [`Count the ${color} parts: there ${plural(k, 'is', 'are')} ${k}.`, `Count all the parts: there are ${n}.`, `So the probability is ${frac(k, n)}.`] }
   }),
@@ -410,7 +410,7 @@ const T5: Level[] = [
 // ── t6 · Two things happening ───────────────────────────────────────────────────────────────────────────────
 const blank = (cols: string[], rows: string[]): Picture => table(['', ...cols], rows.map(x => [x, ...cols.map(() => '')]), true)
 const MENUS = [
-  { row: 'sandwich', rows: ['Turkey', 'Cheese', 'Ham', 'Tuna'], col: 'fruit', cols: ['Apple', 'Banana', 'Grapes', 'Orange', 'Pear'], things: 'lunches' },
+  { row: 'sandwich', rows: ['Chicken', 'Cheese', 'Egg', 'Tuna'], col: 'fruit', cols: ['Apple', 'Banana', 'Grapes', 'Orange', 'Pear'], things: 'lunches' },
   { row: 'shirt', rows: ['Red', 'Blue', 'White', 'Green'], col: 'cap', cols: ['Black', 'Gray', 'Tan'], things: 'outfits' },
   { row: 'drink', rows: ['Milk', 'Juice', 'Water'], col: 'snack', cols: ['Crackers', 'Carrots', 'Pretzels', 'Yogurt', 'Popcorn'], things: 'snack packs' },
   { row: 'ice cream', rows: ['Vanilla', 'Chocolate', 'Mint', 'Mango'], col: 'topping', cols: ['Sprinkles', 'Nuts', 'Fudge', 'Cherries'], things: 'cones' },
@@ -452,7 +452,8 @@ const T6: Level[] = [
     const kind = pick(r, ['right', 'added', 'rows'] as const)
     const claim = kind === 'right' ? `there are 2 × ${n} = ${2 * n} pairs, so it is 1/${2 * n}`
       : kind === 'added' ? `1/2 + 1/${n} = ${n + 2}/${2 * n}` : `there are 2 + ${n} = ${n + 2} pairs, so it is 1/${n + 2}`
-    const yes = `${who} is right`, added = `${who} added the two chances`, rows = `${who} added the rows and columns instead of multiplying`
+    // Each wrong choice names its own sum: "added the two chances" alone also fit the 2 + n pairs (a tester, g7m5-t6, 16 Oct).
+    const yes = `${who} is right`, added = `${who} added the two chances, 1/2 + 1/${n}`, rows = `${who} counted 2 + ${n} pairs instead of 2 × ${n}`
     const right = kind === 'right' ? yes : kind === 'added' ? added : rows
     return { text: `You flip a coin and ${thing}. ${who} finds the probability of ${side} and a ${x} like this: "${claim}." Which is true?`,
       picture: blank(nums(n), ['Heads', 'Tails']), answer: choose(r, right, [yes, added, rows].filter(c => c !== right)),

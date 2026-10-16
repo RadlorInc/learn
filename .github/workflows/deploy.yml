@@ -123,6 +123,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: scripts/migrations-pending.sh "${{ github.sha }}"
+      # Read by red-main.yml through the jobs API, which does not show job outputs: this step SUCCEEDS only when
+      # the answer above was changed=false, so a failed migrate-staging on such a push is not reported as
+      # "database NOT migrated" (four false ones by 2026-10-06). Keep the name: scripts/red-main.mjs matches it.
+      - name: no production migration pending
+        if: steps.diff.outputs.changed == 'false'
+        run: echo "changed=false — migrate-prod is skipped and production has nothing to apply"
 
   migrate-prod:
     # ⚠️⚠️ STAGING-FIRST IS SUSPENDED WHILE NO STAGING PROJECT EXISTS — AND ONLY THEN (2026-09-23,

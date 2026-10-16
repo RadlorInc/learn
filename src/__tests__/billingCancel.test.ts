@@ -228,3 +228,44 @@ describe('Plan → Your subscription', () => {
     s.done()
   })
 })
+
+// ─────────────────────── the checkout beside the card (B1) ───────────────────────
+async function mountPlan() {
+  const { PlanCheckout } = await import('@/app/parent/plan/page')
+  const el = document.createElement('div'); document.body.appendChild(el)
+  const root = createRoot(el)
+  await act(async () => { root.render(createElement(PlanCheckout)) })
+  await act(async () => { await new Promise(r => setTimeout(r, 0)) })
+  const buy = () => [...el.querySelectorAll('button')].find(b => /^Continue — /.test(b.textContent ?? ''))
+  return { el, buy, done: () => { act(() => root.unmount()); el.remove() } }
+}
+
+describe('Plan → the checkout is offered only to a family that can buy (B1)', () => {
+  afterEach(() => { window.history.replaceState({}, '', '/') })
+
+  it('a family with a live plan sees the plan, and no second checkout', async () => {
+    const s = await mountPlan()
+    expect(s.el.textContent).toContain('Renews on February 1, 2026.')
+    expect(s.buy(), 'the checkout is offered beside a live subscription').toBeUndefined()
+    expect(s.el.querySelector('[data-plan="renewal"]')).toBeNull()
+    s.done()
+  })
+
+  it('positive twin: a family with no plan sees the checkout', async () => {
+    session = 'tok-B'
+    const s = await mountPlan()
+    expect(s.el.textContent).toContain('You do not have a subscription, so there is nothing to cancel.')
+    expect(s.buy(), 'the checkout is missing for a family that can buy').toBeTruthy()
+    s.done()
+  })
+
+  it('straight back from paying, before the webhook has written the row: "activating", and no second checkout', async () => {
+    session = 'tok-B'
+    window.history.replaceState({}, '', '/parent/plan?billing=success')
+    const s = await mountPlan()
+    expect(s.el.textContent).toContain('Payment received — we are switching your plan on.')
+    expect(s.el.textContent).not.toContain('You do not have a subscription')
+    expect(s.buy()).toBeUndefined()
+    s.done()
+  })
+})

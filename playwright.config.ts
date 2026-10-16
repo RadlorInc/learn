@@ -1,4 +1,27 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
+
+/**
+ * Cross-browser matrix, opt-in with `E2E_MATRIX=1` (default runs stay Chromium-only).
+ * Every browser on iOS/iPadOS is WebKit underneath (Apple's rule), so iPhone/iPad Safari, Chrome and
+ * Firefox are one engine here. Android Chrome / Samsung Internet / Edge are Chromium; Android Firefox
+ * is Gecko — Playwright cannot set `isMobile` on Firefox, so it gets a phone viewport + touch only.
+ * ⚠️ Playwright's WebKit is close to Safari, not identical: confirm a WebKit-only failure in real Safari.
+ */
+const MATRIX = [
+  { name: 'desktop-chrome', use: { ...devices['Desktop Chrome'] } },
+  { name: 'mac-safari', use: { ...devices['Desktop Safari'] } },
+  { name: 'desktop-firefox', use: { ...devices['Desktop Firefox'] } },
+  { name: 'iphone', use: { ...devices['iPhone 15'] } },
+  { name: 'iphone-landscape', use: { ...devices['iPhone 15 landscape'] } },
+  { name: 'ipad', use: { ...devices['iPad Pro 11'] } },
+  { name: 'ipad-landscape', use: { ...devices['iPad Pro 11 landscape'] } },
+  { name: 'android-chrome', use: { ...devices['Pixel 7'] } },
+  { name: 'android-tablet-chrome', use: { ...devices['Galaxy Tab S9'] } },
+  { name: 'android-chrome-landscape', use: { ...devices['Pixel 7 landscape'] } },
+  { name: 'android-tablet-landscape', use: { ...devices['Galaxy Tab S9 landscape'] } },
+  { name: 'android-firefox', use: { browserName: 'firefox' as const, viewport: { width: 412, height: 839 }, hasTouch: true } },
+  { name: 'android-firefox-landscape', use: { browserName: 'firefox' as const, viewport: { width: 839, height: 412 }, hasTouch: true } },
+]
 
 // E2E harness. Drives the running dev server (start it via the preview tooling:
 // `milo-dev` on port 3017 — never raw-Bash a dev server). Public routes like
@@ -58,5 +81,5 @@ export default defineConfig({
         }
       : {},
   },
-  projects: [{ name: 'chromium' }],
+  projects: process.env.E2E_MATRIX ? MATRIX : [{ name: 'chromium' }],
 })

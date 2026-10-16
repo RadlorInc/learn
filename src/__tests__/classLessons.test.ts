@@ -15,7 +15,7 @@ let learnersUpdated: { id: string }[]
 
 vi.mock('@/data/repositories/_shared', () => ({
   db: () => ({
-    auth: { getUser: async () => ({ data: { user: { id: 'teacher-1' } } }) },
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'teacher-1' } } } }) },
     from: (table: string) => {
       const c: Call = { table, op: 'select', filters: [] }
       calls.push(c)

@@ -107,7 +107,8 @@ describe('/api/child-login', () => {
       [`DELETE /auth/v1/admin/users/${CHILD}`, () => res(200, {})]]
     const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect(r.status).toBe(502)
-    expect(adminCalls().map(c => `${c.method} ${c.path}`)).toEqual([
+    // The failure's own error_events row (status and code only) is checked in handledFailuresSink.test.ts.
+    expect(adminCalls().filter(c => c.path !== '/rest/v1/error_events').map(c => `${c.method} ${c.path}`)).toEqual([
       'POST /auth/v1/admin/users', 'POST /rest/v1/learner_access', `DELETE /auth/v1/admin/users/${CHILD}`,
     ])
   })
@@ -187,7 +188,7 @@ describe('/api/child-login', () => {
     script = [signedIn, owns, noLogin, ['POST /auth/v1/admin/users', () => res(500, { code: 500, error_code: 'unexpected_failure' })]]
     const r = await (await route()).POST(req('POST', { learnerId: LEARNER, username: 'aarav7', password: 'secret12' }))
     expect([r.status, await r.json()]).toEqual([502, { ok: false, error: 'create_failed' }])
-    expect(err.mock.calls).toEqual([['[child-login] create failed', 500, 'unexpected_failure']])
+    expect(err.mock.calls[0]).toEqual(['[child-login] create failed', 500, 'unexpected_failure'])
     expect(JSON.stringify(err.mock.calls)).not.toContain('secret12')
     err.mockRestore()
   })
@@ -204,6 +205,18 @@ describe('/api/child-login', () => {
     const d = await (await route()).DELETE(req('DELETE', { learnerId: LEARNER }))
     expect(await d.json()).toEqual({ ok: true })
     expect(adminCalls().map(c => `${c.method} ${c.path}`)).toEqual([`DELETE /auth/v1/admin/users/${CHILD}`])
+  })
+
+  it('a username that cannot be looked up is left out of the list but LOGGED, with its status and no id', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    script = [signedIn, owns, hasLogin, [`GET /auth/v1/admin/users/${CHILD}`, () => res(500, {})]]
+    const g = await (await route()).GET(req('GET'))
+    expect(await g.json()).toEqual({ ok: true, logins: {} })
+    const logged = JSON.stringify(err.mock.calls)
+    expect(logged, 'the failed lookup left no trace').toContain('child-login: username lookup failed 500')
+    expect(logged).not.toContain(CHILD)
+    expect(logged).not.toContain(LEARNER)
+    err.mockRestore()
   })
 
   it('without the service key says not_configured and never falls back to the anon key', async () => {

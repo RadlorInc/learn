@@ -4,6 +4,8 @@
  *   /lesson-preview                 one sample of every diagram kind
  *   /lesson-preview?module=g4m1     every screen, Screen 8, the twin and all 5 practice problems of every topic in a module,
  *                                   each with its text and answer — the page to LOOK at before a module ships.
+ *   /lesson-preview?ladder=g8m4-t6  4 seeded practice problems at every level of one topic's ladder (&n=, &seed=) —
+ *                                   the questions a tester sees, which the module view above does not draw.
  *   (The parent's lesson chooser moved into the dashboard: /ui-preview?p=lessons.)
  */
 import { Suspense } from 'react'
@@ -11,6 +13,8 @@ import { notFound, useSearchParams } from 'next/navigation'
 import { Pic, INK, PAGE_BG, LESSON_KEYFRAMES } from '@/features/lessons/Pictures'
 import { findModule } from '@/features/lessons/modules'
 import { Chalkboard } from '@/features/lessons/Chalkboard'
+import { ladderOf } from '@/features/lessons/ladders'
+import { draw, rng } from '@/features/lessons/adaptive'
 import { solutionOf, showAnswer, stepsOf, type Picture, type Problem } from '@/features/lessons/script'
 
 const SAMPLES: [string, Picture][] = [
@@ -46,6 +50,7 @@ const SAMPLES: [string, Picture][] = [
   ['chips', { kind: 'chips', pos: 3, neg: 5, pairs: 3 }],
   ['balance', { kind: 'balance', left: 'x + 4', right: '9' }],
   ['spinner', { kind: 'spinner', parts: ['A', 'B', 'C', 'D'] }],
+  ['trail', { kind: 'trail', total: '12.5 km', done: 0.31, doneLabel: '3.875 km', left: '?' }],
   ['eq lines', { kind: 'eq', text: '3x + 5 = 20', lines: ['3x = 15', 'x = 5'] }],
 ]
 
@@ -78,6 +83,23 @@ function Preview() {
             </div>
           </section>
         ))}
+      </div>
+    )
+  }
+  const ladder = ladderOf(params.get('ladder') ?? '')
+  if (ladder) {
+    const n = Number(params.get('n') ?? 4), r = rng(Number(params.get('seed') ?? 1))
+    return (
+      <div style={{ background: PAGE_BG, minHeight: '100dvh', padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 14 }}>
+        {ladder.flatMap((_, lv) => Array.from({ length: n }, (_, i) => {
+          const x = draw(ladder, lv, r)
+          return (
+            <div key={`${lv}-${i}`} data-level={lv + 1} style={card}>
+              <b>L{lv + 1} · {i + 1}</b><span>{x.text}</span><Pic p={x.picture} />
+              <small>Answer: <b>{showAnswer(solutionOf(x))}</b></small>
+            </div>
+          )
+        }))}
       </div>
     )
   }

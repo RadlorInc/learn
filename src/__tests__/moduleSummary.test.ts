@@ -25,6 +25,7 @@ vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchCli
 const ledger: { lesson_id: string | null; reason: string; points: number; created_at: string }[] = []
 vi.mock('@/data/repositories/points', () => ({
   sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
+  syncBatch: async (c: unknown[]) => c.map(() => 'ok'), lessonCall: () => ({}), moduleCall: () => ({}), runCall: () => ({}),   // the queue's one request (sync_batch)
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
   getRecentPoints: async () => ledger,
 }))
@@ -132,7 +133,7 @@ describe('getting there', () => {
       i.dispatchEvent(new Event('input', { bubbles: true })) })
     await act(async () => { host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })) })
     await click('Next problem')                                    // the 12th answer: the topic is done
-    await click('Take a break')
+    await click('Finish for today 🎉')
     expect(text()).toContain('Module complete!')
     await click('See what you learned ⭐')
     expect(onModuleComplete).toHaveBeenCalledTimes(1)

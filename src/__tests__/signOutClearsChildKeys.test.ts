@@ -60,7 +60,8 @@ const run = { asked: 3, recent: ['q'], current: { problem: { text: 'q', answer: 
 const PENDING = [{ learnerId: C, classId: 'class-1', exerciseId: 'ex-1', outcomes: [] }]
 
 Object.defineProperty(window, 'location', { value: { href: '' }, writable: true, configurable: true })
-beforeEach(() => { world.kv.clear(); localStorage.clear(); sessionStorage.clear(); world.session = 'parent'; world.offline = false })
+// The person confirms "sign out anyway" when work is still waiting (profile.ts signOut; supportSync.test.ts).
+beforeEach(() => { world.kv.clear(); localStorage.clear(); sessionStorage.clear(); world.session = 'parent'; world.offline = false; vi.spyOn(window, 'confirm').mockReturnValue(true) })
 
 const kvKeys = () => [...world.kv.keys()].sort()
 const lsKeys = () => Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)!).sort()
@@ -123,6 +124,7 @@ describe('sign-out clears every per-child key on the device, except a child with
       'milo-newflow-done-device-g3m1-t1',
       'milo-newflow-standing-device-g3m1-t1',
       'milo-profile-v2',
+      'milo-sync-status',   // the device's last upload time and error code, for support: no child in it (syncStatus.ts)
     ].sort())
     expect(lsKeys(), 'localStorage after sign-out').toEqual([
       ...lsOf(B), ...lsOf(C),

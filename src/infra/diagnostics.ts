@@ -23,6 +23,7 @@
 import { kv } from '@/infra/storage/kv'
 import { getRecentErrors } from '@/infra/storage/lastError'
 import { pendingLessonUploads } from '@/infra/storage/lessonSync'
+import { getSyncStatus, type SyncStatus } from '@/infra/storage/syncStatus'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { getCurrentSession } from '@/data/auth'
 
@@ -36,6 +37,11 @@ export interface Diagnostics {
   storeMode: 'idb' | 'local'
   queuedSessions: number
   storageUsedMb: string
+  /** Quota and whether the browser agreed not to evict (`navigator.storage.persist`). */
+  storageQuota: string
+  /** The last store write that failed (kv), or null. */
+  writeError: string | null
+  sync: SyncStatus
   online: boolean
   viewport: string
   ua: string
@@ -64,11 +70,12 @@ function swVersion(): Promise<string> {
   })
 }
 
-async function storageUsedMb(): Promise<string> {
+async function storageUsedMb(): Promise<{ used: string; quota: string }> {
+  const mb = (n?: number) => (n ? `${(n / 1_048_576).toFixed(1)}MB` : 'unknown')
   try {
-    const est = await navigator.storage?.estimate?.()
-    return est?.usage ? `${(est.usage / 1_048_576).toFixed(1)}MB` : 'unknown'
-  } catch { return 'unknown' }
+    const [est, kept] = await Promise.all([navigator.storage?.estimate?.(), navigator.storage?.persisted?.().catch(() => undefined)])
+    return { used: mb(est?.usage), quota: `${mb(est?.quota)} quota, ${kept === undefined ? 'persist unknown' : kept ? 'persistent' : 'not persistent'}` }
+  } catch { return { used: 'unknown', quota: 'unknown' } }
 }
 
 /** Collect the snapshot. Never throws — a broken diagnostic must still produce a sendable block. */
@@ -88,7 +95,10 @@ export async function collectDiagnostics(learnerIdOverride?: string): Promise<Di
     learnerId: learnerIdOverride ?? getActiveLearner()?.id ?? 'none selected',
     storeMode: kv.mode(),
     queuedSessions: pendingLessonUploads(),
-    storageUsedMb: used,
+    storageUsedMb: used.used,
+    storageQuota: used.quota,
+    writeError: kv.writeError(),
+    sync: getSyncStatus(),
     online: navigator.onLine,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
     ua: navigator.userAgent.slice(0, 200),
@@ -104,12 +114,15 @@ export function formatDiagnostics(d: Diagnostics): string {
     `app       ${d.swVersion}${d.swControlling ? '' : ' (no service worker)'}`,
     `account   ${d.accountEmail}  ${d.accountId}`,
     `learner   ${d.learnerId}`,
-    `storage   ${d.storeMode}, ${d.storageUsedMb} used`,
+    `storage   ${d.storeMode}, ${d.storageUsedMb} used, ${d.storageQuota}`,
     `unsynced  ${d.queuedSessions} session(s)`,
+    `last sent ${d.sync.okAt ?? 'never on this device'}`,
+    `sync err  ${d.sync.error ? `${d.sync.error.code} at ${d.sync.error.at}` : 'none recorded'}`,
     `network   ${d.online ? 'online' : 'OFFLINE'}`,
     `screen    ${d.viewport}`,
     `browser   ${d.ua}`,
   ]
+  if (d.writeError) lines.push(`save err  ${d.writeError}`)
   if (d.errors.length) {
     lines.push(`recent errors:`)
     for (const e of d.errors) lines.push(`  ${e.at}  [${e.src}] ${e.msg}`)

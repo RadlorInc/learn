@@ -64,7 +64,7 @@ export const G4M6_VOICE: Record<string, VoiceLine> = {
   "Don't call 0.50 BIGGER just because 50 is more than 5.": { style: 'B+', say: "Don't call zero point five zero bigger just because 50 is more than 5." },
   'Look at the tray. They cover the same squares.': { style: 'B+' },
   'A tray of brownies. A tray of brownies is cut into 100 small squares. Ana eats the shaded part. Ben says she ate 0.5 of the tray. Ana says 0.50. Who is right?':
-    { style: 'A', say: 'A tray of brownies. A tray of brownies is cut into 100 small squares. Ana eats the shaded part. Ben says she ate zero point five of the tray. Ana says zero point five zero. Who is right?' },
+    { style: 'A', say: 'A tray of brownies. A tray of brownies is cut into 100 small squares. Ana eats the shaded part. Ben says, she ate zero point five of the tray. Ana says, zero point five zero. Who is right?' },
   'Now you try. You shade 0.7 of a 100-square grid. How many small squares do you shade? Each tenth is one full column. Count the squares in those columns.':
     { style: 'A', say: 'Now you try. You shade zero point seven of a 100-square grid. How many small squares do you shade? Each tenth is one full column. Count the squares in those columns.' },
   'Try a new one. You shade 0.3 of a 100-square grid. How many small squares do you shade?':
@@ -109,7 +109,9 @@ export const G4M6_VOICE: Record<string, VoiceLine> = {
   "Try a new one. Which sign goes between them? 0.3 ? 0.35": { style: 'A', say: "Try a new one. Which sign goes between zero point three and zero point three five?" },
   "Write 0.6 as 0.60. Now compare 60 hundredths and 58 hundredths.": { style: 'A', say: "Write zero point six as zero point six zero. Now compare 60 hundredths and 58 hundredths." },
   "Put a 0 at the end of 0.3 so both have two places. Then compare.": { style: 'A', say: "Put a zero at the end of zero point three so both have two places. Then compare." },
-  "You saw that 0.3 < 0.35 by looking at the hundredths.": { style: 'A', say: "You saw that zero point three is less than zero point three five by looking at the hundredths." },
+  // Commas (9 Oct 2026): three renders in a row read the first "zero" oddly; the brownies line above said "Ana says 0.5
+  // of the tray" twice until its commas. Same words; heard back with scripts/audio/check-numbers.py.
+  "You saw that 0.3 < 0.35 by looking at the hundredths.": { style: 'A', say: "You saw, zero point three is less than zero point three five, by looking at the hundredths." },
   // ── g4m6-t6 ──
   "Can we just add 3 and 4 to get 7?": { style: 'B' },
   "A tenth is a whole column. A hundredth is one tiny square.": { style: 'B' },

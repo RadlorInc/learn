@@ -29,7 +29,7 @@ English counts and are held by `legalSpanish.test.ts`, not here.
 | 02 §rights "does not yet delete" | R11 (this PR) | deletion built and proven: `consentDeletion.test.ts`, `withdrawExportE2e.test.ts` (R7), production D5 |
 | 03 A1 "in-app path" | R11 | R4's path, `Account → Plan & billing` |
 | 12 §12 liability floor (#62) | founder, 26 Sep 2026 (beta; attorney to review, packet D2) | US$100 — `legalSwitch.test.ts` publishes `terms` |
-| 12 §14 phone (#67) | founder, 26 Sep 2026 (beta; attorney to review, packet D4) | §14 is a plain contact: address + support@radlor.com, no designated agent, no phone |
+| 12 §14 phone (#67) | founder, 26 Sep 2026 (beta; attorney to review, packet D4) | §14 is a plain contact: address + support@radlor.com + 1-888-812-9373 (toll-free, founder 14 Oct 2026), no designated agent |
 | 03 receipt "in-app path" | R11 | same |
 | 03 withdrawal screen "control's name must match" | R11 (repo) | since D1 the paragraph names no control; the buttons are held to `copy.ts` both ways by `consentCopy.test.ts` |
 | 05 §"decide before the migration: clear test data or keep the exemption" | R11 (repo) | decided and applied in D6, `20260923170000`; D6 proof on production |

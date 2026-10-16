@@ -7,14 +7,14 @@ import type { Lesson, Picture } from '../script'
 import { attachChalk } from '../chalk'
 import { G6M7_CHALK } from './chalk/g6m7'
 
-/** One row of values, with an optional header row. */
-const row = (values: (string | number)[], head?: string[]): Picture =>
-  head ? { kind: 'table', head, rows: [['', ...values.map(String)]], rowHead: true } : { kind: 'table', rows: [values.map(String)] }
+/** One row of values; with a header row, the row is named too (what its numbers count), never left blank. */
+const row = (values: (string | number)[], ...named: [] | [head: string[], label: string]): Picture =>
+  named.length ? { kind: 'table', head: named[0], rows: [[named[1], ...values.map(String)]], rowHead: true } : { kind: 'table', rows: [values.map(String)] }
 
 const TOWERS: Picture = { kind: 'chart', type: 'bar', labels: ['A', 'B', 'C', 'D'], values: [2, 6, 3, 5], max: 6, yLabel: 'Cubes' }
 const EVEN: Picture = { kind: 'chart', type: 'bar', labels: ['A', 'B', 'C', 'D'], values: [4, 4, 4, 4], max: 6, yLabel: 'Cubes' }
 
-const PETS: Picture = { kind: 'chart', type: 'dot', labels: ['0', '1', '2', '3', '4'], values: [3, 5, 2, 1, 1], xLabel: 'Pets' }
+const PETS: Picture = { kind: 'chart', type: 'dot', dots: true, labels: ['0', '1', '2', '3', '4'], values: [3, 5, 2, 1, 1], xLabel: 'Pets' }
 
 const line20 = (pts: number[], extra: { points?: { at: number; label?: string }[]; jumps?: { from: number; to: number; label?: string }[]; motion?: boolean } = {}): Picture =>
   ({ kind: 'numline', min: 0, max: 20, ticks: 20, points: [...pts.map(at => ({ at })), ...(extra.points ?? [])], jumps: extra.jumps, motion: extra.motion })
@@ -25,7 +25,7 @@ const line40 = (extra: { at: number; label?: string }[] = [], jumps?: { from: nu
 const dots = (min: number, max: number, ticks: number, pts: number[]): Picture =>
   ({ kind: 'numline', min, max, ticks, points: pts.map(at => ({ at })) })
 
-const PRACTICE_DOTS: Picture = { kind: 'chart', type: 'dot', labels: ['10', '20', '30', '40', '50'], values: [2, 4, 5, 3, 1], xLabel: 'Minutes' }
+const PRACTICE_DOTS: Picture = { kind: 'chart', type: 'dot', dots: true, labels: ['10', '20', '30', '40', '50'], values: [2, 4, 5, 3, 1], xLabel: 'Minutes' }
 const PRACTICE_BARS: Picture = { kind: 'chart', type: 'hist', labels: ['0–9', '10–19', '20–29', '30–39', '40–49'], values: [3, 6, 8, 4, 2], xLabel: 'Minutes', yLabel: 'Kids' }
 
 const COLOR_TONE: Record<string, 1 | 2 | 3 | 4> = { green: 1, yellow: 2, red: 3, blue: 4 }
@@ -89,7 +89,7 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: 'Four towers have 3, 7, 4 and 6 cubes. If the cubes are shared fairly, how many cubes are in each tower?',
-      picture: row([3, 7, 4, 6], ['Tower', 'A', 'B', 'C', 'D']),
+      picture: row([3, 7, 4, 6], ['Tower', 'A', 'B', 'C', 'D'], 'Cubes'),
       answer: 5,
       steps: ['Put all the cubes together: 3 + 7 + 4 + 6 = 20.', 'There are 4 towers, so share 20 into 4 equal towers.', '20 ÷ 4 = 5. So each tower has 5 cubes.'],
       prompt: 'Add all the cubes. Then share the total into equal towers.',
@@ -97,7 +97,7 @@ export const G6M7: Lesson[] = [
       hint2: 'The total is 20. Now share it into 4 equal towers.',
       twin: {
         text: 'Five towers have 2, 8, 4, 9 and 7 cubes. If the cubes are shared fairly, how many cubes are in each tower?',
-        picture: row([2, 8, 4, 9, 7], ['Tower', 'A', 'B', 'C', 'D', 'E']),
+        picture: row([2, 8, 4, 9, 7], ['Tower', 'A', 'B', 'C', 'D', 'E'], 'Cubes'),
         answer: 6,
         steps: ['Put all the cubes together: 2 + 8 + 4 + 9 + 7 = 30.', 'There are 5 towers, so share 30 into 5 equal towers.', '30 ÷ 5 = 6. So each tower has 6 cubes.'],
         hint1: 'First add up the cubes in all five towers.',
@@ -109,11 +109,11 @@ export const G6M7: Lesson[] = [
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'Four towers have 1, 5, 2 and 8 cubes. Shared fairly, how many cubes are in each tower?',
-        picture: row([1, 5, 2, 8], ['Tower', 'A', 'B', 'C', 'D']),
+        picture: row([1, 5, 2, 8], ['Tower', 'A', 'B', 'C', 'D'], 'Cubes'),
         answer: 4, steps: ['1 + 5 + 2 + 8 = 16.', 'There are 4 towers.', '16 ÷ 4 = 4. So each tower has 4 cubes.'] } },
       { why: 'Same idea, new numbers', problem: {
         text: 'Three jars hold 7, 12 and 11 marbles. Shared fairly, how many marbles are in each jar?',
-        picture: row([7, 12, 11], ['Jar', 'A', 'B', 'C']),
+        picture: row([7, 12, 11], ['Jar', 'A', 'B', 'C'], 'Marbles'),
         answer: 10, steps: ['7 + 12 + 11 = 30.', 'There are 3 jars, so share 30 into 3.', '30 ÷ 3 = 10. So each jar has 10 marbles.'] } },
       { why: 'Still "total ÷ how many"', problem: {
         text: 'Six friends scored 4, 9, 6, 3, 8 and 9 points. What is the mean score?',
@@ -121,11 +121,11 @@ export const G6M7: Lesson[] = [
         answer: 6.5, steps: ['4 + 9 + 6 + 3 + 8 + 9 = 39.', 'There are 6 scores, so divide by 6.', '39 ÷ 6 = 6.5. So the mean is 6.5 points.'] } },
       { why: 'A little harder', problem: {
         text: 'Kai got 82, 90, 76, 88 and 94 on five tests. What is his mean score?',
-        picture: row([82, 90, 76, 88, 94], ['Test', '1', '2', '3', '4', '5']),
+        picture: row([82, 90, 76, 88, 94], ['Test', '1', '2', '3', '4', '5'], 'Score'),
         answer: 86, steps: ['82 + 90 + 76 + 88 + 94 = 430.', 'There are 5 tests, so divide by 5.', '430 ÷ 5 = 86. So the mean is 86.'] } },
       { why: 'Same math in a story', problem: {
         text: 'Mia ran 2.5, 4, 1.5 and 3 miles on four days. What is the mean distance she ran each day?',
-        picture: row([2.5, 4, 1.5, 3], ['Day', 'Mon', 'Tue', 'Wed', 'Thu']),
+        picture: row([2.5, 4, 1.5, 3], ['Day', 'Mon', 'Tue', 'Wed', 'Thu'], 'Miles'),
         answer: 2.75, steps: ['2.5 + 4 + 1.5 + 3 = 11 miles in all.', 'She ran on 4 days, so divide by 4.', '11 ÷ 4 = 2.75. So she ran a mean of 2.75 miles a day.'] } },
     ],
   },
@@ -136,19 +136,19 @@ export const G6M7: Lesson[] = [
     bigIdea: "Put the numbers in order, and the one in the very middle splits them in half.",
     screens: [
       { title: 'Five seedlings', text: 'Five seedlings are 7, 3, 9, 4 and 6 inches tall. Which height is right in the middle?',
-        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'])] },
+        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches')] },
       { title: "The middle spot is not the middle", text: "The middle spot of this list holds 9. But 9 is the tallest seedling. Can the tallest be the middle? No. This list is jumbled.",
         beats: [
           { say: "The middle spot of this list holds 9.", pic: 0 },
           { say: "But 9 is the tallest seedling. Can the tallest be the middle? No." },
           { say: "This list is jumbled." },
         ],
-        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'])] },
+        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches')] },
       { title: "The big idea", text: "Put the numbers in order, and the one in the very middle splits them in half.",
         beats: [
           { say: "Put the numbers in order, and the one in the very middle splits them in half.", pic: 0 },
         ],
-        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'])] },
+        pictures: [row([7, 3, 9, 4, 6], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches')] },
       { title: "Line them up", text: "So the first job, every time, is to sort them. Smallest to biggest, that's 3, 4, 6, 7, 9.",
         beats: [
           { say: "So the first job, every time, is to sort them." },
@@ -162,12 +162,12 @@ export const G6M7: Lesson[] = [
           { say: "The one left is 6, so the middle height is 6 inches.", pic: 1 },
         ],
         pictures: [{ kind: 'table', rows: [['3', '4', '6', '7', '9']], mark: [[0, 2]] }, { kind: 'eq', text: '3, 4, 6, 7, 9', lines: ['middle: 6'] }] },
-      { title: "Two in the middle", text: "What if there's no single middle? Add a seedling that's 10 inches tall. Now two numbers share the middle, 6 and 7. Halfway between them is 6.5.",
+      { title: "Two in the middle", text: "What if there's no single middle? Add a seedling that's 10 inches tall. Now two numbers share the middle, 6 and 7. Halfway between them is 6.5: add them and halve, (6 + 7) ÷ 2.",
         beats: [
           { say: "What if there's no single middle?" },
           { say: "Add a seedling that's 10 inches tall.", pic: 0 },
           { say: "Now two numbers share the middle, 6 and 7." },
-          { say: "Halfway between them is 6.5.", pic: 1 },
+          { say: "Halfway between them is 6.5: add them and halve, (6 + 7) ÷ 2.", pic: 1 },
         ],
         pictures: [{ kind: 'table', rows: [['3', '4', '6', '7', '9', '10']], mark: [[0, 2], [0, 3]] }, { kind: 'eq', text: '(6 + 7) ÷ 2 = 6.5' }] },
       { title: "One thing not to do", text: "Here's the part people mix up. Don't grab the middle spot BEFORE you sort. That gives 9. Sort first, and the middle is 6. Okay. Your turn.",
@@ -181,14 +181,14 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: 'Five seedlings are 8, 2, 5, 9 and 4 inches tall. What is the middle height?',
-      picture: row([8, 2, 5, 9, 4], ['Seedling', 'A', 'B', 'C', 'D', 'E']),
+      picture: row([8, 2, 5, 9, 4], ['Seedling', 'A', 'B', 'C', 'D', 'E'], 'Inches'),
       answer: 5,
       steps: ['Sort the heights: 2, 4, 5, 8, 9.', 'Cross off 2 and 9, then 4 and 8.', 'The one left is 5. So the middle height is 5 inches.'],
       prompt: 'Sort the heights first. Then find the one in the middle.',
       hint1: 'Put the heights in order, smallest to biggest.',
       hint2: 'Cross off one number from each end until only one is left.',
       twin: {
-        text: 'These 7 dogs weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?',
+        text: 'These 7 pumpkins weigh 12, 30, 18, 25, 9, 21 and 14 pounds. What is the middle weight?',
         picture: row([12, 30, 18, 25, 9, 21, 14]),
         answer: 18,
         steps: ['Sort the weights: 9, 12, 14, 18, 21, 25, 30.', 'Cross off 9 and 30, then 12 and 25, then 14 and 21.', 'The one left is 18. So the middle weight is 18 pounds.'],
@@ -223,7 +223,7 @@ export const G6M7: Lesson[] = [
     id: 'g6m7-t3', title: 'Mode: the most common', skill: 'Find the mode: the value that appears most often',
     bigIdea: "The most common value is the one that shows up most often, so find the tallest stack and read the number under it.",
     screens: [
-      { title: 'How many pets?', text: '12 kids said how many pets they have. Each ✕ is one kid. Which number of pets is the most common?',
+      { title: 'How many pets?', text: '12 kids said how many pets they have. Each dot is one kid. Which number of pets is the most common?',
         pictures: [PETS] },
       { title: "Adding them up does not help", text: "You could add up all the pets. Would that show which answer came up most? No. It only tells how many pets there are in all.",
         beats: [
@@ -237,20 +237,20 @@ export const G6M7: Lesson[] = [
           { say: "The most common value is the one that shows up most often, so find the tallest stack and read the number under it.", pic: 0 },
         ],
         pictures: [PETS] },
-      { title: "Build the stacks", text: "Here's how this picture is made. Each kid puts one ✕ above their number of pets. Watch the stacks grow.",
+      { title: "Build the stacks", text: "Here's how this picture is made. Each kid puts one dot above their number of pets. Watch the stacks grow.",
         beats: [
           { say: "Here's how this picture is made." },
-          { say: "Each kid puts one ✕ above their number of pets.", pic: 0 },
+          { say: "Each kid puts one dot above their number of pets.", pic: 0 },
           { say: "Watch the stacks grow." },
         ],
         pictures: [{ ...PETS, motion: true }] },
-      { title: "Find the tallest stack", text: "Which stack is the tallest? Count each one: 3, 5, 2, 1, 1. The tallest has 5 ✕s, more than any other.",
+      { title: "Find the tallest stack", text: "Which stack is the tallest? Count each one: 3, 5, 2, 1, 1. The tallest has 5 dots, more than any other.",
         beats: [
           { say: "Which stack is the tallest?", pic: 0 },
           { say: "Count each one: 3, 5, 2, 1, 1." },
-          { say: "The tallest has 5 ✕s, more than any other.", pic: 1 },
+          { say: "The tallest has 5 dots, more than any other.", pic: 1 },
         ],
-        pictures: [PETS, { kind: 'eq', text: 'tallest stack: 5 ✕s' }] },
+        pictures: [PETS, { kind: 'eq', text: 'tallest stack: 5 dots' }] },
       { title: "Read the number under it", text: "Now look under that stack. It sits above 1. So the most common number of pets is 1.",
         beats: [
           { say: "Now look under that stack.", pic: 0 },
@@ -269,19 +269,19 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: '12 kids said how many brothers and sisters they have. Which number is the most common?',
-      picture: { kind: 'chart', type: 'dot', labels: ['0', '1', '2', '3', '4'], values: [2, 3, 6, 1, 0], xLabel: 'Brothers and sisters' },
+      picture: { kind: 'chart', type: 'dot', dots: true, labels: ['0', '1', '2', '3', '4'], values: [2, 3, 6, 1, 0], xLabel: 'Brothers and sisters' },
       answer: 2,
-      steps: ['Each ✕ is one kid. Find the tallest stack.', 'The stack above 2 has 6 ✕s, more than any other.', 'So the most common number is 2.'],
+      steps: ['Each dot is one kid. Find the tallest stack.', 'The stack above 2 has 6 dots, more than any other.', 'So the most common number is 2.'],
       prompt: 'Find the tallest stack. Read the number under it.',
-      hint1: 'Which stack of ✕s is the tallest?',
+      hint1: 'Which stack of dots is the tallest?',
       hint2: 'Read the number under the tallest stack, not how tall it is.',
       twin: {
         text: 'These 13 kids marked their shoe size. Which shoe size is the most common?',
-        picture: { kind: 'chart', type: 'dot', labels: ['5', '6', '7', '8', '9'], values: [1, 2, 3, 5, 2], xLabel: 'Shoe size' },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['5', '6', '7', '8', '9'], values: [1, 2, 3, 5, 2], xLabel: 'Shoe size' },
         answer: 8,
-        steps: ['Each ✕ is one kid. Find the tallest stack.', 'The stack above 8 has more ✕s than any other.', 'So the most common shoe size is 8.'],
-        hint1: 'Which stack of ✕s is the tallest?',
-        hint2: 'Say the shoe size under that stack, not how many ✕s it has.',
+        steps: ['Each dot is one kid. Find the tallest stack.', 'The stack above 8 has more dots than any other.', 'So the most common shoe size is 8.'],
+        hint1: 'Which stack of dots is the tallest?',
+        hint2: 'Say the shoe size under that stack, not how many dots it has.',
       },
     },
     won: { text: 'You found the tallest stack and read the number under it.', sticker: 'The value that shows up most often is called the mode.' },
@@ -289,23 +289,23 @@ export const G6M7: Lesson[] = [
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'Kids said how many goals they scored this week. What is the mode?',
-        picture: { kind: 'chart', type: 'dot', labels: ['0', '1', '2', '3', '4'], values: [1, 2, 4, 3, 1], xLabel: 'Goals' },
-        answer: 2, steps: ['Find the tallest stack of ✕s.', 'The stack above 2 has 4 ✕s, the most.', 'So the mode is 2.'] } },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['0', '1', '2', '3', '4'], values: [1, 2, 4, 3, 1], xLabel: 'Goals' },
+        answer: 2, steps: ['Find the tallest stack of dots.', 'The stack above 2 has 4 dots, the most.', 'So the mode is 2.'] } },
       { why: 'Same idea, new numbers', problem: {
         text: 'Kids at a camp marked their age. What is the mode?',
-        picture: { kind: 'chart', type: 'dot', labels: ['10', '11', '12', '13', '14'], values: [2, 4, 1, 6, 3], xLabel: 'Age' },
-        answer: 13, steps: ['Find the tallest stack of ✕s.', 'The stack above 13 has 6 ✕s, the most.', 'So the mode is 13.'] } },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['10', '11', '12', '13', '14'], values: [2, 4, 1, 6, 3], xLabel: 'Age' },
+        answer: 13, steps: ['Find the tallest stack of dots.', 'The stack above 13 has 6 dots, the most.', 'So the mode is 13.'] } },
       { why: 'Still "the one that shows up most"', problem: {
         text: 'What is the mode of these numbers?', picture: row([4, 7, 5, 7, 9, 4, 7]),
         answer: 7, steps: ['4 shows up 2 times. 5 and 9 show up once.', '7 shows up 3 times, more than any other number.', 'So the mode is 7.'] } },
       { why: 'A little harder', problem: {
         text: 'Kids marked how many hours of homework they did this week. Some stacks are close. What is the mode?',
-        picture: { kind: 'chart', type: 'dot', labels: ['1', '2', '3', '4', '5', '6'], values: [3, 4, 2, 5, 4, 3], xLabel: 'Hours' },
-        answer: 4, steps: ['The stacks above 2 and 5 each have 4 ✕s.', 'The stack above 4 has 5 ✕s, one more than those.', 'So the mode is 4.'] } },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['1', '2', '3', '4', '5', '6'], values: [3, 4, 2, 5, 4, 3], xLabel: 'Hours' },
+        answer: 4, steps: ['The stacks above 2 and 5 each have 4 dots.', 'The stack above 4 has 5 dots, one more than those.', 'So the mode is 4.'] } },
       { why: 'Same math in a story', problem: {
         text: 'A class rolled a number cube 20 times and marked each roll. Which number came up most often?',
-        picture: { kind: 'chart', type: 'dot', labels: ['1', '2', '3', '4', '5', '6'], values: [3, 2, 4, 6, 3, 2], xLabel: 'Number rolled' },
-        answer: 4, steps: ['Each ✕ is one roll. Find the tallest stack.', 'The stack above 4 has 6 ✕s, the most.', 'So 4 came up most often. The mode is 4.'] } },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['1', '2', '3', '4', '5', '6'], values: [3, 2, 4, 6, 3, 2], xLabel: 'Number rolled' },
+        answer: 4, steps: ['Each dot is one roll. Find the tallest stack.', 'The stack above 4 has 6 dots, the most.', 'So 4 came up most often. The mode is 4.'] } },
     ],
   },
 
@@ -335,11 +335,12 @@ export const G6M7: Lesson[] = [
           { say: "Every other game sits in between." },
         ],
         pictures: [line20([11, 7, 9], { points: [{ at: 4, label: 'smallest' }, { at: 15, label: 'biggest' }], motion: true })] },
-      { title: "Measure the gap", text: "How far is it from 4 up to 15? 15 − 4 = 11. So his scores are spread over 11 points.",
+      { title: "Measure the gap", text: "How far is it from 4 up to 15? 15 − 4 = 11. So his scores are spread over 11 points. This gap is called the range.",
         beats: [
           { say: "How far is it from 4 up to 15?", pic: 0 },
           { say: "15 − 4 = 11.", pic: 1 },
           { say: "So his scores are spread over 11 points." },
+          { say: "This gap is called the range." },
         ],
         pictures: [line20([4, 11, 7, 15, 9], { jumps: [{ from: 4, to: 15, label: '11' }], motion: true }), { kind: 'eq', text: '15 − 4 = 11' }] },
       { title: "A small gap", text: "Now Kim. She scored 9, 10, 8, 11 and 10. Her gap is 11 − 8 = 3. See how her scores huddle close together?",
@@ -360,7 +361,7 @@ export const G6M7: Lesson[] = [
     ],
     turn: {
       text: 'Leo scored 6, 13, 8, 17 and 10 points in five games. What is the biggest score minus the smallest score?',
-      picture: row([6, 13, 8, 17, 10], ['Game', '1', '2', '3', '4', '5']),
+      picture: row([6, 13, 8, 17, 10], ['Game', '1', '2', '3', '4', '5'], 'Points'),
       answer: 11,
       steps: ['The smallest score is 6.', 'The biggest score is 17.', '17 − 6 = 11. So the spread is 11 points.'],
       prompt: 'Find the smallest and the biggest. Then subtract.',
@@ -495,7 +496,7 @@ export const G6M7: Lesson[] = [
   // ── Topic 6 ──────────────────────────────────────────────────────────────────────────────────
   {
     id: 'g6m7-t6', title: 'Dot plots and histograms', skill: 'Read counts from a dot plot and a histogram',
-    bigIdea: "Each ✕ stands for one thing, and each bar counts everything in its group.",
+    bigIdea: "Each dot stands for one thing, and each bar counts everything in its group.",
     screens: [
       { title: 'How long did you practice?', text: 'Kids in a band wrote down how many minutes they practiced. How many kids practiced 30 minutes or more?',
         pictures: [PRACTICE_DOTS] },
@@ -506,14 +507,14 @@ export const G6M7: Lesson[] = [
           { say: "Is there a faster way? Yes. A picture sorts the kids for us.", pic: 0 },
         ],
         pictures: [PRACTICE_DOTS] },
-      { title: "The big idea", text: "Each ✕ stands for one thing, and each bar counts everything in its group.",
+      { title: "The big idea", text: "Each dot stands for one thing, and each bar counts everything in its group.",
         beats: [
-          { say: "Each ✕ stands for one thing, and each bar counts everything in its group.", pic: 0 },
+          { say: "Each dot stands for one thing, and each bar counts everything in its group.", pic: 0 },
         ],
         pictures: [PRACTICE_DOTS] },
-      { title: "Count the ✕s", text: "Look. Every ✕ here is one kid. Above 30 I count 5. Above 40, 3. Above 50, just 1.",
+      { title: "Count the dots", text: "Look. Every dot here is one kid. Above 30 I count 5. Above 40, 3. Above 50, just 1.",
         beats: [
-          { say: "Look. Every ✕ here is one kid.", pic: 0 },
+          { say: "Look. Every dot here is one kid.", pic: 0 },
           { say: "Above 30 I count 5. Above 40, 3. Above 50, just 1." },
         ],
         pictures: [{ ...PRACTICE_DOTS, motion: true }] },
@@ -531,39 +532,39 @@ export const G6M7: Lesson[] = [
           { say: "This bar is over 20–29. It reaches 8, so 8 kids practiced 20 to 29 minutes." },
         ],
         pictures: [{ ...PRACTICE_BARS, motion: true }] },
-      { title: "One thing not to do", text: "Here's the part people mix up. Don't count the NUMBERS along the bottom. 30, 40 and 50 give you 3. Count the ✕s instead, and you get 9. Okay. Your turn.",
+      { title: "One thing not to do", text: "Here's the part people mix up. Don't count the NUMBERS along the bottom. 30, 40 and 50 give you 3. Count the dots instead, and you get 9. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "Don't count the NUMBERS along the bottom.", pic: 0 },
-          { say: "30, 40 and 50 give you 3. Count the ✕s instead, and you get 9." },
+          { say: "30, 40 and 50 give you 3. Count the dots instead, and you get 9." },
           { say: "Okay. Your turn." },
         ],
         pictures: [{ kind: 'cards', wrong: '30 or more: 3 kids', right: '30 or more: 5 + 3 + 1 = 9 kids' }] },
     ],
     turn: {
       text: 'Kids marked how many books they read this month. How many kids read 3 or more books?',
-      picture: { kind: 'chart', type: 'dot', labels: ['1', '2', '3', '4', '5'], values: [3, 5, 4, 2, 1], xLabel: 'Books' },
+      picture: { kind: 'chart', type: 'dot', dots: true, labels: ['1', '2', '3', '4', '5'], values: [3, 5, 4, 2, 1], xLabel: 'Books' },
       answer: 7,
-      steps: ['3 or more means the stacks above 3, 4 and 5.', 'Count the ✕s in those stacks: 4, 2 and 1.', '4 + 2 + 1 = 7. So 7 kids read 3 or more books.'],
-      prompt: 'Find the stacks you need. Count their ✕s and add.',
+      steps: ['3 or more means the stacks above 3, 4 and 5.', 'Count the dots in those stacks: 4, 2 and 1.', '4 + 2 + 1 = 7. So 7 kids read 3 or more books.'],
+      prompt: 'Find the stacks you need. Count their dots and add.',
       hint1: 'Which numbers count as 3 or more?',
-      hint2: 'Count the ✕s above 3, 4 and 5, then add them.',
+      hint2: 'Count the dots above 3, 4 and 5, then add them.',
       twin: {
         text: 'A team marked how many goals it scored in each game. In how many games did it score 2 or more goals?',
-        picture: { kind: 'chart', type: 'dot', labels: ['0', '1', '2', '3', '4'], values: [2, 6, 3, 4, 1], xLabel: 'Goals' },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['0', '1', '2', '3', '4'], values: [2, 6, 3, 4, 1], xLabel: 'Goals' },
         answer: 8,
-        steps: ['2 or more means the stacks above 2, 3 and 4.', 'Count the ✕s in those stacks: 3, 4 and 1.', '3 + 4 + 1 = 8. So there were 8 games.'],
+        steps: ['2 or more means the stacks above 2, 3 and 4.', 'Count the dots in those stacks: 3, 4 and 1.', '3 + 4 + 1 = 8. So there were 8 games.'],
         hint1: 'Which numbers of goals count as 2 or more?',
-        hint2: 'Each ✕ is one game. Count the ✕s in those stacks and add.',
+        hint2: 'Each dot is one game. Count the dots in those stacks and add.',
       },
     },
-    won: { text: 'You found the stacks you needed and added their ✕s.', sticker: 'A plot of ✕s is a dot plot. A bar graph of groups with no gaps is a histogram.' },
-    twinWon: { text: 'You found every game with 2 or more goals and added them up.', sticker: 'A plot of ✕s is a dot plot. A bar graph of groups with no gaps is a histogram.' },
+    won: { text: 'You found the stacks you needed and added their dots.', sticker: 'A plot of dots is a dot plot. A bar graph of groups with no gaps is a histogram.' },
+    twinWon: { text: 'You found every game with 2 or more goals and added them up.', sticker: 'A plot of dots is a dot plot. A bar graph of groups with no gaps is a histogram.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'Kids rated a movie from 1 to 5 stars. How many kids gave it 4 stars or more?',
-        picture: { kind: 'chart', type: 'dot', labels: ['1', '2', '3', '4', '5'], values: [2, 3, 5, 4, 3], xLabel: 'Stars' },
-        answer: 7, steps: ['4 or more means the stacks above 4 and 5.', 'Count the ✕s: 4 and 3.', '4 + 3 = 7. So 7 kids gave 4 stars or more.'] } },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['1', '2', '3', '4', '5'], values: [2, 3, 5, 4, 3], xLabel: 'Stars' },
+        answer: 7, steps: ['4 or more means the stacks above 4 and 5.', 'Count the dots: 4 and 3.', '4 + 3 = 7. So 7 kids gave 4 stars or more.'] } },
       { why: 'Same idea, new numbers', problem: {
         text: 'This histogram shows how many minutes kids read. How many kids read for less than 20 minutes?',
         picture: { kind: 'chart', type: 'hist', labels: ['0–9', '10–19', '20–29', '30–39'], values: [4, 7, 5, 2], xLabel: 'Minutes', yLabel: 'Kids' },
@@ -574,8 +575,8 @@ export const G6M7: Lesson[] = [
         answer: 17, steps: ['Every student is in one of the bars.', 'The bars are 1, 3, 6, 5 and 2 tall.', '1 + 3 + 6 + 5 + 2 = 17. So 17 students took the test.'] } },
       { why: 'A little harder', problem: {
         text: 'Kids marked how many hours of TV they watched on Saturday. How many kids watched more than 1 hour but fewer than 4 hours?',
-        picture: { kind: 'chart', type: 'dot', labels: ['0', '1', '2', '3', '4', '5'], values: [1, 3, 6, 4, 2, 1], xLabel: 'Hours' },
-        answer: 10, steps: ['More than 1 and fewer than 4 means 2 or 3 hours. Not 1, and not 4.', 'There are 6 ✕s above 2 and 4 ✕s above 3.', '6 + 4 = 10. So 10 kids.'] } },
+        picture: { kind: 'chart', type: 'dot', dots: true, labels: ['0', '1', '2', '3', '4', '5'], values: [1, 3, 6, 4, 2, 1], xLabel: 'Hours' },
+        answer: 10, steps: ['More than 1 and fewer than 4 means 2 or 3 hours. Not 1, and not 4.', 'There are 6 dots above 2 and 4 dots above 3.', '6 + 4 = 10. So 10 kids.'] } },
       { why: 'Same math in a story', problem: {
         text: 'A coach timed how many seconds kids took to run a lap. Kids who took less than 60 seconds get a ribbon. How many kids get a ribbon?',
         picture: { kind: 'chart', type: 'hist', labels: ['40–49', '50–59', '60–69', '70–79'], values: [3, 8, 6, 2], xLabel: 'Seconds', yLabel: 'Kids' },

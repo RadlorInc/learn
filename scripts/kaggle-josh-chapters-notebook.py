@@ -60,8 +60,8 @@ again in the same session: lines already rendered are skipped."""
 VOICE = 'nzFihrBIvB34imQBuxub'   # Josh
 WORK = pathlib.Path('/kaggle/working' if os.path.isdir('/kaggle/working') else '/content')
 REPO = WORK / 'learn-main'
-if not REPO.exists():
-    subprocess.run(['git', 'clone', '--depth', '1', '--branch', 'main', 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
+shutil.rmtree(REPO, ignore_errors=True)   # never a copy a previous run left in the session: it can be stale
+subprocess.run(['git', 'clone', '--depth', '1', '--branch', 'main', 'https://github.com/RadlorInc/learn.git', str(REPO)], check=True)
 LINES = {json.dumps(todo, ensure_ascii=False)}
 HAVE = set(json.load(open(REPO / 'scripts/audio/manifest.json'))['keys'])   # rendered = in the bucket's manifest (not on disk)
 todo = [r for r in LINES if r['key'] not in HAVE]

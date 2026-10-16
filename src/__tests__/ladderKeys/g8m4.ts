@@ -184,7 +184,14 @@ export const SOLVE: Record<string, (q: Q) => string> = {
       const lab = labelNums(shape.sides)
       if (lab.some((x, i) => x !== tri[i])) fail(q, 'picture labels disagree with text')
     }
-    const leak = (ans: number) => shapes.forEach((s: any) => s.sides?.forEach((x: string | null, i: number) => { if (x?.startsWith('?')) sideLeak(q, s, i, ans) }))
+    // Similar triangles are drawn with the SAME angles, not with "?" off its length: the picture's point is the shape, and
+    // an off-length "?" side gave the pair different angles (tester, g8m4-t5, 14 Oct 2026; the founder chose this).
+    const leak = (_ans: number) => {
+      if (shapes.length !== 2) return
+      shapes[0].pts.forEach((_: unknown, i: number) => {
+        if (Math.abs(interior(shapes[0].pts, i) - interior(shapes[1].pts, i)) > 1) fail(q, `the two triangles' angles differ at corner ${i}`)
+      })
+    }
     if ((m = t.match(/The small one has sides (.+?) (?:in|ft|cm|m)\. The big one has sides (.+?) (?:in|ft|cm|m)\./))) {
       const a = list(m[1]), b = list(m[2]); checkPic(a, shapes[0]); checkPic(b, shapes[1])
       const ans = similarMissing(q, a, b); leak(ans); return out(ans)
@@ -206,7 +213,7 @@ export const SOLVE: Record<string, (q: Q) => string> = {
     if ((m = t.match(/^A [\w ]+? (\d+) ft tall casts a shadow (\d+) ft long\. At the same time, a [\w ]+? casts a shadow (\d+) ft long\./))) {
       const h = num(m[1]), s = num(m[2]), S = num(m[3]), ans = h * S / s
       if (!Number.isInteger(ans)) fail(q, `height ${ans} not whole`)
-      const big = shapes[1]; if (big) { const i = big.sides.findIndex((x: string | null) => x?.startsWith('?')); if (i >= 0) sideLeak(q, big, i, ans) }
+      leak(ans)
       return out(ans)
     }
     return fail(q, 'unknown question')

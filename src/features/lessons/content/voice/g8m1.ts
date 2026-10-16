@@ -184,4 +184,14 @@ export const G8M1_VOICE: Record<string, VoiceLine> = {
   "So √20 is just under 4.5, nearer to 4.": { style: 'B', say: "So the square root of 20 is just under four and a half, nearer to 4." },
   "Don't HALVE the number.": { style: 'B+' },
   "√20 is not 10, because 10 × 10 = 100. Look for the perfect squares around 20 instead.": { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "A number with an exponent, like 2⁵, is called a power. Same base: add the exponents.": { style: 'A', say: "A number with an exponent, like 2 to the fifth, is called a power. Same base: add the exponents." },
+  "A number with an exponent, like 7⁵, is called a power. Same base: add the exponents.": { style: 'A', say: "A number with an exponent, like 7 to the fifth, is called a power. Same base: add the exponents." },
+  "Raising a power to a power: keep the base, multiply the exponents. (2³)² = 2⁶.": { style: 'A', say: "Raising a power to a power: keep the base, multiply the exponents. 2 cubed, all squared, equals 2 to the sixth." },
+  "Any base except zero, raised to the exponent zero, is one. A negative exponent means one over: 2⁻² = 1/2².": { style: 'A', say: "Any base except zero, raised to the exponent zero, is one. A negative exponent means one over: 2 to the negative 2 equals 1 over 2 squared." },
+  "Any base except zero, raised to the exponent zero, is one. A negative exponent means one over: 4⁻² = 1/4².": { style: 'A', say: "Any base except zero, raised to the exponent zero, is one. A negative exponent means one over: 4 to the negative 2 equals 1 over 4 squared." },
+  "A number from 1 up to 10 times a power of 10, like 1.5 × 10⁸, is in scientific notation.": { style: 'A', say: "A number from 1 up to 10 times a power of 10, like 1.5 times 10 to the eighth, is in scientific notation." },
+  "A number like 7.2 × 10⁷ is written in scientific notation.": { style: 'A', say: "A number like 7.2 times 10 to the seventh is written in scientific notation." },
+  "√ means square root and ∛ means cube root. 49 is a perfect square, because 7 × 7 = 49.": { style: 'A', say: "The root sign means square root, and the root sign with a small 3 means cube root. 49 is a perfect square, because 7 × 7 = 49." },
+  "√ means square root and ∛ means cube root. 64 is a perfect square, because 8 × 8 = 64.": { style: 'A', say: "The root sign means square root, and the root sign with a small 3 means cube root. 64 is a perfect square, because 8 × 8 = 64." },
 }

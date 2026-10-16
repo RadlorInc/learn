@@ -1,6 +1,6 @@
-/** g6m7-t3's chalkboards: index = screen index (0 is Screen 1, which has none). The pets line plot, 12 kids, one ✕ each:
+/** g6m7-t3's chalkboards: index = screen index (0 is Screen 1, which has none). The pets line plot, 12 kids, one dot each:
  * 3 above 0, 5 above 1, 2 above 2, 1 above 3, 1 above 4. Yellow = the tallest stack and the number under it,
- * blue = one kid's ✕, coral = the slip. */
+ * blue = one kid's dot, coral = the slip. */
 import type { ChalkColor, ChalkMark } from '../../../chalk'
 import { write, line, box, arrow, cross, ring, person } from '../../../chalk'
 import { warn } from '../g3m1/t1'
@@ -10,17 +10,18 @@ const q = (m: ChalkMark): ChalkMark => ({ ...m, quick: true })
 const PETS = [3, 5, 2, 1, 1]
 const XS = [80, 150, 220, 290, 360]
 const BASE = 300
-/** The centre of the k-th ✕ (from the bottom) in column i. */
+/** The centre of the k-th dot (from the bottom) in column i. */
 const yAt = (k: number) => BASE - 20 - k * 32
-/** One ✕, drawn as two strokes. */
-const ex = (at: At, i: number, k: number, c: ChalkColor = 'w') => q(cross(at, XS[i] - 11, yAt(k) - 11, 22, 22, c))
+/** One dot, a small circle drawn thick enough to read as filled. */
+const ex = ([beat, at]: At, i: number, k: number, c: ChalkColor = 'w'): ChalkMark =>
+  q({ beat, at, c, w: 11, d: `M${XS[i] - 4} ${yAt(k)} a4 4 0 1 0 8 0 a4 4 0 1 0 -8 0` })
 /** The line and the numbers under it. */
 const axis = (at: At): ChalkMark[] => [
   q(line(at, [[50, BASE], [400, BASE]], 'd')),
   ...XS.map((x, i) => q(write(at, String(i), x, BASE + 30, 26, 'd'))),
   q(write(at, 'pets', 440, BASE + 30, 22, 'd')),
 ]
-/** Every ✕ on the plot. */
+/** Every dot on the plot. */
 const allEx = (at: At, skip?: [number, number]): ChalkMark[] =>
   PETS.flatMap((n, i) => Array.from({ length: n }, (_, k) => k).filter(k => !(skip && skip[0] === i && skip[1] === k)).map(k => ex(at, i, k)))
 const plot = (at: At) => [...axis(at), ...allEx(at)]

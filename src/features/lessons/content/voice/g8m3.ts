@@ -20,7 +20,8 @@ export const G8M3_VOICE: Record<string, VoiceLine> = {
   "Now watch this one.": { style: 'B' },
   "Input 2 shows up twice.": { style: 'B' },
   "Once it gives 6, and once it gives 8.": { style: 'B' },
-  "That is button A giving chips today and a cookie tomorrow. Not a function.": { style: 'B' },
+  // "Ay": a lone capital A was read as the word "a" (tester, g8m3-t1 Screen 5, 14 Oct 2026).
+  "That is button A giving chips today and a cookie tomorrow. Not a function.": { style: 'B', say: "That is button Ay giving chips today and a cookie tomorrow. Not a function." },
   "Here is one that looks strange. Every input gives 5.": { style: 'B' },
   "Is that allowed? Yes. Two buttons can give you the same snack.": { style: 'B' },
   "Each input still has just one output, so this is a function.": { style: 'B' },
@@ -62,7 +63,7 @@ export const G8M3_VOICE: Record<string, VoiceLine> = {
   "Is that the same step each week? No.": { style: 'B' },
   "It goes up 1, then up 3, then up 5, so the points bend upward.": { style: 'B' },
   "Plant A grew by the same amount every week, so its points make a straight line.": { style: 'B' },
-  "A table like that has a name.": { style: 'B' },
+  "A graph like that has a name.": { style: 'B' },
   "We call it linear. Plant B is not linear.": { style: 'B' },
   "Don't compare the y changes before you CHECK the x steps.": { style: 'B+' },
   "If x goes up 1 and then up 2, y should go up twice as far the second time. That is still a straight line.": { style: 'B+' },
@@ -120,4 +121,6 @@ export const G8M3_VOICE: Record<string, VoiceLine> = {
   'Then from hour 6 to hour 10 it goes down to 0, because Sam is riding home.': { style: 'B' },
   'The graph is NOT a picture of a hill.': { style: 'B+' },
   'Going down does not mean Sam rides downhill. It means he is getting closer to home.': { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "Writing a rule as f(x) is called function notation. Say it \"f of x\".": { style: 'A', say: "Writing a rule as f of x is called function notation. Say it f of x." },
 }

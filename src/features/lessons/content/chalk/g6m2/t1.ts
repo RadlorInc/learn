@@ -40,7 +40,9 @@ export const T1: (ChalkMark[] | undefined)[] = [
     ...bar([0, 'Dividing'], 120, 70, 360, 60, 4, 3), ...row(ex([0, 'Dividing'], '3/4'), 75, 100, 28),
     cells([0, 'fraction'], 120, 225, 45, 60, 1), ...row(ex([0, 'fraction'], '1/8'), 75, 255, 28),
     write([0, 'many'], 'how many fit?', 370, 255, 32, 'y'),
-    ...[165, 255, 345].map(x => cut([0, 'cut'], x, 70, 130, 'w')),
+    // Every fourth is cut, the empty one too, so the bar is 8 equal eighths (a tester, 8 Oct: an uncut last fourth made
+    // the 3/4 bar 7 boxes).
+    ...[165, 255, 345, 435].map(x => cut([0, 'cut'], x, 70, 130, 'w')),
     ...[120, 165, 210].map(x0 => ({ ...hop([0, 'count'], x0, x0 + 45, 66, 'y'), quick: true })),
     ...['1', '2', '3'].map((n, i) => ({ ...write([0, 'count'], n, 142.5 + 45 * i, 162, 26, 'y'), quick: true })),
   ],
@@ -49,7 +51,7 @@ export const T1: (ChalkMark[] | undefined)[] = [
     ...bar([0, 'Fourths'], 120, 40, 360, 55, 4, 3), ...row(ex([0, 'Fourths'], '3/4'), 75, 67, 28),
     ...bar([0, 'eighths'], 120, 125, 360, 55, 8, 1), ...row(ex([0, 'eighths'], '1/8'), 75, 152, 28),
     write([0, 'different'], 'different sizes', 300, 215, 26, 'd'),
-    ...[165, 255, 345].map(x => cut([1, 'half'], x, 40, 95, 'w')),
+    ...[165, 255, 345, 435].map(x => cut([1, 'half'], x, 40, 95, 'w')),
     line([1, 'Now'], [[215, 215], [385, 215]], 'd'), write([1, 'Now'], 'same size now', 300, 255, 26),
     ...row([...ex([2, '3/4'], '3/4 ='), ...ex([2, '6/8'], '6/8', 'y')], 300, 330, 40),
   ],

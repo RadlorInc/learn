@@ -130,7 +130,7 @@ function SetPasswordForm() {
       const tokenHash = params.get('token_hash')
       const type      = params.get('type') as EmailOtpType | null
       if (!tokenHash || !type) {
-        setError(t('This link is missing its token. Ask for a fresh invite.'))
+        setError(t('This link is missing its token.'))
         setDead(true)
         return
       }
@@ -139,8 +139,8 @@ function SetPasswordForm() {
       if (error) {
         setError(
           error.message.toLowerCase().includes('expired')
-            ? t('This invite link has expired. Ask for a fresh one.')
-            : t('This invite link is not valid any more. Ask for a fresh one.'),
+            ? t('This link has expired.')
+            : t('This link is not valid any more.'),
         )
         setDead(true)
         return
@@ -188,6 +188,11 @@ function SetPasswordForm() {
       }}>{error}</div>
       <p style={{ fontSize: 12.5, color: C.ink3, margin: 0, lineHeight: 1.5 }}>
         {t('Invite and reset links expire so that an old email in somebody’s inbox cannot be used to reach your family’s account later.')}
+      </p>
+      {/* One page serves both links, and a reset link that failed at Supabase arrives with no `type` to tell them
+          apart — so the way forward is given for both, rather than telling a parent resetting a password to ask for an invite. */}
+      <p style={{ fontSize: 13.5, color: C.ink2, margin: 0, lineHeight: 1.5 }}>
+        {t('Resetting your password? On the sign-in page, tap “Forgot password?” for a new link. Invited by someone? Ask them for a fresh invite.')}
       </p>
       <Link
         href="/auth"

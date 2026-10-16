@@ -21,12 +21,12 @@ export async function getCurrentSession(): Promise<Session | null> {
  * sends our own email — for a parent it confirms the address AND asks for consent; for a teacher it only confirms.
  * Supabase's own confirmation email is not used for this path. The link lands on `/auth/confirm`.
  */
-export type SignUpResult = 'ok' | 'exists' | 'weak_password' | 'invalid' | 'adult_required' | 'rate_limited' | 'failed'
+export type SignUpResult = 'ok' | 'exists' | 'weak_password' | 'invalid' | 'adult_required' | 'rate_limited' | 'undeliverable' | 'failed'
 export async function signUpOneEmail(body: { email: string; password: string; firstName: string | null; role: 'parent' | 'teacher'; lang: 'en' | 'es'; adult: boolean }): Promise<SignUpResult> {
   const r = await fetch('/api/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
   if (r.ok) return 'ok'
   const e = (await r.json().catch(() => null))?.error
-  return e === 'exists' || e === 'weak_password' || e === 'invalid' || e === 'adult_required' || e === 'rate_limited' ? e : 'failed'
+  return e === 'exists' || e === 'weak_password' || e === 'invalid' || e === 'adult_required' || e === 'rate_limited' || e === 'undeliverable' ? e : 'failed'
 }
 
 /**
@@ -95,6 +95,34 @@ export function signInWithEmail(email: string, password: string) {
   // No logging here: the global listener records the SIGNED_IN this produces. Logging in both
   // places would double-count, and logging only here would miss every OAuth sign-in.
   return createClient().auth.signInWithPassword({ email, password })
+}
+
+// ── Admin two-step verification: an authenticator app (TOTP). Only /admin uses these; nothing else in the app
+//    enrols a factor, so no parent or child account ever meets them.
+
+/** True when the session signed in with a password, has a verified authenticator, and has not given its code yet. */
+export async function needsSecondStep(): Promise<boolean> {
+  const { data } = await createClient().auth.mfa.getAuthenticatorAssuranceLevel()
+  return data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2'
+}
+
+/** The account's verified authenticator (its factor id), or null when it has none. */
+export async function verifiedTotpFactor(): Promise<string | null> {
+  const { data } = await createClient().auth.mfa.listFactors()
+  return data?.totp[0]?.id ?? null
+}
+
+/** Starts a new authenticator. Its QR code and secret come back; it counts only once `verifyTotp` accepts a code. */
+export function enrolTotp() {
+  return createClient().auth.mfa.enroll({ factorType: 'totp', issuer: 'Radlic admin' })
+}
+
+/** One code from the authenticator: a challenge, then the code against it. On success the session is aal2. */
+export async function verifyTotp(factorId: string, code: string) {
+  const mfa = createClient().auth.mfa
+  const { data, error } = await mfa.challenge({ factorId })
+  if (error) return { error }
+  return mfa.verify({ factorId, challengeId: data.id, code })
 }
 
 /**

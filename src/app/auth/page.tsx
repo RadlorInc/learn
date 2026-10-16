@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signUpOneEmail, signInWithEmail, signInWithGoogleOAuth, sendPasswordReset } from '@/data/auth'
 import { getMyRole, homeForRole, enterAsChild, classifyUserError } from '@/data/repositories'
@@ -10,7 +10,7 @@ import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
-import { APP_NAME } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import { firstNameOf } from '@/features/consent/firstName'
 
 type Mode = 'login' | 'signup'
@@ -81,6 +81,12 @@ export default function AuthPage() {
   const [error,    setError]    = useState<string | null>(null)
   const [success,  setSuccess]  = useState<string | null>(null)
   function reset() { setError(null); setSuccess(null) }
+  // /auth/callback sends a Google sign-in that came back with an error here, rather than bouncing silently.
+  // Read after mount (not in render) so the server-rendered page and the first client render agree.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('error') === 'oauth')
+      setError(t('Google sign-in did not finish. Please try again, or sign in with your email and password.'))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps -- once, on arrival
 
   async function handleEmailAuth() {
     if (!email.trim() || !password.trim()) {
@@ -124,6 +130,8 @@ export default function AuthPage() {
           setError(t('Please confirm you are 18 or older'))
         } else if (r === 'weak_password' || r === 'invalid') {
           setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD }))
+        } else if (r === 'undeliverable') {
+          setError(t('We cannot send email to this address: earlier emails to it bounced or were marked as spam. Check it for a typo, or use another address. If it is right, write to {support}.', { support: SUPPORT_EMAIL }))
         } else if (r !== 'ok') {
           setError(t('Something went wrong. Please try again.'))
         } else {
@@ -135,10 +143,14 @@ export default function AuthPage() {
         // A child types a username; `loginEmail` turns it into their account's address (core/childLogin.ts).
         const { error } = await signInWithEmail(loginEmail(email), password)
         if (error) {
+          // An unconfirmed account: signing up again with the same email is the way to a fresh link (the sign-up route
+          // re-issues one for an unconfirmed address), so say that instead of Supabase's bare "Email not confirmed".
           setError(
             error.message.includes('Invalid login')
               ? t('Incorrect email, username or password')
-              : error.message
+              : (error as { code?: string }).code === 'email_not_confirmed' || /not confirmed/i.test(error.message)
+                ? t('This email is not confirmed yet. Open the link in the email we sent you. Can’t find it? Tap “Create account” and sign up again with the same email, and we will send a fresh link.')
+                : error.message
           )
         } else {
           // On-page password sign-in does NOT round-trip through /auth/callback, so
@@ -487,6 +499,14 @@ export default function AuthPage() {
               {t('Your child’s progress is saved securely to your account')}
             </p>
           </div>
+
+          {/* A signed-out parent's only way to reach a person (2026-10-05). */}
+          <p style={{ textAlign: 'center', fontSize: 13, color: C.ink3, margin: '16px 0 0' }}>
+            {t('Need help?')}{' '}
+            <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.accent, fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
+            {' · '}
+            <a href={`tel:${SUPPORT_TEL}`} style={{ color: C.accent, fontWeight: 700 }}>{SUPPORT_PHONE}</a>
+          </p>
 
           {/* Front door for cold traffic: try the diagnostic before making an account. */}
           {!LEGACY_CHAPTERS_HIDDEN && <a href="/diagnostic" style={{

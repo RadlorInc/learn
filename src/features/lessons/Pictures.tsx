@@ -8,7 +8,7 @@
  */
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { scratchLineMax, type Obj, type Picture } from './script'
-import { Diagram, Ink, wrap, useTextWidth, type InkRow } from './Diagrams'
+import { Diagram, Ink, wrap, wrapEq, useTextWidth, type InkRow } from './Diagrams'
 
 // Sky light · flat (founder, 2026-09-25): ink is deep blue (never black), ACCENT (math highlights) is the logo's violet; TEAL is the filled control — soft blue
 // with ON_TEAL deep-blue text on it (white text on it would be 1.5:1). The chalkboard keeps its own colours.
@@ -88,7 +88,7 @@ export function Pic({ p, scratch }: { p: Picture; scratch?: Scratch }) {
 
   switch (p.kind) {
     case 'eq':
-      return <Ink rows={[...wrap(p.text, 22).map(t => ({ t, s: 34 })), ...(p.lines ?? []).flatMap(l => wrap(l, 24).map(t => ({ t, s: 28 })))]} />
+      return <Ink rows={[...wrapEq(p.text, 22).map(t => ({ t, s: 34 })), ...(p.lines ?? []).flatMap(l => wrapEq(l, 24).map(t => ({ t, s: 28 })))]} />
 
     case 'cards':
       return <Cards wrong={p.wrong} right={p.right} />

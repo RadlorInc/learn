@@ -68,9 +68,10 @@ export const T1: (ChalkMark[] | undefined)[] = [
   ],
   // Now it's a rectangle
   [
-    poly([0, 'rectangle'], on(RECT, 30, 240, 45)),
-    poly([0, 'rectangle'], on(MOVED, 30, 240, 45), 'b'), fill([0, 'rectangle'], on(MOVED, 30, 240, 45), 'b'),
-    write([0, '6'], '6 cm', 300, 272, 28), write([0, '4'], '4 cm', 482, 150, 28),
+    // "6 cm" on the top edge, one unbroken side: under the bottom it read as the moved triangle's base (tester feedback).
+    poly([0, 'rectangle'], on(RECT, 30, 265, 45)),
+    poly([0, 'rectangle'], on(MOVED, 30, 265, 45), 'b'), fill([0, 'rectangle'], on(MOVED, 30, 265, 45), 'b'),
+    write([0, '6'], '6 cm', 300, 57, 28), write([0, '4'], '4 cm', 482, 175, 28),
     write([1, '24'], '6 × 4 = 24', 225, 340, 36, 'y'), write([1, 'square'], 'square cm', 410, 340, 36, 'y'),
   ],
   // One thing not to do

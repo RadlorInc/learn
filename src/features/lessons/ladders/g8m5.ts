@@ -13,6 +13,8 @@ import { int, pick, shuffle, fmt, type Level, type Rng } from '../adaptive'
 
 const cyl = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'cylinder', labels: { r, h } })
 const cone = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'cone', labels: { r, h } })
+const cup = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'cup', labels: { r, h } })
+const icecream = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'icecream', labels: { r, h } })
 const ball = (r?: string): Picture => ({ kind: 'solid', shape: 'sphere', labels: { r } })
 
 const choose = (r: Rng, right: string, wrong: string[]) => {
@@ -137,7 +139,7 @@ const T2: Level[] = [
     const { u, cu } = pick(r, SMALL), { rad, h } = coneDims(r, 2, 6, 2, 8), k = int(r, 1, 4), H = k * h
     const V = pi3(rad * rad * h), C = pi(rad * rad * H)
     return { text: `A cone-shaped paper cup has a radius of ${rad} ${u} and a height of ${h} ${u}. How many full cups of water does it take to fill a can with the same radius and a height of ${H} ${u}? Use π ≈ 3.14.`,
-      picture: cone(`${rad} ${u}`, `${h} ${u}`), answer: 3 * k,
+      picture: cup(`${rad} ${u}`, `${h} ${u}`), answer: 3 * k,
       steps: [`One cup: 1/3 × 3.14 × ${rad} × ${rad} × ${h} = ${fmt(V)} ${cu}.`, `The can: 3.14 × ${rad} × ${rad} × ${H} = ${fmt(C)} ${cu}.`, `${fmt(C)} ÷ ${fmt(V)} = ${3 * k}, so it takes ${3 * k} cups.`] }
   }),
 ]
@@ -211,7 +213,7 @@ const T4: Level[] = [
     if (r() < 0.5) {
       const rad = pick(r, [3, 6]), h = int(r, 2, 12), X = pi3(rad * rad * h), B = ballR(rad), half = clean(B / 2), T = clean(X + half)
       return { text: `An ice-cream cone has a radius of ${rad} cm and a height of ${h} cm. Half a ball of ice cream with a radius of ${rad} cm sits on top. How many cubic centimeters is that in all? Use π ≈ 3.14.`,
-        picture: cone(`${rad} cm`, `${h} cm`), answer: T,
+        picture: icecream(`${rad} cm`, `${h} cm`), answer: T,
         steps: [`The cone: 1/3 × 3.14 × ${rad} × ${rad} × ${h} = ${fmt(X)}.`, `The half ball: 4/3 × 3.14 × ${rad} × ${rad} × ${rad} = ${fmt(B)}, and half of that is ${fmt(half)}.`, `Add them: ${fmt(X)} + ${fmt(half)}. So ${fmt(T)} cubic centimeters in all.`] }
     }
     const { u, cu } = pick(r, BIG), rad = pick(r, [3, 6, 9]), h = int(r, 5, 20), X = pi(rad * rad * h), B = ballR(rad), half = clean(B / 2), T = clean(X + half)

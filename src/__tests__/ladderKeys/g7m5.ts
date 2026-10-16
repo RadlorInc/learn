@@ -214,7 +214,7 @@ function spinnerChance(q: Q, color: string): F {
 }
 
 function t4(q: Q): string {
-  let r = q.text.match(/probability of landing on (\w+)\? Write a fraction/)
+  let r = q.text.match(/probability of landing on (\w+)\? Write it as a fraction\.$/)
   if (r) return fstr(spinnerChance(q, r[1]))
   r = q.text.match(/marbles in a bag\. You pick one without looking\. What is the probability it is (\w+)\?$/)
   if (r) {
@@ -326,8 +326,8 @@ function t6(q: Q): string {
     const k = numbers(q, q.text).filter(numEvent(q, ev)).length
     return only(q, c =>
       / is right$/.test(c) ? eq(said, right)
-        : / added the rows and columns instead of multiplying$/.test(c) ? !eq(said, right) && eq(said, fr(k, 2 + n))
-          : / added the two chances$/.test(c) ? !eq(said, right) && eq(said, add(fr(1, 2), fr(k, n)))
+        : / counted 2 \+ (\d+) pairs instead of 2 × \1$/.test(c) ? +c.match(/(\d+) pairs/)![1] === n && !eq(said, right) && eq(said, fr(k, 2 + n))
+          : / added the two chances, 1\/2 \+ 1\/(\d+)$/.test(c) ? +c.match(/1\/(\d+)$/)![1] === n && !eq(said, right) && eq(said, add(fr(1, 2), fr(k, n)))
             : fail(q, `unknown choice "${c}"`))
   }
   r = q.text.match(/What is the probability that the two numbers add up to (\d+)\?$/)

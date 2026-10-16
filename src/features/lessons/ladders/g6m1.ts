@@ -157,6 +157,7 @@ const T2: Level[] = [
   L('story: scale down, then up', r => {
     const P = pick(r, PLANS), a = int(r, 2, 5), b = until(() => int(r, 4, 9), v => v >= a + 2), k = int(r, 3, 6), m = until(() => int(r, 2, 9), v => v !== k)
     return { text: `${P.what} ${a * k} ${P.a} for ${b * k} ${P.b}. Keep the same plan. How many ${P.a} do ${b * m} ${P.b} ${P.need}?`,
+      hint: 'Go down first: divide both numbers by the same number to get a small ratio. Then multiply up.',
       picture: table([[P.A, a * k, '?'], [P.B, b * k, b * m]]), answer: a * m,
       steps: [`Divide both by ${k}: ${a} ${P.a} for ${b} ${P.b}.`, `${b * m} ${P.b} is ${b} × ${m}, so multiply the ${P.a} by ${m} too: ${a} × ${m}.`, `So ${b * m} ${P.b} ${P.need} ${a * m} ${P.a}.`] }
   }),
@@ -280,7 +281,8 @@ const T5: Level[] = [
   L('table with columns ready, add two columns', r => {
     const M = pick(r, MIXES5), a = int(r, 2, 6), b = until(() => int(r, 2, 9), v => v !== a), f = pick(r, [4, 5]), x = f - 3
     return { text: `${M.what} uses ${a} ${M.a} for every ${b} ${M.b}. How many ${M.b} go with ${f * a} ${M.a}?`,
-      picture: table([[M.A, a, 2 * a, 3 * a, f * a], [M.B, b, 2 * b, 3 * b, '?']]), answer: f * b,
+      // A tester (8 Oct): 3a then 5a reads as the pattern breaking; "…" says columns were skipped (4a only, so not at f = 4).
+      picture: table(f === 5 ? [[M.A, a, 2 * a, 3 * a, '…', f * a], [M.B, b, 2 * b, 3 * b, '…', '?']] : [[M.A, a, 2 * a, 3 * a, f * a], [M.B, b, 2 * b, 3 * b, '?']]), answer: f * b,
       steps: [`Two columns add up to ${f * a}: ${x * a} + ${3 * a} = ${f * a}.`, `Add the ${M.b} in those same columns: ${x * b} + ${3 * b}.`, `So you need ${f * b} ${M.b}.`] }
   }),
   L('scale down, then up', r => {
@@ -298,7 +300,8 @@ const T5: Level[] = [
     const say = (x: number, y: number) => `${x} ${M.a} and ${y} ${M.b}`
     const right = say(a * k, b * k)
     return { text: `Every column in this table is the same ${M.what.replace(/^A /, '').toLowerCase()}. Which pair could go in a new column?`,
-      picture: table([[M.A, a, 2 * a, 3 * a], [M.B, b, 2 * b, 3 * b]]), answer: choose(r, right, w.map(([x, y]) => say(x, y))),
+      // The empty "?" column is the new column the question asks about (a tester, 8 Oct: the wording alone read as ambiguous).
+      picture: table([[M.A, a, 2 * a, 3 * a, '?'], [M.B, b, 2 * b, 3 * b, '?']]), answer: choose(r, right, w.map(([x, y]) => say(x, y))),
       steps: [`Every column is ${a} : ${b} with both numbers multiplied by the same number.`, `${a} × ${k} = ${a * k} and ${b} × ${k} = ${b * k}.`, `So the answer is ${right}.`] }
   }),
   L('halve a column, then add columns', r => {
@@ -322,7 +325,7 @@ const T5: Level[] = [
 // ── t6 · Part-part-whole ratios ─────────────────────────────────────────────────────────────────────────────
 const GROUPS = [
   { whole: 'A class', A: 'boys', B: 'girls', all: 'students' }, { whole: 'A club', A: 'boys', B: 'girls', all: 'members' },
-  { whole: 'A fruit bowl', A: 'apples', B: 'oranges', all: 'pieces of fruit' }, { whole: 'A pet shelter', A: 'cats', B: 'dogs', all: 'pets' },
+  { whole: 'A fruit bowl', A: 'apples', B: 'oranges', all: 'pieces of fruit' }, { whole: 'A pet shop', A: 'cats', B: 'rabbits', all: 'pets' },
 ] as const
 const PARTS3 = [
   { what: 'Paint is mixed', k: ['blue', 'white', 'black'] }, { what: 'A fruit punch is mixed', k: ['juice', 'soda water', 'lemonade'] },

@@ -35,6 +35,13 @@ Lesson and chapter content still to write, read, hear or fix. Each line says wha
 
 ## To fix or decide
 
+- **22 Screen 1s open on bare working, not a picture of the story** (building-lessons: Screen 1 is "a real-life
+  picture and the question"). A tester found it in Grade 6 Module 3 (fixed, 9 October 2026); the same shape, a Screen 1
+  whose only picture is `eq`, `columns` or `longdiv`, was counted on 9 October in g4m1-t1, t5, t6, t7; g4m3-t3, t6;
+  g5m1-t3, t4, t6, t9, t10, t11, t14, t15, t16, t18; g5m4-t1, t4, t5, t6; g6m5-t5; g8m2-t8. Some may be on purpose
+  (g4m1-t7 "Did Maya add right?", g5m1-t18 "A number sentence on the board"). *Status: the founder decides whether
+  to redraw them; no gate until then.*
+
 - **The five written practice problems of every topic** (1,410 in all) are no longer asked: every topic is laddered,
   so the player generates practice instead. They are still checked by `lessonsAllModules.test.ts` and the answer keys,
   and feed a mixed-practice fallback that no module uses. Keep them as a record, or delete them with that fallback.

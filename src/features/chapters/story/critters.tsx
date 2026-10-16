@@ -47,7 +47,7 @@ export interface Habitat {
 }
 export const HABITATS: Record<string, Habitat> = {
   meadow: {
-    scenes: ['/assets/backgrounds/farm_barnyard.png', '/assets/backgrounds/garden.png', '/assets/backgrounds/garden_meadow.png'],
+    scenes: ['/assets/backgrounds/meadow_sunflower.jpeg', '/assets/backgrounds/meadow_autumn.jpeg', '/assets/backgrounds/meadow_windmill.jpeg'],
     move: 'land', lineY: 72, waitY0: 82, waitY1: 92,
   },
   reef: {
@@ -55,7 +55,7 @@ export const HABITATS: Record<string, Habitat> = {
     move: 'swim', lineY: 46, waitY0: 64, waitY1: 76,
   },
   sky: {
-    scenes: ['/assets/backgrounds/garden_park.png', '/assets/backgrounds/garden_fence.png', '/assets/backgrounds/town_park.jpeg'],
+    scenes: ['/assets/backgrounds/sky_blossom.jpeg', '/assets/backgrounds/sky_riverside.jpeg', '/assets/backgrounds/sky_wildflower.jpeg'],
     move: 'air', lineY: 40, waitY0: 56, waitY1: 68,
   },
 }

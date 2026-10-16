@@ -377,7 +377,7 @@ export default function NumberTown({ world: forcedWorldId, onFinish, onExit }: {
   const bgScene: Scene = phase === 'practice' ? scene : phase === 'guided' ? GUIDED_ROUND.scene : phase === 'demo' ? DEMO_ROUNDS[demoIdx].scene : world.scenes[0]
 
   const Banner = (text: string) => (
-    <div style={{ position: 'absolute', top: short ? 44 : 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
+    <div style={{ pointerEvents: 'none', position: 'absolute', top: short ? 44 : 50, left: 0, right: 0, zIndex: 45, display: 'flex', justifyContent: 'center', padding: '0 12px' }}>
       <div style={{ background: 'var(--paper)', border: '3px solid var(--milo-orange)', borderRadius: 999, padding: short ? '5px 16px' : '10px 24px', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: short ? 14 : 19, color: 'var(--milo-orange)', boxShadow: '0 4px 0 rgba(242,107,44,.25)', textAlign: 'center' }}>{text}</div>
     </div>
   )

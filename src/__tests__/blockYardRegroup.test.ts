@@ -223,16 +223,16 @@ describe('everything the round can put on screen is actually ON the screen', () 
     expect(groundOf(900)).toBe(GROUND)          // a roomy frame keeps the designed ground line
   })
 
-  it('the walker is the foreman bear, with a registered drawn cycle, and no mascot is drawn', () => {
+  it('the walker is the bear cub, with a registered drawn cycle, and no mascot is drawn', () => {
     // ⚠️ A block has no legs, so the walker is the ONLY living thing left in this chapter —
     // "something arrives on its own legs" rests entirely on him. Without a sheet `SheetCell` silently
     // falls back to a still, and a still that travels is a sticker being dragged.
     // The path is written out HERE, not imported: the product has no mascot (2026-09-25), and a
     // chapter drifting back to `characters/milo_*` must go red.
     const src = readFileSync(join(process.cwd(), 'src', 'features', 'chapters', 'story', 'BlockYard.tsx'), 'utf8')
-    expect(src).toContain("'/assets/objects/foreman_bear_side.png'")
+    expect(src).toContain("'/assets/objects/bearcub_side.png'")
     expect(src).not.toMatch(/characters\/milo|MiloSprite|🦊/)
-    expect(hasSheet('/assets/objects/foreman_bear_side.png')).toBe(true)
+    expect(hasSheet('/assets/objects/bearcub_side.png')).toBe(true)
   })
 })
 

@@ -3,9 +3,13 @@
  * WHAT SHE SAYS, piece by piece, each piece at the word that names it. A screen's `chalk` is a list of marks; each
  * mark belongs to one beat and goes up when that beat reaches its `at` word. Marks of one beat go up one after
  * another (a mark never starts before the one above it in the list has finished), so a list reads as a hand at work.
+ * ⚠️ So a mark listed above one with an EARLIER word holds that one back to its own word: g6m7-t5 Screen 4's ring at
+ *  "person" (the line's last word) held the jump at "jumps" to the end of the line (a tester, 11 Oct 2026). On 12 Oct a
+ *  scan of every lesson found 209 such pairs; many are a deliberate drawing order, none was checked one by one.
  *
  * The board is always 600 × 400. Pure data and timing here; drawing is ./Chalkboard.tsx.
  */
+import { clipKey } from '@/core/voiceClips'
 
 export type ChalkColor = 'w' | 'y' | 'b' | 'r' | 'd'   // white, yellow, blue, coral, dim
 export const CHALK: Record<ChalkColor, string> = { w: '#F0EBDA', y: '#F2CE6B', b: '#8AC0DB', r: '#E88E74', d: '#A9A897' }
@@ -27,13 +31,21 @@ export interface ChalkMark {
 /** How long a line takes to say. The same estimate paces the silent-mode beat clock, so the chalk matches either way. */
 export const beatMs = (say: string) => Math.min(6500, 1500 + say.length * 55)
 
-const norm = (w: string) => w.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
+export const normWord = (w: string) => w.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')
 
-/** When, in ms into the line, `at` is said: its place among the words times the line's length. -1 = not in the line. */
+/** Real word times of the open lesson's clips — `{ clipKey: { word: ms into the clip } }`, ./word-times/<module>.json, built
+ *  by scripts/audio/build-word-times.mts from her recordings — and the rate the clips play at (LessonPlayer sets both). */
+let heard: Record<string, Record<string, number>> = {}, heardRate = 1
+export const setWordTimes = (t: typeof heard, rate: number) => { heard = t; heardRate = rate }
+
+/** When, in ms into the line, `at` is said: the real time from her clip when there is one, else its place among the
+ *  words times the line's length (a line with no clip, or a word whisper did not match). -1 = not in the line. */
 export function wordMs(say: string, at?: string): number {
   if (!at) return 0
-  const words = say.split(/\s+/).map(norm)
-  const i = words.indexOf(norm(at))
+  const real = heard[clipKey(say)]?.[normWord(at)]
+  if (real !== undefined) return Math.round(real / heardRate)
+  const words = say.split(/\s+/).map(normWord)
+  const i = words.indexOf(normWord(at))
   return i < 0 ? -1 : Math.round((i / words.length) * beatMs(say))
 }
 
@@ -62,6 +74,13 @@ export const span = ([beat, at]: At, x1: number, x2: number, y: number, c: Chalk
 /** A hop over a number line, from x1 to x2. */
 export const hop = ([beat, at]: At, x1: number, x2: number, y: number, c: ChalkColor = 'w'): ChalkMark =>
   ({ beat, at, c, d: `M${x1} ${y} Q${(x1 + x2) / 2} ${y - Math.abs(x2 - x1) * 0.6} ${x2} ${y} M${x2 - 9} ${y - 10} L${x2} ${y} L${x2 + 3} ${y - 12}` })
+/** A jump arc from x1 to x2 whose arrowhead points the way the arc lands (`hop`'s small V points down), so the
+ *  direction of each jump reads at a glance (g8m1-t5: a tester read a row of hops the other way, 14 Oct 2026). */
+export const hopArrow = ([beat, at]: At, x1: number, x2: number, y: number, c: ChalkColor = 'w'): ChalkMark => {
+  const cx = (x1 + x2) / 2, cy = y - Math.abs(x2 - x1) * 0.6, l = Math.hypot(x2 - cx, y - cy), ux = (x2 - cx) / l, uy = (y - cy) / l
+  const wing = (a: number) => `${x2 - 13 * (ux * Math.cos(a) - uy * Math.sin(a))} ${y - 13 * (ux * Math.sin(a) + uy * Math.cos(a))}`
+  return { beat, at, c, d: `M${x1} ${y} Q${cx} ${cy} ${x2} ${y} M${wing(0.45)} L${x2} ${y} L${wing(-0.45)}` }
+}
 export const cross = ([beat, at]: At, x: number, y: number, w: number, h: number, c: ChalkColor = 'r'): ChalkMark =>
   ({ beat, at, c, w: 4.5, d: `M${x} ${y} L${x + w} ${y + h} M${x + w} ${y} L${x} ${y + h}` })
 export const ring = ([beat, at]: At, x: number, y: number, rx: number, ry: number, c: ChalkColor = 'y'): ChalkMark =>
