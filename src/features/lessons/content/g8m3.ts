@@ -15,8 +15,10 @@ const io = (xs: string[], ys: string[], x = 'Input (x)', y = 'Output (y)', mark?
 const dots = (pts: [number, number][], lines: Extract<Picture, { kind: 'coord' }>['lines'] = [], motion = false, max = 10): Picture =>
   ({ kind: 'coord', min: 0, max, points: pts.map(([x, y]) => ({ x, y })), lines, motion })
 /** A graph made of connected pieces; piece `hi` is drawn in the second colour. */
-const path = (pts: [number, number][], hi = -1, motion = false): Picture =>
-  ({ kind: 'coord', min: 0, max: 10, lines: pts.slice(1).map((b, i) => ({ a: pts[i], b, tone: i === hi ? 2 as const : undefined })), motion })
+const path = (pts: [number, number][], hi = -1, motion = false, names?: [string, string]): Picture =>
+  ({ kind: 'coord', min: 0, max: 10, lines: pts.slice(1).map((b, i) => ({ a: pts[i], b, tone: i === hi ? 2 as const : undefined })), motion, ...(names ? { names } : {}) })
+/** The bike ride's axes, written on the graph as the lesson says them. */
+const RIDE_AXES: [string, string] = ['hours', 'miles from home']
 
 const FN = ['yes, a function', 'no, not a function']
 const LIN = ['linear', 'not linear']
@@ -236,10 +238,10 @@ export const G8M3: Lesson[] = [
           { say: "It goes up 1, then up 3, then up 5, so the points bend upward.", pic: 0 },
         ],
         pictures: [dots([[0, 0], [1, 1], [2, 4], [3, 9]], [{ a: [0, 0], b: [1, 1], dashed: true }, { a: [1, 1], b: [2, 4], dashed: true }, { a: [2, 4], b: [3, 9], dashed: true }], true), eq('1 − 0 = 1', ['4 − 1 = 3', '9 − 4 = 5'])] },
-      { title: "Give it a name", text: "Plant A grew by the same amount every week, so its points make a straight line. A table like that has a name. We call it linear. Plant B is not linear.",
+      { title: "Give it a name", text: "Plant A grew by the same amount every week, so its points make a straight line. A graph like that has a name. We call it linear. Plant B is not linear.",
         beats: [
           { say: "Plant A grew by the same amount every week, so its points make a straight line.", pic: 0 },
-          { say: "A table like that has a name." },
+          { say: "A graph like that has a name." },
           { say: "We call it linear. Plant B is not linear." },
         ],
         pictures: [dots([[0, 1], [1, 3], [2, 5], [3, 7]], [{ a: [0, 1], b: [3, 7], extend: true }])] },
@@ -464,40 +466,40 @@ export const G8M3: Lesson[] = [
     bigIdea: 'Read the graph from left to right, where up means growing, down means shrinking, and flat means staying the same.',
     screens: [
       { title: 'A bike ride', text: 'This graph shows how far Sam is from home on a bike ride. Along the bottom is hours. Up the side is miles from home. What story does it tell?',
-        pictures: [path(RIDE)] },
+        pictures: [path(RIDE, -1, false, RIDE_AXES)] },
       { title: 'No rule to use', text: 'There is no rule here to put numbers into. So how can a graph tell a story? You read its shape, one piece at a time.',
         beats: [
           { say: 'There is no rule here to put numbers into.', pic: 0 },
           { say: 'So how can a graph tell a story?' },
           { say: 'You read its shape, one piece at a time.' },
         ],
-        pictures: [path(RIDE)] },
+        pictures: [path(RIDE, -1, false, RIDE_AXES)] },
       { title: 'The big idea', text: 'Read the graph from left to right, where up means growing, down means shrinking, and flat means staying the same.',
         beats: [
           { say: 'Read the graph from left to right, where up means growing, down means shrinking, and flat means staying the same.', pic: 0 },
         ],
-        pictures: [path(RIDE)] },
+        pictures: [path(RIDE, -1, false, RIDE_AXES)] },
       { title: 'Going up', text: 'Start at the left. From hour 0 to hour 2, the graph climbs to 6 miles. What does that mean for Sam? His distance from home is growing, so he is riding away.',
         beats: [
           { say: 'Start at the left. From hour 0 to hour 2, the graph climbs to 6 miles.', pic: 0 },
           { say: 'What does that mean for Sam?' },
           { say: 'His distance from home is growing, so he is riding away.' },
         ],
-        pictures: [path(RIDE, 0, true)] },
+        pictures: [path(RIDE, 0, true, RIDE_AXES)] },
       { title: 'Flat', text: 'Next piece. From hour 2 to hour 4, the graph stays flat at 6 miles. Is Sam getting any farther from home? No. His distance is not changing, so he has stopped for a rest.',
         beats: [
           { say: 'Next piece. From hour 2 to hour 4, the graph stays flat at 6 miles.', pic: 0 },
           { say: 'Is Sam getting any farther from home? No.' },
           { say: 'His distance is not changing, so he has stopped for a rest.' },
         ],
-        pictures: [path(RIDE, 1, true)] },
+        pictures: [path(RIDE, 1, true, RIDE_AXES)] },
       { title: 'Steep, gentle, and down', text: 'From hour 4 to hour 6 it climbs again, but only 2 miles. From hour 0 to hour 2 it climbed 6. Steeper means faster. Then from hour 6 to hour 10 it goes down to 0, because Sam is riding home.',
         beats: [
           { say: 'From hour 4 to hour 6 it climbs again, but only 2 miles.', pic: 0 },
           { say: 'From hour 0 to hour 2 it climbed 6. Steeper means faster.' },
           { say: 'Then from hour 6 to hour 10 it goes down to 0, because Sam is riding home.' },
         ],
-        pictures: [path(RIDE, 3, true)] },
+        pictures: [path(RIDE, 3, true, RIDE_AXES)] },
       { title: 'One thing not to do', text: "Here's the part people mix up. The graph is NOT a picture of a hill. Going down does not mean Sam rides downhill. It means he is getting closer to home. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },

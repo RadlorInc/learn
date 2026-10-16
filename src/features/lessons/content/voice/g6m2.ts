@@ -7,7 +7,7 @@ import type { VoiceLine } from './styles'
 export const G6M2_VOICE: Record<string, VoiceLine> = {
   // Their "Here's the part people mix up.", "Okay. Your turn." and "Is there a faster way? Yes." share rows in other modules.
   // ── g6m2-t1 ──
-  "Dividing usually means sharing. But you can't share lasagna with 1/8 of a person.": { style: 'B' },
+  "Dividing usually means sharing. But does ÷ 1/8 mean sharing with 1/8 of a person? No, that makes no sense.": { style: 'B', say: "Dividing usually means sharing. But does dividing by 1/8 mean sharing with 1/8 of a person? No, that makes no sense." },
   "So what does 3/4 ÷ 1/8 ask? How many 1/8 servings fit in 3/4.": { style: 'B' },
   "Dividing by a fraction asks how many of that fraction fit, so cut both into same-size pieces and count.": { style: 'B' },
   "Fourths and eighths are different sizes.": { style: 'B' },
@@ -100,15 +100,18 @@ export const G6M2_VOICE: Record<string, VoiceLine> = {
   "Finish both lists and take the biggest, 6.": { style: 'B+' },
   // ── g6m2-t7 ── (its "Here's the part people mix up." and "Okay. Your turn." are g5m1's rows)
   "Why not buy 6 of each?": { style: 'B' },
-  "Buns come in packs of 4, so you can't get exactly 6 buns.": { style: 'B' },
+  "Erasers come in packs of 4, so you can't get exactly 6 erasers.": { style: 'B' },
   "You need a number that both pack sizes can make.": { style: 'B' },
   "Count by each number, and the first number both counts land on is the smallest multiple they share.": { style: 'B' },
-  "Start with the hot dogs.": { style: 'B' },
+  "Start with the pencils.": { style: 'B' },
   "Count by 6s with me. 6, 12, 18, 24.": { style: 'B' },
-  "Now the buns, on a line underneath.": { style: 'B' },
+  "Now the erasers, on a line underneath.": { style: 'B' },
   "Count by 4s. 4, 8, 12, 16, 20, 24.": { style: 'B' },
   "Which number do both lines hit first? 12.": { style: 'B' },
-  "So buy 12 of each. That's 2 packs of hot dogs and 3 packs of buns.": { style: 'B' },
+  "So buy 12 of each. That's 2 packs of pencils and 3 packs of erasers.": { style: 'B' },
   "Don't just MULTIPLY 6 × 4.": { style: 'B+' },
   "24 works, but 12 comes first. Stop at the first number both counts share.": { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "The biggest factor two numbers share is their greatest common factor (GCF).": { style: 'A', say: "The biggest factor two numbers share is their greatest common factor, G, C, F." },
+  "The smallest multiple two numbers share is their least common multiple (LCM).": { style: 'A', say: "The smallest multiple two numbers share is their least common multiple, L, C, M." },
 }

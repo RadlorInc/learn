@@ -1016,8 +1016,11 @@ input[type="range"] { height: 44px; }
 .dash-act .dash-more { position: static; }
 .dash-act .dash-more[open] > div { left: 0; right: auto; top: calc(100% + 4px); }
 .dash-spot { position: fixed; z-index: 90; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(8,30,70, .55); pointer-events: none; outline: 3px solid #fff; transition: all .25s ease; }
-.dash-coach { position: fixed; z-index: 91; background: #fff; border-radius: 16px; padding: 16px; width: min(340px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,.25); box-sizing: border-box; }
+.dash-coach { position: fixed; z-index: 91; background: #fff; border-radius: 16px; padding: 16px; width: min(340px, calc(100vw - 32px)); box-shadow: 0 10px 30px rgba(0,0,0,.25); box-sizing: border-box; max-height: calc(100dvh - 24px); overflow-y: auto; }
 @media (prefers-reduced-motion: reduce) { .dash-spot { transition: none; } }
+/* The tester's walkthroughs (/test) sit above its review bar (z 1001) and the chapter's cover (z 1000). */
+.tester-tour .dash-spot { z-index: 1100; }
+.tester-tour .dash-coach { z-index: 1101; }
 /* Buttons and fields do not inherit the page font by default — they rendered in the system font. */
 .home-app button, .home-app select, .home-app input, .home-app textarea { font-family: inherit; }
 

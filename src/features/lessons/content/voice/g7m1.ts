@@ -147,4 +147,6 @@ export const G7M1_VOICE: Record<string, VoiceLine> = {
   "0.1 × 100 = 10, so your guess was 10% off.": { style: 'B', say: "Zero point one times 100 equals 10, so your guess was 10 percent off." },
   "Don't divide by your GUESS. It's the thing being checked, so it can't be the measuring stick.": { style: 'B+' },
   "Divide by the real count: 5 ÷ 50 × 100 = 10%.": { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "An equation like 3/20 = 12/80, saying two ratios are equal, is called a proportion.": { style: 'A', say: "An equation like 3 twentieths equals 12 eightieths, saying two ratios are equal, is called a proportion." },
 }

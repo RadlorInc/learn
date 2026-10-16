@@ -15,13 +15,14 @@ let sub: { status: string; cancel_at_period_end: boolean; quantity: number }
 let calls: { url: string; method: string; body: string; idem: string | null }[]
 let declines: boolean
 let needsApproval: boolean   // the bank wants 3-D Secure: Stripe keeps the change pending
+let marks: Record<string, string>   // closeRefund.ts's marker for each seat a one-child withdrawal took off
 
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { 'Content-Type': 'application/json' } })
 const stripeObj = (pending = false) => ({
   pending_update: pending ? { subscription_items: [{ id: 'si_A', quantity: sub.quantity + 1 }], expires_at: 1_790_000_000 } : null,
   latest_invoice: pending ? { id: 'in_P', object: 'invoice', status: 'open', hosted_invoice_url: 'https://invoice.stripe.com/i/test_pending' } : 'in_paid',
   id: 'sub_A', object: 'subscription', status: sub.status, cancel_at_period_end: sub.cancel_at_period_end, customer: 'cus_A',
-  metadata: { account_id: A },
+  metadata: { account_id: A, ...marks },
   items: { object: 'list', data: [{ id: 'si_A', quantity: sub.quantity, price: { recurring: { interval: 'month' } }, current_period_start: 1_767_225_600, current_period_end: 1_769_904_000 }] },
 })
 
@@ -68,7 +69,7 @@ beforeEach(() => {
   })
   table = [{ id: 'row-A', account_id: A, stripe_subscription_id: 'sub_A', status: 'active', seats_paid: 2 }]
   sub = { status: 'active', cancel_at_period_end: false, quantity: 2 }
-  calls = []; declines = false; needsApproval = false
+  calls = []; declines = false; needsApproval = false; marks = {}
   vi.stubGlobal('fetch', vi.fn(network))
 })
 afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
@@ -94,6 +95,14 @@ describe('POST /api/billing/seats', () => {
     expect(w.idem).toBe('seat-sub_A-3')
     expect(table[0].seats_paid).toBe(3)
     expect(JSON.parse(calls.find(c => c.url.endsWith('/rpc/materialize_seats'))!.body)).toEqual({ p_subscription_id: 'row-A', p_seats: 3 })
+  })
+  it('after a seat came off (a one-child withdrawal), re-adding to the same quantity is a NEW key, so Stripe really adds it', async () => {
+    // Same target (3) as before a removal: under the old key Stripe would hand back its cached answer and add nothing.
+    marks = { rs_0123456789abcdef0123456789abcdef: '1790000000' }
+    await post('tok-A', { confirm: true })
+    const [w] = stripePosts()
+    expect(w.idem).toBe('seat-sub_A-3-r1')
+    expect(sub.quantity).toBe(3)
   })
   it('the bank wants approval (3-D Secure): Stripe\'s page is handed back and NO seat is written until it is paid', async () => {
     needsApproval = true

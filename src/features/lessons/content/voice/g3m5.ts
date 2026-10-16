@@ -131,4 +131,6 @@ export const G3M5_VOICE: Record<string, VoiceLine> = {
   "So 2/3 > 2/8.": { style: 'B' },
   "Don't pick the BIGGER bottom number.": { style: 'B+' },
   "A bigger bottom number means more cuts, so smaller pieces. So 1/3 > 1/8.": { style: 'B+' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "> means \"is greater than\". 5/6 > 2/6.": { style: 'A', say: "The greater than sign means is greater than. 5/6 is greater than 2/6." },
 }

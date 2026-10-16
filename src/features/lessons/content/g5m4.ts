@@ -43,6 +43,7 @@ export const G5M4: Lesson[] = [
   {
     id: 'g5m4-t1', title: 'Thousandths', skill: 'Read and write thousandths, and name the value of a digit',
     bigIdea: "The third place after the point is thousandths, so 47 thousandths is 0.047.",
+    hint: "The third place after the point is thousandths. Think how many hundredths and thousandths your number has.",
     screens: [
       { scene: 'g5m4-t1', title: 'A tiny seed', text: 'A seed is so light it weighs 47 thousandths of a gram. How do you write that with a point?',
         pictures: [{ kind: 'eq', text: '47 thousandths of a gram' }] },
@@ -281,9 +282,9 @@ export const G5M4: Lesson[] = [
       { why: 'A little harder', problem: { text: 'Round 6.718 to the nearest whole number.',
         picture: rline(6, 7, 6.718), answer: 7,
         steps: ['6.718 sits between 6 and 7. Halfway is 6.5.', '6.718 is past halfway, so it rounds up.', 'So 6.718 rounds to 7.'] } },
-      { why: 'Same math in a story', problem: { text: 'A puppy weighs 3.462 kilograms. What is its weight to the nearest hundredth of a kilogram?',
+      { why: 'Same math in a story', problem: { text: 'A watermelon weighs 3.462 kilograms. What is its weight to the nearest hundredth of a kilogram?',
         picture: rline(3.46, 3.47, 3.462), answer: 3.46,
-        steps: ['3.462 sits between 3.46 and 3.47. Halfway is 3.465.', '3.462 is before halfway, so it rounds down.', 'So the puppy weighs about 3.46 kilograms.'] } },
+        steps: ['3.462 sits between 3.46 and 3.47. Halfway is 3.465.', '3.462 is before halfway, so it rounds down.', 'So the watermelon weighs about 3.46 kilograms.'] } },
     ],
   },
 

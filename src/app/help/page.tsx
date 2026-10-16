@@ -10,7 +10,7 @@
  *
  * A Server Component — it is text and links.
  */
-import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
@@ -109,7 +109,11 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'I forgot my parent PIN',
     a: <>On the PIN screen, tap &ldquo;Forgot PIN?&rdquo;. For your child&apos;s safety the PIN is removed 24 hours
-       later, and entering it before then cancels the reset. After that you can set a new one.</>,
+       later, and entering it before then cancels the reset. After that you can set a new one. We email your account
+       when a reset is asked for, so if you did not ask, open your dashboard, enter your PIN to cancel it, and tell us.
+       While the PIN is locked or forgotten you can still get help, withdraw permission or download a copy of your
+       child&apos;s data: on the PIN screen, tap &ldquo;Need help, or want to withdraw permission or download your
+       data?&rdquo;. Closing your account needs the PIN.</>,
   },
   {
     q: 'How does Radlic decide what to teach?',
@@ -209,7 +213,8 @@ export default function HelpPage() {
         <div style={{ marginTop: 24, fontSize: 15, lineHeight: 1.6, color: P.ink2 }}>
           Still stuck? <SupportPanel label="Report a problem" /> — it opens an email to us with technical details about
           this device attached. Or write to{' '}
-          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>.
+          <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>, or call{' '}
+          <a href={`tel:${SUPPORT_TEL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_PHONE}</a>.
         </div>
       </div>
       <HelpJsonLd />

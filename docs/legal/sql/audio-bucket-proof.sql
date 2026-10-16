@@ -20,7 +20,36 @@ select count(*) from supabase_migrations.schema_migrations where version = '2026
 select count(*) as badly_named from storage.objects
 where bucket_id = 'lesson-audio' and name !~ '^[0-9a-f]{16}\.mp3$' and name <> 'anon-probe-canary.mp3';
 
--- P5. After the upload run: every manifest object is there.     expected: 17884 | 273065412
+-- P5. After the upload run: every manifest object is there.     expected: 18646 | 289376154
+--     (2026-10-16, tester batch B3, tag audio-src-josh-2026-10-16: 4 objects, 109991 bytes — g7m5's two stickers and two
+--     reworded t3 lines. Before this run P5 should read 18642 | 289266163, the B2 value below; a different "before"
+--     means another upload ran, and the after is before + 4.)
+--     (read by the founder after B3's upload, run 38817372299, 2026-10-16: 18646 | 289376154)
+--     (2026-10-15, tester batch B2, tag audio-src-josh-2026-10-15d: 36 objects, 986056 bytes — 16 say-row re-renders,
+--     13 plain re-renders and 7 new or reworded lines. Before this run P5 should read 18606 | 288280107, the batch C
+--     value below; a different "before" means another upload ran, and the after is before + 36.)
+--     (read by the founder after B2's upload, run 38806660628, 2026-10-16: 18642 | 289266163; P6 0)
+--     (2026-10-15, tester batch C, tag audio-src-josh-2026-10-15c: 342 objects, 7143931 bytes — 14 reworded lines and
+--     328 Screen 9 stickers. Before this run P5 should read 18264 | 281136176, the #437 value below; a different
+--     "before" means another upload ran, and the after is before + 342.)
+--     (2026-10-15, #416 + tester batch B, tag audio-src-josh-2026-10-15: 222 objects, 5942765 bytes — #416's number
+--     re-renders and batch B's 39 new or re-rendered lines. Before this run P5 should read the 12 Oct value below,
+--     18042 | 275193411, if no upload ran since; a different "before" means one did, and the after is before + 222.)
+--     (read by the founder after #425's upload, 2026-10-12: 18042 | 275193411, so before it 18041 | 275178138; P7: 1 | 1 | no-store)
+--     (2026-10-12, #425: its dry run (run 38195871791) listed 18042 objects = 16984 of the manifest + 1057 older ones +
+--     the canary, so before this run P5 reads 18041 (uploads ran after #413); this run adds 1 object, 15273 bytes: the KG–2 take line "You did it! 5 questions solved. You're
+--     getting stronger!" (1g6guhs → 99106db90a5e9e79.mp3). The old line's clip stays in the bucket.)
+--     (2026-10-11, #423: run 38140569672 added 13 objects, 261236 bytes: the dot-plot lines of g6m7 (12) and g7m5 (1).
+--     P5 went from 18028 | 274916902 to 18041 | 275178138, the "before" #425 derives from the founder's read. The dry run's
+--     18029 / 18042 counts include the canary, which P5 leaves out. The 13 old clips stay in the bucket.)
+--     (2026-10-09, #413: before this run the bucket should read 18027 | 274844265; this run adds 1 object, 72637
+--     bytes, g6m4-t7's Screen 1 with what interest is. The old line's clip stays in the bucket.)
+--     (2026-10-08, #407: the bucket read 18026 | 274803288 after #386's 142-clip upload (6 Oct); this run adds 1 object,
+--     40977 bytes, g6m1-t5's new big idea. The old line's clip stays in the bucket: the upload never deletes.)
+--     (2026-10-06, #386: the manifest still names 16985 objects. The run adds 142 objects, 1737876 bytes: 4 for the
+--     watermelon / cat / pumpkins lines, 5 for g6m2-t7's pencils and erasers, 133 for StoryTime's rabbits. The dog,
+--     puppy and hot-dog clips they replace stay in the bucket, because the upload never deletes. Before this upload
+--     the same query read 17884 | 273065412.)
 --     (2026-10-02, #329: the manifest names 16985 objects / 262060131 bytes; the bucket ALSO keeps the 899 objects of
 --     the lines that left the corpus (Story Problems' fish, shark, duck …, and the 123 lines the new Grade 2 ones replaced),
 --     11005281 bytes, because the upload never deletes. Before this upload the same query read 16985 | 261998056;

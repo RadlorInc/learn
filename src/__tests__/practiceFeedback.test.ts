@@ -20,6 +20,7 @@ vi.mock('@/infra/useMiloSpeaker', () => ({ speak: () => {}, speakSteps: () => ()
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/data/repositories/points', () => ({
   sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
+  syncBatch: async (c: unknown[]) => c.map(() => 'ok'), lessonCall: () => ({}), moduleCall: () => ({}), runCall: () => ({}),   // the queue's one request (sync_batch)
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
 }))
 
@@ -90,9 +91,9 @@ describe('Q1: five dots for the current set', () => {
     await answerNotRight()
     expect(dots()).toEqual({ filled: 4, total: 5, label: '4 questions done in this set' })
     await answerNotRight()
-    expect(host.querySelector('[role="dialog"]')?.textContent).toContain('5 questions done!')
+    expect(host.querySelector('[role="dialog"]')?.textContent).toContain('Set complete! ⭐ 5 questions solved.')
     expect(dots()!.filled).toBe(5)
-    await click('Keep going')
+    await click('One more set')
     expect(dots()).toEqual({ filled: 0, total: 5, label: '0 questions done in this set' })
   })
 

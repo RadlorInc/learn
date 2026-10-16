@@ -32,9 +32,12 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Line up the points, fill each empty place with a 0, then add or take away like whole numbers.',
     screens: [
       { title: 'A long bike ride', text: 'A bike trail is 12.5 kilometers long. You have ridden 3.875 kilometers. How far is left?',
-        pictures: [{ kind: 'eq', text: '12.5 − 3.875' }] },
-      { title: "The ends don't match", text: 'Can you just line up the last digits? No. The 5 tenths would sit on top of the 5 thousandths. Those are different places.',
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        // The bike is 3.875 / 12.5 = 0.31 of the way along.
+        pictures: [{ kind: 'trail', total: '12.5 km', done: 0.31, doneLabel: '3.875 km', left: '?' }] },
+      { title: "The ends don't match", text: 'To find how far is left, you subtract 3.875 from 12.5. But how do you line them up? Can you just line up the last digits? No. The 5 tenths would sit on top of the 5 thousandths. Those are different places.',
         beats: [
+          { say: 'To find how far is left, you subtract 3.875 from 12.5. But how do you line them up?' },
           { say: 'Can you just line up the last digits? No.', pic: 0 },
           { say: 'The 5 tenths would sit on top of the 5 thousandths.' },
           { say: 'Those are different places.' },
@@ -45,9 +48,9 @@ export const G6M3: Lesson[] = [
           { say: 'Line up the points, fill each empty place with a 0, then add or take away like whole numbers.', pic: 0 },
         ],
         pictures: [trail()] },
-      { title: 'Fill the empty places', text: "Give 12.5 three places, like 3.875. Write it 12.500. The zeros don't change how much it is.",
+      { title: 'Fill the empty places', text: "Put the points right above each other. 12.5 now has two empty places after its point, so fill them with zeros: 12.500. The zeros don't change how much it is.",
         beats: [
-          { say: 'Give 12.5 three places, like 3.875. Write it 12.500.', pic: 0 },
+          { say: 'Put the points right above each other. 12.5 now has two empty places after its point, so fill them with zeros: 12.500.', pic: 0 },
           { say: "The zeros don't change how much it is." },
         ],
         pictures: [trail(undefined, true)] },
@@ -114,7 +117,9 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Multiply as if there were no points, then give the answer as many places after the point as both numbers have together.',
     screens: [
       { title: 'A garden bed', text: 'A garden bed is 2.4 meters long and 1.3 meters wide. What is its area?',
-        pictures: [{ kind: 'columns', rows: ['2.4', '1.3'], op: '×' }] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'poly', shapes: [{ pts: [[0, 0], [2.4, 0], [2.4, 1.3], [0, 1.3]], sides: ['2.4 m', '1.3 m', null, null], right: [0], tone: 2 }],
+          labels: [{ at: [1.2, 0.65], text: 'area = ?' }] }] },
       { title: 'Where does the point go?', text: "When you add, you line up the points. But when you multiply, lining them up doesn't help. So where does the point go in the answer?",
         beats: [
           { say: 'When you add, you line up the points.' },
@@ -197,7 +202,8 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Put the point in the answer straight above the point inside, then divide like whole numbers.',
     screens: [
       { title: 'Cut the rope', text: 'A rope is 8.52 meters long. You cut it into 4 equal pieces. How long is each piece?',
-        pictures: [rope()] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'tape', rows: [{ label: 'Rope', cells: Array.from({ length: 4 }, () => ({ w: 1, shade: true, text: '?' })), brace: '8.52 m' }] }] },
       { title: 'A point inside', text: 'You know how to divide whole numbers this way. But 8.52 has a point inside it. So where does the point go in the answer?',
         beats: [
           { say: 'You know how to divide whole numbers this way.', pic: 0 },
@@ -217,10 +223,10 @@ export const G6M3: Lesson[] = [
           { say: "Do it first, and it can't get lost." },
         ],
         pictures: [rope(' .')] },
-      { title: 'Divide the 8', text: 'Start on the left. How many 4s fit into 8? 2. Write the 2 on top. 2 × 4 = 8, and 8 − 8 = 0. Bring down the 5.',
+      { title: 'Divide the 8', text: 'Start on the left. How many 4s fit into 8? 2. Write the 2 on top. It goes before the point, because 8 is before the point. 2 × 4 = 8, and 8 − 8 = 0. Bring down the 5.',
         beats: [
           { say: 'Start on the left. How many 4s fit into 8? 2.', pic: 0 },
-          { say: 'Write the 2 on top. 2 × 4 = 8, and 8 − 8 = 0.' },
+          { say: 'Write the 2 on top. It goes before the point, because 8 is before the point. 2 × 4 = 8, and 8 − 8 = 0.' },
           { say: 'Bring down the 5.', pic: 1 },
         ],
         pictures: [rope('2.', ['−8', '  5']),
@@ -281,7 +287,12 @@ export const G6M3: Lesson[] = [
     bigIdea: 'Multiply both numbers by 10 or 100 until the number you divide by is whole, and the answer stays the same.',
     screens: [
       { title: 'Ribbon pieces', text: 'A ribbon is 9.6 meters long. You cut it into pieces that are 0.4 meters long. How many pieces do you get?',
-        pictures: [ld('0.4', '9.6')] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        // How many pieces is not drawn: that is the question.
+        pictures: [{ kind: 'tape', rows: [
+          { label: 'Ribbon', cells: [{ w: 9.6, shade: true }], brace: '9.6 m' },
+          { label: '1 piece', cells: [{ w: 0.4, shade: true }], brace: '0.4 m' },
+        ] }] },
       { title: 'The 0.4 is not whole', text: "You can divide by a whole number. But 0.4 is not whole. How many 0.4s fit in 9.6? That's hard to see.",
         beats: [
           { say: 'You can divide by a whole number.' },
@@ -315,11 +326,11 @@ export const G6M3: Lesson[] = [
           { say: 'So 9.6 ÷ 0.4 = 24. You get 24 pieces of ribbon.', pic: 1 },
         ],
         pictures: [{ kind: 'longdiv', divisor: '4', dividend: '96', quotient: '24', work: ['−8 ', '16', '−16', ' 0'] }, { kind: 'eq', text: '9.6 ÷ 0.4 = 24' }] },
-      { title: 'One thing not to do', text: "Here's the part people mix up. Don't grow ONLY the 0.4. That gives 2.4, far too few. Grow both numbers. 96 ÷ 4 = 24. Okay. Your turn.",
+      { title: 'One thing not to do', text: "Here's the part people mix up. Don't grow ONLY the 0.4. That gives 2.4, far too few. Grow both numbers by the same amount, × 10 each. 96 ÷ 4 = 24. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "Don't grow ONLY the 0.4. That gives 2.4, far too few.", pic: 0 },
-          { say: 'Grow both numbers. 96 ÷ 4 = 24.' },
+          { say: 'Grow both numbers by the same amount, × 10 each. 96 ÷ 4 = 24.' },
           { say: 'Okay. Your turn.' },
         ],
         pictures: [{ kind: 'cards', wrong: '9.6 ÷ 0.4 → 9.6 ÷ 4', right: '9.6 ÷ 0.4 → 96 ÷ 4' }] },
@@ -361,10 +372,13 @@ export const G6M3: Lesson[] = [
   // ── Topic 5 ──────────────────────────────────────────────────────────────────────────────────
   {
     id: 'g6m3-t5', title: 'Long division with big numbers', skill: 'Divide multi-digit whole numbers by a two-digit number with long division',
-    bigIdea: 'Go one digit at a time: guess with a round number, then multiply, take away and bring down.',
+    bigIdea: 'Go one digit at a time: round the number you divide by to the nearest ten to guess, then multiply, take away and bring down.',
     screens: [
       { title: 'Packing eggs', text: 'A farm has 5,184 eggs. Each box holds 24 eggs. How many boxes can the farm fill?',
-        pictures: [eggs()] },
+        // Screen 1 draws the story, not the sum (a tester, 8 Oct: every Screen 1 of this module opened on bare working).
+        pictures: [{ kind: 'tape', rows: [{ label: 'Boxes', cells: [
+          { w: 1, shade: true, text: '24' }, { w: 1, shade: true, text: '24' }, { w: 1, shade: true, text: '24' }, { w: 1.4, text: '…' }, { w: 1, shade: true, text: '24' },
+        ], brace: '5,184 eggs' }] }] },
       { title: 'Too big to do at once', text: "Nobody knows 5,184 ÷ 24 by heart. And 24 isn't in the times tables. So how do we start? One small piece at a time.",
         beats: [
           { say: 'Nobody knows 5,184 ÷ 24 by heart.', pic: 0 },
@@ -372,9 +386,9 @@ export const G6M3: Lesson[] = [
           { say: 'So how do we start? One small piece at a time.' },
         ],
         pictures: [eggs()] },
-      { title: 'The big idea', text: 'Go one digit at a time: guess with a round number, then multiply, take away and bring down.',
+      { title: 'The big idea', text: 'Go one digit at a time: round the number you divide by to the nearest ten to guess, then multiply, take away and bring down.',
         beats: [
-          { say: 'Go one digit at a time: guess with a round number, then multiply, take away and bring down.', pic: 0 },
+          { say: 'Go one digit at a time: round the number you divide by to the nearest ten to guess, then multiply, take away and bring down.', pic: 0 },
         ],
         pictures: [eggs()] },
       { title: 'The first digit', text: "24 won't fit into 5, so start with 51. Here's the trick: 24 is about 20, and 51 holds two 20s. So try 2. 2 × 24 = 48, which fits. Take it away. 51 − 48 = 3.",

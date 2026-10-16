@@ -18,7 +18,8 @@ import { B1, B2, WITHDRAW, PROPOSED, type Lang, type L } from './copy'
 import { makeT } from '@/features/dashboard/i18n'
 import { Md } from './Md'
 import { WithdrawAll } from './WithdrawAll'
-import { SUPPORT_EMAIL } from '@/app/site'
+import { PAYWALL_ENABLED } from '@/features/billing/useTopicGate'
+import { SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 
 type Status = 'loading' | 'pending' | 'granted' | 'already_granted' | 'already_consented' | 'declined' | 'withdrawn' | 'expired' | 'unconfirmed' | 'unknown' | 'kept' | 'error'
 
@@ -75,7 +76,8 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
       </div>
     )
   } else if (mode === 'withdraw' && status === 'granted' && scope === 'account') {
-    content = <WithdrawAll lang={lang} busy={busy} onConfirm={() => act('withdraw')} onKeep={() => setStatus('kept')} />
+    // Signed out, so whether this family pays is unknown: the billing line shows whenever billing is on.
+    content = <WithdrawAll lang={lang} busy={busy} paid={PAYWALL_ENABLED ? undefined : false} onConfirm={() => act('withdraw')} onKeep={() => setStatus('kept')} />
   } else if (mode === 'withdraw' && status === 'granted') {
     content = (
       <div data-consent="withdraw">
@@ -121,6 +123,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
         {!verbatim && (
           <p data-consent="support" style={{ ...S.p, fontSize: 13, margin: '20px 0 0' }}>
             {makeT(lang)('Need help?')} <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
+            {' · '}<a href={`tel:${SUPPORT_TEL}`} style={{ color: '#0B4FA8', fontWeight: 700 }}>{SUPPORT_PHONE}</a>
           </p>
         )}
       </div>

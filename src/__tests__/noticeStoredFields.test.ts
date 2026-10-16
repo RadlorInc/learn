@@ -18,7 +18,7 @@ let inserted: Record<string, unknown> | null = null
 vi.mock('@/shared/ui/Toast', () => ({ toast: { error: () => {}, success: () => {} } }))
 vi.mock('@/data/repositories/_shared', () => ({
   db: () => ({
-    auth: { getUser: async () => ({ data: { user: { id: 'parent-1' } } }) },
+    auth: { getSession: async () => ({ data: { session: { user: { id: 'parent-1' } } } }) },
     from: () => ({
       insert: (p: Record<string, unknown>) => {
         inserted = p

@@ -69,6 +69,7 @@ for (const m of MODULES) {
     line('won', wonFor(l, { ...START, mode: 'won' }).text, 'won')
     line('won', wonFor(l, { ...START, mode: 'won', twin: true }).text, 'twinWon')
     line('won', wonFor(l, { ...START, mode: 'won', twin: true, misses: 3 }).text, 'keep practicing')
+    line('won', l.won.sticker, 'sticker'); line('won', l.twinWon.sticker, 'twinWon sticker')   // Screen 9 says it (15 Oct)
     line('feedback', SAY.right, 'right'); line('feedback', SAY.worked, 'worked')
   }
 }

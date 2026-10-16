@@ -8,7 +8,7 @@ import { graph, q } from './t1'
 
 type At = [number, string?]
 const { X, Y, axes, dot, seg, stair } = graph(70, 370, 70, 30)
-const grid = (at: At) => axes(at, [1, 2, 3], [2, 4, 6, 8, 10])
+const grid = (at: At) => axes(at, [1, 2, 3], [2, 4, 6, 8, 10], ['weeks', 'height (cm)'])
 const C = 450   // centre of the words column
 const label = (at: At, t: string, x: number, y: number) => write(at, t, x, y, 22, 'y')
 

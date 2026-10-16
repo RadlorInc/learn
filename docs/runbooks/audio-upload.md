@@ -20,14 +20,15 @@
 ## A new or reworded line gets its clip
 
 1. **Agent — rebuild the corpus** with `npx tsx scripts/lesson-voice-corpus.mts`. A row is "rendered" when its key is already in the manifest.
-2. **Agent — render the missing rows** with `python3 scripts/kaggle-josh-notebook.py <grade|module> <branch>` (KG–2 chapters: `scripts/kaggle-josh-chapters-notebook.py`). It writes a notebook for rows not in the manifest only.
+2. **Agent — render the missing rows** with `python3 scripts/kaggle-josh-notebook.py <grade|module> <branch>` (KG–2 chapters: `scripts/kaggle-josh-chapters-notebook.py`). It writes a notebook for rows not in the manifest only. To re-render clips that already exist (a bad render), `python3 scripts/kaggle-josh-notebook.py redo <branch> <keys.txt>` renders exactly those keys; park their old mp3s outside the repo first, never delete them.
 3. **Agent — merge the clips and rebuild the manifest.**
    - Run `unzip -n <zip> -d audio-src/`. `audio-src/` is gitignored; on a fresh machine, fill it first with `AUDIO_BASE_URL=<bucket base> node scripts/audio/fetch-src.mjs`.
+   - **Hear the new clips back before anything else:** `<venv>/bin/python scripts/audio/check-numbers.py <dir of the new mp3s>`. It must exit 0. Exit 1 lists clips whose spoken numbers differ from their line (re-render them; a line the model misreads three times running gets commas in its `say` row); exit 2 means it could not look. Why: given digits, the voice model dropped words inside numbers (184 → "one hundred four") in about 180 clips (9 Oct 2026); lines now reach it as words, and this is the check that they came out right.
    - Then run `node scripts/audio/build-manifest.mjs`. It fails on a missing clip, an orphan, a duplicate key or a name collision.
    - Commit the manifest and both `voice-index/` folders on the PR branch.
    - For a lesson line with chalk, give its marks real timing: `<venv>/bin/python scripts/audio/whisper-word-times.py` (faster-whisper, local; only new clips are transcribed), then `npx tsx scripts/audio/build-word-times.mts`, and commit `src/features/lessons/word-times/`. Skipped, the new line's marks keep the length estimate.
 4. **Agent — put only the new mp3s on a side ref.** That is an orphan-branch commit holding them under the voice folder `upload-audio.yml` reads (see its *Fetch* step), tagged `audio-src-<date>` and pushed. A tag does not deploy, and it is also the clips' backup.
-5. **Upload** (next section) **from the PR branch**, with `source_ref` = that tag. Not from `main`: the workflow uploads what **its own branch's** manifest names, so a run from `main` finds nothing missing and goes green having uploaded nothing.
+5. **Upload** (next section) **from `main`**, with `manifest_ref` = the PR branch and `source_ref` = that tag. The workflow refuses any other branch (since 2026-10-16), and `production-db` is limited to `main`: the code that holds the keys is always main's. From the PR branch it reads only `scripts/audio/manifest.json`, which names the new clips. Without `manifest_ref` it uses main's manifest, finds nothing missing and goes green having uploaded nothing.
 6. **Founder — merge the PR** only after the upload run ends "all N manifest objects present", where N is that branch's manifest count.
 
 ## The upload run
@@ -39,9 +40,9 @@
    These keys reach every bucket and bypass RLS. That is why they exist only for the run. The agent never sees the values.
 2. **Agent or founder — dry run.**
    ```bash
-   gh workflow run upload-audio.yml --ref <branch> -f mode=dry-run -f source_ref=<tag> -f region=<region>
+   gh workflow run upload-audio.yml --ref main -f manifest_ref=<branch> -f mode=dry-run -f source_ref=<tag> -f region=<region>
    ```
-   **Founder** checks it is *Upload audio* on the expected branch, then approves `production-db`. The dry run must report exactly as many *missing* objects as there are new clips.
+   **Founder** checks it is *Upload audio* on `main`, and that its log line `manifest: <branch> (N keys; main has M)` names the PR branch, then approves `production-db`. The dry run must report exactly as many *missing* objects as there are new clips.
 3. **Upload.** Same command with `-f mode=upload`, and the **founder** approves again. The job:
    - checks the ref against `scripts/assert-prod-ref.sh`;
    - checks every source file's SHA-256 against the manifest;

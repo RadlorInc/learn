@@ -1,5 +1,5 @@
 /**
- * A NEW CHILD IS ATTESTED AGAINST THE NOTICE THE ADD-A-CHILD SHEET SHOWS (notice-v7, founder 2026-09-28) — once the
+ * A NEW CHILD IS ATTESTED AGAINST THE NOTICE THE ADD-A-CHILD SHEET SHOWS (notice-v7, founder 2026-09-28; now notice-v8) — once the
  * database lists it. Until its migration is applied (the app deploys first on this repo), the account consent's own
  * version, which is exactly what the app sent before and what the database then requires (equal, not newer).
  * Versions written out by hand.
@@ -17,10 +17,10 @@ const { attestationVersion } = await import('@/features/consent/consentState')
 beforeEach(() => { listed.rows = []; listed.error = null; listed.asked = [] })
 
 describe('the attestation version for a new child', () => {
-  it('the database lists notice-v7: a v6 parent attests the new child against notice-v7', async () => {
-    listed.rows = [{ version: 'notice-v6' }, { version: 'notice-v7' }]
-    expect(await attestationVersion('notice-v6')).toBe('notice-v7')
-    expect(listed.asked).toEqual(['consent_notice_versions:notice-v7'])
+  it('the database lists notice-v8: a v6 parent attests the new child against notice-v8', async () => {
+    listed.rows = [{ version: 'notice-v6' }, { version: 'notice-v8' }]
+    expect(await attestationVersion('notice-v6')).toBe('notice-v8')
+    expect(listed.asked).toEqual(['consent_notice_versions:notice-v8'])
   })
   it('the database does not list it yet: the consent\'s own version, as before', async () => {
     listed.rows = [{ version: 'notice-v6' }]

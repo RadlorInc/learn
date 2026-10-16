@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { ConfigMissing, requireConfig, drainB3Cancellations } from '@/features/consent/server'
 import { fromCron, sendOpsDigest } from '@/features/ops/digest'
+import { drainBillingCancellations } from '@/features/billing/closeRefund'
 
 /**
  * Cancel every queued B3 (see `drainB3Cancellations`). Called by the dashboard right after "Delete
@@ -13,6 +14,10 @@ import { fromCron, sendOpsDigest } from '@/features/ops/digest'
  * the only thing it can do is cancel emails the DATABASE has already queued for cancelling — the
  * queue is written only by a trigger, and nothing a caller sends is read. The worst a stranger can
  * do is make a correct cancellation happen sooner; the rate limit stops them turning it into load.
+ *
+ * It also drains `billing_cancellations` (`drainBillingCancellations`): the plan of an account that was just
+ * closed, or whose parent withdrew permission for every child, is cancelled at Stripe and the unused part refunded.
+ * The same argument holds — the subscription ids come only from the queue the database filled, never from here.
  *
  * The daily cron call ALSO sends the ops digest (src/features/ops/digest.ts) — only when the caller
  * proves it is the cron with `CRON_SECRET`, so a stranger cannot make it email anyone. The digest is
@@ -26,8 +31,10 @@ async function drain(req: Request) {
   try {
     requireConfig()
     const tried = await drainB3Cancellations()
+    // Its own catch: a Stripe or queue failure must not stop the B3 result or the digest (which flags what is owed).
+    const billing = await drainBillingCancellations().catch(e => { console.error('[billing] drain failed', e); return 'failed' })
     outcome = tried === null ? 'queue missing (migration 20260923200000 not applied)' : String(tried)
-    res = NextResponse.json({ tried })
+    res = NextResponse.json({ tried, billing })
   } catch (e) {
     if (e instanceof ConfigMissing) {
       console.error('[consent/cancel-second-notice] not configured: missing', e.message)

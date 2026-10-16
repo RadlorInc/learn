@@ -10,9 +10,13 @@
  * Passes straight through when: nobody is signed in (the pages send them to /auth); the account is a child's own
  * login (the dashboard sends them to their lessons); or the PIN functions are not in the database yet, so a deploy
  * that lands before its migration cannot lock every parent out.
+ *
+ * ⚠️ EVERY STAGE LINKS TO /rights (founder, 2026-10-06): help, withdrawing permission and a copy of the data are a
+ * parent's rights, so a locked or forgotten PIN never stands in front of them. Closing the account stays behind it.
  */
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { getCurrentSession } from '@/data/auth'
 import { getMyRole, signOut, getPinStatus, verifyPin, setPin, requestPinReset, type ErrorKind } from '@/data/repositories'
 import { errorWording } from '@/shared/ui/errorWording'
@@ -74,7 +78,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
   }
 
   async function forgot() {
-    if (!window.confirm('Reset your PIN? For safety it is removed 24 hours from now, and entering your PIN before then cancels the reset. After that you can set a new one.')) return
+    if (!window.confirm('Reset your PIN? For safety it is removed 24 hours from now, and entering your PIN before then cancels the reset. After that you can set a new one. We will email you that a reset was asked for.')) return
     setBusy(true)
     const r = await requestPinReset()
     setBusy(false)
@@ -113,6 +117,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
           <button type="button" disabled={busy} onClick={submit} style={btn}>{busy ? 'Checking…' : stage === 'create' ? 'Save PIN' : 'Open dashboard'}</button>
           {stage === 'enter' && <button type="button" disabled={busy} onClick={forgot} style={link}>Forgot PIN?</button>}
         </>}
+        <Link href="/rights" style={{ ...link, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>Need help, or want to withdraw permission or download your data?</Link>
         <button type="button" onClick={async () => { if (await signOut()) router.replace('/auth') }} style={link}>Sign out</button>
       </div>
     </div>

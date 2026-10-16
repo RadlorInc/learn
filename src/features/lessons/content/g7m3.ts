@@ -578,11 +578,12 @@ export const G7M3: Lesson[] = [
           { say: 'So the numbers past −4 are the ones that work.' },
         ],
         pictures: [line(-6, 6, { ray: { from: -4, dir: 'right', open: true } }), { kind: 'table', head: ['x', '−3x', 'less than 12?'], rows: [['0', '0', 'yes'], ['−5', '15', 'no']], motion: true }] },
-      { title: 'One thing not to do', text: "Here's the part people mix up. Don't KEEP the sign when you divide by a negative. −3x < 12 gives x > −4, not x < −4. Okay. Your turn.",
+      { title: 'One thing not to do', text: "Here's the part people mix up. Don't KEEP the sign when you divide by a negative. −3x < 12 gives x > −4, not x < −4. Adding or taking away never flips it. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
           { say: "Don't KEEP the sign when you divide by a negative.", pic: 0 },
           { say: '−3x < 12 gives x > −4, not x < −4.' },
+          { say: 'Adding or taking away never flips it.' },
           { say: 'Okay. Your turn.' },
         ],
         pictures: [cards('−3x < 12 → x < −4', '−3x < 12 → x > −4')] },

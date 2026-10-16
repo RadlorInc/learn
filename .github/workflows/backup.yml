@@ -17,8 +17,8 @@ name: Backup (prod database)
 # access control worth the name — i.e. it would undo the whole security pass to "have a backup".
 #
 # Restore:
-#   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:BACKUP_PASSPHRASE \
-#     -in milo-backup.tar.gz.enc | tar xz
+#   age -d -i <the founder's age key file> milo-backup.tar.gz.age | tar xz
+#   (artifacts made before 2026-10-16 are milo-backup.tar.gz.enc: docs/runbooks/backup-restore.md → older dumps)
 #   # ⚠️⚠️ RUN THIS FIRST, OR THE RESTORE SILENTLY REOPENS V12.
 #   # Supabase's own docs: on restore, "tables inherit ALL privileges from default privileges in the
 #   # target database". THIS APP'S SECURITY MODEL IS PARTLY GRANTS, NOT ONLY POLICIES — the V12 fix
@@ -58,9 +58,8 @@ name: Backup (prod database)
 # a self-hosted runner without a Docker daemon.
 #
 # ⚠️ A backup nobody has restored is a hope, not a backup. Rehearse it into a scratch project once.
-# openssl rather than gpg deliberately: both exist on ubuntu-latest, but openssl is also on the
-# maintainer's machine, so the encrypt AND the restore above were actually run end to end before
-# shipping (round-trip byte-exact, wrong passphrase refused) instead of being written from memory.
+# Encrypted to an age PUBLIC key (vars.BACKUP_AGE_RECIPIENT, 2026-10-16), not a passphrase: the runner can lock a
+# dump but holds nothing that opens one. The private key is the founder's alone (password manager + offline copy).
 
 on:
   schedule:
@@ -74,7 +73,7 @@ on:
 jobs:
   dump:
     runs-on: ubuntu-latest
-    # The production database password, the account-wide Supabase token and the backup passphrase live in this
+    # The production database password and the account-wide Supabase token live in this
     # environment, which only `main` may use (2026-09-28): a workflow on any other branch cannot read them.
     environment: prod-backup
     permissions:
@@ -102,14 +101,14 @@ jobs:
       - name: Check configuration
         env:
           TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
           DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
           REF: ${{ vars.PROD_PROJECT_REF }}
         run: |
           set -uo pipefail
           missing=""
           if [ -z "${TOKEN}" ];       then missing="${missing} secrets.SUPABASE_ACCESS_TOKEN"; fi
-          if [ -z "${PASSPHRASE}" ];  then missing="${missing} secrets.BACKUP_PASSPHRASE"; fi
+          if [ -z "${RECIPIENT}" ];   then missing="${missing} vars.BACKUP_AGE_RECIPIENT"; fi
           if [ -z "${DB_PASSWORD}" ]; then missing="${missing} secrets.PROD_DB_PASSWORD"; fi
           if [ -z "${REF}" ];         then missing="${missing} vars.PROD_PROJECT_REF"; fi
           if [ -n "${missing}" ]; then
@@ -131,7 +130,7 @@ jobs:
           project-ref: ${{ vars.PROD_PROJECT_REF }}
           access-token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           db-password: ${{ secrets.PROD_DB_PASSWORD }}
-          passphrase: ${{ secrets.BACKUP_PASSPHRASE }}
+          recipient: ${{ vars.BACKUP_AGE_RECIPIENT }}
           artifact-name: milo-db-backup-${{ github.run_id }}
 
   # A failed backup used to be a red run nobody was told about (the 30 Sep token expiry went unseen until someone looked).

@@ -240,7 +240,7 @@ describe('add a child: the sheet opens only on a granted, current account consen
     fetchAnswer = () => ({ ok: true, email: 'p@x.test', days: 7 })
     await click(button(m.host, /legal guardian — continue/))
     expect(fetchLog[0]?.url).toBe('/api/consent/request')
-    expect(fetchLog[0]?.body).toMatchObject({ noticeVersion: 'notice-v7', lang: 'en' })
+    expect(fetchLog[0]?.body).toMatchObject({ noticeVersion: 'notice-v8', lang: 'en' })
     expect(m.host.textContent).toContain('Waiting for your permission')
     await m.done()
   })
@@ -252,6 +252,29 @@ describe('add a child: the sheet opens only on a granted, current account consen
     expect(m.host.textContent).toContain('The link works for 3 days.')
     expect(button(m.host, /^Send the email again$/)).toBeTruthy()
     expect(m.host.querySelector('#learner-name')).toBeNull()
+    await m.done()
+  })
+
+  // 20261007000000: the request went out, then bounced permanently (or the parent marked it as spam). The pending test
+  // above is the positive twin: there the deliverability answer is empty and WAITING stays.
+  it('pending, but the address has since bounced: says so, names the address and support, and no "We have emailed"', async () => {
+    st.consents = [granted({ state: 'pending', confirmed_at: null, expires_at: new Date(Date.now() + 3 * 86_400_000).toISOString() })]
+    fetchAnswer = url => url === '/api/email/deliverable' ? { undeliverable: true } : {}
+    const m = await flow()
+    expect(fetchLog.map(f => f.url)).toContain('/api/email/deliverable')
+    expect(m.host.querySelector('[data-consent="undeliverable"]'), 'the parent is still told to wait for an email that bounced').toBeTruthy()
+    expect(m.host.textContent).toContain('We could not deliver email to p@x.test')
+    expect(m.host.textContent).toContain('support@radlor.com')
+    expect(m.host.textContent).not.toContain('We have emailed')
+    await m.done()
+  })
+
+  it('"continue" refused as undeliverable: the same message, never "Waiting for your permission"', async () => {
+    fetchAnswer = url => url === '/api/consent/request' ? { error: 'undeliverable', email: 'p@x.test' } : {}
+    const m = await flow()
+    await click(button(m.host, /legal guardian — continue/))
+    expect(m.host.textContent).toContain('We could not deliver email to p@x.test')
+    expect(m.host.textContent).not.toContain('Waiting for your permission')
     await m.done()
   })
 
@@ -275,7 +298,7 @@ describe('the dashboard never sends B1 by itself — the parent reads the notice
     expect(m.host.querySelector('[data-consent="account-notice"]'), 'the notice is not shown').toBeTruthy()
     await click(button(m.host, /^I'm the parent or legal guardian — continue$/))
     expect(fetchLog.map(f => f.url)).toEqual(['/api/consent/request'])
-    expect(fetchLog[0].body).toEqual({ noticeVersion: 'notice-v7', lang: 'en' })
+    expect(fetchLog[0].body).toEqual({ noticeVersion: 'notice-v8', lang: 'en' })
     expect(m.host.textContent).toContain('Waiting for your permission')
     await m.done()
   })

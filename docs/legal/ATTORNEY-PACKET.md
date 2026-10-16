@@ -115,7 +115,7 @@ The documents referred to below are in `docs/legal/`. They are numbered 01 (Refu
 - **Today:** most lesson content (explanations, questions, voice clips) is AI-generated. The repository's own records say much of it has **not been read by a human**: the Grade 6–8 lesson text is unread, the voice clips are unheard, and some practice ladders are checked only by an automated "blind solver". *(As recorded in the project handoff, 23 September 2026.)*
 - **Decide:** (a) What to claim instead of blanket copyright (we expect selection, arrangement, the Terms as a contract, and acceptable use). (b) The AI disclaimer (§8) for content aimed at children, where "a wrong answer taught confidently" is the realistic failure. (c) The §8 placeholder "describe the actual review process": we will describe only what is actually done. Tell us what minimum is required.
 ### D4. DMCA agent *(12 §14, note 5)* — the service hosts little or no user-posted material.
-- **Today (decided by the founder for the beta on 26 September 2026, attorney to review):** §14 is a plain contact — Radlor Inc.'s address and support@radlor.com. It names no "designated agent" and gives no phone, because no agent is registered with the Copyright Office.
+- **Today (decided by the founder for the beta on 26 September 2026, attorney to review):** §14 is a plain contact — Radlor Inc.'s address and support@radlor.com. It names no "designated agent", because no agent is registered with the Copyright Office. Since 14 October 2026 it also gives the toll-free support line, 1-888-812-9373 (founder).
 - **Decide:** is registration warranted? Without it, the DMCA §512(c) safe harbour is not available; if you advise registering, §14 goes back to naming the agent.
 ### D5. Model training *(11 note 2, 12 note 3)* — Radlor commits that children's work is never used to train models. **Today:** no child input reaches any AI or text-to-speech provider at runtime, and every clip is a static file (measured). Confirm the wording and that vendor terms must be re-checked whenever a vendor is added.
 ### D6. Which document controls
@@ -167,7 +167,7 @@ effect from 25 September 2026. We will email parents before we make any material
 | 52 | Privacy §10 | The security paragraph was checked against the Security Program on 24 Sep 2026. One claim was reworded to what is implemented: internal records are in a separate system with no children's data, and the in-product admin view shows only totals, never an individual child. | E |
 | 44 | Cookies | A promise: no storage the app does not need will be added without asking first, and it will be off unless switched on. | E |
 | **62** | Terms §12 | **Decided 26 September 2026:** the floor is **US$100** ("the greater of 12 months' fees or US$100"). Terms published as beta (PR #267). | D2 |
-| **67** | Terms §14 | **Decided 26 September 2026:** §14 is a plain contact — the postal address and support@radlor.com; no phone, no registered agent (PR #267). | D4 |
+| **67** | Terms §14 | **Decided 26 September 2026:** §14 is a plain contact — the postal address and support@radlor.com; no registered agent (PR #267). The toll-free line 1-888-812-9373 added 14 October 2026 (founder). | D4 |
 
 Measured facts entered at the same time (not decisions): provider log windows (hosting 1 hour on Hobby, database 7
 days on Pro, from the dashboards), GitHub backup location and 30-day expiry, no Stripe key in production, the two

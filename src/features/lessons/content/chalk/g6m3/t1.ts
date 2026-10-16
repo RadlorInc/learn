@@ -42,12 +42,13 @@ const trade3 = (at: At): ChalkMark[] => [slash(at, 'T'), small(at, '0', 'T'), sl
 // do not match and the slip, dim = labels and the working.
 export const T1: (ChalkMark[] | undefined)[] = [
   undefined,
-  // The ends don't match
+  // The ends don't match: first what to do (subtract), then the wrong way to line them up
   [
-    ...row([0, 'last'], '12.5', L.a, 'w', C, 44, 2), ...row([0, 'digits'], '3.875', L.b), ...q([sign([0, 'digits']), rule([0, 'digits'])]),
-    ring([1, 'tenths'], C.th, L.a, 22, 26, 'r'), write([1, 'tenths'], 'tenths', 515, L.a, 22, 'r'),
-    ring([1, 'thousandths'], C.th, L.b, 22, 26, 'r'), write([1, 'thousandths'], 'thousandths', 515, L.b, 22, 'r'),
-    write([2, 'different'], 'different places', 300, 310, 34, 'r'),
+    write([0, 'subtract'], '12.5 − 3.875 = ?', 300, 60, 34, 'd'),
+    ...row([1, 'last'], '12.5', L.a, 'w', C, 44, 2), ...row([1, 'digits'], '3.875', L.b), ...q([sign([1, 'digits']), rule([1, 'digits'])]),
+    ring([2, 'tenths'], C.th, L.a, 22, 26, 'r'), write([2, 'tenths'], 'tenths', 515, L.a, 22, 'r'),
+    ring([2, 'thousandths'], C.th, L.b, 22, 26, 'r'), write([2, 'thousandths'], 'thousandths', 515, L.b, 22, 'r'),
+    write([3, 'different'], 'different places', 300, 310, 34, 'r'),
   ],
   // The big idea
   [
@@ -58,7 +59,7 @@ export const T1: (ChalkMark[] | undefined)[] = [
   ],
   // Fill the empty places
   [
-    ...stack([0, 'Give']), ring([0, 'three'], (C.h + C.th) / 2, L.a, 80, 28, 'r'), ...zeros([0, '12.500']),
+    ...stack([0, 'Put']), ring([0, 'empty'], (C.h + C.th) / 2, L.a, 80, 28, 'r'), ...zeros([0, '12.500']),
     write([0, '12.500'], '12.5 = 12.500', 300, 300, 32),
     write([1, 'change'], 'same amount', 300, 350, 28, 'b'),
   ],

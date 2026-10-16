@@ -10,11 +10,14 @@
  * Expected counts are written out by hand.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { createHash } from 'node:crypto'
 
 type User = { id: string; email: string; email_confirmed_at: string | null; confirmation_sent_at: string; token: string }
 let users: User[] = []
 let emails: { to: string; subject: string }[] = []
 let generateLinkCalls = 0
+/** sha256 hex of addresses that hard-bounced, as the webhook lists them. */
+const listed = new Set<string>()
 let seq = 0
 
 function fakeNetwork(input: unknown, init: RequestInit = {}): Response {
@@ -42,6 +45,9 @@ function fakeNetwork(input: unknown, init: RequestInit = {}): Response {
     const f = u.searchParams.get('filter') ?? ''
     return json({ users: users.filter(x => x.email.includes(f)).map(({ token: _t, ...x }) => x), aud: 'authenticated' })
   }
+  // email_undeliverable (20261007000000): the hashes listed by the test; error_events takes sendEmail's skip row.
+  if (u.pathname === '/rest/v1/email_undeliverable') return json(listed.has(String(u.searchParams.get('email_sha256')).replace(/^eq\./, '')) ? [{ reason: 'bounced' }] : [])
+  if (u.pathname === '/rest/v1/error_events') return json(null, 201)
   if (u.pathname === '/rest/v1/rpc/consent_request_at_signup') return json([{ consent_id: `c${++seq}` }])
   if (u.pathname.startsWith('/rest/v1/rpc/')) return json(null)
   if (u.pathname === '/emails') {
@@ -66,7 +72,7 @@ const sentTo = (to: string) => emails.filter(m => m.to === to).length
 
 const T0 = new Date('2026-09-26T10:00:00Z').getTime()
 beforeEach(() => {
-  users = []; emails = []; generateLinkCalls = 0
+  users = []; emails = []; generateLinkCalls = 0; listed.clear()
   vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(T0)
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:1')
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'anon')
@@ -185,5 +191,21 @@ describe('an adult\'s password: at least 8 characters, as Supabase Auth\'s minim
     expect([generateLinkCalls, emails.length], 'a 7-character sign-up reached Supabase or sent an email').toEqual([0, 0])
     expect(await signUp('eight@example.test', 'parent', { adult: true, password: 'abcdefgh' })).toEqual({ status: 200, body: { ok: true } })
     expect(generateLinkCalls, 'POSITIVE TWIN: the 8-character sign-up made its account').toBe(1)
+  })
+})
+
+describe('an address that hard-bounced before (20261007000000): no email, and the form is told', () => {
+  // The hash is computed here from the literal lowercase address, not by the code under test.
+  const sha = (e: string) => createHash('sha256').update(e).digest('hex')
+  it('422 "undeliverable" and nothing sent — twice (no silent "ok" from the cooldown); a corrected address goes through', async () => {
+    listed.add(sha('typo@example.test'))
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await signUp('Typo@Example.test')).toEqual({ status: 422, body: { error: 'undeliverable' } })
+    vi.setSystemTime(T0 + 10_000)
+    expect(await signUp('typo@example.test'), 'a retry inside the cooldown must not pretend it sent').toEqual({ status: 422, body: { error: 'undeliverable' } })
+    expect(sentTo('typo@example.test')).toBe(0)
+    expect(await signUp('fixed@example.test'), 'POSITIVE TWIN: a different address is not blocked').toEqual({ status: 200, body: { ok: true } })
+    expect(sentTo('fixed@example.test')).toBe(1)
+    err.mockRestore()
   })
 })

@@ -120,7 +120,6 @@ export const SHEETS: Record<string, Sheet> = {
   '/assets/objects/calf_side.png': { url: '/assets/objects/calf_walk.png', cellAspect: 1.277, frames: 12, fps: 10 },
   '/assets/objects/goat_side.png': { url: '/assets/objects/goat_walk.png', cellAspect: 0.992, frames: 12, fps: 12 },
   '/assets/objects/hen_side.png': { url: '/assets/objects/hen_walk.png', cellAspect: 0.859, frames: 12, fps: 14 },
-  '/assets/objects/puppy_side.png': { url: '/assets/objects/puppy_walk.png', cellAspect: 1.105, frames: 12, fps: 13 },
   '/assets/objects/kitten_side.png': { url: '/assets/objects/kitten_walk.png', cellAspect: 1.211, frames: 12, fps: 12 },
   '/assets/objects/fawn_side.png': { url: '/assets/objects/fawn_walk.png', cellAspect: 0.797, frames: 12, fps: 10 },
   '/assets/objects/hedgehog_side.png': { url: '/assets/objects/hedgehog_walk.png', cellAspect: 1.195, frames: 12, fps: 14 },

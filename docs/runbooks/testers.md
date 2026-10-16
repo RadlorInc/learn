@@ -24,6 +24,15 @@ They open the link, see the module's topics (or the chapter) and a short "how to
 same voice, screens and questions as a child gets; it is the live code, not a copy. A yellow bar asks "Is this
 screen right?":
 
+**Walkthroughs (a Grade 3–8 module, since 8 Oct).** The first time each applies on that device, a walkthrough puts a
+spotlight on the real control and a card beside it saying what to do: the topic list (sound on, open a topic), a
+teaching screen (the bar, the locked Next), Screen 8 (answer it yourself) and practice (the Level row, the per-level
+count, Finish practice). **Show me how** on the topic list and **How this works** in the yellow bar run one again.
+They are defined in `src/app/test/testerTours.ts` and use the dashboard's `TourRunner`; `testerTours.test.ts` checks
+every target is rendered. They replaced pictures of the controls, which a tester on a phone tapped as if they were
+the controls. A KG–2 chapter still shows the drawn guide (`TesterGuide.tsx`). "Seen" is kept in the browser's
+storage, so a new device or a cleared browser shows them again.
+
 - before a screen has played (teaching) or been answered (Screen 8, practice) the bar says so;
 - **👍 Looks right** saves and lets it go on;
 - **⚠️ Something is wrong** asks for tags (voice, text, picture, answer, speed, confusing, bug) and a note of at least
@@ -35,7 +44,8 @@ end). Next stays disabled until that screen is reviewed; Back and ← Topics alw
 
 **Practice levels.** A topic's practice has a ladder of question levels (most have 5). For a tester the ladder does not
 move by itself: a **Level** row (L1, L2, …) above the problem picks the level; tapping one swaps in a new problem at
-that level, and **Next problem** keeps drawing from it. Nothing about levels is saved for a child's account, there is
+that level, and **Next problem** keeps drawing from it. A line under the row says so, and that for a child the level moves up by itself after 2 right
+answers in a row (a tester read the still ladder as how a child's practice works, 8 Oct). Nothing about levels is saved for a child's account, there is
 no 5-answer checkpoint and no end at 12 answers. A yellow line counts the tester's reviewed questions per level
 (`L1 2/2 · L2 1/2 …`, from every sitting); **Finish practice ▶** opens only when every level has 2, and leads to the
 real Screen 9. Each practice review's answer starts with its level (`L3 · 7 → 12 ✓`). A later sitting numbers its

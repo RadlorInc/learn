@@ -66,7 +66,7 @@ export async function createLearner(
   consent?: { id: string; noticeVersion: string },
 ): Promise<Learner | null> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) { console.error('[createLearner] no user'); return null }
 
   const payload: Record<string, unknown> = {
@@ -187,7 +187,7 @@ export async function removeMyselfFromLearner(
   learnerId: string
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return { ok: false, error: 'Not logged in' }
 
   const role = await getMyAccessRole(learnerId)

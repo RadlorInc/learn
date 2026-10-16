@@ -34,6 +34,35 @@ export function setSceneVoice(v: string | null, index?: () => Promise<ClipIndex>
   _held.clear()
   _onTap.clear()
   _open = 0
+  keepOutputAwake(voiceNow() !== null)
+}
+
+/**
+ * ⚠️ KEEP THE SOUND OUTPUT AWAKE WHILE A VOICED SCENE IS ON (tester, 8 Oct 2026, HP EliteBook, Windows 10, Chrome):
+ * after some seconds on a screen with nothing playing, the next line started late and lost its first one or two words,
+ * and a short line ("Nice!") was not heard at all while the tab showed its audio icon. Moving on at once: no lag. That
+ * is the laptop's output closing after silence and waking slowly. An inaudible tone (20 Hz, -80 dBFS) holds it open
+ * while a lesson or chapter is on, and is suspended when it ends. Not on iPhone/iPad: a running AudioContext there
+ * changes how the page's sound is routed, and nobody reported the lag there.
+ * ponytail: unmeasured on the tester's laptop until she runs a build with it; if the lag stays, this goes.
+ */
+let _ctx: AudioContext | null = null
+function keepOutputAwake(on: boolean): void {
+  try {
+    if (typeof window === 'undefined' || typeof AudioContext === 'undefined') return
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))) return
+    if (!on) { void _ctx?.suspend().catch(() => {}); return }
+    if (!_ctx) {
+      _ctx = new AudioContext()
+      const tone = _ctx.createOscillator()
+      const gain = _ctx.createGain()
+      tone.frequency.value = 20
+      gain.gain.value = 0.0001
+      tone.connect(gain).connect(_ctx.destination)
+      tone.start()
+    }
+    void _ctx.resume().catch(() => {})
+  } catch {}
 }
 
 /**
@@ -155,6 +184,8 @@ const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQ
 /** Unlock clip audio from inside a user gesture (call next to unlockSpeech, e.g. the intro tap). */
 export function unlockVoiceClips(): void {
   const a = audioEl()
+  // In the gesture too: a context made outside one starts suspended on browsers with no earlier tap on the page.
+  keepOutputAwake(voiceNow() !== null)
   try { a.src = SILENT; void a.play().then(() => { a.pause(); a.currentTime = 0 }).catch(() => {}) } catch {}
 }
 

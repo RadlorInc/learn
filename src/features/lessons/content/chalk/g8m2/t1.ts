@@ -15,11 +15,16 @@ export const graph = (ox: number, oy: number, u: number, v: number) => {
   const P = ([x, y]: Pt): Pt => [X(x), Y(y)]
   return {
     X, Y,
-    /** The two axes, with `xs` and `ys` numbered (dim). */
-    axes: (at: At, xs: number[], ys: number[]): ChalkMark[] => [
+    /** The two axes, with `xs` and `ys` numbered (dim), and what each counts when `names` = [along, up] is given:
+     *  at the end of the bottom axis and over the top of the side one (tester, g8m2-t3/t4, 14 Oct 2026). */
+    axes: (at: At, xs: number[], ys: number[], names?: [string, string]): ChalkMark[] => [
       line(at, [[X(0), Y(Math.max(...ys) + 0.6)], [X(0), Y(0)], [X(Math.max(...xs) + 0.6), Y(0)]], 'd'),
       ...xs.map(n => q(write(at, String(n), X(n), Y(0) + 20, 20, 'd'))),
       ...ys.map(n => q(write(at, String(n), X(0) - 18, Y(n), 20, 'd'))),
+      ...(names ? [
+        q(write(at, names[0], X(Math.max(...xs) + 0.6) + 12 + names[0].length * 5.6, Y(0), 20, 'd')),
+        q(write(at, names[1], X(0) + names[1].length * 5.6, Y(Math.max(...ys) + 0.6) - 18, 20, 'd')),
+      ] : []),
     ],
     /** A chalk dot at graph point (x, y). */
     dot: (at: At, x: number, y: number, c: ChalkColor = 'w', r = 7): ChalkMark[] => {
@@ -93,7 +98,11 @@ export const T1: (ChalkMark[] | undefined)[] = [
   [
     ...warn([0, 'mix']),
     write([1, 'DOWN'], '2 ÷ 3 = 2/3', 300, 150, 34, 'r'), cross([1, 'gentler'], 414, 132, 36, 36),
+    // The two ramps side by side, 30 a unit (tester, g8m2-t1 Screen 7: "a gentler ramp" was said but never drawn):
+    // 2/3 climbs 2 over 3 across, low and long; 3/2 climbs 3 over 2 across, steep.
+    line([1, 'gentler'], [[478, 180], [568, 180], [568, 120], [478, 180]], 'r'),
     write([2, 'Up'], 'up on top: rise ÷ run', 300, 240, 30),
     write([2, '3'], '3 ÷ 2 = 3/2', 300, 310, 40, 'y'),
+    line([2, '3'], [[498, 345], [558, 345], [558, 255], [498, 345]], 'y'),
   ],
 ]

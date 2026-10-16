@@ -11,6 +11,8 @@ import { G8M5_CHALK } from './chalk/g8m5'
 
 const cyl = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'cylinder', labels: { r, h } })
 const cone = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'cone', labels: { r, h } })
+const cup = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'cup', labels: { r, h } })
+const icecream = (r?: string, h?: string): Picture => ({ kind: 'solid', shape: 'icecream', labels: { r, h } })
 const ball = (r?: string): Picture => ({ kind: 'solid', shape: 'sphere', labels: { r } })
 
 const WHICH = (a: string, b: string, correct: 0 | 1 | 2) => ({ choices: [a, b, 'they hold the same'], correct })
@@ -108,7 +110,7 @@ export const G8M5: Lesson[] = [
     bigIdea: "A cone holds 1/3 of the cylinder with the same bottom and height, so find the cylinder and divide by 3.",
     screens: [
       { title: 'A paper cup', text: 'A cone-shaped paper cup is 3 cm from the center to the edge at the top, and 4 cm tall. How much water does it hold?',
-        pictures: [cone('3 cm', '4 cm')] },
+        pictures: [cup('3 cm', '4 cm')] },
       { title: "It gets narrow", text: "Look down this cup from the top. Its circles get smaller and smaller, until they shrink to a point. So can you stack one circle, like in a can? No. Every layer is a different size.",
         beats: [
           { say: "Look down this cup from the top.", pic: 0 },
@@ -116,7 +118,7 @@ export const G8M5: Lesson[] = [
           { say: "So can you stack one circle, like in a can? No." },
           { say: "Every layer is a different size." },
         ],
-        pictures: [cone('3 cm', '4 cm')] },
+        pictures: [cup('3 cm', '4 cm')] },
       { title: "The big idea", text: "A cone holds 1/3 of the cylinder with the same bottom and height, so find the cylinder and divide by 3.",
         beats: [
           { say: "A cone holds 1/3 of the cylinder with the same bottom and height, so find the cylinder and divide by 3.", pic: 0 },
@@ -146,7 +148,7 @@ export const G8M5: Lesson[] = [
           { say: "So we divide by 3. 113.04 ÷ 3 = 37.68.", pic: 1 },
           { say: "Your paper cup holds 37.68 cubic centimeters of water." },
         ],
-        pictures: [cone('3 cm', '4 cm'), { kind: 'eq', text: '113.04 ÷ 3 = 37.68', lines: ['37.68 cubic centimeters'] }] },
+        pictures: [cup('3 cm', '4 cm'), { kind: 'eq', text: '113.04 ÷ 3 = 37.68', lines: ['37.68 cubic centimeters'] }] },
       { title: "One thing not to do", text: "Here's the part people mix up. Don't STOP once you have the cylinder. A cone holds only one third of it, so divide by 3 at the end. Okay. Your turn.",
         beats: [
           { say: "Here's the part people mix up." },
@@ -279,7 +281,7 @@ export const G8M5: Lesson[] = [
     bigIdea: 'Name each shape, use its own rule, and add the pieces.',
     screens: [
       { title: 'An ice-cream cone', text: 'A cone has a radius of 3 cm and a height of 4 cm. On top sits half a ball of ice cream with the same radius. How much ice cream is there in all?',
-        pictures: [cone('3 cm', '4 cm'), ball('3 cm')] },
+        pictures: [icecream('3 cm', '4 cm')] },
       { title: 'Two shapes in one', text: 'Is there one rule for this whole thing? No. So split it into two parts. The bottom is a cone. The scoop on top is half of a ball.',
         beats: [
           { say: 'Is there one rule for this whole thing? No.' },
@@ -315,7 +317,7 @@ export const G8M5: Lesson[] = [
           { say: 'Add them. 37.68 + 56.52 = 94.2.' },
           { say: 'So there are 94.2 cubic centimeters of ice cream in all.' },
         ],
-        pictures: [cone('3 cm', '4 cm'),
+        pictures: [icecream('3 cm', '4 cm'),
           { kind: 'table', head: ['piece', 'cubic cm'], rows: [['cone', '37.68'], ['half ball', '56.52'], ['in all', '94.2']], rowHead: true, motion: true }] },
       { title: 'One thing not to do', text: "Here's the part people mix up. Don't add a WHOLE ball when only half of one sits on top. Halve it first, then add. 37.68 + 56.52 = 94.2. Okay. Your turn.",
         beats: [
@@ -328,7 +330,7 @@ export const G8M5: Lesson[] = [
     ],
     turn: {
       text: 'An ice-cream cone has a radius of 3 cm and a height of 8 cm. Half a ball of ice cream with a radius of 3 cm sits on top. How many cubic centimeters is that in all? Use π ≈ 3.14.',
-      picture: cone('3 cm', '8 cm'),
+      picture: icecream('3 cm', '8 cm'),
       answer: 131.88, steps: ['The cone: 1/3 × 3.14 × 3 × 3 × 8 = 75.36.', 'The half ball: 4/3 × 3.14 × 3 × 3 × 3 = 113.04, and half of that is 56.52.', 'Add them: 75.36 + 56.52. So 131.88 cubic centimeters in all.'],
       prompt: 'Name the two shapes. Find each one, then add.',
       hint1: 'Which two shapes make up this ice-cream cone?',
@@ -343,7 +345,7 @@ export const G8M5: Lesson[] = [
     twinWon: { text: 'You found the can and the ball with their own rules, and saw the ball holds more.', sticker: 'Half of a ball is called a hemisphere. Volume is always measured in cubic units.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'An ice-cream cone has a radius of 3 cm and a height of 2 cm. Half a ball of ice cream with a radius of 3 cm sits on top. How many cubic centimeters is that in all? Use π ≈ 3.14.',
-        picture: cone('3 cm', '2 cm'), answer: 75.36,
+        picture: icecream('3 cm', '2 cm'), answer: 75.36,
         steps: ['The cone: 1/3 × 3.14 × 3 × 3 × 2 = 18.84.', 'The half ball: 113.04 ÷ 2 = 56.52.', 'Add them: 18.84 + 56.52. So 75.36 cubic centimeters in all.'] } },
       { why: 'Same idea, new numbers', problem: { text: 'A juice can has a radius of 4 cm and a height of 10 cm. How many cubic centimeters of juice fit inside? Use π ≈ 3.14.',
         picture: cyl('4 cm', '10 cm'), answer: 502.4,

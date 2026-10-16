@@ -144,4 +144,7 @@ export const G4M5_VOICE: Record<string, VoiceLine> = {
   "Fold it, and the corners stick out.": { style: 'B+' },
   "You folded the shape in your head and checked that the halves match.": { style: 'B' },
   "You saw that the halves would not match on that fold.": { style: 'B' },
+  // ── Screen 9 stickers (spoken since 15 Oct): signs and raised numbers said in words ──
+  "Angles are measured in degrees (°). A right angle is 90°.": { style: 'A', say: "Angles are measured in degrees. A right angle is 90 degrees." },
+  "Angles are measured in degrees (°).": { style: 'A', say: "Angles are measured in degrees." },
 }

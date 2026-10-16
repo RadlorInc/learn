@@ -89,7 +89,7 @@ test('Q3 — desktop: the module\'s last topic left done → "See what you learn
   await page.locator('form input').first().fill(String(solutionOf(problem)))
   await page.locator('button[type=submit]').click()
   await expect(page.getByText(/^Practice 13$/)).toBeVisible()          // the 12th answer moved on by itself: the topic is done
-  await page.getByRole('button', { name: 'Take a break' }).first().click()
+  await page.getByRole('button', { name: 'Finish for today 🎉' }).first().click()
   await expect(page.getByText('Module complete!')).toBeVisible()
   const see = page.getByRole('button', { name: 'See what you learned ⭐' })
   await expect(see).toBeVisible()

@@ -17,8 +17,10 @@ import type { UserRole } from '@/data/supabase/types'
  */
 export async function getMyRole(): Promise<UserRole | null> {
   const supabase = db()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError && authError.name !== 'AuthSessionMissingError') throw authError
+  // The id from the local session (no network): RLS on profiles checks it against the token on the read below.
+  const { data: { session }, error: authError } = await supabase.auth.getSession()
+  if (authError) throw authError
+  const user = session?.user
   if (!user) return null
   const { data, error } = await supabase
     .from('profiles')
@@ -37,7 +39,7 @@ export async function getMyRole(): Promise<UserRole | null> {
  */
 export async function setMyRole(role: UserRole): Promise<boolean> {
   const supabase = db()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = (await supabase.auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return false
   const { error } = await supabase.from('profiles').update({ role }).eq('id', user.id).is('role', null)
   return !error

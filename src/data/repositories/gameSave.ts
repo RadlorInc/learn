@@ -48,17 +48,34 @@ export async function loadGameSave(learnerId: string): Promise<GameSave | null |
   return remote
 }
 
-/** The game, full page, for this child until `until` (ms). It saves under `localSaveKey` and comes back to /play. */
-export const gameUrl = (learnerId: string, until: number) =>
-  `/blockcraft/index.html?key=${encodeURIComponent(localSaveKey(learnerId))}&until=${until}`
+/** The games /play can open with the same paid time. */
+export type GameId = 'blockcraft' | 'beathop' | 'peak' | 'rush'
+
+/** BeatHop's, Peak Rider's and Rescue Rush's saves (levels, missions, stars, coins, vehicles, upgrades) stay on this device, under `<game>.save.<child id>`:
+ *  `game_saves` holds one save per child, BlockCraft's.
+ *  ponytail: a child on a second device starts them from the beginning; a `game` column on game_saves (a migration)
+ *  fixes it.
+ *  ⚠️ The games' device keys (`blockcraft.save.<child id>`, `beathop.save.<child id>`, `peak.save.<child id>`, `rush.save.<child id>`) are NOT
+ *  in doc 08's storage table and NOT swept by sign-out (`CHILD_KEY` in lessonSync.ts) — BlockCraft's since it shipped
+ *  (found 11 Oct). Sweeping a device-only save would delete its only copy, so the account save comes first, then the
+ *  sweep and the doc 08 rows. */
+export const deviceSaveKey = (game: Exclude<GameId, 'blockcraft'>, learnerId: string) => `${game}.save.${learnerId}`
+
+/** The game, full page, for this child. It saves under its key, asks the database how long it may play
+ *  (/api/game-time, public/play-time.js — no end time rides in the URL, so editing it plays no longer) and comes back
+ *  to /play. */
+export const gameUrl = (learnerId: string, game: GameId = 'blockcraft') =>
+  `/${game}/index.html?key=${encodeURIComponent(game === 'blockcraft' ? localSaveKey(learnerId) : deviceSaveKey(game, learnerId))}&learner=${encodeURIComponent(learnerId)}`
 
 /**
- * Puts the newest save on this device (the game reads only this device) and opens the game. 'unreachable' = nothing
- * opened: the account could not be read and this device has no copy, so a new world would overwrite the real one.
+ * Opens the game. For BlockCraft it first puts the newest save on this device (the game reads only this device);
+ * 'unreachable' = nothing opened: the account could not be read and this device has no copy, so a new world would
+ * overwrite the real one. The other games' saves are only on this device, so they open at once.
  */
-export async function openGame(learnerId: string, until: number): Promise<'unreachable' | void> {
+export async function openGame(learnerId: string, game: GameId = 'blockcraft'): Promise<'unreachable' | void> {
+  if (game !== 'blockcraft') return location.assign(gameUrl(learnerId, game))
   const save = await loadGameSave(learnerId)
   if (save === 'unreachable') return save
   try { if (save) localStorage.setItem(localSaveKey(learnerId), JSON.stringify(save)) } catch { /* full: the game starts from what is there */ }
-  location.assign(gameUrl(learnerId, until))
+  location.assign(gameUrl(learnerId))
 }

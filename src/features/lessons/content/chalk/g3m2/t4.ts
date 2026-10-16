@@ -56,11 +56,9 @@ export const T4: (ChalkMark[] | undefined)[] = [
   // Grams or kilograms?
   [
     dots([0, 'apples'], [[110, 120], [140, 112], [170, 120], [125, 145], [155, 145]], 14), write([0, 'grams'], 'grams', 140, 200, 32, 'y'),
-    // a dog: body, legs, tail, then its head, ear and nose
-    { beat: 1, at: 'dog', c: 'w', d: 'M370 120 H490 Q505 120 505 135 V150 Q505 165 490 165 H370 Q355 165 355 150 V135 Q355 120 370 120 Z'
-      + ' M372 165 v38 M395 165 v38 M465 165 v38 M488 165 v38 M357 128 Q335 118 330 92' },
-    { ...ring([1, 'dog'], 522, 106, 24, 20), quick: true },
-    { beat: 1, at: 'dog', c: 'w', d: 'M506 94 L500 70 L520 86 M545 110 h4' },
+    // a watermelon: its outline, then its stripes
+    { beat: 1, at: 'watermelon', c: 'w', d: 'M360 150 A70 48 0 1 0 500 150 A70 48 0 1 0 360 150 Z' },
+    { beat: 1, at: 'watermelon', c: 'w', d: 'M405 106 Q388 150 405 194 M430 102 V198 M455 106 Q472 150 455 194' },
     write([1, 'kilograms'], 'kilograms', 440, 250, 32, 'y'),
     write([2, '1,000'], '1 kg = 1,000 g', 300, 335, 40, 'y'),
   ],

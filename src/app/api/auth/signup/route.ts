@@ -9,7 +9,7 @@ import { firstNameOf } from '@/features/consent/firstName'
 import { MIN_PASSWORD } from '@/core/childLogin'
 import {
   ConfigMissing, requireConfig, PRIVACY_VERSION, TERMS_VERSION, generateSignupLink, hashToken, lastSignupLinkAt, newToken, rpc, scrambleUnconfirmedPassword, sendEmail,
-  type RpcError,
+  Undeliverable, type RpcError,
 } from '@/features/consent/server'
 
 /** 2 minutes: twice Supabase's own default resend throttle (60 s), which stopped applying when this route took the
@@ -114,6 +114,9 @@ export async function POST(req: Request) {
     // reset clears it (measured, see lastSignupLinkAt) and kills the unsent token, so the retry is treated as a first send.
     if (unsent) await scrambleUnconfirmedPassword(unsent.userId, unsent.signupCount + 1)
       .catch(err => console.error('[auth/signup] could not clear the cooldown after a failed send', err))
+    // The address hard-bounced or complained before: nothing was sent, so the form must not say "check your email".
+    // The cooldown was cleared above, so the same address answers this again instead of a silent "ok".
+    if (e instanceof Undeliverable) return NextResponse.json({ error: 'undeliverable' }, { status: 422 })
     if (e instanceof ConfigMissing) {
       console.error('[auth/signup] not configured: missing', e.message)
       return NextResponse.json({ error: 'not_configured' }, { status: 503 })

@@ -20,7 +20,8 @@ vi.mock('@/data/repositories/_shared', async (orig) => {
     getSession: async () => ({ data: { session: { user: { id: 'parent' } } } }),
     signOut: async () => { world.signedOut++; return { error: null } },
   }
-  return { ...actual, db: () => ({ rpc: (fn: string, a: Record<string, unknown>) => world.rpc(fn, a), auth }) }
+  const { unbatch } = await import('./_syncBatch')
+  return { ...actual, db: () => ({ rpc: unbatch((fn, a) => world.rpc(fn, a) as never), auth }) }
 })
 vi.mock('@/data/auth', () => ({ logAuthEvent: async () => {}, getCurrentSession: async () => null }))
 
@@ -114,6 +115,15 @@ describe('page errors', () => {
     installErrorCapture()
     for (let i = 0; i < 3; i++) window.dispatchEvent(new ErrorEvent('error', { message: 'chunk failed to load' }))
     expect(reports).toEqual(['chunk failed to load'])
+  })
+
+  // Seen on production 5–6 Oct: six of these from /test in two days, each one a digest `!!` with nothing wrong.
+  it("Chrome's ResizeObserver notice stays on the device and is not reported", async () => {
+    installErrorCapture()
+    window.dispatchEvent(new ErrorEvent('error', { message: 'ResizeObserver loop completed with undelivered notifications.' }))
+    window.dispatchEvent(new ErrorEvent('error', { message: 'ResizeObserver loop limit exceeded' }))
+    expect(reports).toEqual([])
+    expect(await block()).toContain('[window] ResizeObserver loop completed with undelivered notifications.')
   })
 })
 

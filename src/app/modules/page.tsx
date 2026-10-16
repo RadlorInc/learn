@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, useSyncExternalStore } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { getMyRole, signOut, getMyLearners, getClassMode, type ClassMode } from '@/data/repositories'
+import { getMyRole, signOut, getMyLearners, getClassMode, type ClassMode, type LearnerWithRole } from '@/data/repositories'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { ModuleHome } from '@/features/lessons/ModuleHome'
 import { mustChangePassword } from '@/data/auth'
@@ -41,9 +41,12 @@ function Modules() {
   // since a teacher may have put them in a class after they signed in; a child in no class never waits on it.
   const [mode, setMode] = useState<ClassMode | null>(null)
   const [showExercises, setShowExercises] = useState(false)   // a paid class's child, looking at the class's exercises
+  // The account's row for this child, read ONCE here and handed to ModuleHome (it used to read every learner again:
+  // ~250 ms more from India). undefined = could not read; the home then keeps the copy saved at sign-in.
+  const [account, setAccount] = useState<LearnerWithRole | undefined>()
   useEffect(() => {
     const a = getActiveLearner()
-    ;(a ? getMyLearners().then(all => all.find(l => l.id === a.id) ?? a).catch(() => a) : Promise.resolve(null))
+    ;(a ? getMyLearners().then(all => { const me = all.find(l => l.id === a.id); setAccount(me); return me ?? a }).catch(() => a) : Promise.resolve(null))
       .then(me => me?.grade_id ? getClassMode(me) : { mode: 'lessons' as const })
       .then(setMode).catch(() => setMode({ mode: 'lessons' }))
   }, [])
@@ -53,6 +56,7 @@ function Modules() {
     const a = getActiveLearner()
     if (!classId || !a?.created_by) return
     const t = setInterval(() => {
+      if (document.hidden) return   // a tab in the background asks nothing; the next tick after it is shown does
       getClassMode({ grade_id: classId, created_by: a.created_by }).then(m => { if (m.mode !== 'lessons' || m.classId) setMode(m) }).catch(() => {})
     }, 20_000)
     return () => clearInterval(t)
@@ -67,7 +71,7 @@ function Modules() {
   if (showExercises && mode.exercises) return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId ?? null} className={mode.className ?? ''} exercises={mode.exercises}
     back={{ label: '← Lessons', onClick: () => setShowExercises(false) }} />
   return <ModuleHome key={grade} grade={grade}
-    exercises={mode.exercises?.length ? { count: mode.exercises.length, onOpen: () => setShowExercises(true) } : undefined} learnerId={learner?.id ?? null} lessonIds={learner?.lesson_ids} back={child === undefined ? undefined
+    exercises={mode.exercises?.length ? { count: mode.exercises.length, onOpen: () => setShowExercises(true) } : undefined} learnerId={learner?.id ?? null} lessonIds={learner?.lesson_ids} account={account} back={child === undefined ? undefined
     : child ? signOutBtn
     : { href: '/parent', label: '← Switch' }} />
 }

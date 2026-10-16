@@ -1,7 +1,7 @@
 /**
  * SHORT PRACTICE SESSIONS, THE SCREEN (founder, 2026-09-24) — the real LessonPlayer on a real topic, rendered and
  * clicked: a saved run greets the child with a choice; Keep practicing puts back the SAME problem; a checkpoint after
- * the 5th and the 10th answer; Keep going; Take a break celebrates with the points; the topic becomes done at 12.
+ * the 5th and the 10th answer; One more set; Finish for today celebrates with the points; the topic becomes done at 12.
  * ⚠️ Every expected line is written out here, never imported from sessionCopy.ts (a check that imports the value it
  * asserts passes because the code equals itself). Only the network and the voice are replaced.
  */
@@ -20,6 +20,7 @@ vi.mock('@/infra/useMiloSpeaker', () => ({ speak: () => {}, speakSteps: () => ()
 vi.mock('@/infra/voiceClipPlayer', () => ({ setSceneVoice: () => {}, prefetchClips: () => {}, setClipRate: () => {} }))
 vi.mock('@/data/repositories/points', () => ({
   sessionUserId: async () => 'u-test',   // #239: the queue stamps each item with its account
+  syncBatch: async (c: unknown[]) => c.map(() => 'ok'), lessonCall: () => ({}), moduleCall: () => ({}), runCall: () => ({}),   // the queue's one request (sync_batch)
   recordLessonProgress: async () => 'ok', recordModulePractice: async () => 'ok', recordPracticeRun: async () => 'ok', getLessonRows: async () => null,
 }))
 
@@ -84,18 +85,18 @@ describe('short practice sessions', () => {
     await answerNotRight()                                           // 4
     expect(dialog()).toBeNull()
     await answerNotRight()                                           // 5
-    expect(dialog()).toContain('5 questions done! ⭐ Nice work.')
-    await click('Keep going')
+    expect(dialog()).toContain('Set complete! ⭐ 5 questions solved.')
+    await click('One more set')
     expect(dialog()).toBeNull()
     for (let k = 6; k <= 10; k++) await answerNotRight()
-    expect(dialog()).toContain('5 questions done! ⭐ Nice work.')
+    expect(dialog()).toContain('Set complete! ⭐ 5 questions solved.')
     expect(onFinish).not.toHaveBeenCalled()                          // 10 answers, not mastered: not done yet
-    await click('Keep going')
+    await click('One more set')
     await answerNotRight(); await answerNotRight()                   // 11, 12
     expect(onFinish).toHaveBeenCalledTimes(1)                        // done after 12 answers across sessions
     expect(loadRun(L, lesson.id)!.asked).toBe(12)
 
-    await click('Take a break')                                      // the top bar's, mid-round
+    await click('Finish for today 🎉')                                      // the top bar's, mid-round
     // Practice is complete, so this is Screen 9 (founder, 2026-09-24): Screen 8's sentence and the math-word sticker —
     // not the break screen, which is for a topic still in progress (next test).
     expect(text()).toContain('Screen 9 of 9')
@@ -122,12 +123,16 @@ describe('short practice sessions', () => {
     expect(cheer()).toBe('')
   })
 
-  it('Take a break from the checkpoint', async () => {
+  it('Finish for today from the checkpoint: a win, nothing left unfinished (founder, 2026-10-12)', async () => {
     await click('Keep practicing')
     await answerNotRight(); await answerNotRight()
-    expect(dialog()).toContain('5 questions done! ⭐ Nice work.')
-    await click('Take a break')
-    expect(text()).toContain('Great work, 2 questions done! ⭐')
+    expect(dialog()).toContain('Set complete! ⭐ 5 questions solved.')
+    await click('Finish for today 🎉')
+    expect(text()).toContain('You did it! ⭐')
+    expect(text()).toContain(`You're getting stronger at ${lesson.title}.`)
+    // "Take a break" and "Your spot is saved" read as leaving work undone: never on this screen
+    expect(text()).not.toMatch(/saved|break|unfinished|left to do/i)
+    expect(text()).toContain('+2 points')
     expect(text()).not.toContain('Screen 9 of 9')                   // not done yet: the break, not Screen 9
     expect(loadRun(L, lesson.id)!.asked).toBe(5)
   })

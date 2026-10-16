@@ -10,7 +10,7 @@
  * The pans stay LEVEL (counter-rotated) so the animals/numbers are always upright. The child PICKS
  * one of three worlds; the animals SHUFFLE and the scene rotates across the 10 adaptive rounds (one
  * continuous SkillBeat — wider range on a streak, gentler when struggling, re-teach after 3 wrong):
- *   🛝 Playground — puppy · duck · ladybug · kitten · lamb   (park_picnic / park_fountain / park_pond)
+ *   🛝 Playground — rabbit · duck · ladybug · kitten · lamb   (park_picnic / park_fountain / park_pond)
  *   🌲 Forest     — squirrel · fawn · hedgehog · owl · mouse  (woods_fern / woods_stream / woods_autumn)
  *   🐸 Pond       — otter · beaver · penguin · duckling
  *
@@ -65,7 +65,7 @@ const SETTINGS: CmpWorld[] = [
       { grad: 'linear-gradient(#d6efff 0%, #e6f5d8 52%, #c2e69a 100%)', img: '/assets/backgrounds/park_fountain.jpeg' },
       { grad: 'linear-gradient(#d2eefc 0%, #e4f2d6 52%, #c0e498 100%)', img: '/assets/backgrounds/park_pond.jpeg' },
     ],
-    items: [IT('puppy_side', '🐶'), IT('duck_side', '🦆'), IT('ladybug_side', '🐞'),
+    items: [IT('rabbit_side', '🐰'), IT('duck_side', '🦆'), IT('ladybug_side', '🐞'),
       IT('kitten_side', '🐱'), IT('lamb_side', '🐑')] },
   { id: 'forest',
     bgs: [

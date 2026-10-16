@@ -69,7 +69,7 @@ Parent creates account
 > - Plan: Radlic Family
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
-> - You can cancel any time at **Account → Plan & billing** or by emailing support@radlor.com. Cancelling stops all future charges.
+> - You can cancel any time at **Account → Plan & billing** by emailing support@radlor.com or by calling 1-888-812-9373. Cancelling stops all future charges.
 > - Full terms: [Refund and Cancellation Policy](https://radlic.com/legal/refunds)
 
 **Checkbox — unticked by default, and the button must stay disabled until it is ticked:**
@@ -234,6 +234,8 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 > If you withdraw permission, we will stop collecting information from every child on your account, delete everything we hold about each of them — including their own sign-ins — and close their profiles. This cannot be undone.
 >
 > **Your account stays open.** If you add a child again later, we will ask for your permission again first.
+>
+> **If you have a paid plan, this also cancels it today** and refunds the part you have not used to your card.
 
 **Buttons:** `Withdraw permission and delete my children's data` · `Keep my settings`
 

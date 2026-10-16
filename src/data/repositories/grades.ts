@@ -27,7 +27,7 @@ export async function getGradeChapterIds(gradeId: string): Promise<ChapterType[]
 export interface ClassRow { id: string; name: string; grade: number; lesson_ids: string[] | null; exercises: Exercise[] }
 
 export async function getMyClasses(): Promise<ClassRow[]> {
-  const { data: { user } } = await db().auth.getUser()
+  const user = (await db().auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return []
   const { data, error } = await db()
     .from('grades')
@@ -40,7 +40,7 @@ export async function getMyClasses(): Promise<ClassRow[]> {
 }
 
 export async function createClass(name: string, grade: number): Promise<ClassRow | null> {
-  const { data: { user } } = await db().auth.getUser()
+  const user = (await db().auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return null
   const { data, error } = await db()
     .from('grades')
@@ -66,7 +66,7 @@ export async function updateClass(id: string, patch: { name?: string; grade?: nu
  * class; the screen only remembers who was.
  */
 export async function setClassLessons(classId: string, lessonIds: string[] | null): Promise<number | null> {
-  const { data: { user } } = await db().auth.getUser()
+  const user = (await db().auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return null
   if (!(await updateClass(classId, { lesson_ids: lessonIds }))) return null
   const { data, error } = await db().from('learners')
@@ -87,7 +87,7 @@ export async function deleteClass(id: string): Promise<boolean> {
  * the class's exercises only. `teacher_plans` is read-only to every client — no row = free.
  */
 export async function getMyTeacherPaid(): Promise<boolean> {
-  const { data: { user } } = await db().auth.getUser()
+  const user = (await db().auth.getSession()).data.session?.user   // local read; RLS checks the id
   if (!user) return false
   const { data, error } = await db().from('teacher_plans' as never).select('paid').eq('teacher_id', user.id).maybeSingle()
   if (error) { console.warn('[getMyTeacherPaid]', error.message); return false }
@@ -107,10 +107,13 @@ export type ClassMode = { mode: 'lessons'; classId?: string; className?: string;
  */
 export async function getClassMode(learner: Pick<Learner, 'grade_id' | 'created_by'> | null): Promise<ClassMode> {
   if (!learner?.grade_id || !learner.created_by) return { mode: 'lessons' }
-  const { data: cls, error } = await db().from('grades').select('name, grade, exercises').eq('id', learner.grade_id).maybeSingle()
+  // Both reads at once (one round trip, not two in a row); the plan is simply unused when the grade is not a class.
+  const [{ data: cls, error }, { data: plan, error: pe }] = await Promise.all([
+    db().from('grades').select('name, grade, exercises').eq('id', learner.grade_id).maybeSingle(),
+    db().from('teacher_plans' as never).select('paid').eq('teacher_id', learner.created_by).maybeSingle(),
+  ])
   const c = cls as { name: string; grade: number | null; exercises: Exercise[] | null } | null
   if (error || !c || c.grade == null) return { mode: 'lessons' }          // a legacy chapter grade is not a class
-  const { data: plan, error: pe } = await db().from('teacher_plans' as never).select('paid').eq('teacher_id', learner.created_by).maybeSingle()
   if (pe) { console.warn('[getClassMode]', pe.message); return { mode: 'lessons' } }
   const exercises = c.exercises ?? []
   return (plan as { paid?: boolean } | null)?.paid

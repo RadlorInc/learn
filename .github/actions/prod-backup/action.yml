@@ -1,6 +1,6 @@
 name: Encrypted production dump
 description: >-
-  Dump production's schema + data, encrypt it, and upload it as a workflow artifact. Used by BOTH
+  Dump production's schema + data, encrypt it to the founder's offline age key, and upload it as a workflow artifact. Used by BOTH
   backup.yml (nightly) and deploy.yml's migrate-prod (right before `supabase db push`), so there is
   one copy of the backup logic. `supabase db dump` is pg_dump: read-only against production.
   The caller must have checked out the repo, run supabase/setup-cli first, and grant `packages: read`
@@ -18,8 +18,10 @@ inputs:
   db-password:
     description: secrets.PROD_DB_PASSWORD
     required: true
-  passphrase:
-    description: secrets.BACKUP_PASSPHRASE
+  recipient:
+    description: >-
+      vars.BACKUP_AGE_RECIPIENT — the founder's age PUBLIC key (age1…). It can only encrypt; the private key that opens
+      a dump never touches GitHub, so no secret on this repo, leaked or not, can read a backup.
     required: true
   artifact-name:
     description: name of the uploaded artifact
@@ -132,25 +134,42 @@ runs:
         tar czf milo-backup.tar.gz schema.sql data.sql
         rm -f schema.sql data.sql
 
+    # age, not openssl's passphrase mode (2026-10-16): with a passphrase, the thing that LOCKS the dump also OPENS it,
+    # and it lived in a GitHub secret. With an age recipient the runner holds only the public half. From Ubuntu's own
+    # signed archive (no new third-party download); retried because apt mirrors flake like registries do.
+    - name: Install age
+      shell: bash
+      run: |
+        set -uo pipefail
+        command -v age >/dev/null && { age --version; exit 0; }
+        for wait in 0 10 30; do
+          sleep "$wait"
+          sudo apt-get update -qq && sudo apt-get install -y -qq age && break
+          echo "apt-get install age failed; trying again"
+        done
+        command -v age >/dev/null || { echo "::error::could not install age — no backup produced"; exit 1; }
+        age --version
+
     - name: Encrypt
       shell: bash
       env:
-        BACKUP_PASSPHRASE: ${{ inputs.passphrase }}
+        RECIPIENT: ${{ inputs.recipient }}
       run: |
         set -euo pipefail
-        # An empty passphrase would still "encrypt" — refuse it rather than upload a dump anyone can open.
-        if [ -z "$BACKUP_PASSPHRASE" ]; then
+        # An empty or malformed recipient must not produce an artifact. An X25519 age recipient is "age1" plus 58
+        # bech32 characters; anything else (a pasted secret key, a typo, an ssh key) is refused before encrypting.
+        if ! [[ "$RECIPIENT" =~ ^age1[02-9ac-hj-np-z]{58}$ ]]; then
           rm -f milo-backup.tar.gz
-          echo "::error::BACKUP_PASSPHRASE is empty — refusing to produce a backup"; exit 1
+          echo "::error::vars.BACKUP_AGE_RECIPIENT is empty or not an age public key (age1…) — refusing to produce a backup"; exit 1
         fi
-        openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:BACKUP_PASSPHRASE \
-          -in milo-backup.tar.gz -out milo-backup.tar.gz.enc
+        age -r "$RECIPIENT" -o milo-backup.tar.gz.age milo-backup.tar.gz
         rm -f milo-backup.tar.gz # never let the plaintext reach the upload step
-        test -s milo-backup.tar.gz.enc
-        # Prove the artifact is actually encrypted before it leaves the runner. Cheap, and it is
-        # the one failure that would be silent: a passphrase misconfiguration that produced a
-        # readable dump would look identical in the artifact list.
-        if tar tzf milo-backup.tar.gz.enc >/dev/null 2>&1; then
+        test -s milo-backup.tar.gz.age
+        # Prove the artifact is actually encrypted before it leaves the runner: it must start with age's header line
+        # and must not be readable as a tarball. The silent failure this catches is a plaintext dump in the artifact list.
+        [ "$(head -n1 milo-backup.tar.gz.age)" = "age-encryption.org/v1" ] \
+          || { echo "::error::artifact does not start with the age header — NOT uploading"; exit 1; }
+        if tar tzf milo-backup.tar.gz.age >/dev/null 2>&1; then
           echo "::error::artifact is readable as a tarball — it is NOT encrypted"; exit 1
         fi
 
@@ -158,6 +177,6 @@ runs:
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: ${{ inputs.artifact-name }}
-        path: milo-backup.tar.gz.enc
+        path: milo-backup.tar.gz.age
         retention-days: 30
         if-no-files-found: error

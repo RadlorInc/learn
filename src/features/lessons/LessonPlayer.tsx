@@ -40,6 +40,26 @@ import { Feedback } from './Feedback'
  * 2026-09-20: 3 s then 2.3 s both felt long — and the screen now carries a bar that says where it is, so the wait
  * does not have to be long enough to be understood on its own. */
 const HOLD_MS = 1500
+
+/** Her line as it is written on the right, a new row wherever one sentence ends on a number and the next starts with
+ *  one: "10 − 5 = 5. 9 − 7 = 2." on one row reads as "5.9" (a tester, g6m3-t1, 8 Oct). Only how it is shown changes;
+ *  what she says, its clip and the text a screen reader reads (the space stays) are the same line. */
+const sumLines = (say: string) => say.split(/(?<=\d\.) (?=[\d−])/)
+/** A word in capitals is the line's stress ("Don't take 25% OF the $15"). The voice says it lowercase (styles.ts); on
+ *  screen it is bold lowercase, capitalised only at the start of a sentence: capitals read as shouting, and a tester took
+ *  "OF" for a typo (g6m4-t4, 8 Oct 2026; the founder's call, 15 Oct). Display only: the line, and so its clip key, is
+ *  unchanged. AM and PM stay as they are, as in the voice. */
+export const emphasis = (t: string): ReactNode[] => t.split(/\b([A-Z]{2,})\b/).map((part, i, all) => {
+  if (i % 2 === 0 || part === 'AM' || part === 'PM') return part
+  const low = part.toLowerCase(), first = i === 1 && all[0].trim() === '' || /[.!?]\s*$/.test(all[i - 1])
+  return <b key={i}>{first ? low[0].toUpperCase() + low.slice(1) : low}</b>
+})
+
+/** The Screen 9 sticker, one sentence a row: "The fair share is called the mean. Mean = total ÷ how many." run on
+ *  as one line hid the rule in the middle of it (a tester, g6m7-t1, 11 Oct). The text a screen reader reads is the same. */
+const stickerRows = (sticker: string) => sticker.split(/(?<=[.!?]) (?=\S)/)
+/** A formula wraps as one piece, never "V = π × r ×" / "r × h" (a tester, g8m5-t1, 15 Oct). The text is unchanged. */
+const keepFormula = (t: string) => t.split(/((?:\S+ [=×÷+−] )+\S+)/).map((s, i) => i % 2 ? <span key={i} style={{ whiteSpace: 'nowrap' }}>{s}</span> : s)
 /** A breath between two of her sentences. The clips carry ~0.16 s of their own (trimmed), so this makes ~0.65 s.
  * History: ~0.8 s sounded generated, none at all (2026-09-19) ran the sentences together, ~0.45 s (300) was still
  * too quick for the founder (2026-09-24: "add a small pause between the sentences"). */
@@ -185,6 +205,18 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     return () => ids.forEach(clearTimeout)
   }, [beats, audio, replay, autoNext])
 
+  // Screen 9, once practice is complete: Screen 8's sentence (the big idea for a child who needed the worked steps) and
+  // the math-word sticker. It says both, the sentence then the sticker: the page was silent, and the sticker is the
+  // thing to remember (testers, g6m1-t1/t7/t8, 7 Oct 2026; the founder's call, 15 Oct). A break card says nothing.
+  const nine = s.mode === 'finish' && (!!review || !ladder || doneHere || lessonDone(learnerId, lesson.id))
+    ? wonAt ?? { title: 'You got it', ...lesson.won, helped: false } : null
+  const nineSaid = nine ? [nine.helped ? lesson.bigIdea : nine.text, nine.sticker] : null
+  const nineKey = nineSaid?.join('\n') ?? ''
+  useEffect(() => {
+    if (!nineKey || !audio) return
+    return speakSteps(nineKey.split('\n'), { gapMs: GAP_MS })
+  }, [nineKey, audio])
+
   // Screen 8 solved (or the twin's worked steps seen): straight on to practice with the green check. Screen 9 (its sentence
   // and the math-word sticker) comes AFTER practice (founder, 2026-09-24).
   const startPractice = () => {
@@ -249,6 +281,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // A review problem comes from an earlier topic: its own big idea and lesson, not this one's.
   const from = run && s.mode === 'practice' && run.current.from !== lesson.id ? loadedLesson(run.current.from) ?? null : null
   const bigIdea = from?.bigIdea ?? lesson.bigIdea
+  const hintText = problem?.hint ?? (from ?? lesson).hint ?? bigIdea
   // The answer box's shape is the lesson's, never the problem's (see AnswerInput). A ladder's answers are sampled.
   const sampled = useMemo(() => (ladder ? ladderAnswers(ladder) : []), [ladder])
   const all = [lesson.turn, lesson.turn.twin, ...lesson.practice.map(x => x.problem)].map(solutionOf).concat(sampled)
@@ -334,7 +367,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         onExit={ladder && !review ? takeBreak : () => { stopSpeech(); onExit() }} pad padKey={s.practice} feedback={feedback} topic={run?.current.from ?? lesson.id}>
         {pause && <Checkpoint text={pause === 'mastered' ? C.mastered : C.checkpoint(5)} onKeep={() => setPause(null)} onBreak={takeBreak} />}
         {review && ladder && run && (
-          <div role="group" aria-label="Tester: question level" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+          <div role="group" aria-label="Tester: question level" data-tour="tester-levels" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
             <b style={{ fontSize: 16 }}>Level</b>
             {ladder.map((_, i) => (
               <button key={i} type="button" aria-pressed={i === reviewLevel} disabled={!answering}
@@ -350,6 +383,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
                 L{i + 1}
               </button>
             ))}
+            {/* A tester took "the level never moves" for how a child's practice works (8 Oct). It moves for a child:
+                adaptive.ts `step`, two right first tries in a row → one level up. */}
+            <span style={{ fontSize: 14, color: INK, flexBasis: '100%' }}>
+              You choose the level here. For a child, the level moves up by itself after 2 right answers in a row.
+            </span>
           </div>
         )}
         {review && ladder && run && (() => {
@@ -358,11 +396,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           const enough = counts.every(c => c >= review.practice.need)
           return (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', padding: '8px 12px', borderRadius: 14, border: `3px dashed ${INK}`, background: '#fffbe8' }}>
-              <span style={{ fontSize: 15, fontWeight: 700, color: INK }}>
+              <span data-tour="tester-count" style={{ fontSize: 15, fontWeight: 700, color: INK }}>
                 Tester: {review.practice.need} questions per level —{' '}
                 {counts.map((c, i) => <span key={i} style={{ color: c >= review.practice.need ? '#1f7a43' : INK }}>L{i + 1} {Math.min(c, review.practice.need)}/{review.practice.need}{i < counts.length - 1 ? ' · ' : ''}</span>)}
               </span>
-              <button type="button" style={{ ...primary, minHeight: 44, padding: '8px 18px', fontSize: 17, marginLeft: 'auto', ...(enough && !(locked && !answering) ? {} : { opacity: 0.45, cursor: 'not-allowed' }) }}
+              <button type="button" data-tour="tester-finish" style={{ ...primary, minHeight: 44, padding: '8px 18px', fontSize: 17, marginLeft: 'auto', ...(enough && !(locked && !answering) ? {} : { opacity: 0.45, cursor: 'not-allowed' }) }}
                 disabled={!enough || (locked && !answering)} title={enough ? undefined : 'Review the questions above at every level first'}
                 onClick={() => { stopSpeech(); go({ ...s, mode: 'finish', misses: 0, feedback: null }) }}>
                 Finish practice ▶
@@ -378,12 +416,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center' }} onClick={() => setTaps(0)}>Clear picture</button>}
         </div>
         {answering && (
-          <form id="lp-answer" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <form id="lp-answer" data-tour={review ? 'tester-answer' : undefined} onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <b style={{ fontSize: 22 }}>Your answer</b>
             {box}
           </form>
         )}
-        {s.feedback === 'idea' ? <TryAgain>{bigIdea}</TryAgain> : asked && answering && <p style={idea}>{bigIdea}</p>}
+        {s.feedback === 'idea' ? <TryAgain>{bigIdea}</TryAgain> : asked && answering && <p style={idea}>{hintText}</p>}
         {s.feedback === 'right' && <Cheer k={s.practice} />}
         {worked && <>
           <div style={hint}>
@@ -434,7 +472,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
           {taps > 0 && <button type="button" style={{ ...pill, alignSelf: 'center' }} onClick={() => setTaps(0)}>Clear picture</button>}
         </div>
         {!worked && (
-          <form id="lp-turn" onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
+          <form id="lp-turn" data-tour={review ? 'tester-answer' : undefined} onSubmit={e => { e.preventDefault(); submit() }} style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
             <b style={{ fontSize: 22 }}>Your answer</b>
             {box}
           </form>
@@ -495,10 +533,10 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     words = sc.beats
       ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sc.beats.slice(0, shown).map((b, i) =>
-            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{b.say}</p>)}
+            <p key={i} style={{ ...said, opacity: i < shown - 1 ? 0.5 : 1 }}>{sumLines(b.say).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : ''}{emphasis(t)}</span>)}</p>)}
         </div>
-      : <p style={bubble}>{ask ? ask[1] : sc.text}</p>
-    action = <button type="button" style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
+      : <p style={bubble}>{emphasis(ask ? ask[1] : sc.text)}</p>
+    action = <button type="button" data-tour={review ? 'tester-next' : undefined} style={{ ...(ask ? askBtn : primary), ...shut }} disabled={locked} onClick={() => {
       setAutoOn(true)
       const n = next(s)
       go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
@@ -518,25 +556,26 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     crumb = 'Done!'; at = 8
     // A laddered topic counts only once it is really done (mastered or 12 answers), not because the child took a break.
     // A tester reviews the real Screen 9 (the sticker and Screen 8's sentence), not the child's break card.
-    const topicDone = !!review || !ladder || doneHere || lessonDone(learnerId, lesson.id)
-    const allDone = topicDone && (moduleDone?.() ?? false)
+    const allDone = !!nine && (moduleDone?.() ?? false)
     title = allDone ? 'Module complete!' : `${lesson.title}: done!`
     // Screen 9, once practice is complete: Screen 8's sentence and the math word (README: the math word appears ONLY
     // here). A child who needed the worked steps on the twin never hears "You got it" — the big idea instead.
-    const w = topicDone ? wonAt ?? { title: 'You got it', ...lesson.won, helped: false } : null
+    const w = nine
     picture = <div style={stage}>
       {allDone && <img src="/assets/lessons/badge.webp" alt="Module badge" width={96} height={112} style={{ alignSelf: 'center', animation: 'lp-pop .4s ease-out' }} />}
       {w
-        ? <p data-sticker style={{ ...idea, alignSelf: 'center', boxShadow: `4px 4px 0 ${INK}`, transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' }}>⭐ {w.sticker}</p>
+        ? <p data-sticker style={{ ...idea, alignSelf: 'center', boxShadow: `4px 4px 0 ${INK}`, transform: 'rotate(-2deg)', animation: 'lp-pop .4s ease-out' }}>
+          {stickerRows(w.sticker).map((t, k) => <span key={k} style={{ display: 'block' }}>{k ? ' ' : '⭐ '}{keepFormula(t)}</span>)}</p>
         : <p style={idea}>{lesson.bigIdea}</p>}
     </div>
     if (w) { crumb = 'Screen 9 of 9'; if (!allDone) title = w.helped ? KEEP_GOING.title : w.title }
     if (run && !w) {
-      // The break (founder, 2026-09-24): a celebration, never a verdict — no count of a total, no "unfinished".
-      crumb = C.takeBreak
-      title = session.mastered ? C.breakMastered : C.breakTitle(session.answered)
+      // The stop (founder, 2026-09-24; reworded 2026-10-12): a win, never a verdict — no count of a total, nothing
+      // "unfinished" or "saved"; what the child got stronger at.
+      crumb = lesson.title
+      title = session.mastered ? C.breakMastered : C.breakTitle
       words = <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <p style={bubble}>{C.spotSaved}</p>
+        {!session.mastered && <p style={bubble}>{C.stronger(lesson.title)}</p>}
         {session.points > 0 && <p style={{ ...right, alignSelf: 'flex-start' }}>{C.points(session.points)}</p>}
       </div>
     } else words = <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

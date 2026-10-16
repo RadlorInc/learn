@@ -8,6 +8,11 @@ name: Upload audio
 # before a run and revokes them right after (docs/runbooks/audio-upload.md). Nothing here prints a key, a URL list or
 # an object name — counts only.
 #
+# ⚠️ RUN FROM `main`, ALWAYS (2026-10-16). The job holds keys to production, so the CODE that runs with them is main's
+# reviewed code, never a branch's: a non-main run is refused, and `production-db` is limited to `main`. A voice batch is
+# uploaded BEFORE its PR merges, so the new clips' names come from that PR branch as DATA: `manifest_ref` names the
+# branch, and only its scripts/audio/manifest.json is read from it (nothing else from the branch runs).
+#
 # Where the audio comes from: not this checkout (clips are not in git any more) but `source_ref`, a git ref that still
 # holds them (default: the tag made when they left the tree). upload.py refuses unless every source file's SHA-256 is
 # the manifest's, so a wrong ref cannot upload the wrong audio.
@@ -23,6 +28,10 @@ on:
         type: choice
         options: [dry-run, upload]
         default: dry-run
+      manifest_ref:
+        description: 'The PR branch whose scripts/audio/manifest.json names the new clips (only that file is read from it). Empty = main''s manifest, which finds nothing new'
+        type: string
+        default: ''
       source_ref:
         description: 'Git ref that holds public/audio/<voice>/*.mp3'
         type: string
@@ -59,6 +68,31 @@ jobs:
         env:
           PROD_PROJECT_REF: ${{ vars.PROD_PROJECT_REF }}
         run: scripts/assert-prod-ref.sh
+
+      - name: Refuse unless this run is main's code
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::upload-audio runs only from main (this run: $GITHUB_REF). Run it with --ref main -f manifest_ref=<the PR branch>."
+            exit 2
+          fi
+
+      - name: Take the manifest (data only) from manifest_ref
+        env:
+          MANIFEST_REF: ${{ inputs.manifest_ref }}
+        run: |
+          set -euo pipefail
+          if [ -z "$MANIFEST_REF" ]; then
+            echo "manifest: main's own ($(python3 -c "import json;print(len(json.load(open('scripts/audio/manifest.json'))['keys']))") keys) — a run with no manifest_ref finds nothing new"
+            exit 0
+          fi
+          if ! [[ "$MANIFEST_REF" =~ ^[A-Za-z0-9._/-]+$ ]]; then echo "::error::manifest_ref has characters a branch name does not need"; exit 2; fi
+          git fetch --no-tags --depth=1 origin "+refs/heads/${MANIFEST_REF}:refs/remotes/origin/manifest-source" 2>/dev/null \
+            || { echo "::error::manifest_ref '${MANIFEST_REF}' is not a branch on origin — nothing was checked"; exit 2; }
+          main_n=$(python3 -c "import json;print(len(json.load(open('scripts/audio/manifest.json'))['keys']))")
+          git show refs/remotes/origin/manifest-source:scripts/audio/manifest.json > "$RUNNER_TEMP/manifest.json"
+          branch_n=$(python3 -c "import json,sys;print(len(json.load(open(sys.argv[1]))['keys']))" "$RUNNER_TEMP/manifest.json")
+          cp "$RUNNER_TEMP/manifest.json" scripts/audio/manifest.json
+          echo "manifest: ${MANIFEST_REF} (${branch_n} keys; main has ${main_n})"
 
       - name: Fetch the clip files from the source ref (not from this checkout)
         env:

@@ -2,7 +2,7 @@
  * Grade 3 · Module 2 — Place value through metric measurement.
  * Written to docs/product/building-lessons.md. Not yet founder-reviewed.
  */
-import type { Lesson, Picture } from '../script'
+import type { Lesson, Picture, ScaleItem } from '../script'
 import { attachChalk } from '../chalk'
 import { G3M2_CHALK } from './chalk/g3m2'
 
@@ -16,10 +16,10 @@ const timeline = (h: number, from: number, to: number, extra: Partial<Extract<Pi
   ...extra,
 })
 
-const gramScale = (value: number | null, max = 1000, step = 100, labelEvery = 200): Picture =>
-  ({ kind: 'measure', tool: 'scale', max, step, labelEvery, value, unit: 'grams' })
-const kgScale = (value: number | null, max: number, step: number, labelEvery: number): Picture =>
-  ({ kind: 'measure', tool: 'scale', max, step, labelEvery, value, unit: 'kilograms' })
+const gramScale = (value: number | null, max = 1000, step = 100, labelEvery = 200, on?: ScaleItem): Picture =>
+  ({ kind: 'measure', tool: 'scale', max, step, labelEvery, value, unit: 'grams', ...(on ? { on } : {}) })
+const kgScale = (value: number | null, max: number, step: number, labelEvery: number, on?: ScaleItem): Picture =>
+  ({ kind: 'measure', tool: 'scale', max, step, labelEvery, value, unit: 'kilograms', ...(on ? { on } : {}) })
 const mlJug = (value: number | null, max = 1000, step = 100, labelEvery = 200): Picture =>
   ({ kind: 'measure', tool: 'jug', max, step, labelEvery, value, unit: 'milliliters' })
 const literJug = (value: number | null, max: number, step: number, labelEvery: number): Picture =>
@@ -298,10 +298,10 @@ export const G3M2: Lesson[] = [
           { say: 'So the apples weigh 700 grams.' },
         ],
         pictures: [gramScale(700), { kind: 'table', head: ['Count', 'Grams'], rows: [['at the number', '600'], ['1 more mark', '700']], motion: true }] },
-      { title: 'Grams or kilograms?', text: 'Light things, like apples, are weighed in grams. What about a dog? A dog is heavy, so we use kilograms. And 1 kilogram is 1,000 grams.',
+      { title: 'Grams or kilograms?', text: 'Light things, like apples, are weighed in grams. What about a watermelon? A watermelon is heavy, so we use kilograms. And 1 kilogram is 1,000 grams.',
         beats: [
           { say: 'Light things, like apples, are weighed in grams.' },
-          { say: 'What about a dog? A dog is heavy, so we use kilograms.', pic: 0 },
+          { say: 'What about a watermelon? A watermelon is heavy, so we use kilograms.', pic: 0 },
           { say: 'And 1 kilogram is 1,000 grams.' },
         ],
         pictures: [kgScale(12, 20, 1, 5)] },
@@ -315,28 +315,28 @@ export const G3M2: Lesson[] = [
         pictures: [{ kind: 'cards', wrong: '600 and 1 more = 601 grams', right: '600 and 100 more = 700 grams' }] },
     ],
     turn: {
-      text: 'How heavy is the bag of rice?', picture: gramScale(300),
+      text: 'How heavy is the bag of rice?', picture: gramScale(300, 1000, 100, 200, 'bag'),
       answer: 300, steps: ['From 0 to 200 there are 2 jumps, so each mark is 100 grams.', 'The needle is 1 mark past 200.', 'So the rice weighs 300 grams.'],
       prompt: 'Find what one mark is worth. Then count to the needle.',
       hint1: 'How much is each little mark worth?',
       hint2: 'Each mark is 100 grams. Find the number just before the needle and count on.',
-      twin: { text: 'How heavy is the puppy?', picture: kgScale(7, 10, 1, 2),
-        answer: 7, steps: ['From 0 to 2 there are 2 jumps, so each mark is 1 kilogram.', 'The needle is 1 mark past 6.', 'So the puppy weighs 7 kilograms.'],
+      twin: { text: 'How heavy is the cat?', picture: kgScale(7, 10, 1, 2, 'cat'),
+        answer: 7, steps: ['From 0 to 2 there are 2 jumps, so each mark is 1 kilogram.', 'The needle is 1 mark past 6.', 'So the cat weighs 7 kilograms.'],
         hint1: 'How much is each little mark worth?', hint2: 'Each mark is 1 kilogram. Find the number just before the needle and count on.' },
     },
     won: { text: 'You found what one mark is worth and counted to the needle.', sticker: 'How heavy something is is called its mass.' },
-    twinWon: { text: 'You counted the marks and found the puppy weighs 7 kilograms.', sticker: 'How heavy something is is called its mass.' },
+    twinWon: { text: 'You counted the marks and found the cat weighs 7 kilograms.', sticker: 'How heavy something is is called its mass.' },
     practice: [
-      { why: 'Almost a copy of the lesson', problem: { text: 'How heavy is the bag of flour?', picture: gramScale(500), answer: 500,
+      { why: 'Almost a copy of the lesson', problem: { text: 'How heavy is the bag of flour?', picture: gramScale(500, 1000, 100, 200, 'bag'), answer: 500,
         steps: ['Each mark is 100 grams.', 'The needle is 1 mark past 400.', 'So the flour weighs 500 grams.'] } },
-      { why: 'Same idea, new numbers', problem: { text: 'How heavy is the box?', picture: kgScale(35, 50, 5, 10), answer: 35,
+      { why: 'Same idea, new numbers', problem: { text: 'How heavy is the box?', picture: kgScale(35, 50, 5, 10, 'box'), answer: 35,
         steps: ['From 0 to 10 there are 2 jumps, so each mark is 5 kilograms.', 'The needle is 1 mark past 30.', 'So the box weighs 35 kilograms.'] } },
-      { why: 'Still "count to the needle"', problem: { text: 'How heavy is the suitcase?', picture: kgScale(13, 20, 1, 5), answer: 13,
+      { why: 'Still "count to the needle"', problem: { text: 'How heavy is the suitcase?', picture: kgScale(13, 20, 1, 5, 'suitcase'), answer: 13,
         steps: ['From 0 to 5 there are 5 jumps, so each mark is 1 kilogram.', 'Start at 10 and count 3 marks: 11, 12, 13.', 'So the suitcase weighs 13 kilograms.'] } },
-      { why: 'A little harder', problem: { text: 'How heavy is the book?', picture: gramScale(350, 500, 50, 100), answer: 350,
+      { why: 'A little harder', problem: { text: 'How heavy is the book?', picture: gramScale(350, 500, 50, 100, 'book'), answer: 350,
         steps: ['From 0 to 100 there are 2 jumps, so each mark is 50 grams.', 'The needle is 1 mark past 300.', 'So the book weighs 350 grams.'] } },
       { why: 'Same math in a story', problem: { text: 'Sam puts a bag of pasta on the scale. It weighs 400 grams. Then he adds a jar of sauce that weighs 350 grams. How many grams are on the scale now?',
-        picture: gramScale(400, 1000, 50, 200), answer: 750,
+        picture: gramScale(400, 1000, 50, 200, 'bag'), answer: 750,
         steps: ['The pasta weighs 400 grams.', 'Add the sauce: 400 + 350.', 'So there are 750 grams on the scale.'] } },
     ],
   },

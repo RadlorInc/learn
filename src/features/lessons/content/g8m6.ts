@@ -106,8 +106,8 @@ export const G8M6: Lesson[] = [
         hint2: 'If the cloud neither rises nor falls, what do you call it?',
       },
     },
-    won: { text: 'You read the whole cloud, not just one dot.', sticker: 'A pattern between two sets of data is a correlation, or association: positive or negative. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.' },
-    twinWon: { text: 'You saw the dots jump around with no rise and no fall.', sticker: 'A pattern between two sets of data is a correlation, or association: positive or negative. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.' },
+    won: { text: 'You read the whole cloud, not just one dot.', sticker: 'A pattern between two sets of data is a correlation, or association: positive or negative. Positive means both go up together, and negative means one goes up as the other goes down. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.' },
+    twinWon: { text: 'You saw the dots jump around with no rise and no fall.', sticker: 'A pattern between two sets of data is a correlation, or association: positive or negative. Positive means both go up together, and negative means one goes up as the other goes down. A dot far from the rest is an outlier. A tight bunch of dots is a cluster.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: {
         text: 'Each dot is one player: hours of practice and free throws made out of 20. What pattern does the plot show?',
@@ -421,7 +421,7 @@ export const G8M6: Lesson[] = [
     id: 'g8m6-t5', title: 'Relative frequency', skill: 'Divide a count by its row or column total and compare the result as a fraction, decimal or percent',
     bigIdea: "Divide each count by the total of its own group, and then groups of different sizes compare fairly.",
     screens: [
-      { title: 'Which grade likes pizza more?', text: '12 grade 7 students like pizza, and 15 grade 8 students do. Does that mean grade 8 likes pizza more?',
+      { title: 'Which grade likes pizza more?', text: 'In grade 7, 12 students like pizza. In grade 8, 15 do. Does that mean grade 8 likes pizza more?',
         pictures: [table(PIZZA_HEAD, SHARE)] },
       { title: "The bigger count can fool you", text: "15 is more than 12, sure. But look at the row totals. Grade 8 has 30 students, and grade 7 has only 20. So is 15 out of 30 really more than 12 out of 20? The counts alone cannot tell us.",
         beats: [

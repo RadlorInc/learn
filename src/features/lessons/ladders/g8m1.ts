@@ -69,10 +69,11 @@ const T1: Level[] = [
   { style: 'missing exponent, work backwards', make: r => hidden(() => {
     const b = pick(r, BASES), a = int(r, 2, 9), m = int(r, 2, 9), t = a + m
     return { text: `Fill in the missing exponent: ${pw(b, a)} × ${b}^? = ${pw(b, t)}. What number goes in place of the ?`,
+      hint: 'Work backwards: the two exponents add up to the one on the right, so take away the one you know.',
       picture: eq(`${pw(b, a)} × ${b}^? = ${pw(b, t)}`), answer: m,
       steps: [`Same base, so the exponents add: ${a} + ? = ${t}.`, `Work backwards: ${t} − ${a} = ${m}.`, `So the missing exponent is ${m}.`] }
   }) },
-  { style: 'three factors in a story, one of them a lone base', make: r => hidden(() => {
+  { style: 'three factors in a story, one of them a single base', make: r => hidden(() => {
     if (r() < 0.5) {
       const a = int(r, 2, 6), b = int(r, 2, 8), c = int(r, 3, 10), s = a + b + c
       return { text: `A data center has ${pw(2, a)} racks. Each rack holds ${pw(2, b)} drives, and each drive holds ${pw(2, c)} folders. Written as 2 with one exponent, how many folders is that? Type the exponent.`,
@@ -82,7 +83,7 @@ const T1: Level[] = [
     const a = int(r, 2, 6), b = int(r, 2, 5), s = a + b + 1
     return { text: `A factory fills ${pw(10, a)} crates. Each crate holds ${pw(10, b)} boxes, and each box holds 10 paper clips. Written as 10 with one exponent, how many paper clips is that? Type the exponent.`,
       picture: eq(`${pw(10, a)} × ${pw(10, b)} × 10 = 10^?`), answer: s,
-      steps: ['A lone 10 is 10¹, one 10.', `Same base 10: add the exponents, ${a} + ${b} + 1.`, `So the exponent is ${s}.`] }
+      steps: ['A single 10 is 10¹, one 10.', `Same base 10: add the exponents, ${a} + ${b} + 1.`, `So the exponent is ${s}.`] }
   }) },
 ]
 
@@ -104,7 +105,8 @@ const T2: Level[] = [
     const { c, q } = until(() => ({ c: int(r, 2, 5), q: int(r, 2, 6) }), ({ c, q }) => q !== c * q - c)
     const b = pick(r, BASES), a = c * q, d = a - c, who = pick(r, KIDS)
     return { text: `${who} says ${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}. What should the exponent really be?`,
-      picture: cards(`${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}`, `${pw(b, a)} ÷ ${pw(b, c)} = ${b}^?`), answer: d,
+      // The wrong card says what it did to the exponents (a tester, 8 Oct: the two cards looked alike and did not say why).
+      picture: cards(`${pw(b, a)} ÷ ${pw(b, c)} = ${pw(b, q)}, because ${a} ÷ ${c} = ${q}`, `${pw(b, a)} ÷ ${pw(b, c)} = ${b}^?`), answer: d,
       steps: ['Dividing powers subtracts the exponents. It does not divide them.', `Top minus bottom: ${a} − ${c} = ${d}.`, `So the exponent is ${d}.`] }
   }) },
   { style: 'missing bottom exponent', make: r => hidden(() => {
@@ -145,7 +147,7 @@ const T3: Level[] = [
     const right = pw(b, a * n)
     return { text: `Which is the same as (${pw(b, a)})${sup(n)}?`, picture: eq(`(${pw(b, a)})${sup(n)}`),
       answer: choose(r, right, [pw(b, a + n), pw(b, a ** n)]),
-      steps: [`The outside exponent ${n} counts copies of ${pw(b, a)}. Adding the exponents is the trap.`, `Copies of the same power: multiply the exponents, ${a} × ${n} = ${a * n}.`, `So it is ${right}.`] }
+      steps: [`The outside exponent ${n} counts copies of ${pw(b, a)}. Adding the exponents is the trap.`, `So multiply the exponents: ${a} × ${n} = ${a * n}.`, `So it is ${right}.`] }
   } },
   { style: 'missing exponent, work backwards', make: r => hidden(() => {
     const b = pick(r, BASES), a = int(r, 2, 9), n = int(r, 2, 5), t = a * n
@@ -165,11 +167,13 @@ const T3: Level[] = [
         picture: eq(`(${pw(2, a)})² × ${pw(2, c)} = 2^?`), answer: s,
         steps: [`First the power of a power: (${pw(2, a)})² = ${pw(2, 2 * a)}, because ${a} × 2 = ${2 * a}.`, `Then ${pw(2, 2 * a)} × ${pw(2, c)} has the same base, so add: ${2 * a} + ${c}.`, `So the exponent is ${s}.`] }
     }
-    const a = int(r, 1, 3), c = int(r, 2, 6), s = 3 * a + c
-    const side = a === 1 ? '10' : pw(10, a), vol = a === 1 ? '10³' : `(${side})³`
+    // The side is always a power with an exponent of 2 or 3: a side of plain 10 made 10³ × 10ᶜ, only adding, in the
+    // power-of-a-power topic whose hint says multiply (a paid tester, 11 Oct 2026).
+    const a = int(r, 2, 3), c = int(r, 2, 6), s = 3 * a + c
+    const side = pw(10, a), vol = `(${side})³`
     return { text: `A box shaped like a cube is ${side} centimeters on each side, so its volume is ${vol} cubic centimeters. A truck carries ${pw(10, c)} of these boxes. Written as 10 with one exponent, what is the volume of all the boxes? Type the exponent.`,
       picture: eq(`${vol} × ${pw(10, c)} = 10^?`), answer: s,
-      steps: [a === 1 ? `First, 10 is 10¹, so ${vol} = ${pw(10, 3)}.` : `First the power of a power: ${vol} = ${pw(10, 3 * a)}, because ${a} × 3 = ${3 * a}.`, `Then ${pw(10, 3 * a)} × ${pw(10, c)} has the same base, so add: ${3 * a} + ${c}.`, `So the exponent is ${s}.`] }
+      steps: [`First the power of a power: ${vol} = ${pw(10, 3 * a)}, because ${a} × 3 = ${3 * a}.`, `Then ${pw(10, 3 * a)} × ${pw(10, c)} has the same base, so add: ${3 * a} + ${c}.`, `So the exponent is ${s}.`] }
   }) },
 ]
 

@@ -23,6 +23,8 @@ The first choice is always the in-app control. It is immediate, it checks owners
 
 **After a deletion from SQL,** the database has already queued the cancel of any pending second consent email (a trigger). The daily cron sends it at 06:23 UTC. To send it now (agent or founder; public, harmless, rate-limited): `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice`.
 
+**A paid plan** is cancelled immediately and its unused part refunded on **Withdraw for every child** and **Close the account**, whichever door was used (in the app, the email link, or the SQL above): the database queues it in the same transaction (`billing_cancellations`) and the same call settles it, then emails the parent the amount. Withdrawing for **one** child of several (deleting that child, by any door above) takes that child's seat off the plan and refunds the seat's unused part, queued in `billing_seat_removals`; if a child with no seat takes the freed seat, nothing changes; the last child is the whole plan, as withdraw-all. If the automatic refund failed, the ops digest says `billing_cancellations_owed`; the steps are in [billing.md](billing.md) → *Withdrawal of consent or closing the account*. A deletion request is never held back for it.
+
 **Kept on purpose, not deleted by these steps:**
 - the consent record after an account closes (04 §2, attorney question);
 - `deletion_log`;
@@ -42,18 +44,18 @@ nothing (`learners.created_by` is `ON DELETE RESTRICT`), and without children it
 
 1. **Founder.** Run queries 1, 2 and 7 of [../legal/sql/support-lookup.sql](../legal/sql/support-lookup.sql) with the
    verified address. Note the account id and how many children it owns. `child_login = true` or no row: stop.
-2. **Founder, Stripe first.** If `docs/legal/sql/billing-lookup.sql` (written in its own PR) shows a subscription that is not `canceled`, cancel it
-   in the Stripe dashboard before anything else. Whether to cancel now or at period end, and any refund, is **the
-   founder's open decision** — this runbook does not make it. Once Stripe has it, set `v_stripe_cancelled` to `true` in
-   the SQL. (Closing first would leave Stripe billing a family whose account no longer exists.)
+2. **Founder, billing.** If `docs/legal/sql/billing-lookup.sql` shows a subscription that is not `canceled`, set
+   `v_stripe_cancelled` to `true` in the SQL (the flag's name is older than the automation): since migration
+   20261008000000, deleting the account queues the immediate cancel and the pro-rata refund (doc 01 §5), which step 6's
+   call settles. Do not cancel or refund in Stripe by hand first ([billing.md](billing.md)).
 3. **Founder.** If they also gave an email before signing up, the lead row is not reachable by account deletion
    (`NOT_REACHABLE_BY_DELETION` in `src/core/accountDeletion.ts`): offer `select public.delete_lead_by_email('<address>');`.
 4. **Founder.** Run the **before** check for each child ([Confirm a deletion](#confirm-a-deletion-founder-sql-editor-read-only))
    and see rows.
 5. **Founder.** Fill `<account id>` and `<account email>` in `close-account-operator.sql`, run it once. A `STOP:` error
    means nothing was deleted; read it. Success prints `CLOSED: <n> children, census {…}`.
-6. **Founder.** Send the second-email cancel now: `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice`
-   (or let the 06:23 UTC cron do it).
+6. **Founder.** Send the second-email cancel, and the plan's cancel and refund, now:
+   `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice` (or let the 06:23 UTC cron do it).
 7. **Founder.** Check, read-only:
    ```sql
    select count(*) as account_left from auth.users where id = '<account id>'::uuid;               -- 0
@@ -61,6 +63,8 @@ nothing (`learners.created_by` is `ON DELETE RESTRICT`), and without children it
      from public.deletion_log where account_id = '<account id>'::uuid order by at;                -- one row per child + one for the account, all 'service'
    select state, withdrawn_at, parent_id is null as unlinked
      from public.parental_consents where lower(email_address) = lower('<account email>');         -- withdrawn/declined, unlinked; no pending
+   select queued_because, result from public.billing_cancellations
+    where stripe_subscription_id = '<subscription id from step 2>';                                -- account_closed, done: … (only if there was a plan)
    ```
    and the **after** check for each child id from step 1: every count 0.
 8. **Founder.** Reply and close the request as below. Tell them what was kept (next list).
@@ -70,8 +74,14 @@ nothing (`learners.created_by` is `ON DELETE RESTRICT`), and without children it
   `src/core/accountDeletion.ts`);
 - `billing_events` — a payment record with no link to the account (`SURVIVORS`), and Stripe's own records
   (`HELD_ELSEWHERE`);
+- `billing_cancellations` — only if there was a paid plan: Stripe's subscription id, when, and whether it was cancelled
+  and refunded; no account link (`SURVIVORS`);
+- `billing_seat_removals` — only if a child was removed from a paid plan: Stripe's subscription id, when, and whether
+  the seat came off and was refunded; no account or child link (`SURVIVORS`);
 - `deletion_log` — the audit rows (ids and counts);
 - `email_suppressions` — the address, if it ever unsubscribed, so that no marketing email reaches it again;
+- `email_undeliverable` — only if an email to the address bounced permanently or was marked as spam: its sha256 hash,
+  the reason and when, deleted 12 months after the last event (`SURVIVORS`; lifting one: support.md → Email bounces);
 - `diagnostic_leads` — only if not deleted in step 3;
 - the backup copies, until they expire (04 §5).
 

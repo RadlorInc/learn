@@ -10,7 +10,7 @@ import { getLeadEmail } from '@/infra/storage/leadEmail'
 import { ConsentLine } from '@/shared/ui/ConsentLine'
 import { LEGACY_CHAPTERS_HIDDEN } from '@/core/chapters'
 import { makeT, saveLang, useSavedLang } from '@/features/dashboard/i18n'
-import { APP_NAME, SUPPORT_EMAIL } from '@/app/site'
+import { APP_NAME, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_TEL } from '@/app/site'
 import { firstNameOf } from '@/features/consent/firstName'
 
 type Mode = 'login' | 'signup'
@@ -130,6 +130,8 @@ export default function AuthPage() {
           setError(t('Please confirm you are 18 or older'))
         } else if (r === 'weak_password' || r === 'invalid') {
           setError(t('Password must be at least {n} characters', { n: MIN_PASSWORD }))
+        } else if (r === 'undeliverable') {
+          setError(t('We cannot send email to this address: earlier emails to it bounced or were marked as spam. Check it for a typo, or use another address. If it is right, write to {support}.', { support: SUPPORT_EMAIL }))
         } else if (r !== 'ok') {
           setError(t('Something went wrong. Please try again.'))
         } else {
@@ -502,6 +504,8 @@ export default function AuthPage() {
           <p style={{ textAlign: 'center', fontSize: 13, color: C.ink3, margin: '16px 0 0' }}>
             {t('Need help?')}{' '}
             <a href={`mailto:${SUPPORT_EMAIL}`} style={{ color: C.accent, fontWeight: 700 }}>{SUPPORT_EMAIL}</a>
+            {' · '}
+            <a href={`tel:${SUPPORT_TEL}`} style={{ color: C.accent, fontWeight: 700 }}>{SUPPORT_PHONE}</a>
           </p>
 
           {/* Front door for cold traffic: try the diagnostic before making an account. */}

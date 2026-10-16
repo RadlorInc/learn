@@ -48,6 +48,25 @@ async function billingUnprocessed(): Promise<string> {
   } catch { return 'unknown' }
 }
 
+/**
+ * Plans owed a cancel and refund after a close or a withdraw-all (`billing_cancellations`) that the drain could not
+ * settle. Read AFTER the cron's drain, so anything still due failed today. Only the count reaches the email.
+ */
+async function billingCancellationsOwed(): Promise<{ line: string; bad: boolean }> {
+  try {
+    const plans = (await rpc<unknown[]>('billing_cancellations_due', {})).length
+    // One-child seat removals (20261008010000) count too; a queue not there yet owes nothing.
+    const seats = await rpc<unknown[]>('billing_seat_removals_due', {}).then(r => r.length, (e: RpcError) => {
+      if (e?.code === 'PGRST202') return 0
+      throw e
+    })
+    return { line: String(plans + seats), bad: false }
+  } catch (e) {
+    if ((e as RpcError)?.code === 'PGRST202') return { line: 'queue missing (migration 20261008000000 not applied)', bad: false }
+    return { line: 'unknown', bad: true }
+  }
+}
+
 async function workflow(file: string): Promise<{ latest: string; hoursSinceSuccess: string }> {
   try {
     const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/${file}/runs?status=completed&per_page=30`,
@@ -86,6 +105,8 @@ export async function buildDigest(drain: string): Promise<{ lines: string[]; att
   }
   const billing = await billingUnprocessed()
   flag(billing !== '0', `billing_events_unprocessed_1h: ${billing}`)
+  const owed = await billingCancellationsOwed()
+  flag(owed.bad || /^[1-9]\d*$/.test(owed.line), `billing_cancellations_owed: ${owed.line}`)
   for (const f of ['backup.yml', 'deploy.yml']) {
     const w = await workflow(f)
     // Deploys run only on merges, so only the backup has an age limit. Not a number ("none in last 30 runs") is old.

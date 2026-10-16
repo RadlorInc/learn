@@ -466,8 +466,8 @@ export const G6M6: Lesson[] = [
         answer: 15, steps: ['1 1/2 = 3/2 and 2 1/2 = 5/2.', '3/2 × 4 = 6. Then 6 × 5/2 = 30/2.', '30/2 = 15. So the volume is 15 cubic inches.'],
         hint1: 'Change the mixed numbers into fractions.', hint2: '1 1/2 is 3/2 and 2 1/2 is 5/2. Multiply them with the 4.' },
     },
-    won: { text: 'You changed the edges to fractions and multiplied all three.', sticker: 'The volume of a rectangular prism is V = l × w × h, for fraction edges too.' },
-    twinWon: { text: 'You changed 1 1/2 and 2 1/2 into fractions and got 15 cubic inches.', sticker: 'The volume of a rectangular prism is V = l × w × h, for fraction edges too.' },
+    won: { text: 'You changed the edges to fractions and multiplied all three.', sticker: 'The volume of a box shape (a rectangular prism) is V = l × w × h, for fraction edges too.' },
+    twinWon: { text: 'You changed 1 1/2 and 2 1/2 into fractions and got 15 cubic inches.', sticker: 'The volume of a box shape (a rectangular prism) is V = l × w × h, for fraction edges too.' },
     practice: [
       { why: 'Almost a copy of the lesson', problem: { text: 'A box is 2 1/2 ft long, 2 ft wide and 2 1/2 ft tall. What is its volume in cubic feet?',
         picture: box('2 1/2 ft', '2 ft', '2 1/2 ft'), answer: { frac: [1, 2], whole: 12 },
