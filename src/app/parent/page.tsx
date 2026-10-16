@@ -58,6 +58,7 @@ import { TrialTopicPicker, useFamilyTrial, FREE_TOPICS } from '@/features/billin
 import { chooseFreeTopics } from '@/data/repositories/billing'
 import { usePaidSeats, SeatsFullDialog } from '@/features/billing/SeatsFull'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
+import { TEACHER_SIGNUP_OPEN } from '@/app/site'
 
 const AVATARS     = ['🦊', '🐰', '🐻', '🐱']
 
@@ -805,17 +806,19 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
 // underneath ("you can change this later") was not true of anything on screen. Two steps means the
 // choice is visible, re-tappable, and the reader can see what they picked before it is saved.
 export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRole) => void }) {
-  const [picked, setPicked] = useState<UserRole | null>(null)
+  // Teacher sign-up closed (TEACHER_SIGNUP_OPEN, site.ts): Parent is the only card, already chosen; the 18+ tick still gates it.
+  const [picked, setPicked] = useState<UserRole | null>(TEACHER_SIGNUP_OPEN ? null : 'parent')
   const [busy,   setBusy]   = useState(false)
   // A Google account never saw the sign-up form's "I'm 18 or older", so it says it here, before it gets a role.
   const [adult,  setAdult]  = useState(false)
   const ready = !!picked && adult && !busy
   function commit() { if (!ready) return; setBusy(true); onPick(picked!) }
 
-  const cards: { role: UserRole; emoji: string; title: string; sub: string }[] = [
+  const allCards: { role: UserRole; emoji: string; title: string; sub: string }[] = [
     { role: 'parent',  emoji: '👪', title: "I'm a Parent",  sub: 'One or two children at home.' },
     { role: 'teacher', emoji: '🎓', title: "I'm a Teacher", sub: 'A class or several groups.' },
   ]
+  const cards = allCards.filter(c => TEACHER_SIGNUP_OPEN || c.role !== 'teacher')
 
   return (
     <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'32px 20px', background:P.page, fontFamily:'var(--font-body)' }}>
