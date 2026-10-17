@@ -279,6 +279,8 @@ deletion, and the daily cron drain it.
 - **Chalk timing.** A lesson module also loads `features/lessons/word-times/<module>.json`: when, in her clip, each chalk
   mark's word is said (from faster-whisper, `scripts/audio/build-word-times.mts`). `wordMs` (`chalk.ts`) uses it at the
   0.9 playback rate, and the length estimate for a line or word it does not hold (`chalkWordTimes.test.ts`).
+  The child's ⏸ pauses the board's Web Animations and cancels her `speakSteps` run; ▶ starts a new run from the
+  current beat and draws that beat's marks again (`Chalkboard`'s `paused`; `lessonPlayerControls.test.ts`).
 - **KG–2 questions.** Some lines depend on what the child tapped, so `openQuestion()` (`infra/voiceClipPlayer.ts`)
   fetches every line a question can lead to when it loads; while it is open, other lines use the device voice and
   request nothing (`questionLock`, `kg2IdenticalRequests`). The one bounded exception is documented at `_onTap`.
