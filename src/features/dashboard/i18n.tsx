@@ -103,6 +103,9 @@ export const ES: Record<string, string> = {
   'Help': 'Ayuda',
   'Account': 'Cuenta',
   'Dismiss': 'Cerrar aviso',
+  // Straight back from Stripe's Checkout (?billing=success), before the webhook has written the row.
+  'Payment received — we are switching your plan on.': 'Pago recibido: estamos activando su plan.',
+  'This usually takes less than a minute. Your plan is under Account → Plan.': 'Suele tardar menos de un minuto. Su plan está en Cuenta → Plan.',
   'You’ve been invited!': '¡Lo han invitado!',
   'Access to:': 'Acceso a:',
   'a learner': 'un estudiante',
@@ -185,6 +188,7 @@ export const ES: Record<string, string> = {
   'Avatar {n}': 'Avatar {n}',
   'Avatar': 'Avatar',
   'Child’s name': 'Nombre del niño',
+  '(needed)': '(obligatorio)',
   'First name is plenty': 'Basta con el nombre de pila',
   'Which modules can they see?': '¿Qué módulos puede ver?',
   'Progress is private to this account. No public profiles and no comparisons with other children.': 'El progreso es privado de esta cuenta. No hay perfiles públicos ni comparaciones con otros niños.',

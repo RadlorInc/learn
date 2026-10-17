@@ -108,8 +108,10 @@ export async function POST(req: Request) {
     // The consent's time travels with the subscription, so Stripe holds the record of when they agreed.
     subscription_data: { metadata: { account_id: user.id, renewal_consent_at: renewalConsentAt } },
     // No trial — founder's call, Stage 1 §1.
-    // Back to the plan screen, which reads `billing=success` to say "activating" until the webhook has written the row.
-    success_url: `${SITE_URL}/parent/plan?billing=success`,
+    // Back to the DASHBOARD, where the parent was going anyway (founder, 2026-10-17). It reads `billing=success` to
+    // say "activating" until the webhook has written the row — the same note /parent/plan shows, so a parent who
+    // lands on either screen is told the payment arrived and must not pay again.
+    success_url: `${SITE_URL}/parent?billing=success`,
     cancel_url: `${SITE_URL}/parent?billing=cancelled`,
   }
 
