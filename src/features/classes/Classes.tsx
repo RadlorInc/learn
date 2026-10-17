@@ -10,7 +10,7 @@
  * by the teacher (./exercise.ts). A PAID teacher's students get the modules AND the exercises; a FREE teacher's (no
  * paid row in `teacher_plans`) get the exercises only.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createClient } from '@/data/supabase/client'
 import {
   createClass, updateClass, createLearner, deleteLearnerPermanently, setChildLogin, setClassLessons,
@@ -83,14 +83,39 @@ export function Rename({ cls, onDone }: { cls: ClassRow; onDone: () => void }) {
 }
 
 /** Grade chips and a tick per module — what a class and a newly added child are given. `pick` holds module ids. */
+/**
+ * Opening a grade ticks every module in it, once (founder, 2026-10-17): the common case is "everything in their
+ * grade", and ticking six boxes by hand to get there is work for the ordinary answer. The adult then unticks what
+ * they do not want — the line under the chips says so.
+ *
+ * ONCE per grade, remembered in `filled`: without that, going back to a grade would undo the unticking the adult
+ * just did there. A grade that already has something ticked (a class's saved modules, a second visit) is left alone.
+ */
 export function ModuleChecklist({ grade, setGrade, pick, setPick }: {
   grade: number; setGrade: (g: number) => void; pick: Set<string>; setPick: (f: (p: Set<string>) => Set<string>) => void
 }) {
+  const playable = (g: number) => modulesOf(g).filter(m => m.lessons.length > 0)
+  const filled = useRef(new Set<number>())
+  const fill = useCallback((g: number) => {
+    if (filled.current.has(g)) return
+    filled.current.add(g)
+    const ids = playable(g).map(m => m.id)
+    setPick(p => (ids.some(id => p.has(id)) ? p : new Set([...p, ...ids])))
+  }, [setPick])
+  // The grade the checklist opens on is filled too, so the first screen is not an empty list of boxes.
+  useEffect(() => { fill(grade) }, [grade, fill])
+  const justFilled = playable(grade).length > 0 && playable(grade).every(m => pick.has(m.id))
+
   return (
     <>
       <div className="chip-scroll" aria-label="Grade">
-        {GRADES.map(g => <button key={g} onClick={() => setGrade(g)} aria-pressed={grade === g} style={chip(grade === g)}>{gradeName(g)}</button>)}
+        {GRADES.map(g => <button key={g} onClick={() => { setGrade(g); fill(g) }} aria-pressed={grade === g} style={chip(grade === g)}>{gradeName(g)}</button>)}
       </div>
+      {justFilled && (
+        <p data-testid="grade-all-ticked" style={{ margin: '2px 0 6px', fontSize: 12.5, lineHeight: 1.45, color: P.ink3 }}>
+          Every module in {gradeName(grade)} is ticked. Untick any they should not see.
+        </p>
+      )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {modulesOf(grade).map(m => {
           const on = pick.has(m.id), soon = m.lessons.length === 0
