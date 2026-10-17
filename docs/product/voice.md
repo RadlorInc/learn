@@ -21,7 +21,9 @@ A Grade 3–8 lesson speaks these lines, each from its own recorded clip:
 
 Not spoken: the worked steps (shown only) and the practice problems, which the ladders generate with random numbers,
 so there is no fixed set to record (the founder: not now). A teaching screen moves on by itself once her last line
-has finished.
+has finished. Under the board on Screens 1–7: ⏸ stops her voice and the chalk together, ▶ says the line she was on
+again from its start, ↻ starts the screen over; a child who touches them is not moved on until they tap Next
+(`lessonPlayerControls.test.ts`).
 
 A KG–2 chapter speaks every line its component says. Lines built from numbers (a count, "That makes seventeen") are
 recorded value by value; a line with a child's name in it is never recorded.

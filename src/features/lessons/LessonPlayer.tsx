@@ -152,6 +152,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
   // forward — and Next turns it back on. Screen 1 too, once its line is said (founder, 2026-09-24; it used to wait for
   // the child to tap its question), and Screen 7 runs on into "Your turn" (founder, 2026-09-20).
   const [autoOn, setAutoOn] = useState(true)
+  // The child's own controls on a teaching screen (founder, 17 Oct): ⏸ stops her voice and the chalk together, ▶ goes
+  // on from the line she was on (said again from its start, its marks drawn again with it), ↻ starts the screen over.
+  // Touching any of them turns the pull forward off, as ← Back does; Next turns it back on.
+  const [paused, setPaused] = useState(false)
+  const [resumeAt, setResumeAt] = useState(0)   // the beat ▶ goes on from
   // Review mode: which screen's lines have played to the end (the beats array, or Screen 1's line), and what the
   // tester typed on this problem.
   const [playedOf, setPlayedOf] = useState<unknown>(null)
@@ -162,7 +167,7 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   const say = (text: string, on = audio) => { if (on && text) speak(text) }
   const go = (n: FlowState, spoken?: string) => {
-    if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false); if (n.mode !== 'won') setTries([]) }
+    if (n.mode !== s.mode || n.screen !== s.screen || n.twin !== s.twin || n.practice !== s.practice) { setTaps(0); setValue(''); setAsked(false); setPaused(false); setResumeAt(0); if (n.mode !== 'won') setTries([]) }
     setS(n)
     if (spoken) say(spoken)
     // A laddered topic is done by its run (see nextProblem); its 'finish' screen is only the break.
@@ -181,29 +186,29 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
     go(n, n.mode === 'turn' ? SAY.turn(lesson) : undefined)
   })
   useEffect(() => {
-    if (!line1) return
+    if (!line1 || paused) return
     // speakSteps, not speak: it says when the line is over — and, when the browser blocks sound (a cold link), its
     // own timer stands in, so the screen still moves on.
     let hold: ReturnType<typeof setTimeout> | undefined
     const stop = speakSteps([line1], { onDone: () => { setPlayedOf(line1); hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
     return () => { stop(); clearTimeout(hold) }
-  }, [line1, replay, autoNext])
+  }, [line1, replay, autoNext, paused])
 
   useEffect(() => {
-    if (!beats) return
-    setShown(1)
+    if (!beats || paused) return
+    setShown(resumeAt + 1)
     // Her voice paces it when the child has audio on; when they don't, reading time does — a flat beat is far too
     // fast for a long line. Either way the lines and the board move together.
     let hold: ReturnType<typeof setTimeout> | undefined
     if (audio) {
-      const stop = speakSteps(beats.map(b => b.say), { gapMs: GAP_MS, onStep: i => setShown(i + 1), onDone: () => { setPlayedOf(beats); hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
+      const stop = speakSteps(beats.slice(resumeAt).map(b => b.say), { gapMs: GAP_MS, onStep: i => setShown(resumeAt + i + 1), onDone: () => { setPlayedOf(beats); hold = setTimeout(() => autoNext.current(), HOLD_MS) } })
       return () => { stop(); clearTimeout(hold) }
     }
     let t = 0
-    const ids = beats.map((b, i) => { const at = t; t += beatMs(b.say); return setTimeout(() => setShown(i + 1), at) })
+    const ids = beats.slice(resumeAt).map((b, i) => { const at = t; t += beatMs(b.say); return setTimeout(() => setShown(resumeAt + i + 1), at) })
     ids.push(setTimeout(() => { setPlayedOf(beats); autoNext.current() }, t + HOLD_MS))
     return () => ids.forEach(clearTimeout)
-  }, [beats, audio, replay, autoNext])
+  }, [beats, audio, replay, autoNext, paused, resumeAt])
 
   // Screen 9, once practice is complete: Screen 8's sentence (the big idea for a child who needed the worked steps) and
   // the math-word sticker. It says both, the sentence then the sticker: the page was silent, and the sticker is the
@@ -503,9 +508,11 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
 
   if (s.mode === 'lesson') {
     const sc = lesson.screens[s.screen]
-    const moving = sc.pictures.some(p => 'motion' in p && p.motion)
     // ponytail: on Screen 1 the closing question becomes the button ("How many…? Let's see"), split out of the approved text.
-    const ask = s.screen === 0 ? sc.text.match(/^([\s\S]*?[.!])\s+([^.!?]+\?)$/) : null
+    const ask = s.screen === 0 ? sc.text.match(ASK) : null
+    // …and it stays up above the board on the screens after it, so the child always sees what they are working out
+    // (founder, 17 Oct).
+    const question = s.screen > 0 ? lesson.screens[0].text.match(ASK)?.[2] : undefined
     // "One thing not to do": the Not this / Do this cards run full width, the explanation underneath (the template's Trap door).
     stack = !sc.chalk && sc.pictures.length > 0 && sc.pictures.every(p => p.kind === 'cards')
     crumb = `Screen ${s.screen + 1} of 9`; at = s.screen
@@ -522,14 +529,24 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
         ...(b.write ? [<Written key={`w${i}`}><Ink rows={wrap(b.write, 26).map(t => ({ t, s: 28, w: 900 }))} box="#fff" /></Written>] : []),
       ]) ?? []),
     ]
-    picture = sc.chalk && sc.beats
-      ? <Chalkboard key={`${s.screen}-${replay}`} marks={sc.chalk} says={sc.beats.map(b => b.say)} shown={shown} label={sc.text} />
+    const board = sc.chalk && sc.beats
+      ? <Chalkboard key={`${s.screen}-${replay}`} marks={sc.chalk} says={sc.beats.map(b => b.say)} shown={shown} label={sc.text} paused={paused} />
       : stack
       ? <div key={`${s.screen}-${replay}`} style={{ flex: 1 }}>{onBoard}</div>
       : <div key={`${s.screen}-${replay}`} style={sc.scene ? { ...stage, background: `center / cover url(/assets/lessons/${sc.scene}.webp)`, borderRadius: 20, padding: '24px 12px' } : stage}>
         {onBoard}
-        {moving && <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => setReplay(r => r + 1)}>↻ Watch again</button>}
       </div>
+    const hold = () => { setAutoOn(false); stopSpeech() }
+    picture = <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {question && <p data-question style={{ ...bubble, fontWeight: 800, boxShadow: 'none' }}>{emphasis(question)}</p>}
+      {board}
+      <div role="group" aria-label="Lesson controls" style={{ display: 'flex', gap: 10 }}>
+        {paused
+          ? <button type="button" style={ctl} onClick={() => { hold(); setPaused(false) }}>▶ Play</button>
+          : <button type="button" style={ctl} onClick={() => { hold(); setResumeAt(Math.max(0, shown - 1)); setPaused(true) }}>⏸ Pause</button>}
+        <button type="button" style={ctl} onClick={() => { hold(); setResumeAt(0); setPaused(false); setReplay(r => r + 1) }}>↻ Replay</button>
+      </div>
+    </div>
     words = sc.beats
       ? <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {sc.beats.slice(0, shown).map((b, i) =>
@@ -671,6 +688,9 @@ function Written({ children, after = 0 }: { children: ReactNode; after?: number 
 }
 
 const said: CSSProperties = { margin: 0, fontSize: 'clamp(19px, 2.4vw, 24px)', lineHeight: 1.35, color: INK, fontWeight: 600, transition: 'opacity .4s ease' }
+const ASK = /^([\s\S]*?[.!])\s+([^.!?]+\?)$/
+/** 44 px, the app's tap size. */
+const ctl: CSSProperties = { ...pill, minHeight: 44, minWidth: 44, padding: '8px 16px', fontSize: 18 }
 const askBtn: CSSProperties = { ...primary, flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', padding: '12px 22px', maxWidth: 440 }
 
 /** The choice after every 5 answers and at mastery. Two positive buttons; the problem behind it is already the next one. */

@@ -27,7 +27,7 @@ If a topic cannot be drawn with the pictures that exist, say so rather than inve
 
 | screen | in the data | rule |
 |---|---|---|
-| 1 Hello | `screens[0]` | a real-life picture and the question. No answer asked. Its closing question becomes the button |
+| 1 Hello | `screens[0]` | a real-life picture and the question. No answer asked. Its closing question becomes the button, and stays above the board on Screens 2–7 |
 | 2 | `screens[1]` | why we can't just do it yet |
 | 3 | `screens[2]` | `title: 'The big idea'`, `text` exactly equal to `bigIdea`: **one sentence** |
 | 4, 5, 6 | `screens[3..5]` | the worked example, slowly, with the same numbers as Screen 1 |

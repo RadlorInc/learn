@@ -7,8 +7,9 @@
 import { useLayoutEffect, useRef, type CSSProperties } from 'react'
 import { CHALK, wordMs, type ChalkMark } from './chalk'
 
-/** `still`: no drawing, everything already up (the preview page). */
-export function Chalkboard({ marks, says, shown, label, still }: { marks: ChalkMark[]; says: string[]; shown: number; label: string; still?: boolean }) {
+/** `still`: no drawing, everything already up (the preview page). `paused`: the child's ⏸ — the hand stops where it is;
+ *  on ▶ the line is said again from its start, so the current beat's marks are drawn again from theirs. */
+export function Chalkboard({ marks, says, shown, label, still, paused }: { marks: ChalkMark[]; says: string[]; shown: number; label: string; still?: boolean; paused?: boolean }) {
   const svg = useRef<SVGSVGElement>(null)
   const beat = shown - 1
 
@@ -17,8 +18,12 @@ export function Chalkboard({ marks, says, shown, label, still }: { marks: ChalkM
     const root = svg.current
     if (!root || still || typeof root.animate !== 'function') return
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const running = root.getAnimations?.({ subtree: true }) ?? []
+    if (paused) { running.forEach(a => a.pause()); return }
+    running.forEach(a => a.play())   // an earlier beat's last stroke, held by ⏸, finishes
     let free = 0   // when the hand is free again
     root.querySelectorAll<SVGGraphicsElement>(`[data-beat="${beat}"]`).forEach(el => {
+      el.getAnimations?.({ subtree: true }).forEach(a => a.cancel())   // after ⏸: drawn again from the start, with her line
       const start = Math.max(free, Number(el.dataset.at) || 0), quick = el.dataset.quick !== undefined
       if (el.tagName === 'text') {
         const ls = [...el.querySelectorAll('tspan')], stroke = el.getAttribute('fill') ?? CHALK.w
@@ -45,7 +50,7 @@ export function Chalkboard({ marks, says, shown, label, still }: { marks: ChalkM
       }
       if (quick) free = start + 90
     })
-  }, [beat, still])
+  }, [beat, still, paused])
 
   return (
     // Fills the picture column, and the frame hugs the board rather than stretching to the column's height.
