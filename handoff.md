@@ -39,7 +39,7 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-Three from 17 Oct, no migrations, none seen in a browser (each PR says what to look at after its deploy):
+Four from 17 Oct, no migrations, none seen on production (each PR says what to look at after its deploy):
 - **#450** capacity runbook: the 16 Oct measurements, the staging load test (1,000 children at once, 0 errors) and
   `scripts/load-staging.mjs` to re-run it. Docs and a script; it answers "when do we buy more".
 - **#459** four of the founder's 17 Oct list: no tour in the add-a-child window, the child's name marked as needed,
@@ -47,6 +47,9 @@ Three from 17 Oct, no migrations, none seen in a browser (each PR says what to l
   because that note is what stops a parent paying twice.
 - **#460** three more: an idle dashboard asks for the PIN again after 15 min (`IDLE_LOCK_MS`, no sign-out), opening a
   grade ticks its modules once, and an empty trial picker suggests two topics.
+- **#464** the last three, lesson player: Screen 1's question stays above the board; ⏸/▶/↻ under it (stops voice
+  and chalk; a child who touches them is not moved on). Auto-advance on every screen was already built — "only 1→2"
+  was not reproduced (offline, no clips): check it with Josh's voice.
 
 
 ## Open — the founder decides
@@ -113,14 +116,10 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 
 ## Open — agent work
 
-- **The founder's 17 Oct list: three left, all in the lesson player** (seven shipped in #459/#460). Founder's call:
-  auto-advance on EVERY screen, not only 1→2. (8) when a screen's voice ends, go to the next screen by itself;
-  (9) Screen 1's closing question (`LessonPlayer.tsx:507`) stays above the chalkboard on the screens that follow,
-  instead of being only the button that opened them; (10) a video-style controller on every screen (play/pause/
-  replay the chalk) so the child drives it. Touches `Chalkboard.tsx`, `chalk.ts`, `LessonPlayer.tsx`.
 - Testers: ask what g5m2-t1 Screen 2 "Confusion" meant; close the KG–2 "Chapter testing" notes in Ops (3 open, 9 to
   re-check by playing); triage anything newer than 15 Oct the same way.
-- Seen in jsdom only, never a browser: the KG–2 pause screen (`ConsentPause`), and #459/#460's screens.
+- Seen in jsdom only, never a browser: the KG–2 pause screen (`ConsentPause`), and #459/#460's screens. #464 was
+  seen in a local browser with no voice clips: its ⏸ with Josh's real voice, on a phone and on iPad Safari, is not.
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone
   with zoom now allowed. The jsx-a11y lint lists harmless shapes (`<img onError>`, backdrop taps) — not a gate.
 - An old consent link on the old domain should land on radlic.com with its `#t=` token (browser pane). `nightly-e2e`
