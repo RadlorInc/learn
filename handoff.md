@@ -44,7 +44,7 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
   a browser. Production: `docs/legal/sql/game-pause-before.sql`, approve, then `game-pause-proof.sql`.
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
-Admin data requires the authenticator code since #325 (16 Oct). None waiting.
+Admin data requires the authenticator code since #325 (16 Oct).
 
 ## Open — the founder decides
 
