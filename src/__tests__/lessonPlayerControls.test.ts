@@ -75,12 +75,12 @@ it('(10) ⏸ stops her voice and the chalk; ▶ goes on from the line she was on
   await act(async () => { first.onStep!(1) })                       // she is on her second line
   expect(live(host, true).some(a => a.state === 'running')).toBe(true)   // the board is drawing it
 
+  const runsAtPause = runs.length
   await tap(/Pause/)
   expect(first.stopped).toBe(true)                                   // her voice stopped…
   expect(live(host, true).filter(a => a.state !== 'paused')).toEqual([])  // …and so did every stroke on the board
-  const runsAtPause = runs.length
   await wait(60_000)
-  expect(runs.length).toBe(runsAtPause)                              // nothing started talking again on its own
+  expect(runs.length).toBe(runsAtPause)                              // and nothing started talking again, then or later
   expect(screen()).toBe(2)
 
   await tap(/Play/)
