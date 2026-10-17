@@ -88,6 +88,7 @@ recorded in a pull request.
 - [ ] 👪 Copy the three Supabase Auth email templates (confirm, reset, invite) out of the dashboard and confirm each is transactional (doc 09 §8)
 - [ ] 👪 The support mailbox receives mail and is answered within 24 hours during the beta
 - [ ] 👪 The Resend plan can carry a launch (the free plan's daily cap is about 50 sign-ups a day)
+- [ ] 👪 Doc 05's control table still reads "Leaked-password protection on accounts — **NOT implemented**" (dated 22 Sep) while the setting is on: record the date it was switched on. Only the founder can see the dashboard, so the date has to come from them
 - [ ] 👪 **Publication dates** (the *date* rows) and the day-of checks: doc 02's version label = `NOTICE_VERSION`; doc 11's security paragraph against doc 05
 - [ ] 👪 Doc 06 §B2 promises a confirmation link for requests made by email; nothing sends one — build it or reword §B2
 - [ ] 👪 Observe the signed-in storage keys in a real session (doc 08: 8 rows are read from the code)
@@ -95,6 +96,7 @@ recorded in a pull request.
 
 ### Live checks on production (the founder)
 - [ ] 👪 **Sign-up**: one email, which confirms the address and asks consent; B3 *Scheduled* about 24 hours later; `docs/legal/sql/signup-email-proof.sql`. The 13 steps: `git show fbf193280:docs/legal/SIGNUP-EMAIL-LIVE-CHECK.md`. If sign-up sends two emails or no B3 is scheduled, hold the beta link
+- [ ] 👪 **A refused password says why** (#458, 17 Oct): sign up with a password that is LONG but breached (e.g. `password123`, 11 characters) → "This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.", never the length message; and a password under 8 still gets the length message without leaving the browser. Leaked-password protection must be on in Supabase Auth for the first half to fire at all
 - [ ] 👪 **KG–2 consent**: when the waiting KG child next plays — the friendly screen, B1 to the parent, re-consent, the queued answers upload (`docs/legal/sql/notice-v7-proof.sql`: "waiting" → 0); and a parent on notice-v6 who adds a child is recorded on v7
 
 ### The attorney (`ATTORNEY-PACKET.md`; *attorney* placeholders)
