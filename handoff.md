@@ -40,8 +40,8 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-- Game time "Paused" really pauses (2026-10-17, branch `game-time-real-pause`): migration 20261017120000 is a SECURITY
-  change (two new DEFINER functions). Before/after SQL: `docs/legal/sql/game-pause-before.sql`, `game-pause-proof.sql`.
+- #452 "Paused" pauses the paid game time: CI green, on staging; SECURITY (two new DEFINER functions). Not yet seen in
+  a browser. Production: `docs/legal/sql/game-pause-before.sql`, approve, then `game-pause-proof.sql`.
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
 Admin data requires the authenticator code since #325 (16 Oct). None waiting.
@@ -124,6 +124,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   (06:23 UTC) reports the previous day's backup, because scheduled backups start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list). `sessions` (read-only since #323) and the
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
+- Staging's seed step fails: `seed-staging.mjs` reads one `listUsers` page, and the load test's 1000 fake parents fill it.
 - `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
   alone — twice on 28 Sep. A timing assumption in the test, not yet found.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
