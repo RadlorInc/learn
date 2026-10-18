@@ -21,20 +21,11 @@ fixed yet are tracked outside this public repo; ask the founder.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship).
 
-## Paid testers' notes (the loop, 15 Oct)
+## Paid testers' notes (15 Oct)
 
-Testers review every screen through `/test` (links and reviews live in Radlor Ops, the separate ops app, in its own
-`review.radlic_tester_reviews` table). The founder keeps a Corrections Tracker outside the repo. Every "Something is wrong"
-note up to 15 Oct evening is fixed or decided (#421–#444; last voice batch #444, tag
-`audio-src-josh-2026-10-16`, P5 18646 | 289376154). Word times are keyed by clip key: drop a re-rendered key's old
-timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
-- **Split by kind:** code-only fixes ship alone; anything that changes or re-reads a spoken line waits for ONE voice
-  batch on the last voice branch (conflicts are only in the generated corpus, manifest and voice-index — merge key by
-  key, rebuild the corpus). **Render:** `python3 scripts/kaggle-josh-notebook.py redo <branch> <keys.txt>` (clones
-  fresh, prints the commit — a reused clone rendered old text, 15 Oct). Check every clip with `check-numbers.py` AND
-  read the transcripts: it reads line and audio the same way, so "one hundred and one thousand" passed it. A misread
-  word gets a `say` row, never a retry ("A" → "Ay", "x" after a digit → "ex", "3 comma 5"). **Ship:**
-  [audio-upload.md](docs/runbooks/audio-upload.md) — since #447 the run is from `main` with `manifest_ref=<branch>`.
+Every "Something is wrong" note up to 15 Oct evening is fixed or decided (#421–#444; last voice batch #444, tag
+`audio-src-josh-2026-10-16`, P5 18646 | 289376154). Where the notes live and how a batch of them ships:
+[audio-upload.md](docs/runbooks/audio-upload.md), *A batch of tester corrections*.
 
 ## Open — Draft PRs waiting for the founder
 
@@ -133,6 +124,9 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   digest reports the previous day's backup, because scheduled runs start hours late.
 - Delete the legacy code KG–2 does not use (the founder approves the list); `sessions` (read-only since #323) and
   `diagnostic_*` stay (read by /admin's funnel and the export).
+- Staging's seed step fails once the load test has run: on `email_exists`, `scripts/seed-staging.mjs:84` looks the
+  user up in ONE `listUsers` page (`perPage: 1000`), which the test's 1,000 fake parents fill, so the seed user is
+  not on it and the next line throws on `data.user.id`. Page or filter the lookup before the next load test.
 - Load-only flakes, each passing alone: `noChildDataInAudioUrl.test.ts` (28 Sep) and `eqRows.test.ts` (17 Oct). The
   local vitest `int` hang: fix the loop — a per-test timeout cannot stop a synchronous one.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the

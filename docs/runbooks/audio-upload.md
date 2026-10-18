@@ -31,6 +31,23 @@
 5. **Upload** (next section) **from `main`**, with `manifest_ref` = the PR branch and `source_ref` = that tag. The workflow refuses any other branch (since 2026-10-16), and `production-db` is limited to `main`: the code that holds the keys is always main's. From the PR branch it reads only `scripts/audio/manifest.json`, which names the new clips. Without `manifest_ref` it uses main's manifest, finds nothing missing and goes green having uploaded nothing.
 6. **Founder — merge the PR** only after the upload run ends "all N manifest objects present", where N is that branch's manifest count.
 
+## A batch of tester corrections
+
+Testers review every screen through `/test`; their notes land in Radlor Ops (the separate ops app, table
+`review.radlic_tester_reviews`) and the founder keeps a Corrections Tracker outside the repo. A batch of their
+"Something is wrong" notes goes out like this.
+
+- **Split the batch by kind.** Code-only fixes ship on their own. Anything that changes or re-reads a *spoken* line
+  waits for ONE voice batch on the last voice branch. Conflicts between voice branches are only ever in the
+  generated corpus, the manifest and the voice-index: merge those key by key, then rebuild the corpus.
+- **Render from a fresh clone.** `python3 scripts/kaggle-josh-notebook.py redo <branch> <keys.txt>` clones fresh and
+  prints the commit it rendered — read that line. A reused clone rendered the OLD text of every key (15 Oct 2026).
+- **Hear the clips AND read the transcripts.** `check-numbers.py` is necessary, not sufficient: it reads the line
+  and the audio the same way, so "one hundred and one thousand" passed it while being wrong. A word the model
+  misreads gets a `say` row — never a retry: "A" → "Ay", an "x" after a digit → "ex", "3 comma 5".
+- **Drop a re-rendered key's old word times first.** `whisper-word-times.py` keys timings by clip key, so it keeps
+  the stale ones if they are still there, and the chalk marks follow the old audio.
+
 ## The upload run
 
 1. **Founder — create short-lived S3 keys** just before the run:
