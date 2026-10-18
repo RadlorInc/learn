@@ -6,27 +6,26 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (17 October 2026)
+## Where things stand (18 October 2026)
 
-- **Production code** is on `b0d5a411e` (#452, 17 Oct). ⚠️ **Two deploys are stopped on `production-db` approval:**
-  #452's migration `20261017120000` (real pause) is NOT applied and #458 is queued behind it, so a game's Pause does
-  not stop the paid clock yet — the call fails and the clock runs on, as before. Nothing else reaches production
-  until these are approved.
-- The repo `learn` is public again (see the Vercel item). The private beta with families the founder knows has run
-  since 25 September; it is free and billing is off.
+- **Production code** is on `c00e36488`: `main`, `release` and Vercel's production deployment are the same commit,
+  and nothing local is unpushed (checked 18 Oct). #452's migration `20261017120000` was approved and applied — the
+  `prod-db-migrated` tag sits on `b0d5a411e` — so a game's Pause now stops the paid clock. **Never watched doing
+  it:** `docs/legal/sql/game-pause-proof.sql` is the proof, and the founder runs it.
+- The repo `learn` is public again (see the Vercel item). The private beta with families the founder knows has
+  run since 25 September; it is free and billing is off.
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG–2 (23 voiced
   story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with the database gate;
   parent dashboard (teacher sign-up hidden); points buy game time on `/play` (four games, #424); six legal pages as
   beta versions; nightly backups green.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
-  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship); local `learner-grade` has its
-  own "notice-v7" (clashes). The pre-rewrite handoff and old-doc extracts are on the founder's machine (owner-only).
+  `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship).
 
 ## Paid testers' notes (the loop, 15 Oct)
 
 Testers review every screen through `/test` (links and reviews live in Radlor Ops, the separate ops app, in its own
-`review.radlic_tester_reviews` table). The founder keeps a Corrections Tracker outside the repo. Every "Something is
-wrong" note up to 15 Oct evening is fixed or decided (#421–#444; last voice batch #444, tag
+`review.radlic_tester_reviews` table). The founder keeps a Corrections Tracker outside the repo. Every "Something is wrong"
+note up to 15 Oct evening is fixed or decided (#421–#444; last voice batch #444, tag
 `audio-src-josh-2026-10-16`, P5 18646 | 289376154). Word times are keyed by clip key: drop a re-rendered key's old
 timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 - **Split by kind:** code-only fixes ship alone; anything that changes or re-reads a spoken line waits for ONE voice
@@ -39,17 +38,18 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-Four from 17 Oct, no migrations, none seen on production (each PR says what to look at after its deploy):
+The founder's whole 17 Oct list of ten shipped in #459, #460 and #464, with #462; all four are live and unseen (the
+live-checks section). Five superseded handoff drafts were closed on 17 Oct. What is left:
 - **#450** capacity runbook: the 16 Oct measurements, the staging load test (1,000 children at once, 0 errors) and
   `scripts/load-staging.mjs` to re-run it. Docs and a script; it answers "when do we buy more".
-- **#459** four of the founder's 17 Oct list: no tour in the add-a-child window, the child's name marked as needed,
-  "your child" vs "your children", and Checkout returning to `/parent` — the "payment received" note moved with it,
-  because that note is what stops a parent paying twice.
-- **#460** three more: an idle dashboard asks for the PIN again after 15 min (`IDLE_LOCK_MS`, no sign-out), opening a
-  grade ticks its modules once, and an empty trial picker suggests two topics.
-- **#464** the last three, lesson player: Screen 1's question stays above the board; ⏸/▶/↻ under it (stops voice
-  and chalk; a child who touches them is not moved on). Auto-advance on every screen was already built — "only 1→2"
-  was not reproduced (offline, no clips): check it with Josh's voice.
+- **#463** one line: #445's EXPLAIN ran on a local copy, not staging.
+- **#401** (6–7 Oct, 12 commits) is NOT a stale draft — it fixes four things still open below: `smoke-live.mjs`'s
+  hard-coded service-worker version, the backup time against the 06:23 digest, `noChildDataInAudioUrl`'s load-only
+  flake, and `break-verdict`'s `beforeEach`. Three weeks old, so re-run CI before trusting it.
+- **#405** holds three `decisions.md` lines that never reached main (#411 the 20 Hz tone, #413 simple interest stays
+  in Grade 6, #416 `speakable`). Take those three lines, then close it.
+- **This file (#461) merges last**: #450 and #463 both edit the Performance block it rewrote.
+Nine dependabot PRs stand apart; merge #418 (Next 16.4.0) alone and last, so a breakage has one cause.
 
 
 ## Open — the founder decides
@@ -65,12 +65,12 @@ Four from 17 Oct, no migrations, none seen on production (each PR says what to l
   moving a student between classes, bulk password reset, teacher billing; confirm "the first attempt is the
   class-exercise result" (decided without the founder); a free teacher can sign up as a parent for free.
 - A way to mute the lesson voice (classrooms).
-- Lead capture is gone since `/api/lead` was deleted: rebuild it, or drop the `diagnostic_leads` table.
+- Lead capture is gone with `/api/lead`: rebuild it, or drop `diagnostic_leads`.
 - A maintenance switch: none exists, so stopping the app means removing the domain. A notice switch does
   (`OUTAGE_NOTICE`, [outages.md](docs/runbooks/outages.md)); it tells people and stops nothing.
 - Points: the 8-a-minute rate is a guess to measure (points never reset — settled 19 September).
-- A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop), and
-  the one clause of its `if` that cannot change the outcome; delete the spent `migrate-region.yml`.
+- A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop), the
+  one clause of its `if` that cannot change the outcome; delete the spent `migrate-region.yml`.
 - After the beta: Search Console, then one public page per grade.
 
 ## Open — the founder sets (dashboards and accounts)
@@ -83,8 +83,8 @@ Four from 17 Oct, no migrations, none seen on production (each PR says what to l
 - **If `learn` goes private, Actions minutes cost money**: ~5,400 min/30 days (28 Sep) vs 2,000 free, about US$20 a
   month over; with no budget, Actions and deploys stop at 2,000. Set a budget first, or have the agent cut minutes
   (Deploy re-runs the whole CI on every merge).
-- Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"):
-  it targets the pre-move URL, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
+- Turn off the old daily Claude health-check routine (claude.ai → routines): it checks the pre-move URL and so
+  fails every morning; `daily-smoke.yml` replaces it.
 - red-main opens an issue per red run and never closes one: close them on the next green run.
 - Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
   drop its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic.
@@ -102,14 +102,19 @@ Four from 17 Oct, no migrations, none seen on production (each PR says what to l
 
 ## Open — live checks on production (the founder)
 
+- **The four merged on 17–18 Oct, none opened on production.** #459: no tour in add-a-child, the name marked
+  needed, "your child", Checkout returns to `/parent`. #460: a grade ticks its modules, the trial suggests two
+  topics, the dashboard asks for the PIN again after 15 idle minutes. #464: the question stays above the board,
+  ⏸/▶/↻ with Josh's voice and on a phone, every screen advancing itself. The real Pause: open a game, change tab,
+  come back — the clock must have stopped.
+
 Consent and sign-up checks are in READINESS. The step lists below are in git history; `git show <path>` prints them.
 - Batch C (#439) in the real player: Screen 9 speaks then the sticker; g6m1-t2 L5 Hint; a stressed word bold.
 - The Round-2 lists, none run since 28 Sep, each a step list `git show` prints: deep-review fixes #235–#275
   (`fbf193280:docs/review/ROUND2.md` §3, then `fbf193280:docs/review/sql/fix-FND-15-proof.sql` and its BUG-09 twin;
   delete `docs/review/sql/` once both have run), short sessions
-  (`fbf193280:docs/legal/SHORT-SESSIONS-ROUND2.md` §3), Review 1 with the Apple Pencil on a real iPad
-  (`fbf193280:docs/legal/REVIEW1-ROUND2.md` §4), and iPhone audio — Josh speaks, a replay starts without a pause,
-  airplane mode falls back to the device voice (`fbf193280:docs/legal/AUDIO-ROUND2.md` §3).
+  (`fbf193280:docs/legal/SHORT-SESSIONS-ROUND2.md` §3), Review 1 on a real iPad with the Apple Pencil
+  (`fbf193280:docs/legal/REVIEW1-ROUND2.md` §4), iPhone audio (`fbf193280:docs/legal/AUDIO-ROUND2.md` §3).
 - Play one KG–2 chapter signed in and read its `c:` row back; the Help walkthroughs; the parent PIN's "Forgot PIN"
   and its lock after 5 wrong tries.
 - RLS on production: `docs/legal/sql/rls-everywhere.sql` (expected answers are in the file).
@@ -118,8 +123,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 
 - Testers: ask what g5m2-t1 Screen 2 "Confusion" meant; close the KG–2 "Chapter testing" notes in Ops (3 open, 9 to
   re-check by playing); triage anything newer than 15 Oct the same way.
-- Seen in jsdom only, never a browser: the KG–2 pause screen (`ConsentPause`), and #459/#460's screens. #464 was
-  seen in a local browser with no voice clips: its ⏸ with Josh's real voice, on a phone and on iPad Safari, is not.
+- Seen in jsdom only, never a browser: the KG–2 pause screen (`ConsentPause`).
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone
   with zoom now allowed. The jsx-a11y lint lists harmless shapes (`<img onError>`, backdrop taps) — not a gate.
 - An old consent link on the old domain should land on radlic.com with its `#t=` token (browser pane). `nightly-e2e`
