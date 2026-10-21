@@ -8,8 +8,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (16 October 2026)
 
-- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
-  private beta with families the founder knows has run since 25 September; it is free and billing is off.
+- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). Radlic is
+  launched (paid since 1 October, `BILLING_LIVE`); the beta is over (founder, 21 Oct).
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
   and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
   the database gate; parent dashboard (teacher sign-up hidden); points buy game time on `/play` (four games,
@@ -40,8 +40,9 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-- Game time "Paused" really pauses (2026-10-17, branch `game-time-real-pause`): migration 20261017120000 is a SECURITY
-  change (two new DEFINER functions). Before/after SQL: `docs/legal/sql/game-pause-before.sql`, `game-pause-proof.sql`.
+- **Ask maths** (2026-10-21, `ask-maths` + whiteboard-ai `kids-maths`): built, tested, **OFF** until the legal steps in
+  [product/ask-maths.md](docs/product/ask-maths.md). Migration 20261021120000 is a SECURITY change; proof
+  `docs/legal/sql/ask-maths-proof.sql`. Price $4.99/month is a placeholder.
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
 Admin data requires the authenticator code since #325 (16 Oct). None waiting.

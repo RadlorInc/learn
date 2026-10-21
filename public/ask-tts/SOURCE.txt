@@ -1,0 +1,1 @@
+Copied by scripts/sync-ask-player.mjs from RadlorInc/whiteboard-ai at 7679fdd41a61c4bb05b2deea49fe16fb31b6f329. Do not edit here: change it there and copy again.

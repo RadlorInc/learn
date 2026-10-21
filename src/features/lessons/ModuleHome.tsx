@@ -9,6 +9,8 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { lessonDone } from '@/infra/storage/lessonProgress'
 import { pullLessonProgress, pendingLessonUploads } from '@/infra/storage/lessonSync'
 import { getWallet } from '@/data/repositories/points'
+import { getAskSettings } from '@/data/repositories/askMaths'
+import { ASK_MATHS_PUBLIC } from '@/features/askMaths/stream'
 import type { LearnerWithRole } from '@/data/repositories/learners'
 import { getActiveLearner, setActiveLearner } from '@/data/supabase/useLearnerSession'
 import { trialTopics } from '@/data/repositories/billing'
@@ -100,6 +102,15 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
       .then(ok => { if (live && ok) redraw(n => n + 1); if (waiting) void showWallet() })
     return () => { live = false }
   }, [learnerId])
+  // Ask maths (docs/product/ask-maths.md): the button shows only when the child's grown-up has switched it on —
+  // never an offer, a price or a "locked" button on a child's screen.
+  const [askOn, setAskOn] = useState(false)
+  useEffect(() => {
+    if (!ASK_MATHS_PUBLIC || !learnerId) return
+    let live = true
+    getAskSettings(learnerId).then(s => { if (live) setAskOn(!!s?.enabled) })
+    return () => { live = false }
+  }, [learnerId])
   const [picked, setPicked] = useState(() => GRADES.length ? firstOf(GRADES.includes(startGrade) ? startGrade : GRADES[0]) : '')
   // A story tab is open when the child asked for KG–2, or when the parent chose nothing from Grades 3–8.
   const [storyTab, setStoryTab] = useState<number | null>(() => STORY_TABS.includes(startGrade) ? startGrade : GRADES.length ? null : STORY_TABS[0] ?? null)
@@ -132,6 +143,7 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>{gradeLabel(storyGrade ?? grade)}</span>
           <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
+            {askOn && <Link href="/ask" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>✏️ Ask maths</Link>}
             {points !== null && <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
             <TextSizeMenu />
           </span>

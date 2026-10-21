@@ -456,7 +456,7 @@ function Dashboard() {
     page = !child ? <div style={dcard}><p style={{ margin:0 }}>{t('We couldn’t find that child.')} <Link href="/parent">{t('Back to Home')}</Link></p></div> : (() => {
       const d = child, klass = classes.find(c => c.id === d.learner.grade_id)
       const tab = (CHILD_TABS.some(([k]) => k === tabParam) ? tabParam : 'progress') as ChildTab
-      return <ChildPage id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
+      return <ChildPage id={d.learner.id} name={d.learner.display_name} band={d.learner.age_group} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
         crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}

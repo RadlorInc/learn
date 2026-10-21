@@ -205,6 +205,22 @@ metadata — not applied"* and ignores it, for ever. The family pays and gets no
   **founder** sends the parent the hosted invoice link from the failed invoice in Stripe, where they can pay with
   another card. When it is paid, the subscription goes back to `active` and the app follows.
 
+## Ask maths, the add-on
+
+Ask maths ([product/ask-maths.md](../product/ask-maths.md)) is its own monthly subscription on the family's Stripe
+customer, marked `metadata.product = ask_maths` (Stripe → the subscription → Metadata). It is never the plan and holds
+no seats. In the database it is the family's `addon_subscriptions` row (service role; the founder reads it in the SQL
+editor).
+- **"I added Ask maths but my child can't ask"** (agent checks the code path; founder reads the rows): the row's
+  `status` is `active`? The child's `ask_maths_settings.enabled` is true (the parent turns it on per child, after the
+  disclosure)? The child is in Grades 3–8 (band `9-11` or `12-14`)? Today's questions are under `daily_limit`?
+- **Cancel by email or phone** (founder): in Stripe, the add-on subscription → Cancel at period end. The webhook writes
+  the row. The parent can also do it on any child's page → Ask maths → "Stop the add-on".
+- **Refund** (founder): as for the plan (doc 01 §5); closing the account or withdrawing for every child already
+  cancels and refunds it through `billing_cancellations`.
+- **A family paying for the add-on twice**: two live subscriptions with `product = ask_maths` on one customer. Cancel
+  the newer one and refund it; `/api/checkout/ask-maths` refuses a second while one is live in the row or in Stripe.
+
 ## Open questions for the founder
 
 Not decided here. Until each is decided, the founder handles that case one by one.

@@ -13,6 +13,8 @@ import { LessonsTab, type SaveResult } from './LessonsTab'
 import { dbtn, dghost, dcard } from './Helpers'
 import { useT } from './i18n'
 import { bandOf } from '@/features/classes/Classes'
+import { ASK_MATHS_PUBLIC } from '@/features/askMaths/stream'
+import { AskMathsCard } from './AskMathsCard'
 
 /** The four avatars a parent picks from (add-a-child and the correction card) — pictures we provide, never a photo. */
 export const AVATAR_SRCS = ['/assets/objects/fox.png', '/assets/objects/bunny.png', '/assets/objects/bear.png', '/assets/objects/cat.png']
@@ -22,7 +24,9 @@ export type Band = '3-5' | '6-8' | '9-11' | '12-14'
  *  agreed only to an older notice (notice-v7), and the consent email for the newer one was — or could not be — sent. */
 export type CorrectResult = 'ok' | ErrorKind | 'notice_sent' | 'notice_unsent'
 
-export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['login', 'Login & data']] as const
+export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['ask', 'Ask maths'], ['login', 'Login & data']] as const
+/** Ask maths' tab shows only when the feature is switched on for this build (docs/product/ask-maths.md). */
+const SHOWN_TABS = CHILD_TABS.filter(([k]) => k !== 'ask' || ASK_MATHS_PUBLIC)
 export type ChildTab = typeof CHILD_TABS[number][0]
 
 export function Tabs({ base, tabs, on }: { base: string; tabs: readonly (readonly [string, string])[]; on: string }) {
@@ -34,8 +38,8 @@ export function Tabs({ base, tabs, on }: { base: string; tabs: readonly (readonl
   )
 }
 
-export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, lessonIds, due, isDone, login, wallet, onLaunch, onSaveLessons, onSaveGame, onLogin, onCorrect, dataRights }: {
-  id: string; name: string; avatar: string; avatarIndex: number; tab: ChildTab; crumb: { href: string; label: string }; owner: boolean
+export function ChildPage({ id, name, band, avatar, avatarIndex, tab, crumb, owner, lessonIds, due, isDone, login, wallet, onLaunch, onSaveLessons, onSaveGame, onLogin, onCorrect, dataRights }: {
+  id: string; name: string; band?: string; avatar: string; avatarIndex: number; tab: ChildTab; crumb: { href: string; label: string }; owner: boolean
   lessonIds: string[] | null; due: Record<string, string>; isDone: (lessonId: string) => boolean
   login: string | null | undefined; wallet: Wallet | 'unavailable' | null | undefined
   onLaunch: () => void; onSaveLessons: (ids: string[] | null, due: Record<string, string>) => Promise<SaveResult>
@@ -58,11 +62,12 @@ export function ChildPage({ id, name, avatar, avatarIndex, tab, crumb, owner, le
       </div>
       <button type="button" style={dbtn} data-tour="start-learning" onClick={onLaunch}>▶ {t('Start learning')}</button>
     </div>
-    <Tabs base={base} tabs={CHILD_TABS} on={tab} />
+    <Tabs base={base} tabs={SHOWN_TABS} on={tab} />
 
     {tab === 'progress' && <Performance learners={[{ id, name, lessonIds, due }]} lessonsHref={`${base}&tab=lessons`} />}
     {tab === 'lessons' && <LessonsTab name={name} ids={lessonIds} due={due} canEdit={owner} isDone={isDone} onSave={onSaveLessons} />}
     {tab === 'game' && <GameTimeCard name={name} wallet={wallet} canEdit={owner} onSave={onSaveGame} />}
+    {tab === 'ask' && ASK_MATHS_PUBLIC && <AskMathsCard id={id} name={name} band={band ?? ''} owner={owner} />}
     {tab === 'login' && (
       <div className="card-grid">
         <section style={dcard} data-tour="login-card">
