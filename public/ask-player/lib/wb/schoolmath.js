@@ -218,5 +218,151 @@ Object.assign(window.RECIPES, {
     if (hi) line(g, `M${x0 + hi * step - 26} ${y - 52} L${x0 + hi * step + 26} ${y - 52} L${x0 + hi * step + 26} ${y + gap + 56} L${x0 + hi * step - 26} ${y + gap + 56} Z`, RED, 3);
     return g;
   },
+
+  // "usmoney x y size items=q:3,d:2,n:1,p:4,b1:1,b5:1 sum=1 | label" — US money laid out to count: bills ($1 b1, $5 b5,
+  // $10 b10, $20 b20) then coins (quarter q, dime d, nickel n, penny p), each its real relative size and colour, with
+  // its value on it; sum=1 writes the total ("= $7.39"), computed from the items, never typed
+  usmoney: ([x = 120, y = 120, S = 70], o, t, parent) => {
+    const g = mk('g', {}, parent);
+    const KIND = { b20: [2000, '$20'], b10: [1000, '$10'], b5: [500, '$5'], b1: [100, '$1'], q: [25, '25¢'], d: [10, '10¢'], n: [5, '5¢'], p: [1, '1¢'] };
+    const R = { q: .5, n: .44, p: .39, d: .36 }, FILLC = { q: '#d5d8dc', n: '#c3c7cc', p: '#e0a066', d: '#dfe3e6' };
+    const items = String(o.items || 'q:3,d:2,n:1,p:4').split(',').map(p => p.split(':')).filter(([k]) => k in KIND)
+      .map(([k, n]) => [k, clamp(Math.round(+n || 0), 0, 12)]).sort((a, b) => KIND[b[0]][0] - KIND[a[0]][0]);
+    let cx = x, cy = y, total = 0;
+    const maxX = x + 760;
+    for (const [k, n] of items) for (let i = 0; i < n; i++) {
+      total += KIND[k][0];
+      if (k.startsWith('b')) {
+        const w = S * 2.2, h = S;
+        if (cx + w > maxX) { cx = x; cy += S * 1.3; }
+        wash(g, rectD(cx, cy, w, h), '#cfe8c6'); line(g, rectD(cx, cy, w, h), '#3f6b3a', 3);
+        line(g, rectD(cx + 6, cy + 6, w - 12, h - 12), '#3f6b3a', 1.4);
+        wash(g, ring(cx + w / 2, cy + h / 2, h * .28), '#e8f3e2'); line(g, ring(cx + w / 2, cy + h / 2, h * .28), '#3f6b3a', 1.8);
+        label(g, cx + 16, cy + h * .38, KIND[k][1], '#2c4f28', S * .3); label(g, cx + w / 2, cy + h / 2 + S * .1, KIND[k][1].slice(1), '#2c4f28', S * .26, 'middle');
+        cx += w + 14;
+      } else {
+        const r = S * R[k];
+        if (cx + 2 * r > maxX) { cx = x; cy += S * 1.3; }
+        wash(g, ring(cx + r, cy + S / 2, r), FILLC[k]); line(g, ring(cx + r, cy + S / 2, r), k === 'p' ? '#8a4a1e' : '#6b7178', 3);
+        line(g, ring(cx + r, cy + S / 2, r * .8), k === 'p' ? '#8a4a1e' : '#6b7178', 1.2);
+        label(g, cx + r, cy + S / 2 + r * .3, KIND[k][1], K, Math.max(12, r * .72), 'middle');
+        cx += 2 * r + 12;
+      }
+    }
+    if (o.sum === '1') label(g, x, cy + S * 1.75, `= $${(total / 100).toFixed(2)}`, TXT.orange, 36);
+    if (t) label(g, x, y - 18, t, TXT.blue, 26);
+    return g;
+  },
+
+  // "measure cx cy size k=jug|scale v=750 max=1000 step=250 u=mL | label" — a measuring jug filled to v (liquid volume)
+  // or a kitchen scale whose needle points at v (mass); the marks every step= are numbered with the unit u=
+  measure: ([cx = 480, cy = 270, S = 340], o, t, parent) => {
+    const g = mk('g', {}, parent), max = Math.max(1e-9, opt(o, 'max', 1000)), v = clamp(opt(o, 'v', 750), 0, max);
+    const step = Math.max(max / 20, opt(o, 'step', max / 4)), u = String(o.u ?? (o.k === 'scale' ? 'g' : 'mL')).replace(/_/g, ' ');
+    if (o.k === 'scale') {
+      const r = S * .36, dy = cy + S * .12;
+      wash(g, rectD(cx - S * .5, dy - r * 1.25, S, r * 2.6), '#eef1f4'); line(g, rectD(cx - S * .5, dy - r * 1.25, S, r * 2.6), K, 3);
+      wash(g, `M${cx - S * .45} ${dy - r * 1.25} Q${cx} ${dy - r * 2.1} ${cx + S * .45} ${dy - r * 1.25} Z`, '#cfd8e0');
+      line(g, `M${cx - S * .45} ${dy - r * 1.25} Q${cx} ${dy - r * 2.1} ${cx + S * .45} ${dy - r * 1.25} Z`, K, 3);
+      wash(g, ring(cx, dy, r), '#ffffff'); line(g, ring(cx, dy, r), K, 3);
+      const ang = f => -225 + 270 * f;                         // the dial runs from 7:30 to 4:30, clockwise
+      for (let m = 0; m <= max + 1e-9; m += step) { const a = ang(m / max), [x0, y0] = pol(cx, dy, r * .82, a), [x1, y1] = pol(cx, dy, r * .96, a), [lx, ly] = pol(cx, dy, r * .64, a);
+        line(g, `M${x0} ${y0} L${x1} ${y1}`, K, 2.4); label(g, lx, ly + 7, fmt(m), TICK, Math.max(13, r * .15), 'middle'); }
+      const [nx, ny] = pol(cx, dy, r * .86, ang(v / max));
+      line(g, `M${cx} ${dy} L${nx} ${ny}`, RED, 4); wash(g, ring(cx, dy, 6), RED);
+      label(g, cx, dy + r * .45, u, TICK, Math.max(14, r * .16), 'middle');
+      label(g, cx, dy + r * 1.6, `${fmt(v)} ${u}`, TXT.orange, 32, 'middle');
+    } else {
+      const w = S * .62, h = S * .9, top = cy - h / 2, bot = cy + h / 2, x0 = cx - w / 2, x1 = cx + w / 2, lvl = bot - (h * .88) * v / max;
+      const side = yy => (bot - yy) / h * w * .06;              // the jug widens a little to the top
+      wash(g, `M${x0 - side(lvl)} ${lvl} L${x1 + side(lvl)} ${lvl} L${x1} ${bot} L${x0} ${bot} Z`, '#9fd1f2', { opacity: .85 });
+      line(g, `M${x0 - w * .06} ${top} L${x0} ${bot} L${x1} ${bot} L${x1 + w * .06} ${top}`, K, 3.4);
+      line(g, `M${x1 + w * .04} ${top + h * .12} Q${x1 + w * .38} ${top + h * .2} ${x1 + w * .05} ${top + h * .55}`, K, 3.4);
+      for (let m = step; m <= max + 1e-9; m += step) { const yy = bot - (h * .88) * m / max;
+        line(g, `M${x0 + 2} ${yy} L${x0 + w * .22} ${yy}`, K, 2.4); label(g, x0 + w * .26, yy + 7, `${fmt(m)} ${u}`, TICK, Math.max(13, S * .05)); }
+      line(g, `M${x0 - 14} ${lvl} L${x0 - 2} ${lvl}`, RED, 3);
+      label(g, x0 - 20, lvl + 8, `${fmt(v)} ${u}`, TXT.orange, 28, 'end');
+    }
+    if (t) label(g, cx, cy - S * .62, t, TXT.blue, 26, 'middle');
+    return g;
+  },
+
+  // "shapenet cx cy size k=cube|cuboid|pyramid|prism l=4 w=3 h=2 u=cm area=1 | label" — the flat net of a solid: its
+  // faces laid out as they unfold, fold lines dashed, edge lengths written; area=1 writes each face's area inside and
+  // the total surface area under it (computed from l, w, h)
+  shapenet: ([cx = 480, cy = 270, S = 60], o, t, parent) => {
+    const g = mk('g', {}, parent), k = o.k || 'cuboid', u = String(o.u ?? '').replace(/_/g, ' ');
+    let l = opt(o, 'l', 4), w = opt(o, 'w', 3), h = opt(o, 'h', 2);
+    if (k === 'cube') { w = l; h = l; }
+    const faces = [];                                          // [x, y, w, h, colour index, area] in units
+    if (k === 'pyramid') {                                     // square base l x l, four triangles of slant height h
+      const B = l * S, H = h * S, x0 = cx - B / 2, y0 = cy - B / 2;
+      wash(g, rectD(x0, y0, B, B), PAL[0], { opacity: .7 }); line(g, rectD(x0, y0, B, B), K, 3);
+      const tri = [[[x0, y0], [x0 + B, y0], [cx, y0 - H]], [[x0 + B, y0], [x0 + B, y0 + B], [x0 + B + H, cy]], [[x0, y0 + B], [x0 + B, y0 + B], [cx, y0 + B + H]], [[x0, y0], [x0, y0 + B], [x0 - H, cy]]];
+      tri.forEach((p, i) => { const d = `M${p[0][0]} ${p[0][1]} L${p[1][0]} ${p[1][1]} L${p[2][0]} ${p[2][1]} Z`; wash(g, d, PAL[i + 1], { opacity: .7 }); line(g, d, K, 3); });
+      if (o.area === '1') {
+        label(g, cx, cy + 8, fmt(l * l), K, 22, 'middle');
+        for (const [xx, yy] of [[cx, y0 - H / 3], [x0 + B + H / 3, cy + 8], [cx, y0 + B + H / 3 + 8], [x0 - H / 3, cy + 8]]) label(g, xx, yy, fmt(l * h / 2), K, 20, 'middle');
+        label(g, cx, y0 + B + H + 44, `surface area = ${fmt(l * l)} + 4 × ${fmt(l * h / 2)} = ${fmt(l * l + 2 * l * h)} ${u}${u ? '²' : ''}`, TXT.orange, 26, 'middle');
+      }
+      label(g, cx, y0 + B - 10, `${fmt(l)} ${u}`, TICK, 18, 'middle');
+      if (t) label(g, cx, y0 - H - 20, t, TXT.blue, 26, 'middle');
+      return g;
+    }
+    // cuboid / cube / prism(rectangular): a cross of l x w (top, bottom), l x h (front, back), w x h (two sides)
+    const W = l * S, D = w * S, Hh = h * S, x0 = cx - (W + 2 * D) / 2 + D, y0 = cy - (2 * Hh + 2 * D) / 2;
+    faces.push([x0, y0, W, D, 0, l * w], [x0, y0 + D, W, Hh, 1, l * h], [x0, y0 + D + Hh, W, D, 0, l * w], [x0, y0 + 2 * D + Hh, W, Hh, 1, l * h],
+      [x0 - D, y0 + D, D, Hh, 2, w * h], [x0 + W, y0 + D, D, Hh, 2, w * h]);
+    for (const [fx, fy, fw, fh, c] of faces) { wash(g, rectD(fx, fy, fw, fh), PAL[c], { opacity: .7 }); }
+    for (const [fx, fy, fw, fh] of faces) line(g, rectD(fx, fy, fw, fh), K, 3);
+    const folds = [[x0, y0 + D, x0 + W, y0 + D], [x0, y0 + D + Hh, x0 + W, y0 + D + Hh], [x0, y0 + 2 * D + Hh, x0 + W, y0 + 2 * D + Hh], [x0, y0 + D, x0, y0 + D + Hh], [x0 + W, y0 + D, x0 + W, y0 + D + Hh]];
+    for (const [a, b, c2, d] of folds) line(g, `M${a} ${b} L${c2} ${d}`, '#ffffff', 3.6);
+    for (const [a, b, c2, d] of folds) { const L = Math.hypot(c2 - a, d - b), n = Math.max(1, Math.floor(L / 16));
+      line(g, Array.from({ length: n }, (_, i) => `M${a + (c2 - a) * i / n} ${b + (d - b) * i / n} L${a + (c2 - a) * (i + .55) / n} ${b + (d - b) * (i + .55) / n}`).join(' '), TICK, 2); }
+    label(g, x0 + W / 2, y0 - 10, `${fmt(l)} ${u}`, TICK, 18, 'middle');
+    label(g, x0 + W + D + 10, y0 + D + Hh / 2 + 6, `${fmt(h)} ${u}`, TICK, 18);
+    label(g, x0 - D / 2, y0 + D - 8, `${fmt(w)} ${u}`, TICK, 18, 'middle');
+    if (o.area === '1') {
+      for (const [fx, fy, fw, fh, , a] of faces) label(g, fx + fw / 2, fy + fh / 2 + 8, fmt(a), K, Math.min(24, fh * .5), 'middle');
+      const sa = 2 * (l * w + l * h + w * h);
+      label(g, cx, y0 + 2 * D + 2 * Hh + 40, `surface area = 2 × (${fmt(l * w)} + ${fmt(l * h)} + ${fmt(w * h)}) = ${fmt(sa)} ${u}${u ? '²' : ''}`, TXT.orange, 26, 'middle');
+    }
+    if (t) label(g, cx, y0 - 34, t, TXT.blue, 26, 'middle');
+    return g;
+  },
+
+  // "picgraph x y w h vals=4,6,3 key=2 icon=star|circle|apple|book | names" — a picture graph: one row per name, one icon
+  // per key= items (half an icon for an odd one left), and the key under it ("★ = 2"); every count is from vals
+  picgraph: ([x = 140, y = 90, w = 680, h = 330], o, t, parent) => {
+    const g = mk('g', {}, parent), vals = nlist(o.vals || '4,6,3').map(v => Math.max(0, v)), key = Math.max(1, opt(o, 'key', 2));
+    const names = t ? words(t) : vals.map((_, i) => String.fromCharCode(65 + i)), n = vals.length, rh = h / Math.max(1, n);
+    const nameW = Math.min(180, Math.max(...names.map(s => tw(s, 24))) + 24), most = Math.max(1, ...vals.map(v => Math.ceil(v / key)));
+    const sz = Math.min(rh * .62, (w - nameW - 20) / most * .85), icon = o.icon || 'star';
+    const draw = (ix, iy, half) => {
+      let clip = {};
+      if (half) {                                               // the left half of the icon's box only
+        const id = 'smHalf' + clipN++;
+        mk('clipPath', { id }, g).append(mk('rect', { x: ix - sz, y: iy - sz, width: sz, height: 2 * sz }));
+        clip = { 'clip-path': `url(#${id})` };
+      }
+      if (icon === 'circle') { wash(g, ring(ix, iy, sz * .45), PAL[1], clip); if (!half) line(g, ring(ix, iy, sz * .45), K, 2.4); }
+      else if (icon === 'apple') { const d = `M${ix} ${iy - sz * .3} C${ix - sz * .55} ${iy - sz * .55} ${ix - sz * .6} ${iy + sz * .35} ${ix} ${iy + sz * .45} C${ix + sz * .6} ${iy + sz * .35} ${ix + sz * .55} ${iy - sz * .55} ${ix} ${iy - sz * .3} Z`;
+        wash(g, d, '#e04b3a', clip); if (!half) { line(g, d, '#8a1f14', 2.4); line(g, `M${ix} ${iy - sz * .3} L${ix + sz * .08} ${iy - sz * .5}`, '#5a3a1a', 2.4); } }
+      else if (icon === 'book') { const d = rectD(ix - sz * .4, iy - sz * .35, sz * .8, sz * .7); wash(g, d, PAL[0], clip); if (!half) { line(g, d, K, 2.4); line(g, `M${ix} ${iy - sz * .35} L${ix} ${iy + sz * .35}`, K, 2); } }
+      else { const pts = Array.from({ length: 10 }, (_, i) => pol(ix, iy, i % 2 ? sz * .2 : sz * .48, -90 + i * 36)), d = `M${pts.map(p => p.join(' ')).join(' L')} Z`;
+        wash(g, d, '#ffd84a', clip); if (!half) line(g, d, '#b08a00', 2.4); }
+      if (half) line(g, `M${ix} ${iy - sz * .5} L${ix} ${iy + sz * .5}`, TICK, 1.6);
+    };
+    vals.forEach((v, r) => { const yy = y + r * rh + rh / 2;
+      label(g, x + nameW - 14, yy + 8, names[r] ?? '', TXT.blue, 24, 'end');
+      line(g, `M${x} ${y + (r + 1) * rh} L${x + w} ${y + (r + 1) * rh}`, SOFT, 1.4);
+      const full = Math.floor(v / key), part = v % key;
+      for (let i = 0; i < full; i++) draw(x + nameW + 8 + sz * (i + .55), yy, false);
+      if (part) draw(x + nameW + 8 + sz * (full + .55), yy, true); });
+    line(g, `M${x + nameW} ${y} L${x + nameW} ${y + h}`, K, 2.4);
+    draw(x + nameW + sz * .6, y + h + sz * .7, false);
+    label(g, x + nameW + sz * 1.2, y + h + sz * .7 + 9, `= ${fmt(key)}`, K, 26);
+    return g;
+  },
 });
 })();

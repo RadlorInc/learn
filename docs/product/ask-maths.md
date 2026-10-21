@@ -43,7 +43,8 @@ child's browser: the board (public/ask-player, sandboxed iframe) + the voice (pu
 - **The voice** is made on the child's device: the first time it downloads ~166 MB (the model from Hugging Face, the
   voices from us), kept in the browser. If it cannot (an old browser), the device's own voice reads the lines.
 - **Maths drawings** (askRadlor `public/player/lib/wb/schoolmath.js`): `timeclock`, `tape` (bar model), `column` (+ − ×
-  with carries and borrows, decimals), `longdiv`, `ratiotable`, plus askRadlor's whole `math` and `calculus`
+  with carries and borrows, decimals), `longdiv`, `ratiotable`, `usmoney` (coins and bills), `measure` (jug, kitchen
+  scale), `shapenet` (nets and surface area), `picgraph` (picture graph), plus askRadlor's whole `math` and `calculus`
   libraries. Every digit is computed by the recipe, not typed by the model. No realistic drawings (askRadlor refuses
   `sv`/`pin` for maths, since this copy ships none).
 
