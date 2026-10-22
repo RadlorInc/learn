@@ -33,6 +33,86 @@ function connectSrc(): string {
   return audio && !supa.split(' ').includes(audio) ? `${supa} ${audio}` : supa
 }
 
+/**
+ * ASK MATHS (docs/product/ask-maths.md): the whiteboard player (public/ask-player, copied from the askRadlor app by
+ * scripts/sync-ask-player.mjs) runs in a SANDBOXED iframe on /ask, and its voice (public/ask-tts, Pocket TTS) in a
+ * worker. Both take their own CSP, overriding the app's (Next applies every matching rule; a later key wins).
+ * A sandboxed frame has an opaque origin, so 'self' inside it matches nothing: the player's CSP names the app's
+ * origins instead — the site, and on Vercel this deployment's own and its branch URL (baked in at build).
+ */
+const appOrigins = () => [...new Set([
+  (() => { try { return new URL(process.env.NEXT_PUBLIC_SITE_URL ?? '').origin } catch { return '' } })(),
+  process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+  process.env.VERCEL_BRANCH_URL && `https://${process.env.VERCEL_BRANCH_URL}`,
+  process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+  ...(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:*', 'http://127.0.0.1:*']),
+].filter((o): o is string => !!o && o !== 'null'))].join(' ')
+/** The player: our scripts and fonts only, no network at all (connect-src 'none'), framed only by our own pages. */
+export const askPlayerCsp = () => {
+  const o = appOrigins()
+  return [
+    'sandbox allow-scripts', "default-src 'none'", `script-src ${o} 'unsafe-inline'`, `style-src ${o} 'unsafe-inline'`,
+    `font-src ${o}`, `img-src ${o} data:`, `media-src ${o} blob:`, "connect-src 'none'", `frame-ancestors ${o}`,
+    "base-uri 'none'", "form-action 'none'",
+  ].join('; ')
+}
+/** The voice worker: our scripts and WebAssembly, and the pinned model files from Hugging Face (huggingface.co
+ *  redirects to a *.hf.co CDN host). 'unsafe-eval': the tokenizer (vendor/sentencepiece.js, emscripten embind)
+ *  builds functions with Function(); a worker has no DOM and no cookies, and it evaluates no text from users. The
+ *  child's browser sends Hugging Face nothing but the file requests (its IP address) — docs/legal/07 must name it
+ *  before Ask maths is turned on. */
+export const ASK_TTS_CSP = ["default-src 'none'", "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'",
+  "connect-src 'self' https://huggingface.co https://*.hf.co", "base-uri 'none'"].join('; ')
+
+/** The app's one enforced CSP (the long comment at its use in headers() says why each entry is there). */
+const appCsp = () => [
+  "default-src 'self'",
+  /** ⚠️ jsDelivr, storage.googleapis.com, 'wasm-unsafe-eval' and blob: workers were all
+   *  here for the MediaPipe hand tracker, which went with the AR chapters (2026-09-20).
+   *  Removed rather than left: an unused grant is reach nobody re-examines. Put them
+   *  back WITH the code that needs them, never ahead of it — and update /privacy, which
+   *  names both origins.
+   *  ⚠️ 'unsafe-eval' IN DEV ONLY, and it is not cosmetic: React's dev build calls
+   *  `eval()` for its debugging features, so with it blocked EVERY page logs a console
+   *  error — which made `npm run test:chapters` (the C7 gate, whose contract is "zero
+   *  console errors") fail 210 of 211 against the dev server it is documented to drive.
+   *  It went unnoticed because the gate was last run against production. Never shipped:
+   *  this whole branch is dropped from the production header. */
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
+  "font-src 'self' data:",
+  /** ⚠️ WITHOUT THIS THE RECORDED VOICE IS SILENTLY DEAD ON MOBILE, and nothing in the
+   *  app reports it. `media-src` was unset, so `default-src 'self'` was the fallback and
+   *  it blocked the `data:` WAV that `unlockVoiceClips()` plays inside the intro tap —
+   *  the mobile-autoplay unlock. Blocked, the element is never unlocked, so every
+   *  ElevenLabs clip in bands 12–18 falls back to browser speech, which most Chrome
+   *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing.
+   *  ⚠️ AND THE CLIPS THEMSELVES ARE ON THE AUDIO ORIGIN since 2026-09-26 (the lesson-audio bucket): leave it
+   *  out and every <audio> load is blocked, every line falls to device speech, and nothing reports it —
+   *  the same silent class as above. cspHeader.test.ts asserts the origin is here. */
+  /** blob: (Ask maths, docs/product/ask-maths.md): each spoken line of a whiteboard lesson is made in this browser and
+ *  played from a blob: URL on the page. On EVERY page, not only /ask: the app moves between pages without loading a
+ *  new document, so a /ask-only header never reached a child who came from /modules (measured 21 Oct 2026, the line
+ *  was blocked). A blob: URL can only be made by this origin's own scripts. */
+`media-src 'self' data: blob:${audioOrigin() ? ` ${audioOrigin()}` : ''}`,
+  // Supabase (REST + realtime) — the ONE project this build talks to, not every project on
+  // supabase.co (SEC-11: a wildcard would let injected script post data to anyone's project).
+  `connect-src 'self' ${connectSrc()}`,
+  "worker-src 'self'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://accounts.google.com",
+  "object-src 'none'",
+  /**
+   * ⚠️ PRODUCTION ONLY. Safari (unlike Chrome) applies this even on http://localhost,
+   * rewriting EVERY subresource to https:// — the plain-HTTP dev server cannot answer,
+   * so no JS/CSS loads and the app never hydrates (blank splash).
+   */
+  ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
+].join('; ')
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
@@ -151,49 +231,7 @@ const nextConfig: NextConfig = {
            */
           {
             key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              /** ⚠️ jsDelivr, storage.googleapis.com, 'wasm-unsafe-eval' and blob: workers were all
-               *  here for the MediaPipe hand tracker, which went with the AR chapters (2026-09-20).
-               *  Removed rather than left: an unused grant is reach nobody re-examines. Put them
-               *  back WITH the code that needs them, never ahead of it — and update /privacy, which
-               *  names both origins.
-               *  ⚠️ 'unsafe-eval' IN DEV ONLY, and it is not cosmetic: React's dev build calls
-               *  `eval()` for its debugging features, so with it blocked EVERY page logs a console
-               *  error — which made `npm run test:chapters` (the C7 gate, whose contract is "zero
-               *  console errors") fail 210 of 211 against the dev server it is documented to drive.
-               *  It went unnoticed because the gate was last run against production. Never shipped:
-               *  this whole branch is dropped from the production header. */
-              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"}`,
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob:",
-              // 'self' only — the fonts are self-hosted now. data: stays for inlined glyphs.
-              "font-src 'self' data:",
-              /** ⚠️ WITHOUT THIS THE RECORDED VOICE IS SILENTLY DEAD ON MOBILE, and nothing in the
-               *  app reports it. `media-src` was unset, so `default-src 'self'` was the fallback and
-               *  it blocked the `data:` WAV that `unlockVoiceClips()` plays inside the intro tap —
-               *  the mobile-autoplay unlock. Blocked, the element is never unlocked, so every
-               *  ElevenLabs clip in bands 12–18 falls back to browser speech, which most Chrome
-               *  installs do not have. Caught on PROD, in the console, after the CSP went enforcing.
-               *  ⚠️ AND THE CLIPS THEMSELVES ARE ON THE AUDIO ORIGIN since 2026-09-26 (the lesson-audio bucket): leave it
-               *  out and every <audio> load is blocked, every line falls to device speech, and nothing reports it —
-               *  the same silent class as above. cspHeader.test.ts asserts the origin is here. */
-              `media-src 'self' data:${audioOrigin() ? ` ${audioOrigin()}` : ''}`,
-              // Supabase (REST + realtime) — the ONE project this build talks to, not every project on
-              // supabase.co (SEC-11: a wildcard would let injected script post data to anyone's project).
-              `connect-src 'self' ${connectSrc()}`,
-              "worker-src 'self'",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self' https://accounts.google.com",
-              "object-src 'none'",
-              /**
-               * ⚠️ PRODUCTION ONLY. Safari (unlike Chrome) applies this even on http://localhost,
-               * rewriting EVERY subresource to https:// — the plain-HTTP dev server cannot answer,
-               * so no JS/CSS loads and the app never hydrates (blank splash).
-               */
-              ...(process.env.NODE_ENV === 'production' ? ['upgrade-insecure-requests'] : []),
-            ].join('; '),
+            value: appCsp(),
           },
         ],
       },
@@ -222,13 +260,33 @@ const nextConfig: NextConfig = {
       {
         // Self-hosted fonts (app/fonts.css). Each file is named by its content hash, so it can never change in place.
         source: '/fonts/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        // Access-Control-Allow-Origin: the Ask maths player runs in a sandboxed (opaque-origin) frame, so its font
+        // loads are cross-origin and need it. Public font files (OFL), nothing private.
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+          { key: 'Access-Control-Allow-Origin', value: '*' }],
       },
       // (/audio/* went 2026-09-26: the recorded clips live in the lesson-audio bucket, which sets its own year-long
       //  immutable Cache-Control per object; the index is a hashed JS chunk under /_next/static.)
       {
         source: '/icons/:path*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000, stale-while-revalidate=31536000' }],
+      },
+      {
+        // ASK MATHS: the player page may be framed by our own pages (the app says DENY everywhere else).
+        source: '/ask-player/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: askPlayerCsp() },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+        ],
+      },
+      {
+        source: '/ask-tts/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: ASK_TTS_CSP },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
       },
       {
         source: '/sw.js',

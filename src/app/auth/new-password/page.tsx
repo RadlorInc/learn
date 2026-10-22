@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentSession, mustChangePassword, setOwnPassword } from '@/data/auth'
+import { getCurrentSession, mustChangePassword, setOwnPassword, isWeakPassword } from '@/data/auth'
 import { MIN_PASSWORD, usernameFromEmail } from '@/core/childLogin'
 
 const C = { page: 'var(--paper)', card: 'var(--paper-soft)', edge: 'var(--card-border)', ink: 'var(--ink)', ink2: 'var(--ink-soft)', accent: 'var(--milo-orange)' } as const
@@ -37,7 +37,11 @@ export default function NewPasswordPage() {
     try {
       const { error } = await setOwnPassword(password)
       if (error) {
-        setError(/different from the old/i.test(error.message) ? 'Pick a new password, not the one your teacher gave you' : error.message)
+        // This screen is a CHILD's, so no data-breach wording: Supabase refuses a breached or guessable password
+        // whatever its length, and `error.message` would show them the auth server's own English.
+        setError(/different from the old/i.test(error.message) ? 'Pick a new password, not the one your teacher gave you'
+          : isWeakPassword(error) ? 'That password is too easy to guess. Pick a different one.'
+          : error.message)
         setSaving(false); return
       }
       router.replace('/modules')

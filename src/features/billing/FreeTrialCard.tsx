@@ -8,13 +8,19 @@ import { findLesson } from '@/features/lessons/modules'
 import { dcard, dbtn } from '@/features/dashboard/Helpers'
 import { useFamilyTrial } from './TrialTopicPicker'
 
-export function FreeTrialCard() {
+/**
+ * `childCount` only picks the wording: one child reads "Your child", more read "Your children" (founder, 2026-10-17 —
+ * "your children" to a parent with one child is wrong). The topics themselves are the FAMILY's, whatever the count.
+ */
+export function FreeTrialCard({ childCount = 1 }: { childCount?: number }) {
   const trial = useFamilyTrial()
   if (trial?.state !== 'chosen') return null
   return (
     <section style={dcard}>
       <h2 style={{ margin: 0, fontSize: 18 }}>Your free trial</h2>
-      <p style={{ margin: '6px 0 8px', lineHeight: 1.5 }}>Your children can learn these two topics:</p>
+      <p style={{ margin: '6px 0 8px', lineHeight: 1.5 }}>
+        {childCount > 1 ? 'Your children can learn these two topics:' : 'Your child can learn these two topics:'}
+      </p>
       <ul style={{ margin: '0 0 12px', paddingLeft: 18, lineHeight: 1.6 }}>
         {trial.topics.map(t => <li key={t}>{findLesson(t)?.lesson.title ?? t}</li>)}
       </ul>

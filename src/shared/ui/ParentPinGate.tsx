@@ -22,6 +22,16 @@ import { getMyRole, signOut, getPinStatus, verifyPin, setPin, requestPinReset, t
 import { errorWording } from '@/shared/ui/errorWording'
 
 type Stage = 'loading' | 'open' | 'enter' | 'create' | 'error'
+
+/**
+ * An open dashboard locks itself after this long with nothing touched (founder, 2026-10-17). The dashboard holds a
+ * child's progress, their sign-in and their game limit, so a dashboard left open on a shared tablet is the thing
+ * this guards. It asks for the PIN again — it does NOT sign the adult out, and it never touches a child's lesson.
+ *
+ * Measured against a clock, never a timer: a background tab's timers are throttled, so a sleeping laptop would
+ * otherwise come back still unlocked. Anything the adult does (a tap, a key, a scroll) starts the time again.
+ */
+export const IDLE_LOCK_MS = 15 * 60_000
 const time = (iso?: string | null) => iso ? new Date(iso).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : ''
 
 /** `preview` shows a stage without asking the server — for /ui-preview only; submitting does nothing useful there. */
@@ -32,6 +42,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
   const [confirm, setConfirm] = useState('')
   const [msg, setMsg] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
+  const [locked, setLocked] = useState(false)   // re-locked by inactivity, so the screen can say why
   const [busy, setBusy] = useState(false)
   const [failKind, setFailKind] = useState<ErrorKind>('other')
   // Same PIN for both adult roles; only the words follow the role — a teacher is not a "parent" (2026-09-18).
@@ -57,6 +68,28 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
   }
   useEffect(() => { if (!preview) load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Lock an idle dashboard (IDLE_LOCK_MS) ──────────────────────────────────────────────────────
+  // Only while it is open, and never in /ui-preview. The check runs on a clock reading, so time spent with the tab
+  // hidden or the device asleep counts, and it runs again the moment the tab is shown.
+  useEffect(() => {
+    if (stage !== 'open' || preview) return
+    let last = Date.now()
+    const touched = () => { last = Date.now() }
+    const lock = () => {
+      if (Date.now() - last < IDLE_LOCK_MS) return
+      setPinText(''); setConfirm(''); setMsg(null); setLocked(true); setStage('enter')
+    }
+    const onShow = () => { if (!document.hidden) lock() }
+    for (const e of ['pointerdown', 'keydown', 'scroll'] as const) addEventListener(e, touched, { passive: true })
+    document.addEventListener('visibilitychange', onShow)
+    const iv = setInterval(lock, 30_000)
+    return () => {
+      for (const e of ['pointerdown', 'keydown', 'scroll'] as const) removeEventListener(e, touched)
+      document.removeEventListener('visibilitychange', onShow)
+      clearInterval(iv)
+    }
+  }, [stage, preview])
+
   const digits = (v: string) => v.replace(/\D/g, '').slice(0, 4)
 
   async function submit() {
@@ -68,7 +101,7 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
     setBusy(false)
     if (r.ok) {
       if ('reset_cancelled' in r && r.reset_cancelled) window.alert('Someone asked to reset your PIN. Entering your PIN cancelled that.')
-      setStage('open'); return
+      setLocked(false); setStage('open'); return
     }
     setPinText(''); setConfirm('')
     if (r.error === 'locked') setMsg(`Too many wrong tries. Try again after ${time(r.locked_until)}.`)
@@ -98,6 +131,8 @@ export function ParentPinGate({ children, preview }: { children: ReactNode; prev
         <p style={{ margin: 0, fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.45 }}>
           {stage === 'create' ? `Choose 4 digits. We ask for it every time this dashboard opens, so a ${teacher ? 'student' : 'child'} on this device cannot get in.`
             : stage === 'error' ? errorWording(failKind, 'Check your connection and try again.')
+            // Say WHY it is asking again, or an adult who only stepped away reads it as the app forgetting them.
+            : locked ? 'The dashboard locked itself because nothing was touched for a while. You are still signed in.'
             : 'This keeps the dashboard for grown-ups only.'}
         </p>
 

@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en" data-style="whiteboard">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Whiteboard Answers</title>
+<link href="fonts.css" rel="stylesheet">
+<style>
+  :root { --ink: #222; --board: #fdfdfb; --page: #e9ecef; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: var(--page); font-family: system-ui, sans-serif; color: #222; }
+  .wrap { width: min(960px, 100vw - 32px); padding: 16px 0; }
+  .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  select, button { font-size: 17px; padding: 9px 16px; border-radius: 999px; border: 1px solid #b9c0c7; background: #fff; }
+  button { background: #2f7fd6; color: #fff; border: 0; cursor: pointer; }
+  button:disabled { opacity: .5; }
+  svg { width: 100%; height: auto; background: var(--board); border: 10px solid #b9c0c7; border-radius: 14px; box-shadow: 0 10px 30px #0002; display: block; overflow: hidden; }
+  .ink { stroke-linecap: round; stroke-linejoin: round; }
+  .hand { font-family: Caveat, cursive; }
+  /* Polished drawings (founder, 18 Oct 2026: Biology only for now): no wobble or watercolour, labels in a clean font. */
+  .polished [filter] { filter: none; }
+  .polished text { font-family: "Helvetica Neue", Arial, sans-serif; font-weight: 600; }
+  /* anatomy drawings and pins: square line ends, so an undrawn line (dash offset = its length) shows no dot */
+  .anat .ink { stroke-linecap: butt; }
+  .shimmer { stroke-dasharray: 3 16; opacity: .85; animation: flowrun .8s linear infinite; }
+  @keyframes flowrun { to { stroke-dashoffset: -38; } }
+  .anat-draw { transition: filter .6s; }
+  #scene.spot .anat-draw { filter: grayscale(.65) opacity(.38); }
+  .flow.old, .flow.old + .shimmer { opacity: .25; transition: opacity .6s; }
+  .flow.old + .shimmer { animation: none; }
+  @media (prefers-reduced-motion: reduce) { .shimmer { animation: none; } }
+  #scene.on-anat .prim, #scene.on-anat .trip { filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1px #fff); }
+  .fillable { transition: fill-opacity .7s ease; fill-opacity: 0; }
+  .fillable.on { fill-opacity: 1; }
+  .pivot { transform-box: fill-box; transform-origin: center; }
+  #scene { transform-box: view-box; transform-origin: 0 0; }
+  #caption { min-height: 1.6em; margin: 12px 4px 4px; font-size: 19px; text-align: center; }
+  #stats { font-size: 13px; color: #667; text-align: center; }
+  .styles { font-size: 14px; color: #445; } .styles a { color: #2f7fd6; }
+  #askbar { display: none; gap: 10px; margin-bottom: 12px; }
+  #q { flex: 1; min-width: 0; font-size: 17px; padding: 9px 16px; border-radius: 999px; border: 1px solid #b9c0c7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <form id="askbar" aria-label="Ask a question">
+    <input id="q" placeholder="Ask anything, e.g. Why is the sky blue?" aria-label="Your question" maxlength="500">
+    <button id="ask">Ask</button>
+  </form>
+  <div class="bar">
+    <select id="pick" aria-label="Question"></select>
+    <button id="play">▶ Play</button>
+    <span class="styles">Choose your style: <b>Whiteboard</b> · <a href="explain-stopmotion.html">Stop-motion</a> · <a href="matchcut.html">Match-cut</a> · <a href="styles-demo.html">(the two Instagram style copies)</a> · <a href="compare.html"><b>Compare all</b></a></span>
+  </div>
+  <svg viewBox="0 0 960 540" aria-label="Whiteboard answer"><g id="scene"></g></svg>
+  <div id="caption"></div>
+  <div id="stats"></div>
+</div>
+
+<script src="answers.js"></script>
+<script src="recipes.js"></script>
+<script src="lib/wb-load.js"></script>
+<script>
+// ---------- Player: ek scene script (JSON) ko whiteboard animation mein chalata hai ----------
+const NS = 'http://www.w3.org/2000/svg';
+const $ = s => document.querySelector(s);
+const scene = $('#scene');
+// FAST: a seek draws the steps before the one it jumps to at once (bridge.js seek), with no motion and no voice.
+let FAST = false, PAUSED = false;      // PAUSED: the embedded player's pause (bridge.js); timed drawing and waits hold
+const wait = ms => FAST ? Promise.resolve() : frames(ms, () => {});
+const BOUNCE = 'cubic-bezier(.34,1.56,.64,1)', SMOOTH = 'cubic-bezier(.65,0,.35,1)';
+let els = {}, marker, camNow = '', runId = 0;
+
+function mk(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  parent?.append(e);
+  return e;
+}
+
+// "circle 110 110 45 f=#ffd23f c=#e09f00"  ya  "text 40 60 s=30 | Hello"
+function parse(spec) {
+  const [head, content] = spec.split('|').map(s => s?.trim());
+  const parts = head.split(/\s+/), type = parts.shift();
+  const n = [], o = {};
+  for (const p of parts) p.includes('=') ? (o[p.split('=')[0]] = p.split('=')[1]) : n.push(+p);
+  return { type, n, o, content };
+}
+
+function arrowD([x1, y1, x2, y2]) {
+  const a = Math.atan2(y2 - y1, x2 - x1), h = 16;
+  const p = d => `${x2 - h * Math.cos(a + d)} ${y2 - h * Math.sin(a + d)}`;
+  return `M${x1} ${y1} L${x2} ${y2} M${p(-.45)} L${x2} ${y2} L${p(.45)}`;
+}
+
+// Words written on top of other words (the model's text over a recipe's own label, heading or formula, two tags in one
+// spot) or running across the edge of a library drawing are fixed at build. Each crowded word tries nearby spots (up,
+// down, and for text also left and right) and smaller sizes (a title shrinks most readily) and takes the one with the
+// least overlap, even when the board has no fully free place (19 Oct 2026: a title over a Krebs cycle's own heading
+// had nowhere wholly clear to go and stayed put). A word wholly inside a drawing (a note in a graph) is meant to be
+// there. Drawings never move; old videos get it too.
+const PRIMS = new Set(['text', 'tag', 'title', 'circle', 'ellipse', 'rect', 'line', 'arrow', 'path', 'pin']);
+function unclutter(movable, drawings) {
+  const m = scene.getScreenCTM(); if (!m || !movable.length) return;
+  const inv = m.inverse(), box = e => { const r = e.getBoundingClientRect();
+    const a = new DOMPoint(r.left, r.top).matrixTransform(inv), b = new DOMPoint(r.right, r.bottom).matrixTransform(inv);
+    return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y }; };
+  const area = q => q.w * q.h, cross = (p, q) => Math.max(0, Math.min(p.x + p.w, q.x + q.w) - Math.max(p.x, q.x)) * Math.max(0, Math.min(p.y + p.h, q.y + q.h) - Math.max(p.y, q.y));
+  const inside = (q, d) => q.x >= d.x - 2 && q.y >= d.y - 2 && q.x + q.w <= d.x + d.w + 2 && q.y + q.h <= d.y + d.h + 2;
+  const placed = [...scene.querySelectorAll('text')].filter(t => !movable.some(e => e === t || e.contains(t))).map(box).filter(area);
+  const boxes = drawings.map(box).filter(area);
+  // how crowded a spot is: the area it shares with other words and with library drawings it runs across (or, for a tag, sits on)
+  // (a word the model put wholly inside a drawing may stay inside it; one from outside is not pushed into it)
+  const onWords = q => placed.reduce((s, p) => s + cross(p, q), 0);
+  const onDrawings = (q, tag, home) => boxes.reduce((s, d) => s + (cross(d, q) && (tag || !(inside(q, d) && inside(home, d))) ? cross(d, q) : 0), 0);
+  const cost = (q, tag, home) => onWords(q) + onDrawings(q, tag, home);
+  const off = q => q.x < 0 || q.y < 0 || q.x + q.w > 960 || q.y + q.h > 540;
+  const shift = (e, dx, dy) => { if (e.kind !== 'tag') { e.setAttribute('x', +e.getAttribute('x') + dx); e.setAttribute('y', +e.getAttribute('y') + dy); }
+    else { for (const c of e.querySelectorAll('rect, text')) c.setAttribute('y', +c.getAttribute('y') + dy); e.center[1] += dy; } };
+  for (const e of movable) {
+    const b = box(e); if (!area(b)) continue;
+    const tag = e.kind === 'tag', c0 = cost(b, tag, b);
+    if (onWords(b) <= .05 * area(b) && !onDrawings(b, tag, b)) { placed.push(b); continue; }   // clear: leave it where the model put it
+    const s0 = tag ? 0 : +e.getAttribute('font-size'), size = f => { if (s0) e.setAttribute('font-size', (s0 * f).toFixed(1)); };
+    const dys = [0, 1, -1, 2, -2, 3, -3].map(k => k * (b.h + 6)), dxs = tag ? [0] : [0, -40, 40, -80, 80, -140, 140];
+    let best = { c: c0, f: 1, dx: 0, dy: 0 };
+    for (const f of s0 ? [1, .9, .8, .7] : [1]) {
+      size(f); const s = f === 1 ? b : box(e);
+      for (const dy of dys) for (const dx of dxs) {
+        const q = { ...s, x: s.x + dx, y: s.y + dy }; if ((f === 1 && !dx && !dy) || off(q)) continue;
+        // a small price for each change, so the nearest fix wins; a title gives up size more easily than place
+        const c = cost(q, tag, b) + (1 - f) * area(b) * (e.kind === 'title' ? .05 : .3) + (Math.abs(dx) + Math.abs(dy)) * b.h * .05;
+        if (c < best.c) best = { c, f, dx, dy };
+      }
+    }
+    if (best.c < c0 * .6) { size(best.f); shift(e, best.dx, best.dy); } else size(1);
+    placed.push(box(e));
+  }
+}
+
+function build(answer) {
+  scene.replaceChildren(); els = {};
+  // the order the model wrote (answer.order: saved scripts, whose jsonb lost it); older saved videos: pins last
+  const keys = Array.isArray(answer.order) ? [...new Set([...answer.order.filter(k => k in answer.els), ...Object.keys(answer.els)])]
+    : Object.keys(answer.els).sort((a, b) => /^\s*pin\b/.test(answer.els[a]) - /^\s*pin\b/.test(answer.els[b]));
+  for (const [id, spec] of keys.map(k => [k, answer.els[k]])) {
+    const { type, n, o, content } = parse(spec);
+    const stroke = { stroke: o.c || '#222', 'stroke-width': o.w || 5, class: 'ink pivot', fill: o.f || 'none' };
+    if (o.f) stroke.class += ' fillable';
+    let e;
+    if (type === 'circle') e = mk('circle', { cx: n[0], cy: n[1], r: n[2], ...stroke }, scene);
+    else if (type === 'ellipse') e = mk('ellipse', { cx: n[0], cy: n[1], rx: n[2], ry: n[3], ...stroke }, scene);
+    else if (type === 'rect') e = mk('rect', { x: n[0], y: n[1], width: n[2], height: n[3], rx: o.rx || 4, ...stroke }, scene);
+    else if (type === 'line') e = mk('path', { d: `M${n[0]} ${n[1]} L${n[2]} ${n[3]}`, ...stroke, fill: 'none' }, scene);
+    else if (type === 'arrow') e = mk('path', { d: arrowD(n), ...stroke, fill: 'none' }, scene);
+    else if (type === 'path') e = mk('path', { d: content, ...stroke }, scene);
+    else if (type === 'text') {
+      e = mk('text', { x: n[0], y: n[1], class: 'hand pivot', 'font-size': o.s || 32, fill: o.f || '#222' }, scene);
+      richText(e, content);
+    } else if (type === 'tag') {                       // dabba + beech mein likha text, saath hilte hain
+      const [cx, cy, w, h] = n;
+      e = mk('g', { class: 'pivot' }, scene);
+      mk('rect', { x: cx - w / 2, y: cy - h / 2, width: w, height: h, rx: 8, stroke: '#222', 'stroke-width': 4, fill: o.f || '#fff3c4', class: 'ink fillable' }, e);
+      const t = mk('text', { x: cx, y: cy + 9, 'text-anchor': 'middle', class: 'hand fillable', 'font-size': o.s || 28, fill: '#222' }, e);
+      richText(t, content);
+      e.center = [cx, cy];
+    } else if (RECIPES[type]) {
+      e = RECIPES[type](n, o, content, scene);
+      if (e.tagName === 'g' && !e.anim) { const inner = mk('g', { class: 'pivot' }); inner.append(...e.childNodes); e.append(inner); e.anim = inner; }
+      if (e.tagName === 'text') e.classList.add('pivot');
+    }
+    else throw new Error(`Unknown element type "${type}" in ${id}`);
+    e.kind = type; e.off = [0, 0];
+    if (['line', 'arrow', 'path', 'circle', 'ellipse', 'rect'].includes(type)) e.classList.add('prim');
+    els[id] = e;
+  }
+  const words = keys.filter(k => ['text', 'tag', 'title'].includes(els[k].kind)).map(k => els[k]), drawings = keys.filter(k => !PRIMS.has(els[k].kind)).map(k => els[k]);
+  unclutter(words, drawings);
+  // measured again once the hand font has loaded: before it, a fallback font made a long title look short enough
+  if (document.fonts && document.fonts.status !== 'loaded') document.fonts.ready.then(() => { if (words[0]?.isConnected) unclutter(words, drawings); });
+  marker = mk('g', { style: 'opacity:0' }, scene);
+  marker.innerHTML = '<g transform="rotate(-35)"><path d="M0 0 L8 -14 L-8 -14Z" fill="#222"/><rect x="-11" y="-110" width="22" height="96" rx="6" fill="#2f7fd6" stroke="#1d1d1f" stroke-width="3"/><rect x="-11" y="-120" width="22" height="22" rx="5" fill="#1d1d1f"/></g>';
+  // sab chhupa do
+  // Over a realistic drawing a plain arrow or line gets a white edge, or a red arrow vanishes on a red heart
+  scene.classList.toggle('on-anat', !!scene.querySelector('.anat'));
+  scene.querySelectorAll('.ink').forEach(e => { const L = e.getTotalLength(); e.style.strokeDasharray = L; e.style.strokeDashoffset = L; });
+  scene.querySelectorAll('text.hand:not(.fillable)').forEach(e => e.style.clipPath = 'inset(0 100% 0 0)');
+  setCam(480, 270, 1, 0);
+}
+
+const strokeOf = id => { const e = els[id]; if (!e) throw new Error(`No element "${id}"`); return e.kind === 'tag' ? e.querySelector('rect') : e; };
+
+function markAt(el, x, y) {
+  const p = new DOMPoint(x, y).matrixTransform(scene.getCTM().inverse().multiply(el.getCTM()));
+  marker.setAttribute('transform', `translate(${p.x} ${p.y})`);
+}
+
+function frames(ms, onT) {
+  if (FAST) { onT(1); return Promise.resolve(); }
+  return new Promise(done => {
+    let gone = 0, last = performance.now();                 // time only runs while not paused
+    (function f(now) { if (!PAUSED) gone += now - last; last = now; const t = Math.min(gone / ms, 1); onT(t); t < 1 ? requestAnimationFrame(f) : done(); })(last);
+  });
+}
+const ease = t => t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+
+function drawEl(el, ms) {
+  const len = el.getTotalLength();
+  marker.style.opacity = 1;
+  return frames(ms, t => { t = ease(t); el.style.strokeDashoffset = len * (1 - t); const p = el.getPointAtLength(len * t); markAt(el, p.x, p.y); });
+}
+// A flow over a realistic drawing (founder, 18 Oct 2026): once drawn, an arrow or line carries a white shimmer that
+// runs along it, so the movement reads; the step's spotlight (bridge.js) dims the drawing behind it.
+// a flow = an arrow, line or path lying over a realistic drawing (not, say, the arrows between the step tags)
+function isFlow(el) {
+  if (!el || !el.classList?.contains('prim') || !['arrow', 'line', 'path'].includes(el.kind)) return false;
+  const a = el.getBoundingClientRect();
+  return [...scene.querySelectorAll('.anat-draw')].some(g => { const b = g.getBoundingClientRect();
+    return Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 0; });
+}
+function flowify(el) {
+  if (!isFlow(el)) return;
+  el.classList.add('flow');
+  const w = parseFloat(el.getAttribute('stroke-width')) || 5;
+  el.shimmer = mk('path', { d: el.getAttribute('d'), fill: 'none', stroke: '#fff', 'stroke-width': Math.max(1.5, w * .45), 'stroke-linecap': 'round', class: 'shimmer', 'pointer-events': 'none' });
+  el.after(el.shimmer);
+}
+async function draw(id, ms = 800) {
+  const el = strokeOf(id);
+  // A tag's words show once its box is drawn; "fill" adds the colour. A script that drew a tag but never filled it
+  // showed an empty box (seen in 3 of 6 real videos, 19 Oct 2026).
+  if (el.tagName !== 'g') { await drawEl(el, ms); flowify(el); if (els[id].kind === 'tag') els[id].querySelector('text')?.classList.add('on'); return; }
+  // recipe: saari lines ek-ek karke (lambai ke hisaab se samay), phir uske labels
+  // .linked: a pin's outline kept inside the drawing it points at; the pin draws it (el.linked), the drawing does not
+  const inks = [...el.querySelectorAll('.ink:not(.linked)'), ...(el.linked || [])], total = inks.reduce((s, e) => s + e.getTotalLength(), 0);
+  // A line's share of the drawing's time, never less than 50 ms unless there are many lines: a whole drawing stays near
+  // its budget (founder, 19 Oct 2026: drawn, but a child is not kept waiting; a 124-line Servier drawing took 6 s+).
+  if ((el.matches('.anat-draw') || el.querySelector('.anat-draw')) && ms === 800) ms = 600;           // a realistic drawing: about 1 s of pen in all (each line takes a frame or more)
+  const floor = Math.min(50, ms / Math.max(1, inks.length));
+  for (const e of inks) await drawEl(e, Math.max(floor, ms * e.getTotalLength() / total));
+  for (const t of el.querySelectorAll('.lbl')) await write(t, 500);
+}
+async function write(id, ms = 900) {
+  const el = typeof id === 'string' ? els[id] : id;
+  // a recipe (label, tag…) is a group: write the hidden text inside it, not the group itself
+  if (el.tagName === 'g') { const ts = [...el.querySelectorAll('text.hand:not(.fillable)')]; for (const t of ts) await write(t, ms / ts.length); return; }
+  const b = el.getBBox();
+  marker.style.opacity = 1;
+  return frames(ms, t => { el.style.clipPath = `inset(0 ${100 - t * 100}% 0 0)`; markAt(el, b.x + b.width * t, b.y + b.height * .75); });
+}
+async function penUp() {
+  if (marker.style.opacity === '0') return;
+  if (FAST) { marker.style.opacity = 0; return; }
+  await marker.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220 }).finished;
+  marker.style.opacity = 0;
+}
+const anim = (el, kf, opt = {}) => el.animate(kf, { duration: 600, easing: BOUNCE, fill: 'forwards', ...opt, ...(FAST && { duration: 0 }) }).finished;
+function setCam(cx, cy, s, ms) {
+  const to = `translate(${480 - s * cx}px, ${270 - s * cy}px) scale(${s})`;
+  const p = ms ? anim(scene, [{ transform: camNow || to }, { transform: to }], { duration: ms, easing: SMOOTH }) : (scene.style.transform = to, Promise.resolve());
+  camNow = to; return p;
+}
+function go(id, ms, pts) {             // tag ko waypoints se le jao (centre coordinates)
+  const el = els[id], [cx, cy] = el.center, kf = [{ transform: `translate(${el.off[0]}px, ${el.off[1]}px)` }];
+  for (let i = 0; i < pts.length; i += 2) kf.push({ transform: `translate(${pts[i] - cx}px, ${pts[i + 1] - cy}px)` });
+  el.off = [pts.at(-2) - cx, pts.at(-1) - cy];
+  return anim(el, kf, { duration: ms, easing: 'ease-in-out' });
+}
+
+// Ek kan raaste par safar kare: "travel bodyIn,toLungs,fromLungs,toBody 6000 loop"
+// har raaste ka rang le leta hai; paas ke raaste jud jaate hain, door wale par kan chhup kar wahan nikalta hai
+async function travel(ids, ms, repeat, me = runId) {
+  // With a realistic drawing on the board, a dot running only along the arrows between the step tags looked like
+  // blood or urine flowing there (founder, 18 Oct 2026): a travel that touches none of the drawing is skipped.
+  if (scene.classList.contains('on-anat') && !ids.some(id => isFlow(els[id]) || els[id]?.closest?.('.anat'))) return;
+  if (FAST) {                     // a one-off trip leaves nothing behind; a looping one starts once the seek is done
+    if (repeat) setTimeout(() => me === runId && travel(ids, ms, repeat, me), 50);
+    return;
+  }
+  const segs = ids.map(id => { const g = els[id], p = g.tagName === 'g' ? g.querySelector('.ink:not(.head)') : g; return { p, len: p.getTotalLength(), color: p.getAttribute('stroke') }; });
+  const at = (s, t) => { const q = s.p.getPointAtLength(s.len * t); return new DOMPoint(q.x, q.y).matrixTransform(scene.getCTM().inverse().multiply(s.p.getCTM())); };
+  const dot = mk('circle', { r: 9, stroke: '#fff', 'stroke-width': 3, class: 'trip' }); scene.insertBefore(dot, marker);
+  const put = q => { dot.setAttribute('cx', q.x); dot.setAttribute('cy', q.y); };
+  const total = segs.reduce((t, s) => t + s.len, 0), per = i => Math.max(300, ms * segs[i].len / total);
+  do {
+    for (let i = 0; i < segs.length; i++) {
+      if (me !== runId) return dot.remove();
+      dot.setAttribute('fill', segs[i].color);
+      if (i > 0) {
+        const a = at(segs[i - 1], 1), b = at(segs[i], 0);
+        if (Math.hypot(b.x - a.x, b.y - a.y) < 260) await frames(250, t => put({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }));
+        else { await dot.animate([{ opacity: 1 }, { opacity: 0 }], 200).finished; put(b); dot.animate([{ opacity: 0 }, { opacity: 1 }], 200); }
+      }
+      await frames(per(i), t => put(at(segs[i], t)));
+    }
+  } while (repeat && me === runId);
+  dot.remove();
+}
+
+// Lagataar chalne wali motion: dil ka dhadakna, bahaav, baarish, bhaap, lehrein
+function loop(el, kind) {
+  const t = el.anim || el, inks = [...el.querySelectorAll('.ink:not(.head)')], forever = { iterations: Infinity };
+  if (kind === 'beat') t.animate([{ scale: 1 }, { scale: 1.06 }, { scale: .98 }, { scale: 1 }], { duration: 850, easing: 'ease-in-out', ...forever });
+  else if (kind === 'flow') inks.forEach(e => { e.style.strokeDasharray = '12 9'; e.animate([{ strokeDashoffset: 0 }, { strokeDashoffset: -42 }], { duration: 900, ...forever }); });
+  else if (kind === 'fall' || kind === 'rise') inks.forEach((e, i) => e.animate(
+    [{ translate: '0 0', opacity: 1 }, { translate: kind === 'fall' ? '-6px 34px' : '0 -26px', opacity: 0 }],
+    { duration: 1000, delay: i * 70, easing: 'ease-in', ...forever }));
+  else if (kind === 'swing') {                 // rotate about a pivot: the drawing's own (el.swing, pivot at its 0,0) or its top centre
+    const s = el.swing || t; Object.assign(s.style, el.swing ? { transformBox: 'view-box', transformOrigin: '0px 0px' } : { transformBox: 'fill-box', transformOrigin: '50% 0%' });
+    s.animate([{ rotate: el.swing ? '0deg' : '-8deg' }, { rotate: el.swing ? '40deg' : '8deg' }], { duration: 1400, direction: 'alternate', easing: 'ease-in-out', ...forever });
+  }
+  else if (kind === 'sway') t.animate([{ translate: '-10px 0' }, { translate: '10px 0' }], { duration: 1600, direction: 'alternate', easing: 'ease-in-out', ...forever });
+  else throw new Error(`Unknown loop "${kind}"`);
+}
+
+// A teacher's mark (20 Oct 2026): circle, underline or point at something already on the board, in red chalk, on
+// the word that names it (bridge.js cues); it fades after a moment so the board stays clean. A seek skips it.
+async function mark(id, kind = 'circle', ms = 600) {
+  const e = els[id]; if (!e) throw new Error(`No element "${id}"`);
+  if (FAST) return;
+  const b = e.getBBox(), M = scene.getCTM().inverse().multiply(e.getCTM());
+  const pts = [[b.x, b.y], [b.x + b.width, b.y], [b.x, b.y + b.height], [b.x + b.width, b.y + b.height]].map(([x, y]) => new DOMPoint(x, y).matrixTransform(M));
+  const x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)), y0 = Math.min(...pts.map(p => p.y)), y1 = Math.max(...pts.map(p => p.y));
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  let d;
+  if (kind === 'circle') {             // a hand loop: a little past all the way round, so the ends overlap like chalk
+    const rx = (x1 - x0) / 2 + 16, ry = (y1 - y0) / 2 + 14;
+    d = Array.from({ length: 41 }, (_, i) => { const t = -1.9 + i / 40 * 2.15 * Math.PI, k = 1 + .04 * Math.sin(i / 3);
+      return `${i ? 'L' : 'M'}${(cx + rx * k * Math.cos(t)).toFixed(1)} ${(cy + ry * k * Math.sin(t)).toFixed(1)}`; }).join(' ');
+  } else if (kind === 'underline') d = `M${x0 - 6} ${y1 + 10} Q${cx} ${y1 + 16} ${x1 + 6} ${y1 + 8}`;
+  else if (kind === 'point') {         // an arrow in from the side with more room, its tip just off the thing
+    const s = x0 > 960 - x1 ? -1 : 1, u = cy < 80 ? 1 : -1, tx = s < 0 ? x0 - 8 : x1 + 8, fx = tx + s * 90, fy = cy + u * 55;   // u: from above, or below near the top
+    d = `M${fx} ${fy} Q${tx + s * 30} ${fy} ${tx} ${cy} M${tx + s * 4} ${cy + u * 22} L${tx} ${cy} L${tx + s * 22} ${cy + u * 10}`;
+  } else throw new Error(`Unknown mark "${kind}"`);
+  const m = mk('path', { d, fill: 'none', stroke: '#e53935', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'pointer-events': 'none' });
+  scene.insertBefore(m, marker);
+  const L = m.getTotalLength(); m.style.strokeDasharray = L; m.style.strokeDashoffset = L;
+  await drawEl(m, ms);
+  wait(1800).then(() => m.isConnected && anim(m, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, easing: 'linear' })).then(() => m.remove());
+}
+
+// A command may start with a cue, "@nucleus draw n1": bridge.js waits for the voice to say that word; here it is dropped.
+const bare = cmd => cmd.trim().replace(/^&\s*/, '').replace(/^@\S+\s+/, '').replace(/^&\s*/, '');   // "&@w x" or "@w &x"
+
+// Ek command: "draw sun 900", "fill a b c", "go p1 2000 360 150 620 150", "&pop x" (& = intezaar mat karo)
+async function run(cmd) {
+  const bg = /^(@\S+\s+)?&/.test(cmd.trim()); const [op, ...a] = bare(cmd).split(/\s+/);
+  const nums = a.slice(1).map(Number);
+  let p;
+  if (op === 'draw') p = draw(a[0], nums[0]);
+  else if (op === 'write') p = write(a[0], nums[0]);
+  else if (op === 'fill') { a.forEach(id => (els[id].tagName === 'g' ? els[id].querySelectorAll('.fillable') : [els[id]]).forEach(e => e.classList.add('on'))); p = wait(150); }
+  else if (op === 'pop') p = anim(els[a[0]].anim || els[a[0]], [{ scale: 1 }, { scale: nums[0] || 1.15 }, { scale: 1 }], { duration: 500, easing: 'ease-out', fill: 'none' });
+  else if (op === 'fade') p = anim(els[a[0]], [{ opacity: getComputedStyle(els[a[0]]).opacity }, { opacity: nums[0] }], { duration: nums[1] || 500, easing: 'linear' });
+  else if (op === 'go') p = go(a[0], nums[0], nums.slice(1));
+  else if (op === 'cam') p = Promise.resolve();   // founder, 12 Oct: the whole board stays in view so the flow shows; old scripts' cam is ignored
+  else if (op === 'wait') p = wait(+a[0]);
+  else if (op === 'loop') { loop(els[a[0]], a[1]); p = Promise.resolve(); }
+  else if (op === 'travel') p = travel(a[0].split(','), nums[0], a[2] === 'loop');
+  else if (op === 'mark') p = mark(a[0], a[1], nums[1]);
+  else throw new Error(`Unknown command "${op}"`);
+  // a looping travel never ends: waiting for it froze the lesson on that step (18 Oct 2026), so it always runs alongside
+  if (!bg && !(op === 'travel' && a[2] === 'loop')) await p;
+}
+
+function say(text) {
+  $('#caption').textContent = text;
+  return new Promise(done => {
+    const guess = 1200 + text.length * 70, tts = window.speechSynthesis;
+    if (!tts) { self.voiceStart?.(text, guess / 1000); return wait(guess).then(done); }
+    const u = new SpeechSynthesisUtterance(text), v = tts.getVoices();
+    u.voice = v.find(x => /Samantha|Google UK English Female|Veena|Rishi/.test(x.name)) || v.find(x => x.lang.startsWith('en')) || null;
+    u.rate = 0.97;
+    let fin = false; const end = () => { if (!fin) { fin = true; done(); } };
+    u.onend = end; u.onerror = end;
+    // the board's cues (bridge.js) follow the words: when the speaking starts, and each word's place as it is reached
+    u.onstart = () => self.voiceStart?.(text, text.length * .07); u.onboundary = e => self.voiceAt?.(e.charIndex);
+    self.voiceStart?.(text, text.length * .07);     // a voice that never says onstart still moves the cues
+    setTimeout(end, guess + 4000);                  // ponytail: Chrome kabhi onend nahi bhejta; ye bas bachaav hai
+    tts.speak(u);
+  });
+}
+
+async function play(answer) {
+  runId++;
+  window.speechSynthesis?.cancel();
+  document.getAnimations().forEach(a => a.cancel());
+  build(answer); stats(answer);
+  $('#play').disabled = true;
+  try {
+    for (const s of answer.steps) {
+      await Promise.all([say(s.say), (async () => { for (const c of s.do) await run(c); await penUp(); })()]);
+      await wait(250);
+    }
+  } catch (e) { $('#caption').textContent = '⚠️ ' + e.message; console.error(e); }
+  $('#play').disabled = false; $('#play').textContent = '↻ Replay';
+}
+
+// Har script ka size: yahi AI ko likhna padega, isi se kharcha nikalta hai
+function stats(a) {
+  const chars = JSON.stringify(a).length, spoken = a.steps.map(s => s.say).join(' ').length;
+  $('#stats').textContent = `Scene script: ${chars.toLocaleString()} chars (≈ ${Math.round(chars / 3.5).toLocaleString()} tokens) · narration: ${spoken} chars`;
+}
+
+ANSWERS.forEach((a, i) => $('#pick').append(new Option(a.q, i)));
+const current = () => ANSWERS[$('#pick').value];
+$('#pick').onchange = () => { build(current()); stats(current()); $('#caption').textContent = ''; $('#play').textContent = '▶ Play'; };
+$('#play').onclick = () => play(current());
+window.speechSynthesis?.getVoices();
+build(current()); stats(current());
+// #autoN plays answer N; #showN only opens it (the compare page uses this)
+const fromHash = () => { const m = location.hash.match(/#(auto|show)(\d*)/); if (m) { $('#pick').value = m[2] || 0; $('#pick').onchange(); if (m[1] === 'auto') play(current()); } };
+fromHash(); window.onhashchange = fromHash;
+// ?saved=1 : also list the answers saved from live API runs (saved-answers.jsonl), marked ★; no API call
+if (new URLSearchParams(location.search).has('saved')) fetch('saved-answers.jsonl').then(r => r.text()).then(t => t.trim().split('\n').filter(Boolean).map(JSON.parse)).then(all => {
+  for (const s of all.filter(s => s.style === 'whiteboard')) { ANSWERS.push(s.answer); $('#pick').append(new Option('★ ' + s.answer.q, ANSWERS.length - 1)); }
+  $('#pick').value = ANSWERS.length - all.filter(s => s.style === 'whiteboard').length; $('#pick').onchange();
+});
+
+// Ask anything: only when the page is served by server.mjs (python http.server has no /api)
+if (self === top) fetch('api/health').then(r => r.ok && r.json()).then(h => { if (h) $('#askbar').style.display = 'flex'; }).catch(() => {});
+$('#askbar').onsubmit = async e => {
+  e.preventDefault();
+  const question = $('#q').value.trim(); if (!question) return;
+  $('#ask').disabled = true; const t0 = Date.now();
+  const tick = setInterval(() => $('#caption').textContent = `Writing your lesson… ${Math.round((Date.now() - t0) / 1000)} s`, 500);
+  try {
+    const r = await fetch('api/answer', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ question }) });
+    const out = await r.json();
+    if (!r.ok) throw new Error(out.error);
+    ANSWERS.push(out.answer); $('#pick').append(new Option(out.answer.q, ANSWERS.length - 1)); $('#pick').value = ANSWERS.length - 1;
+    clearInterval(tick); play(out.answer);
+    if (out.usage[0]?.mock) $('#stats').textContent += ' · MOCK: a hand-made answer, no API call';
+    else $('#stats').textContent += ` · made in ${(out.ms / 1000).toFixed(1)} s, ${out.attempts} attempt(s), cost $${out.cost.toFixed(4)}`;
+  } catch (err) { clearInterval(tick); $('#caption').textContent = '⚠️ ' + err.message; }
+  $('#ask').disabled = false;
+};
+</script>
+<style>:root.embed{color-scheme:dark}.embed body{margin:0;background:transparent;min-height:0;display:block;place-items:normal}.embed .wrap{width:auto;max-width:none;margin:0;padding:0}.embed .bar,.embed #askbar,.embed #stats,.embed a{display:none!important}.embed svg,.embed canvas{display:block;width:100%;height:auto}.embed #caption{min-height:0;margin:10px 12px 4px;font-size:clamp(14px,3.6vw,19px);color:#e4e4e7}.embed svg{border:0;border-radius:0;box-shadow:none}</style><script src="bridge.js"></script>
+</body>
+</html>

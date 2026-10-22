@@ -1,4 +1,4 @@
-const VERSION      = 'v252'
+const VERSION      = 'v253'
 const SHELL_CACHE  = `milo-shell-${VERSION}`
 const STATIC_CACHE = `milo-static-${VERSION}`
 const ASSETS_CACHE = `milo-assets-${VERSION}`
@@ -83,6 +83,11 @@ self.addEventListener('fetch', event => {
     )
     return
   }
+
+  // Ask maths (docs/product/ask-maths.md): the board and its voice go straight to the network. The voice files
+  // (~40 MB of voices, the model from Hugging Face) are kept by the voice worker itself (OPFS / Cache Storage
+  // "pocket"), never twice in this worker's caches; the board's page must be the one this deploy serves.
+  if (url.pathname.startsWith('/ask-player/') || url.pathname.startsWith('/ask-tts/')) return
 
   // The game (built into public/blockcraft). Its page names its code by content hash, so the page must come from the
   // network (a stale page would ask for code the new deploy no longer has) and the hashed files can be cached for ever.

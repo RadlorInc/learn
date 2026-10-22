@@ -5,7 +5,7 @@ import { HOLDS_SEATS, subscriptionRow, totalCents } from '@/core/billing'
 import { sinkError } from '@/infra/errorSink'
 import { callerKey, overLimit } from '../../_rateLimit'
 import { ConfigMissing, sendEmail, Undeliverable } from '@/features/consent/server'
-import { renderRenewalReminder, renderSubscribed } from '@/features/billing/subscriptionNotices'
+import { renderAddonSubscribed, renderRenewalReminder, renderSubscribed } from '@/features/billing/subscriptionNotices'
 
 /**
  * The Stripe webhook. Signature-verified, idempotent, and ORDER-INDEPENDENT.
@@ -186,6 +186,38 @@ export async function POST(req: Request) {
     sub = await stripe.subscriptions.retrieve(subId)
   } catch (e) {
     return fail('subscription retrieve', e instanceof Error ? e.message : String(e))
+  }
+
+  // ── 3b. Ask maths, the add-on (docs/product/ask-maths.md): its own row, never the plan's ─────────────
+  // Its subscription carries metadata.product = 'ask_maths' (/api/checkout/ask-maths). It is applied to
+  // addon_subscriptions with the same properties as the plan: Stripe's current truth, an upsert keyed on the account
+  // and product (convergent on replay), and a closed account is acknowledged, not retried.
+  if (sub.metadata?.product === 'ask_maths') {
+    const account = sub.metadata.account_id
+    if (!account) return done({ ignored: 'no_account_metadata' })
+    const periodEnd = sub.items?.data?.[0]?.current_period_end
+    const addon = {
+      account_id: account, product: 'ask_maths', status: sub.status,
+      stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id ?? null,
+      stripe_subscription_id: sub.id, cancel_at_period_end: !!sub.cancel_at_period_end,
+      current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null, updated_at: new Date().toISOString(),
+    }
+    const up = await db('addon_subscriptions?on_conflict=account_id,product', {
+      method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: JSON.stringify(addon),
+    }).catch(() => null)
+    if (up && up.status === 409 && /"code"\s*:\s*"23503"/.test(await up.clone().text())) return done({ ignored: 'account_closed' })
+    if (!up || !up.ok) return fail('addon upsert', up ? await up.text() : 'network')
+    if (event.type === 'checkout.session.completed' && object.customer_details?.email) {
+      const item = sub.items?.data?.[0]
+      try {
+        await sendEmail('transactional', object.customer_details.email, renderAddonSubscribed({
+          chargedCents: object.amount_total ?? 0, renewalCents: item?.price?.unit_amount ?? 0, renewsIso: addon.current_period_end,
+        }), `addon-ack-${sub.id}`)
+      } catch (e) {
+        if (!(e instanceof ConfigMissing) && !(e instanceof Undeliverable)) return fail('email', e instanceof Error ? e.message : String(e))
+      }
+    }
+    return done({ ok: true, addon: 'ask_maths', status: sub.status }, account)
   }
 
   const row = subscriptionRow(sub)

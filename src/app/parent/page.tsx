@@ -124,6 +124,9 @@ function Dashboard() {
   const [prefs, setPrefsState] = useState<Prefs | null>(null)
   const [bell, setBell] = useState(false)
   const [tour, setTour] = useState<(Tour & { id?: string }) | null>(null)
+  // Set on mount only: `?billing=success` is the return from Stripe's Checkout (/api/checkout's success_url).
+  const [justPaid, setJustPaid] = useState(false)
+  useEffect(() => { setJustPaid(new URLSearchParams(window.location.search).get('billing') === 'success') }, [])
   const [now] = useState(() => Date.now())
   const [autoDone, setAutoDone] = useState(false)   // the one automatic pop-up of this visit has been shown and closed
   // English or Spanish, chosen in Account → Language. PARENTS ONLY (founder, 2026-09-22): a teacher's dashboard stays English.
@@ -365,13 +368,6 @@ function Dashboard() {
       { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
       { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
       { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }
-    // The first time a parent opens the add-a-child window with no child yet. Runs inside the window, after consent.
-    if (id === 'add-child') return { title: t('Add your first child'), steps: [
-      { target: 'add-avatar', title: t('Pick a picture'), text: t('Choose a picture for your child.') },
-      { target: 'add-name', title: t('Their name'), text: t('A first name or nickname is plenty.') },
-      { target: 'add-modules', title: t('Choose their lessons'), text: t('Pick a grade, then tick the modules they can see. You can change this later in their Lessons tab.') },
-      { target: 'add-attest', title: t('Confirm this child'), text: t('Tick to confirm you are their parent or guardian.') },
-      { target: 'add-submit', title: t('Add them'), text: t('Tap here when you’re done.') }] }
     if (id === 'inside-class') return { title: 'Inside a class', steps: [
       { target: 'tab-students', title: 'Students', text: 'Add students, and give a new password to anyone who can’t sign in.' },
       { target: 'tab-lessons', title: 'Lessons', text: 'Choose the class’s modules. New students get them too.' },
@@ -416,6 +412,14 @@ function Dashboard() {
   const h1 = { margin: 0, fontSize: 28, fontWeight: 900, color: P.ink, fontFamily: 'var(--font-display)' } as const
 
   const notices = <>
+    {/* Straight back from Stripe (`?billing=success`, /api/checkout): the webhook writes the row a moment later, so
+        say the payment arrived BEFORE anything else — a parent who is not told tends to pay a second time. */}
+    {justPaid && (
+      <div data-testid="dash-activating" style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, lineHeight:1.5, color:'#166534' }}>
+        <strong>{t('Payment received — we are switching your plan on.')}</strong>{' '}
+        {t('This usually takes less than a minute. Your plan is under Account → Plan.')}
+      </div>
+    )}
     {/* The result of what the adult just did comes FIRST — after withdrawing for every child the full notice follows, and
         a banner under it is a banner nobody sees (2026-09-24). */}
     {actionMsg && (
@@ -452,7 +456,7 @@ function Dashboard() {
     page = !child ? <div style={dcard}><p style={{ margin:0 }}>{t('We couldn’t find that child.')} <Link href="/parent">{t('Back to Home')}</Link></p></div> : (() => {
       const d = child, klass = classes.find(c => c.id === d.learner.grade_id)
       const tab = (CHILD_TABS.some(([k]) => k === tabParam) ? tabParam : 'progress') as ChildTab
-      return <ChildPage id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
+      return <ChildPage id={d.learner.id} name={d.learner.display_name} band={d.learner.age_group} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
         crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
@@ -581,7 +585,7 @@ function Dashboard() {
             )
           })}
         </section>
-        {!tea && <FreeTrialCard />}
+        {!tea && <FreeTrialCard childCount={learners.length} />}
         {tea
           ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
           // The private beta is free (founder, 2026-09-24): no plans, no prices, no link to the (dark) refund policy until billing is live.
@@ -655,7 +659,7 @@ function Dashboard() {
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {upNext}
           {/* The family's free trial and the way to purchase, on the home the parent lands on (also under Account). */}
-          <FreeTrialCard />
+          <FreeTrialCard childCount={learners.length} />
           <div className="card-grid">
             {learners.map(d => {
               const lessons = chosenModules(d.learner.lesson_ids).flatMap(m => m.lessons)
@@ -755,13 +759,12 @@ function Dashboard() {
       {showAddModal && (
         <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
           <>
+            {/* No tour here: the window's own labels say what each field is (founder, 2026-10-17). */}
             <AddLearnerModal
               attest={attest}
               onClose={() => setShowAddModal(false)}
               onAdded={async () => { setShowAddModal(false); await loadAll() }}
             />
-            <TourRunner tour={!tea && learners.length === 0 && prefs && !prefs.seen.includes('add-child') ? tourFor('add-child') : null}
-              onEnd={() => setPrefs(p => ({ ...p, seen: [...new Set([...p.seen, 'add-child'])] }))} />
           </>
         )} />
       )}
@@ -965,8 +968,11 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
           ))}
         </div>
         <div data-tour="add-name">
-        <label htmlFor="learner-name" style={{ display:'block', fontSize:13, fontWeight:700, color:P.ink2, margin:'0 0 6px' }}>{t('Child’s name')}</label>
-        <input id="learner-name" type="text" placeholder={t('First name is plenty')} value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
+        <label htmlFor="learner-name" style={{ display:'block', fontSize:13, fontWeight:700, color:P.ink2, margin:'0 0 6px' }}>
+          {t('Child’s name')}<span aria-hidden="true" style={{ color:'#93000A', marginLeft:3 }}>*</span>
+          <span style={{ fontWeight:600, color:P.ink3, marginLeft:6 }}>{t('(needed)')}</span>
+        </label>
+        <input id="learner-name" type="text" required aria-required="true" placeholder={t('First name is plenty')} value={name} onChange={e => { setName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleAdd()} maxLength={30} autoFocus style={{ width:'100%', padding:'14px 16px', minHeight:44, fontSize:16, fontWeight:600, color:P.ink, background:P.page, border:`2px solid ${error?'#F0B4AE':P.edge}`, borderRadius:14, outline:'none', boxSizing:'border-box', marginBottom:6 }} />
         </div>
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 

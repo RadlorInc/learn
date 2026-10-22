@@ -45,6 +45,19 @@ export function renderSubscribed(a: {
   ])
 }
 
+/** Ask maths, the add-on (docs/product/ask-maths.md): the same acknowledgment an auto-renewing charge owes. */
+export function renderAddonSubscribed(a: { chargedCents: number; renewalCents: number; renewsIso: string | null }): Rendered {
+  const on = endDate(a.renewsIso)
+  return render('Ask maths on Radlic — confirmation and how to cancel', [
+    'Your Ask maths add-on is active. Here are the details, for your records.',
+    'Add-on: Ask maths, for every child in your family. Turn it on for each child on that child\'s page, under Ask maths.',
+    `Charged today: ${usd(a.chargedCents)}.`,
+    `Renews: automatically, every month${on ? `, next on ${on}` : ''}. Renewal amount: ${usd(a.renewalCents)} (we do not charge sales tax).`,
+    'To cancel: open any child\'s page in your Radlic dashboard, go to Ask maths and choose "Stop the add-on". It stops at the end of the month you have paid for.',
+    POLICY,
+  ])
+}
+
 export function renderRenewalReminder(a: { amountCents: number; renewsIso: string | null; seats: number }): Rendered {
   const on = endDate(a.renewsIso)
   return render('Your Radlic annual subscription renews soon', [

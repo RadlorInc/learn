@@ -19,20 +19,33 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(''),
   usePathname: () => '/',
 }))
-const signIn = vi.hoisted(() => vi.fn(async (_e: string, _p: string) => ({ error: null as null | { message: string; code?: string } })))
+type AuthErr = null | { message: string; code?: string }
+const signIn = vi.hoisted(() => vi.fn(async (_e: string, _p: string) => ({ error: null as AuthErr })))
+// Signed out by default — the screens here are the signed-out ones. The two password screens need a session, so
+// they set one for their own test. `isWeakPassword` is NOT stubbed: it comes from the real module below, so the
+// pages' own predicate is what decides the wording.
+const session = vi.hoisted(() => vi.fn(async () => null as null | { user: { email: string } }))
+const setPwd = vi.hoisted(() => vi.fn(async (_p: string) => ({ error: null as AuthErr })))
+const setOwnPwd = vi.hoisted(() => vi.fn(async (_p: string) => ({ error: null as AuthErr })))
 vi.mock('@/data/auth', async orig => ({
   ...(await orig<Record<string, unknown>>()),
   signInWithEmail: signIn,
-  getCurrentSession: async () => null,
+  getCurrentSession: session,
+  setPassword: setPwd,
+  setOwnPassword: setOwnPwd,
+  mustChangePassword: async () => true,
   onAuthStateChange: () => ({ subscription: { unsubscribe() {} } }),
 }))
 
 beforeAll(async () => {
-  await Promise.all([import('@/app/auth/page'), import('@/app/auth/callback/page'), import('@/app/auth/set-password/page'), import('@/features/consent/ConsentLink')])
+  await Promise.all([import('@/app/auth/page'), import('@/app/auth/callback/page'), import('@/app/auth/set-password/page'), import('@/app/auth/new-password/page'), import('@/features/consent/ConsentLink')])
 }, 120_000)
 
 beforeEach(() => {
   replaced.length = 0; signIn.mockClear(); localStorage.clear()
+  session.mockClear(); session.mockResolvedValue(null)
+  setPwd.mockClear(); setPwd.mockResolvedValue({ error: null })
+  setOwnPwd.mockClear(); setOwnPwd.mockResolvedValue({ error: null })
   window.history.replaceState(null, '', '/')
   vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })))
 })
@@ -129,6 +142,121 @@ describe('a dead reset link', () => {
     expect(m.host.textContent, 'control: the dead-link screen').toContain('This link can no longer be used')
     expect(m.host.textContent).toContain('Resetting your password? On the sign-in page, tap “Forgot password?” for a new link.')
     expect(m.host.textContent).not.toContain('Ask for a fresh invite.')
+    await m.done()
+  })
+})
+
+/**
+ * THE OTHER TWO SCREENS THAT SET A PASSWORD. Supabase refuses a breached password whatever its length, and without
+ * this each screen showed `error.message` — the auth server's own English, which a Spanish-reading parent cannot
+ * read and which no screen here is allowed to print. Driven for real: a session, a long password, the click, then
+ * the alert read back. The child's screen says it without the data-breach half (`/auth/new-password` is a child's).
+ */
+const fill = async (host: HTMLElement, ids: string[], value: string) => {
+  await act(async () => {
+    for (const id of ids) {
+      const el = host.querySelector(id) as HTMLInputElement
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, value)
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+  })
+  await settle()
+}
+const press = async (host: HTMLElement, text: RegExp) => {
+  const b = [...host.querySelectorAll('button')].find(x => text.test(x.textContent ?? ''))
+  expect(b, `the control ${text} is not on the screen`).toBeTruthy()
+  await act(async () => { b!.click() }); await settle()
+}
+const WEAK = { message: 'Password is known to be weak and easy to guess, please choose a different one.', code: 'weak_password' }
+
+describe('a password Supabase refuses, on the screens that set one', () => {
+  it('/auth/set-password: our words, not the auth server’s English, and nothing about the length', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: WEAK })
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    expect(m.host.textContent, 'control: the form is on screen, not the dead-link page').toContain('Setting a password for')
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')     // 10 characters: over the minimum
+    await press(m.host, /^Set password/)
+    expect(setPwd, 'control: 10 characters passed the form and really was sent').toHaveBeenCalledTimes(1)
+    const alert = m.host.querySelector('[role="alert"]')?.textContent ?? ''
+    expect(alert).toBe('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+    expect(alert, 'Supabase’s own English reached the parent').not.toContain('known to be weak')
+    expect(alert, 'a refused password is still read as a short one').not.toMatch(/at least/)
+    await m.done()
+  })
+
+  // ⚠️ ONE ASSERTION PER ARM OF isWeakPassword's `||`. The refusal above carries BOTH a code and a matching
+  // message, so either arm alone satisfies it and deleting one would not show up. These two each leave only one
+  // arm able to match: without them one side could be deleted and every test here would stay green.
+  it('/auth/set-password: a weak_password code with wording we have never seen still gets our words', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: { message: 'Contraseña rechazada por el servidor.', code: 'weak_password' } })
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')
+    await press(m.host, /^Set password/)
+    expect(setPwd, 'control: the password really was sent').toHaveBeenCalledTimes(1)
+    expect(m.host.querySelector('[role="alert"]')?.textContent)
+      .toBe('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+    await m.done()
+  })
+
+  it('/auth/set-password: the same refusal with no error code still gets our words, not the auth server’s', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: { message: WEAK.message } })        // no `code`
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')
+    await press(m.host, /^Set password/)
+    expect(setPwd, 'control: the password really was sent').toHaveBeenCalledTimes(1)
+    expect(m.host.querySelector('[role="alert"]')?.textContent)
+      .toBe('This password is too easy to guess, or it has appeared in a data breach. Please choose a different one.')
+    await m.done()
+  })
+
+  it('POSITIVE TWIN: an error that is NOT about the password is still passed through as it was', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    setPwd.mockResolvedValueOnce({ error: { message: 'New password should be different from the old password.', code: 'same_password' } })
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'horsebeach')
+    await press(m.host, /^Set password/)
+    expect(m.host.querySelector('[role="alert"]')?.textContent).toBe('New password should be different from the old password.')
+    await m.done()
+  })
+
+  it('POSITIVE TWIN: /auth/set-password still says the length itself for a short password, and sends nothing', async () => {
+    session.mockResolvedValue({ user: { email: 'pat@example.test' } })
+    const { default: SetPassword } = await import('@/app/auth/set-password/page')
+    const m = await mount(createElement(SetPassword))
+    await fill(m.host, ['#sp-new', '#sp-confirm'], 'short1')         // 6 characters
+    await press(m.host, /^Set password/)
+    expect(setPwd, 'a password under the minimum left the browser').not.toHaveBeenCalled()
+    expect(m.host.querySelector('[role="alert"]')?.textContent).toBe('Password must be at least 8 characters')
+    await m.done()
+  })
+
+  it('/auth/new-password (a child’s): “too easy to guess”, with no data-breach wording and no length claim', async () => {
+    session.mockResolvedValue({ user: { email: 'aarav7@learner.radlic.invalid' } })
+    setOwnPwd.mockResolvedValueOnce({ error: WEAK })
+    const { default: NewPassword } = await import('@/app/auth/new-password/page')
+    const m = await mount(createElement(NewPassword))
+    const boxes = [...m.host.querySelectorAll('input[type="password"]')] as HTMLInputElement[]
+    expect(boxes, 'control: the child’s two password boxes are on screen').toHaveLength(2)
+    await act(async () => {
+      for (const el of boxes) {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(el, 'horsebeach')
+        el.dispatchEvent(new Event('input', { bubbles: true }))
+      }
+    })
+    await settle()
+    await press(m.host, /^Save and start$/)
+    expect(setOwnPwd, 'control: the child’s 10-character password really was sent').toHaveBeenCalledTimes(1)
+    const alert = m.host.querySelector('[role="alert"]')?.textContent ?? ''
+    expect(alert).toBe('That password is too easy to guess. Pick a different one.')
+    expect(alert, 'Supabase’s own English reached the child').not.toContain('known to be weak')
+    expect(alert, 'a refused password is still read as a short one').not.toMatch(/at least/)
     await m.done()
   })
 })
