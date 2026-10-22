@@ -6,6 +6,7 @@
  * a sentence.
  */
 import { useState, type CSSProperties, type RefObject } from 'react'
+import { flushSync } from 'react-dom'
 import { INK, TEAL, pill } from '@/features/lessons/Pictures'
 import { bubble } from '@/features/lessons/Frame'
 import { MAX_QUESTION } from './stream'
@@ -69,12 +70,16 @@ export function MathTray({ area, value, onChange, disabled }: {
   const [maker, setMaker] = useState<Maker | null>(null)
   const [f, setF] = useState({ a: '', b: '', c: '' })
 
+  // Puts s at the caret and moves focus back at once (flushSync), so what the child types next lands after it.
   function put(s: string, back = 0) {
     const el = area.current
     const a = el?.selectionStart ?? value.length, b = el?.selectionEnd ?? a
-    onChange((value.slice(0, a) + s + value.slice(b)).slice(0, MAX_QUESTION))
+    const head = value.slice(0, a), tail = value.slice(b)
+    if (s.startsWith(' ') && (!head || /\s$/.test(head))) s = s.slice(1)
+    if (s.endsWith(' ') && /^\s/.test(tail)) s = s.slice(0, -1)
+    flushSync(() => onChange((head + s + tail).slice(0, MAX_QUESTION)))
     const at = Math.min(a + s.length - back, MAX_QUESTION)
-    requestAnimationFrame(() => { el?.focus(); el?.setSelectionRange(at, at) })
+    el?.focus(); el?.setSelectionRange(at, at)
   }
   function open(m: Maker) { setF({ a: '', b: '', c: '' }); setMaker(maker === m ? null : m) }
   function done() {
@@ -83,7 +88,7 @@ export function MathTray({ area, value, onChange, disabled }: {
       : maker === 'mixed' ? (a.trim() && b.trim() && c.trim() && mixed(a, b, c))
       : (a.trim() && b.trim() && power(a, b))
     if (!s) return
-    put(` ${s} `); setMaker(null)
+    flushSync(() => setMaker(null)); put(` ${s} `)
   }
   const field = (k: 'a' | 'b' | 'c', label: string, style?: CSSProperties) => (
     <input aria-label={label} value={f[k]} maxLength={12} autoComplete="off" style={{ ...box, ...style }}
