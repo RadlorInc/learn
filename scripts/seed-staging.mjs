@@ -81,8 +81,15 @@ async function account(email, name, role) {
   })
   if (error) {
     if (error.code !== 'email_exists') must(`createUser ${email}`)({ error })
-    const list = must('listUsers')(await db.auth.admin.listUsers({ perPage: 1000 }))
-    data = { user: list.users.find((u) => u.email === email) }
+    // Every page: the load test left more than 1000 users on staging, so page 1 alone missed ours (16 Oct onwards).
+    let user
+    for (let page = 1; !user; page++) {
+      const list = must('listUsers')(await db.auth.admin.listUsers({ page, perPage: 1000 }))
+      user = list.users.find((u) => u.email === email)
+      if (list.users.length < 1000) break
+    }
+    if (!user) throw new Error(`createUser ${email}: it exists, but no page of listUsers has it`)
+    data = { user }
   }
   const id = data.user.id
   // handle_new_user created the profile; the role is what the role picker would have written.
