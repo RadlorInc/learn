@@ -40,7 +40,7 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-- **Ask maths** (21–22 Oct, `ask-maths`, local only, no PR): built, **OFF**; next steps and local try-out in
+- **Ask maths** (21–22 Oct, `ask-maths`, Draft PR; askRadlor's side is `kids-maths` in whiteboard-ai, Draft PR): built, **OFF**; the question box has a row of six maths buttons (½ 1½ x² √ × ÷) and a stacked-fraction preview; next steps and local try-out in
   [product/ask-maths.md](docs/product/ask-maths.md). Migration 20261021120000 is a SECURITY change.
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
