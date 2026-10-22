@@ -116,6 +116,22 @@ The same text is in the code, in English and a Spanish machine draft. Changing a
 >
 > ☐ I am {name}'s parent or guardian, and I agree to this.
 
+## Try it locally (no money, no production)
+
+Docker running, in this repo:
+
+1. `supabase start` (a throwaway local stack; copy `supabase/schema/baseline_schema.sql` to
+   `supabase/migrations/00000000000000_baseline.sql` first, as CI does, and delete it again after: the vitest schema
+   fixture fails while it is there), then `supabase db reset`.
+2. `node scripts/ask-maths-local-seed.mjs`: a test family (the sign-in is in that file), a Grade 6–8 child, the
+   add-on marked active.
+3. askRadlor's `app` (branch `kids-maths`) with `GENERATION_MOCK=1 RADLIC_PARTNER_SECRET=<any>`: no model call; a
+   question containing "coins" gets a hand-made maths lesson, any other the rainbow sample.
+4. This app with `ASK_MATHS=on NEXT_PUBLIC_ASK_MATHS=on WHITEBOARD_URL=<askRadlor's local URL>
+   WHITEBOARD_PARTNER_SECRET=<the same>` and the local stack's Supabase URL and keys.
+5. Open it in **real Chrome**: Claude's in-app browser pane blocks every sandboxed iframe, so the board stays empty
+   there (measured 21 Oct 2026; askRadlor's own player too).
+
 ## Tests
 
 `askMathsDb.test.ts` (every function as each role, with positive twins), `askMathsRoute.test.ts` (the route, the
