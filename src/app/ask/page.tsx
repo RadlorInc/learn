@@ -11,8 +11,9 @@ import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { askMaths, type AskRefusal } from '@/data/repositories/askMaths'
 import { ASK_MATHS_PUBLIC, MAX_QUESTION } from '@/features/askMaths/stream'
 import { AskPlayer, type Post } from '@/features/askMaths/AskPlayer'
+import { MathPreview, MathTray } from '@/features/askMaths/MathTray'
 import { unlockSound, useVoiceStatus } from '@/features/askMaths/voice'
-import { INK, PAGE_BG, pill, shell, topBar } from '@/features/lessons/Pictures'
+import { INK, PAGE_BG, TEAL, pill, shell, topBar } from '@/features/lessons/Pictures'
 import { bubble, primary } from '@/features/lessons/Frame'
 
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
@@ -47,6 +48,8 @@ export default function AskPage() {
   const [stage, setStage] = useState<string | null>(null)
   const [shown, setShown] = useState(false)               // a board is on screen (the lesson has started)
   const [left, setLeft] = useState<number | null>(null)
+  const [tray, setTray] = useState(false)
+  const area = useRef<HTMLTextAreaElement>(null)
   const post = useRef<Post | null>(null)
   const bind = useCallback((p: Post) => { post.current = p }, [])
   const voice = useVoiceStatus()
@@ -76,12 +79,16 @@ export default function AskPage() {
   else body = <>
     <form onSubmit={(e) => { e.preventDefault(); void ask(q) }} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <label htmlFor="ask-q" style={{ fontSize: 'clamp(20px, 3.4vw, 26px)', fontWeight: 900, color: INK }}>What maths question do you have?</label>
-      <textarea id="ask-q" value={q} maxLength={MAX_QUESTION} rows={2} onChange={(e) => setQ(e.target.value)} disabled={busy}
-        placeholder="Type your question here" autoComplete="off" spellCheck
+      <textarea id="ask-q" ref={area} value={q} maxLength={MAX_QUESTION} rows={2} onChange={(e) => setQ(e.target.value)} disabled={busy}
+        placeholder="Type your question here, or a word problem from your homework" autoComplete="off" spellCheck
         style={{ ...bubble, fontSize: 22, fontFamily: 'inherit', resize: 'vertical', minHeight: 80 }}
         onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(q) } }} />
+      {tray && <div id="ask-maths-tray"><MathTray area={area} value={q} onChange={setQ} disabled={busy} /></div>}
+      <MathPreview text={q} />
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         <button type="submit" style={primary} disabled={busy || !q.trim()}>{busy ? 'Drawing…' : 'Ask'}</button>
+        <button type="button" style={{ ...pill, minHeight: 56, fontSize: 18, ...(tray ? { background: TEAL } : {}) }} aria-expanded={tray}
+          aria-controls="ask-maths-tray" onClick={() => setTray(!tray)}>½ x² Maths</button>
         <span style={{ fontSize: 16, color: INK }}>Only maths, and never your name, school or address.</span>
       </div>
     </form>
