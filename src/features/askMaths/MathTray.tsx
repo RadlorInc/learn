@@ -1,6 +1,6 @@
 'use client'
 /**
- * Ask maths: the maths buttons under the question box, and the preview that shows fractions stacked the way a child
+ * Ask maths: one row of the six maths buttons a phone keyboard lacks (= − ( ) % it has), always under the box, and the preview that shows fractions stacked the way a child
  * writes them in a copy. The question stays plain text (3/8, x², √(16)) — that is what goes to askRadlor — so a word
  * problem and its maths share one ordinary box. No maths-editor library: those type maths only, and eat the spaces of
  * a sentence.
@@ -37,7 +37,7 @@ export const mixed = (whole: string, top: string, bottom: string) => `${whole.tr
 export const power = (base: string, p: string) =>
   wrap(base.trim()) + (/^\d{1,2}$/.test(p.trim()) ? [...p.trim()].map((d) => SUP[d]).join('') : `^${wrap(p.trim())}`)
 
-const key: CSSProperties = { ...pill, minHeight: 52, fontSize: 22, padding: '6px 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const key: CSSProperties = { ...pill, minHeight: 48, fontSize: 22, padding: '6px 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
 const box: CSSProperties = { width: 72, minHeight: 44, fontSize: 22, textAlign: 'center', border: `3px solid ${INK}`, borderRadius: 10, color: INK, fontFamily: 'inherit' }
 const line: CSSProperties = { height: 3, background: INK, alignSelf: 'stretch', borderRadius: 2 }
 
@@ -103,12 +103,10 @@ export function MathTray({ area, value, onChange, disabled }: {
   const keys: [string, string, () => void, Maker?][] = [
     ['½', 'Fraction', () => open('fraction'), 'fraction'], ['1½', 'Mixed fraction', () => open('mixed'), 'mixed'], ['x²', 'Power', () => open('power'), 'power'],
     ['√', 'Square root', () => put('√()', 1)], ['×', 'Times', () => put(' × ')], ['÷', 'Divide', () => put(' ÷ ')],
-    ['−', 'Minus', () => put(' − ')], ['=', 'Equals', () => put(' = ')], ['( )', 'Brackets', () => put('()', 1)],
-    ['x', 'x', () => put('x')], ['%', 'Percent', () => put('%')], ['°', 'Degrees', () => put('°')],
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div role="group" aria-label="Maths buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 8 }}>
+      <div role="group" aria-label="Maths buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 8 }}>
         {keys.map(([shown, label, go, m]) => (
           <button key={label} type="button" aria-label={label} title={label} disabled={disabled} onClick={go}
             aria-expanded={m ? maker === m : undefined} style={{ ...key, ...(m && maker === m ? { background: TEAL } : {}) }}>{shown}</button>
