@@ -141,7 +141,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
 - Performance (audit 16 Oct; #445 fixed the ledger, one request per answer, /modules): measure #445's request counts
-  in a signed-in browser (code-derived: /modules 8→5, an answer 2→1); the teacher dashboard and `child-login` GET make
+  in a signed-in browser (code-derived: /modules 8→5, an answer 2→1); its EXPLAIN ran on a local copy, not staging (the
+  Claude Supabase connector listed only production's org on 16 Oct — never query through it); the teacher dashboard and `child-login` GET make
   calls per child (one RPC); `admin_learning`/`admin_overview` scan `learner_events` unindexed; the daily cron has no
   LIMIT; the signup cooldown lists auth users by filter.
 - SEO: signed-out visitors wait about 2.5 s before the redirect to the landing page (kept client-side by choice); a
