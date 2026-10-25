@@ -89,6 +89,8 @@ async function account(email, name, role) {
       if (list.users.length < 1000) break
     }
     if (!user) throw new Error(`createUser ${email}: it exists, but no page of listUsers has it`)
+    // A new SEED_PASSWORD reaches accounts made by an earlier run too (26 Oct: a forgotten one locked testers out).
+    must(`password ${email}`)(await db.auth.admin.updateUserById(user.id, { password }))
     data = { user }
   }
   const id = data.user.id
