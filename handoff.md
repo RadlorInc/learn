@@ -140,6 +140,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   Performance tab dates by upload time, not answer time; `exercise_results` needs idempotency before rosters return.
 - Activation: the 7-day view (#275) has never shown two different values; `/admin`'s funnel counts events lessons do
   not write.
+- Capacity: load test 16 Oct on staging (Nano), 1,000 children at once, 0 errors, CPU ~40% — [capacity.md](docs/runbooks/capacity.md).
 - Performance (audit 16 Oct; #445 fixed the ledger, one request per answer, /modules): measure #445's request counts
   in a signed-in browser (code-derived: /modules 8→5, an answer 2→1); the teacher dashboard and `child-login` GET make
   calls per child (one RPC); `admin_learning`/`admin_overview` scan `learner_events` unindexed; the daily cron has no

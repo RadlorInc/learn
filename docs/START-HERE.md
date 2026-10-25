@@ -30,6 +30,7 @@ Step-by-step, and each step says whether the founder or the agent does it.
 | [admin-access](runbooks/admin-access.md) | turn on two-step verification for `/admin`, or recover from a lost authenticator |
 | [outages](runbooks/outages.md) | Supabase, Vercel, Resend or Stripe is down: what parents see, what to check, what to tell them |
 | [incident](runbooks/incident.md) | a security incident or breach: first hour, evidence, notification questions for the attorney (draft) |
+| [capacity](runbooks/capacity.md) | how many children the app carries (measured), what runs out first, when to buy more, re-run the load test |
 | [testers](runbooks/testers.md) | give a paid tester a link to one module and check their screen-by-screen review before paying |
 
 ## The product — `docs/product/`
