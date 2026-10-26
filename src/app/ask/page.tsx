@@ -6,9 +6,9 @@
  * Shown only with NEXT_PUBLIC_ASK_MATHS=on (and the server's ASK_MATHS=on); no price or plan ever appears here.
  */
 import Link from 'next/link'
-import { useCallback, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
-import { askMaths, type AskRefusal } from '@/data/repositories/askMaths'
+import { askMaths, getAskQuestions, type AskQuestion, type AskRefusal } from '@/data/repositories/askMaths'
 import { ASK_MATHS_PUBLIC, MAX_QUESTION } from '@/features/askMaths/stream'
 import { AskPlayer, type Post } from '@/features/askMaths/AskPlayer'
 import { MathPreview, MathTray } from '@/features/askMaths/MathTray'
@@ -52,11 +52,19 @@ export default function AskPage() {
   const post = useRef<Post | null>(null)
   const bind = useCallback((p: Post) => { post.current = p }, [])
   const voice = useVoiceStatus()
+  // The child's own answered lessons of the last 30 days (the table keeps no more), to watch again.
+  const [past, setPast] = useState<AskQuestion[]>([])
+  const [watch, setWatch] = useState<AskQuestion | null>(null)
+  const learnerId = learner?.id
+  const loadPast = useCallback(() => {
+    if (learnerId) void getAskQuestions(learnerId).then(qs => setPast((qs ?? []).filter(x => x.outcome === 'answered' && x.script)))
+  }, [learnerId])
+  useEffect(loadPast, [loadPast])
 
   async function ask(question: string) {
     if (!learner || busy || !question.trim()) return
     unlockSound()                                       // inside the tap: an iPhone then lets this page play sound
-    setBusy(true); setNote(null); setStage(STAGE.reading); setShown(false)
+    setBusy(true); setNote(null); setStage(STAGE.reading); setShown(false); setWatch(null)
     post.current?.({ type: 'reset' })
     let ended = false
     const r = await askMaths(learner.id, question.trim(), ({ event, data }) => {
@@ -69,6 +77,7 @@ export default function AskPage() {
     if (!r.ok) { setNote(SAID[r.error]); setStage(null) }
     else { setLeft(r.left); if (!ended) { setStage(null); setNote(SAID.broke) } }
     setBusy(false)
+    loadPast()
   }
 
   let body
@@ -100,6 +109,17 @@ export default function AskPage() {
     {note && <p style={bubble} role="status">{note}</p>}
     <div style={{ display: shown ? 'block' : 'none' }}><AskPlayer bind={bind} /></div>
     {left !== null && left <= 2 && <p style={{ margin: 0, fontSize: 16, color: INK }}>{left === 0 ? 'That was the last question for today.' : `${left} more question${left === 1 ? '' : 's'} today.`}</p>}
+    {past.length > 0 && (
+      <section aria-label="Your questions" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: INK }}>Your questions</h2>
+        {past.map(p => (
+          <button key={p.id} type="button" disabled={busy} aria-pressed={watch?.id === p.id}
+            style={{ ...pill, cursor: 'pointer', textAlign: 'left', justifyContent: 'flex-start' }}
+            onClick={() => { setShown(false); post.current?.({ type: 'reset' }); setWatch(watch?.id === p.id ? null : p) }}>{watch?.id === p.id ? '✕ ' : '▶ '}{p.question}</button>
+        ))}
+        {watch && <AskPlayer key={watch.id} script={watch.script as { els: unknown; steps: { say: string }[] }} />}
+      </section>
+    )}
     <p style={{ margin: 0, fontSize: 13, color: INK, opacity: 0.8 }}>Voice: Pocket TTS by Kyutai, speaker Alba MacKenna (CC BY 4.0), made on this device.</p>
   </>
 
