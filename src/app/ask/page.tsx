@@ -52,6 +52,9 @@ export default function AskPage() {
   const post = useRef<Post | null>(null)
   const bind = useCallback((p: Post) => { post.current = p }, [])
   const voice = useVoiceStatus()
+  // No asking until the made voice is here (founder, 26 Oct): a lesson started earlier stops at every step to wait for it.
+  // A failed or impossible voice does not block: the device's own voice speaks.
+  const voiceLoading = voice.state === 'loading'
   // The child's own answered lessons of the last 30 days (the table keeps no more), to watch again.
   const [past, setPast] = useState<AskQuestion[]>([])
   const [watch, setWatch] = useState<AskQuestion | null>(null)
@@ -62,7 +65,7 @@ export default function AskPage() {
   useEffect(loadPast, [loadPast])
 
   async function ask(question: string) {
-    if (!learner || busy || !question.trim()) return
+    if (!learner || busy || voiceLoading || !question.trim()) return
     unlockSound()                                       // inside the tap: an iPhone then lets this page play sound
     setBusy(true); setNote(null); setStage(STAGE.reading); setShown(false); setWatch(null)
     post.current?.({ type: 'reset' })
@@ -94,11 +97,12 @@ export default function AskPage() {
       <MathTray area={area} value={q} onChange={setQ} disabled={busy} />
       <MathPreview text={q} />
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <button type="submit" style={primary} disabled={busy || !q.trim()}>{busy ? 'Drawing…' : 'Ask'}</button>
+        <button type="submit" style={primary} disabled={busy || voiceLoading || !q.trim()}>{busy ? 'Drawing…' : voiceLoading ? 'Getting ready…' : 'Ask'}</button>
         <span style={{ fontSize: 16, color: INK }}>Only maths, and never your name, school or address.</span>
       </div>
     </form>
-    {!shown && !busy && (
+    {voiceLoading && <p style={bubble} role="status">Getting the voice ready the first time{voice.total ? ` (${Math.round(voice.loaded / 1e6)} of ${Math.round(voice.total / 1e6)} MB)` : ''}. You can type your question now.</p>}
+    {!shown && !busy && !voiceLoading && (
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} aria-label="Ideas to ask">
         {(IDEAS[learner.age_group] ?? IDEAS['9-11']).map((idea) => (
           <button key={idea} type="button" style={{ ...pill, cursor: 'pointer' }} onClick={() => { setQ(idea); void ask(idea) }}>{idea}</button>
