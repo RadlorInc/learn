@@ -10,7 +10,7 @@
  * `resumeSound`. Only our own iframe's messages are read (e.source).
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { cancelLine, pauseSound, playSound, resumeSound, speakLine, startVoice, stopSound, tapForSound, useSoundBlocked, voiceOn } from './voice'
+import { cancelLine, pauseSound, playSound, resumeSound, speakLine, retryVoice, stopSound, tapForSound, useSoundBlocked, voiceOn } from './voice'
 import { primary } from '@/features/lessons/Frame'
 import { INK } from '@/features/lessons/Pictures'
 
@@ -91,7 +91,7 @@ export function AskPlayer({ bind, script, onAt }: {
     frame.current?.contentWindow?.postMessage({ type: 'hello' }, '*')
     return () => { removeEventListener('message', on); stopSound() }
   }, [raw, pump, onAt])
-  useEffect(() => { startVoice() }, [])
+  useEffect(() => { retryVoice() }, [])
   useEffect(() => {
     if (!script) return
     post({ type: 'reset' }); post({ type: 'els', els: script.els, drawings: script.drawings })

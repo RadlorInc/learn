@@ -28,14 +28,17 @@ export const voiceOn = () => typeof Worker !== 'undefined'
 let worker: Worker | null = null
 let ready: Promise<boolean> | null = null
 let nextId = 0
+let tries = 0
 const waiting = new Map<number, (wav: ArrayBuffer | null) => void>()
 
 export function startVoice(): Promise<boolean> {
   if (ready) return ready
   if (!voiceOn()) return (ready = Promise.resolve(false))
   set({ state: 'loading' })
+  const tryNo = ++tries
   ready = new Promise<boolean>((resolve) => {
     const fail = (why: string) => {
+      if (tryNo !== tries) return                      // an earlier try's worker, after retryVoice replaced it
       console.warn('Ask maths: the made voice is off, the device voice speaks instead:', why)
       set({ state: 'failed' }); resolve(false)
       waiting.forEach((w) => w(null)); waiting.clear()
@@ -52,6 +55,12 @@ export function startVoice(): Promise<boolean> {
     worker.postMessage({ warm: true })
   })
   return ready
+}
+
+/** A new visit to /ask after a failed load tries again; the download carries on where it stopped (pocket-worker.js). */
+export function retryVoice(): Promise<boolean> {
+  if (status.state === 'failed') { worker?.terminate(); worker = null; ready = null; set({ loaded: 0, total: 0 }) }
+  return startVoice()
 }
 
 // A line made once is kept for the life of the tab (a replay gets it at once). ponytail: unbounded, ~250 KB a line;
