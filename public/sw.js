@@ -88,6 +88,9 @@ self.addEventListener('fetch', event => {
   // (~40 MB of voices, the model from Hugging Face) are kept by the voice worker itself (OPFS / Cache Storage
   // "pocket"), never twice in this worker's caches; the board's page must be the one this deploy serves.
   if (url.pathname.startsWith('/ask-player/') || url.pathname.startsWith('/ask-tts/')) return
+  // Its model comes from Hugging Face (huggingface.co redirects to *.hf.co): fetched from here, this worker's own CSP
+  // refused it and the voice fell back to the device's (26 Oct, staging).
+  if (/(^|\.)(huggingface\.co|hf\.co)$/.test(url.hostname)) return
 
   // The game (built into public/blockcraft). Its page names its code by content hash, so the page must come from the
   // network (a stale page would ask for code the new deploy no longer has) and the hashed files can be cached for ever.
