@@ -6,17 +6,16 @@
 // at a drawing's scale times the screen's grew past WebKit's filter limit (about 4096 x 4096 device pixels): Safari
 // then painted nothing, so a body or a protein vanished on iPhone and Mac while Chrome showed it (22 Oct 2026).
 // A perfectly straight line has a zero-height box and would vanish with this region: build() takes the filter off it.
+// The watercolour (#wc) is one soft wobble, no paper grain: a second, fine-grained noise per washed shape closed the tab
+// on an iPhone 13 after two boards with apples in a row (31 Oct 2026, Radlic staging), even with the regions above.
 document.querySelector('svg').insertAdjacentHTML('afterbegin', `<defs>
   <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
     <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/>
     <feDisplacementMap in="SourceGraphic" scale="3.2"/>
   </filter>
   <filter id="wc" x="-20%" y="-20%" width="140%" height="140%">
-    <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n"/>
-    <feDisplacementMap in="SourceGraphic" in2="n" scale="7" result="d"/>
-    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="2" result="grain"/>
-    <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.45 1.05" result="g2"/>
-    <feComposite in="d" in2="g2" operator="in"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="1" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="7"/>
   </filter>
   <linearGradient id="leafG" x1="0" y1="0" x2="0.3" y2="1">
     <stop offset="0" stop-color="#9ad35a"/><stop offset=".55" stop-color="#5fae3a"/><stop offset="1" stop-color="#2f7d27"/>
