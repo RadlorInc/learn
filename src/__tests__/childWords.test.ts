@@ -30,6 +30,7 @@ const CHILD_SCREENS = [
   'src/features/lessons/Feedback.tsx', 'src/features/lessons/AnswerInput.tsx', 'src/features/lessons/ModuleSummary.tsx',
   'src/app/modules/page.tsx', 'src/app/lesson/page.tsx', 'src/app/play/page.tsx',
   'src/features/lessons/VerticalNumberLine.tsx',
+  'src/app/ask/page.tsx', 'src/features/askMaths/AskPlayer.tsx',   // Ask maths (2026-10-21)
   'src/features/consent/ConsentPause.tsx',   // the screen a child sees when their answers wait on the device (2026-09-28)
 ]
 

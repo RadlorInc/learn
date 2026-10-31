@@ -100,18 +100,18 @@ describe('Content-Security-Policy', () => {
   const mediaSrc = (p: string) => p.split('; ').find((d) => d.startsWith('media-src '))!
   it("media-src names the audio bucket's origin (the Supabase project by default), and connect-src does not repeat it", async () => {
     const p = await csp('production', PROJECT)
-    expect(mediaSrc(p)).toBe("media-src 'self' data: https://abcdefghijklmnopqrst.supabase.co")
+    expect(mediaSrc(p)).toBe("media-src 'self' data: blob: https://abcdefghijklmnopqrst.supabase.co")
     expect(connectSrc(p).split(' ').filter(x => x === 'https://abcdefghijklmnopqrst.supabase.co')).toHaveLength(1)
   })
 
   it('moving the audio (NEXT_PUBLIC_AUDIO_BASE_URL, e.g. to R2) moves media-src AND connect-src with it — one value', async () => {
     const p = await csp('production', PROJECT, 'https://audio.example.org/lesson-audio')
-    expect(mediaSrc(p)).toBe("media-src 'self' data: https://audio.example.org")
+    expect(mediaSrc(p)).toBe("media-src 'self' data: blob: https://audio.example.org")
     expect(connectSrc(p)).toBe("connect-src 'self' https://abcdefghijklmnopqrst.supabase.co wss://abcdefghijklmnopqrst.supabase.co https://audio.example.org")
   })
 
   it('no audio base at all → media-src allows nothing extra (and the player asks for no clip)', async () => {
-    expect(mediaSrc(await csp('production', ''))).toBe("media-src 'self' data:")
+    expect(mediaSrc(await csp('production', ''))).toBe("media-src 'self' data: blob:")
   })
 
   it('a build with no Supabase URL falls back to the wildcard rather than breaking sign-in', async () => {

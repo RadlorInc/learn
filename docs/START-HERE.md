@@ -40,6 +40,7 @@ Step-by-step, and each step says whether the founder or the agent does it.
 | [building lessons](product/building-lessons.md) | how a Grade 3–8 module or a KG–2 chapter is written, approved, built and checked |
 | [voice](product/voice.md) | the recorded lesson voice: how lines are written and rendered |
 | [points](product/points.md) | how a child earns points and game time |
+| [ask maths](product/ask-maths.md) | Ask maths: a child's typed question answered as a drawn, spoken whiteboard lesson (built, off until legal sign-off) |
 | [content backlog](product/content-backlog.md) | lessons and clips still to write, fix or check |
 
 ## Legal — `docs/legal/`

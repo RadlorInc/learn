@@ -35,6 +35,9 @@ export interface ExportExtras {
   crashRecords:      unknown[]
   access:            unknown[]
   gameSave:          unknown
+  /** Ask maths: the parent's switch for this child, and the questions still kept, with their lessons. */
+  askMathsSettings:  unknown
+  askMathsQuestions: unknown[]
   /** Empty when everything came back whole. Anything in here is printed IN the file. */
   notes:             string[]
 }
@@ -63,7 +66,7 @@ const EMPTY: ExportExtras = {
   events: [], diagnosticSessions: [], diagnosticAnswers: [],
   diagnosticPlans: [], diagnosticPlanProgress: [], diagnosticRechecks: [],
   lessonProgress: [], points: [], gameSettings: null, classExerciseResults: [], lessonFeedback: [],
-  crashRecords: [], access: [], gameSave: null,
+  crashRecords: [], access: [], gameSave: null, askMathsSettings: null, askMathsQuestions: [],
   notes: ['We could not read part of this data. Nothing has been deleted — please try again, or write to us and we will send it.'],
 }
 
@@ -77,7 +80,7 @@ const EMPTY: ExportExtras = {
 export async function getLearnerExportExtras(learnerId: string): Promise<ExportExtras> {
   const supabase = db()
   try {
-    const [events, sessions, plans, rechecks, lessons, points, game, exercises, feedback, records, save] = await Promise.all([
+    const [events, sessions, plans, rechecks, lessons, points, game, exercises, feedback, records, save, askSet, askQs] = await Promise.all([
       supabase.from('learner_events').select('*').eq('learner_id', learnerId).order('created_at').limit(EVENTS_CAP),
       supabase.from('diagnostic_sessions').select('*').eq('learner_id', learnerId).order('started_at'),
       supabase.from('diagnostic_plans').select('*').eq('learner_id', learnerId).order('created_at'),
@@ -89,6 +92,8 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       supabase.from('lesson_feedback' as never).select('*').eq('learner_id', learnerId).order('created_at'),
       supabase.rpc('export_child_records' as never, { p_learner_id: learnerId } as never),
       supabase.from('game_saves' as never).select('*').eq('learner_id', learnerId).maybeSingle(),
+      supabase.from('ask_maths_settings' as never).select('*').eq('learner_id', learnerId).maybeSingle(),
+      supabase.from('ask_maths_questions' as never).select('*').eq('learner_id', learnerId).order('asked_at'),
     ])
 
     const sessionIds = (sessions.data ?? []).map((s: { id: string }) => s.id)
@@ -131,6 +136,8 @@ export async function getLearnerExportExtras(learnerId: string): Promise<ExportE
       crashRecords:           rec?.crashRecords ?? [],
       access:                 rec?.access ?? [],
       gameSave:               (save.data as unknown) ?? null,
+      askMathsSettings:       (askSet.data as unknown) ?? null,
+      askMathsQuestions:      (askQs.data as unknown[] | null) ?? [],
     }
   } catch {
     // A parent exercising a data right must still get a file. An empty section is visibly

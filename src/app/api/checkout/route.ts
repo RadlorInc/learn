@@ -177,9 +177,12 @@ export async function POST(req: Request) {
   } catch {
     return refuse('lookup_failed', 503)
   }
-  if (subs.some(s => LIVE.has(s.status))) return refuse('already_subscribed', 409)
+  // Ask maths, the add-on (metadata.product = 'ask_maths'), is a second subscription on the same customer: it is not a
+  // plan, and its sessions are not this route's to keep or expire (/api/checkout/ask-maths).
+  const plan = (m: Stripe.Metadata | null | undefined) => m?.product !== 'ask_maths'
+  if (subs.some(s => plan(s.metadata) && LIVE.has(s.status))) return refuse('already_subscribed', 409)
 
-  const open = listed.filter(s => s.status === 'open')
+  const open = listed.filter(s => s.status === 'open' && plan(s.metadata))
   if (!open.some(s => s.id === own.id)) open.push(own)
   const keep = open.reduce((a, b) => (b.created > a.created || (b.created === a.created && b.id > a.id) ? b : a))
   // A refused expire is fine only if the session is now expired (the other tab's request got there first).

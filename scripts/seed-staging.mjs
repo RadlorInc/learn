@@ -81,8 +81,17 @@ async function account(email, name, role) {
   })
   if (error) {
     if (error.code !== 'email_exists') must(`createUser ${email}`)({ error })
-    const list = must('listUsers')(await db.auth.admin.listUsers({ perPage: 1000 }))
-    data = { user: list.users.find((u) => u.email === email) }
+    // Every page: the load test left more than 1000 users on staging, so page 1 alone missed ours (16 Oct onwards).
+    let user
+    for (let page = 1; !user; page++) {
+      const list = must('listUsers')(await db.auth.admin.listUsers({ page, perPage: 1000 }))
+      user = list.users.find((u) => u.email === email)
+      if (list.users.length < 1000) break
+    }
+    if (!user) throw new Error(`createUser ${email}: it exists, but no page of listUsers has it`)
+    // A new SEED_PASSWORD reaches accounts made by an earlier run too (26 Oct: a forgotten one locked testers out).
+    must(`password ${email}`)(await db.auth.admin.updateUserById(user.id, { password }))
+    data = { user }
   }
   const id = data.user.id
   // handle_new_user created the profile; the role is what the role picker would have written.
@@ -158,5 +167,15 @@ const s2 = await child(t1, T1, 'Fakestudent Echo', '9-11', { grade_id: klass.id 
 await progress(s1, [['g4m1-t1', true, 1]])
 await progress(s2, [['g4m1-t1', false, 0]])
 
-console.log(`✓ seeded ${ref}: 2 parents, 1 teacher (class "Fake Class 4B"), 5 children, under one granted account consent per adult.`)
-console.log(`  sign in at /auth with ${P1}, ${P2} or ${T1} and the SEED_PASSWORD you set.`)
+// Ask maths (docs/product/ask-maths.md): a family whose add-on is already active (no Stripe), with a Grade 6–8 child.
+// Ask maths stays OFF: the parent turns it on for the child on the child's page, through the disclosure.
+const PA = 'askmaths.parent@example.test'
+const pa = await account(PA, 'Fake Ask Parent', 'parent')
+await child(pa, PA, 'Fakekid Sam', '12-14')
+must('addon_subscriptions')(await db.from('addon_subscriptions').upsert({
+  account_id: pa, product: 'ask_maths', status: 'active',
+  current_period_end: new Date(Date.now() + 30 * 864e5).toISOString(), updated_at: new Date().toISOString(),
+}, { onConflict: 'account_id,product' }))
+
+console.log(`✓ seeded ${ref}: 3 parents, 1 teacher (class "Fake Class 4B"), 6 children, under one granted account consent per adult.`)
+console.log(`  sign in at /auth with ${P1}, ${P2}, ${PA} (Ask maths add-on active) or ${T1} and the SEED_PASSWORD you set.`)
