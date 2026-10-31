@@ -2,12 +2,16 @@
 // AI sirf "leaf 455 265 390 rot=-12" likhta hai; hilti outline, watercolour, nasein, chhaya yahan se aati hain.
 // Isliye quality yahan badhti hai, tokens wahi rehte hain.
 
+// The hand-drawn filters cover each shape plus a 20% margin (its own box). They used a fixed 6000-unit square, which
+// at a drawing's scale times the screen's grew past WebKit's filter limit (about 4096 x 4096 device pixels): Safari
+// then painted nothing, so a body or a protein vanished on iPhone and Mac while Chrome showed it (22 Oct 2026).
+// A perfectly straight line has a zero-height box and would vanish with this region: build() takes the filter off it.
 document.querySelector('svg').insertAdjacentHTML('afterbegin', `<defs>
-  <filter id="rough" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000">
+  <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
     <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/>
     <feDisplacementMap in="SourceGraphic" scale="3.2"/>
   </filter>
-  <filter id="wc" filterUnits="userSpaceOnUse" x="-2000" y="-2000" width="6000" height="6000">
+  <filter id="wc" x="-20%" y="-20%" width="140%" height="140%">
     <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n"/>
     <feDisplacementMap in="SourceGraphic" in2="n" scale="7" result="d"/>
     <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="2" result="grain"/>
