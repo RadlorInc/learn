@@ -4,6 +4,8 @@
  * drawing (an apple, `fruit k=apple`) and closed the tab: "A problem repeatedly occurred" (31 Oct 2026, iPhone 13,
  * staging; found by replaying the lesson piece by piece on the phone). askRadlor fixed its player on 22 Oct (4dbf119);
  * Radlic's copy (public/ask-player, scripts/sync-ask-player.mjs) was older. This fails on a copy from before that fix.
+ * Even then, the watercolour's second, fine-grained noise closed the tab after two apple boards in a row; askRadlor
+ * f0bfb50 keeps one soft noise. This also fails on a copy from before that.
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -21,5 +23,9 @@ describe('ask-player: filter regions follow each shape', () => {
     const f = filters.find(x => x.includes(`id="${id}"`))!
     expect(f).not.toMatch(/filterUnits="userSpaceOnUse"/)
     expect(f).toMatch(/width="1[0-9]{2}%"/)
+  })
+  it('#wc is one soft noise, no fine paper grain', () => {
+    const f = recipes.match(/<filter id="wc"[\s\S]*?<\/filter>/)![0]
+    expect([...f.matchAll(/<feTurbulence\b/g)]).toHaveLength(1)
   })
 })
