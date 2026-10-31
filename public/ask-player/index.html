@@ -183,6 +183,8 @@ function build(answer) {
   // Over a realistic drawing a plain arrow or line gets a white edge, or a red arrow vanishes on a red heart
   scene.classList.toggle('on-anat', !!scene.querySelector('.anat'));
   scene.querySelectorAll('.ink').forEach(e => { const L = e.getTotalLength(); e.style.strokeDasharray = L; e.style.strokeDashoffset = L; });
+  // A straight horizontal or vertical line has a flat box, and a filter sized to its box (recipes.js) would hide it.
+  scene.querySelectorAll('[filter]').forEach(e => { const b = e.getBBox(); if (b.width < 1 || b.height < 1) e.removeAttribute('filter'); });
   scene.querySelectorAll('text.hand:not(.fillable)').forEach(e => e.style.clipPath = 'inset(0 100% 0 0)');
   setCam(480, 270, 1, 0);
 }
@@ -245,7 +247,10 @@ async function write(id, ms = 900) {
   if (el.tagName === 'g') { const ts = [...el.querySelectorAll('text.hand:not(.fillable)')]; for (const t of ts) await write(t, ms / ts.length); return; }
   const b = el.getBBox();
   marker.style.opacity = 1;
-  return frames(ms, t => { el.style.clipPath = `inset(0 ${100 - t * 100}% 0 0)`; markAt(el, b.x + b.width * t, b.y + b.height * .75); });
+  await frames(ms, t => { el.style.clipPath = `inset(0 ${100 - t * 100}% 0 0)`; markAt(el, b.x + b.width * t, b.y + b.height * .75); });
+  // Written: no clip at all. Safari clips "inset(0 0% 0 0)" at the text's box, cutting a hand-font letter's tail or a
+  // subscript (H2O read H2C, NADH read NADh); Chrome showed them (22 Oct 2026).
+  el.style.clipPath = 'none';
 }
 async function penUp() {
   if (marker.style.opacity === '0') return;
