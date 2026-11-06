@@ -26,6 +26,7 @@ import {
 } from '@/data/repositories'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
@@ -90,6 +91,7 @@ export default function ParentDashboard() {
 
 function Dashboard() {
   const router = useRouter()
+  const pin = usePinConfirm()
   const sp = useSearchParams()
   const childId = sp.get('child'), classId = sp.get('class'), view = sp.get('view'), tabParam = sp.get('tab')
 
@@ -503,7 +505,7 @@ function Dashboard() {
                   </p>
                 )}
                 <div style={{ display:'flex', gap:10 }}>
-                  <button onClick={() => d.accessRole === 'owner' ? handleDelete(d.learner.id) : handleRemoveSelf(d.learner.id)}
+                  <button onClick={() => d.accessRole === 'owner' ? pin.confirm(() => handleDelete(d.learner.id)) : handleRemoveSelf(d.learner.id)}
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
                     {d.accessRole === 'owner' ? t('Yes, delete') : t('Yes, remove me')}
                   </button>
@@ -717,6 +719,7 @@ function Dashboard() {
       </Sheet>
 
       <TourRunner tour={tour} onEnd={() => setTour(null)} />
+      {pin.dialog}
 
       {loginFor && (
         <ChildLoginSheet

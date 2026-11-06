@@ -150,8 +150,8 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261016150000, applied only once every admin
   has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
 - **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time or Ask Radlic setting
-  changes, so a child on a signed-in device cannot change them; the rest of `/parent` opens without it (founder, 6 Nov
-  2026). `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
+  changes, before a child's profile is deleted and before the account is closed; the rest of `/parent` opens without it
+  (founder, 6 Nov 2026). `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
   data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
   token and emails the account once per reset. `/rights` keeps help, withdraw-all
   (`WithdrawAllCard`) and the per-child export (`DataRights`) in one place, for a signed-in adult only (a `learner` login
