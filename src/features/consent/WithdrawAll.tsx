@@ -33,7 +33,7 @@ export function WithdrawAll({ lang, busy, paid, onConfirm, onKeep }: { lang: Lan
  * mistake. So it lives beside "Close your account", NOT on its page, looks nothing like it (no red until the
  * confirm itself), and on success `onDone` takes the parent back to the dashboard — never to the close page.
  */
-export function WithdrawAllCard({ lang, style, paid, onDone }: { lang: Lang; style: CSSProperties; paid: boolean; onDone: () => void }) {
+export function WithdrawAllCard({ lang, style, paid, onDone, guard }: { lang: Lang; style: CSSProperties; paid: boolean; onDone: () => void; /** The dashboard's PIN; /rights passes none, on purpose. */ guard?: (go: () => void) => void }) {
   const [st, setSt] = useState<'idle' | 'confirm' | 'busy' | 'error'>('idle')
   async function go() {
     setSt('busy')
@@ -44,7 +44,7 @@ export function WithdrawAllCard({ lang, style, paid, onDone }: { lang: Lang; sty
   return (
     <section style={style} data-tour="withdraw-all-card">
       {st === 'confirm' || st === 'busy'
-        ? <WithdrawAll lang={lang} busy={st === 'busy'} paid={paid} onConfirm={go} onKeep={() => setSt('idle')} />
+        ? <WithdrawAll lang={lang} busy={st === 'busy'} paid={paid} onConfirm={() => guard ? guard(go) : go()} onKeep={() => setSt('idle')} />
         : <>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--ink)' }}>{WITHDRAW_ALL.heading[lang]}</h2>
             <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}><Md s={WITHDRAW_ALL.body1[lang]} /></p>

@@ -1,15 +1,14 @@
 // @vitest-environment jsdom
 /**
  * With the parent PIN locked or not yet entered, three things stay reachable — help, withdrawing permission for all
- * children, and a copy of the data — and closing the account does not (founder, 2026-10-06).
+ * children, and a copy of the data (founder, 2026-10-06).
  *
- * Rendered for real: the PIN screen (`ParentPinGate`), the page its link points to, and the /parent layout. Only the
+ * Rendered for real: the PIN screen (`ParentPinGate`), and the page its link points to. Only the
  * account's reads are stubbed. Expected words and paths are written by hand.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createElement, act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { existsSync } from 'node:fs'
 
 let role: string | null
 let session: boolean
@@ -71,12 +70,6 @@ describe('the PIN screen links to what stays open', () => {
     g.done()
   })
 
-  it('/rights is not under app/parent, so the PIN layout does not wrap it; /parent/account is', () => {
-    expect(existsSync('src/app/rights/page.tsx')).toBe(true)
-    expect(existsSync('src/app/rights/layout.tsx')).toBe(false)
-    expect(existsSync('src/app/parent/account/page.tsx')).toBe(true)
-    expect(existsSync('src/app/parent/layout.tsx')).toBe(true)
-  })
 })
 
 describe('/rights with the PIN locked', () => {
@@ -116,24 +109,5 @@ describe('/rights with the PIN locked', () => {
     expect(button(p.el, 'Withdraw permission')).toBeUndefined()
     expect(button(p.el, 'Download a copy')).toBeUndefined()
     p.done()
-  })
-})
-
-describe('closing the account still needs the PIN', () => {
-  it('the /parent layout hides its pages until the PIN is right, then shows them', async () => {
-    pin = { state: 'set' }
-    const { default: ParentLayout } = await import('@/app/parent/layout')
-    const g = await mount(createElement(ParentLayout, null, 'CLOSE-YOUR-ACCOUNT-PAGE'))
-    expect(g.el.textContent).not.toContain('CLOSE-YOUR-ACCOUNT-PAGE')
-    const input = g.el.querySelector('input[aria-label="PIN"]') as HTMLInputElement
-    const type = async (v: string) => act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, v)
-      input.dispatchEvent(new Event('input', { bubbles: true }))
-    })
-    await type('1111'); await click(button(g.el, 'Open dashboard'))
-    expect(g.el.textContent).not.toContain('CLOSE-YOUR-ACCOUNT-PAGE')
-    await type('4826'); await click(button(g.el, 'Open dashboard'))
-    expect(g.el.textContent).toContain('CLOSE-YOUR-ACCOUNT-PAGE')
-    g.done()
   })
 })

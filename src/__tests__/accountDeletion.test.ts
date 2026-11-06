@@ -105,6 +105,9 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.exercise_results':         `public.exercise_results where learner_id in (${ls})`,
     'public.lesson_feedback':          `public.lesson_feedback where learner_id in (${ls})`,
     'public.game_saves':               `public.game_saves where learner_id in (${ls})`,
+    'public.ask_maths_settings':       `public.ask_maths_settings where learner_id in (${ls})`,
+    'public.ask_maths_questions':      `public.ask_maths_questions where learner_id in (${ls})`,
+    'public.addon_subscriptions':      `public.addon_subscriptions where account_id = '${uid}'`,
     /**
      * ⚠️ AND THIS ONE IS A DECISION, NOT A MAPPING — flag it to the attorney before it ships.
      * `parental_consents.parent_id` cascades from auth.users, so closing an account destroys the
@@ -141,6 +144,7 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
     insert into public.billing_events (account_id, stripe_event_id, type)
       values ('${uid}', 'evt_${uid.slice(0, 8)}', 'checkout.session.completed');
     insert into public.free_topics (account_id, topic) values ('${uid}', 'g3m2-t1');
+    insert into public.addon_subscriptions (account_id, product, status) values ('${uid}', 'ask_maths', 'active');
   `)
   // Consent-once: ONE account consent covers every child of the family.
   const consent = await grantedConsent(db, uid)
@@ -155,6 +159,8 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
       insert into public.exercise_results (learner_id, class_id, exercise_id, outcomes) values ('${l}', '${klass}', 'e1', '{first,worked}');
       insert into public.lesson_feedback (learner_id, lesson_id, screen, reasons) values ('${l}', 'g3m2-t1', '3', '{fast,words}');
       insert into public.game_saves (learner_id, data) values ('${l}', '{"v":2}');
+      insert into public.ask_maths_settings (learner_id, enabled, consent_version, consented_at) values ('${l}', true, 'ask-maths-v1', now());
+      insert into public.ask_maths_questions (learner_id, question, outcome) values ('${l}', 'What is 3 x 4?', 'answered');
       insert into public.sessions (learner_id, chapter, correct_count) values ('${l}', 'counting', 7);
       insert into public.learner_events (learner_id, event) values ('${l}', 'chapter_open');
       insert into public.error_events (learner_id, source, message) values ('${l}', 'client', 'boom');

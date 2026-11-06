@@ -129,6 +129,19 @@
 --                                                  viewer, the child's 'self' login); INSERT/UPDATE on
 --                                                  (learner_id, data) only; no DELETE (cascade with the learner).
 --                                                  Not read by anything privileged. No SECURITY DEFINER.
+--   ask_maths_settings         rls=t  policies=1   2026-10-21 (20261021120000): Ask maths, the parent's switch per
+--                                                  child and who agreed to which disclosure. SELECT for a learner_access
+--                                                  row; every write revoked from clients: only set_ask_maths (DEFINER,
+--                                                  the owner) writes it. Consent-gated. NOT YET APPLIED TO PRODUCTION.
+--   ask_maths_questions        rls=t  policies=1   2026-10-21 (20261021120000): a child's typed question, its outcome
+--                                                  and the lesson; 30 days (prune-ask-maths-questions). SELECT for a
+--                                                  learner_access row; no client writes: ask_maths_begin (DEFINER,
+--                                                  family), ask_maths_finish (DEFINER, service_role only),
+--                                                  ask_maths_forget (DEFINER, owner). Consent-gated. NOT YET APPLIED.
+--   addon_subscriptions        rls=t  policies=1   2026-10-21 (20261021120000): the Ask maths add-on's Stripe
+--                                                  subscription, one per account and product. SELECT own row only;
+--                                                  written by the webhook (service role). A delete queues the Stripe
+--                                                  cancel (billing_queue_cancel_on_delete). NOT YET APPLIED.
 --   teacher_plans              rls=t  policies=1   2026-09-18 (20260918120000): who has PAID. SELECT only — own row,
 --                                                  or the row of the adult who created my learner. Every write
 --                                                  privilege revoked from public/anon/authenticated and no write

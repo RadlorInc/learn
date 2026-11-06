@@ -280,6 +280,53 @@ begin
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;
 
 
+  -- ═══ ASK MATHS (20261021120000) — the attacker's half ═══════════════════════
+  -- A question of the OWNER's child, planted as the database role (the consent gate passes: the owner consented).
+  reset role;
+  insert into public.ask_maths_questions (learner_id, question, outcome) values (v_learner, 'rlstest question', 'answered');
+  set local role authenticated;
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+
+  -- AM1: the attacker cannot switch Ask maths on for a child they do not own…
+  v_blocked := false;
+  begin perform public.set_ask_maths(v_learner, true, 20, 'ask-maths-v1');
+  exception when insufficient_privilege then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL AM1: attacker switched Ask maths on for a child they do not own'; end if;
+  -- AM1b (positive twin): …and CAN for their own child.
+  v_asserts := v_asserts + 1;
+  if (select public.set_ask_maths(v_alearner, true, 3, 'ask-maths-v1')) <> '{"ok": true}'::jsonb then
+    raise exception 'RLS FAIL AM1b: the owner could not switch Ask maths on for their own child'; end if;
+  select count(*) into v_cnt from public.ask_maths_settings where learner_id = v_alearner and enabled;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 then raise exception 'RLS FAIL AM1c: the owner cannot read their own child''s Ask maths switch'; end if;
+
+  -- AM2: nor ask for that child, nor read its questions, nor write them, nor settle one.
+  v_blocked := false;
+  begin perform public.ask_maths_begin(v_learner, 'what is 2 + 2');
+  exception when insufficient_privilege then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL AM2: attacker asked a question as a child they do not own'; end if;
+  select count(*) into v_cnt from public.ask_maths_questions where learner_id = v_learner;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 0 then raise exception 'RLS FAIL AM3: attacker read another family''s Ask maths questions (% rows)', v_cnt; end if;
+  v_blocked := false;
+  begin insert into public.ask_maths_questions (learner_id, question) values (v_alearner, 'planted');
+  exception when insufficient_privilege then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL AM4: a client wrote an Ask maths question directly (only the functions may)'; end if;
+  v_blocked := false;
+  begin perform public.ask_maths_finish(gen_random_uuid(), 'answered', '{}'::jsonb);
+  exception when insufficient_privilege then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL AM5: a client can settle an Ask maths question (service role only)'; end if;
+  v_blocked := false;
+  begin insert into public.addon_subscriptions (account_id, product, status) values (v_attacker, 'ask_maths', 'active');
+  exception when insufficient_privilege then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL AM6: a client gave itself the Ask maths add-on'; end if;
+
   -- ═══ BILLING (Stage 1) — the attacker's half ═══════════════════════════════
   -- The attacker has NO subscription and owns v_alearner, so they are the unentitled case.
 

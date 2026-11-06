@@ -162,7 +162,7 @@ describe('ParentPinGate: a failed read is not "an adult with no role"', () => {
     const { ParentPinGate } = await import('@/shared/ui/ParentPinGate')
     const text = await render(createElement(ParentPinGate, null, 'dashboard'))
     expect(text).not.toContain('Set a parent PIN')
-    expect(text).toContain('Could not open the dashboard')
+    expect(text).toContain('Could not check the PIN')
     expect(text).toContain('Try again')
   })
 })

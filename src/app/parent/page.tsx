@@ -26,6 +26,7 @@ import {
 } from '@/data/repositories'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
@@ -90,6 +91,7 @@ export default function ParentDashboard() {
 
 function Dashboard() {
   const router = useRouter()
+  const pin = usePinConfirm()
   const sp = useSearchParams()
   const childId = sp.get('child'), classId = sp.get('class'), view = sp.get('view'), tabParam = sp.get('tab')
 
@@ -328,7 +330,7 @@ function Dashboard() {
   const snooze = (r: Reminder) => setPrefs(p => ({ ...p, snoozed: { ...p.snoozed, [r.id]: now + SNOOZE_DAYS * 86_400_000 } }))
   const hide = (r: Reminder) => setPrefs(p => ({ ...p, hidden: [...p.hidden, r.id] }))
 
-  // ── One pop-up per visit: a celebration, else the weekly recap, else the first-visit tour. Decided once. ──
+  // ── One pop-up per visit: a celebration, else the weekly recap. Decided once. ──
   const mastered = useMemo(() => {
     if (!prefs?.lastVisit || tea) return []
     return learners.flatMap(d => (extra[d.learner.id]?.points ?? [])
@@ -338,20 +340,16 @@ function Dashboard() {
   const extrasReady = tea || (learners.length > 0 && learners.every(d => extra[d.learner.id] !== undefined))
   const home = !childId && !classId && !view
   // ONE automatic pop-up per visit, on the home screen, once everything it reads has arrived:
-  // a celebration, else the weekly recap, else the first-visit tour.
-  const autoPick: 'celebrate' | 'recap' | 'first' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
+  // a celebration, else the weekly recap. A tour never starts by itself (founder, 6 Nov 2026): Help has them.
+  const autoPick: 'celebrate' | 'recap' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
     : mastered.length && !prefs.off.includes('good') ? 'celebrate'
-    : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap'
-    : !prefs.seen.includes('first') && (tea || learners.length > 0) ? 'first' : null
+    : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap' : null
   const auto = !autoDone && home && !showAddModal ? autoPick : null
-  const shownPopup = auto === 'celebrate' || auto === 'recap' ? auto : null
+  const shownPopup = auto
   function closePopup() {
     setAutoDone(true)
     if (auto === 'recap') setPrefs(p => ({ ...p, recapWeek: weekOf(new Date(now)) }))
   }
-  // The first time an adult opens a child or a class, a 3-step tour of its tabs. Once.
-  const insideKey = childId ? 'inside-child' : classId ? 'inside-class' : null
-
   function tourFor(id: string): Tour | null {
     const first = learners[0]?.learner.id, cls = classes[0]?.id
     const helpStep = { target: 'nav-help', title: t('Not sure how?'), text: t('Help has step-by-step walkthroughs: pick what you want to do.') }
@@ -364,25 +362,9 @@ function Dashboard() {
           { url: '/parent', target: 'upnext', title: t('The one thing to do next'), text: t('We’ll always put the most useful thing here.') },
           { target: first ? `child-${first}` : 'add-child', title: t('One card per child'), text: t('Open a child and everything about them is inside: progress, lessons, game time, login.') },
           { target: 'bell', title: t('Reminders'), text: t('Anything else worth a look waits here.') }, helpStep] }
-    if (id === 'inside-child') return { title: t('Inside a child’s profile'), steps: [
-      { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
-      { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
-      { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }
-    if (id === 'inside-class') return { title: 'Inside a class', steps: [
-      { target: 'tab-students', title: 'Students', text: 'Add students, and give a new password to anyone who can’t sign in.' },
-      { target: 'tab-lessons', title: 'Lessons', text: 'Choose the class’s modules. New students get them too.' },
-      { target: 'tab-exercises', title: 'Exercises', text: 'Make a test, unlock it when it’s time, and read the results.' }] }
     return null
   }
   function startTour(id: string) { const t = tourFor(id); if (t) setTour({ ...t, id }) }
-  const autoTour = auto === 'first' ? 'first' : !tour && !shownPopup && insideKey && prefs && !prefs.seen.includes(insideKey) ? insideKey : null
-  const activeTour = tour ?? (autoTour ? { ...tourFor(autoTour)!, id: autoTour } : null)
-  function endTour() {
-    const id = activeTour?.id
-    if (id) setPrefs(p => ({ ...p, seen: [...new Set([...p.seen, id])] }))
-    if (auto === 'first') setAutoDone(true)
-    setTour(null)
-  }
 
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#EFF8FF' }} aria-busy="true" />
@@ -456,11 +438,11 @@ function Dashboard() {
     page = !child ? <div style={dcard}><p style={{ margin:0 }}>{t('We couldn’t find that child.')} <Link href="/parent">{t('Back to Home')}</Link></p></div> : (() => {
       const d = child, klass = classes.find(c => c.id === d.learner.grade_id)
       const tab = (CHILD_TABS.some(([k]) => k === tabParam) ? tabParam : 'progress') as ChildTab
-      return <ChildPage id={d.learner.id} name={d.learner.display_name} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
+      return <ChildPage id={d.learner.id} name={d.learner.display_name} band={d.learner.age_group} avatar={AVATAR_SRCS[d.learner.avatar_index] ?? AVATAR_SRCS[0]} avatarIndex={d.learner.avatar_index ?? 0} tab={tab}
         crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
-        onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
+        onLaunch={() => launchGame(d)} onLogin={() => pin.confirm(() => setLoginFor(d.learner.id))}
         onCorrect={async (display_name, band, avatar_index) => {
           const r = await correctLearner(d.learner.id, band === null ? { display_name, avatar_index } : { display_name, avatar_index, age_group: band })
           if (r === 'ok') await loadAll()
@@ -523,7 +505,7 @@ function Dashboard() {
                   </p>
                 )}
                 <div style={{ display:'flex', gap:10 }}>
-                  <button onClick={() => d.accessRole === 'owner' ? handleDelete(d.learner.id) : handleRemoveSelf(d.learner.id)}
+                  <button onClick={() => d.accessRole === 'owner' ? pin.confirm(() => handleDelete(d.learner.id)) : handleRemoveSelf(d.learner.id)}
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
                     {d.accessRole === 'owner' ? t('Yes, delete') : t('Yes, remove me')}
                   </button>
@@ -544,7 +526,7 @@ function Dashboard() {
       const tab = (CLASS_TABS.some(([k]) => k === tabParam) ? tabParam : 'students') as ClassTab
       const students = learners.filter(d => d.learner.grade_id === cls.id && d.accessRole === 'owner')
         .map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, due: d.learner.lesson_due ?? {} }))
-      return <ClassPage cls={cls} tab={tab} paid={paid} students={students} logins={childLogins} onLogin={setLoginFor}
+      return <ClassPage cls={cls} tab={tab} paid={paid} students={students} logins={childLogins} onLogin={id => pin.confirm(() => setLoginFor(id))}
         onChanged={() => { void loadAll(true); getMyClasses().then(setClasses) }} onStudentsAdded={() => { void loadAll(true) }}
         onUpdate={c => setClasses(cs => cs.map(x => x.id === c.id ? c : x))}
         onDeleted={() => { setClasses(cs => cs.filter(x => x.id !== cls.id)); router.push('/parent'); void loadAll(true) }} />
@@ -593,9 +575,9 @@ function Dashboard() {
         {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
         {/* Withdraw permission for every child, and KEEP the account — its own card, never on the close page (prod check 2.8).
             On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}
-        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null}
+        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null} guard={pin.confirm}
           onDone={() => { setActionMsg(PROPOSED.withdrawnAllBody[lang]); router.push('/parent'); void loadAll(true) }} />}
-        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
+        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
             /parent. The page itself carries the real guards. */}
         <section style={dcard} data-tour="close-card"><h2 style={h2}>{t('Close your account')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{tea ? 'Deletes your account and every student profile you added.' : t('Deletes your account and every child profile you added.')}</p>
@@ -736,7 +718,8 @@ function Dashboard() {
         <p style={{ margin:'14px 0 0', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Shown on your first visit each week. Turn it off in Account → Reminders.')}</p>
       </Sheet>
 
-      <TourRunner tour={activeTour} onEnd={endTour} />
+      <TourRunner tour={tour} onEnd={() => setTour(null)} />
+      {pin.dialog}
 
       {loginFor && (
         <ChildLoginSheet
