@@ -108,7 +108,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'I forgot my parent PIN',
-    a: <>On the PIN screen (it shows when you change game time or Ask Radlic, delete a child&apos;s profile or close the account), tap &ldquo;Forgot PIN?&rdquo;. For your child&apos;s
+    a: <>On the PIN screen (it shows before changes that matter, like game time, Ask Radlic, a login, a payment or deleting a profile), tap &ldquo;Forgot PIN?&rdquo;. For your child&apos;s
        safety the PIN is removed 24 hours later, and you can then set a new one. We email you when a reset is asked for, so if
        you did not ask, change one of those settings, enter your PIN to cancel it, and tell us.</>,
   },

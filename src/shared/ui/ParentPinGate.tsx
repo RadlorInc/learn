@@ -111,7 +111,7 @@ export function ParentPinGate({ children, preview, onOpen, onCancel }: { childre
           {stage === 'create' ? `Set a ${teacher ? 'teacher' : 'parent'} PIN` : stage === 'error' ? 'Could not check the PIN' : `Enter your ${teacher ? 'teacher' : 'parent'} PIN`}
         </h1>
         <p style={{ margin: 0, fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.45 }}>
-          {stage === 'create' ? `Choose 4 digits. We ask for it before game time or Ask Radlic settings change, a ${teacher ? 'student' : 'child'}’s profile is deleted or the account is closed, so a ${teacher ? 'student' : 'child'} on this device cannot do these.`
+          {stage === 'create' ? `Choose 4 digits. We ask for it before changes that matter, like game time, Ask Radlic, a login, a payment or deleting a profile, so a ${teacher ? 'student' : 'child'} on this device cannot make them.`
             : stage === 'error' ? errorWording(failKind, 'Check your connection and try again.')
             : 'Only a grown-up can change this setting.'}
         </p>

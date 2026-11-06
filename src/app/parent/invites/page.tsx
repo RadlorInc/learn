@@ -10,6 +10,7 @@ import {
   sendInvite, acceptInvite, revokeInvite,
 } from '@/data/repositories'
 import type { Learner, InviteWithLearner } from '@/data/supabase/types'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 
 /* The adult surface's palette, from globals.css — same tokens as the other parent screens. */
 const P = {
@@ -24,6 +25,7 @@ const P = {
 
 
 export default function InvitesPage() {
+  const pin = usePinConfirm()
   const router = useRouter()
   const [learners,   setLearners]   = useState<Learner[]>([])
   const [selectedId, setSelectedId] = useState<string>('')
@@ -193,7 +195,7 @@ export default function InvitesPage() {
             placeholder="e.g. teacher@school.com"
             value={email}
             onChange={e => { setEmail(e.target.value); setMsg(null) }}
-            onKeyDown={e => e.key === 'Enter' && handleSend()}
+            onKeyDown={e => e.key === 'Enter' && email.trim() && pin.confirm(handleSend)}
             style={{
               width: '100%', padding: '13px 16px',
               fontSize: 16, fontWeight: 500,
@@ -216,7 +218,7 @@ export default function InvitesPage() {
           )}
 
           <button
-            onClick={handleSend}
+            onClick={() => pin.confirm(handleSend)}
             disabled={sending || !email.trim() || !selectedId}
             style={{
               width: '100%', padding: '14px',
@@ -270,6 +272,7 @@ export default function InvitesPage() {
             </div>
           </div>
         )}
+      {pin.dialog}
       </div>
     </div>
   )

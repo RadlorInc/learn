@@ -42,13 +42,13 @@ describe('PIN gate wording', () => {
     pin = 'none'
     const created = await heading()
     expect(created).toMatch(/^Set a teacher PIN \|/)
-    expect(created).toContain('so a student on this device cannot do these')
+    expect(created).toContain('so a student on this device cannot make them')
   })
 
   it('a parent is still asked for a PARENT PIN', async () => {
     role = 'parent'
     expect(await heading()).toMatch(/^Enter your parent PIN \|/)
     pin = 'none'
-    expect(await heading()).toContain('so a child on this device cannot do these')
+    expect(await heading()).toContain('so a child on this device cannot make them')
   })
 })

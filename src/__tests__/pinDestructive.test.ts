@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * Deleting a child's profile and closing the account ask for the parent PIN (founder, 6 Nov 2026). The real /parent and
- * /parent/account screens are mounted on a stubbed Supabase client; the assertion is on the database call itself, so it
- * must not be made on a wrong PIN or a Cancel, and must be made on the right PIN.
+ * The changes that matter ask for the parent PIN (founder, 6 Nov 2026). The real screens are mounted on a stubbed
+ * Supabase client; the assertion is on the call itself, so it must not be made on a wrong PIN or a Cancel, and must be
+ * made on the right PIN.
  */
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest'
 import { createElement, act, type ReactNode } from 'react'
@@ -25,7 +25,7 @@ vi.mock('@/data/supabase/client', () => {
     const b: Record<string, unknown> = new Proxy({}, {
       get: (_t, k) => k === 'then'
         ? (res: (x: unknown) => void) => res({ data: table === 'profiles' ? { role: 'parent' } : [], error: null })
-        : () => b,
+        : (...a: unknown[]) => { if (k === 'update' || k === 'insert') h.rpcs.push(`${String(k)}:${table}`); void a; return b },
     })
     return b
   }
@@ -40,6 +40,7 @@ vi.mock('@/data/supabase/client', () => {
       from: (t: string) => query(t),
       rpc: async (fn: string, args: { p_pin?: string }) => {
         h.rpcs.push(fn)
+        if (fn === 'get_my_learners') return { data: [learner], error: null }
         if (fn === 'get_parent_dashboard') return { data: [{ learner, role: 'owner', stats: null, progress: [], sessions: [] }], error: null }
         if (fn === 'parent_pin_status') return { data: { state: 'set' }, error: null }
         if (fn === 'verify_parent_pin') return { data: args.p_pin === '4826' ? { ok: true } : { ok: false, error: 'wrong', tries_left: 4 }, error: null }
@@ -111,5 +112,84 @@ describe('closing the account asks for the PIN first', () => {
     await click('Delete my account')
     await enterPin('4826')
     expect(h.rpcs).toContain('delete_my_account')
+  })
+})
+
+describe('the other changes that matter ask too', () => {
+  const dashboard = async (qs: string) => {
+    h.qs = qs
+    const { default: Dashboard } = await import('@/app/parent/page')
+    await show(createElement(Dashboard))
+    expect(pinBox(), 'the dashboard opened behind a PIN').toBeNull()
+  }
+
+  it('withdrawing permission from the dashboard', async () => {
+    await dashboard('view=account')
+    await click('Withdraw permission for all your children')
+    await click('Withdraw permission and delete')
+    expect(h.rpcs).not.toContain('withdraw_my_consent')
+    await enterPin('1111')
+    expect(h.rpcs).not.toContain('withdraw_my_consent')
+    await enterPin('4826')
+    expect(h.rpcs).toContain('withdraw_my_consent')
+  })
+
+  it("opening a child's login", async () => {
+    await dashboard('child=kid&tab=login')
+    const sheet = () => host.querySelector('[role="dialog"][aria-label="Ana’s login"]')
+    await click('Change login')
+    expect(sheet(), 'the login sheet opened without the PIN').toBeNull()
+    await enterPin('1111')
+    expect(sheet()).toBeNull()
+    await enterPin('4826')
+    expect(sheet(), 'the right PIN did not open the login sheet').toBeTruthy()
+  })
+
+  it("saving a child's details", async () => {
+    await dashboard('child=kid&tab=login')
+    const save = [...host.querySelectorAll('[data-tour="correct-card"] button')].filter(b => b.textContent === 'Save').pop() as HTMLButtonElement
+    await act(async () => { save.click() }); await settle()
+    expect(h.rpcs).not.toContain('update:learners')
+    await enterPin('4826')
+    expect(h.rpcs, 'the right PIN did not save').toContain('update:learners')
+  })
+
+  it('buying a seat', async () => {
+    const posts: unknown[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_u: string, o: { body: string }) => {
+      posts.push(JSON.parse(o.body).confirm)
+      return new Response(JSON.stringify({ ok: true, seats: 2, preview: { cadence: 'monthly', seats_now: 1, seats_after: 1, total_now_cents: 0, total_after_cents: 0, due_today_cents: 0 } }), { status: 200 })
+    }))
+    const { SeatsFullDialog } = await import('@/features/billing/SeatsFull')
+    await show(createElement(SeatsFullDialog, { seats: 1, onClose: () => {}, onAdded: () => {} }))
+    await click('Add a seat')
+    expect(posts, 'a seat was bought before the PIN').toEqual([false])
+    await enterPin('4826')
+    expect(posts).toEqual([false, true])
+  })
+
+  it('paying for a plan', async () => {
+    const calls: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (u: string) => { calls.push(u); return new Response('{}', { status: 200 }) }))
+    const { PlanCheckout } = await import('@/app/parent/plan/page')
+    await show(createElement(PlanCheckout))
+    const tick = host.querySelector('input[type="checkbox"]') as HTMLInputElement
+    await act(async () => { tick.click() }); await settle()
+    await click('Continue')
+    expect(calls.filter(u => u.includes('/api/checkout')), 'checkout started before the PIN').toEqual([])
+    await enterPin('4826')
+    expect(calls.filter(u => u.includes('/api/checkout')).length).toBe(1)
+  })
+
+  it('deleting a class', async () => {
+    const onDeleted = vi.fn()
+    const { ClassPage } = await import('@/features/dashboard/ClassPage')
+    await show(createElement(ClassPage, { cls: { id: 'c', name: 'Four B' }, tab: 'settings', paid: true, students: [], logins: {},
+      onLogin: () => {}, onChanged: () => {}, onStudentsAdded: () => {}, onUpdate: () => {}, onDeleted } as unknown as Parameters<typeof ClassPage>[0]))
+    await click('Delete class')
+    await click('Yes, delete')
+    expect(onDeleted).not.toHaveBeenCalled()
+    await enterPin('4826')
+    expect(onDeleted).toHaveBeenCalledTimes(1)
   })
 })

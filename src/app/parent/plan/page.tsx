@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { createClient } from '@/data/supabase/client'
 import { LADDER, MAX_SEATS, totalCents, type Cadence } from '@/core/billing'
 import { SubscriptionCard } from '@/features/billing/SubscriptionCard'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 
 /* The adult surface's palette, from globals.css — same tokens the other parent screens use.
    These pages previously mixed ad-hoc greys (#3D6FB8 / #3d6fb8 / #083d85 / #f3f9ff) with the brand
@@ -66,6 +67,7 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [agreed, setAgreed] = useState(false)   // the auto-renewal tick: unticked until the parent ticks it
+  const pin = usePinConfirm()
 
   async function checkout() {
     if (!agreed) return
@@ -180,7 +182,8 @@ export function PlanCheckout({ test = false }: { test?: boolean }) {
 
         {error && <p style={{ fontSize: 13, color: '#DC2626', fontWeight: 700, margin: '0 0 12px' }}>{error}</p>}
 
-        <button onClick={checkout} disabled={busy || !agreed} style={{
+        {pin.dialog}
+        <button onClick={() => pin.confirm(checkout)} disabled={busy || !agreed} style={{
           width: '100%', background: agreed ? 'var(--accent-fill)' : P.edge, color: agreed ? 'var(--on-accent-fill)' : P.ink3,
           fontWeight: 800, fontSize: 16, border: 'none', borderRadius: 50, padding: '14px 26px',
           cursor: busy ? 'default' : agreed ? 'pointer' : 'not-allowed', opacity: busy ? 0.6 : 1,
