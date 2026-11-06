@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The parent PIN is asked before a game-time or Ask Radlic setting changes, and nowhere else on the dashboard (founder,
- * 6 Nov 2026). Rendered for real: the Ask Radlic card and the child's page with its Game time tab. Only the account's
+ * The parent PIN is asked before a game-time or Ask Radlic setting changes or an invite goes out, not to open the
+ * dashboard (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the Ask Radlic card and the child's page with its Game time tab. Only the account's
  * reads are stubbed. Each change must not reach the database until the right PIN is in.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -12,12 +12,16 @@ import { existsSync, readFileSync } from 'node:fs'
 const setAskMaths = vi.fn(async () => ({ ok: true }))
 const cancelAddon = vi.fn(async () => ({ ok: true }))
 const forgetAskQuestions = vi.fn(async () => 0)
+const sendInvite = vi.fn(async () => ({ ok: true }))
 const verifyPin = vi.fn(async (p: string) => p === '4826' ? { ok: true } : { ok: false, error: 'wrong', tries_left: 4 })
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: () => {}, push: () => {} }) }))
 vi.mock('@/data/auth', () => ({ getCurrentSession: async () => ({ user: { id: 'u' } }) }))
 vi.mock('@/data/repositories', () => ({
   getMyRole: async () => 'parent', getPinStatus: async () => ({ state: 'set' }),
   verifyPin, setPin: async () => ({ ok: true }), requestPinReset: async () => ({ ok: true }),
+  sendInvite, acceptInvite: vi.fn(), revokeInvite: vi.fn(), declineInvite: vi.fn(),
+  getMyLearners: async () => [{ id: 'kid', display_name: 'Ana', avatar_index: 0, age_group: '9-11' }],
+  getReceivedInvites: async () => [], getSentInvites: async () => [],
 }))
 vi.mock('@/data/repositories/askMaths', () => ({
   addonActive: () => true, setAskMaths, cancelAddon, forgetAskQuestions, startAddonCheckout: vi.fn(),
@@ -105,6 +109,25 @@ describe('Game time asks for the PIN first', () => {
     expect(onSaveGame).not.toHaveBeenCalled()
     await typePin('4826')
     expect(onSaveGame).toHaveBeenCalledWith(false, 20)
+  })
+})
+
+describe('sharing a child with another adult asks for the PIN first', () => {
+  it('the invite is sent only after the right PIN', async () => {
+    const { default: InvitesPage } = await import('@/app/parent/invites/page')
+    await show(createElement(InvitesPage))
+    expect(host.querySelector('input[aria-label="PIN"]'), 'the page opened behind a PIN').toBeNull()
+    const email = host.querySelector('input[type="email"]') as HTMLInputElement
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(email, 'gran@x.test')
+      email.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await click('Send invite for')
+    expect(sendInvite).not.toHaveBeenCalled()
+    await typePin('1111')
+    expect(sendInvite).not.toHaveBeenCalled()
+    await typePin('4826')
+    expect(sendInvite).toHaveBeenCalledWith('kid', 'gran@x.test')
   })
 })
 

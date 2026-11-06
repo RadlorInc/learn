@@ -106,6 +106,7 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
   const [band, setBand] = useState<'' | Band>('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
+  const pin = usePinConfirm()
   const field: CSSProperties = { minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 16, width: '100%', boxSizing: 'border-box' }
   async function save() {
     const trimmed = value.trim()
@@ -140,7 +141,8 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
         <option value={bandOf(3)}>{t('Grades 3–5')}</option>
         <option value={bandOf(6)}>{t('Grades 6–8')}</option>
       </select></label>
-    <button type="button" disabled={busy || !value.trim()} onClick={save} style={dbtn}>{t('Save')}</button>
+    <button type="button" disabled={busy || !value.trim()} onClick={() => pin.confirm(save)} style={dbtn}>{t('Save')}</button>
+    {pin.dialog}
     {msg && <p role="status" style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-soft)', fontWeight: 700 }}>{msg}</p>}
   </>
 }

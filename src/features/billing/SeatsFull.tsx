@@ -10,6 +10,7 @@ import { HOLDS_SEATS, MAX_SEATS } from '@/core/billing'
 import { addSeat, getMySubscription, type SeatPreview } from '@/data/repositories/billing'
 import { PAYWALL_ENABLED } from '@/features/billing/useTopicGate'
 import { dbtn, dghost } from '@/features/dashboard/Helpers'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 
 /** The number of paid seats, or null when there is no paid plan (or the paywall is off, or we could not find out). */
 export function usePaidSeats(): [number | null, (n: number) => void] {
@@ -33,6 +34,7 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
   const most = seats >= MAX_SEATS
   const [preview, setPreview] = useState<SeatPreview | null>()
   const [busy, setBusy] = useState(false)
+  const pin = usePinConfirm()
   const [note, setNote] = useState<string | null>(null)
   useEffect(() => {
     if (most) return
@@ -91,7 +93,8 @@ export function SeatsFullDialog({ seats, onClose, onAdded }: { seats: number; on
         {note && <p role="alert" style={{ margin: '0 0 12px', fontWeight: 800, color: '#B42318' }}>{note}</p>}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <button type="button" style={dghost} onClick={onClose}>Not now</button>
-          {!most && !payUrl && <button type="button" style={dbtn} disabled={!preview || busy} onClick={buy}>{busy ? 'Adding…' : 'Add a seat'}</button>}
+          {pin.dialog}
+          {!most && !payUrl && <button type="button" style={dbtn} disabled={!preview || busy} onClick={() => pin.confirm(buy)}>{busy ? 'Adding…' : 'Add a seat'}</button>}
           {payUrl && <a href={payUrl} target="_blank" rel="noopener noreferrer" style={dbtn}>Approve payment</a>}
           {payUrl && <button type="button" style={dghost} disabled={busy} onClick={paid}>{busy ? 'Checking…' : 'I have paid'}</button>}
         </div>

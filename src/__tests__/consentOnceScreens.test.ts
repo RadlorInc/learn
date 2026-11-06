@@ -59,6 +59,7 @@ vi.mock('@/data/supabase/client', () => {
       from: (t: string) => { log.push(`from:${t}`); return thenable(() => ({ data: t === 'parental_consents' ? st.consents : [], error: null })) },
       rpc: async (fn: string) => {
         log.push(`rpc:${fn}`)
+        if (fn === 'parent_pin_status') return { data: { state: 'unavailable' }, error: null }   // not what this file tests; pinDestructive does
         if (fn === 'consent_is_current') return { data: st.current, error: null }
         if (fn === 'withdraw_my_consent') return { data: 'withdrawn', error: st.withdrawErr }
         return { data: null, error: null }

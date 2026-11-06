@@ -14,6 +14,7 @@ import { Performance } from '@/features/lessons/Performance'
 import { AddStudents, ModulePicker, Rename } from '@/features/classes/Classes'
 import { Tabs } from './ChildPage'
 import { dbtn, dghost, dcard } from './Helpers'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 
 // It carries every question ladder: loaded only when the Exercises tab opens.
 const ExerciseEditor = dynamic(() => import('@/features/classes/ExerciseEditor').then(m => m.ExerciseEditor), { ssr: false })
@@ -30,6 +31,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
   const [adding, setAdding] = useState(false)
   const [choosing, setChoosing] = useState(false)
   const [confirm, setConfirm] = useState(false)
+  const pin = usePinConfirm()
   const base = `/parent?class=${cls.id}`
   const chosen = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m))
 
@@ -95,11 +97,11 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
       <div className="card-grid">
         <section style={dcard}><h2 style={h2}>Class name</h2><Rename cls={cls} onDone={onChanged} /></section>
         <section style={dcard}>
-          <h2 style={h2}>Delete this class</h2>
+          {pin.dialog}<h2 style={h2}>Delete this class</h2>
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>The students, their logins and their lessons stay — they just won’t be in a class.</p>
           {confirm
             ? <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button type="button" style={{ ...dbtn, background: '#DC2626' }} onClick={async () => { if (await deleteClass(cls.id)) onDeleted() }}>Yes, delete {cls.name}</button>
+                <button type="button" style={{ ...dbtn, background: '#DC2626' }} onClick={() => pin.confirm(async () => { if (await deleteClass(cls.id)) onDeleted() })}>Yes, delete {cls.name}</button>
                 <button type="button" style={dghost} onClick={() => setConfirm(false)}>Cancel</button></div>
             : <button type="button" style={{ ...dghost, color: '#B42318' }} onClick={() => setConfirm(true)}>Delete class</button>}
         </section>

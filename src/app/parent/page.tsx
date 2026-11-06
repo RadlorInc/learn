@@ -442,7 +442,7 @@ function Dashboard() {
         crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
-        onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
+        onLaunch={() => launchGame(d)} onLogin={() => pin.confirm(() => setLoginFor(d.learner.id))}
         onCorrect={async (display_name, band, avatar_index) => {
           const r = await correctLearner(d.learner.id, band === null ? { display_name, avatar_index } : { display_name, avatar_index, age_group: band })
           if (r === 'ok') await loadAll()
@@ -526,7 +526,7 @@ function Dashboard() {
       const tab = (CLASS_TABS.some(([k]) => k === tabParam) ? tabParam : 'students') as ClassTab
       const students = learners.filter(d => d.learner.grade_id === cls.id && d.accessRole === 'owner')
         .map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, due: d.learner.lesson_due ?? {} }))
-      return <ClassPage cls={cls} tab={tab} paid={paid} students={students} logins={childLogins} onLogin={setLoginFor}
+      return <ClassPage cls={cls} tab={tab} paid={paid} students={students} logins={childLogins} onLogin={id => pin.confirm(() => setLoginFor(id))}
         onChanged={() => { void loadAll(true); getMyClasses().then(setClasses) }} onStudentsAdded={() => { void loadAll(true) }}
         onUpdate={c => setClasses(cs => cs.map(x => x.id === c.id ? c : x))}
         onDeleted={() => { setClasses(cs => cs.filter(x => x.id !== cls.id)); router.push('/parent'); void loadAll(true) }} />
@@ -575,7 +575,7 @@ function Dashboard() {
         {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
         {/* Withdraw permission for every child, and KEEP the account — its own card, never on the close page (prod check 2.8).
             On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}
-        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null}
+        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null} guard={pin.confirm}
           onDone={() => { setActionMsg(PROPOSED.withdrawnAllBody[lang]); router.push('/parent'); void loadAll(true) }} />}
         {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
