@@ -98,13 +98,13 @@ describe('the right-to-correct card', () => {
 describe('the parent PIN gate', () => {
   it('an expired sign-in is not called a connection problem', async () => {
     const text = await pinGateText({ error: { code: 'PGRST301', message: 'JWT expired' } })
-    expect(text, 'control: the gate is on its error screen').toContain('Could not open the dashboard')
+    expect(text, 'control: the gate is on its error screen').toContain('Could not check the PIN')
     expect(text).not.toMatch(/connection/i)
     expect(text).toContain(EXPIRED)
   })
   it('control: a real network failure still says check your connection', async () => {
     const text = await pinGateText({ throws: failedFetch })
-    expect(text).toContain('Could not open the dashboard')
+    expect(text).toContain('Could not check the PIN')
     expect(text).toContain('Check your connection and try again.')
   })
 })

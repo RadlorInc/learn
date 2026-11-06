@@ -565,9 +565,9 @@ describe('the Stripe webhook', () => {
 //  THE EMAILS A SUBSCRIPTION OWES (docs/legal/01 §3). Every sentence, date and amount below is typed out by hand.
 //  PERIOD_END is 2026-02-01T00:00:00Z.
 // ─────────────────────────────────────────────────────────────────────────────
-// Ask maths, the add-on (docs/product/ask-maths.md): a second subscription on the same customer, marked by
+// Ask Radlic, the add-on (docs/product/ask-maths.md): a second subscription on the same customer, marked by
 // metadata.product. It must reach addon_subscriptions and NEVER the plan's row or its seats.
-describe('the Stripe webhook: the Ask maths add-on', () => {
+describe('the Stripe webhook: the Ask Radlic add-on', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -604,7 +604,7 @@ describe('the Stripe webhook: the Ask maths add-on', () => {
     await deliver('checkout.session.completed', { id: 'cs_9', subscription: 'sub_addon', amount_total: 499, customer_details: { email: 'p@example.com' } })
     const [mail] = post(calls, 'api.resend.com/emails')
     expect(mail, 'no acknowledgement was sent').toBeTruthy()
-    expect(JSON.parse(mail.body).subject).toBe('Ask maths on Radlic — confirmation and how to cancel')
+    expect(JSON.parse(mail.body).subject).toBe('Ask Radlic on Radlic — confirmation and how to cancel')
     expect(JSON.parse(mail.body).text).toContain('$4.99')
     expect(mail.headers['Idempotency-Key'] ?? mail.headers['idempotency-key']).toBe('addon-ack-sub_addon')
   })
@@ -750,7 +750,7 @@ describe('POST /api/checkout', () => {
   function stubCheckout(opts: {
     userOk?: boolean; customerId?: string | null; staleCustomer?: boolean; status?: string; lookupFails?: boolean
     stripeSubs?: string[]                 // statuses of the subscriptions Stripe holds for the customer
-    addonSubs?: string[]                  // statuses of Ask maths add-on subscriptions (metadata.product = ask_maths)
+    addonSubs?: string[]                  // statuses of Ask Radlic add-on subscriptions (metadata.product = ask_maths)
     priorSessions?: FakeSession[]         // sessions that already exist in Stripe
     stripeListFails?: boolean             // Stripe answers the subscription list with an error
     unexpirable?: string[]                // session ids Stripe refuses to expire (already paid)
@@ -1018,7 +1018,7 @@ describe('POST /api/checkout', () => {
     }
   })
 
-  it('T2 — a live Ask maths ADD-ON on the customer is not a plan: the plan checkout still opens', async () => {
+  it('T2 — a live Ask Radlic ADD-ON on the customer is not a plan: the plan checkout still opens', async () => {
     const calls = stubCheckout({ addonSubs: ['active'] })
     const res = await checkout({ seats: 1 })
     expect(res.status).toBe(200)

@@ -5,7 +5,7 @@ import { ASK_MATHS_ON, MAX_QUESTION, parseSse, scriptOf } from '@/features/askMa
 
 /**
  * POST /api/ask-maths {learner, question} with the signed-in token (the child's own login, or the parent's session the
- * child is using): Ask maths (docs/product/ask-maths.md). The route decides nothing about who may ask:
+ * child is using): Ask Radlic (docs/product/ask-maths.md). The route decides nothing about who may ask:
  *
  *   1. `ask_maths_begin` (as the caller) checks access, grade band, the parent's switch, the paid add-on, one at a
  *      time and the daily limit, and makes a 'pending' row — or refuses (403 forbidden / 409 {error}).

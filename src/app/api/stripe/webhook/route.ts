@@ -188,7 +188,7 @@ export async function POST(req: Request) {
     return fail('subscription retrieve', e instanceof Error ? e.message : String(e))
   }
 
-  // ── 3b. Ask maths, the add-on (docs/product/ask-maths.md): its own row, never the plan's ─────────────
+  // ── 3b. Ask Radlic, the add-on (docs/product/ask-maths.md): its own row, never the plan's ─────────────
   // Its subscription carries metadata.product = 'ask_maths' (/api/checkout/ask-maths). It is applied to
   // addon_subscriptions with the same properties as the plan: Stripe's current truth, an upsert keyed on the account
   // and product (convergent on replay), and a closed account is acknowledged, not retried.

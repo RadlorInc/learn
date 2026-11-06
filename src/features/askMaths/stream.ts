@@ -1,5 +1,5 @@
 /**
- * Ask maths (docs/product/ask-maths.md): the parts the server route and the page share. No React, no browser APIs.
+ * Ask Radlic (docs/product/ask-maths.md): the parts the server route and the page share. No React, no browser APIs.
  * The lesson arrives as the whiteboard service's server-sent events (askRadlor's /api/partner/maths): accepted,
  * stage, els, need, els_add, step…, then done or failed.
  */

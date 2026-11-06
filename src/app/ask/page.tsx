@@ -1,32 +1,31 @@
 'use client'
 /**
- * /ask — Ask maths (docs/product/ask-maths.md): a child in grades 3–8 types a maths question and watches a whiteboard
+ * /ask — Ask Radlic (docs/product/ask-maths.md): a child in grades 3–8 types a maths question and watches a whiteboard
  * lesson drawn and spoken for it. Everything that decides whether they may ask (the parent's switch, the add-on, the
  * day's limit, grade band) is decided by the database through /api/ask-maths; this page shows the answer as it comes.
  * Shown only with NEXT_PUBLIC_ASK_MATHS=on (and the server's ASK_MATHS=on); no price or plan ever appears here.
  */
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import { getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { askMaths, getAskQuestions, type AskQuestion, type AskRefusal } from '@/data/repositories/askMaths'
 import { ASK_MATHS_PUBLIC, MAX_QUESTION } from '@/features/askMaths/stream'
 import { AskPlayer, type Post } from '@/features/askMaths/AskPlayer'
 import { MathPreview, MathTray } from '@/features/askMaths/MathTray'
 import { unlockSound, useVoiceStatus } from '@/features/askMaths/voice'
-import { INK, PAGE_BG, pill, shell, topBar } from '@/features/lessons/Pictures'
-import { bubble, primary } from '@/features/lessons/Frame'
+import { INK, LINE, ON_TEAL, PAGE_BG, TEAL, pill, shell, topBar } from '@/features/lessons/Pictures'
 
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
 const SAID: Record<AskRefusal | 'broke', string> = {
-  off: 'Ask maths is switched off right now. Ask your grown-up.',
-  not_entitled: 'Ask maths is not turned on for your family yet. Ask your grown-up.',
-  band: 'Ask maths is for grades 3 to 8.',
+  off: 'Ask Radlic is switched off right now. Ask your grown-up.',
+  not_entitled: 'Ask Radlic is not turned on for your family yet. Ask your grown-up.',
+  band: 'Ask Radlic is for grades 3 to 8.',
   busy: 'One question at a time. Let this lesson finish first.',
   limit: "That's all the questions for today. Come back tomorrow!",
   not_maths: 'I can only help with maths. Try a maths question!',
   personal: "Please don't type names, schools, addresses or phone numbers. Ask again without them.",
   unsafe: "I can't help with that one. If something is worrying you, talk to a grown-up you trust.",
-  unavailable: "Ask maths isn't working right now. Try again soon.",
+  unavailable: "Ask Radlic isn't working right now. Try again soon.",
   unauthenticated: 'Ask your grown-up to open your lessons first.',
   forbidden: 'Ask your grown-up to open your lessons first.',
   broke: "This lesson didn't come out right. Try asking again.",
@@ -39,12 +38,27 @@ const STAGE: Record<string, string> = { reading: 'Reading your question…', dra
 
 const noSubscribe = () => () => {}
 
+// Shaped like askRadlor's question box (AskComposer, its chat page), in Radlic's colours (founder, 6 Nov 2026): one
+// centred column, the text on top and the send button at the bottom right of the same box.
+const col: CSSProperties = { width: '100%', maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }
+const composer = (focused: boolean): CSSProperties => ({ background: '#fff', border: `2px solid ${focused ? INK : LINE}`, borderRadius: 24, padding: '12px 10px 10px 16px',
+  boxShadow: '0 8px 30px rgb(8 61 133 / 0.12)', transition: 'border-color .15s' })
+const send = (off: boolean): CSSProperties => ({ flex: 'none', alignSelf: 'flex-start', width: 44, height: 44, borderRadius: '50%', border: 0, display: 'grid', placeItems: 'center',
+  background: off ? LINE : TEAL, color: off ? '#fff' : ON_TEAL, cursor: off ? 'not-allowed' : 'pointer', transition: 'background-color .15s' })
+const statusLine: CSSProperties = { margin: 0, textAlign: 'center', fontSize: 16, fontWeight: 700, color: INK }
+const note: CSSProperties = { margin: 0, textAlign: 'center', fontSize: 13, color: INK, opacity: 0.8 }
+const chip: CSSProperties = { minHeight: 44, padding: '8px 14px', borderRadius: 999, border: `1.5px solid ${LINE}`, background: '#fff', color: INK, fontSize: 15, fontWeight: 700, cursor: 'pointer' }
+const asked: CSSProperties = { alignSelf: 'flex-end', maxWidth: 'min(85%, 560px)', padding: '10px 16px', borderRadius: '20px 20px 6px 20px', background: '#DCEFFD', color: INK, fontSize: 18,
+  lineHeight: 1.45, overflowWrap: 'anywhere' }
+
 export default function AskPage() {
   const mounted = useSyncExternalStore(noSubscribe, () => true, () => false)
   const learner = mounted ? getActiveLearner() : undefined
   const [q, setQ] = useState('')
   const [busy, setBusy] = useState(false)
-  const [note, setNote] = useState<string | null>(null)
+  const [said, setSaid] = useState<string | null>(null)
+  const [focused, setFocused] = useState(false)
+  const [question, setQuestion] = useState<string | null>(null)   // the one on the board, above it
   const [stage, setStage] = useState<string | null>(null)
   const [shown, setShown] = useState(false)               // a board is on screen (the lesson has started)
   const [left, setLeft] = useState<number | null>(null)
@@ -52,6 +66,15 @@ export default function AskPage() {
   const post = useRef<Post | null>(null)
   const bind = useCallback((p: Post) => { post.current = p }, [])
   const voice = useVoiceStatus()
+  // Grow from 1 to 6 rows.
+  useLayoutEffect(() => {
+    const el = area.current
+    if (!el) return
+    el.style.height = 'auto'
+    const line = parseFloat(getComputedStyle(el).lineHeight) || 26
+    el.style.height = `${Math.min(el.scrollHeight, line * 6)}px`
+    el.style.overflowY = el.scrollHeight > line * 6 ? 'auto' : 'hidden'
+  }, [q])
   // No asking until the made voice is here (founder, 26 Oct): a lesson started earlier stops at every step to wait for it.
   // A failed or impossible voice does not block: the device's own voice speaks.
   const voiceLoading = voice.state === 'loading'
@@ -64,75 +87,90 @@ export default function AskPage() {
   }, [learnerId])
   useEffect(loadPast, [loadPast])
 
-  async function ask(question: string) {
-    if (!learner || busy || voiceLoading || !question.trim()) return
+  async function ask(text: string) {
+    if (!learner || busy || voiceLoading || !text.trim()) return
     unlockSound()                                       // inside the tap: an iPhone then lets this page play sound
-    setBusy(true); setNote(null); setStage(STAGE.reading); setShown(false); setWatch(null)
+    setBusy(true); setSaid(null); setStage(STAGE.reading); setShown(false); setWatch(null); setQuestion(text.trim()); setQ('')
     post.current?.({ type: 'reset' })
     let ended = false
-    const r = await askMaths(learner.id, question.trim(), ({ event, data }) => {
+    const r = await askMaths(learner.id, text.trim(), ({ event, data }) => {
       if (event === 'stage') setStage(STAGE[String(data.stage)] ?? null)
       if (event === 'els' || event === 'els_add') { setShown(true); post.current?.({ type: event, els: data.els, drawings: data.drawings }) }
       if (event === 'step') post.current?.({ type: 'step', step: data.step })
       if (event === 'done') { ended = true; post.current?.({ type: 'done' }); setStage(null) }
-      if (event === 'failed') { ended = true; setStage(null); setNote(SAID.broke) }
+      if (event === 'failed') { ended = true; setStage(null); setSaid(SAID.broke) }
     })
-    if (!r.ok) { setNote(SAID[r.error]); setStage(null) }
-    else { setLeft(r.left); if (!ended) { setStage(null); setNote(SAID.broke) } }
+    if (!r.ok) { setSaid(SAID[r.error]); setStage(null); setQuestion(null); setQ(text) }   // a refusal gives the words back to fix
+    else { setLeft(r.left); if (!ended) { setStage(null); setSaid(SAID.broke) } }
     setBusy(false)
     loadPast()
   }
 
   let body
   if (learner === undefined) body = null
-  else if (!ASK_MATHS_PUBLIC) body = <p style={bubble}>Ask maths is coming soon!</p>
-  else if (!learner) body = <p style={bubble}>{SAID.unauthenticated}</p>
-  else body = <>
-    <form onSubmit={(e) => { e.preventDefault(); void ask(q) }} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <label htmlFor="ask-q" style={{ fontSize: 'clamp(20px, 3.4vw, 26px)', fontWeight: 900, color: INK }}>What maths question do you have?</label>
-      <textarea id="ask-q" ref={area} value={q} maxLength={MAX_QUESTION} rows={2} onChange={(e) => setQ(e.target.value)} disabled={busy}
-        placeholder="A word problem, or a sum like 2x + 3 = 11" autoComplete="off" spellCheck
-        style={{ ...bubble, fontSize: 22, fontFamily: 'inherit', resize: 'vertical', minHeight: 80 }}
-        onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(q) } }} />
-      <MathTray area={area} value={q} onChange={setQ} disabled={busy} />
-      <MathPreview text={q} />
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <button type="submit" style={primary} disabled={busy || voiceLoading || !q.trim()}>{busy ? 'Drawing…' : voiceLoading ? 'Getting ready…' : 'Ask'}</button>
-        <span style={{ fontSize: 16, color: INK }}>Only maths, and never your name, school or address.</span>
-      </div>
-    </form>
-    {voiceLoading && <p style={bubble} role="status">Getting the voice ready the first time{voice.total ? ` (${Math.round(voice.loaded / 1e6)} of ${Math.round(voice.total / 1e6)} MB)` : ''}. You can type your question now.</p>}
-    {!shown && !busy && !voiceLoading && (
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }} aria-label="Ideas to ask">
-        {(IDEAS[learner.age_group] ?? IDEAS['9-11']).map((idea) => (
-          <button key={idea} type="button" style={{ ...pill, cursor: 'pointer' }} onClick={() => { setQ(idea); void ask(idea) }}>{idea}</button>
-        ))}
-      </div>
-    )}
-    {stage && <p style={bubble} role="status">{stage}{voice.state === 'loading' && voice.total ? ` Getting the voice ready the first time (${Math.round(voice.loaded / 1e6)} of ${Math.round(voice.total / 1e6)} MB).` : ''}</p>}
-    {note && <p style={bubble} role="status">{note}</p>}
-    <div style={{ display: shown ? 'block' : 'none' }}><AskPlayer bind={bind} /></div>
-    {left !== null && left <= 2 && <p style={{ margin: 0, fontSize: 16, color: INK }}>{left === 0 ? 'That was the last question for today.' : `${left} more question${left === 1 ? '' : 's'} today.`}</p>}
-    {past.length > 0 && (
-      <section aria-label="Your questions" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: INK }}>Your questions</h2>
-        {past.map(p => (
-          <button key={p.id} type="button" disabled={busy} aria-pressed={watch?.id === p.id}
-            style={{ ...pill, cursor: 'pointer', textAlign: 'left', justifyContent: 'flex-start' }}
-            onClick={() => { setShown(false); post.current?.({ type: 'reset' }); setWatch(watch?.id === p.id ? null : p) }}>{watch?.id === p.id ? '✕ ' : '▶ '}{p.question}</button>
-        ))}
-        {watch && <AskPlayer key={watch.id} script={watch.script as { els: unknown; steps: { say: string }[] }} />}
-      </section>
-    )}
-    <p style={{ margin: 0, fontSize: 13, color: INK, opacity: 0.8 }}>Voice: Pocket TTS by Kyutai, speaker Alba MacKenna (CC BY 4.0), made on this device.</p>
-  </>
+  else if (!ASK_MATHS_PUBLIC) body = <p style={statusLine}>Ask Radlic is coming soon!</p>
+  else if (!learner) body = <p style={statusLine}>{SAID.unauthenticated}</p>
+  else {
+    const fresh = !question && !watch
+    const off = busy || voiceLoading || !q.trim()
+    body = <div style={col}>
+      {fresh && <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 900, color: INK }}>What maths question do you have?</h1>
+        <p style={{ margin: '8px 0 0', fontSize: 17, color: INK }}>Radlic draws and explains the answer, step by step.</p>
+      </div>}
+      {question && <div style={asked}>{question}</div>}
+      {stage && <p style={statusLine} role="status">{stage}</p>}
+      <div style={{ display: shown ? 'block' : 'none' }}><AskPlayer bind={bind} /></div>
+      {said && <p style={{ ...statusLine, color: INK }} role="status">{said}</p>}
+      {left !== null && left <= 2 && <p style={note}>{left === 0 ? 'That was the last question for today.' : `${left} more question${left === 1 ? '' : 's'} today.`}</p>}
+
+      <form onSubmit={(e) => { e.preventDefault(); void ask(q) }} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={composer(focused)} onFocusCapture={() => setFocused(true)} onBlurCapture={() => setFocused(false)}>
+          <label htmlFor="ask-q" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }}>Your question</label>
+          <textarea id="ask-q" ref={area} value={q} maxLength={MAX_QUESTION} rows={2} onChange={(e) => setQ(e.target.value)} disabled={busy} enterKeyHint="send"
+            placeholder={fresh ? 'A word problem, or a sum like 2x + 3 = 11' : 'Ask another question…'} autoComplete="off" spellCheck
+            style={{ display: 'block', width: '100%', boxSizing: 'border-box', minHeight: 28, padding: '2px 4px 0 0', border: 0, outline: 'none', resize: 'none', background: 'transparent', color: INK, fontSize: 18, lineHeight: 1.45, fontFamily: 'inherit' }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void ask(q) } }} />
+          <MathPreview text={q} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginTop: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}><MathTray area={area} value={q} onChange={setQ} disabled={busy} /></div>
+            <button type="submit" aria-label={busy ? 'Drawing' : voiceLoading ? 'Getting ready' : 'Ask'} disabled={off} style={send(off)}>
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+            </button>
+          </div>
+        </div>
+        {voiceLoading && <p style={note} role="status">Getting the voice ready the first time{voice.total ? ` (${Math.round(voice.loaded / 1e6)} of ${Math.round(voice.total / 1e6)} MB)` : ''}. You can type your question now.</p>}
+        <p style={note}>Only maths, and never your name, school or address. Written by AI. It can be wrong.</p>
+      </form>
+
+      {fresh && !busy && !voiceLoading && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }} aria-label="Ideas to ask">
+          {(IDEAS[learner.age_group] ?? IDEAS['9-11']).map((idea) => (
+            <button key={idea} type="button" style={chip} onClick={() => { setQ(idea); void ask(idea) }}>{idea}</button>
+          ))}
+        </div>
+      )}
+      {past.length > 0 && (
+        <section aria-label="Your questions" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: INK }}>Your questions</h2>
+          {past.map(p => (
+            <button key={p.id} type="button" disabled={busy} aria-pressed={watch?.id === p.id}
+              style={{ minHeight: 44, padding: '10px 14px', borderRadius: 14, border: `1.5px solid ${LINE}`, background: '#fff', color: INK, fontSize: 16, fontWeight: 700, textAlign: 'left', cursor: 'pointer' }}
+              onClick={() => { setShown(false); setQuestion(null); setSaid(null); post.current?.({ type: 'reset' }); setWatch(watch?.id === p.id ? null : p) }}>{watch?.id === p.id ? '✕ ' : '▶ '}{p.question}</button>
+          ))}
+          {watch && <AskPlayer key={watch.id} script={watch.script as { els: unknown; steps: { say: string }[] }} />}
+        </section>
+      )}
+      <p style={{ ...note, fontSize: 12 }}>Voice: Pocket TTS by Kyutai, speaker Alba MacKenna (CC BY 4.0), made on this device.</p>
+    </div>
+  }
 
   return (
     <div style={{ minHeight: '100dvh', background: PAGE_BG, padding: '14px 14px 26px', display: 'flex', justifyContent: 'center' }}>
       <div style={{ ...shell, maxWidth: 1000, alignSelf: 'flex-start' }}>
         <div style={topBar}>
           <Link href="/modules" style={link}>← Lessons</Link>
-          <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Ask maths</span>
+          <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Ask Radlic</span>
           <span />
         </div>
         <main style={{ padding: 'clamp(14px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>{body}</main>

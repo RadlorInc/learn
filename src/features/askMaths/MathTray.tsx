@@ -1,13 +1,13 @@
 'use client'
 /**
- * Ask maths: one row of the six maths buttons a phone keyboard lacks (= − ( ) % it has), always under the box, and the preview that shows fractions stacked the way a child
+ * Ask Radlic: one row of the six maths buttons a phone keyboard lacks (= − ( ) % it has), always under the box, and the preview that shows fractions stacked the way a child
  * writes them in a copy. The question stays plain text (3/8, x², √(16)) — that is what goes to askRadlor — so a word
  * problem and its maths share one ordinary box. No maths-editor library: those type maths only, and eat the spaces of
  * a sentence.
  */
 import { useState, type CSSProperties, type RefObject } from 'react'
 import { flushSync } from 'react-dom'
-import { INK, TEAL, pill } from '@/features/lessons/Pictures'
+import { INK, LINE, TEAL, pill } from '@/features/lessons/Pictures'
 import { bubble } from '@/features/lessons/Frame'
 import { MAX_QUESTION } from './stream'
 
@@ -37,7 +37,7 @@ export const mixed = (whole: string, top: string, bottom: string) => `${whole.tr
 export const power = (base: string, p: string) =>
   wrap(base.trim()) + (/^\d{1,2}$/.test(p.trim()) ? [...p.trim()].map((d) => SUP[d]).join('') : `^${wrap(p.trim())}`)
 
-const key: CSSProperties = { ...pill, minHeight: 48, fontSize: 22, padding: '6px 8px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
+const key: CSSProperties = { minHeight: 44, minWidth: 0, fontSize: 18, fontWeight: 800, color: INK, background: '#F7FBFF', border: `1.5px solid ${LINE}`, borderRadius: 12, padding: '4px 2px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }
 const box: CSSProperties = { width: 72, minHeight: 44, fontSize: 22, textAlign: 'center', border: `3px solid ${INK}`, borderRadius: 10, color: INK, fontFamily: 'inherit' }
 const line: CSSProperties = { height: 3, background: INK, alignSelf: 'stretch', borderRadius: 2 }
 
@@ -55,7 +55,7 @@ export function MathPreview({ text }: { text: string }) {
   const ps = pieces(text)
   if (!ps.some((p) => typeof p !== 'string')) return null
   return (
-    <div aria-label="Your question" style={{ ...bubble, boxShadow: 'none', borderWidth: 3, lineHeight: 2 }}>
+    <div aria-label="Your question" style={{ background: '#F7FBFF', borderRadius: 14, padding: '6px 12px', margin: '8px 0 0', fontSize: 18, color: INK, lineHeight: 2 }}>
       {ps.map((p, i) => typeof p === 'string' ? <span key={i}>{p}</span>
         : 'sup' in p ? <sup key={i}>{p.sup}</sup> : <Frac key={i} top={p.top} bottom={p.bottom} />)}
     </div>
@@ -106,7 +106,7 @@ export function MathTray({ area, value, onChange, disabled }: {
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div role="group" aria-label="Maths buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 8 }}>
+      <div role="group" aria-label="Maths buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 4 }}>
         {keys.map(([shown, label, go, m]) => (
           <button key={label} type="button" aria-label={label} title={label} disabled={disabled} onClick={go}
             aria-expanded={m ? maker === m : undefined} style={{ ...key, ...(m && maker === m ? { background: TEAL } : {}) }}>{shown}</button>

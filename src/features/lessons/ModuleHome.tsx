@@ -102,7 +102,7 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
       .then(ok => { if (live && ok) redraw(n => n + 1); if (waiting) void showWallet() })
     return () => { live = false }
   }, [learnerId])
-  // Ask maths (docs/product/ask-maths.md): the button shows only when the child's grown-up has switched it on —
+  // Ask Radlic (docs/product/ask-maths.md): the button shows only when the child's grown-up has switched it on —
   // never an offer, a price or a "locked" button on a child's screen.
   const [askOn, setAskOn] = useState(false)
   useEffect(() => {
@@ -143,7 +143,7 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>{gradeLabel(storyGrade ?? grade)}</span>
           <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
-            {askOn && <Link href="/ask" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>✏️ Ask maths</Link>}
+            {askOn && <Link href="/ask" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>✏️ Ask Radlic</Link>}
             {points !== null && <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
             <TextSizeMenu />
           </span>
@@ -193,7 +193,10 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
                 })()}
               </div>
               <span aria-hidden style={{ display: 'flex', gap: 3, '--lp-u': '18px' } as CSSProperties}><Thing obj={firstObj} /><Thing obj={firstObj} /><Thing obj={firstObj} /></span>
-              <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>
+                {askOn && <Link href="/ask" style={{ ...primary, background: '#fff', color: INK, fontSize: 18 }}>Help me with homework</Link>}
+              </span>
             </div>
 
             {!trial && <div style={{ ...card, background: '#fbdbba' }}>

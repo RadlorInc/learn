@@ -1,5 +1,5 @@
 /**
- * Ask maths' voice: Pocket TTS (Kyutai), made in the child's own browser on the CPU — no server, no per-line cost,
+ * Ask Radlic's voice: Pocket TTS (Kyutai), made in the child's own browser on the CPU — no server, no per-line cost,
  * and the spoken text never leaves the device. Ported from the askRadlor app's src/lib/voice.ts (the founder's pick
  * there, 13 Oct 2026); its files are copied into public/ask-tts by scripts/sync-ask-player.mjs.
  *
@@ -39,7 +39,7 @@ export function startVoice(): Promise<boolean> {
   ready = new Promise<boolean>((resolve) => {
     const fail = (why: string) => {
       if (tryNo !== tries) return                      // an earlier try's worker, after retryVoice replaced it
-      console.warn('Ask maths: the made voice is off, the device voice speaks instead:', why)
+      console.warn('Ask Radlic: the made voice is off, the device voice speaks instead:', why)
       set({ state: 'failed' }); resolve(false)
       waiting.forEach((w) => w(null)); waiting.clear()
     }
