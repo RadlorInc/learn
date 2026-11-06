@@ -328,7 +328,7 @@ function Dashboard() {
   const snooze = (r: Reminder) => setPrefs(p => ({ ...p, snoozed: { ...p.snoozed, [r.id]: now + SNOOZE_DAYS * 86_400_000 } }))
   const hide = (r: Reminder) => setPrefs(p => ({ ...p, hidden: [...p.hidden, r.id] }))
 
-  // ── One pop-up per visit: a celebration, else the weekly recap, else the first-visit tour. Decided once. ──
+  // ── One pop-up per visit: a celebration, else the weekly recap. Decided once. ──
   const mastered = useMemo(() => {
     if (!prefs?.lastVisit || tea) return []
     return learners.flatMap(d => (extra[d.learner.id]?.points ?? [])
@@ -338,20 +338,16 @@ function Dashboard() {
   const extrasReady = tea || (learners.length > 0 && learners.every(d => extra[d.learner.id] !== undefined))
   const home = !childId && !classId && !view
   // ONE automatic pop-up per visit, on the home screen, once everything it reads has arrived:
-  // a celebration, else the weekly recap, else the first-visit tour.
-  const autoPick: 'celebrate' | 'recap' | 'first' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
+  // a celebration, else the weekly recap. A tour never starts by itself (founder, 6 Nov 2026): Help has them.
+  const autoPick: 'celebrate' | 'recap' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
     : mastered.length && !prefs.off.includes('good') ? 'celebrate'
-    : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap'
-    : !prefs.seen.includes('first') && (tea || learners.length > 0) ? 'first' : null
+    : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap' : null
   const auto = !autoDone && home && !showAddModal ? autoPick : null
-  const shownPopup = auto === 'celebrate' || auto === 'recap' ? auto : null
+  const shownPopup = auto
   function closePopup() {
     setAutoDone(true)
     if (auto === 'recap') setPrefs(p => ({ ...p, recapWeek: weekOf(new Date(now)) }))
   }
-  // The first time an adult opens a child or a class, a 3-step tour of its tabs. Once.
-  const insideKey = childId ? 'inside-child' : classId ? 'inside-class' : null
-
   function tourFor(id: string): Tour | null {
     const first = learners[0]?.learner.id, cls = classes[0]?.id
     const helpStep = { target: 'nav-help', title: t('Not sure how?'), text: t('Help has step-by-step walkthroughs: pick what you want to do.') }
@@ -364,25 +360,9 @@ function Dashboard() {
           { url: '/parent', target: 'upnext', title: t('The one thing to do next'), text: t('We’ll always put the most useful thing here.') },
           { target: first ? `child-${first}` : 'add-child', title: t('One card per child'), text: t('Open a child and everything about them is inside: progress, lessons, game time, login.') },
           { target: 'bell', title: t('Reminders'), text: t('Anything else worth a look waits here.') }, helpStep] }
-    if (id === 'inside-child') return { title: t('Inside a child’s profile'), steps: [
-      { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
-      { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
-      { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }
-    if (id === 'inside-class') return { title: 'Inside a class', steps: [
-      { target: 'tab-students', title: 'Students', text: 'Add students, and give a new password to anyone who can’t sign in.' },
-      { target: 'tab-lessons', title: 'Lessons', text: 'Choose the class’s modules. New students get them too.' },
-      { target: 'tab-exercises', title: 'Exercises', text: 'Make a test, unlock it when it’s time, and read the results.' }] }
     return null
   }
   function startTour(id: string) { const t = tourFor(id); if (t) setTour({ ...t, id }) }
-  const autoTour = auto === 'first' ? 'first' : !tour && !shownPopup && insideKey && prefs && !prefs.seen.includes(insideKey) ? insideKey : null
-  const activeTour = tour ?? (autoTour ? { ...tourFor(autoTour)!, id: autoTour } : null)
-  function endTour() {
-    const id = activeTour?.id
-    if (id) setPrefs(p => ({ ...p, seen: [...new Set([...p.seen, id])] }))
-    if (auto === 'first') setAutoDone(true)
-    setTour(null)
-  }
 
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#EFF8FF' }} aria-busy="true" />
@@ -595,7 +575,7 @@ function Dashboard() {
             On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}
         {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null}
           onDone={() => { setActionMsg(PROPOSED.withdrawnAllBody[lang]); router.push('/parent'); void loadAll(true) }} />}
-        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
+        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
             /parent. The page itself carries the real guards. */}
         <section style={dcard} data-tour="close-card"><h2 style={h2}>{t('Close your account')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{tea ? 'Deletes your account and every student profile you added.' : t('Deletes your account and every child profile you added.')}</p>
@@ -736,7 +716,7 @@ function Dashboard() {
         <p style={{ margin:'14px 0 0', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Shown on your first visit each week. Turn it off in Account → Reminders.')}</p>
       </Sheet>
 
-      <TourRunner tour={activeTour} onEnd={endTour} />
+      <TourRunner tour={tour} onEnd={() => setTour(null)} />
 
       {loginFor && (
         <ChildLoginSheet

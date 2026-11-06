@@ -71,7 +71,7 @@ describe('the add-a-child window', () => {
   })
 
   it('positive control: the dashboard still has its own tour (only the add-a-child one went)', () => {
-    expect(PARENT).toMatch(/<TourRunner tour=\{activeTour\}/)
+    expect(PARENT).toMatch(/<TourRunner tour=\{tour\}/)
   })
 
   it("marks the child's name as the field that must be filled", () => {

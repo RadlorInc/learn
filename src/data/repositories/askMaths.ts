@@ -1,6 +1,6 @@
 'use client'
 /**
- * Ask maths (docs/product/ask-maths.md), the browser side: the child's question (POST /api/ask-maths, streamed), the
+ * Ask Radlic (docs/product/ask-maths.md), the browser side: the child's question (POST /api/ask-maths, streamed), the
  * parent's switch (set_ask_maths), the questions of the last 30 days (RLS read), forgetting them (ask_maths_forget),
  * and the add-on (addon_subscriptions read; /api/checkout/ask-maths, /api/billing/ask-maths-cancel).
  */
@@ -85,7 +85,7 @@ export async function forgetAskQuestions(learnerId: string): Promise<number | nu
   } catch { return null }
 }
 
-/** The account's Ask maths add-on, null when it has none (undefined: could not read). */
+/** The account's Ask Radlic add-on, null when it has none (undefined: could not read). */
 export async function getAddon(): Promise<Addon | null | undefined> {
   try {
     const { data, error } = await db().from('addon_subscriptions').select('status, current_period_end, cancel_at_period_end').eq('product', 'ask_maths').maybeSingle()

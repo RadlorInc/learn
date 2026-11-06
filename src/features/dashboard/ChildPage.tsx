@@ -14,6 +14,7 @@ import { dbtn, dghost, dcard } from './Helpers'
 import { useT } from './i18n'
 import { bandOf } from '@/features/classes/Classes'
 import { ASK_MATHS_PUBLIC } from '@/features/askMaths/stream'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 import { AskMathsCard } from './AskMathsCard'
 
 /** The four avatars a parent picks from (add-a-child and the correction card) — pictures we provide, never a photo. */
@@ -24,8 +25,8 @@ export type Band = '3-5' | '6-8' | '9-11' | '12-14'
  *  agreed only to an older notice (notice-v7), and the consent email for the newer one was — or could not be — sent. */
 export type CorrectResult = 'ok' | ErrorKind | 'notice_sent' | 'notice_unsent'
 
-export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['ask', 'Ask maths'], ['login', 'Login & data']] as const
-/** Ask maths' tab shows only when the feature is switched on for this build (docs/product/ask-maths.md). */
+export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['ask', 'Ask Radlic'], ['login', 'Login & data']] as const
+/** Ask Radlic's tab shows only when the feature is switched on for this build (docs/product/ask-maths.md). */
 const SHOWN_TABS = CHILD_TABS.filter(([k]) => k !== 'ask' || ASK_MATHS_PUBLIC)
 export type ChildTab = typeof CHILD_TABS[number][0]
 
@@ -150,10 +151,12 @@ function GameTimeCard({ name, wallet, canEdit, onSave }: {
 }) {
   const t = useT()
   const [saving, setSaving] = useState(false)
-  const save = async (enabled: boolean, minutes: number) => { setSaving(true); await onSave(enabled, minutes); setSaving(false) }
+  const pin = usePinConfirm()
+  const save = (enabled: boolean, minutes: number) => pin.confirm(async () => { setSaving(true); await onSave(enabled, minutes); setSaving(false) })
   const P = { ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', edge: 'var(--card-border)', page: 'var(--paper)' }
   return (
     <div style={{ ...dcard, maxWidth: 640 }} data-tour="game-card">
+      {pin.dialog}
       <h2 style={{ ...h2, marginBottom: 10 }}>🎮 {t('Game time')}</h2>
       {wallet === undefined ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Loading…')}</p>
         : wallet === 'unavailable' ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Points and game time are coming soon.')}</p>

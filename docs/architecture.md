@@ -52,7 +52,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 
 | Who | Routes |
 |---|---|
-| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) · `/ask` (Ask maths, Grades 3–8: a typed maths question answered as a drawn, spoken whiteboard lesson; off unless `NEXT_PUBLIC_ASK_MATHS=on`; [product/ask-maths.md](product/ask-maths.md)) |
+| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) · `/ask` (Ask Radlic, Grades 3–8: a typed maths question answered as a drawn, spoken whiteboard lesson; off unless `NEXT_PUBLIC_ASK_MATHS=on`; [product/ask-maths.md](product/ask-maths.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
@@ -85,8 +85,8 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
 | `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
 | `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
-| `POST /api/ask-maths` | the child, or the adult whose session they use (own token forwarded) | Ask maths ([product/ask-maths.md](product/ask-maths.md)); 404 unless `ASK_MATHS=on`. `ask_maths_begin` as the caller decides (403/409); the question goes from this server only to askRadlor's `/api/partner/maths` (`WHITEBOARD_URL`, Bearer `WHITEBOARD_PARTNER_SECRET`); its lesson is streamed on as server-sent events and `ask_maths_finish` (service role) settles the row, even after the tab closes (`after`) |
-| `POST /api/checkout/ask-maths`, `POST /api/billing/ask-maths-cancel` | parent | The Ask maths add-on's own Stripe subscription (`metadata.product = ask_maths`, §8) and stopping its renewal |
+| `POST /api/ask-maths` | the child, or the adult whose session they use (own token forwarded) | Ask Radlic ([product/ask-maths.md](product/ask-maths.md)); 404 unless `ASK_MATHS=on`. `ask_maths_begin` as the caller decides (403/409); the question goes from this server only to askRadlor's `/api/partner/maths` (`WHITEBOARD_URL`, Bearer `WHITEBOARD_PARTNER_SECRET`); its lesson is streamed on as server-sent events and `ask_maths_finish` (service role) settles the row, even after the tab closes (`after`) |
+| `POST /api/checkout/ask-maths`, `POST /api/billing/ask-maths-cancel` | parent | The Ask Radlic add-on's own Stripe subscription (`metadata.product = ask_maths`, §8) and stopping its renewal |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -103,12 +103,12 @@ if it imports outside `core/` or imports React.
 `public/sw.js` ignores non-GET, `/api/*` and Supabase requests except audio clips. Navigations are network-first,
 falling back to a cached copy or `/offline.html`; the only offline promise is that answers are kept (§7). Static
 chunks, images and fonts are cache-first. Clips, matched by content-hash name, go to `milo-assets-audio`, which
-survives releases and keeps the newest `AUDIO_CAP` (`swTakeover`, `swAudioCache`, `swPartialResponse`). Ask maths'
+survives releases and keeps the newest `AUDIO_CAP` (`swTakeover`, `swAudioCache`, `swPartialResponse`). Ask Radlic'
 `/ask-player/` and `/ask-tts/` go straight to the network (the voice worker keeps its own files).
 
 `next.config.ts` sends `X-Frame-Options: DENY`, `nosniff`, a strict `Referrer-Policy`, HSTS, a `Permissions-Policy`
 with camera, microphone and geolocation off, and a CSP defaulting to `'self'` that refuses framing and plugins and
-limits `connect-src`/`media-src` to the Supabase project and the audio origin. Fonts are self-hosted. Ask maths overrides
+limits `connect-src`/`media-src` to the Supabase project and the audio origin. Fonts are self-hosted. Ask Radlic overrides
 two paths, and `media-src` allows `blob:` everywhere (the lines are played from blob URLs; a /ask-only header never reached a client-side navigation): `/ask-player/*` (the sandboxed whiteboard player) may be framed by our own
 origins and connects nowhere (`askPlayerCsp`); `/ask-tts/*` (the voice worker) may run WebAssembly and fetch the model
 from Hugging Face (`ASK_TTS_CSP`). `/fonts/*` sends `Access-Control-Allow-Origin: *` for the sandboxed player.
@@ -149,13 +149,13 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   account without an authenticator signs in as before and is shown nothing about it. The database requires it:
   `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261016150000, applied only once every admin
   has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
-- **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
-  out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
+- **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time or Ask Radlic setting
+  changes, so a child on a signed-in device cannot change them; the rest of `/parent` opens without it (founder, 6 Nov
+  2026). `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
   data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
-  token and emails the account once per reset. `/rights` sits outside `app/parent/`, so the gate does not wrap it: help,
-  withdraw-all (`WithdrawAllCard`) and the per-child export (`DataRights`) stay reachable with the PIN locked, for a
-  signed-in adult only (a `learner` login is sent to its lessons); closing the account (`/parent/account`) stays behind
-  the PIN (`pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
+  token and emails the account once per reset. `/rights` keeps help, withdraw-all
+  (`WithdrawAllCard`) and the per-child export (`DataRights`) in one place, for a signed-in adult only (a `learner` login
+  is sent to its lessons) (`pinOnlyForSettings.test.ts`, `pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
 
 ## 4. Supabase
 
@@ -174,7 +174,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions`, `email_undeliverable` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
-| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations`, `billing_seat_removals`, `addon_subscriptions` (Ask maths) |
+| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations`, `billing_seat_removals`, `addon_subscriptions` (Ask Radlic) |
 | Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.
@@ -309,7 +309,7 @@ deletion, and the daily cron drain it.
 | Child login | `auth.users`, `learner_access`, `profiles` | `/api/child-login` | `childLogin`, `rosterRollbackDelete` |
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |
-| Ask maths | `ask_maths_settings`, `ask_maths_questions` (30 days) | `set_ask_maths`; `/api/ask-maths` → `ask_maths_begin` / `ask_maths_finish`; `ask_maths_forget` ([product/ask-maths.md](product/ask-maths.md)) | `askMathsDb`, `askMathsRoute` |
+| Ask Radlic | `ask_maths_settings`, `ask_maths_questions` (30 days) | `set_ask_maths`; `/api/ask-maths` → `ask_maths_begin` / `ask_maths_finish`; `ask_maths_forget` ([product/ask-maths.md](product/ask-maths.md)) | `askMathsDb`, `askMathsRoute` |
 | Export | every child table, crash records, access list | `export_child_records` + reads | `exportCompleteness`, `withdrawExportE2e` |
 | Delete a child | `learners` cascade, child login, `deletion_log`; on a paid plan the freed seat removed and refunded, or the plan for the last child (§8) | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel`, `closeRefund` |
 | Close account | all children, the account; consent kept; the plan cancelled and refunded (§8) | `delete_my_account` | `accountDeletion`, `keepConsentRecord`, `closeRefund` |
@@ -380,7 +380,7 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
   fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
   `RESEND_API_KEY` is logged and the event still closes.
 - **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
-- **The Ask maths add-on** (20261021120000; [product/ask-maths.md](product/ask-maths.md)): its own subscription on the
+- **The Ask Radlic add-on** (20261021120000; [product/ask-maths.md](product/ask-maths.md)): its own subscription on the
   family's customer, marked `metadata.product = ask_maths`, made by `/api/checkout/ask-maths` (the same token, renewal
   tick and two-tab rules as `/api/checkout`). The webhook writes it to `addon_subscriptions` only (on account and
   product; never `subscriptions` or seats) and sends its acknowledgement (`renderAddonSubscribed`); the plan's
@@ -438,12 +438,12 @@ the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbo
 | Stripe | checkout | account id, the parent's email or customer id, seat count, renewal-consent time; nothing about a child |
 | Google | adult sign-in via Supabase Auth | the adult's Google sign-in |
 | GitHub | code, CI, deploys, backups | the source; an encrypted nightly production dump (30-day artifact) |
-| askRadlor (Radlor Inc.'s whiteboard service), and through it Anthropic | Ask maths, **only once it is switched on** ([product/ask-maths.md](product/ask-maths.md)) | a child's typed maths question and the grade band (3–5 or 6–8), server to server; nothing else about the child or the family |
-| Hugging Face | Ask maths' voice model files, **only once it is switched on** | the file requests from the child's device (IP, user agent); no text |
+| askRadlor (Radlor Inc.'s whiteboard service), and through it Anthropic | Ask Radlic, **only once it is switched on** ([product/ask-maths.md](product/ask-maths.md)) | a child's typed maths question and the grade band (3–5 or 6–8), server to server; nothing else about the child or the family |
+| Hugging Face | Ask Radlic's voice model files, **only once it is switched on** | the file requests from the child's device (IP, user agent); no text |
 
 Supabase Auth's own emails (password reset, invites) go through its dashboard SMTP setting, outside this repo. The
-published list is [legal/07-subprocessors.md](legal/07-subprocessors.md) — which does not yet name the two Ask maths rows: they
-are added there, after legal review, before Ask maths is switched on.
+published list is [legal/07-subprocessors.md](legal/07-subprocessors.md) — which does not yet name the two Ask Radlic rows: they
+are added there, after legal review, before Ask Radlic is switched on.
 
 ## 10. Checks that hold the architecture
 

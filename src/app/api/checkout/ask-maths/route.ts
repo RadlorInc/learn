@@ -6,7 +6,7 @@ import { SITE_URL } from '@/app/site'
 import { ASK_MATHS_ON } from '@/features/askMaths/stream'
 
 /**
- * POST /api/checkout/ask-maths {renewalConsent: true} with the parent's token: a Stripe Checkout Session for Ask maths,
+ * POST /api/checkout/ask-maths {renewalConsent: true} with the parent's token: a Stripe Checkout Session for Ask Radlic,
  * the add-on (docs/product/ask-maths.md) — its OWN subscription, one per account, on the same Stripe customer as the
  * plan. The webhook writes `addon_subscriptions` from it (`metadata.product = 'ask_maths'`), never `subscriptions`.
  *

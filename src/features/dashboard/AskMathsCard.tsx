@@ -1,6 +1,6 @@
 'use client'
 /**
- * Ask maths on a child's page (docs/product/ask-maths.md): the add-on for the family, the switch for this child (after
+ * Ask Radlic on a child's page (docs/product/ask-maths.md): the add-on for the family, the switch for this child (after
  * the disclosure, features/askMaths/disclosure.ts), the daily limit, and the questions of the last 30 days, each
  * answered one with its lesson to watch again. Only the adult who added the child changes anything — the database
  * checks (set_ask_maths, ask_maths_forget); anyone with access sees the questions.
@@ -11,6 +11,7 @@ import { addonActive, cancelAddon, forgetAskQuestions, getAddon, getAskQuestions
 import { DISCLOSURE, DISCLOSURE_VERSION } from '@/features/askMaths/disclosure'
 import { AskPlayer } from '@/features/askMaths/AskPlayer'
 import { ASK_MATHS_MONTHLY_CENTS } from '@/core/billing'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 import { dbtn, dghost, dcard } from './Helpers'
 import { useLang, useT } from './i18n'
 
@@ -33,6 +34,7 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [watch, setWatch] = useState<AskQuestion | null>(null)
+  const pin = usePinConfirm()
 
   const [tick, setTick] = useState(0)                    // bumped after every change: read everything again
   const load = useCallback(async () => setTick(n => n + 1), [])
@@ -44,8 +46,8 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
     return () => { live = false }
   }, [id, tick])
 
-  if (band !== '9-11' && band !== '12-14') return <div style={{ ...dcard, maxWidth: 720 }}><h2 style={h2}>✏️ {t('Ask maths')}</h2>
-    <p style={{ ...soft, marginTop: 8 }}>{t('Ask maths is for Grades 3–8.')}</p></div>
+  if (band !== '9-11' && band !== '12-14') return <div style={{ ...dcard, maxWidth: 720 }}><h2 style={h2}>✏️ {t('Ask Radlic')}</h2>
+    <p style={{ ...soft, marginTop: 8 }}>{t('Ask Radlic is for Grades 3–8.')}</p></div>
 
   const on = !!settings?.enabled, limit = settings?.daily_limit ?? 5, paid = addonActive(addon)
   const d = DISCLOSURE[lang]
@@ -67,7 +69,7 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
     setBusy(true); setMsg('')
     const r = await cancelAddon()
     setBusy(false)
-    setMsg(r.ok ? t('Ask maths will stop at the end of the month you have paid for.') : t('Could not change it. Try again.'))
+    setMsg(r.ok ? t('Ask Radlic will stop at the end of the month you have paid for.') : t('Could not change it. Try again.'))
     await load()
   }
   async function forget() {
@@ -82,38 +84,39 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 720 }}>
+      {pin.dialog}
       <section style={dcard} data-tour="ask-card">
-        <h2 style={{ ...h2, marginBottom: 8 }}>✏️ {t('Ask maths')}</h2>
+        <h2 style={{ ...h2, marginBottom: 8 }}>✏️ {t('Ask Radlic')}</h2>
         <p style={soft}>{t('{name} types a maths question and watches a whiteboard lesson drawn and spoken for it.', { name })}</p>
 
         {addon === undefined || settings === undefined ? <p style={{ ...soft, marginTop: 10 }}>{t('Loading…')}</p>
           : !paid ? (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <p style={soft}>{t('Ask maths is an add-on for your whole family: {price} a month.', { price })}</p>
+              <p style={soft}>{t('Ask Radlic is an add-on for your whole family: {price} a month.', { price })}</p>
               {owner ? <>
                 <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 14, color: 'var(--ink)' }}>
                   <input type="checkbox" checked={renew} onChange={e => setRenew(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18 }} />
-                  {t('I agree that Ask maths renews every month at {price} until I cancel. I can cancel here at any time.', { price })}
+                  {t('I agree that Ask Radlic renews every month at {price} until I cancel. I can cancel here at any time.', { price })}
                 </label>
-                <button type="button" style={dbtn} disabled={busy || !renew} onClick={buy}>{t('Add Ask maths')}</button>
+                <button type="button" style={dbtn} disabled={busy || !renew} onClick={() => pin.confirm(buy)}>{t('Add Ask Radlic')}</button>
               </> : <p style={soft}>{t('Only the adult who added {name} can change it.', { name })}</p>}
             </div>
           ) : (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p style={soft}>{addon!.cancel_at_period_end ? t('Your Ask maths add-on ends on {day}.', { day: day(addon!.current_period_end) })
-                : t('Your Ask maths add-on renews on {day}.', { day: day(addon!.current_period_end) })}</p>
-              {!owner ? <p style={soft}>{on ? t('Ask maths is on for {name}.', { name }) : t('Ask maths is off for {name}.', { name })} {t('Only the adult who added {name} can change it.', { name })}</p>
+              <p style={soft}>{addon!.cancel_at_period_end ? t('Your Ask Radlic add-on ends on {day}.', { day: day(addon!.current_period_end) })
+                : t('Your Ask Radlic add-on renews on {day}.', { day: day(addon!.current_period_end) })}</p>
+              {!owner ? <p style={soft}>{on ? t('Ask Radlic is on for {name}.', { name }) : t('Ask Radlic is off for {name}.', { name })} {t('Only the adult who added {name} can change it.', { name })}</p>
                 : on ? (
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--ink)' }}>{t('Ask maths is on for {name}.', { name })}</span>
+                    <span style={{ fontWeight: 800, color: 'var(--ink)' }}>{t('Ask Radlic is on for {name}.', { name })}</span>
                     <label style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
                       {t('Questions a day')}
-                      <select disabled={busy} value={limit} onChange={e => save(true, Number(e.target.value))}
+                      <select disabled={busy} value={limit} onChange={e => { const n = Number(e.target.value); pin.confirm(() => save(true, n)) }}
                         style={{ minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 14, fontWeight: 700 }}>
                         {[...new Set([...LIMITS, limit])].sort((a, b) => a - b).map(n => <option key={n} value={n}>{n}</option>)}
                       </select>
                     </label>
-                    <button type="button" style={dghost} disabled={busy} onClick={() => save(false, limit)}>{t('Turn off')}</button>
+                    <button type="button" style={dghost} disabled={busy} onClick={() => pin.confirm(() => save(false, limit))}>{t('Turn off')}</button>
                   </div>
                 ) : (
                   <div style={{ background: 'var(--paper)', border: '1.5px solid var(--card-border)', borderRadius: 14, padding: 14 }}>
@@ -125,10 +128,10 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
                       <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ marginTop: 3, width: 18, height: 18 }} />
                       {fill(d.agree, name)}
                     </label>
-                    <button type="button" style={dbtn} disabled={busy || !agree} onClick={() => save(true, limit)}>{d.button}</button>
+                    <button type="button" style={dbtn} disabled={busy || !agree} onClick={() => pin.confirm(() => save(true, limit))}>{d.button}</button>
                   </div>
                 )}
-              {owner && !addon!.cancel_at_period_end && <button type="button" style={{ ...dghost, alignSelf: 'flex-start' }} disabled={busy} onClick={stop}>{t('Stop the add-on')}</button>}
+              {owner && !addon!.cancel_at_period_end && <button type="button" style={{ ...dghost, alignSelf: 'flex-start' }} disabled={busy} onClick={() => pin.confirm(stop)}>{t('Stop the add-on')}</button>}
             </div>
           )}
         {msg && <p role="status" style={{ ...soft, marginTop: 10, fontWeight: 700 }}>{msg}</p>}
@@ -152,7 +155,7 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
               ))}
             </ul>
             {watch && <div style={{ marginTop: 12 }}><AskPlayer key={watch.id} script={watch.script as { els: unknown; steps: { say: string }[] }} /></div>}
-            {owner && <button type="button" style={{ ...dghost, marginTop: 12 }} disabled={busy} onClick={forget}>{t('Delete all of {name}’s questions now', { name })}</button>}
+            {owner && <button type="button" style={{ ...dghost, marginTop: 12 }} disabled={busy} onClick={() => pin.confirm(forget)}>{t('Delete all of {name}’s questions now', { name })}</button>}
           </>}
       </section>
     </div>

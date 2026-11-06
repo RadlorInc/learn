@@ -3,7 +3,7 @@ import { callerKey, overLimit } from '../../_rateLimit'
 import { stripeClient } from '@/infra/stripe'
 
 /**
- * POST /api/billing/ask-maths-cancel with the parent's token: Ask maths, the add-on, stops renewing — it runs to the
+ * POST /api/billing/ask-maths-cancel with the parent's token: Ask Radlic, the add-on, stops renewing — it runs to the
  * end of the month already paid for (docs/legal/01 §4, as the plan's cancel). Sends no id: the subscription is the
  * one on this account's own `addon_subscriptions` row, read with the caller's token (RLS), so nobody can cancel
  * another family's. The webhook then writes Stripe's new state to the row.

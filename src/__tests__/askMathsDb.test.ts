@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Ask maths in the database (migration 20261021120000), driven in the repo's real schema as the roles a browser and
+ * Ask Radlic in the database (migration 20261021120000), driven in the repo's real schema as the roles a browser and
  * the server have. Every refusal is paired with the same call working for the right caller.
  */
 import { describe, it, expect, beforeAll } from 'vitest'

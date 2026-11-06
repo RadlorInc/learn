@@ -36,7 +36,7 @@ export const LADDER: Record<Cadence, { first: number; extra: number; interval: '
   annual: { first: 7599, extra: 4800, interval: 'year' },
 }
 
-/** Ask maths, the add-on (docs/product/ask-maths.md): one price per family a month, whatever the number of children.
+/** Ask Radlic, the add-on (docs/product/ask-maths.md): one price per family a month, whatever the number of children.
  *  ⚠️ The founder's number to set; the Stripe price (STRIPE_PRICE_ASK_MATHS) must be made at the same amount. */
 export const ASK_MATHS_MONTHLY_CENTS = 499
 

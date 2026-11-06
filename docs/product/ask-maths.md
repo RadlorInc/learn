@@ -1,4 +1,4 @@
-# Ask maths
+# Ask Radlic
 
 A child in Grades 3–8 types a maths question and watches a whiteboard lesson drawn and spoken for it: the marker
 draws, parts move, a voice explains step by step. It is the meeting point of Radlic and askRadlor (the Whiteboard AI
@@ -11,11 +11,11 @@ is done. The live notice (notice-v8, docs/legal/02), the subprocessor list (docs
 
 ## What the child and the parent see
 
-- **Child** (`/ask`): an "✏️ Ask maths" pill on the home (`/modules`) appears only when the child's grown-up has switched
+- **Child** (`/ask`): an "✏️ Ask Radlic" pill on the home (`/modules`) appears only when the child's grown-up has switched
   it on. One text box (300 characters), a few example questions for the child's band, the board, and play/pause,
   back/next and "Watch again". Refusals are in plain words with no price, plan or "locked" anywhere
   (`childWords.test.ts` covers the page). A credit line names the voice (CC BY 4.0).
-- **Parent** (a child's page → **Ask maths** tab, `src/features/dashboard/AskMathsCard.tsx`): the add-on (one price
+- **Parent** (a child's page → **Ask Radlic** tab, `src/features/dashboard/AskMathsCard.tsx`): the add-on (one price
   for the family, `ASK_MATHS_MONTHLY_CENTS`, monthly, with an auto-renewal tick box), then per child the
   disclosure to agree to and the switch, the number of questions a day (1–20, default 5), and every question of the
   last 30 days with its outcome. An answered one can be watched again; "Delete all of …'s questions now" deletes them.
@@ -81,10 +81,10 @@ The founder and the attorney, in this order:
 
 1. **The words.** Approve the disclosure (`src/features/askMaths/disclosure.ts`, quoted below), and the changes it needs
    in the notice (docs/legal/02 and `src/features/consent/copy.ts`: "no artificial-intelligence service that receives
-   anything your child types" becomes true only while Ask maths is off for that child), the privacy policy (doc 11:
+   anything your child types" becomes true only while Ask Radlic is off for that child), the privacy policy (doc 11:
    the AI and model-training paragraphs), the subprocessors (doc 07: askRadlor / Radlor Inc., Anthropic, Hugging Face
    for the voice files), retention (doc 04: 30 days), terms (doc 12 §8), and the decision line in docs/decisions.md
-   (21 Sep: "no free text" for the "Didn't get it?" reasons — Ask maths is a deliberate, parent-switched exception).
+   (21 Sep: "no free text" for the "Didn't get it?" reasons — Ask Radlic is a deliberate, parent-switched exception).
    Whether the notice change needs `reconsent_required` (a new notice version) or the per-child disclosure is enough.
 2. **Anthropic.** Confirm the terms that cover a child's question (no training on API data; retention; a Zero Data
    Retention agreement if the attorney wants it; Anthropic's requirements for products used by minors).
@@ -101,7 +101,7 @@ The founder and the attorney, in this order:
 The same text is in the code, in English and a Spanish machine draft. Changing a word means a new version string in
 `disclosure.ts` AND in `set_ask_maths` (a migration).
 
-> **Before you turn on Ask maths for {name}**
+> **Before you turn on Ask Radlic for {name}**
 > - {name} types a maths question, and a whiteboard lesson is drawn and spoken for it.
 > - What {name} types is sent from our server to askRadlor, the whiteboard service of Radlor Inc. (the company behind
 >   Radlic). askRadlor uses Anthropic's Claude model to write the lesson. askRadlor keeps none of it. Anthropic handles
@@ -112,7 +112,7 @@ The same text is in the code, in English and a Spanish machine draft. Changing a
 >   them yourself at any time.
 > - The voice is made on {name}'s device. The first time, the device downloads the voice files (about 166 MB), part of
 >   them from Hugging Face, which sees only the device's internet address.
-> - {name} can ask up to the number of questions a day you choose. You can turn Ask maths off at any time.
+> - {name} can ask up to the number of questions a day you choose. You can turn Ask Radlic off at any time.
 >
 > ☐ I am {name}'s parent or guardian, and I agree to this.
 
