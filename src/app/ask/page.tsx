@@ -140,7 +140,7 @@ export default function AskPage() {
           </div>
         </div>
         {voiceLoading && <p style={note} role="status">Getting the voice ready the first time{voice.total ? ` (${Math.round(voice.loaded / 1e6)} of ${Math.round(voice.total / 1e6)} MB)` : ''}. You can type your question now.</p>}
-        <p style={note}>Only maths, and never your name, school or address. Written by AI. It can be wrong.</p>
+        <p style={note}>Only maths, and never your name, school or address. Written by AI. It can make mistakes.</p>
       </form>
 
       {fresh && !busy && !voiceLoading && (
