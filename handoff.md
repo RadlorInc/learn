@@ -126,6 +126,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
 - `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
   alone — twice on 28 Sep. A timing assumption in the test, not yet found.
+- `eqRows.test.ts` (walks every lesson and 40 seeds per ladder level) times out at 20 s in a loaded full local run and
+  passes alone (8 Nov); a timeout, not an assertion.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's
