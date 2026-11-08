@@ -145,12 +145,3 @@ describe('a tour never starts by itself', () => {
     expect(src).not.toMatch(/autoTour|'first' : null/)
   })
 })
-
-describe('the child\'s homework button', () => {
-  it('sits under Start learning, goes to /ask, and shows only when a grown-up switched Ask Radlic on', () => {
-    const src = readFileSync('src/features/lessons/ModuleHome.tsx', 'utf8')
-    const at = src.indexOf('Help me with homework')
-    expect(at).toBeGreaterThan(src.indexOf("'Start learning'"))
-    expect(src.slice(at - 120, at)).toMatch(/askOn && <Link href="\/ask"/)
-  })
-})

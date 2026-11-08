@@ -9,7 +9,7 @@
  *   Class Home / Roster / Assign / Class dashboard / the class bar → a class's tabs;
  *   Plan & billing / Settings / Close your account → Account.
  * Every screen is a URL (`?child=`, `?class=`, `&tab=`, `?view=`), so the browser's Back button works.
- * The helpers (Up next, reminders, celebrations, the weekly recap, tours) follow the founder's calm rules — see
+ * The helpers (Up next, reminders, celebrations, tours) follow the founder's calm rules — see
  * ../../features/dashboard/Helpers.tsx.
  */
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
@@ -43,7 +43,7 @@ import { ChildPage, ChildCard, CHILD_TABS, AVATAR_SRCS, type ChildTab } from '@/
 import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dashboard/ClassPage'
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
 import { helpGoals } from '@/features/dashboard/helpGoals'
-import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
+import { loadPrefs, savePrefs, isShown, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
 import { LangContext, loadLang, saveLang, makeT, useT, useLang, type Lang } from '@/features/dashboard/i18n'
 import { TextSizeCard } from '@/features/dashboard/TextSizeCard'
 import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
@@ -330,7 +330,7 @@ function Dashboard() {
   const snooze = (r: Reminder) => setPrefs(p => ({ ...p, snoozed: { ...p.snoozed, [r.id]: now + SNOOZE_DAYS * 86_400_000 } }))
   const hide = (r: Reminder) => setPrefs(p => ({ ...p, hidden: [...p.hidden, r.id] }))
 
-  // ── One pop-up per visit: a celebration, else the weekly recap. Decided once. ──
+  // ── At most one pop-up per visit: a celebration. Decided once. ──
   const mastered = useMemo(() => {
     if (!prefs?.lastVisit || tea) return []
     return learners.flatMap(d => (extra[d.learner.id]?.points ?? [])
@@ -339,16 +339,15 @@ function Dashboard() {
   }, [prefs, tea, learners, extra])
   const extrasReady = tea || (learners.length > 0 && learners.every(d => extra[d.learner.id] !== undefined))
   const home = !childId && !classId && !view
-  // ONE automatic pop-up per visit, on the home screen, once everything it reads has arrived:
-  // a celebration, else the weekly recap. A tour never starts by itself (founder, 6 Nov 2026): Help has them.
-  const autoPick: 'celebrate' | 'recap' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
-    : mastered.length && !prefs.off.includes('good') ? 'celebrate'
-    : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap' : null
+  // The only automatic pop-up, on the home screen, once everything it reads has arrived: a celebration. A tour never
+  // starts by itself (founder, 6 Nov 2026): Help has them. No weekly recap pop-up either (founder, 8 Nov 2026): it put
+  // the setup steps still to do (a child's login…) in the parent's face; those wait under the bell.
+  const autoPick: 'celebrate' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
+    : mastered.length && !prefs.off.includes('good') ? 'celebrate' : null
   const auto = !autoDone && home && !showAddModal ? autoPick : null
   const shownPopup = auto
   function closePopup() {
     setAutoDone(true)
-    if (auto === 'recap') setPrefs(p => ({ ...p, recapWeek: weekOf(new Date(now)) }))
   }
   function tourFor(id: string): Tour | null {
     const first = learners[0]?.learner.id, cls = classes[0]?.id
@@ -553,8 +552,8 @@ function Dashboard() {
           {([['setup', t('Setup steps'), t('Things not set up yet: logins, game time, modules, exercises.')],
              ['help', t('Where help is needed'), tea ? 'A question most of a class got wrong.' : t('A topic a child keeps missing.')],
              ['nudge', t('Gentle nudges'), tea ? 'An exercise not everyone has taken.' : t('A child who hasn’t practiced for a while, or a due date that passed.')],
-             ...(tea ? [] : [['good', t('Celebrations'), t('When a child masters a topic.')], ['recap', t('Weekly recap'), t('A short summary on your first visit each week.')]]),
-          ] as [Kind | 'good' | 'recap', string, string][]).map(([k, title, d]) => {
+             ...(tea ? [] : [['good', t('Celebrations'), t('When a child masters a topic.')]]),
+          ] as [Kind | 'good', string, string][]).map(([k, title, d]) => {
             const on = !prefs?.off.includes(k)
             return (
               <div key={k} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, padding:'10px 0', borderTop:`1px solid ${P.edge}` }}>
@@ -659,13 +658,6 @@ function Dashboard() {
     </>
   }
 
-  const recapRows = learners.map(d => {
-    const r = extra[d.learner.id]?.report, weekAgo = now - 7 * 86_400_000
-    const mastered7 = (extra[d.learner.id]?.points ?? []).filter(p => p.reason === 'mastered' && new Date(p.created_at).getTime() > weekAgo).length
-    const stuck = r?.stuck[0] ? findLesson(r.stuck[0].lessonId)?.lesson.title : undefined
-    return { d, problems: r?.problemsThisWeek ?? 0, mastered7, stuck }
-  })
-
   return (
     <LangContext.Provider value={lang}>
     <div className="home-app" style={{ fontFamily:'var(--font-body)' }}>
@@ -700,22 +692,6 @@ function Dashboard() {
             <button type="button" style={dghost} onClick={closePopup}>{t('Nice!')}</button>
           </div>
         </div>}
-      </Sheet>
-
-      <Sheet open={shownPopup === 'recap'} onClose={closePopup} label={t('This week')}>
-        <h2 style={{ ...h2, fontSize:22, marginBottom:8 }}>{t('This week')}</h2>
-        {recapRows.map(({ d, problems, mastered7, stuck }) => (
-          <div key={d.learner.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'12px 0', borderBottom:`1px solid ${P.edge}` }}>
-            <div><b style={{ color:P.ink }}>{d.learner.display_name}</b>
-              <div style={{ fontSize:13.5, color:P.ink2 }}>{t(problems === 1 ? '1 problem answered' : '{n} problems answered', { n: problems })}{mastered7 ? ` · ${t(mastered7 === 1 ? '1 topic mastered' : '{n} topics mastered', { n: mastered7 })}` : ''}{stuck ? ` · ${t('finding “{title}” hard', { title: stuck })}` : ''}</div></div>
-            <Link href={`/parent?child=${d.learner.id}&tab=progress`} onClick={closePopup} style={dlink}>{t('Open')}</Link>
-          </div>
-        ))}
-        {shown[0] && <div style={{ ...dcard, background:'#fff', marginTop:14 }}>
-          <div style={{ fontSize:13, color:P.ink3, fontWeight:700 }}>{t('One thing to try this week')}</div>
-          <p style={{ margin:'4px 0 10px', fontWeight:800, color:P.ink }}>{shown[0].title}</p>
-          <button type="button" style={dbtn} onClick={() => { closePopup(); act(shown[0]) }}>{shown[0].action}</button></div>}
-        <p style={{ margin:'14px 0 0', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Shown on your first visit each week. Turn it off in Account → Reminders.')}</p>
       </Sheet>
 
       <TourRunner tour={tour} onEnd={() => setTour(null)} />

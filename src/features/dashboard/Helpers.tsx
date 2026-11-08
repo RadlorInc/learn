@@ -4,7 +4,7 @@
  * called cluttered:
  *   · Home shows ONE thing, "Up next". Every other reminder waits under the bell; nothing is shown in two places.
  *   · A reminder has one button that finishes it; "Remind me in 3 days" and "Not needed" sit behind ⋯.
- *   · At most one pop-up per visit (a celebration, else the weekly recap, else the first-visit tour) — decided by the page.
+ *   · At most one pop-up per visit, a celebration — decided by the page. No weekly recap and no tour by themselves.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'

@@ -24,6 +24,9 @@ const fake = {
 vi.mock('@/data/repositories/_shared', async orig => ({ ...await orig<object>(), db: () => fake }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push() {}, replace() {} }), usePathname: () => '/parent', useSearchParams: () => new URLSearchParams() }))
 vi.mock('@/data/auth', async orig => ({ ...await orig<object>(), getCurrentSession: async () => ({ user: { id: 'u' } }) }))
+// The card's Save asks for the parent PIN first (6 Nov 2026, pinDestructive.test.ts); this file is about the save's own
+// error words, so the PIN step lets the save through. The gate itself stays real for pinGateText below.
+vi.mock('@/shared/ui/ParentPinGate', async orig => ({ ...await orig<object>(), usePinConfirm: () => ({ confirm: (f: () => void) => f(), dialog: null }) }))
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 // Rafi's words (N9, 2026-09-26), written out here — not imported — so a reword needs two edits.
