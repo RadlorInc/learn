@@ -193,10 +193,7 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
                 })()}
               </div>
               <span aria-hidden style={{ display: 'flex', gap: 3, '--lp-u': '18px' } as CSSProperties}><Thing obj={firstObj} /><Thing obj={firstObj} /><Thing obj={firstObj} /></span>
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>
-                {askOn && <Link href="/ask" style={{ ...primary, background: '#fff', color: INK, fontSize: 18 }}>Help me with homework</Link>}
-              </span>
+              <Link href={`/lesson?module=${m.id}`} style={primary}>{done === 0 ? 'Start learning' : done === m.lessons.length ? 'Learn again' : 'Keep learning'}</Link>
             </div>
 
             {!trial && <div style={{ ...card, background: '#fbdbba' }}>
@@ -206,6 +203,14 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
               </div>
               <span aria-hidden style={{ display: 'flex', gap: 3, '--lp-u': '18px' } as CSSProperties}><Thing obj="cookie" /><Thing obj="chair" /><Thing obj="apple" /></span>
               <Link href={`/practice?module=${m.id}`} style={{ ...primary, background: '#fff', color: INK }}>Practice</Link>
+            </div>}
+
+            {askOn && <div style={{ ...card, background: '#cfe3ff' }}>
+              <div style={{ flex: 1 }}>
+                <strong style={cardTitle}>Homework</strong>
+                Stuck on a problem? Radlic shows you how, step by step.
+              </div>
+              <Link href="/ask" style={{ ...primary, background: '#fff', color: INK }}>Help with homework</Link>
             </div>}
             </>}
           </section>
