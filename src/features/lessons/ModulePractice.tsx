@@ -125,10 +125,11 @@ export function ModulePractice({ module, learnerId = null, onExit, exercise }: {
         <b>Here&apos;s how this one works:</b>
         <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
       </div>
-      {!exercise && <Link href={`/lesson?id=${lesson.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
-        Watch the lesson: {lesson.title}
-      </Link>}
     </>}
+    {/* Always there, so a child unsure can go back to the explanation (founder, 8 Nov 2026). Not in a class exercise. */}
+    {!exercise && <Link href={`/lesson?id=${lesson.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>
+      Watch the lesson: {lesson.title}
+    </Link>}
 
     <div className="pr-foot">
       {answering

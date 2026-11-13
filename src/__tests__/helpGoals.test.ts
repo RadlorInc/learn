@@ -3,7 +3,7 @@
  * step's `data-tour` target is missing, so a walkthrough aimed at a renamed or deleted element does nothing and nobody
  * is told. This checks each target is emitted somewhere under src/ — as a literal `data-tour="x"` or a template prefix
  * (`tab-${k}` covers `tab-lessons`). It does NOT prove the element is on screen in that state (e.g. `lessons-what` on a
- * class exists only on the paid plan); that needs a signed-in drive.
+ * class's Lessons tab); that needs a signed-in drive.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
@@ -24,11 +24,10 @@ const rendered = (key: string) => literal.has(key) || tern.includes(key) || pref
   || (key.startsWith('nav-') && literal.has('menu'))   // nav items get data-tour from the nav list's `tour` field
 
 const cases = [
-  { who: 'parent with a child', g: helpGoals({ tea: false, paid: false, c: 'c1' }) },
-  { who: 'parent, no child yet', g: helpGoals({ tea: false, paid: false }) },
-  { who: 'paid teacher with a class', g: helpGoals({ tea: true, paid: true, k: 'k1' }) },
-  { who: 'free teacher with a class', g: helpGoals({ tea: true, paid: false, k: 'k1' }) },
-  { who: 'teacher, no class yet', g: helpGoals({ tea: true, paid: false }) },
+  { who: 'parent with a child', g: helpGoals({ tea: false, c: 'c1' }) },
+  { who: 'parent, no child yet', g: helpGoals({ tea: false }) },
+  { who: 'teacher with a class', g: helpGoals({ tea: true, k: 'k1' }) },
+  { who: 'teacher, no class yet', g: helpGoals({ tea: true }) },
 ]
 
 describe('Help walkthroughs', () => {
@@ -42,14 +41,14 @@ describe('Help walkthroughs', () => {
     expect(missing).toEqual([])
   })
   it('covers the things adults do (written out, not derived)', () => {
-    const titles = (tea: boolean) => helpGoals({ tea, paid: true, c: 'c', k: 'k' }).flatMap(s => s.items.map(i => i.t))
+    const titles = (tea: boolean) => helpGoals({ tea, c: 'c', k: 'k' }).flatMap(s => s.items.map(i => i.t))
     expect(titles(false)).toEqual([
       'Set up a new child', 'Let my child start learning here', 'See how my child is doing', 'Change what my child learns',
       'Give homework with a due date', 'Give my child a login, or a new password', 'Set game time', 'Share with my partner',
-      'Download or delete my child’s data', 'Choose which reminders I get', 'See my plan and billing', 'Close my account'])   // the plan step is back since billing went live (2026-10-01)
+      'Download or delete my child’s data', 'Choose which reminders I get', 'Close my account'])   // no plan step: Radlic is free (13 Nov 2026)
     expect(titles(true)).toEqual([
       'Set up a new class', 'Add more students', 'Help a student who can’t sign in', 'Look at one student',
       'Choose what my class learns', 'Give my class a test', 'Find who is stuck', 'Rename or delete a class',
-      'Choose which reminders I get', 'See my plan', 'Close my account'])
+      'Choose which reminders I get', 'Close my account'])
   })
 })

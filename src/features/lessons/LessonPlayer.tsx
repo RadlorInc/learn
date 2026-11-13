@@ -433,10 +433,12 @@ export function LessonPlayer({ lesson, learnerId = null, earlier = [], moduleDon
             <b>Here&apos;s how this one works:</b>
             <ol style={{ margin: '6px 0 0', paddingLeft: 24 }}>{stepsOf(problem).map(t => <li key={t}>{t}</li>)}</ol>
           </div>
-          {from
-            ? <Link href={`/lesson?id=${from.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Watch the lesson: {from.title}</Link>
-            : <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => go(replayLesson(s))}>Watch the lesson again</button>}
         </>}
+        {/* Always there, not only after the worked steps: a child unsure can go back to the explanation any time and come
+            back to this same problem (replayLesson keeps replayFrom). Founder, 8 Nov 2026. */}
+        {!review && (from
+          ? <Link href={`/lesson?id=${from.id}`} style={{ ...pill, alignSelf: 'flex-start', textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>Watch the lesson: {from.title}</Link>
+          : <button type="button" style={{ ...pill, alignSelf: 'flex-start' }} onClick={() => { stopSpeech(); go(replayLesson(s)) }}>Watch the lesson again</button>)}
         <div className="pr-foot">
           {answering ? <button type="button" style={hintBtn} onClick={() => setAsked(true)} disabled={asked || s.feedback === 'idea'}>Hint</button> : <span />}
           {answering

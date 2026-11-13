@@ -13,6 +13,7 @@ import { LessonsTab, type SaveResult } from './LessonsTab'
 import { dbtn, dghost, dcard } from './Helpers'
 import { useT } from './i18n'
 import { bandOf } from '@/features/classes/Classes'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 
 /** The four avatars a parent picks from (add-a-child and the correction card) — pictures we provide, never a photo. */
 export const AVATAR_SRCS = ['/assets/objects/fox.png', '/assets/objects/bunny.png', '/assets/objects/bear.png', '/assets/objects/cat.png']
@@ -100,6 +101,7 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
   const [band, setBand] = useState<'' | Band>('')
   const [msg, setMsg] = useState('')
   const [busy, setBusy] = useState(false)
+  const pin = usePinConfirm()
   const field: CSSProperties = { minHeight: 44, borderRadius: 10, border: '1.5px solid var(--card-border)', padding: '0 10px', fontSize: 16, width: '100%', boxSizing: 'border-box' }
   async function save() {
     const trimmed = value.trim()
@@ -134,7 +136,8 @@ function CorrectCard({ name, avatarIndex, onCorrect }: { name: string; avatarInd
         <option value={bandOf(3)}>{t('Grades 3–5')}</option>
         <option value={bandOf(6)}>{t('Grades 6–8')}</option>
       </select></label>
-    <button type="button" disabled={busy || !value.trim()} onClick={save} style={dbtn}>{t('Save')}</button>
+    <button type="button" disabled={busy || !value.trim()} onClick={() => pin.confirm(save)} style={dbtn}>{t('Save')}</button>
+    {pin.dialog}
     {msg && <p role="status" style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-soft)', fontWeight: 700 }}>{msg}</p>}
   </>
 }
@@ -145,10 +148,12 @@ function GameTimeCard({ name, wallet, canEdit, onSave }: {
 }) {
   const t = useT()
   const [saving, setSaving] = useState(false)
-  const save = async (enabled: boolean, minutes: number) => { setSaving(true); await onSave(enabled, minutes); setSaving(false) }
+  const pin = usePinConfirm()
+  const save = (enabled: boolean, minutes: number) => pin.confirm(async () => { setSaving(true); await onSave(enabled, minutes); setSaving(false) })
   const P = { ink: 'var(--ink)', ink2: 'var(--ink-soft)', ink3: 'var(--ink-muted)', edge: 'var(--card-border)', page: 'var(--paper)' }
   return (
     <div style={{ ...dcard, maxWidth: 640 }} data-tour="game-card">
+      {pin.dialog}
       <h2 style={{ ...h2, marginBottom: 10 }}>🎮 {t('Game time')}</h2>
       {wallet === undefined ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Loading…')}</p>
         : wallet === 'unavailable' ? <p style={{ margin: 0, fontSize: 13, color: P.ink3 }}>{t('Points and game time are coming soon.')}</p>

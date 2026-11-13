@@ -14,6 +14,7 @@ import { Performance } from '@/features/lessons/Performance'
 import { AddStudents, ModulePicker, Rename } from '@/features/classes/Classes'
 import { Tabs } from './ChildPage'
 import { dbtn, dghost, dcard } from './Helpers'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 
 // It carries every question ladder: loaded only when the Exercises tab opens.
 const ExerciseEditor = dynamic(() => import('@/features/classes/ExerciseEditor').then(m => m.ExerciseEditor), { ssr: false })
@@ -21,8 +22,8 @@ const ExerciseEditor = dynamic(() => import('@/features/classes/ExerciseEditor')
 export const CLASS_TABS = [['students', 'Students'], ['lessons', 'Lessons'], ['exercises', 'Exercises'], ['progress', 'Progress'], ['settings', 'Settings']] as const
 export type ClassTab = typeof CLASS_TABS[number][0]
 
-export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged, onStudentsAdded, onUpdate, onDeleted }: {
-  cls: ClassRow; tab: ClassTab; paid: boolean
+export function ClassPage({ cls, tab, students, logins, onLogin, onChanged, onStudentsAdded, onUpdate, onDeleted }: {
+  cls: ClassRow; tab: ClassTab
   students: { id: string; name: string; lessonIds: string[] | null; due: Record<string, string> }[]
   logins: Record<string, string> | null; onLogin: (learnerId: string) => void
   onChanged: () => void; onStudentsAdded: () => void; onUpdate: (c: ClassRow) => void; onDeleted: () => void
@@ -30,6 +31,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
   const [adding, setAdding] = useState(false)
   const [choosing, setChoosing] = useState(false)
   const [confirm, setConfirm] = useState(false)
+  const pin = usePinConfirm()
   const base = `/parent?class=${cls.id}`
   const chosen = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m))
 
@@ -69,7 +71,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
         </section>}
     </>}
 
-    {tab === 'lessons' && (paid ? (
+    {tab === 'lessons' && (
       <section style={dcard} data-tour="lessons-what">
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
           <div><h2 style={h2}>What {cls.name} sees</h2>
@@ -83,9 +85,7 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
         )}
         {choosing && <ModulePicker cls={cls} onDone={() => { setChoosing(false); onChanged() }} />}
       </section>
-    ) : (
-      <div style={dcard}><p style={{ margin: 0, color: 'var(--ink-soft)' }}>Free plan: your students see the class exercises only. Modules for students come with the classroom plan.</p></div>
-    ))}
+    )}
 
     {tab === 'exercises' && <div data-tour="exercises"><ExerciseEditor cls={cls} students={students.map(s => ({ id: s.id, name: s.name }))} onUpdate={onUpdate} /></div>}
 
@@ -95,11 +95,11 @@ export function ClassPage({ cls, tab, paid, students, logins, onLogin, onChanged
       <div className="card-grid">
         <section style={dcard}><h2 style={h2}>Class name</h2><Rename cls={cls} onDone={onChanged} /></section>
         <section style={dcard}>
-          <h2 style={h2}>Delete this class</h2>
+          {pin.dialog}<h2 style={h2}>Delete this class</h2>
           <p style={{ margin: '6px 0 12px', color: 'var(--ink-soft)' }}>The students, their logins and their lessons stay — they just won’t be in a class.</p>
           {confirm
             ? <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button type="button" style={{ ...dbtn, background: '#DC2626' }} onClick={async () => { if (await deleteClass(cls.id)) onDeleted() }}>Yes, delete {cls.name}</button>
+                <button type="button" style={{ ...dbtn, background: '#DC2626' }} onClick={() => pin.confirm(async () => { if (await deleteClass(cls.id)) onDeleted() })}>Yes, delete {cls.name}</button>
                 <button type="button" style={dghost} onClick={() => setConfirm(false)}>Cancel</button></div>
             : <button type="button" style={{ ...dghost, color: '#B42318' }} onClick={() => setConfirm(true)}>Delete class</button>}
         </section>
@@ -112,7 +112,7 @@ const h2: CSSProperties = { margin: 0, fontSize: 18, fontWeight: 900, color: 'va
 const small: CSSProperties = { ...dghost, minHeight: 36, padding: '6px 10px' }
 
 /** A class's card on the teacher's home. */
-export function ClassCard({ cls, paid, students }: { cls: ClassRow; paid: boolean; students: number }) {
+export function ClassCard({ cls, students }: { cls: ClassRow; students: number }) {
   const open = cls.exercises.filter(e => e.open !== false).length
   const mods = MODULES.filter(m => m.lessons.length && cls.lesson_ids?.length && hasModule(cls.lesson_ids, m)).length
   const dt: CSSProperties = { color: 'var(--ink-muted)', fontWeight: 800 }, dd: CSSProperties = { margin: 0, fontWeight: 700, color: 'var(--ink)' }
@@ -122,7 +122,7 @@ export function ClassCard({ cls, paid, students }: { cls: ClassRow; paid: boolea
       <div style={{ fontSize: 13, color: 'var(--ink-muted)', fontWeight: 700 }}>Grade {cls.grade}</div>
       <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', margin: '12px 0', fontSize: 14 }}>
         <dt style={dt}>Students</dt><dd style={dd}>{students}</dd>
-        {paid && <><dt style={dt}>Modules</dt><dd style={dd}>{mods ? `${mods} chosen` : 'every topic'}</dd></>}
+        <dt style={dt}>Modules</dt><dd style={dd}>{mods ? `${mods} chosen` : 'every topic'}</dd>
         <dt style={dt}>Exercises</dt><dd style={dd}>{cls.exercises.length ? `${cls.exercises.length}${open ? ` · ${open} open now` : ' · all locked'}` : 'none yet'}</dd>
       </dl>
       <Link href={`/parent?class=${cls.id}&tab=students`} style={dbtn}>Open {cls.name}</Link>

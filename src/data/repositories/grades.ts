@@ -82,43 +82,21 @@ export async function deleteClass(id: string): Promise<boolean> {
   return true
 }
 
-/**
- * Has this teacher paid (founder, 2026-09-18)? A paid teacher's students get the class's modules; a free teacher's get
- * the class's exercises only. `teacher_plans` is read-only to every client — no row = free.
- */
-export async function getMyTeacherPaid(): Promise<boolean> {
-  const user = (await db().auth.getSession()).data.session?.user   // local read; RLS checks the id
-  if (!user) return false
-  const { data, error } = await db().from('teacher_plans' as never).select('paid').eq('teacher_id', user.id).maybeSingle()
-  if (error) { console.warn('[getMyTeacherPaid]', error.message); return false }
-  return (data as { paid?: boolean } | null)?.paid === true
-}
-
-/** `lessons` may still carry the class's exercises: a PAID teacher's students get both (founder, 2026-09-18). */
-export type ClassMode = { mode: 'lessons'; classId?: string; className?: string; exercises?: Exercise[] } | { mode: 'exercises'; classId: string; className: string; exercises: Exercise[] }
+/** A child in a class sees the class's lessons and its exercises. Every teacher gets both since Radlic went free
+ *  (13 Nov 2026); until then a free teacher's students got the exercises only (`teacher_plans`, no longer read). */
+export type ClassMode = { mode: 'lessons'; classId?: string; className?: string; exercises?: Exercise[] }
 
 /**
- * What a child sees: their lessons (plus the class's exercises, in a paid teacher's class), or — in a class whose
- * teacher has not paid — that class's exercises only.
- * A child in no class (every parent's child) always gets lessons.
- * ⚠️ FAILS OPEN to lessons when it cannot tell (offline, or a deploy ahead of its migration), so a child is never shown
- * an empty screen by a lookup that failed. The gate is a product rule, not a data boundary: lesson content ships in
- * the app bundle regardless.
+ * The child's class, with its exercises. A child in no class (every parent's child) gets lessons only.
+ * ⚠️ FAILS OPEN to lessons when it cannot tell (offline), so a child is never shown an empty screen by a lookup that
+ * failed.
  */
 export async function getClassMode(learner: Pick<Learner, 'grade_id' | 'created_by'> | null): Promise<ClassMode> {
   if (!learner?.grade_id || !learner.created_by) return { mode: 'lessons' }
-  // Both reads at once (one round trip, not two in a row); the plan is simply unused when the grade is not a class.
-  const [{ data: cls, error }, { data: plan, error: pe }] = await Promise.all([
-    db().from('grades').select('name, grade, exercises').eq('id', learner.grade_id).maybeSingle(),
-    db().from('teacher_plans' as never).select('paid').eq('teacher_id', learner.created_by).maybeSingle(),
-  ])
+  const { data: cls, error } = await db().from('grades').select('name, grade, exercises').eq('id', learner.grade_id).maybeSingle()
   const c = cls as { name: string; grade: number | null; exercises: Exercise[] | null } | null
   if (error || !c || c.grade == null) return { mode: 'lessons' }          // a legacy chapter grade is not a class
-  if (pe) { console.warn('[getClassMode]', pe.message); return { mode: 'lessons' } }
-  const exercises = c.exercises ?? []
-  return (plan as { paid?: boolean } | null)?.paid
-    ? { mode: 'lessons', classId: learner.grade_id, className: c.name, exercises }
-    : { mode: 'exercises', classId: learner.grade_id, className: c.name, exercises }
+  return { mode: 'lessons', classId: learner.grade_id, className: c.name, exercises: c.exercises ?? [] }
 }
 
 /**

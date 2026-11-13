@@ -116,12 +116,7 @@ merge or push it to `staging` (and merge `main` into `staging` now and then, so 
   `customer.subscription.created/updated/deleted` and `invoice.upcoming` (the annual renewal reminder; Stripe →
   Settings → Billing → Subscriptions → upcoming renewal events: 30 days). Its signing secret is Preview's `STRIPE_WEBHOOK_SECRET`.
 - A Preview variable reaches a preview only on its next build: after changing one, push to `staging`.
-- While `BILLING_LIVE` is false, `/parent/plan` shows "free during the beta" and no checkout. To test checkout on
-  `staging`, sign in and call `/api/checkout` from the browser console with the session's access token (key
-  `milo-auth` in localStorage) and `{ seats, cadence, renewalConsent: true }`, then open the returned URL and pay with
-  `4242 4242 4242 4242`.
-- Verified 2026-10-01 on a preview: 2 seats monthly ($12.98) → both events processed in `billing_events`,
-  `subscriptions` `active` with `seats_paid = 2`, two `subscription_seats` rows, all in staging.
+- There is no checkout since 2026-11-13 (Radlic is free); the webhook stays for plans bought before then.
 - Rotating the bypass secret breaks the webhook until the Stripe URL carries the new one.
 
 **Before a merge: the `staging` branch runs staging's migrations too** (`.github/workflows/staging.yml`, 2026-10-01).

@@ -9,7 +9,7 @@
  *   Class Home / Roster / Assign / Class dashboard / the class bar → a class's tabs;
  *   Plan & billing / Settings / Close your account → Account.
  * Every screen is a URL (`?child=`, `?class=`, `&tab=`, `?view=`), so the browser's Back button works.
- * The helpers (Up next, reminders, celebrations, the weekly recap, tours) follow the founder's calm rules — see
+ * The helpers (Up next, reminders, celebrations, tours) follow the founder's calm rules — see
  * ../../features/dashboard/Helpers.tsx.
  */
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
@@ -21,11 +21,12 @@ import {
   getReceivedInvites, acceptInvite,
   deleteLearnerPermanently, correctLearner, removeMyselfFromLearner,
   getMyRole, setMyRole, setLearnerAssignments, enterAsChild, getChildLogins,
-  getWallet, setGameSettings, type Wallet, getMyClasses, getMyTeacherPaid, type ClassRow,
+  getWallet, setGameSettings, type Wallet, getMyClasses, type ClassRow,
   getRecentPoints, getExerciseResults,
 } from '@/data/repositories'
 import { setActiveLearner, getActiveLearner } from '@/data/supabase/useLearnerSession'
 import { DataRights } from '@/shared/ui/DataRights'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 import { getCurrentSession } from '@/data/auth'
 import type { Learner, Session, InviteWithLearner, UserRole } from '@/data/supabase/types'
 import { SupportPanel } from '@/shared/ui/SupportPanel'
@@ -42,7 +43,7 @@ import { ChildPage, ChildCard, CHILD_TABS, AVATAR_SRCS, type ChildTab } from '@/
 import { ClassPage, ClassCard, CLASS_TABS, type ClassTab } from '@/features/dashboard/ClassPage'
 import { childReminders, classReminders, hardestQuestion, byPriority, type Reminder, type Kind } from '@/features/dashboard/reminders'
 import { helpGoals } from '@/features/dashboard/helpGoals'
-import { loadPrefs, savePrefs, isShown, weekOf, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
+import { loadPrefs, savePrefs, isShown, SNOOZE_DAYS, type Prefs } from '@/features/dashboard/prefs'
 import { LangContext, loadLang, saveLang, makeT, useT, useLang, type Lang } from '@/features/dashboard/i18n'
 import { TextSizeCard } from '@/features/dashboard/TextSizeCard'
 import { AddChildFlow, type Attest } from '@/features/consent/AddChildFlow'
@@ -52,11 +53,7 @@ import { askForConsent } from '@/features/consent/childPause'
 import { firstNameOf } from '@/features/consent/firstName'
 import { Notice } from '@/features/consent/Notice'
 import { ATTEST, PROPOSED } from '@/features/consent/copy'
-import { BILLING_LIVE } from '@/app/legal/registry'
-import { FreeTrialCard } from '@/features/billing/FreeTrialCard'
-import { TrialTopicPicker, useFamilyTrial, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
-import { chooseFreeTopics } from '@/data/repositories/billing'
-import { usePaidSeats, SeatsFullDialog } from '@/features/billing/SeatsFull'
+import { usePaidSeats } from '@/features/billing/paidSeats'
 import { WithdrawAllCard } from '@/features/consent/WithdrawAll'
 import { TEACHER_SIGNUP_OPEN } from '@/app/site'
 
@@ -90,6 +87,7 @@ export default function ParentDashboard() {
 
 function Dashboard() {
   const router = useRouter()
+  const pin = usePinConfirm()
   const sp = useSearchParams()
   const childId = sp.get('child'), classId = sp.get('class'), view = sp.get('view'), tabParam = sp.get('tab')
 
@@ -101,9 +99,9 @@ function Dashboard() {
   // ?add=1 opens the add-a-child flow — where B2 ("permission recorded") sends the parent, so the consent they just
   // gave is used straight away instead of waiting behind a second press of "Add a child".
   const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
-  // A paying family with every seat taken gets "you have used all N seats" instead of the add sheet (features/billing/SeatsFull).
-  const [paidSeats, setPaidSeats] = usePaidSeats()
-  const [seatsFull, setSeatsFull] = useState(false)
+  // A family still on a plan from before Radlic went free (13 Nov 2026): deleting a child or withdrawing says what
+  // happens to it. Gone once no subscription is left in Stripe.
+  const [paidSeats] = usePaidSeats()
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
   const [acceptingId,  setAcceptingId]  = useState<string | null>(null)
   const [inviteMsg,    setInviteMsg]    = useState<string | null>(null)
@@ -115,7 +113,6 @@ function Dashboard() {
   const [childLogins, setChildLogins] = useState<Record<string, string> | null>(null)   // learnerId → username; null = unknown
   const [loginFor, setLoginFor] = useState<string | null>(null)       // learnerId whose login sheet is open
   const [classes, setClasses] = useState<ClassRow[]>([])              // a teacher's classes (features/classes)
-  const [paid, setPaid] = useState(false)                             // a paid teacher's classes get modules, a free one's exercises
   const [makingClass, setMakingClass] = useState(false)
   // The helpers.
   const [extra, setExtra] = useState<Record<string, ChildExtra>>({})
@@ -124,9 +121,6 @@ function Dashboard() {
   const [prefs, setPrefsState] = useState<Prefs | null>(null)
   const [bell, setBell] = useState(false)
   const [tour, setTour] = useState<(Tour & { id?: string }) | null>(null)
-  // Set on mount only: `?billing=success` is the return from Stripe's Checkout (/api/checkout's success_url).
-  const [justPaid, setJustPaid] = useState(false)
-  useEffect(() => { setJustPaid(new URLSearchParams(window.location.search).get('billing') === 'success') }, [])
   const [now] = useState(() => Date.now())
   const [autoDone, setAutoDone] = useState(false)   // the one automatic pop-up of this visit has been shown and closed
   // English or Spanish, chosen in Account → Language. PARENTS ONLY (founder, 2026-09-22): a teacher's dashboard stays English.
@@ -172,7 +166,6 @@ function Dashboard() {
           // Exercise results feed the teacher's reminders (who has taken an open exercise, the question most got wrong).
           for (const c of cs) if (c.exercises.some(e => e.open !== false)) getExerciseResults(c.id).then(r => setClassResults(p => ({ ...p, [c.id]: r })))
         })
-        getMyTeacherPaid().then(setPaid)
       }
       getChildLogins().then(setChildLogins)   // not awaited: the dashboard must not wait on the login lookup
 
@@ -292,7 +285,7 @@ function Dashboard() {
       const studs = learners.filter(d => d.learner.grade_id === c.id)
       const res = classResults[c.id]
       return classReminders({
-        id: c.id, name: c.name, paid, exercises: c.exercises.length,
+        id: c.id, name: c.name, exercises: c.exercises.length,
         hasModules: !!c.lesson_ids?.length,
         students: studs.map(d => ({ id: d.learner.id, name: d.learner.display_name, login: childLogins === null ? null : childLogins[d.learner.id] })),
         open: res && res !== null ? c.exercises.filter(e => e.open !== false).map((e, i) => {
@@ -316,7 +309,7 @@ function Dashboard() {
         stuck: stuck ? { lessonId: stuck.lessonId, title: findLesson(stuck.lessonId)?.lesson.title ?? stuck.lessonId } : undefined,
       }, today, new Date(now), id => findLesson(id)?.lesson.title ?? id, lang)
     }))
-  }, [tea, classes, learners, classResults, paid, childLogins, extra, wallets, today, now, lang])
+  }, [tea, classes, learners, classResults, childLogins, extra, wallets, today, now, lang])
   const shown = prefs ? all.filter(r => isShown(prefs, r, now)) : all
   const snoozed = prefs ? all.filter(r => (prefs.snoozed[r.id] ?? 0) > now && !prefs.hidden.includes(r.id)).length : 0
 
@@ -328,7 +321,7 @@ function Dashboard() {
   const snooze = (r: Reminder) => setPrefs(p => ({ ...p, snoozed: { ...p.snoozed, [r.id]: now + SNOOZE_DAYS * 86_400_000 } }))
   const hide = (r: Reminder) => setPrefs(p => ({ ...p, hidden: [...p.hidden, r.id] }))
 
-  // ── One pop-up per visit: a celebration, else the weekly recap, else the first-visit tour. Decided once. ──
+  // ── At most one pop-up per visit: a celebration. Decided once. ──
   const mastered = useMemo(() => {
     if (!prefs?.lastVisit || tea) return []
     return learners.flatMap(d => (extra[d.learner.id]?.points ?? [])
@@ -337,21 +330,16 @@ function Dashboard() {
   }, [prefs, tea, learners, extra])
   const extrasReady = tea || (learners.length > 0 && learners.every(d => extra[d.learner.id] !== undefined))
   const home = !childId && !classId && !view
-  // ONE automatic pop-up per visit, on the home screen, once everything it reads has arrived:
-  // a celebration, else the weekly recap, else the first-visit tour.
-  const autoPick: 'celebrate' | 'recap' | 'first' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
-    : mastered.length && !prefs.off.includes('good') ? 'celebrate'
-    : !tea && prefs.lastVisit && prefs.recapWeek !== weekOf(new Date(now)) && !prefs.off.includes('recap') && learners.length ? 'recap'
-    : !prefs.seen.includes('first') && (tea || learners.length > 0) ? 'first' : null
+  // The only automatic pop-up, on the home screen, once everything it reads has arrived: a celebration. A tour never
+  // starts by itself (founder, 6 Nov 2026): Help has them. No weekly recap pop-up either (founder, 8 Nov 2026): it put
+  // the setup steps still to do (a child's login…) in the parent's face; those wait under the bell.
+  const autoPick: 'celebrate' | null = !prefs || loading || role === 'loading' || role === null || !extrasReady ? null
+    : mastered.length && !prefs.off.includes('good') ? 'celebrate' : null
   const auto = !autoDone && home && !showAddModal ? autoPick : null
-  const shownPopup = auto === 'celebrate' || auto === 'recap' ? auto : null
+  const shownPopup = auto
   function closePopup() {
     setAutoDone(true)
-    if (auto === 'recap') setPrefs(p => ({ ...p, recapWeek: weekOf(new Date(now)) }))
   }
-  // The first time an adult opens a child or a class, a 3-step tour of its tabs. Once.
-  const insideKey = childId ? 'inside-child' : classId ? 'inside-class' : null
-
   function tourFor(id: string): Tour | null {
     const first = learners[0]?.learner.id, cls = classes[0]?.id
     const helpStep = { target: 'nav-help', title: t('Not sure how?'), text: t('Help has step-by-step walkthroughs: pick what you want to do.') }
@@ -364,25 +352,9 @@ function Dashboard() {
           { url: '/parent', target: 'upnext', title: t('The one thing to do next'), text: t('We’ll always put the most useful thing here.') },
           { target: first ? `child-${first}` : 'add-child', title: t('One card per child'), text: t('Open a child and everything about them is inside: progress, lessons, game time, login.') },
           { target: 'bell', title: t('Reminders'), text: t('Anything else worth a look waits here.') }, helpStep] }
-    if (id === 'inside-child') return { title: t('Inside a child’s profile'), steps: [
-      { target: 'tab-progress', title: t('Progress'), text: t('How they’re doing, and what they find hard.') },
-      { target: 'tab-lessons', title: t('Lessons'), text: t('Choose what they learn, and give a lesson a due date.') },
-      { target: 'tab-game,tab-login', title: t('Game time and Login'), text: t('Their daily game limit, their sign-in, and their data.') }] }
-    if (id === 'inside-class') return { title: 'Inside a class', steps: [
-      { target: 'tab-students', title: 'Students', text: 'Add students, and give a new password to anyone who can’t sign in.' },
-      { target: 'tab-lessons', title: 'Lessons', text: 'Choose the class’s modules. New students get them too.' },
-      { target: 'tab-exercises', title: 'Exercises', text: 'Make a test, unlock it when it’s time, and read the results.' }] }
     return null
   }
   function startTour(id: string) { const t = tourFor(id); if (t) setTour({ ...t, id }) }
-  const autoTour = auto === 'first' ? 'first' : !tour && !shownPopup && insideKey && prefs && !prefs.seen.includes(insideKey) ? insideKey : null
-  const activeTour = tour ?? (autoTour ? { ...tourFor(autoTour)!, id: autoTour } : null)
-  function endTour() {
-    const id = activeTour?.id
-    if (id) setPrefs(p => ({ ...p, seen: [...new Set([...p.seen, id])] }))
-    if (auto === 'first') setAutoDone(true)
-    setTour(null)
-  }
 
   if (loading) return (
     <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', background:'#EFF8FF' }} aria-busy="true" />
@@ -412,14 +384,6 @@ function Dashboard() {
   const h1 = { margin: 0, fontSize: 28, fontWeight: 900, color: P.ink, fontFamily: 'var(--font-display)' } as const
 
   const notices = <>
-    {/* Straight back from Stripe (`?billing=success`, /api/checkout): the webhook writes the row a moment later, so
-        say the payment arrived BEFORE anything else — a parent who is not told tends to pay a second time. */}
-    {justPaid && (
-      <div data-testid="dash-activating" style={{ background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:14, padding:'12px 16px', marginBottom:16, fontSize:14, lineHeight:1.5, color:'#166534' }}>
-        <strong>{t('Payment received — we are switching your plan on.')}</strong>{' '}
-        {t('This usually takes less than a minute. Your plan is under Account → Plan.')}
-      </div>
-    )}
     {/* The result of what the adult just did comes FIRST — after withdrawing for every child the full notice follows, and
         a banner under it is a banner nobody sees (2026-09-24). */}
     {actionMsg && (
@@ -460,7 +424,7 @@ function Dashboard() {
         crumb={klass ? { href: `/parent?class=${klass.id}&tab=students`, label: klass.name } : { href: '/parent', label: tea ? 'Classes' : t('Home') }}
         owner={d.accessRole === 'owner'} lessonIds={d.learner.lesson_ids ?? null} due={d.learner.lesson_due ?? {}} isDone={id => lessonDone(d.learner.id, id)}
         login={childLogins === null ? null : childLogins[d.learner.id]} wallet={wallets[d.learner.id]}
-        onLaunch={() => launchGame(d)} onLogin={() => setLoginFor(d.learner.id)}
+        onLaunch={() => launchGame(d)} onLogin={() => pin.confirm(() => setLoginFor(d.learner.id))}
         onCorrect={async (display_name, band, avatar_index) => {
           const r = await correctLearner(d.learner.id, band === null ? { display_name, avatar_index } : { display_name, avatar_index, age_group: band })
           if (r === 'ok') await loadAll()
@@ -523,7 +487,7 @@ function Dashboard() {
                   </p>
                 )}
                 <div style={{ display:'flex', gap:10 }}>
-                  <button onClick={() => d.accessRole === 'owner' ? handleDelete(d.learner.id) : handleRemoveSelf(d.learner.id)}
+                  <button onClick={() => d.accessRole === 'owner' ? pin.confirm(() => handleDelete(d.learner.id)) : handleRemoveSelf(d.learner.id)}
                     style={{ flex:1, padding:'12px', background:'#DC2626', color:'#fff', border:'none', borderRadius:50, fontSize:14, fontWeight:800, cursor:'pointer' }}>
                     {d.accessRole === 'owner' ? t('Yes, delete') : t('Yes, remove me')}
                   </button>
@@ -544,7 +508,7 @@ function Dashboard() {
       const tab = (CLASS_TABS.some(([k]) => k === tabParam) ? tabParam : 'students') as ClassTab
       const students = learners.filter(d => d.learner.grade_id === cls.id && d.accessRole === 'owner')
         .map(d => ({ id: d.learner.id, name: d.learner.display_name, lessonIds: d.learner.lesson_ids ?? null, due: d.learner.lesson_due ?? {} }))
-      return <ClassPage cls={cls} tab={tab} paid={paid} students={students} logins={childLogins} onLogin={setLoginFor}
+      return <ClassPage cls={cls} tab={tab} students={students} logins={childLogins} onLogin={id => pin.confirm(() => setLoginFor(id))}
         onChanged={() => { void loadAll(true); getMyClasses().then(setClasses) }} onStudentsAdded={() => { void loadAll(true) }}
         onUpdate={c => setClasses(cs => cs.map(x => x.id === c.id ? c : x))}
         onDeleted={() => { setClasses(cs => cs.filter(x => x.id !== cls.id)); router.push('/parent'); void loadAll(true) }} />
@@ -571,8 +535,8 @@ function Dashboard() {
           {([['setup', t('Setup steps'), t('Things not set up yet: logins, game time, modules, exercises.')],
              ['help', t('Where help is needed'), tea ? 'A question most of a class got wrong.' : t('A topic a child keeps missing.')],
              ['nudge', t('Gentle nudges'), tea ? 'An exercise not everyone has taken.' : t('A child who hasn’t practiced for a while, or a due date that passed.')],
-             ...(tea ? [] : [['good', t('Celebrations'), t('When a child masters a topic.')], ['recap', t('Weekly recap'), t('A short summary on your first visit each week.')]]),
-          ] as [Kind | 'good' | 'recap', string, string][]).map(([k, title, d]) => {
+             ...(tea ? [] : [['good', t('Celebrations'), t('When a child masters a topic.')]]),
+          ] as [Kind | 'good', string, string][]).map(([k, title, d]) => {
             const on = !prefs?.off.includes(k)
             return (
               <div key={k} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, padding:'10px 0', borderTop:`1px solid ${P.edge}` }}>
@@ -585,17 +549,12 @@ function Dashboard() {
             )
           })}
         </section>
-        {!tea && <FreeTrialCard childCount={learners.length} />}
-        {tea
-          ? <section style={dcard} data-tour="plan-card"><h2 style={h2}>Your plan</h2><p style={{ margin:'6px 0 0', color:P.ink2 }}>{paid ? 'Paid: your students get modules and class exercises.' : 'Free: your students get class exercises. Modules for students come with the classroom plan.'}</p></section>
-          // The private beta is free (founder, 2026-09-24): no plans, no prices, no link to the (dark) refund policy until billing is live.
-          : BILLING_LIVE && <section style={dcard} data-tour="plan-card"><h2 style={h2}>{t('Plan & billing')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Your plan and what it costs.')}</p><Link href="/parent/plan" style={dghost}>{t('See plans')}</Link></section>}
         {!tea && <section style={dcard}><h2 style={h2}>{t('Share access')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{t('Let another parent or guardian see a child’s progress.')}</p><Link href="/parent/invites" style={dghost}>{t('Share access')}</Link></section>}
         {/* Withdraw permission for every child, and KEEP the account — its own card, never on the close page (prod check 2.8).
             On success: back to the dashboard with the result as the banner; "Add a child" then asks for permission again. */}
-        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null}
+        {!tea && <WithdrawAllCard lang={lang} style={dcard} paid={paidSeats !== null} guard={pin.confirm}
           onDone={() => { setActionMsg(PROPOSED.withdrawnAllBody[lang]); router.push('/parent'); void loadAll(true) }} />}
-        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account, behind the parent PIN —
+        {/* ⚠️ THE ONLY LINK TO ACCOUNT DELETION, and it lives here, inside the adult's Account —
             the threat is a child on a parent's signed-in device, so nothing on the child's side links anywhere under
             /parent. The page itself carries the real guards. */}
         <section style={dcard} data-tour="close-card"><h2 style={h2}>{t('Close your account')}</h2><p style={{ margin:'6px 0 12px', color:P.ink2 }}>{tea ? 'Deletes your account and every student profile you added.' : t('Deletes your account and every child profile you added.')}</p>
@@ -607,7 +566,7 @@ function Dashboard() {
       <h1 style={{ ...h1, marginBottom: 18 }}>{t('Help')}</h1>
       <section style={{ ...dcard, maxWidth: 640, display:'flex', flexDirection:'column', gap:8 }}>
         <h2 style={{ ...h2, marginBottom: 4 }}>{t('Show me how to…')}</h2>
-        {helpGoals({ tea, paid, c: learners[0]?.learner.id, k: classes[0]?.id, lang }).map(g => (
+        {helpGoals({ tea, c: learners[0]?.learner.id, k: classes[0]?.id, lang }).map(g => (
           <div key={g.h} style={{ display:'flex', flexDirection:'column', gap:8 }}>
             <h3 style={{ margin:'10px 0 0', fontSize:13, fontWeight:900, color:P.ink3, textTransform:'uppercase', letterSpacing:'.06em' }}>{g.h}</h3>
             {g.items.map(i => (
@@ -635,7 +594,7 @@ function Dashboard() {
       <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
         {upNext}
         <div className="card-grid">
-          {classes.map(c => <ClassCard key={c.id} cls={c} paid={paid} students={learners.filter(d => d.learner.grade_id === c.id).length} />)}
+          {classes.map(c => <ClassCard key={c.id} cls={c} students={learners.filter(d => d.learner.grade_id === c.id).length} />)}
         </div>
         {classes.length === 0 && !makingClass && <div style={dcard}><p style={{ margin:0, color:P.ink2 }}>No classes yet. Make one to add students and choose their lessons.</p></div>}
         {loose.length > 0 && (
@@ -658,8 +617,6 @@ function Dashboard() {
       {learners.length === 0 ? <EmptyDashboard onAdd={() => setShowAddModal(true)} /> : (
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           {upNext}
-          {/* The family's free trial and the way to purchase, on the home the parent lands on (also under Account). */}
-          <FreeTrialCard childCount={learners.length} />
           <div className="card-grid">
             {learners.map(d => {
               const lessons = chosenModules(d.learner.lesson_ids).flatMap(m => m.lessons)
@@ -669,20 +626,13 @@ function Dashboard() {
                 lastPlayed={lastAt[d.learner.id] ? new Date(lastAt[d.learner.id]!).toLocaleDateString(lang === 'es' ? 'es-US' : undefined) : '—'}
                 next={next?.title ?? null} done={done} total={lessons.length} onStart={() => launchGame(d)} />
             })}
-            <button type="button" data-tour="add-child" onClick={() => paidSeats !== null && learners.filter(d => d.accessRole === 'owner').length >= paidSeats ? setSeatsFull(true) : setShowAddModal(true)}
+            <button type="button" data-tour="add-child" onClick={() => setShowAddModal(true)}
               style={{ border:`2px dashed ${P.edge}`, background:'transparent', borderRadius:16, minHeight:180, fontWeight:900, fontSize:15, color:P.ink2, cursor:'pointer' }}>{t('+ Add a child')}</button>
           </div>
         </div>
       )}
     </>
   }
-
-  const recapRows = learners.map(d => {
-    const r = extra[d.learner.id]?.report, weekAgo = now - 7 * 86_400_000
-    const mastered7 = (extra[d.learner.id]?.points ?? []).filter(p => p.reason === 'mastered' && new Date(p.created_at).getTime() > weekAgo).length
-    const stuck = r?.stuck[0] ? findLesson(r.stuck[0].lessonId)?.lesson.title : undefined
-    return { d, problems: r?.problemsThisWeek ?? 0, mastered7, stuck }
-  })
 
   return (
     <LangContext.Provider value={lang}>
@@ -720,23 +670,8 @@ function Dashboard() {
         </div>}
       </Sheet>
 
-      <Sheet open={shownPopup === 'recap'} onClose={closePopup} label={t('This week')}>
-        <h2 style={{ ...h2, fontSize:22, marginBottom:8 }}>{t('This week')}</h2>
-        {recapRows.map(({ d, problems, mastered7, stuck }) => (
-          <div key={d.learner.id} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:10, padding:'12px 0', borderBottom:`1px solid ${P.edge}` }}>
-            <div><b style={{ color:P.ink }}>{d.learner.display_name}</b>
-              <div style={{ fontSize:13.5, color:P.ink2 }}>{t(problems === 1 ? '1 problem answered' : '{n} problems answered', { n: problems })}{mastered7 ? ` · ${t(mastered7 === 1 ? '1 topic mastered' : '{n} topics mastered', { n: mastered7 })}` : ''}{stuck ? ` · ${t('finding “{title}” hard', { title: stuck })}` : ''}</div></div>
-            <Link href={`/parent?child=${d.learner.id}&tab=progress`} onClick={closePopup} style={dlink}>{t('Open')}</Link>
-          </div>
-        ))}
-        {shown[0] && <div style={{ ...dcard, background:'#fff', marginTop:14 }}>
-          <div style={{ fontSize:13, color:P.ink3, fontWeight:700 }}>{t('One thing to try this week')}</div>
-          <p style={{ margin:'4px 0 10px', fontWeight:800, color:P.ink }}>{shown[0].title}</p>
-          <button type="button" style={dbtn} onClick={() => { closePopup(); act(shown[0]) }}>{shown[0].action}</button></div>}
-        <p style={{ margin:'14px 0 0', fontSize:13, color:P.ink3, fontWeight:700 }}>{t('Shown on your first visit each week. Turn it off in Account → Reminders.')}</p>
-      </Sheet>
-
-      <TourRunner tour={activeTour} onEnd={endTour} />
+      <TourRunner tour={tour} onEnd={() => setTour(null)} />
+      {pin.dialog}
 
       {loginFor && (
         <ChildLoginSheet
@@ -754,8 +689,6 @@ function Dashboard() {
 
       {/* Add learner modal */}
       {/* Consent first (document 02), then the sheet — carrying the consent that lets the child exist. */}
-      {seatsFull && paidSeats !== null && <SeatsFullDialog seats={paidSeats} onClose={() => setSeatsFull(false)}
-        onAdded={n => { setPaidSeats(n); setSeatsFull(false); setShowAddModal(true) }} />}
       {showAddModal && (
         <AddChildFlow lang={lang} onClose={() => setShowAddModal(false)} renderAdd={attest => (
           <>
@@ -921,28 +854,18 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
   const [pick,        setPick]        = useState<Set<string>>(() => new Set())
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState<string | null>(null)
-  // The free trial (TrialTopicPicker): two topics instead of whole modules, chosen once for the family.
-  const trial = useFamilyTrial()
-  const [trialPick,   setTrialPick]   = useState<string[]>([])
-  const trialIds = trial?.state === 'chosen' ? trial.topics : trial?.state === 'choose' ? trialPick : null
-
   async function handleAdd() {
     const trimmed = name.trim()
     if (!trimmed || trimmed.length < 2) { setError(t('Please enter a name (at least 2 characters)')); return }
-    if (!trial) return
-    if (trialIds ? trialIds.length < FREE_TOPICS : pick.size === 0) { setError(trialIds ? 'Choose two topics for the free trial.' : t('Choose at least one module for this learner.')); return }
+    if (pick.size === 0) { setError(t('Choose at least one module for this learner.')); return }
     if (!attest || !attested) return
-    const chosen = trialIds ? MODULES.filter(m => m.lessons.some(l => trialIds.includes(l.id))) : MODULES.filter(m => pick.has(m.id))
+    const chosen = MODULES.filter(m => pick.has(m.id))
     // `age_group` is a legacy band the database still requires; it is no longer asked (founder, 2026-09-19).
     // The captured-diagnostic band that used to win here went with the check itself (2026-09-20).
     const ageGroup = bandOf(chosen[0].grade)
     setLoading(true)
-    if (trial.state === 'choose') {
-      const out = await chooseFreeTopics(trialPick)
-      if (!out.ok) { setError(out.error ?? t('Something went wrong. Please try again.')); setLoading(false); return }
-    }
     const noticeVersion = await attestationVersion(attest.noticeVersion)
-    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: trialIds ?? chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
+    const learner = await createLearner(trimmed, avatarIndex, ageGroup, { lessonIds: chosen.flatMap(m => m.lessons.map(l => l.id)) }, { id: attest.id, noticeVersion })
     if (!learner) { setError(t('Something went wrong. Please try again.')); setLoading(false); return }
     onAdded()
   }
@@ -977,10 +900,9 @@ export function AddLearnerModal({ onClose, onAdded, attest }: { onClose: () => v
         {error && <p role="alert" style={{ fontSize:13, color:'#93000A', fontWeight:600, margin:'0 0 12px' }}>{error}</p>}
 
         <div data-tour="add-modules">
-        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{trialIds ? 'Which topics can they see?' : t('Which modules can they see?')}</p>
+        <p style={{ fontSize:13, fontWeight:700, color:P.ink2, margin:'10px 0 8px' }}>{t('Which modules can they see?')}</p>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-          {trialIds ? <TrialTopicPicker value={trialIds} onChange={trial?.state === 'choose' ? setTrialPick : undefined} />
-            : <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />}
+          <ModuleChecklist grade={grade} setGrade={setGrade} pick={pick} setPick={setPick} />
         </div>
         </div>
 
