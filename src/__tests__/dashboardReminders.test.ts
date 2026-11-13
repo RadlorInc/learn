@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { childReminders, classReminders, hardestQuestion, byPriority, type ChildFacts } from '@/features/dashboard/reminders'
-import { isShown, weekOf, type Prefs } from '@/features/dashboard/prefs'
+import { isShown, type Prefs } from '@/features/dashboard/prefs'
 
 const NOW = new Date('2026-09-21T12:00:00Z')
 const title = (id: string) => ({ 'g5m1-t2': 'Estimate products', 'g5m1-t3': 'Round to ten' } as Record<string, string>)[id] ?? id
@@ -88,17 +88,12 @@ describe('a class’s reminders', () => {
 })
 
 describe('the adult’s choices', () => {
-  const p: Prefs = { snoozed: { a: NOW.getTime() + 1000 }, hidden: ['b'], off: ['nudge'], lastVisit: null, recapWeek: null, seen: [] }
+  const p: Prefs = { snoozed: { a: NOW.getTime() + 1000 }, hidden: ['b'], off: ['nudge'], lastVisit: null, seen: [] }
   it('snoozed, hidden and switched-off kinds are not shown; the rest are', () => {
     expect(isShown(p, { id: 'a', kind: 'setup' }, NOW.getTime())).toBe(false)
     expect(isShown(p, { id: 'a', kind: 'setup' }, NOW.getTime() + 2000)).toBe(true)
     expect(isShown(p, { id: 'b', kind: 'setup' }, NOW.getTime())).toBe(false)
     expect(isShown(p, { id: 'c', kind: 'nudge' }, NOW.getTime())).toBe(false)
     expect(isShown(p, { id: 'c', kind: 'help' }, NOW.getTime())).toBe(true)
-  })
-  it('weekOf: Monday starts a week (the recap shows once per week)', () => {
-    expect(weekOf(new Date(2026, 8, 20))).toBe('2026-W38')   // Sunday
-    expect(weekOf(new Date(2026, 8, 21))).toBe('2026-W39')   // Monday
-    expect(weekOf(new Date(2026, 8, 27))).toBe('2026-W39')
   })
 })

@@ -30,8 +30,13 @@ vi.mock('next/navigation', () => ({
 // Every query answers "nothing": the add-a-child flow then shows the notice, which is the state it collects in.
 // ⚠️ EXCEPT `parental_consents` while painting the ROSTER: AddStudents shows "adding students is paused"
 // whenever that table answers (the consent gate is live), and the paused state collects nothing. The
-// roster is checked in the state where it DOES collect — the table missing, as on production before D4.
-const db = vi.hoisted(() => ({ consentTable: true }))
+// roster is checked in the state where it DOES collect — the teacher's school consent granted (20261113130000).
+const db = vi.hoisted(() => ({ consentTable: true, schoolConsent: false }))
+// The roster collects only once the teacher's school consent is granted (20261113130000); everywhere else the real read.
+vi.mock('@/features/consent/consentState', async orig => {
+  const real = await orig<typeof import('@/features/consent/consentState')>()
+  return { ...real, readAccountConsent: async () => db.schoolConsent ? { k: 'granted', id: 'sc', noticeVersion: 'notice-v8', confirmedAt: '' } as const : real.readAccountConsent() }
+})
 vi.mock('@/data/supabase/client', () => {
   const answer = (v: unknown): unknown => new Proxy(() => {}, {
     get: (_t, k) => (k === 'then' ? (r: (x: unknown) => void) => r(v) : answer(v)),
@@ -121,13 +126,17 @@ const SURFACES: Record<string, { paint: () => Promise<string>; control: string }
   'child-home': { paint: async () => paint(await h(import('@/app/modules/page'))), control: '/lesson?module=' },
   roster: {
     paint: async () => {
-      db.consentTable = false
+      db.schoolConsent = true
       try {
         return await paint(await h(import('@/features/classes/Classes'), 'AddStudents',
           { cls: { id: 'c', name: 'Room 12', grade: 5 }, onAdded() {}, onDone() {} }))
-      } finally { db.consentTable = true }
+      } finally { db.schoolConsent = false }
     },
     control: 'One student per line',
+  },
+  'school-consent': {
+    paint: async () => paint(await h(import('@/features/classes/Classes'), 'SchoolConsentForm', { onGranted() {}, onCancel() {} })),
+    control: 'First, your school’s permission',
   },
 }
 

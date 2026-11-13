@@ -26,6 +26,7 @@ import { describe, it, expect, vi } from 'vitest'
 vi.mock('@/data/repositories', async (orig) => ({
   ...(await orig<Record<string, unknown>>()),
   getMyRole: async () => 'parent',
+  getPinStatus: async () => ({ state: 'unavailable' }),   // the PIN is not what this file tests; pinDestructive does
 }))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: () => {}, push: () => {}, refresh: () => {} }),

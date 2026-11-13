@@ -18,6 +18,7 @@
  *      the parent's password or their Google account. See the migration for why token age rather
  *      than a password prompt (half these accounts have no password) or an emailed code (no
  *      verified sender).
+ *   4. IT ASKS FOR THE PARENT PIN FIRST (founder, 6 Nov 2026), since the dashboard itself now opens without one.
  *
  * ⚠️ ONLY CLOSING LIVES HERE. "Withdraw permission for all your children" is its own card in the dashboard's
  * Account view (/parent?view=account): on this page a parent who withdrew went on to close the account by mistake.
@@ -32,6 +33,7 @@ import Link from 'next/link'
 import { getMyLearners, getRecentSessions, deleteMyAccount, signOut } from '@/data/repositories'
 import { getCurrentSession } from '@/data/auth'
 import { DataRights } from '@/shared/ui/DataRights'
+import { usePinConfirm } from '@/shared/ui/ParentPinGate'
 import { SURVIVORS, HELD_ELSEWHERE } from '@/core/accountDeletion'
 import type { Learner, Session } from '@/data/supabase/types'
 
@@ -58,6 +60,7 @@ export default function AccountPage() {
   const [stale, setStale] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState<Record<string, number> | null>(null)
+  const pin = usePinConfirm()
   useEffect(() => {
     (async () => {
       const session = await getCurrentSession()
@@ -178,7 +181,7 @@ export default function AccountPage() {
           />
           {error && <p style={{ ...p, color: '#DC2626', fontWeight: 700 }}>{error}</p>}
           <div>
-            <button onClick={confirmDelete} disabled={!match || busy}
+            <button onClick={() => pin.confirm(confirmDelete)} disabled={!match || busy}
               style={{ ...btn, marginTop: 14, background: match ? '#DC2626' : '#f3f9ff',
                        color: match ? '#fff' : '#3d6fb8', border: 'none',
                        cursor: match && !busy ? 'pointer' : 'default' }}>
@@ -187,6 +190,7 @@ export default function AccountPage() {
           </div>
         </>
       )}
+      {pin.dialog}
     </Shell>
   )
 }

@@ -47,6 +47,7 @@ click is clicked first).
 | support | Support form | `SupportPanel` (opened) | free text from an adult, may name a child | privacy | present |
 | child-home | The child's home | `/modules` | the child area: answers, points, game saves, feedback | privacy | present |
 | roster | Teacher adds students | `AddStudents` in the class page | students' names and usernames | privacy | present |
+| school-consent | Teacher states the school's permission | `SchoolConsentForm` (before the first student) | the school's name, the teacher's statement | privacy, terms | present |
 
 ### Found in the product and not in the brief's list
 

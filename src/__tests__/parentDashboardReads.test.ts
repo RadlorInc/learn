@@ -99,10 +99,9 @@ describe('/parent reads each child\'s lesson_progress once (PERF-03)', () => {
     expect(text).toContain('Adalast played —Next lessonPlates of cookiesDone0 of 3 lessons')
     expect(text).toContain('Benlast played —Next lessonRows of chairsDone1 of 3 lessons')
     expect(text).toContain('Cylast played —Next lessonTurn the trayDone2 of 3 lessons')
-    // The report: Ada is stuck on g3m1-t1; Ben mastered it (his progress row), so he is not — in Up next, Reminders and the recap.
+    // The report: Ada is stuck on g3m1-t1; Ben mastered it (his progress row), so he is not — in Up next and Reminders.
+    // (The weekly recap pop-up that also listed it is gone, founder 8 Nov 2026.)
     expect(text).toContain('Ada is finding “Plates of cookies” hard')
-    expect(text).toContain('Ada6 problems answered · finding “Plates of cookies” hardOpen')
-    expect(text).toContain('Ben6 problems answeredOpen')
     expect(text).not.toContain('Ben is finding')
 
     await act(async () => root.unmount()); host.remove()

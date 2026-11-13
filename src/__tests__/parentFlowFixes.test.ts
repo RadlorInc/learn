@@ -2,8 +2,6 @@
 /**
  * Three changes the founder asked for on 2026-10-17. Expected values are written out here by hand.
  *
- *  2. An open parent dashboard locks itself after IDLE_LOCK_MS with nothing touched, and asks for the PIN again —
- *     measured against the CLOCK, so a sleeping device counts. It does not sign the adult out.
  *  4. Opening a grade ticks every module in it, ONCE: a second visit must not undo what the adult unticked there.
  *  5. An empty trial picker suggests two topics of one module, which must satisfy the same rule the database holds
  *     the parent to (`canAdd`, mirroring `choose_free_topics`).
@@ -12,7 +10,6 @@
  * so the test moves time and fires the events a person would.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { IDLE_LOCK_MS } from '@/shared/ui/ParentPinGate'
 import { ALL_MODULES as MODULES, modulesOf, gradeName } from '@/features/lessons/modules'
 import { createElement, act } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -20,39 +17,6 @@ import { createRoot } from 'react-dom/client'
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 vi.mock('@/data/supabase/client', () => ({ createClient: () => ({}) }))
 vi.mock('@/data/repositories', () => ({}))
-
-describe('2 — the idle lock', () => {
-  it('locks after a quarter of an hour, which is the number the screen is built around', () => {
-    expect(IDLE_LOCK_MS).toBe(15 * 60_000)
-  })
-
-  it('the gate watches the clock, not a timer, and only while it is open', () => {
-    // A background tab's timers are throttled, so a timer alone would leave a sleeping laptop unlocked. The guard
-    // reads Date.now(); the interval only decides how often it looks.
-    const src = readGate()
-    expect(src).toMatch(/Date\.now\(\) - last < IDLE_LOCK_MS/)
-    expect(src, 'the watcher runs when the dashboard is not open').toMatch(/if \(stage !== 'open' \|\| preview\) return/)
-    expect(src, 'a hidden tab coming back is not re-checked').toMatch(/visibilitychange/)
-  })
-
-  it('locking asks for the PIN again and keeps the adult signed in', () => {
-    const src = readGate()
-    const body = src.slice(src.indexOf('const lock ='), src.indexOf('const onShow'))
-    expect(body.length, 'the lock function was not found, so the three checks below read nothing').toBeGreaterThan(80)
-    expect(body).toMatch(/setStage\('enter'\)/)
-    expect(body, 'the old PIN is left in the box').toMatch(/setPinText\(''\)/)
-    expect(body, 'locking signs the adult out — it must not').not.toMatch(/signOut|router\.(push|replace)/)
-  })
-
-  it('a typing or tapping adult is never locked out mid-use', () => {
-    expect(readGate()).toMatch(/\['pointerdown', 'keydown', 'scroll'\]/)
-  })
-})
-
-function readGate() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require('node:fs').readFileSync('src/shared/ui/ParentPinGate.tsx', 'utf8') as string
-}
 
 describe('4 — opening a grade ticks its modules, once', () => {
   // The REAL ModuleChecklist, rendered, with its grade chips clicked the way an adult clicks them. An earlier

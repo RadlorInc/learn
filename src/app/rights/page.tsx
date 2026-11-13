@@ -1,12 +1,11 @@
 'use client'
 /**
- * /rights — what a parent can always reach, even when the parent PIN is locked or not entered (founder, 2026-10-06):
+ * /rights — what a parent can always reach, even when the parent PIN is locked (founder, 2026-10-06):
  * help, withdrawing permission for all their children, and a copy of each child's data. These are a parent's legal
  * rights (COPPA) or the way to get help, so the PIN — a barrier for a child, not authentication — does not stand in
- * front of them. It lives OUTSIDE `app/parent/`, so `ParentPinGate` (the /parent layout) does not wrap it.
+ * front of them.
  *
- * ⚠️ CLOSING THE ACCOUNT IS NOT HERE, and nothing here links to it: it is irreversible and a child could tap it, so it
- * stays at /parent/account behind the PIN.
+ * ⚠️ CLOSING THE ACCOUNT IS NOT HERE, and nothing here links to it: it is irreversible. It stays at /parent/account.
  *
  * ⚠️ SAME DOORS AS THE DASHBOARD, NOT COPIES: `WithdrawAllCard` (→ `withdraw_my_consent`, the same audit rows) and
  * `DataRights` (the same export). Each still needs the parent's own signed-in session — the RPCs are keyed on
@@ -56,7 +55,7 @@ export default function RightsPage() {
         <div className="adult-doc">
           <Link href="/parent" style={{ fontSize: 13, fontWeight: 700, color: '#3d6fb8', textDecoration: 'none' }}>{t('← Back to the dashboard')}</Link>
           <h1 style={{ fontSize: 24, margin: '10px 0 10px', color: 'var(--ink)', fontFamily: 'var(--font-display)' }}>{t('Help and your rights')}</h1>
-          <p style={p}>{t('These stay open without your PIN, so you can always get help, withdraw permission or take a copy of your data.')}</p>
+          <p style={p}>{t('You can always get help, withdraw permission or take a copy of your data here.')}</p>
 
           <section style={card} data-rights="help">
             <h2 style={h2}>{t('Help')}</h2>

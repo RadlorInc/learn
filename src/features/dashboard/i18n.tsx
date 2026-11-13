@@ -90,7 +90,7 @@ export const ES: Record<string, string> = {
   // /rights — open without the PIN (2026-10-06)
   '← Back to the dashboard': '← Volver al panel',
   'Help and your rights': 'Ayuda y sus derechos',
-  'These stay open without your PIN, so you can always get help, withdraw permission or take a copy of your data.': 'Esto sigue abierto sin su PIN, para que siempre pueda pedir ayuda, retirar el permiso o descargar una copia de sus datos.',
+  'You can always get help, withdraw permission or take a copy of your data here.': 'Aquí siempre puede pedir ayuda, retirar el permiso o descargar una copia de sus datos.',
   'Answers to common questions, including a forgotten PIN, are on the help page.': 'Las respuestas a las preguntas frecuentes, incluido un PIN olvidado, están en la página de ayuda.',
   'Open the help page': 'Abrir la página de ayuda',
   'Could not load this page. Check your connection and try again.': 'No se pudo cargar esta página. Revise su conexión e inténtelo de nuevo.',
