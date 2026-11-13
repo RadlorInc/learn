@@ -91,7 +91,6 @@ export function childReminders(c: ChildFacts, today: Day, now: Date, titleOf: (l
 export interface ClassFacts {
   id: string
   name: string
-  paid: boolean
   hasModules: boolean
   students: { id: string; name: string; login: string | null | undefined }[]
   /** Open exercises with how many of the class have taken each, and the question most got wrong (if any). */
@@ -109,7 +108,7 @@ export function classReminders(c: ClassFacts): Reminder[] {
       detail: 'Give them a username and a temporary password from the Students tab.',
       action: 'Open Students', to: `?class=${c.id}&tab=students` })
   }
-  if (c.paid && !c.hasModules && c.students.length) {
+  if (!c.hasModules && c.students.length) {
     out.push({ ...base, id: `mods:${c.id}`, kind: 'setup', title: `${c.name} has no modules chosen`,
       detail: 'Until you choose, every student in the class sees every topic.', action: 'Choose modules', to: `?class=${c.id}&tab=lessons` })
   }

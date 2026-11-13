@@ -1,5 +1,8 @@
 # Runbook: billing support
 
+> **Radlic is free since 13 Nov 2026** (architecture §8): nobody can buy a plan any more. This runbook is for the plans
+> bought before then, until every one is cancelled in Stripe (`docs/legal/sql/radlic-free-check.sql`).
+
 **Use this when:** a parent writes about money: a double charge, a refund, a dispute, a cancellation by email or post,
 "I paid but it is still locked", a failed payment. Anything about money is **P1** in [support.md](support.md).
 
@@ -37,11 +40,8 @@ Two payments for the same period, or two live subscriptions for one family.
 4. **Agent.** Draft the reply: what was doubled, that the extra charge is refunded in full, and that refunds reach the
    card in up to 10 business days (doc 01 §5).
 
-The app refuses a second checkout while a plan holds seats (`/api/checkout` answers `already_subscribed`), and the plan
-screen hides the checkout then. Before the webhook has written a row (two tabs, a double click), checkout asks Stripe:
-one customer per account, a live subscription on it refuses, and only the newest open Checkout Session stays payable
-(older ones are expired). A double can still come from Stripe itself, a subscription made by hand, or an account
-whose row never got written that comes back more than a day later (a second customer; see architecture §8).
+A double can only have come from before 13 Nov 2026 (there is no checkout since), from Stripe itself, or from a
+subscription made by hand.
 
 A parent who says "the payment page said expired": they had two tabs open and paid in the older one. Nothing was
 charged; they start checkout again.
@@ -136,7 +136,7 @@ that child's use, so both are handled the same (migration 20261008010000).
   If a sibling took the seat, nothing is queued — every paid seat is still in use. If **no child is left**, it is the
   withdraw-all case: the whole plan is queued in `billing_cancellations` (`consent_withdrawn`), once.
 - **How seats are billed.** One graduated price; the quantity is the number of seats (seat 1 at $7.99/$75.99, every
-  other seat $4.99/$48.00). A seat added part-way through (`/api/billing/seats`, `always_invoice`) is its own invoice
+  other seat $4.99/$48.00). A seat added part-way through (before 13 Nov 2026, `always_invoice`) is its own invoice
   for the rest of the period.
 - **The refund** (`removeSeatAndRefund`, `closeRefund.ts`): per billing period still running when the request was
   actioned, the newest paid invoice with a seat not yet refunded — a seat-add invoice (its whole amount) or the

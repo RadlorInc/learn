@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
- * The parent PIN is asked before a game-time or Ask Radlic setting changes or an invite goes out, not to open the
- * dashboard (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the Ask Radlic card and the child's page with its Game time tab. Only the account's
+ * The parent PIN is asked before a game-time or Ask Radlic setting changes or an invite goes out, not to open the dashboard
+ * (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the Ask Radlic card, the child's
+ * page with its Game time tab, and the invites page. Only the account's
  * reads are stubbed. Each change must not reach the database until the right PIN is in.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'

@@ -141,7 +141,7 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     await s.done()
   })
 
-  it('email signup asks for a first name; with teacher sign-up closed there is no Parent/Teacher choice and the account is a parent', async () => {
+  it('email signup asks for a first name and Parent or Teacher: without either nothing is sent; with both they go to the one email', async () => {
     const s = await signup()
     await type(s.host.querySelector('#auth-email'), 'p@x.test')
     await type(s.host.querySelector('#auth-password'), 'secret123')
@@ -150,9 +150,11 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     expect(signUp, 'signed up with no first name').not.toHaveBeenCalled()
     expect(s.host.textContent).toContain('Please enter your first name')
     await type(s.host.querySelector('#auth-first-name'), '  Maya  ')
-    // TEACHER_SIGNUP_OPEN is false (site.ts, 2026-10-16): no "I am a…" choice on the form, and no Teacher anywhere on it.
-    expect(s.host.querySelector('[role="radiogroup"]'), 'the Parent/Teacher choice is still on the form').toBeNull()
-    expect(s.host.textContent, 'Teacher is still offered at sign-up').not.toMatch(/Teacher/)
+    // Teacher sign-up is open again (TEACHER_SIGNUP_OPEN, 13 Nov 2026): the form asks which one.
+    await click(s.email())
+    expect(signUp, 'signed up without choosing Parent or Teacher').not.toHaveBeenCalled()
+    expect(s.host.textContent).toContain('Please choose Parent or Teacher')
+    await click([...s.host.querySelectorAll('[role="radio"]')].find(b => b.textContent === 'Parent') ?? null)
     await click(s.email())
     expect(signUp, 'signed up without saying 18 or older').not.toHaveBeenCalled()
     expect(s.host.textContent).toContain('Please confirm you are 18 or older')
@@ -173,12 +175,11 @@ describe('signup: no consent block (founder, 2026-09-25) — consent is the emai
     await m.done()
   })
 
-  it('with teacher sign-up closed the first-login picker offers only Parent, already chosen', async () => {
+  it('the first-login picker offers Parent and Teacher, neither chosen (teacher sign-up open, 13 Nov 2026)', async () => {
     const { RolePicker } = await import('@/app/parent/page')
     const m = await mount(createElement(RolePicker, { name: 'Maya', onPick: vi.fn() }))
-    expect(m.host.textContent, 'the picker still offers Teacher').not.toMatch(/I'm a Teacher/)
-    const parent = button(m.host, /I'm a Parent/) as HTMLButtonElement
-    expect(parent.getAttribute('aria-pressed'), 'Parent is not chosen by default').toBe('true')
+    expect(button(m.host, /I'm a Teacher/), 'the picker does not offer Teacher').toBeTruthy()
+    expect((button(m.host, /I'm a Parent/) as HTMLButtonElement).getAttribute('aria-pressed')).toBe('false')
     await m.done()
   })
 
@@ -218,6 +219,7 @@ describe('sign-up: a refused password says why, and never the length message', (
     await type(m.host.querySelector('#auth-password'), password)
     await type(m.host.querySelector('#auth-confirm'), password)
     await type(m.host.querySelector('#auth-first-name'), 'Pat')
+    await click([...m.host.querySelectorAll('[role="radio"]')].find(b => b.textContent === 'Parent') ?? null)
     await click(m.host.querySelector('[data-auth="adult"] input[type="checkbox"]'))
     await click(m.host.querySelector('[data-auth="email"]'))
     return { ...m, alert: () => m.host.querySelector('[role="alert"]')?.textContent ?? '' }

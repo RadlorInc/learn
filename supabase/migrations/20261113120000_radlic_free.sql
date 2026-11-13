@@ -1,0 +1,11 @@
+-- Radlic is free (founder, 13 Nov 2026): the paywall goes off for every family and every class.
+--
+-- `billing_config.enforced = false` is the one switch every entitlement function reads (20260824133906 §4,
+-- `claim_topic`, `trial_topics`, `is_chapter_entitled`…): while it is false they answer "allowed" for everything and
+-- record nothing. The tables and functions stay for now, so a subscription bought before today can still be cancelled
+-- and refunded by the Stripe webhook; they go in a later migration once Stripe shows no subscription left.
+--
+-- Not a security change: no function, grant, owner or search_path changes. Safe in either deploy order: the client
+-- no longer asks the paywall anything, and with this applied the database stops refusing too.
+-- Rollback: `update public.billing_config set enforced = true, updated_at = now();`
+update public.billing_config set enforced = false, updated_at = now();

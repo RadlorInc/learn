@@ -518,7 +518,7 @@ export const ES: Record<string, string> = {
   'Adaptive math · grades K–8': 'Matemáticas adaptativas · de kínder a 8.º grado',
   'Quiet insight into how your child actually learns.': 'Una mirada tranquila a cómo aprende de verdad su hijo.',
   'No vanity streaks or frantic countdowns. We track mathematical intuition step by step and report the real milestones straight to you.': 'Sin rachas de vanidad ni cuentas regresivas agobiantes. Seguimos paso a paso su intuición matemática y le informamos directamente de los logros reales.',
-  'Curriculum aligned UK & US': 'Alineado con el currículo de EE. UU. y el Reino Unido',
+  'Curriculum aligned US': 'Alineado con el currículo de EE. UU.',
   'Private by default — no public profiles': 'Privado por defecto: sin perfiles públicos',
   'Adaptive math for grades K–8': 'Matemáticas adaptativas de kínder a 8.º grado',
   'Sign in': 'Iniciar sesión',

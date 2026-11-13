@@ -50,6 +50,12 @@ declare
   v_consent  uuid;                        -- the attacker's granted ACCOUNT consent (see below)
   v_owner_consent uuid;                   -- the owner's granted ACCOUNT consent: covers all three of their children
   v_role     text;                        -- S1–S5: each client role in turn
+  v_teacher  uuid := gen_random_uuid();   -- SC: a teacher who states a school consent (20261113130000)
+  v_tparent  uuid := gen_random_uuid();   -- SC: a parent, who may not
+  v_sc       uuid;
+  v_sc2      uuid;
+  v_tkid     uuid := gen_random_uuid();
+  v_notice   text;
 begin
   -- ── Setup (as the migration role; RLS bypassed here) ──────────────────────
   select id into v_chapter from public.chapters limit 1;   -- a real chapter (sessions.chapter is FK'd)
@@ -103,6 +109,19 @@ begin
     values (v_alearner, 'Attacker Kid', v_attacker, v_consent, 'notice-v7');
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
+
+  -- ── Radlic is free (20261113120000) ───────────────────────────────────────
+  -- R0: after every migration the paywall is OFF. R1: so a topic opens for a child whose family chose no free topics
+  -- and holds no seat. The suite turns the paywall ON just below, to keep testing that code while it still exists.
+  select enforced into v_blocked from public.billing_config;
+  v_asserts := v_asserts + 1;
+  if coalesce(v_blocked, false) then
+    raise exception 'RLS FAIL R0: the paywall is ON after the migrations, but Radlic is free (20261113120000)';
+  end if;
+  v_asserts := v_asserts + 1;
+  if not public.claim_topic(v_alearner, 'c:counting') then
+    raise exception 'RLS FAIL R1: with the paywall off, a topic is still refused to a family that chose none';
+  end if;
 
   -- ── Billing setup (Stage 1) ───────────────────────────────────────────────
   -- ⚠️⚠️ THE PAYWALL SHIPS **OFF** AND THIS SUITE MUST TURN IT ON. `billing_config.enforced`
@@ -999,6 +1018,76 @@ begin
   select count(*) into v_cnt from storage.objects where bucket_id = 'lesson-audio' and name = v_attacker::text || '/rlstest0000000000.mp3';
   v_asserts := v_asserts + 1;
   if v_cnt <> 1 then raise exception 'RLS FAIL S5: the control object was changed or removed by a client role'; end if;
+
+  -- ── SC: school consent (20261113130000) ───────────────────────────────────
+  -- A teacher states their school's permission through consent_grant_school (service_role only); it is an ACCOUNT
+  -- consent the unchanged learner gate accepts. Addresses end in .test, not .invalid: a .invalid address is a child's.
+  select version into v_notice from public.consent_notice_versions order by seq desc limit 1;
+  insert into auth.users (id, email, email_confirmed_at) values
+    (v_teacher, 'teacher.rlstest@example.test', now()), (v_tparent, 'parent.rlstest@example.test', now());
+  update public.profiles set role = 'teacher' where id = v_teacher;
+  update public.profiles set role = 'parent'  where id = v_tparent;
+
+  -- SC1: only service_role may call it — never a client role.
+  v_asserts := v_asserts + 1;
+  if not has_function_privilege('service_role', 'public.consent_grant_school(uuid, text, text, text, text, text)', 'execute')
+     or has_function_privilege('authenticated', 'public.consent_grant_school(uuid, text, text, text, text, text)', 'execute')
+     or has_function_privilege('anon', 'public.consent_grant_school(uuid, text, text, text, text, text)', 'execute') then
+    raise exception 'RLS FAIL SC1: consent_grant_school is executable by a client role, or not by service_role';
+  end if;
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_teacher, 'role', 'authenticated')::text, true);
+  v_blocked := false;
+  begin
+    perform public.consent_grant_school(v_teacher, 'Lincoln Elementary', v_notice, 'privacy-v1', 'terms-v1', 'en');
+  exception when insufficient_privilege then v_blocked := true;
+  end;
+  reset role;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL SC1b: a signed-in teacher granted themselves a school consent directly'; end if;
+
+  -- SC2: a parent cannot state one (P0C03); SC3: nor can a teacher without a school name (22023).
+  v_blocked := false;
+  begin perform public.consent_grant_school(v_tparent, 'Lincoln Elementary', v_notice, 'privacy-v1', 'terms-v1', 'en');
+  exception when sqlstate 'P0C03' then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL SC2: a parent account recorded a school consent'; end if;
+  v_blocked := false;
+  begin perform public.consent_grant_school(v_teacher, ' x ', v_notice, 'privacy-v1', 'terms-v1', 'en');
+  exception when sqlstate '22023' then v_blocked := true; end;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL SC3: a school consent was recorded without a school name'; end if;
+
+  -- SC4: the teacher's consent is granted, account-wide, names the school (trimmed); asking again returns the same one.
+  v_sc  := public.consent_grant_school(v_teacher, '  Lincoln Elementary ', v_notice, 'privacy-v1', 'terms-v1', 'en');
+  v_sc2 := public.consent_grant_school(v_teacher, 'Another School', v_notice, 'privacy-v1', 'terms-v1', 'en');
+  select count(*) into v_cnt from public.parental_consents
+   where id = v_sc and parent_id = v_teacher and method = 'school_official' and state = 'granted' and scope = 'account'
+     and school_name = 'Lincoln Elementary' and confirmed_at is not null and parent_ack_at is not null;
+  v_asserts := v_asserts + 1;
+  if v_cnt <> 1 or v_sc2 <> v_sc then raise exception 'RLS FAIL SC4: the school consent row is wrong, or a second one was stacked'; end if;
+
+  -- SC5 (positive twin of the gate): the teacher, signed in, creates a student under it.
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_teacher, 'role', 'authenticated')::text, true);
+  insert into public.learners (id, display_name, age_group, created_by, consent_id, attested_notice_version)
+    values (v_tkid, 'Kabir', '9-11', v_teacher, v_sc, v_notice);
+  reset role;
+  v_asserts := v_asserts + 1;
+  if not public.consent_ok(v_tkid) then raise exception 'RLS FAIL SC5: a student created under a school consent is not consented'; end if;
+
+  -- SC6: the parent cannot borrow the teacher's school consent for a child of their own (P0C01).
+  set local role authenticated;
+  perform set_config('request.jwt.claims', json_build_object('sub', v_tparent, 'role', 'authenticated')::text, true);
+  v_blocked := false;
+  begin
+    insert into public.learners (display_name, age_group, created_by, consent_id, attested_notice_version)
+      values ('Borrowed', '9-11', v_tparent, v_sc, v_notice);
+  exception when sqlstate 'P0C01' then v_blocked := true;
+  end;
+  reset role;
+  v_asserts := v_asserts + 1;
+  if not v_blocked then raise exception 'RLS FAIL SC6: a parent created a child under a teacher''s school consent'; end if;
 
   -- The machine-readable line CI greps for. Keep the `RLS_ASSERTIONS=` token stable.
   raise notice 'RLS REGRESSION SUITE: ALL ASSERTIONS PASSED';

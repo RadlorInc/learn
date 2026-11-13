@@ -63,11 +63,11 @@ describe('parent dashboard — Spanish', () => {
     const kid = { id: 'a', name: 'Ana', owner: true, login: undefined, gameEnabled: false, lessonIds: null, due: {}, isDone: () => false, lastProblemAt: undefined, createdAt: '2026-09-01T00:00:00Z' }
     const r = childReminders(kid, '2026-09-21', new Date('2026-09-21T12:00:00Z'), id => id, 'es')
     expect(r.map(x => x.title)).toEqual(['Ana todavía no tiene inicio de sesión', 'El tiempo de juego está desactivado para Ana'])
-    expect(helpGoals({ tea: false, paid: false, c: 'a', lang: 'es' })[0].h).toBe('Primeros pasos')
+    expect(helpGoals({ tea: false, c: 'a', lang: 'es' })[0].h).toBe('Primeros pasos')
     // The teacher's "Your account" walkthroughs are the SAME objects a parent gets (wrapped in t) — so only the
     // teacher gate keeps them English. The teacher-only groups are never wrapped and would prove nothing.
-    const account = helpGoals({ tea: true, paid: false, k: 'k', lang: 'es' }).at(-1)!
-    expect(account.items.map(i => i.t)).toEqual(['Choose which reminders I get', 'See my plan', 'Close my account'])
+    const account = helpGoals({ tea: true, k: 'k', lang: 'es' }).at(-1)!
+    expect(account.items.map(i => i.t)).toEqual(['Choose which reminders I get', 'Close my account'])
   })
 
   it('the Spanish consent line links both documents and says they are in English', () => {
