@@ -93,3 +93,19 @@ export const longDate = (iso: string, lang: Lang) =>
 
 /** "{days}" in WAITING.body: whole days the link still works (at least 1). */
 export const daysLeft = (until: string) => Math.max(1, Math.ceil((new Date(until).getTime() - Date.now()) / 86_400_000))
+
+export type SchoolResult = { ok: true; id: string } | { ok: false; error: 'school_name' | 'not_eligible' | 'stale' | 'not_ready' | 'failed' }
+
+/** POST /api/consent/school: a teacher states their school authorised them (migration 20261113130000). */
+export async function grantSchoolConsent(school: string): Promise<SchoolResult> {
+  const { data } = await createClient().auth.getSession()
+  const r = await fetch('/api/consent/school', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${data.session?.access_token ?? ''}` },
+    body: JSON.stringify({ school, agree: true, noticeVersion: NOTICE_VERSION }),
+  }).catch(() => null)
+  const j = await r?.json().catch(() => null)
+  if (r?.ok && j?.ok && typeof j.id === 'string') return { ok: true, id: j.id }
+  const e = j?.error
+  return { ok: false, error: r?.status === 409 ? 'stale' : e === 'school_name' || e === 'not_eligible' || e === 'not_ready' ? e : 'failed' }
+}

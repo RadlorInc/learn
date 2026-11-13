@@ -11,7 +11,8 @@
  * paid row in `teacher_plans`) get the exercises only.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createClient } from '@/data/supabase/client'
+import Link from 'next/link'
+import { readAccountConsent, attestationVersion, grantSchoolConsent } from '@/features/consent/consentState'
 import {
   createClass, updateClass, createLearner, deleteLearnerPermanently, setChildLogin, setClassLessons,
   type ClassRow,
@@ -174,8 +175,11 @@ const loginError = (e: string) =>
   : e === 'bad_username' ? 'not a valid username'
   : 'could not set the login'
 
-async function addOne(row: RosterRow, cls: ClassRow): Promise<Made> {
-  const learner = await createLearner(row.name, Math.floor(Math.random() * 4), bandOf(cls.grade), { classId: cls.id, lessonIds: cls.lesson_ids })
+/** The teacher's granted account consent (a school consent, 20261113130000) that each new student is created under. */
+type Consent = { id: string; noticeVersion: string }
+
+async function addOne(row: RosterRow, cls: ClassRow, consent: Consent): Promise<Made> {
+  const learner = await createLearner(row.name, Math.floor(Math.random() * 4), bandOf(cls.grade), { classId: cls.id, lessonIds: cls.lesson_ids }, consent)
   if (!learner) return { ...row, error: 'could not add the student' }
   let password = tempPassword()
   let r = await setChildLogin(learner.id, row.username, password, true)
@@ -206,19 +210,15 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
   const [oneUser, setOneUser] = useState('')
   const [made, setMade] = useState<Made[] | null>(null)
   const [progress, setProgress] = useState<string | null>(null)
-  // ⚠️ ADDING STUDENTS IS PAUSED ONCE THE CONSENT GATE IS LIVE (founder, deploy loop D1). From
-  // migration 20260923120000 every new child needs a parent's granted consent, and no consent route
-  // fits a school yet — so every roster add would be refused (P0C01). The signal is the same one
-  // AddChildFlow uses: the consent table exists ⇒ the gate exists. Before that, adds work as they
-  // always have. Any other error falls through to the form, whose per-row errors stay visible.
-  const [paused, setPaused] = useState<boolean | null>(null)
-  useEffect(() => {
-    let live = true
-    void createClient().from('parental_consents').select('id', { head: true, count: 'exact' }).limit(1)
-      // paused only when the table answered; a missing table, or any other error, leaves the form
-      .then(({ error }) => { if (live) setPaused(!error) })
-    return () => { live = false }
+  // Every new child needs a granted ACCOUNT consent from the adult who creates them (the database refuses otherwise,
+  // P0C01). For a teacher that is the school consent (founder, 13 Nov 2026; migration 20261113130000): asked once,
+  // here, before the first student. undefined = still reading, null = none yet (the school form), 'error' = could not read.
+  const [consent, setConsent] = useState<Consent | null | 'error' | undefined>()
+  const loadConsent = useCallback(async () => {
+    const c = await readAccountConsent()
+    setConsent(c.k === 'granted' ? { id: c.id, noticeVersion: await attestationVersion(c.noticeVersion) } : c.k === 'error' ? 'error' : null)
   }, [])
+  useEffect(() => { void loadConsent() }, [loadConsent])
 
   // The list is parsed; one student's two boxes are taken as they are — no guessing which box is which.
   const parsed = useMemo(() => {
@@ -231,10 +231,11 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
   const ready = parsed.rows
 
   async function run() {
+    if (!consent || consent === 'error') return
     const out: Made[] = []
     for (let i = 0; i < ready.length; i++) {
       setProgress(`Adding ${i + 1} of ${ready.length}…`)
-      out.push(await addOne(ready[i], cls))
+      out.push(await addOne(ready[i], cls, consent))
     }
     setProgress(null)
     setMade(out)
@@ -243,14 +244,14 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
     if (out.some(m => m.password)) onAdded()
   }
 
-  if (paused === null) return <p style={{ marginTop: 14, fontSize: 13.5, color: P.ink3 }}>Loading…</p>
-  if (paused) return (
-    <div data-roster="paused" style={{ marginTop: 14, fontSize: 14, color: P.ink, background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 10, padding: '12px 14px', lineHeight: 1.5 }}>
-      <p style={{ margin: 0, fontWeight: 800 }}>Adding students is paused for now.</p>
-      <p style={{ margin: '6px 0 0' }}>We are still setting up how a school gives permission for a child to use Radlic. Until that is ready, new students cannot be added to a class. Students already in your class are not affected.</p>
-      <button onClick={onDone} style={{ ...ghost, marginTop: 10 }}>Close</button>
+  if (consent === undefined) return <p style={{ marginTop: 14, fontSize: 13.5, color: P.ink3 }}>Loading…</p>
+  if (consent === 'error') return (
+    <div role="alert" style={{ marginTop: 14, fontSize: 14, color: P.ink }}>
+      <p style={{ margin: 0 }}>Could not check your school’s permission. Check your connection and try again.</p>
+      <button onClick={() => { setConsent(undefined); void loadConsent() }} style={{ ...ghost, marginTop: 10 }}>Try again</button>
     </div>
   )
+  if (consent === null) return <SchoolConsentForm onGranted={loadConsent} onCancel={onDone} />
 
   if (made) {
     const good = made.filter(m => m.password)
@@ -328,5 +329,50 @@ export function AddStudents({ cls, onAdded, onDone }: { cls: ClassRow; onAdded: 
         {mode === 'list' && parsed.errors.length > 0 && ready.length > 0 && <span style={{ fontSize: 12.5, color: P.ink3 }}>Lines with a problem are skipped.</span>}
       </div>
     </div>
+  )
+}
+
+const SCHOOL_ERR: Record<string, string> = {
+  school_name: 'Type your school’s name (2 to 120 characters).',
+  not_eligible: 'Only a teacher account with a confirmed email can give school permission.',
+  stale: 'This page is out of date. Reload it and try again.',
+  not_ready: 'This is not switched on yet. Try again later.',
+  failed: 'Something went wrong and nothing was saved. Try again.',
+}
+
+/**
+ * The school's permission, asked once before a teacher's first student (attorney item A3: the wording is the
+ * attorney's to confirm). What the teacher states is recorded with the school's name and the time.
+ */
+export function SchoolConsentForm({ onGranted, onCancel }: { onGranted: () => void; onCancel: () => void }) {
+  const [school, setSchool] = useState('')
+  const [agree, setAgree] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const ok = agree && school.trim().length >= 2 && !busy
+  return (
+    <form data-roster="school-consent" onSubmit={async e => {
+      e.preventDefault(); if (!ok) return
+      setBusy(true); setError(null)
+      const r = await grantSchoolConsent(school.trim())
+      setBusy(false)
+      if (r.ok) onGranted(); else setError(SCHOOL_ERR[r.error])
+    }} style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14, color: P.ink, background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 10, padding: '12px 14px', lineHeight: 1.5 }}>
+      <p style={{ margin: 0, fontWeight: 800 }}>First, your school’s permission</p>
+      <p style={{ margin: 0 }}>Students under 13 need a parent’s permission to use Radlic. A school can give it for school use, on behalf of the parents. We ask once, before your first student.</p>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 700 }}>School name
+        <input value={school} onChange={e => setSchool(e.target.value)} maxLength={120} autoComplete="organization" required
+          style={{ padding: '10px 12px', minHeight: 44, borderRadius: 10, border: `1.5px solid ${P.edge}`, fontSize: 15, background: '#fff', color: P.ink }} />
+      </label>
+      <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
+        <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ width: 22, height: 22, flex: '0 0 auto', marginTop: 2 }} />
+        <span>I teach at this school. My school has authorised me to use Radlic with my students for school learning only, and has the parents’ permission for that. I’ve read the <Link href="/legal/privacy" target="_blank">Privacy Policy</Link> and the <Link href="/legal/terms" target="_blank">Terms</Link>.</span>
+      </label>
+      {error && <p role="alert" style={{ margin: 0, fontWeight: 800, color: '#B42318' }}>{error}</p>}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button type="submit" disabled={!ok} style={{ ...btn, opacity: ok ? 1 : 0.5 }}>{busy ? 'Saving…' : 'Give permission'}</button>
+        <button type="button" onClick={onCancel} style={ghost}>Not now</button>
+      </div>
+    </form>
   )
 }

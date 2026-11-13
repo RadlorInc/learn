@@ -62,12 +62,11 @@ export function oldDomainRedirects(siteUrl: string = SITE_URL) {
  * file is `'use client'` and three of the four consumers are Server Components.
  */
 /**
- * Whether a new account can choose "Teacher" (the sign-up form and the first-login picker). OFF since 2026-10-16:
- * adding students to a class is paused until there is a school consent route (attorney item A3), so a new teacher
- * only ever saw an empty dashboard. Existing teacher accounts are untouched, and every teacher screen stays in the
- * code; turning this back on is the whole switch.
+ * Whether a new account can choose "Teacher" (the sign-up form and the first-login picker). ON again since
+ * 2026-11-13, with the school consent route (migration 20261113130000, attorney item A3): before a teacher's first
+ * student they state their school's permission. OFF 2026-10-16 → 2026-11-13, while adding students was paused.
  */
-export const TEACHER_SIGNUP_OPEN = false
+export const TEACHER_SIGNUP_OPEN = true
 
 export const SUPPORT_EMAIL = 'support@radlor.com'
 /** Toll-free support line (founder, 2026-10-14). `SUPPORT_TEL` is the same number for `tel:` links. */
