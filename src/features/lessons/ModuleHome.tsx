@@ -207,10 +207,10 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
 
             {askOn && <div style={{ ...card, background: '#cfe3ff' }}>
               <div style={{ flex: 1 }}>
-                <strong style={cardTitle}>Homework</strong>
-                Stuck on a problem? Radlic shows you how, step by step.
+                <strong style={cardTitle}>Ask Radlic</strong>
+                Homework or anything else: Radlic shows you how, step by step.
               </div>
-              <Link href="/ask" style={{ ...primary, background: '#fff', color: INK }}>Help with homework</Link>
+              <Link href="/ask" style={{ ...primary, background: '#fff', color: INK }}>Ask any math question</Link>
             </div>}
             </>}
           </section>

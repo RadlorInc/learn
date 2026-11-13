@@ -115,7 +115,7 @@ export default function AskPage() {
     const off = busy || voiceLoading || !q.trim()
     body = <div style={col}>
       {fresh && <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
-        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 900, color: INK }}>Enter the math homework problem you need help with</h1>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 900, color: INK }}>Ask any math question</h1>
         <p style={{ margin: '8px 0 0', fontSize: 17, color: INK }}>Radlic draws and explains the answer, step by step.</p>
       </div>}
       {question && <div style={asked}>{question}</div>}
