@@ -107,7 +107,6 @@ async function censusFor(db: PGlite, tables: string[], uid: string, learnerIds: 
     'public.game_saves':               `public.game_saves where learner_id in (${ls})`,
     'public.ask_maths_settings':       `public.ask_maths_settings where learner_id in (${ls})`,
     'public.ask_maths_questions':      `public.ask_maths_questions where learner_id in (${ls})`,
-    'public.addon_subscriptions':      `public.addon_subscriptions where account_id = '${uid}'`,
     /**
      * ⚠️ AND THIS ONE IS A DECISION, NOT A MAPPING — flag it to the attorney before it ships.
      * `parental_consents.parent_id` cascades from auth.users, so closing an account destroys the
@@ -144,7 +143,6 @@ async function seedFamily(db: PGlite, uid: string, learners: string[], email: st
     insert into public.billing_events (account_id, stripe_event_id, type)
       values ('${uid}', 'evt_${uid.slice(0, 8)}', 'checkout.session.completed');
     insert into public.free_topics (account_id, topic) values ('${uid}', 'g3m2-t1');
-    insert into public.addon_subscriptions (account_id, product, status) values ('${uid}', 'ask_maths', 'active');
   `)
   // Consent-once: ONE account consent covers every child of the family.
   const consent = await grantedConsent(db, uid)

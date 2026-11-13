@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Ask maths on a LOCAL stack only (docs/product/ask-maths.md): a test family to try it end to end — a parent with
-// consent on the current notice, a Grade 6–8 child, and the add-on marked active (no Stripe), Ask maths still OFF so
+// consent on the current notice, a Grade 6–8 child, Ask maths still OFF so
 // the parent turns it on through the disclosure. Run after `supabase start` + `supabase db reset`:
 //   node scripts/ask-maths-local-seed.mjs
 // Sign in at /auth with the address and password below (test values for this local stack, nothing else).
@@ -32,7 +32,4 @@ const consent = sql(`insert into public.parental_consents (parent_id, method, st
 if (!sql(`select id from public.learners where created_by = '${id}' and display_name = '${CHILD}'`))
   sql(`insert into public.learners (display_name, avatar_index, age_group, created_by, consent_id, attested_notice_version)
        values ('${CHILD}', 1, '12-14', '${id}', '${consent}', '${notice}')`)
-sql(`insert into public.addon_subscriptions (account_id, product, status, current_period_end)
-     values ('${id}', 'ask_maths', 'active', now() + interval '30 days')
-     on conflict (account_id, product) do update set status = 'active', current_period_end = excluded.current_period_end`)
-console.log(`local test family ready: ${EMAIL} (notice ${notice}), child ${CHILD} in Grades 6–8, add-on active, Ask maths off`)
+console.log(`local test family ready: ${EMAIL} (notice ${notice}), child ${CHILD} in Grades 6–8, Ask maths off (free)`)

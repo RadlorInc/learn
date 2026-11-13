@@ -87,7 +87,6 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
 | `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
 | `POST /api/ask-maths` | the child, or the adult whose session they use (own token forwarded) | Ask Radlic ([product/ask-maths.md](product/ask-maths.md)); 404 unless `ASK_MATHS=on`. `ask_maths_begin` as the caller decides (403/409); the question goes from this server only to askRadlor's `/api/partner/maths` (`WHITEBOARD_URL`, Bearer `WHITEBOARD_PARTNER_SECRET`); its lesson is streamed on as server-sent events and `ask_maths_finish` (service role) settles the row, even after the tab closes (`after`) |
-| `POST /api/checkout/ask-maths`, `POST /api/billing/ask-maths-cancel` | parent | The Ask Radlic add-on's own Stripe subscription (`metadata.product = ask_maths`, §8) and stopping its renewal |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -178,7 +177,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions`, `email_undeliverable` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
-| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations`, `billing_seat_removals`, `addon_subscriptions` (Ask Radlic) |
+| Billing | `subscriptions`, `subscription_seats`, `billing_events`, `billing_config`, `billing_cancellations`, `billing_seat_removals` |
 | Legacy | `sessions` (read-only to every client), `diagnostic_*`, `diagnostic_leads`, `chapters` — no live writer; `sessions` is still read by the dashboard RPC, the export and /admin's funnel. `learner_progress`, `learner_stats` and `learner_state` were dropped on 2026-09-28 (`20260928190000`) |
 
 Age bands map to grades: `3-5` Kindergarten, `6-8` Grades 1–2, `9-11` Grades 3–5, `12-14` Grades 6–8.

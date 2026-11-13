@@ -299,7 +299,7 @@ begin
   if v_cnt <> 0 then raise exception 'RLS FAIL A4: attacker read another learner''s sessions (% rows)', v_cnt; end if;
 
 
-  -- ═══ ASK MATHS (20261021120000) — the attacker's half ═══════════════════════
+  -- ═══ ASK MATHS (20261113140000) — the attacker's half ═══════════════════════
   -- A question of the OWNER's child, planted as the database role (the consent gate passes: the owner consented).
   reset role;
   insert into public.ask_maths_questions (learner_id, question, outcome) values (v_learner, 'rlstest question', 'answered');
@@ -340,11 +340,22 @@ begin
   exception when insufficient_privilege then v_blocked := true; end;
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL AM5: a client can settle an Ask maths question (service role only)'; end if;
-  v_blocked := false;
-  begin insert into public.addon_subscriptions (account_id, product, status) values (v_attacker, 'ask_maths', 'active');
-  exception when insufficient_privilege then v_blocked := true; end;
-  v_asserts := v_asserts + 1;
-  if not v_blocked then raise exception 'RLS FAIL AM6: a client gave itself the Ask maths add-on'; end if;
+  -- AM6: Ask Radlic is free (13 Nov 2026): the owner's own Grade 3-8 child, switched on (AM1b), can ask with no add-on
+  -- or payment of any kind. Run in a sub-block that always rolls back (the band and the question are not kept).
+  declare v_msg text;
+  begin
+    reset role;
+    update public.learners set age_group = '9-11' where id = v_alearner;
+    set local role authenticated;
+    perform set_config('request.jwt.claims',
+      json_build_object('sub', v_attacker, 'email', 'attacker.rlstest@milo.invalid', 'role', 'authenticated')::text, true);
+    raise exception using errcode = 'P0R06', message = (public.ask_maths_begin(v_alearner, 'what is 2 + 2'))::text;
+  exception when sqlstate 'P0R06' then
+    get stacked diagnostics v_msg = message_text;
+    v_asserts := v_asserts + 1;
+    if (v_msg::jsonb ->> 'ok') is distinct from 'true' then
+      raise exception 'RLS FAIL AM6: the owner''s own child could not ask a free question: %', v_msg; end if;
+  end;
 
   -- ═══ BILLING (Stage 1) — the attacker's half ═══════════════════════════════
   -- The attacker has NO subscription and owns v_alearner, so they are the unentitled case.

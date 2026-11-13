@@ -82,7 +82,7 @@ describe('/api/ask-maths', () => {
     expect(r.status).toBe(503); expect(finishes().map(f => f.p_outcome)).toEqual(['failed'])
   })
   it('a refusal from the database: 409 with its reason, and the service is never called', async () => {
-    for (const error of ['off', 'not_entitled', 'limit', 'busy', 'band']) {
+    for (const error of ['off', 'limit', 'busy', 'band']) {
       calls.length = 0; begin = () => Response.json({ ok: false, error })
       const r = await ask({ learner: KID, question: 'q' })
       expect(r.status).toBe(409); expect(JSON.parse(r.text)).toEqual({ error })

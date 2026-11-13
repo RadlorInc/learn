@@ -7,7 +7,7 @@ import { ASK_MATHS_ON, MAX_QUESTION, parseSse, scriptOf } from '@/features/askMa
  * POST /api/ask-maths {learner, question} with the signed-in token (the child's own login, or the parent's session the
  * child is using): Ask Radlic (docs/product/ask-maths.md). The route decides nothing about who may ask:
  *
- *   1. `ask_maths_begin` (as the caller) checks access, grade band, the parent's switch, the paid add-on, one at a
+ *   1. `ask_maths_begin` (as the caller) checks access, grade band, the parent's switch, one at a
  *      time and the daily limit, and makes a 'pending' row — or refuses (403 forbidden / 409 {error}).
  *   2. The question goes, from this server only, to the askRadlor whiteboard service (`WHITEBOARD_URL`, Bearer
  *      `WHITEBOARD_PARTNER_SECRET`), which screens it and streams the lesson as server-sent events.
@@ -15,7 +15,7 @@ import { ASK_MATHS_ON, MAX_QUESTION, parseSse, scriptOf } from '@/features/askMa
  *      role) records the outcome — after the browser has gone too (`after`), so a closed tab still settles the row.
  *
  * Answers: 404 when ASK_MATHS is not 'on'; 400 bad input; 401 no token; 403 not this caller's child; 409 a refusal
- * ({error: off | band | not_entitled | busy | limit}); 422 the screen's verdict ({error: not_maths | personal |
+ * ({error: off | band | busy | limit}); 422 the screen's verdict ({error: not_maths | personal |
  * unsafe}); 503 {error: unavailable}; otherwise 200 text/event-stream.
  */
 export const dynamic = 'force-dynamic'

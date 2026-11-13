@@ -184,7 +184,6 @@ function stubNetwork(opts: {
   others?: Record<string, Record<string, unknown>>  // Stripe's answer for a subscription other than `sub`
   upsertFails?: { status: number; body: unknown }[]  // answers to the subscription upserts, in order, before a success
   upsert?: { status: number; body: unknown }        // what PostgREST answers the subscriptions upsert with
-  addonUpsert?: { status: number; body: unknown }   // what PostgREST answers the addon_subscriptions upsert with
 } = {}) {
   const calls: Call[] = []
   const json = (body: unknown, status = 200) =>
@@ -213,7 +212,6 @@ function stubNetwork(opts: {
       if (opts.upsert) return json(opts.upsert.body, opts.upsert.status)
       return json([{ id: 'sub-row-1' }], 201)
     }
-    if (url.includes('/rest/v1/addon_subscriptions')) return opts.addonUpsert ? json(opts.addonUpsert.body, opts.addonUpsert.status) : new Response(null, { status: 201 })
     if (url.includes('/rest/v1/rpc/materialize_seats')) return json(2)
     if (url.includes('/auth/v1/user')) return json({ id: ACC, email: 'p@example.com' })
     return json({ unexpected: url }, 500)
@@ -565,60 +563,6 @@ describe('the Stripe webhook', () => {
 //  THE EMAILS A SUBSCRIPTION OWES (docs/legal/01 §3). Every sentence, date and amount below is typed out by hand.
 //  PERIOD_END is 2026-02-01T00:00:00Z.
 // ─────────────────────────────────────────────────────────────────────────────
-// Ask Radlic, the add-on (docs/product/ask-maths.md): a second subscription on the same customer, marked by
-// metadata.product. It must reach addon_subscriptions and NEVER the plan's row or its seats.
-describe('the Stripe webhook: the Ask Radlic add-on', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks()
-    vi.spyOn(console, 'error').mockImplementation(() => {})
-    __resetStripe()
-    process.env.NEXT_PUBLIC_SUPABASE_URL = SUPA
-    process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-key'
-    process.env.STRIPE_SECRET_KEY = 'sk_test_stage2b'
-    process.env.STRIPE_WEBHOOK_SECRET = SECRET
-    process.env.RESEND_API_KEY = 're_test'
-  })
-  afterEach(() => { process.env = { ...ENV }; vi.unstubAllGlobals(); __resetStripe() })
-  const ADDON = (over: Record<string, unknown> = {}) => SUB({ id: 'sub_addon', metadata: { account_id: ACC, product: 'ask_maths' }, ...over }, { quantity: 1, price: { unit_amount: 499, recurring: { interval: 'month' } } })
-
-  it('writes addon_subscriptions on (account, product) — and leaves the plan and its seats alone', async () => {
-    const calls = stubNetwork({ sub: ADDON() })
-    const res = await deliver('customer.subscription.updated', { id: 'sub_addon' })
-    expect(res.status).toBe(200)
-    const [up] = post(calls, '/rest/v1/addon_subscriptions')
-    expect(up, 'no add-on upsert happened').toBeTruthy()
-    expect(up.url).toContain('on_conflict=account_id,product')
-    expect(JSON.parse(up.body)).toMatchObject({ account_id: ACC, product: 'ask_maths', status: 'active', stripe_subscription_id: 'sub_addon', stripe_customer_id: 'cus_9', cancel_at_period_end: false,
-      current_period_end: new Date(PERIOD_END * 1000).toISOString() })
-    expect(post(calls, '/rest/v1/subscriptions'), 'the plan row was written by an add-on event').toEqual([])
-    expect(post(calls, 'rpc/materialize_seats'), 'seats were touched by an add-on event').toEqual([])
-    expect(calls.some(c => c.method === 'PATCH' && c.url.includes('billing_events'))).toBe(true)
-  })
-  it('a cancelled add-on is written as Stripe says it', async () => {
-    const calls = stubNetwork({ sub: ADDON({ status: 'canceled', cancel_at_period_end: true }) })
-    await deliver('customer.subscription.deleted', { id: 'sub_addon' })
-    expect(JSON.parse(post(calls, '/rest/v1/addon_subscriptions')[0].body)).toMatchObject({ status: 'canceled', cancel_at_period_end: true })
-  })
-  it('a completed checkout sends the add-on acknowledgement, keyed once per subscription', async () => {
-    const calls = stubNetwork({ sub: ADDON() })
-    await deliver('checkout.session.completed', { id: 'cs_9', subscription: 'sub_addon', amount_total: 499, customer_details: { email: 'p@example.com' } })
-    const [mail] = post(calls, 'api.resend.com/emails')
-    expect(mail, 'no acknowledgement was sent').toBeTruthy()
-    expect(JSON.parse(mail.body).subject).toBe('Ask Radlic on Radlic — confirmation and how to cancel')
-    expect(JSON.parse(mail.body).text).toContain('$4.99')
-    expect(mail.headers['Idempotency-Key'] ?? mail.headers['idempotency-key']).toBe('addon-ack-sub_addon')
-  })
-  it('the account is gone (23503): acknowledged, not retried', async () => {
-    stubNetwork({ sub: ADDON(), addonUpsert: { status: 409, body: { code: '23503' } } })
-    const res = await deliver('customer.subscription.deleted', { id: 'sub_addon' })
-    expect(res.status).toBe(200); expect(await res.json()).toEqual({ ignored: 'account_closed' })
-  })
-  it('any other refusal is a 500, so Stripe delivers again', async () => {
-    stubNetwork({ sub: ADDON(), addonUpsert: { status: 500, body: { message: 'down' } } })
-    expect((await deliver('customer.subscription.updated', { id: 'sub_addon' })).status).toBe(500)
-  })
-})
-
 describe('the Stripe webhook sends the acknowledgement and the annual renewal reminder', () => {
   beforeEach(() => {
     vi.restoreAllMocks()

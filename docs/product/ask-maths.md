@@ -15,8 +15,8 @@ is done. The live notice (notice-v8, docs/legal/02), the subprocessor list (docs
   it on. One text box (300 characters), a few example questions for the child's band, the board, and play/pause,
   back/next and "Watch again". Refusals are in plain words with no price, plan or "locked" anywhere
   (`childWords.test.ts` covers the page). A credit line names the voice (CC BY 4.0).
-- **Parent** (a child's page → **Ask Radlic** tab, `src/features/dashboard/AskMathsCard.tsx`): the add-on (one price
-  for the family, `ASK_MATHS_MONTHLY_CENTS`, monthly, with an auto-renewal tick box), then per child the
+- **Parent** (a child's page → **Ask Radlic** tab, `src/features/dashboard/AskMathsCard.tsx`): free (no add-on, 13 Nov
+  2026); per child the
   disclosure to agree to and the switch, the number of questions a day (1–20, default 5), and every question of the
   last 30 days with its outcome. An answered one can be watched again; "Delete all of …'s questions now" deletes them.
   The questions and settings are also in the child's data download.
@@ -25,7 +25,7 @@ is done. The live notice (notice-v8, docs/legal/02), the subprocessor list (docs
 
 ```
 child's browser ──POST /api/ask-maths (child's or parent's token)──▶ Radlic server
-   1. ask_maths_begin (as the caller): access, band 9-11/12-14, switch on, add-on paid, one at a time, daily limit
+   1. ask_maths_begin (as the caller): access, band 9-11/12-14, switch on, one at a time, daily limit
       → a 'pending' row in ask_maths_questions
    2. ──POST {WHITEBOARD_URL}/api/partner/maths (Bearer WHITEBOARD_PARTNER_SECRET, {question, band})──▶ askRadlor
          screen (Opus 5.5, low effort): maths / not_maths / personal / unsafe → 422 unless maths
@@ -48,18 +48,15 @@ child's browser: the board (public/ask-player, sandboxed iframe) + the voice (pu
   libraries. Every digit is computed by the recipe, not typed by the model. No realistic drawings (askRadlor refuses
   `sv`/`pin` for maths, since this copy ships none).
 
-## The data (migration 20261021120000)
+## The data (migration 20261113140000)
 
 | table | what | who reads | who writes | kept |
 |---|---|---|---|---|
 | `ask_maths_settings` | on/off, daily limit, who agreed to which disclosure version, when | the child's family | `set_ask_maths` (owner only) | with the child |
 | `ask_maths_questions` | the question (cleared when it had personal details), outcome, the lesson | the child's family | `ask_maths_begin` (family) / `ask_maths_finish` (service role) / `ask_maths_forget` (owner) | **30 days** (`prune-ask-maths-questions`, 03:52 UTC) |
-| `addon_subscriptions` | the add-on's Stripe subscription | the account | the webhook (service role) | with the account; closing it or withdrawing for every child queues a cancel and pro-rata refund (`billing_cancellations`) |
 
-Billing: `/api/checkout/ask-maths` makes a second subscription on the family's Stripe customer with
-`metadata.product = 'ask_maths'`; the webhook writes it to `addon_subscriptions` only, never to `subscriptions` or the
-seats, and sends its own acknowledgement email. `/api/billing/ask-maths-cancel` stops renewal at period end. The plan's
-checkout ignores the add-on when it checks for a live subscription.
+Free (founder, 13 Nov 2026): no add-on, no checkout, no payment. A child asks while the owner's switch is on, up to
+the daily limit (default 5).
 
 ## Settings
 
@@ -69,7 +66,6 @@ checkout ignores the add-on when it checks for a live subscription.
 | Radlic, Vercel (build) | `NEXT_PUBLIC_ASK_MATHS` | `on` to show the button, the page and the parent tab |
 | Radlic, Vercel (server) | `WHITEBOARD_URL` | askRadlor's origin, e.g. `https://<askRadlor domain>` |
 | Radlic, Vercel (server) | `WHITEBOARD_PARTNER_SECRET` | 32 random bytes; the same value as askRadlor's `RADLIC_PARTNER_SECRET` |
-| Radlic, Vercel (server) | `STRIPE_PRICE_ASK_MATHS` | the add-on's monthly Stripe price (test price on Preview, live on Production) |
 | askRadlor, Vercel | `RADLIC_PARTNER_SECRET` | the same 32 bytes |
 
 Turning it off again: set `ASK_MATHS` to anything else (the routes answer 404 at once), then `NEXT_PUBLIC_ASK_MATHS`
@@ -88,11 +84,9 @@ The founder and the attorney, in this order:
    Whether the notice change needs `reconsent_required` (a new notice version) or the per-child disclosure is enough.
 2. **Anthropic.** Confirm the terms that cover a child's question (no training on API data; retention; a Zero Data
    Retention agreement if the attorney wants it; Anthropic's requirements for products used by minors).
-3. **The price.** `ASK_MATHS_MONTHLY_CENTS` (now $4.99 a month, a placeholder) and a Stripe price at the same amount.
+3. **The cost.** Ask is free; the daily limit (default 5 a child) caps the model cost.
 4. **The secret and the URL** (table above) in both projects; askRadlor's `kids-maths` branch merged and deployed first.
-5. **Staging**: the migration through `staging`, then a test family: switch on, buy the add-on with a Stripe test
-   card, ask 5 questions (one not maths, one with a phone number), watch one again from the dashboard, delete them,
-   close the account and see the add-on cancelled. Then a real model run of 20 questions per band, read by a person.
+5. **Staging**: the migration through `staging`, then a test family: switch on, ask 5 questions (one not maths, one with a phone number), watch one again from the dashboard, delete them. Then a real model run of 20 questions per band, read by a person.
 6. Production: the migration (founder-approved `migrate-prod`), then `docs/legal/sql/ask-maths-proof.sql`, then the
    two flags.
 
@@ -123,8 +117,7 @@ Docker running, in this repo:
 1. `supabase start` (a throwaway local stack; copy `supabase/schema/baseline_schema.sql` to
    `supabase/migrations/00000000000000_baseline.sql` first, as CI does, and delete it again after: the vitest schema
    fixture fails while it is there), then `supabase db reset`.
-2. `node scripts/ask-maths-local-seed.mjs`: a test family (the sign-in is in that file), a Grade 6–8 child, the
-   add-on marked active.
+2. `node scripts/ask-maths-local-seed.mjs`: a test family (the sign-in is in that file), a Grade 6–8 child.
 3. askRadlor's `app` (branch `kids-maths`) with `GENERATION_MOCK=1 RADLIC_PARTNER_SECRET=<any>`: no model call; a
    question containing "coins" gets a hand-made maths lesson, any other the rainbow sample.
 4. This app with `ASK_MATHS=on NEXT_PUBLIC_ASK_MATHS=on WHITEBOARD_URL=<askRadlor's local URL>
@@ -135,6 +128,5 @@ Docker running, in this repo:
 ## Tests
 
 `askMathsDb.test.ts` (every function as each role, with positive twins), `askMathsRoute.test.ts` (the route, the
-stream, every settle), `askMathsCheckout.test.ts`, `billingStripe.test.ts` (the add-on webhook branch; the plan
-checkout ignores a live add-on), `exportCompleteness`, `accountDeletion`, `childWords`, `dashboardSpanish`. askRadlor:
+stream, every settle), `exportCompleteness`, `accountDeletion`, `childWords`, `dashboardSpanish`. askRadlor:
 `tests/generation/partner.test.ts` and the maths subject in `prompts.test.ts` / `wb-load.test.ts`.
