@@ -31,7 +31,7 @@ must still be ticked **before any payment**.
 - [x] **Nightly encrypted backup** running unattended; restore proven 23 Sep 2026 (#40–#42; see `docs/runbooks/backup-restore.md`)
 - [x] **No third-party tracking in a child's session**: our own origin and our own Supabase project (lesson audio, since 27 Sep 2026); CSP `connect-src` limited (23 Sep audit)
 - [x] **Legal surface**: 7 pages routed and linked from every collection point; the publish switch refuses a page for placeholders / draft / sign-off / Spanish (`legalSwitch`, `legalSurface`). Six published as beta versions (#208, #267), Refund dark
-- [x] **Teacher roster paused** until school consent exists (live since D4)
+- [x] **Teacher roster paused** until school consent exists (live since D4; reopened 2026-11-13 with the school consent below)
 - [x] **Secret scanning + push protection on**; **org 2FA required** (measured 24 Sep)
 - [x] **Round 1 merged** (23 Sep 2026). Every PR has tests that went red on a planted break, plus green CI.
 - [x] **Deletion audit trail** built — who deleted which child's data, and when (#260, 26 Sep)
@@ -103,7 +103,7 @@ recorded in a pull request.
 - [ ] 👪 **Sign-off on every page, and on its public boundary**
 - [ ] 👪 Withdrawal scope: per-child vs whole account (A1)
 - [ ] 👪 Consent-record retention; closing an account now keeps the consent record (#269) (A2)
-- [ ] 👪 School/teacher consent. The roster stays paused until then (A3)
+- [ ] 👪 School/teacher consent (A3): built 2026-11-13 — a teacher names the school and ticks that it authorised them and has the parents' permission (`SchoolConsentForm`, method `school_official`). The attorney confirms the wording, and whether a self-declared teacher is acceptable
 - [ ] 👪 Email-plus availability and the 24 h delay (A4)
 - [ ] 👪 An "I'm 18 or older" tick vs a neutral age screen at sign-up (A6)
 - [ ] 👪 One consent per account plus a tick per child; when a notice change must re-ask; the sign-up email as the consent email (A8–A10)

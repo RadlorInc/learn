@@ -59,18 +59,18 @@ describe('a child’s reminders', () => {
 })
 
 describe('a class’s reminders', () => {
-  const base = { id: 'c', name: '5-A', paid: true, hasModules: true, exercises: 1, open: [],
+  const base = { id: 'c', name: '5-A', hasModules: true, exercises: 1, open: [],
     students: [{ id: 's1', name: 'Kabir', login: 'kabir' }, { id: 's2', name: 'Zoya', login: 'zoya' }] }
 
   it('a set-up class with nothing open has none', () => {
     expect(classReminders(base)).toEqual([])
   })
 
-  it('students without a login; no modules (paid only); no exercises', () => {
+  it('students without a login; no modules; no exercises', () => {
     expect(classReminders({ ...base, students: [{ id: 's1', name: 'Kabir', login: undefined }, { id: 's2', name: 'Zoya', login: 'zoya' }] }).map(x => x.title))
       .toEqual(['Kabir in 5-A has no login'])
     expect(ids(classReminders({ ...base, hasModules: false }))).toEqual(['mods:c'])
-    expect(classReminders({ ...base, hasModules: false, paid: false })).toEqual([])
+    expect(classReminders({ ...base, hasModules: false, students: [] }), 'no students yet: nothing to choose modules for').toEqual([])
     expect(ids(classReminders({ ...base, exercises: 0 }))).toEqual(['noex:c'])
   })
 

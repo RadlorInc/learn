@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The child's "Help with homework" is its own card under Practice, not a second button inside Learn (founder,
- * 8 Nov 2026), and it shows only when a grown-up switched Ask Radlic on for that child (no offer on a child's screen).
+ * The child's Ask Radlic card ("Ask any math homework", founder 13 Nov 2026; was "Help with homework") is its own
+ * card under Practice, not a second button inside Learn (founder, 8 Nov 2026), and it shows only when a grown-up switched Ask Radlic on for that child (no offer on a child's screen).
  * The real ModuleHome is rendered; only the network reads are stubbed.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
@@ -33,7 +33,7 @@ describe('the homework card on the child\'s module page', () => {
   it('Ask Radlic on: a card of its own, after Practice, going to /ask, and not inside the Learn card', async () => {
     ask.enabled = true
     await home()
-    const hw = links().find(a => a.textContent === 'Help with homework')
+    const hw = links().find(a => a.textContent === 'Ask any math homework')
     expect(hw, 'the homework button is on the page').toBeDefined()
     expect(hw!.getAttribute('href')).toBe('/ask')
     const practice = links().find(a => a.textContent === 'Practice')!
@@ -48,6 +48,6 @@ describe('the homework card on the child\'s module page', () => {
     ask.enabled = false
     await home()
     expect(links().some(a => a.textContent === 'Practice')).toBe(true)
-    expect(links().some(a => /homework/i.test(a.textContent ?? ''))).toBe(false)
+    expect(links().some(a => a.getAttribute('href') === '/ask'), 'no link to /ask').toBe(false)
   })
 })

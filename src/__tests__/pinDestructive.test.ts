@@ -154,33 +154,6 @@ describe('the other changes that matter ask too', () => {
     expect(h.rpcs, 'the right PIN did not save').toContain('update:learners')
   })
 
-  it('buying a seat', async () => {
-    const posts: unknown[] = []
-    vi.stubGlobal('fetch', vi.fn(async (_u: string, o: { body: string }) => {
-      posts.push(JSON.parse(o.body).confirm)
-      return new Response(JSON.stringify({ ok: true, seats: 2, preview: { cadence: 'monthly', seats_now: 1, seats_after: 1, total_now_cents: 0, total_after_cents: 0, due_today_cents: 0 } }), { status: 200 })
-    }))
-    const { SeatsFullDialog } = await import('@/features/billing/SeatsFull')
-    await show(createElement(SeatsFullDialog, { seats: 1, onClose: () => {}, onAdded: () => {} }))
-    await click('Add a seat')
-    expect(posts, 'a seat was bought before the PIN').toEqual([false])
-    await enterPin('4826')
-    expect(posts).toEqual([false, true])
-  })
-
-  it('paying for a plan', async () => {
-    const calls: string[] = []
-    vi.stubGlobal('fetch', vi.fn(async (u: string) => { calls.push(u); return new Response('{}', { status: 200 }) }))
-    const { PlanCheckout } = await import('@/app/parent/plan/page')
-    await show(createElement(PlanCheckout))
-    const tick = host.querySelector('input[type="checkbox"]') as HTMLInputElement
-    await act(async () => { tick.click() }); await settle()
-    await click('Continue')
-    expect(calls.filter(u => u.includes('/api/checkout')), 'checkout started before the PIN').toEqual([])
-    await enterPin('4826')
-    expect(calls.filter(u => u.includes('/api/checkout')).length).toBe(1)
-  })
-
   it('deleting a class', async () => {
     const onDeleted = vi.fn()
     const { ClassPage } = await import('@/features/dashboard/ClassPage')

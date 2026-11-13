@@ -1,17 +1,18 @@
--- ASK MATHS — PROOF after the migration 20261021120000 (read-only; counts and booleans only, no child's data).
+-- ASK MATHS — PROOF after the migration 20261113140000 (read-only; counts and booleans only, no child's data).
 -- The founder runs it in the Supabase SQL editor (the agent never queries production). Every row should say PASS.
--- The two INFO rows are counts (0 before anyone has used Ask maths; never an error).
-select 'ledger has 20261021120000' as check,
-       case when exists (select 1 from supabase_migrations.schema_migrations where version = '20261021120000') then 'PASS' else 'FAIL' end as result
-union all select 'the three tables exist with RLS on',
-       case when (select count(*) = 3 and bool_and(relrowsecurity) from pg_class
-                  where oid in ('public.ask_maths_settings'::regclass, 'public.ask_maths_questions'::regclass, 'public.addon_subscriptions'::regclass))
+-- The INFO row is a count (0 before anyone has used Ask maths; never an error).
+select 'ledger has 20261113140000' as check,
+       case when exists (select 1 from supabase_migrations.schema_migrations where version = '20261113140000') then 'PASS' else 'FAIL' end as result
+union all select 'the two tables exist with RLS on, and no add-on table (Ask Radlic is free)',
+       case when (select count(*) = 2 and bool_and(relrowsecurity) from pg_class
+                  where oid in ('public.ask_maths_settings'::regclass, 'public.ask_maths_questions'::regclass))
+                  and to_regclass('public.addon_subscriptions') is null
             then 'PASS' else 'FAIL' end
 union all select 'clients may only SELECT them (no insert, update or delete; anon nothing)',
        case when (select bool_and(has_table_privilege('authenticated', t, 'SELECT')
                     and not has_table_privilege('authenticated', t, 'INSERT') and not has_table_privilege('authenticated', t, 'UPDATE')
                     and not has_table_privilege('authenticated', t, 'DELETE') and not has_table_privilege('anon', t, 'SELECT'))
-                  from unnest(array['public.ask_maths_settings', 'public.ask_maths_questions', 'public.addon_subscriptions']) t)
+                  from unnest(array['public.ask_maths_settings', 'public.ask_maths_questions']) t)
             then 'PASS' else 'FAIL' end
 union all select 'the consent gate is on both child tables',
        case when (select count(*) from pg_trigger where tgname = 'trg_enforce_child_consent' and not tgisinternal
@@ -31,14 +32,7 @@ union all select 'ask_maths_finish: service_role only (a browser can never set a
 union all select 'the 30-day job is scheduled at 03:52',
        case when exists (select 1 from cron.job where jobname = 'prune-ask-maths-questions' and schedule = '52 3 * * *'
                            and command like '%ask_maths_questions%30 days%') then 'PASS' else 'FAIL' end
-union all select 'closing an account queues the add-on cancel (trigger on addon_subscriptions)',
-       case when exists (select 1 from pg_trigger where tgname = 'trg_billing_queue_cancel_on_delete' and not tgisinternal
-                           and tgrelid = 'public.addon_subscriptions'::regclass) then 'PASS' else 'FAIL' end
-union all select 'withdraw-all queues the add-on too, and keeps DEFINER',
-       case when (select prosecdef and pg_get_functiondef(oid) like '%addon_subscriptions%' from pg_proc
-                  where oid = 'public.consent_withdraw_account(uuid)'::regprocedure) then 'PASS' else 'FAIL' end
 union all select 'deletion_log accepts the new path',
        case when exists (select 1 from pg_constraint where conname = 'deletion_log_path_check'
                            and pg_get_constraintdef(oid) like '%ask_maths_forget%') then 'PASS' else 'FAIL' end
-union all select 'INFO: children with Ask maths switched on', (select count(*)::text from public.ask_maths_settings where enabled)
-union all select 'INFO: families with the add-on active', (select count(*)::text from public.addon_subscriptions where status in ('active', 'trialing'));
+union all select 'INFO: children with Ask maths switched on', (select count(*)::text from public.ask_maths_settings where enabled);

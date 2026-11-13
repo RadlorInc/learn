@@ -1,5 +1,8 @@
 # Runbook: billing support
 
+> **Radlic is free since 13 Nov 2026** (architecture §8): nobody can buy a plan any more. This runbook is for the plans
+> bought before then, until every one is cancelled in Stripe (`docs/legal/sql/radlic-free-check.sql`).
+
 **Use this when:** a parent writes about money: a double charge, a refund, a dispute, a cancellation by email or post,
 "I paid but it is still locked", a failed payment. Anything about money is **P1** in [support.md](support.md).
 
@@ -37,11 +40,8 @@ Two payments for the same period, or two live subscriptions for one family.
 4. **Agent.** Draft the reply: what was doubled, that the extra charge is refunded in full, and that refunds reach the
    card in up to 10 business days (doc 01 §5).
 
-The app refuses a second checkout while a plan holds seats (`/api/checkout` answers `already_subscribed`), and the plan
-screen hides the checkout then. Before the webhook has written a row (two tabs, a double click), checkout asks Stripe:
-one customer per account, a live subscription on it refuses, and only the newest open Checkout Session stays payable
-(older ones are expired). A double can still come from Stripe itself, a subscription made by hand, or an account
-whose row never got written that comes back more than a day later (a second customer; see architecture §8).
+A double can only have come from before 13 Nov 2026 (there is no checkout since), from Stripe itself, or from a
+subscription made by hand.
 
 A parent who says "the payment page said expired": they had two tabs open and paid in the older one. Nothing was
 charged; they start checkout again.
@@ -136,7 +136,7 @@ that child's use, so both are handled the same (migration 20261008010000).
   If a sibling took the seat, nothing is queued — every paid seat is still in use. If **no child is left**, it is the
   withdraw-all case: the whole plan is queued in `billing_cancellations` (`consent_withdrawn`), once.
 - **How seats are billed.** One graduated price; the quantity is the number of seats (seat 1 at $7.99/$75.99, every
-  other seat $4.99/$48.00). A seat added part-way through (`/api/billing/seats`, `always_invoice`) is its own invoice
+  other seat $4.99/$48.00). A seat added part-way through (before 13 Nov 2026, `always_invoice`) is its own invoice
   for the rest of the period.
 - **The refund** (`removeSeatAndRefund`, `closeRefund.ts`): per billing period still running when the request was
   actioned, the newest paid invoice with a seat not yet refunded — a seat-add invoice (its whole amount) or the
@@ -205,21 +205,9 @@ metadata — not applied"* and ignores it, for ever. The family pays and gets no
   **founder** sends the parent the hosted invoice link from the failed invoice in Stripe, where they can pay with
   another card. When it is paid, the subscription goes back to `active` and the app follows.
 
-## Ask Radlic, the add-on
+## Ask Radlic
 
-Ask Radlic ([product/ask-maths.md](../product/ask-maths.md)) is its own monthly subscription on the family's Stripe
-customer, marked `metadata.product = ask_maths` (Stripe → the subscription → Metadata). It is never the plan and holds
-no seats. In the database it is the family's `addon_subscriptions` row (service role; the founder reads it in the SQL
-editor).
-- **"I added Ask Radlic but my child can't ask"** (agent checks the code path; founder reads the rows): the row's
-  `status` is `active`? The child's `ask_maths_settings.enabled` is true (the parent turns it on per child, after the
-  disclosure)? The child is in Grades 3–8 (band `9-11` or `12-14`)? Today's questions are under `daily_limit`?
-- **Cancel by email or phone** (founder): in Stripe, the add-on subscription → Cancel at period end. The webhook writes
-  the row. The parent can also do it on any child's page → Ask Radlic → "Stop the add-on".
-- **Refund** (founder): as for the plan (doc 01 §5); closing the account or withdrawing for every child already
-  cancels and refunds it through `billing_cancellations`.
-- **A family paying for the add-on twice**: two live subscriptions with `product = ask_maths` on one customer. Cancel
-  the newer one and refund it; `/api/checkout/ask-maths` refuses a second while one is live in the row or in Stripe.
+Ask Radlic is free (13 Nov 2026): no add-on, no Stripe subscription.
 
 ## Open questions for the founder
 

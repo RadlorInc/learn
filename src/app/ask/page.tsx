@@ -1,7 +1,7 @@
 'use client'
 /**
  * /ask — Ask Radlic (docs/product/ask-maths.md): a child in grades 3–8 types a maths question and watches a whiteboard
- * lesson drawn and spoken for it. Everything that decides whether they may ask (the parent's switch, the add-on, the
+ * lesson drawn and spoken for it. Everything that decides whether they may ask (the parent's switch, the
  * day's limit, grade band) is decided by the database through /api/ask-maths; this page shows the answer as it comes.
  * Shown only with NEXT_PUBLIC_ASK_MATHS=on (and the server's ASK_MATHS=on); no price or plan ever appears here.
  */
@@ -18,7 +18,6 @@ import { INK, LINE, ON_TEAL, PAGE_BG, TEAL, pill, shell, topBar } from '@/featur
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
 const SAID: Record<AskRefusal | 'broke', string> = {
   off: 'Ask Radlic is switched off right now. Ask your grown-up.',
-  not_entitled: 'Ask Radlic is not turned on for your family yet. Ask your grown-up.',
   band: 'Ask Radlic is for grades 3 to 8.',
   busy: 'One question at a time. Let this lesson finish first.',
   limit: "That's all the questions for today. Come back tomorrow!",
@@ -115,7 +114,7 @@ export default function AskPage() {
     const off = busy || voiceLoading || !q.trim()
     body = <div style={col}>
       {fresh && <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
-        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 900, color: INK }}>Enter the math homework problem you need help with</h1>
+        <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 900, color: INK }}>Ask any math homework</h1>
         <p style={{ margin: '8px 0 0', fontSize: 17, color: INK }}>Radlic draws and explains the answer, step by step.</p>
       </div>}
       {question && <div style={asked}>{question}</div>}

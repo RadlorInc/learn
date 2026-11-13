@@ -236,7 +236,7 @@ export default function AuthPage() {
             {t('No vanity streaks or frantic countdowns. We track mathematical intuition step by step and report the real milestones straight to you.')}
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 26 }}>
-            {[t('Curriculum aligned UK & US'), t('Private by default — no public profiles')].map(chip => (
+            {[t('Curriculum aligned US'), t('Private by default — no public profiles')].map(chip => (
               <span key={chip} style={{
                 background: C.card, border: `1.5px solid ${C.edge}`, borderRadius: 999,
                 padding: '8px 14px', fontSize: 12.5, fontWeight: 700, color: C.ink2,

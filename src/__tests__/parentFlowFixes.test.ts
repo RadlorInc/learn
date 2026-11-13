@@ -10,7 +10,6 @@
  * so the test moves time and fires the events a person would.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { suggestTwo, canAdd, FREE_TOPICS } from '@/features/billing/TrialTopicPicker'
 import { ALL_MODULES as MODULES, modulesOf, gradeName } from '@/features/lessons/modules'
 import { createElement, act } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -104,34 +103,3 @@ describe('4 — opening a grade ticks its modules, once', () => {
   })
 })
 
-describe('5 — the trial picker suggests two', () => {
-  it('suggests exactly two topics, and the database rule accepts them', () => {
-    for (const grade of [3, 4, 5, 6, 7, 8]) {
-      const two = suggestTwo(grade, () => 0.42)
-      expect(two, `grade ${grade} suggested ${two.length}`).toHaveLength(FREE_TOPICS)
-      // canAdd mirrors choose_free_topics: both must be from ONE module.
-      expect(canAdd([], two[0]), `grade ${grade}: first topic refused`).toBe(true)
-      expect(canAdd([two[0]], two[1]), `grade ${grade}: the pair is not one module's`).toBe(true)
-    }
-  })
-
-  it('the two are real, neighbouring topics of one module', () => {
-    const two = suggestTwo(4, () => 0.1)
-    const m = MODULES.find(x => x.lessons.some(l => l.id === two[0]))!
-    const at = m.lessons.findIndex(l => l.id === two[0])
-    expect(m.lessons[at + 1].id).toBe(two[1])
-  })
-
-  it('different draws give different pairs (it is a suggestion, not one fixed answer)', () => {
-    const pairs = new Set([0.05, 0.3, 0.6, 0.9].map(r => suggestTwo(6, () => r).join()))
-    expect(pairs.size, 'every draw gave the same pair').toBeGreaterThan(1)
-  })
-
-  it('suggests nothing where there is no module with two topics (KG–2 stories are chosen by hand)', () => {
-    const storyGrade = MODULES.find(m => m.story)?.grade
-    if (storyGrade === undefined) return
-    const only = MODULES.filter(m => m.grade === storyGrade && !m.story && m.lessons.length >= FREE_TOPICS)
-    if (only.length) return // that grade also has ordinary modules; nothing to assert
-    expect(suggestTwo(storyGrade, () => 0.5)).toEqual([])
-  })
-})

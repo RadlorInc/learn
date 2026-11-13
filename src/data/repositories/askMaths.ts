@@ -1,18 +1,17 @@
 'use client'
 /**
  * Ask Radlic (docs/product/ask-maths.md), the browser side: the child's question (POST /api/ask-maths, streamed), the
- * parent's switch (set_ask_maths), the questions of the last 30 days (RLS read), forgetting them (ask_maths_forget),
- * and the add-on (addon_subscriptions read; /api/checkout/ask-maths, /api/billing/ask-maths-cancel).
+ * parent's switch (set_ask_maths), the questions of the last 30 days (RLS read) and forgetting them (ask_maths_forget).
+ * It is free: no add-on (13 Nov 2026).
  */
 import { db } from '@/data/repositories/_shared'
 import { parseSse, type SseEvent } from '@/features/askMaths/stream'
 
 export type AskSettings = { enabled: boolean; daily_limit: number; consent_version: string | null; consented_at: string | null }
 export type AskQuestion = { id: string; asked_at: string; question: string | null; outcome: string; script: unknown }
-export type Addon = { status: string; current_period_end: string | null; cancel_at_period_end: boolean }
 /** What a refusal says (the route's `error`); 'unavailable' covers everything we cannot tell apart. */
-export type AskRefusal = 'off' | 'band' | 'not_entitled' | 'busy' | 'limit' | 'not_maths' | 'personal' | 'unsafe' | 'unavailable' | 'unauthenticated' | 'forbidden'
-const REFUSALS: AskRefusal[] = ['off', 'band', 'not_entitled', 'busy', 'limit', 'not_maths', 'personal', 'unsafe', 'unauthenticated', 'forbidden']
+export type AskRefusal = 'off' | 'band' | 'busy' | 'limit' | 'not_maths' | 'personal' | 'unsafe' | 'unavailable' | 'unauthenticated' | 'forbidden'
+const REFUSALS: AskRefusal[] = ['off', 'band', 'busy', 'limit', 'not_maths', 'personal', 'unsafe', 'unauthenticated', 'forbidden']
 
 async function token(): Promise<string | null> {
   const { data: { session } } = await db().auth.getSession()
@@ -84,26 +83,3 @@ export async function forgetAskQuestions(learnerId: string): Promise<number | nu
     return error ? null : (data as number)
   } catch { return null }
 }
-
-/** The account's Ask Radlic add-on, null when it has none (undefined: could not read). */
-export async function getAddon(): Promise<Addon | null | undefined> {
-  try {
-    const { data, error } = await db().from('addon_subscriptions').select('status, current_period_end, cancel_at_period_end').eq('product', 'ask_maths').maybeSingle()
-    return error ? undefined : (data as Addon | null)
-  } catch { return undefined }
-}
-export const addonActive = (a: Addon | null | undefined) => !!a && (a.status === 'active' || a.status === 'trialing')
-
-async function billing(path: string, body?: unknown): Promise<{ ok: true; url?: string } | { ok: false; error: string }> {
-  const t = await token()
-  if (!t) return { ok: false, error: 'unauthenticated' }
-  try {
-    const r = await fetch(path, { method: 'POST', headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body ?? {}) })
-    const j = (await r.json().catch(() => null)) as { ok?: boolean; url?: string; error?: string } | null
-    return r.ok && j?.ok ? { ok: true, url: j.url } : { ok: false, error: j?.error ?? 'failed' }
-  } catch { return { ok: false, error: 'failed' } }
-}
-/** Stripe Checkout for the add-on: the URL to go to. `renewalConsent`: the parent ticked the auto-renew box. */
-export const startAddonCheckout = (renewalConsent: boolean) => billing('/api/checkout/ask-maths', { renewalConsent })
-/** Stops the add-on at the end of the period already paid for. */
-export const cancelAddon = () => billing('/api/billing/ask-maths-cancel')

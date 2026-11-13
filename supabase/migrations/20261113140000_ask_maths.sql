@@ -1,14 +1,14 @@
 -- ASK MATHS (founder, 2026-10-21; docs/product/ask-maths.md): a child in grades 3–8 types a maths question, and an
 -- animated whiteboard lesson answers it. The question goes from Radlic's server to the askRadlor whiteboard service
--- (Radlor Inc.) and from there to the model; the parent turns it on per child, after a disclosure they agree to, and it
--- is a separately paid add-on. This file is the database half.
+-- (Radlor Inc.) and from there to the model; the parent turns it on per child, after a disclosure they agree to. It is
+-- free, like the rest of Radlic since 13 Nov 2026 (no add-on, no payment; the daily limit caps the cost). This file is
+-- the database half. Renumbered from 20261021120000 (13 Nov) so it applies after production's newest migration;
+-- staging's ledger had the old number marked reverted, and every statement here is safe to run on staging's copy.
 --
 --   ask_maths_settings    one row per child: on/off, the daily limit, and WHO agreed to the disclosure WHEN, under
 --                         which text version. THE AUTHORISATION — only the adult who owns the child writes it.
 --   ask_maths_questions   what the child asked, the outcome, and the drawn lesson (for the parent and for a replay).
 --                         Deleted after 30 DAYS by a daily job (and with the child). Nobody writes it from a browser.
---   addon_subscriptions   the add-on's Stripe subscription, one row per account and product. Written only by the
---                         webhook (service role), like `subscriptions`; the owner may read it.
 --
 --   set_ask_maths(learner, enabled, daily_limit, consent_version) — the owner turns it on/off. Turning it ON needs the
 --       current disclosure version ('ask-maths-v1'), which is stored with who and when.
@@ -21,11 +21,8 @@
 -- WHO MAY DO WHAT (enforced here):
 --   ask_maths_settings  SELECT: anyone with a learner_access row for the child (the child's home shows the button).
 --   ask_maths_questions SELECT: the same family. INSERT/UPDATE/DELETE: nobody from a browser — only the functions.
---   addon_subscriptions SELECT: the account itself. Nothing else, ever, from a browser.
 --
--- ⚠️ SECURITY CHANGE: REDEFINED SECURITY DEFINER `consent_withdraw_account(uuid)` (copied from 20261008000000, one
--- added line marked; DEFINER, search_path, owner and its revoke unchanged), and a trigger on addon_subscriptions
--- running the existing DEFINER `billing_queue_cancel_on_delete()`. And four NEW SECURITY DEFINER functions (search_path pinned to public, owner the migration's role).
+-- ⚠️ SECURITY CHANGE: four NEW SECURITY DEFINER functions (search_path pinned to public, owner the migration's role).
 -- EXECUTE revoked from public, anon and authenticated; set_ask_maths, ask_maths_begin and ask_maths_forget granted to
 -- authenticated, ask_maths_finish to service_role only (a browser can never set an outcome or a script). Each checks
 -- the caller against learner_access / learners.created_by and raises 42501 otherwise. Asserted at the bottom.
@@ -34,8 +31,7 @@
 -- the parent's switch reads this table; before this runs, the dashboard card says Ask maths is not available.
 -- Rollback: select cron.unschedule('prune-ask-maths-questions'); drop function public.ask_maths_forget(uuid),
 --   public.ask_maths_finish(uuid, text, jsonb), public.ask_maths_begin(uuid, text),
---   public.set_ask_maths(uuid, boolean, int, text); drop table public.ask_maths_questions, public.ask_maths_settings,
---   public.addon_subscriptions.
+--   public.set_ask_maths(uuid, boolean, int, text); drop table public.ask_maths_questions, public.ask_maths_settings.
 
 -- ── 1. Tables ──────────────────────────────────────────────────────────────────────────────────────────────────────
 create table if not exists public.ask_maths_settings (
@@ -62,29 +58,13 @@ create table if not exists public.ask_maths_questions (
 );
 create index if not exists ask_maths_questions_learner_asked on public.ask_maths_questions (learner_id, asked_at desc);
 
-create table if not exists public.addon_subscriptions (
-  id                     uuid primary key default gen_random_uuid(),
-  account_id             uuid not null references auth.users(id) on delete cascade,
-  product                text not null check (product in ('ask_maths')),
-  stripe_customer_id     text,
-  stripe_subscription_id text unique,
-  -- What Stripe last said; no CHECK, as on subscriptions.status (an unknown word fails CLOSED: not entitled).
-  status                 text not null default 'none',
-  current_period_end     timestamptz,
-  cancel_at_period_end   boolean not null default false,
-  updated_at             timestamptz not null default now(),
-  unique (account_id, product)
-);
 
 alter table public.ask_maths_settings  enable row level security;
 alter table public.ask_maths_questions enable row level security;
-alter table public.addon_subscriptions enable row level security;
 revoke all on public.ask_maths_settings  from public, anon, authenticated;
 revoke all on public.ask_maths_questions from public, anon, authenticated;
-revoke all on public.addon_subscriptions from public, anon, authenticated;
 grant select on public.ask_maths_settings  to authenticated;
 grant select on public.ask_maths_questions to authenticated;
-grant select on public.addon_subscriptions to authenticated;
 
 drop policy if exists "ask_maths_settings: the child's family reads" on public.ask_maths_settings;
 create policy "ask_maths_settings: the child's family reads" on public.ask_maths_settings for select to authenticated
@@ -92,9 +72,6 @@ create policy "ask_maths_settings: the child's family reads" on public.ask_maths
 drop policy if exists "ask_maths_questions: the child's family reads" on public.ask_maths_questions;
 create policy "ask_maths_questions: the child's family reads" on public.ask_maths_questions for select to authenticated
   using (learner_id in (select learner_id from public.learner_access where parent_id = (select auth.uid())));
-drop policy if exists "addon_subscriptions: owner can read" on public.addon_subscriptions;
-create policy "addon_subscriptions: owner can read" on public.addon_subscriptions for select to authenticated
-  using (account_id = (select auth.uid()));
 
 -- The consent gate (20260923120000 §4), wired by hand for tables added after its one-time loop.
 drop trigger if exists trg_enforce_child_consent on public.ask_maths_settings;
@@ -141,22 +118,18 @@ $$;
 create or replace function public.ask_maths_begin(p_learner uuid, p_question text)
   returns jsonb language plpgsql security definer set search_path to 'public' as $$
 declare
-  v_band text; v_owner uuid; v_set public.ask_maths_settings; v_id uuid; v_used int;
+  v_band text; v_set public.ask_maths_settings; v_id uuid; v_used int;
   v_q text := btrim(coalesce(p_question, ''));
 begin
   if not exists (select 1 from public.learner_access where learner_id = p_learner and parent_id = auth.uid()) then
     raise exception 'forbidden' using errcode = '42501';
   end if;
   if char_length(v_q) < 1 or char_length(v_q) > 300 then return jsonb_build_object('ok', false, 'error', 'bad_question'); end if;
-  select age_group, created_by into v_band, v_owner from public.learners where id = p_learner;
+  select age_group into v_band from public.learners where id = p_learner;
   -- Grades 3–8 only: the 9-11 and 12-14 bands (docs/architecture.md, "age_group").
   if v_band not in ('9-11', '12-14') then return jsonb_build_object('ok', false, 'error', 'band'); end if;
   select * into v_set from public.ask_maths_settings where learner_id = p_learner;
   if not found or not v_set.enabled then return jsonb_build_object('ok', false, 'error', 'off'); end if;
-  if not exists (select 1 from public.addon_subscriptions
-                 where account_id = v_owner and product = 'ask_maths' and status in ('active', 'trialing')) then
-    return jsonb_build_object('ok', false, 'error', 'not_entitled');
-  end if;
   if exists (select 1 from public.ask_maths_questions
              where learner_id = p_learner and outcome = 'pending' and asked_at > now() - interval '5 minutes') then
     return jsonb_build_object('ok', false, 'error', 'busy');
@@ -213,38 +186,6 @@ grant execute on function public.ask_maths_begin(uuid, text)            to authe
 grant execute on function public.ask_maths_forget(uuid)                 to authenticated;
 grant execute on function public.ask_maths_finish(uuid, text, jsonb)    to service_role;
 
--- ── 3b. Closing the account, or withdrawing for every child, cancels the add-on too ─────────────────────────────
--- The same queue and the same drain as the plan (20261008000000; src/features/billing/closeRefund.ts): a deleted
--- add-on row (the account closed: on delete cascade) queues its Stripe id by the same trigger function, and the
--- withdraw-all function queues it as it queues the plan.
-drop trigger if exists trg_billing_queue_cancel_on_delete on public.addon_subscriptions;
-create trigger trg_billing_queue_cancel_on_delete
-  after delete on public.addon_subscriptions
-  for each row execute function public.billing_queue_cancel_on_delete();
-
--- Copied from 20261008000000 (its last definition); the one added line is marked -- CHANGED (ask maths).
-create or replace function public.consent_withdraw_account(p_parent uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public, pg_temp
-as $$
-declare
-  k uuid;
-begin
-  for k in select id from public.learners where created_by = p_parent loop
-    perform public.delete_child_data(k, 'withdraw_consent_account');   -- FND-15: names its path
-  end loop;
-  update public.parental_consents set state = 'withdrawn', withdrawn_at = now()
-   where parent_id = p_parent and state = 'granted';
-  update public.parental_consents set state = 'expired'
-   where parent_id = p_parent and state = 'pending';
-  insert into public.billing_cancellations (stripe_subscription_id, queued_because) select stripe_subscription_id, 'consent_withdrawn' from public.subscriptions where account_id = p_parent and stripe_subscription_id is not null on conflict (stripe_subscription_id) do nothing;   -- CHANGED
-  insert into public.billing_cancellations (stripe_subscription_id, queued_because) select stripe_subscription_id, 'consent_withdrawn' from public.addon_subscriptions where account_id = p_parent and stripe_subscription_id is not null on conflict (stripe_subscription_id) do nothing;   -- CHANGED (ask maths)
-end
-$$;
-revoke all on function public.consent_withdraw_account(uuid) from public, anon, authenticated, service_role;
-
 -- ── 4. 30 days, then gone (docs/legal/04 states the same number) ──────────────────────────────────────────────────
 select cron.schedule('prune-ask-maths-questions', '52 3 * * *',
   $$with gone as (delete from public.ask_maths_questions where asked_at < now() - interval '30 days' returning 1)
@@ -267,8 +208,7 @@ begin
     raise exception 'authenticated cannot execute ask_maths_begin';
   end if;
   if has_table_privilege('authenticated', 'public.ask_maths_questions', 'insert')
-     or has_table_privilege('authenticated', 'public.ask_maths_settings', 'update')
-     or has_table_privilege('authenticated', 'public.addon_subscriptions', 'insert') then
+     or has_table_privilege('authenticated', 'public.ask_maths_settings', 'update') then
     raise exception 'a browser can write an Ask maths table';
   end if;
 end $$;

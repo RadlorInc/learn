@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Ask Radlic in the database (migration 20261021120000), driven in the repo's real schema as the roles a browser and
+ * Ask Radlic in the database (migration 20261113140000; free since 13 Nov 2026, no add-on), driven in the repo's real schema as the roles a browser and
  * the server have. Every refusal is paired with the same call working for the right caller.
  */
 import { describe, it, expect, beforeAll } from 'vitest'
@@ -40,8 +40,6 @@ const set = (uid: string, learner: string, on: boolean, limit = 5, version: stri
   val(uid, `select public.set_ask_maths('${learner}', ${on}, ${limit}, ${version === null ? 'null' : `'${version}'`})`)
 const begin = (uid: string, learner: string, q = 'What is 3 x 4?') => val(uid, `select public.ask_maths_begin('${learner}', '${q}')`)
 const forbidden = (r: { err?: string } | Record<string, unknown>) => expect((r as { err?: string }).err ?? 'ALLOWED').toMatch(/forbidden|permission denied/)
-const entitle = (status: string) => db.exec(`insert into public.addon_subscriptions (account_id, product, status) values ('${PARENT}', 'ask_maths', '${status}')
-  on conflict (account_id, product) do update set status = excluded.status`)
 
 describe('the switch (set_ask_maths)', () => {
   it('only the owner sets it; the child, a viewer and a stranger are refused', async () => {
@@ -70,13 +68,10 @@ describe('the switch (set_ask_maths)', () => {
 })
 
 describe('a question (ask_maths_begin)', () => {
-  it('refused while the add-on is not paid for — an unknown or ended status counts as not paid', async () => {
-    expect(await begin(CHILD, L)).toEqual({ ok: false, error: 'not_entitled' })
-    await entitle('canceled'); expect(await begin(CHILD, L)).toEqual({ ok: false, error: 'not_entitled' })
-    await entitle('something_new'); expect(await begin(CHILD, L)).toEqual({ ok: false, error: 'not_entitled' })
-    await entitle('active')
+  it('free: there is no add-on to pay for (no addon_subscriptions table)', async () => {
+    expect((await db.query(`select to_regclass('public.addon_subscriptions') as t`)).rows).toEqual([{ t: null }])
   })
-  it('the child asks: a pending row, the band, and how many are left today', async () => {
+  it('the child asks with nothing paid: a pending row, the band, and how many are left today', async () => {
     const r = await begin(CHILD, L)
     expect(r).toMatchObject({ ok: true, band: '9-11', left: 2 })
     expect(typeof r.id).toBe('string')
@@ -139,10 +134,5 @@ describe('the outcome (ask_maths_finish) and forgetting', () => {
     expect((await db.query(`select count(*)::int n from public.ask_maths_questions where learner_id = '${L}'`)).rows).toEqual([{ n: 0 }])
     expect((await db.query(`select path, actor_id, row_counts from public.deletion_log where path = 'ask_maths_forget'`)).rows)
       .toEqual([{ path: 'ask_maths_forget', actor_id: PARENT, row_counts: { ask_maths_questions: 2 } }])
-  })
-  it('the add-on row: the account reads its own, nobody writes it from a browser', async () => {
-    expect((await as(PARENT, `select status from public.addon_subscriptions`)).rows).toEqual([{ status: 'active' }])
-    expect((await as(STRANGER, `select status from public.addon_subscriptions`)).rows).toEqual([])
-    expect((await as(PARENT, `update public.addon_subscriptions set status = 'active'`)).err).toMatch(/permission denied/)
   })
 })
