@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * The child's Ask Radlic card ("Ask any math question", founder 13 Nov 2026; was "Help with homework") is its own
+ * The child's Ask Radlic card ("Ask any math homework", founder 13 Nov 2026; was "Help with homework") is its own
  * card under Practice, not a second button inside Learn (founder, 8 Nov 2026), and it shows only when a grown-up switched Ask Radlic on for that child (no offer on a child's screen).
  * The real ModuleHome is rendered; only the network reads are stubbed.
  */
@@ -33,7 +33,7 @@ describe('the homework card on the child\'s module page', () => {
   it('Ask Radlic on: a card of its own, after Practice, going to /ask, and not inside the Learn card', async () => {
     ask.enabled = true
     await home()
-    const hw = links().find(a => a.textContent === 'Ask any math question')
+    const hw = links().find(a => a.textContent === 'Ask any math homework')
     expect(hw, 'the homework button is on the page').toBeDefined()
     expect(hw!.getAttribute('href')).toBe('/ask')
     const practice = links().find(a => a.textContent === 'Practice')!

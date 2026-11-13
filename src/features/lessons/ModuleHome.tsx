@@ -210,7 +210,7 @@ function Home({ learnerId, back, grade: startGrade = 3, lessonIds: savedIds, exe
                 <strong style={cardTitle}>Ask Radlic</strong>
                 Homework or anything else: Radlic shows you how, step by step.
               </div>
-              <Link href="/ask" style={{ ...primary, background: '#fff', color: INK }}>Ask any math question</Link>
+              <Link href="/ask" style={{ ...primary, background: '#fff', color: INK }}>Ask any math homework</Link>
             </div>}
             </>}
           </section>
