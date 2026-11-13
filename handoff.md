@@ -9,10 +9,10 @@ fixed yet are tracked outside this public repo; ask the founder.
 ## Where things stand (16 October 2026)
 
 - **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
-  private beta with families the founder knows has run since 25 September; it is free and billing is off.
+  private beta with families the founder knows has run since 25 September. Radlic is free since 13 Nov (no paywall).
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
   and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
-  the database gate; parent dashboard (teacher sign-up hidden); points buy game time on `/play` (four games,
+  the database gate; parent dashboard; points buy game time on `/play` (four games,
   #424); six legal pages as beta versions; nightly backups green.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship); local `learner-grade` has
@@ -46,6 +46,9 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
 Admin data requires the authenticator code since #325 (16 Oct). None waiting.
 
+- **Billing leftovers (13 Nov):** once `docs/legal/sql/radlic-free-check.sql` block 2 is 0, delete the webhook, the
+  refund drain, `paidSeats`, `infra/stripe.ts` and the billing tables (one PR, a migration), and unpublish the refund page.
+
 ## Open — the founder decides
 
 - Games: multiplayer later (a server; no chat); try them on a real tablet.
@@ -56,9 +59,8 @@ Admin data requires the authenticator code since #325 (16 Oct). None waiting.
 - Bring back the install banner on `/modules`.
 - KG–2 chapters still move tiers by their own rule, not the ladder (#273) — keep or change.
 - Whether a signed-out device keeps the practice keys doc 08 discloses.
-- Teachers (sign-up hidden since 16 Oct, `TEACHER_SIGNUP_OPEN`; reopen with a school consent route): due dates, moving a student between classes, bulk password reset, class
-  exercise due dates, teacher billing; confirm "the first attempt is the class-exercise result" (decided without the
-  founder); a free teacher can sign up as a parent to get lessons free.
+- Teachers (open again 13 Nov): due dates, moving a student between classes, bulk password reset, class exercise due
+  dates; confirm "the first attempt is the class-exercise result" (decided without the founder).
 - A way to mute the lesson voice (classrooms).
 - Lead capture is gone since `/api/lead` was deleted: rebuild it, and keep or drop the `diagnostic_leads` table.
 - A maintenance switch: none exists, so stopping the app means removing the domain. A notice switch does

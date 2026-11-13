@@ -53,7 +53,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 | Who | Routes |
 |---|---|
 | Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) |
-| Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` · `/parent/plan` |
+| Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
 | Auth | `/auth` · `/auth/confirm` (sign-up link) · `/auth/callback` (Google) · `/auth/set-password` (invite, reset) · `/auth/new-password` (child's temporary password) |
@@ -82,7 +82,8 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `POST /api/report-error` | anyone; capped | Crashes, page errors, unhandled rejections and refused uploads (`infra/reportCrash`: once per message, 10 a page load): log, `error_events`, `MONITORING_INGEST_URL` if set |
 | `POST /api/email/unsubscribe` | an unsubscribe token | Commercial-email opt-out |
 | `POST /api/email/resend-webhook` | Resend (Svix signature, `RESEND_WEBHOOK_SECRET`; 503 without it) | A bounce or complaint becomes one `error_events` row naming only the event type; a `Permanent` bounce or a complaint also lists the recipient's sha256 in `email_undeliverable` (500 on a failed write, so Resend retries) |
-| `/api/checkout`, `/api/billing/cancel`, `/api/billing/seats`, `/api/stripe/webhook` | parent, parent, parent, Stripe | §8 |
+| `/api/stripe/webhook` | Stripe | §8 |
+| `/api/consent/school` | teacher | a teacher's school consent (§3) |
 | `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
 | `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
 | `GET /api/health` | anyone | Liveness, no database call |
@@ -114,12 +115,13 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
 - **Parents** sign up with email and password or with Google. A Google account ticks "I'm 18 or older" and picks
   Parent or Teacher on its first visit to `/parent`. `profiles` is created on email confirmation (`handle_new_user`);
   `profiles.role` is a label its owner can write and grants nothing.
-- **New teacher accounts are closed** (`TEACHER_SIGNUP_OPEN = false` in `src/app/site.ts`, 2026-10-16): neither the
-  sign-up form nor the first-login picker offers Teacher, so every new account is a parent. Existing teacher accounts
-  and every teacher screen are unchanged; the API still accepts `role: 'teacher'` from a hand-built request.
-- **Teachers** sign up the same way (B0t), make classes (`grades`), pick modules and write class exercises
-  (`teacher_plans.paid` decides modules vs exercises only). Adding students is paused on screen while the consent gate
-  is live, as there is no school consent route yet (`rosterPaused.test.ts`).
+- **Teachers** sign up the same way (B0t; `TEACHER_SIGNUP_OPEN = true` in `src/app/site.ts` again since 2026-11-13),
+  make classes (`grades`), pick modules and write class exercises; every class gets both (`teacher_plans` is no longer
+  read). Before the first student a teacher states their school's permission (`SchoolConsentForm` →
+  `/api/consent/school` → `consent_grant_school`, 20261113130000): a granted ACCOUNT consent of method
+  `school_official` naming the school, which the unchanged learner gate (§5) accepts like a parent's email-plus consent.
+  `profiles.role` is self-written, so the teacher check is a product rule, not a boundary (attorney item A3)
+  (`rosterSchoolConsent.test.ts`, `schoolConsentRoute.test.ts`, RLS suite SC1–SC6).
 - **Children** have no real email. The learner's creator sets a username and password via `/api/child-login`: an Auth
   user at a reserved `.invalid` address (`src/core/childLogin.ts`) plus a `learner_access` row with
   `access_role = 'self'`. The child signs in on `/auth` with the username and reaches only their own record. A
@@ -143,13 +145,14 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   account without an authenticator signs in as before and is shown nothing about it. The database requires it:
   `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261016150000, applied only once every admin
   has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
-- **Parent PIN.** Every `/parent` screen asks a 4-digit PIN (`ParentPinGate`) so a child on a signed-in device stays
-  out; `parent_pins` has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not
-  data. *Forgot PIN* goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own
-  token and emails the account once per reset. `/rights` sits outside `app/parent/`, so the gate does not wrap it: help,
-  withdraw-all (`WithdrawAllCard`) and the per-child export (`DataRights`) stay reachable with the PIN locked, for a
-  signed-in adult only (a `learner` login is sent to its lessons); closing the account (`/parent/account`) stays behind
-  the PIN (`pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
+- **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time setting changes, and
+  before a child's login or details change, access is shared, a child or class is deleted, permission is withdrawn from
+  the dashboard or the account is closed. The rest of `/parent` opens without it (founder, 6–8 Nov 2026). `parent_pins`
+  has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not data. *Forgot PIN*
+  goes through `/api/parent/pin-reset`, which runs `request_parent_pin_reset` with the caller's own token and emails the
+  account once per reset. `/rights` keeps help, withdraw-all (`WithdrawAllCard`) and the per-child export (`DataRights`)
+  in one place, without a PIN, for a signed-in adult only (a `learner` login is sent to its lessons)
+  (`pinOnlyForSettings.test.ts`, `pinDestructive.test.ts`, `pinRightsOpen.test.ts`, `pinResetEmail.test.ts`).
 
 ## 4. Supabase
 
@@ -343,74 +346,23 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 
 ## 8. Billing
 
-Switched on for the paid launch (`BILLING_LIVE`, 2026-10-01); whether a deployment can take real money is decided by
-the key mode `src/infra/stripe.ts` accepts (State, below). Support steps: [runbooks/billing.md](runbooks/billing.md).
+**Radlic is free since 2026-11-13** (founder): no paywall, plans, checkout, seats or free-trial topics; every lesson,
+practice and story chapter opens for every child, and every teacher's class gets its modules. The client never asks the
+paywall; migration 20261113120000 sets `billing_config.enforced = false`, so every entitlement function answers
+"allowed" and records nothing (the RLS suite asserts it, R0–R1, before turning it on to test that code).
+Support steps for money questions about plans bought before then: [runbooks/billing.md](runbooks/billing.md).
 
-- **Schema:** `subscriptions` (one per account), `subscription_seats`, `billing_events` (an allow-listed summary per
-  Stripe event), `billing_config.enforced`. Parents read their own rows; no client writes them directly.
-- **`/api/checkout`:** account from the token; requires the renewal-terms tick, whose time goes on the Stripe
-  subscription's metadata with the account id. Refuses (409 `already_subscribed`) while the account's row holds seats
-  (active, trialing, past_due, unpaid), and refuses (503) when it cannot read the row. Because the row is written
-  after payment, it then asks Stripe too: one customer per account (created under an idempotency key from the account
-  id, which Stripe keeps about 24 h), then — after creating the session — the customer's subscriptions (a live or
-  `incomplete` one → 409) and sessions (only the newest open one is kept; the rest are expired; an expire that fails
-  on a session that is not then expired → 409 `checkout_conflict`). A failed Stripe read → 503. Returns to
-  `/parent/plan?billing=success`, where the card says "activating" and hides the checkout until the webhook writes the row;
-  `/parent/plan` never shows the checkout beside a plan that holds seats.
-- **`/api/stripe/webhook`:** verifies Stripe's signature on the raw body first; idempotent (`stripe_event_id` unique,
-  done only once `processed_at` is set); re-reads the subscription from Stripe and reconciles seats to a target
-  (`materialize_seats`), so delivery order does not matter. One row per account, so an event about a DIFFERENT
-  subscription than the row's is applied only if Stripe says the stored one no longer holds seats; otherwise it is
-  closed unapplied and logged (a late event from an old subscription, or a double subscription). A checkout's first
-  events arrive together, so two can insert the account's first row at once; the loser's upsert fails on the
-  `stripe_customer_id` unique key (23505) and is retried once, which then updates the winner's row. A bad signature
-  (per-IP limited) and a missing setting (by name) reach `error_events`, never the payload.
-- **Emails a subscription owes** (`features/billing/subscriptionNotices.ts`, sent by the webhook; docs/legal/01 §3):
-  the acknowledgement on `checkout.session.completed` (terms, renewal, how to cancel), and a reminder on
-  `invoice.upcoming` for ANNUAL plans that will renew (Stripe sends it 30 days ahead — a dashboard setting). Each has a
-  fixed Resend idempotency key, so a failed send answers 5xx and the redelivery cannot send it twice; a missing
-  `RESEND_API_KEY` is logged and the event still closes.
-- **`/api/billing/cancel`:** cancels the caller's own subscription at period end.
-- **Close or withdraw-all cancels now and refunds** (20261008000000, `features/billing/closeRefund.ts`; doc 01 §5):
-  the close (a trigger on `subscriptions` DELETE) and `consent_withdraw_account` write the Stripe subscription id to
-  `billing_cancellations` in the same transaction, so Stripe can never block or undo a deletion. The drain (called by
-  the dashboard after either, by `/api/consent/respond` after the email-link withdrawal, and by the daily cron) cancels
-  at Stripe immediately and refunds each paid invoice pro rata by full days left from `queued_at` (the whole payment
-  within 14 days of it), then emails the parent at the Stripe customer's address. Idempotency keys
-  `close-cancel-<sub>` / `close-refund-<sub>-<invoice>`, and a payment that already carries a refund gets none, so a
-  retry never pays twice. An unsettled row stays due, is retried, and the ops digest flags it
-  (`billing_cancellations_owed`). Stripe's later events for a closed account are closed as `account_closed` (the upsert's
-  23503).
-- **One child of several withdrawn removes that seat and refunds it** (20261008010000; doc 01 §5): `delete_child_data`
-  on the `delete_child` / `withdraw_consent_child` paths, after the seat refill, queues a row in `billing_seat_removals`
-  when a seat of the plan is left empty (the whole plan in `billing_cancellations` when no child is left). The same
-  drain lowers Stripe's quantity by one (`proration_behavior: 'none'`, a metadata marker against a second decrement)
-  and refunds that seat's share of its newest paid invoice per period, last in first out, by the same rule
-  (`removeSeatAndRefund`). Its refunds are tagged `seat_removed`; a later close subtracts them. `/api/billing/seats`
-  adds the count of removals to its idempotency key so a re-add after a removal is a new request.
-- **`/api/billing/seats`:** one more seat on the caller's own active plan (max 4): a preview of the renewal total, then
-  Stripe invoices the prorated difference now on the card on file; the row and seats are written at once. If the bank
-  wants approval (3-D Secure) or the card fails, the change stays `pending_update` (no seat) and the parent finishes on
-  Stripe's hosted invoice page; the webhook seats the child once paid. Shown when every seat is in use. A request Stripe
-  refuses outright answers `payment_failed` only; Stripe's text goes to `error_events`.
-- **Free trial and entitlement** (20261001120000, reshaped by 20261001140000): the PARENT picks the family's two free
-  topics once on `/parent` (`FreeTrialCard` → `choose_free_topics`): two topics of one Grade 3–8 module, or two KG–2
-  stories; final. The child's home (`ModuleHome`, via `trial_topics`) shows only those two — no lock, trial or price on
-  the child's side — and "your grown-up is picking" before the choice; Practice is hidden (paid only). Opening a topic
-  asks `claim_topic`, which never picks: a paid seat, the paywall off, or a chosen topic. `is_chapter_entitled` reads
-  the same choice plus the paid seat. All answer only for a learner the caller can reach. After choosing, the parent's
-  card offers Purchase.
-- **Seats fill themselves** (20261001150000): a new paid seat goes to the family's oldest child without one, and a
-  child added later takes an empty seat; `reassign_learner_seat` (once per period) is still the only way to MOVE one.
-- **State (2026-10-01):** `BILLING_LIVE = true` (`src/app/legal/registry.ts`, the paid launch with beta legal pages):
-  `/parent/plan` is the checkout and the Refund policy is published (`billingLive`). `src/infra/stripe.ts` pins the
-  key's mode to the deployment (#351): Vercel Production (`VERCEL_ENV=production`) accepts only `sk_live_`, everywhere
-  else only `sk_test_`; any other key throws. `scripts/stripe-products.mts --live` makes the live product and prices
-  (key from the environment only). `PAYWALL_ENABLED` (`useTopicGate.ts`, true only with `NEXT_PUBLIC_PAYWALL=on`) lets every
-  topic through while off (`chapterGateOff`).
-- **On:** set `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_MONTHLY`, `STRIPE_PRICE_ANNUAL`; to gate
-  access, set `NEXT_PUBLIC_PAYWALL=on` and `billing_config.enforced`. Real payments need the live values of all four
-  in Vercel Production. Rollback: `billing_config.enforced = false` (no deploy), then `BILLING_LIVE = false`.
+What stays until Stripe shows no subscription left (`docs/legal/sql/radlic-free-check.sql`, block 2 = 0), then goes in
+one PR with the billing tables:
+- **`/api/stripe/webhook`:** verifies Stripe's signature on the raw body first; idempotent (`stripe_event_id` unique);
+  re-reads the subscription from Stripe, so a cancellation the founder makes in Stripe updates `subscriptions`.
+- **Close or withdraw cancels and refunds** (`features/billing/closeRefund.ts`; doc 01 §5): closing the account,
+  withdrawing for every child or deleting a child on a plan queues the Stripe cancel and the pro-rata refund in the same
+  transaction; the drain (dashboard, `/api/consent/respond`, the daily cron) settles it.
+- **`features/billing/paidSeats.ts`:** reads the account's own plan so deleting a child or withdrawing still says what
+  happens to it.
+- `src/infra/stripe.ts` pins the key's mode to the deployment: Vercel Production accepts only `sk_live_`, everywhere
+  else only `sk_test_`.
 
 ## 9. External services
 
