@@ -1,6 +1,6 @@
 /**
- * What a child sees (founder, 2026-09-18): a paid teacher's class → lessons AND the class's exercises; a free teacher's
- * class → exercises only; a child in no class → lessons. And when it cannot tell, lessons (fail open), never nothing.
+ * What a child sees: a teacher's class → lessons AND the class's exercises (every teacher since Radlic went free,
+ * 13 Nov 2026; before, a free teacher's class got exercises only); a child in no class → lessons. And when it cannot tell, lessons (fail open), never nothing.
  * The database is stubbed; the answers it gives are written out by hand.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -31,20 +31,13 @@ describe('getClassMode', async () => {
     expect(await getClassMode({ grade_id: null, created_by: 'parent-1' })).toEqual({ mode: 'lessons' })
   })
 
-  it('a PAID teacher\'s class: lessons AND the class\'s exercises', async () => {
-    rows.teacher_plans = { data: { paid: true }, error: null }
+  it('any teacher\'s class: lessons AND the class\'s exercises (Radlic is free, 13 Nov 2026)', async () => {
+    rows.teacher_plans = { data: null, error: null }   // no paid row: before 13 Nov this was "exercises only"
     expect(await getClassMode(kid)).toEqual({ mode: 'lessons', classId: 'class-1', className: '5-A', exercises: EX })
   })
 
-  it('a FREE teacher\'s class (no paid row): the exercises only', async () => {
-    rows.teacher_plans = { data: null, error: null }
-    expect(await getClassMode(kid)).toEqual({ mode: 'exercises', classId: 'class-1', className: '5-A', exercises: EX })
-    rows.teacher_plans = { data: { paid: false }, error: null }
-    expect((await getClassMode(kid)).mode).toBe('exercises')
-  })
-
-  it('fails OPEN to lessons when the paid lookup fails, and treats a legacy chapter grade as no class', async () => {
-    rows.teacher_plans = { data: null, error: { message: 'relation "teacher_plans" does not exist' } }
+  it('fails OPEN to lessons when the class lookup fails, and treats a legacy chapter grade as no class', async () => {
+    rows.grades = { data: null, error: { message: 'network' } }
     expect(await getClassMode(kid)).toEqual({ mode: 'lessons' })
     rows = { grades: { data: { name: 'old', grade: null, exercises: [] }, error: null } }
     expect(await getClassMode(kid)).toEqual({ mode: 'lessons' })

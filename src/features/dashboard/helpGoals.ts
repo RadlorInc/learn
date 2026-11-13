@@ -1,16 +1,13 @@
-import { BILLING_LIVE } from '@/app/legal/registry'
 import type { Tour } from './Helpers'
 import { makeT, type Lang } from './i18n'
 
 /** "Show me how": step-by-step walkthroughs on the real screens (under Help), grouped. Founder, 2026-09-21: EVERY
  *  thing an adult can do on the dashboard has one here — add a walkthrough when you add a thing to do. */
-export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid: boolean; c?: string; k?: string; lang?: Lang }): { h: string; items: { t: string; d: string; tour: Tour }[] }[] {
+export function helpGoals({ tea, c, k, lang = 'en' }: { tea: boolean; c?: string; k?: string; lang?: Lang }): { h: string; items: { t: string; d: string; tour: Tour }[] }[] {
   const t = makeT(tea ? 'en' : lang)   // a teacher's dashboard is English only (founder, 2026-09-22)
   const reminders = { t: t('Choose which reminders I get'), d: t('Read them, snooze one, or turn a kind off.'), tour: { title: t('Reminders'), steps: [
     { url: '/parent', target: 'bell', title: t('Your reminders'), text: t('Everything worth a look waits under the bell. ⋯ on one snoozes or hides it.') },
     { url: '/parent?view=account', target: 'reminders-card', title: t('Turn a kind on or off'), text: t('Switch off anything you don’t want pointed out. Saved on this device.') }] } }
-  const plan = { t: tea ? 'See my plan' : t('See my plan and billing'), d: tea ? 'Free or paid, and what your students get.' : t('What you pay and what you get.'), tour: { title: t('Your plan'), steps: [
-    { url: '/parent?view=account', target: 'plan-card', title: t('Your plan'), text: tea ? 'Paid: students get modules and exercises. Free: exercises only.' : t('See plans shows each plan and its price.') }] } }
   const close = { t: t('Close my account'), d: tea ? 'Delete the account and every student profile in it.' : t('Delete the account and every child profile in it.'), tour: { title: t('Close my account'), steps: [
     { url: '/parent?view=account', target: 'close-card', title: t('Close your account'), text: t('It asks you to confirm first, and it cannot be undone.') }] } }
   if (tea) return [
@@ -31,7 +28,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
       ] },
       { h: 'Lessons and tests', items: [
         { t: 'Choose what my class learns', d: 'Pick the class’s modules.', tour: { title: 'Choose the class’s lessons', steps: [
-          { url: `/parent?class=${k}&tab=lessons`, target: paid ? 'lessons-what' : 'tab-lessons', title: 'The class’s modules', text: paid ? '“Change” to tick modules from any grade. Every student in the class gets them.' : 'On the free plan students see the class exercises only; modules come with the classroom plan.' }] } },
+          { url: `/parent?class=${k}&tab=lessons`, target: 'lessons-what', title: 'The class’s modules', text: '“Change” to tick modules from any grade. Every student in the class gets them.' }] } },
         { t: 'Give my class a test', d: 'Make an exercise, unlock it, read the results.', tour: { title: 'Give my class a test', steps: [
           { url: `/parent?class=${k}&tab=exercises`, target: 'exercises', title: 'Exercises', text: 'Make one (module, level, how many questions). It stays locked until you tap “Unlock for the class”; “Lock again” closes it.' },
           { url: `/parent?class=${k}&tab=exercises`, target: 'exercises', title: 'Read the results', text: 'Each exercise shows every student’s score and how each question went. “Remove” deletes it.' }] } },
@@ -43,7 +40,7 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
           { url: `/parent?class=${k}&tab=settings`, target: 'tab-settings', title: 'Settings', text: 'Change the class name, or delete the class. Its students stay, just not in a class.' }] } },
       ] },
     ] : []),
-    { h: 'Your account', items: [reminders, plan, close] },
+    { h: 'Your account', items: [reminders, close] },
   ]
   return [
     { h: t('Getting started'), items: [
@@ -79,7 +76,6 @@ export function helpGoals({ tea, paid, c, k, lang = 'en' }: { tea: boolean; paid
           { url: `/parent?child=${c}&tab=login`, target: 'data-card', title: t('Their data'), text: t('Download a copy of everything stored about them, or delete their profile for good.') }] } },
       ] },
     ] : []),
-    // The plan step only while billing is live: with BILLING_LIVE false the card it points at is not shown (2026-09-24).
-    { h: t('Your account'), items: BILLING_LIVE ? [reminders, plan, close] : [reminders, close] },
+    { h: t('Your account'), items: [reminders, close] },
   ]
 }

@@ -37,10 +37,10 @@ function Modules() {
     // A child still on the temporary password from a class list (e.g. reopening the app) chooses their own first.
     mustChangePassword().then(m => { if (m) router.replace('/auth/new-password') }).catch(() => {})
   }, [router])
-  // A child in a free teacher's class gets that class's exercises instead of lessons (features/classes). Asked fresh,
-  // since a teacher may have put them in a class after they signed in; a child in no class never waits on it.
+  // A child in a class also gets that class's exercises (features/classes). Asked fresh, since a teacher may have put
+  // them in a class after they signed in; a child in no class never waits on it.
   const [mode, setMode] = useState<ClassMode | null>(null)
-  const [showExercises, setShowExercises] = useState(false)   // a paid class's child, looking at the class's exercises
+  const [showExercises, setShowExercises] = useState(false)   // a class's child, looking at the class's exercises
   // The account's row for this child, read ONCE here and handed to ModuleHome (it used to read every learner again:
   // ~250 ms more from India). undefined = could not read; the home then keeps the copy saved at sign-in.
   const [account, setAccount] = useState<LearnerWithRole | undefined>()
@@ -51,13 +51,13 @@ function Modules() {
       .then(setMode).catch(() => setMode({ mode: 'lessons' }))
   }, [])
   // A teacher opens an exercise when it is test time: a child in a class sees it within 20 seconds, without reloading.
-  const classId = mode?.mode === 'exercises' ? mode.classId : mode?.classId
+  const classId = mode?.classId
   useEffect(() => {
     const a = getActiveLearner()
     if (!classId || !a?.created_by) return
     const t = setInterval(() => {
       if (document.hidden) return   // a tab in the background asks nothing; the next tick after it is shown does
-      getClassMode({ grade_id: classId, created_by: a.created_by }).then(m => { if (m.mode !== 'lessons' || m.classId) setMode(m) }).catch(() => {})
+      getClassMode({ grade_id: classId, created_by: a.created_by }).then(m => { if (m.classId) setMode(m) }).catch(() => {})
     }, 20_000)
     return () => clearInterval(t)
   }, [classId])
@@ -66,8 +66,6 @@ function Modules() {
   if (!mounted || !mode) return null
   const learner = getActiveLearner()
   const signOutBtn = { label: 'Sign out', onClick: async () => { if (!await signOut()) return; knownChild = undefined; router.replace('/auth') } }
-  if (mode.mode === 'exercises') return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId} className={mode.className} exercises={mode.exercises}
-    back={child ? signOutBtn : undefined} />
   if (showExercises && mode.exercises) return <ExerciseHome learnerId={learner?.id ?? null} classId={mode.classId ?? null} className={mode.className ?? ''} exercises={mode.exercises}
     back={{ label: '← Lessons', onClick: () => setShowExercises(false) }} />
   return <ModuleHome key={grade} grade={grade}

@@ -38,7 +38,6 @@ click is clicked first).
 |---|---|---|---|---|---|
 | home | Homepage | `/` | — (COPPA: prominent link on the home page) | privacy, terms | present |
 | signup | Sign-up / sign-in | `/auth` | adult email, password, Google identity | privacy, terms | present |
-| checkout | Checkout | `/parent/plan` | payment (via Stripe) | privacy, terms, refunds | present |
 | add-child | Add a child | `AddLearnerModal` in `/parent` | child's name, avatar, grade | privacy | present |
 | notice | Direct notice (consent) | `AddChildFlow` in `/parent` | — (the notice itself) | privacy, subprocessors, retention | present |
 | consent-email | B1 consent request email | `renderB1` | — | privacy | present |

@@ -104,6 +104,19 @@ begin
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
+  -- ── Radlic is free (20261113120000) ───────────────────────────────────────
+  -- R0: after every migration the paywall is OFF. R1: so a topic opens for a child whose family chose no free topics
+  -- and holds no seat. The suite turns the paywall ON just below, to keep testing that code while it still exists.
+  select enforced into v_blocked from public.billing_config;
+  v_asserts := v_asserts + 1;
+  if coalesce(v_blocked, false) then
+    raise exception 'RLS FAIL R0: the paywall is ON after the migrations, but Radlic is free (20261113120000)';
+  end if;
+  v_asserts := v_asserts + 1;
+  if not public.claim_topic(v_alearner, 'c:counting') then
+    raise exception 'RLS FAIL R1: with the paywall off, a topic is still refused to a family that chose none';
+  end if;
+
   -- ── Billing setup (Stage 1) ───────────────────────────────────────────────
   -- ⚠️⚠️ THE PAYWALL SHIPS **OFF** AND THIS SUITE MUST TURN IT ON. `billing_config.enforced`
   -- defaults false so the migration can be applied to a production with no subscriptions without
