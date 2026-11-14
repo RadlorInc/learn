@@ -35,7 +35,7 @@ const db = vi.hoisted(() => ({ consentTable: true, schoolConsent: false }))
 // The roster collects only once the teacher's school consent is granted (20261113130000); everywhere else the real read.
 vi.mock('@/features/consent/consentState', async orig => {
   const real = await orig<typeof import('@/features/consent/consentState')>()
-  return { ...real, readAccountConsent: async () => db.schoolConsent ? { k: 'granted', id: 'sc', noticeVersion: 'notice-v8', confirmedAt: '' } as const : real.readAccountConsent() }
+  return { ...real, readAccountConsent: async () => db.schoolConsent ? { k: 'granted', id: 'sc', noticeVersion: 'notice-v9', confirmedAt: '' } as const : real.readAccountConsent() }
 })
 vi.mock('@/data/supabase/client', () => {
   const answer = (v: unknown): unknown => new Proxy(() => {}, {
@@ -57,7 +57,7 @@ vi.mock('@/data/supabase/client', () => {
   }
 })
 
-const ORIGIN = 'https://radlic.com'
+const ORIGIN = 'https://app.radlor.com'
 const MANIFEST = readFileSync(resolve(__dirname, '../../docs/legal/SURFACE.md'), 'utf8')
 
 /** The rows of the table under `## <heading>`, as objects keyed by the header cells. */
@@ -109,7 +109,7 @@ const SURFACES: Record<string, { paint: () => Promise<string>; control: string }
   },
   'consent-email': {
     paint: async () => (await import('@/features/consent/email')).renderB1('en', `${ORIGIN}/consent/respond#t=x`, 'Maya').html,
-    control: 'Thanks for signing up with Radlic',
+    control: 'Thanks for signing up with Radlor',
   },
   'withdraw-email': {
     paint: async () => (await import('@/features/consent/email')).renderB3('en', `${ORIGIN}/consent/withdraw#t=x`).html,

@@ -35,7 +35,7 @@ export interface ExportExtras {
   crashRecords:      unknown[]
   access:            unknown[]
   gameSave:          unknown
-  /** Ask Radlic: the parent's switch for this child, and the questions still kept, with their lessons. */
+  /** Ask Radlor: the parent's switch for this child, and the questions still kept, with their lessons. */
   askMathsSettings:  unknown
   askMathsQuestions: unknown[]
   /** Empty when everything came back whole. Anything in here is printed IN the file. */

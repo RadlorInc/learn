@@ -7,7 +7,7 @@
 // then painted nothing, so a body or a protein vanished on iPhone and Mac while Chrome showed it (22 Oct 2026).
 // A perfectly straight line has a zero-height box and would vanish with this region: build() takes the filter off it.
 // The watercolour (#wc) is one soft wobble, no paper grain: a second, fine-grained noise per washed shape closed the tab
-// on an iPhone 13 after two boards with apples in a row (31 Oct 2026, Radlic staging), even with the regions above.
+// on an iPhone 13 after two boards with apples in a row (31 Oct 2026, Radlor staging), even with the regions above.
 document.querySelector('svg').insertAdjacentHTML('afterbegin', `<defs>
   <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
     <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4"/>

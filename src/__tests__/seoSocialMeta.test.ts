@@ -6,7 +6,7 @@
  * root layout, the real segment exports, and `metadataBase` from the root. The defect lived in the MERGE (a page that
  * declares no `openGraph` inherits the root's whole object, og:url included), so a check on `help/page.tsx`'s export
  * alone could not have seen it. The segment list mirrors Next's loader tree: one item per layout (null when a segment
- * has none) then the page — which is also what makes the root title template reach `/help` ("Help · Radlic", the
+ * has none) then the page — which is also what makes the root title template reach `/help` ("Help · Radlor", the
  * value `next build` emits, measured 2026-09-26).
  *
  * ⚠️ NOT COVERED HERE: the og:image. It comes from `opengraph-image.tsx` files, which the build turns into static
@@ -52,12 +52,12 @@ async function routes() {
   }
 }
 
-const HOME_TITLE = 'Radlic — math lessons that adapt to your child, grades K–8'
+const HOME_TITLE = 'Radlor — math lessons that adapt to your child, grades K–8'
 const HOME_OG_DESC =
   'Math for kindergarten through grade 8: a lesson that explains one idea step by step, then practice that adapts to your child.'
-const HELP_TITLE = 'Help · Radlic'
+const HELP_TITLE = 'Help · Radlor'
 const HELP_DESC =
-  'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, points, and choosing where a child starts.'
+  'Answers to the questions parents ask about Radlor: lost progress, how lessons adapt, what we store, child logins, points, and choosing where a child starts.'
 
 const url = (u: URL | string | undefined | null) => (u ? String(u).replace(/\/$/, '') : u)
 
@@ -65,8 +65,8 @@ describe('SEO-05: /help previews as /help, and cards are large', () => {
   it("/help's og:url is its own canonical and its og/twitter title is its own <title>", async () => {
     const h = (await routes())['/help']
     expect(h.title?.absolute).toBe(HELP_TITLE) // the rendered <title>, cross-checked against the build
-    expect(url(h.alternates?.canonical?.url)).toBe('https://radlic.com/help')
-    expect(url(h.openGraph?.url)).toBe('https://radlic.com/help')
+    expect(url(h.alternates?.canonical?.url)).toBe('https://app.radlor.com/help')
+    expect(url(h.openGraph?.url)).toBe('https://app.radlor.com/help')
     expect(h.openGraph?.title?.absolute).toBe(HELP_TITLE)
     expect(h.openGraph?.description).toBe(HELP_DESC)
     expect(h.twitter?.title?.absolute).toBe(HELP_TITLE)
@@ -82,9 +82,9 @@ describe('SEO-05: /help previews as /help, and cards are large', () => {
     const h = (await routes())['/']
     expect(h.openGraph?.title?.absolute).toBe(HOME_TITLE)
     expect(h.openGraph?.description).toBe(HOME_OG_DESC)
-    expect(url(h.openGraph?.url)).toBe('https://radlic.com')
+    expect(url(h.openGraph?.url)).toBe('https://app.radlor.com')
     expect(h.openGraph?.type).toBe('website')
-    expect(h.openGraph?.siteName).toBe('Radlic')
+    expect(h.openGraph?.siteName).toBe('Radlor')
     expect(h.twitter?.title?.absolute).toBe(HOME_TITLE)
   })
 })

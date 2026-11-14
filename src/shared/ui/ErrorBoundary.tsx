@@ -31,7 +31,7 @@ export class MiloErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ errorInfo })
-    console.error('[Radlic Error]', error, errorInfo)
+    console.error('[Radlor Error]', error, errorInfo)
     // ⚠️ ONE report path, shared with `app/error.tsx` and `app/global-error.tsx` — see
     // `infra/reportCrash.ts`. It keeps the local breadcrumb (what travels to support in the
     // parent's diagnostic block) AND posts to the monitoring sink, and it can never throw.

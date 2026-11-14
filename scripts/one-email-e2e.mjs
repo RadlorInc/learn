@@ -72,7 +72,7 @@ console.log('\n── B. a teacher signs up: ONE email that only confirms; no co
   const r = await signup(email, 'teacher')
   ok(r.status === 200, `sign-up answered ${r.status}`)
   const all = await ours(email)
-  ok(all.length === 1 && all[0].subject === 'Confirm your email for Radlic', `one email: "${all[0]?.subject}"`)
+  ok(all.length === 1 && all[0].subject === 'Confirm your email for Radlor', `one email: "${all[0]?.subject}"`)
   const x = linkOf(all[0] ?? { text: '' })
   ok(!!x[1] && !x[2], 'a confirmation link, with no consent token')
   ok(!!(await confirm(new URL(x[1]).searchParams.get('th'))).body?.access_token, 'the link confirms the address')

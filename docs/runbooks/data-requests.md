@@ -21,7 +21,7 @@ The first choice is always the in-app control. It is immediate, it checks owners
 | **Withdraw for every child** | **Account → Withdraw permission for all your children**, or the link in the second consent email. The account stays open | `select public.consent_withdraw_account('<account id>'::uuid);` This is the same function the in-app control calls. It deletes each child (logged), withdraws granted consents and expires pending ones. Then trigger the second-email cancel (below) |
 | **Close the account** | **Account → Close your account**: type the email, signed in within the last 10 minutes | [Close an account from SQL](#close-an-account-from-sql) below (rehearsed on a local stack 2026-10-05; never yet run on production) |
 
-**After a deletion from SQL,** the database has already queued the cancel of any pending second consent email (a trigger). The daily cron sends it at 06:23 UTC. To send it now (agent or founder; public, harmless, rate-limited): `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice`.
+**After a deletion from SQL,** the database has already queued the cancel of any pending second consent email (a trigger). The daily cron sends it at 06:23 UTC. To send it now (agent or founder; public, harmless, rate-limited): `curl -s -X POST https://app.radlor.com/api/consent/cancel-second-notice`.
 
 **A paid plan** is cancelled immediately and its unused part refunded on **Withdraw for every child** and **Close the account**, whichever door was used (in the app, the email link, or the SQL above): the database queues it in the same transaction (`billing_cancellations`) and the same call settles it, then emails the parent the amount. Withdrawing for **one** child of several (deleting that child, by any door above) takes that child's seat off the plan and refunds the seat's unused part, queued in `billing_seat_removals`; if a child with no seat takes the freed seat, nothing changes; the last child is the whole plan, as withdraw-all. If the automatic refund failed, the ops digest says `billing_cancellations_owed`; the steps are in [billing.md](billing.md) → *Withdrawal of consent or closing the account*. A deletion request is never held back for it.
 
@@ -55,7 +55,7 @@ nothing (`learners.created_by` is `ON DELETE RESTRICT`), and without children it
 5. **Founder.** Fill `<account id>` and `<account email>` in `close-account-operator.sql`, run it once. A `STOP:` error
    means nothing was deleted; read it. Success prints `CLOSED: <n> children, census {…}`.
 6. **Founder.** Send the second-email cancel, and the plan's cancel and refund, now:
-   `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice` (or let the 06:23 UTC cron do it).
+   `curl -s -X POST https://app.radlor.com/api/consent/cancel-second-notice` (or let the 06:23 UTC cron do it).
 7. **Founder.** Check, read-only:
    ```sql
    select count(*) as account_left from auth.users where id = '<account id>'::uuid;               -- 0

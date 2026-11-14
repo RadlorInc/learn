@@ -1,6 +1,6 @@
 'use client'
 /**
- * Ask Radlic: one row of the six maths buttons a phone keyboard lacks (= − ( ) % it has), always under the box, and the preview that shows fractions stacked the way a child
+ * Ask Radlor: one row of the six maths buttons a phone keyboard lacks (= − ( ) % it has), always under the box, and the preview that shows fractions stacked the way a child
  * writes them in a copy. The question stays plain text (3/8, x², √(16)) — that is what goes to askRadlor — so a word
  * problem and its maths share one ordinary box. No maths-editor library: those type maths only, and eat the spaces of
  * a sentence.

@@ -55,8 +55,8 @@ Each value below is what the founder confirmed, from memory or from the named da
 
 | # (before) | where | now says |
 |---|---|---|
-| #8 | 03-consent-and-checkout-screen-copy.md | Radlic Family |
-| #14 | 03-consent-and-checkout-screen-copy.md | Radlic Family |
+| #8 | 03-consent-and-checkout-screen-copy.md | Radlor Family |
+| #14 | 03-consent-and-checkout-screen-copy.md | Radlor Family |
 | #20 | 04-data-retention-policy.md | Co-founder |
 | #23 | 04-data-retention-policy.md | 12 months |
 | #26 | 04-data-retention-policy.md | deleted deliberately ~17 Sep (test data); audit trail decided, not built |

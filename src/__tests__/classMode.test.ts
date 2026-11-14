@@ -1,5 +1,5 @@
 /**
- * What a child sees: a teacher's class → lessons AND the class's exercises (every teacher since Radlic went free,
+ * What a child sees: a teacher's class → lessons AND the class's exercises (every teacher since Radlor went free,
  * 13 Nov 2026; before, a free teacher's class got exercises only); a child in no class → lessons. And when it cannot tell, lessons (fail open), never nothing.
  * The database is stubbed; the answers it gives are written out by hand.
  */
@@ -31,7 +31,7 @@ describe('getClassMode', async () => {
     expect(await getClassMode({ grade_id: null, created_by: 'parent-1' })).toEqual({ mode: 'lessons' })
   })
 
-  it('any teacher\'s class: lessons AND the class\'s exercises (Radlic is free, 13 Nov 2026)', async () => {
+  it('any teacher\'s class: lessons AND the class\'s exercises (Radlor is free, 13 Nov 2026)', async () => {
     rows.teacher_plans = { data: null, error: null }   // no paid row: before 13 Nov this was "exercises only"
     expect(await getClassMode(kid)).toEqual({ mode: 'lessons', classId: 'class-1', className: '5-A', exercises: EX })
   })

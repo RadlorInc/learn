@@ -217,8 +217,8 @@ describe('closing the account cancels the plan now and refunds the unused part',
     const [mail, ...extra] = mails
     expect(extra).toEqual([])
     expect(mail.to).toEqual([f.paidWith])
-    expect(mail.subject).toBe('Your Radlic subscription is cancelled')
-    expect(mail.text).toContain('Your Radlic subscription is cancelled from today. You will not be charged again.')
+    expect(mail.subject).toBe('Your Radlor subscription is cancelled')
+    expect(mail.text).toContain('Your Radlor subscription is cancelled from today. You will not be charged again.')
     expect(mail.text).toContain('We have refunded $6.05, the part of your plan you had not used.')
 
     // Positive twin: another family's plan is not touched.
@@ -339,7 +339,7 @@ describe('withdrawing for ONE child of several takes that seat off the plan and 
     const [mail, ...extra] = mails
     expect(extra).toEqual([])
     expect(mail.to).toEqual([f.paidWith])
-    expect(mail.subject).toBe('A seat was removed from your Radlic plan')
+    expect(mail.subject).toBe('A seat was removed from your Radlor plan')
     expect(mail.text).toContain('We have refunded $2.32, the part of that seat you had not used.')
 
     // Retries: the settled row is not due again; reopened with Stripe's keys long expired, Stripe's state still stops a

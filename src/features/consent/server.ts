@@ -326,7 +326,7 @@ export async function unsubscribe(token: string): Promise<'unsubscribed' | 'unkn
  */
 function withCommercialFooter(m: Rendered, unsubscribeUrl: string): Rendered {
   const lines = [
-    'You are receiving this because you have a Radlic account.',
+    'You are receiving this because you have a Radlor account.',
     `Unsubscribe from updates like this: ${unsubscribeUrl}`,
     `Radlor Inc.\n${POSTAL_ADDRESS}`,
     'We will still send you essential messages about your account and your subscription, such as receipts and renewal reminders.',

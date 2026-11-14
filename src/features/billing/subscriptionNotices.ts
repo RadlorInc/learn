@@ -18,7 +18,7 @@ const children = (n: number) => `${n} ${n === 1 ? 'child' : 'children'}`
 const HOW_TO_CANCEL =
   'How to cancel: sign in and go to Account → Plan & billing → See plans → Cancel subscription, email support@radlor.com or call 1-888-812-9373. ' +
   'Cancelling stops all future charges. Your plan continues until the end of the period you have paid for.'
-const POLICY = 'Our Refund and Cancellation Policy: https://radlic.com/legal/refunds'
+const POLICY = 'Our Refund and Cancellation Policy: https://app.radlor.com/legal/refunds'
 
 function render(subject: string, lines: string[]): Rendered {
   const text = [...lines, TRANSACTIONAL_FOOTER].join('\n\n')
@@ -35,9 +35,9 @@ export function renderSubscribed(a: {
 }): Rendered {
   const every = a.interval === 'year' ? 'every 12 months' : 'every month'
   const on = endDate(a.renewsIso)
-  return render('Your Radlic subscription — confirmation and how to cancel', [
-    'Your Radlic subscription is active. Here are the details, for your records.',
-    `Plan: Radlic Family, for ${children(a.seats)}.`,
+  return render('Your Radlor subscription — confirmation and how to cancel', [
+    'Your Radlor subscription is active. Here are the details, for your records.',
+    `Plan: Radlor Family, for ${children(a.seats)}.`,
     `Charged today: ${usd(a.chargedCents)}.`,
     `Renews: automatically, ${every}${on ? `, next on ${on}` : ''}. Renewal amount: ${usd(a.renewalCents)} (we do not charge sales tax).`,
     HOW_TO_CANCEL,
@@ -47,8 +47,8 @@ export function renderSubscribed(a: {
 
 export function renderRenewalReminder(a: { amountCents: number; renewsIso: string | null; seats: number }): Rendered {
   const on = endDate(a.renewsIso)
-  return render('Your Radlic annual subscription renews soon', [
-    `Your Radlic annual subscription for ${children(a.seats)} renews automatically${on ? ` on ${on}` : ' at the end of this year'}.`,
+  return render('Your Radlor annual subscription renews soon', [
+    `Your Radlor annual subscription for ${children(a.seats)} renews automatically${on ? ` on ${on}` : ' at the end of this year'}.`,
     `You will be charged ${usd(a.amountCents)} for the next 12 months.`,
     `If you do not want to continue, cancel before that date. ${HOW_TO_CANCEL}`,
     POLICY,
@@ -58,8 +58,8 @@ export function renderRenewalReminder(a: { amountCents: number; renewsIso: strin
 /** After "Close your account" or "Withdraw permission for all your children" (docs/legal/01 §4, §5): the plan stops
  *  today, not at period end, and the unused part is refunded. Sent by `drainBillingCancellations`. */
 export function renderCancelledNow(refundCents: number): Rendered {
-  return render('Your Radlic subscription is cancelled', [
-    'Your Radlic subscription is cancelled from today. You will not be charged again.',
+  return render('Your Radlor subscription is cancelled', [
+    'Your Radlor subscription is cancelled from today. You will not be charged again.',
     refundCents > 0
       ? `We have refunded ${usd(refundCents)}, the part of your plan you had not used. It reaches your card within 10 business days.`
       : 'There is no unused part of your plan left to refund.',
@@ -70,8 +70,8 @@ export function renderCancelledNow(refundCents: number): Rendered {
 /** After one child's profile is deleted or their permission withdrawn while other children stay (docs/legal/01 §5):
  *  that child's seat is off the plan from today and its unused part refunded. Sent by `drainBillingCancellations`. */
 export function renderSeatRemoved(refundCents: number): Rendered {
-  return render('A seat was removed from your Radlic plan', [
-    'We have removed one child\'s seat from your Radlic plan from today. Your next payment is for one seat fewer.',
+  return render('A seat was removed from your Radlor plan', [
+    'We have removed one child\'s seat from your Radlor plan from today. Your next payment is for one seat fewer.',
     refundCents > 0
       ? `We have refunded ${usd(refundCents)}, the part of that seat you had not used. It reaches your card within 10 business days.`
       : 'There is no unused part of that seat left to refund.',

@@ -157,6 +157,9 @@ describe('the consent copy is the documents, verbatim', () => {
       // v8, 2026-10-14: "Contact us" adds the toll-free line 1-888-812-9373. Registered with reconsent_required = false
       // (20261014120000): notice-v7 consents stay current.
       'notice-v8': '9097aa087874',
+      // v9, 2026-11-14 (the Radlor rename): the product's name and web address (Radlic → Radlor, radlic.com →
+      // app.radlor.com). Registered with reconsent_required = false (20261114120000).
+      'notice-v9': 'd26d85ec017b',
     }
     const h = createHash('sha256').update(noticeCopy.join('\n')).digest('hex').slice(0, 12)
     expect(PINNED[NOTICE_VERSION], `${NOTICE_VERSION} has no pinned hash`).toBeDefined()

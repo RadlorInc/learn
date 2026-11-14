@@ -26,7 +26,7 @@ async function reportFrom(el: ReturnType<typeof createElement>) {
   let href = ''
   await vi.waitFor(() => {
     href = decodeURIComponent([...host.querySelectorAll('a')].find(a => a.textContent === 'Email support')?.getAttribute('href') ?? '')
-    expect(href, 'the device details were never filled in').toContain('--- Radlic diagnostics')
+    expect(href, 'the device details were never filled in').toContain('--- Radlor diagnostics')
   })
   await act(async () => root.unmount()); host.remove()
   return href

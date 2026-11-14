@@ -1,6 +1,6 @@
 'use client'
 /**
- * /ask — Ask Radlic (docs/product/ask-maths.md): a child in grades 3–8 types a maths question and watches a whiteboard
+ * /ask — Ask Radlor (docs/product/ask-maths.md): a child in grades 3–8 types a maths question and watches a whiteboard
  * lesson drawn and spoken for it. Everything that decides whether they may ask (the parent's switch, the
  * day's limit, grade band) is decided by the database through /api/ask-maths; this page shows the answer as it comes.
  * Shown only with NEXT_PUBLIC_ASK_MATHS=on (and the server's ASK_MATHS=on); no price or plan ever appears here.
@@ -17,14 +17,14 @@ import { INK, LINE, ON_TEAL, PAGE_BG, TEAL, pill, shell, topBar } from '@/featur
 
 const link = { ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' } as const
 const SAID: Record<AskRefusal | 'broke', string> = {
-  off: 'Ask Radlic is switched off right now. Ask your grown-up.',
-  band: 'Ask Radlic is for grades 3 to 8.',
+  off: 'Ask Radlor is switched off right now. Ask your grown-up.',
+  band: 'Ask Radlor is for grades 3 to 8.',
   busy: 'One question at a time. Let this lesson finish first.',
   limit: "That's all the questions for today. Come back tomorrow!",
   not_maths: 'I can only help with maths. Try a maths question!',
   personal: "Please don't type names, schools, addresses or phone numbers. Ask again without them.",
   unsafe: "I can't help with that one. If something is worrying you, talk to a grown-up you trust.",
-  unavailable: "Ask Radlic isn't working right now. Try again soon.",
+  unavailable: "Ask Radlor isn't working right now. Try again soon.",
   unauthenticated: 'Ask your grown-up to open your lessons first.',
   forbidden: 'Ask your grown-up to open your lessons first.',
   broke: "This lesson didn't come out right. Try asking again.",
@@ -37,7 +37,7 @@ const STAGE: Record<string, string> = { reading: 'Reading your question…', dra
 
 const noSubscribe = () => () => {}
 
-// Shaped like askRadlor's question box (AskComposer, its chat page), in Radlic's colours (founder, 6 Nov 2026): one
+// Shaped like askRadlor's question box (AskComposer, its chat page), in Radlor's colours (founder, 6 Nov 2026): one
 // centred column, the text on top and the send button at the bottom right of the same box.
 const col: CSSProperties = { width: '100%', maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }
 const composer = (focused: boolean): CSSProperties => ({ background: '#fff', border: `2px solid ${focused ? INK : LINE}`, borderRadius: 24, padding: '12px 10px 10px 16px',
@@ -107,7 +107,7 @@ export default function AskPage() {
 
   let body
   if (learner === undefined) body = null
-  else if (!ASK_MATHS_PUBLIC) body = <p style={statusLine}>Ask Radlic is coming soon!</p>
+  else if (!ASK_MATHS_PUBLIC) body = <p style={statusLine}>Ask Radlor is coming soon!</p>
   else if (!learner) body = <p style={statusLine}>{SAID.unauthenticated}</p>
   else {
     const fresh = !question && !watch
@@ -115,7 +115,7 @@ export default function AskPage() {
     body = <div style={col}>
       {fresh && <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
         <h1 style={{ margin: 0, fontSize: 'clamp(24px, 4vw, 32px)', fontWeight: 900, color: INK }}>Ask any math homework</h1>
-        <p style={{ margin: '8px 0 0', fontSize: 17, color: INK }}>Radlic draws and explains the answer, step by step.</p>
+        <p style={{ margin: '8px 0 0', fontSize: 17, color: INK }}>Radlor draws and explains the answer, step by step.</p>
       </div>}
       {question && <div style={asked}>{question}</div>}
       {stage && <p style={statusLine} role="status">{stage}</p>}
@@ -169,7 +169,7 @@ export default function AskPage() {
       <div style={{ ...shell, maxWidth: 1000, alignSelf: 'flex-start' }}>
         <div style={topBar}>
           <Link href="/modules" style={link}>← Lessons</Link>
-          <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Ask Radlic</span>
+          <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>Ask Radlor</span>
           <span />
         </div>
         <main style={{ padding: 'clamp(14px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: 16 }}>{body}</main>

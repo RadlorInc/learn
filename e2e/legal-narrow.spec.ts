@@ -1,6 +1,6 @@
 /**
  * THE LEGAL PAGES FIT A 320 px PHONE (founder, 2026-09-24): `/legal/privacy` — PUBLISHED — scrolled sideways at 320 px,
- * because one long URL (`https://radlic.com/legal/subprocessors`) could not wrap. Every legal page, published or dark:
+ * because one long URL (`https://app.radlor.com/legal/subprocessors`) could not wrap. Every legal page, published or dark:
  * the page never scrolls sideways, and nothing reaches past the screen's edge unless it sits in a box that scrolls on
  * its own (a wide table does, on purpose).
  *

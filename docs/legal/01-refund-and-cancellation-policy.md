@@ -5,7 +5,7 @@
 > **This policy must be published before the first payment is taken, not after.** It goes live in the same change that switches billing on (`BILLING_LIVE`).
 
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** Radlic
+**Product:** Radlor
 **Effective date:** 1 October 2026
 **Last updated:** 14 October 2026
 
@@ -13,7 +13,7 @@
 
 ## 1. What this policy covers
 
-This policy explains how subscriptions to Radlic are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, **the Terms of Service control.**
+This policy explains how subscriptions to Radlor are billed, how they renew, how you cancel, and when you can get a refund. It forms part of our Terms of Service. If there is a conflict between this policy and the Terms of Service, **the Terms of Service control.**
 
 ## 2. Our plans
 

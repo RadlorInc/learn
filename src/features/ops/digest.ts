@@ -123,8 +123,8 @@ export async function sendOpsDigest(drain: string): Promise<void> {
   try {
     const { lines, attention } = await buildDigest(drain)
     const day = new Date().toISOString().slice(0, 10)
-    const text = [`Radlic ops digest ${day} (counts only; !! = look at this)`, '', ...lines].join('\n')
-    const subject = `Radlic ops ${day}: ${attention ? `${attention} to look at` : 'all clear'}`
+    const text = [`Radlor ops digest ${day} (counts only; !! = look at this)`, '', ...lines].join('\n')
+    const subject = `Radlor ops ${day}: ${attention ? `${attention} to look at` : 'all clear'}`
     await sendEmail('transactional', to, { subject, text, html: `<pre>${text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>` }, `ops-digest-${day}`)
   } catch (e) { console.error('[ops-digest] failed', e instanceof Error ? e.message : e) }
 }

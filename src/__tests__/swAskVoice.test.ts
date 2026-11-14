@@ -1,5 +1,5 @@
 /**
- * The service worker leaves Ask Radlic's voice model to the browser. Staging, 2026-10-26: the voice worker's fetches of
+ * The service worker leaves Ask Radlor's voice model to the browser. Staging, 2026-10-26: the voice worker's fetches of
  * the model from Hugging Face went through sw.js's network-first branch, whose fetch() runs under the app's CSP
  * (connect-src without huggingface.co) — refused, answered 'Offline' 503, and the made voice fell back to the device's.
  */
@@ -20,7 +20,7 @@ function respondsTo(url: string) {
   return responded
 }
 
-describe('sw.js: the Ask Radlic voice model is not fetched by the service worker', () => {
+describe('sw.js: the Ask Radlor voice model is not fetched by the service worker', () => {
   it.each([
     'https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/abc/onnx/english_2026-04/flow_lm_main_int8.onnx',
     'https://cdn-lfs-us-1.hf.co/repos/ab/cd/flow_lm_main_int8.onnx',
@@ -29,7 +29,7 @@ describe('sw.js: the Ask Radlic voice model is not fetched by the service worker
   })
 
   it('positive control: an app page still goes through the worker', () => {
-    expect(respondsTo('https://radlic.com/modules')).toBe(true)
+    expect(respondsTo('https://app.radlor.com/modules')).toBe(true)
   })
 
   it('a look-alike host is not let through', () => {

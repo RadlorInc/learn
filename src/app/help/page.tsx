@@ -31,14 +31,14 @@ const P = {
 
 const TITLE = 'Help'
 const DESCRIPTION =
-  'Answers to the questions parents ask about Radlic: lost progress, how lessons adapt, what we store, child logins, points, and choosing where a child starts.'
+  'Answers to the questions parents ask about Radlor: lost progress, how lessons adapt, what we store, child logins, points, and choosing where a child starts.'
 
 /**
  * ⚠️ `openGraph` and `twitter` ARE DECLARED HERE ON PURPOSE (SEO-05). Next merges metadata SHALLOWLY: a page that sets
  * no `openGraph` inherits the root's whole object — so a shared /help link previewed as the home page, with
  * `og:url` = the site root. Setting it here replaces the root's object wholesale, which is why `type`/`siteName`
  * are repeated. The image is not named: `app/opengraph-image.tsx` still supplies it (measured in the built HTML).
- * The og/twitter title is the rendered `<title>` — the root's `%s · Radlic` template does not reach these fields.
+ * The og/twitter title is the rendered `<title>` — the root's `%s · Radlor` template does not reach these fields.
  */
 export const metadata: Metadata = {
   title: TITLE,
@@ -80,7 +80,7 @@ function plainText(node: React.ReactNode): string {
 const FAQ: { q: string; a: React.ReactNode }[] = [
   {
     q: 'The app looks wrong, or older than it should',
-    a: <>Fully close the app and open it again — not just a refresh. Radlic keeps parts of itself on the
+    a: <>Fully close the app and open it again — not just a refresh. Radlor keeps parts of itself on the
        device so it loads faster, and occasionally that copy is a version behind. Reopening replaces it.</>,
   },
   {
@@ -108,12 +108,12 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: 'I forgot my parent PIN',
-    a: <>On the PIN screen (it shows before changes that matter, like game time, Ask Radlic, a login, sharing a child or deleting a profile), tap &ldquo;Forgot PIN?&rdquo;. For your child&apos;s
+    a: <>On the PIN screen (it shows before changes that matter, like game time, Ask Radlor, a login, sharing a child or deleting a profile), tap &ldquo;Forgot PIN?&rdquo;. For your child&apos;s
        safety the PIN is removed 24 hours later, and you can then set a new one. We email you when a reset is asked for, so if
        you did not ask, change one of those settings, enter your PIN to cancel it, and tell us.</>,
   },
   {
-    q: 'How does Radlic decide what to teach?',
+    q: 'How does Radlor decide what to teach?',
     a: <>You choose. On your dashboard you pick what your child sees: whole modules or single topics,
        from any grade, kindergarten through grade 8, or simply every topic. Each lesson explains one idea step by step,
        then practice adjusts to your child: two right in a row brings a different, harder kind of
@@ -155,7 +155,7 @@ const FAQ: { q: string; a: React.ReactNode }[] = [
     q: 'Does private browsing or clearing browser data lose work?',
     a: <>It can. Answers waiting to be sent are kept in the browser, so a private window that is closed, or clearing
        this site&apos;s data, before the device is back online loses them. Lessons already sent are safe in your
-       account. For everyday use, open Radlic in a normal window and let it finish sending before you clear anything.</>,
+       account. For everyday use, open Radlor in a normal window and let it finish sending before you clear anything.</>,
   },
   {
     q: 'How do I close my account?',
@@ -190,7 +190,7 @@ export default function HelpPage() {
       padding: '28px 20px 60px',
     }}>
       <div className="adult-doc">
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#0B4FA8', textDecoration: 'none' }}>← Radlic</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#0B4FA8', textDecoration: 'none' }}>← Radlor</Link>
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: P.ink, margin: '14px 0 20px' }}>
           Help
         </h1>

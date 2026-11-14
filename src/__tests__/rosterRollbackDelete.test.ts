@@ -42,7 +42,7 @@ vi.mock('@/data/supabase/client', () => {
 
 // The teacher's school consent is granted (20261113130000), so the roster form shows.
 vi.mock('@/features/consent/consentState', () => ({
-  readAccountConsent: async () => ({ k: 'granted', id: 'sc', noticeVersion: 'notice-v8', confirmedAt: '' }),
+  readAccountConsent: async () => ({ k: 'granted', id: 'sc', noticeVersion: 'notice-v9', confirmedAt: '' }),
   attestationVersion: async (v: string) => v, grantSchoolConsent: async () => ({ ok: true, id: 'sc' }),
 }))
 vi.mock('@/data/repositories', async (orig) => ({

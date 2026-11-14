@@ -40,7 +40,7 @@ export interface ExportBundle {
 export function buildExport(name: string, b: ExportBundle, extra?: ExportExtras) {
   return {
     exportedAt: new Date().toISOString(),
-    about: `Everything Radlic has stored about ${name}.`,
+    about: `Everything Radlor has stored about ${name}.`,
     note: 'This is a copy. It does not delete anything — use "Delete profile" for that.',
     learner: b.learner,
     // Consent-once: the parent's attestation for THIS child, named on its own so it cannot be missed inside
@@ -82,7 +82,7 @@ function attestation(learner: unknown): Record<(typeof ATTESTATION)[number], unk
 /** A filename a parent can find again in their Downloads folder. `radlic-` since the 2026-09-24 rename (was `milo-`);
  *  nothing reads the name back, so a file downloaded before the rename still works wherever it is used. */
 export const exportFilename = (name: string, at: Date) =>
-  `radlic-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'learner'}-${at.toISOString().slice(0, 10)}.json`
+  `radlor-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'learner'}-${at.toISOString().slice(0, 10)}.json`
 
 /**
  * ⚠️ IT WRAPS THE EXISTING DELETE CONTROL RATHER THAN ADDING A SECOND ONE. The dashboard already
@@ -127,7 +127,7 @@ export function DataRights({ name, learnerId, bundle, children }: {
         {t('{name}’s data', { name })}
       </h3>
       <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--ink-soft)' }}>
-        {t('You can take a copy of everything Radlic has stored, or delete it for good. Deleting cannot be undone.')}
+        {t('You can take a copy of everything Radlor has stored, or delete it for good. Deleting cannot be undone.')}
       </p>
       <button onClick={download} disabled={busy} style={btn}>
         {busy ? `… ${t('Gathering')}` : done ? `✓ ${t('Downloaded')}` : `⬇ ${t('Download a copy')}`}

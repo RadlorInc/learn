@@ -28,14 +28,14 @@ export const SPANISH_REVIEW = 'machine-translated 2026-09-23, NOT reviewed by a 
 /** Document 02's version. Its English body is hash-pinned in `consentCopy.test.ts`: change a word of
  *  the notice without bumping this and that test goes red, because every consent row stores this
  *  string as "what the parent was shown". */
-export const NOTICE_VERSION = 'notice-v8'
+export const NOTICE_VERSION = 'notice-v9'
 
 // ─────────────────────────── Document 02 — the direct notice (the screen) ───────────────────────────
 export const NOTICE = {
   title: { en: 'Before your child starts: what we collect, and your choice',
            es: 'Antes de que su hijo empiece: qué recopilamos y su decisión' },
-  intro: { en: "You are creating a Radlic account for your children. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their children's ages. You give it once, for this account, and it covers every child you add to it. Here it is, in plain language.",
-           es: 'Está creando una cuenta de Radlic para sus hijos. La ley de los Estados Unidos — la Ley de Protección de la Privacidad Infantil en Línea, que protege a los menores de 13 años — nos exige decirle exactamente qué recopilamos y obtener su permiso primero. Pedimos el mismo permiso a todos los padres, sea cual sea la edad de sus hijos. Lo da una sola vez, para esta cuenta, y cubre a todos los niños que añada a ella. Aquí lo tiene, en lenguaje sencillo.' },
+  intro: { en: "You are creating a Radlor account for your children. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their children's ages. You give it once, for this account, and it covers every child you add to it. Here it is, in plain language.",
+           es: 'Está creando una cuenta de Radlor para sus hijos. La ley de los Estados Unidos — la Ley de Protección de la Privacidad Infantil en Línea, que protege a los menores de 13 años — nos exige decirle exactamente qué recopilamos y obtener su permiso primero. Pedimos el mismo permiso a todos los padres, sea cual sea la edad de sus hijos. Lo da una sola vez, para esta cuenta, y cubre a todos los niños que añada a ella. Aquí lo tiene, en lenguaje sencillo.' },
   collectHeading: { en: 'What we collect from your child', es: 'Qué recopilamos de su hijo' },
   columns: [
     { en: 'What', es: 'Qué' },
@@ -72,10 +72,10 @@ export const NOTICE = {
   doNotAsk: { en: '**We do not ask your child for:** a last name, an email address, a phone number, a home address, a photograph, a voice recording, or their exact location.',
               es: '**No le pedimos a su hijo:** apellido, dirección de correo electrónico, número de teléfono, domicilio, fotografía, grabación de voz ni su ubicación exacta.' },
   useHeading: { en: 'What we do with it', es: 'Qué hacemos con ella' },
-  use: { en: 'We use this information only to run Radlic for your child: to teach, to track progress, to show you reports, and to keep the service secure and working.',
-         es: 'Usamos esta información solo para que Radlic funcione para su hijo: para enseñar, hacer seguimiento del progreso, mostrarle informes y mantener el servicio seguro y en funcionamiento.' },
-  thirdParty: { en: "**Nothing about your child is given to any other company for that company's own purposes.** The only outside companies involved at all are the ones that run our systems for us — the database that stores the information and the hosting service that delivers the app — and they act only on our instructions. Every one of them is listed at https://radlic.com/legal/subprocessors. There is no analytics company, no advertising company, and no artificial-intelligence service that receives anything your child types or says.",
-                es: '**Nada sobre su hijo se entrega a ninguna otra empresa para los fines propios de esa empresa.** Las únicas empresas externas que intervienen son las que operan nuestros sistemas por nosotros — la base de datos que almacena la información y el servicio de alojamiento que entrega la aplicación — y solo actúan según nuestras instrucciones. Todas figuran en https://radlic.com/legal/subprocessors (en inglés). No hay ninguna empresa de analítica, ninguna empresa de publicidad ni ningún servicio de inteligencia artificial que reciba nada de lo que su hijo escribe o dice.' },
+  use: { en: 'We use this information only to run Radlor for your child: to teach, to track progress, to show you reports, and to keep the service secure and working.',
+         es: 'Usamos esta información solo para que Radlor funcione para su hijo: para enseñar, hacer seguimiento del progreso, mostrarle informes y mantener el servicio seguro y en funcionamiento.' },
+  thirdParty: { en: "**Nothing about your child is given to any other company for that company's own purposes.** The only outside companies involved at all are the ones that run our systems for us — the database that stores the information and the hosting service that delivers the app — and they act only on our instructions. Every one of them is listed at https://app.radlor.com/legal/subprocessors. There is no analytics company, no advertising company, and no artificial-intelligence service that receives anything your child types or says.",
+                es: '**Nada sobre su hijo se entrega a ninguna otra empresa para los fines propios de esa empresa.** Las únicas empresas externas que intervienen son las que operan nuestros sistemas por nosotros — la base de datos que almacena la información y el servicio de alojamiento que entrega la aplicación — y solo actúan según nuestras instrucciones. Todas figuran en https://app.radlor.com/legal/subprocessors (en inglés). No hay ninguna empresa de analítica, ninguna empresa de publicidad ni ningún servicio de inteligencia artificial que reciba nada de lo que su hijo escribe o dice.' },
   weDoNot: { en: '**We do not:**', es: '**Nosotros no:**' },
   weDoNotList: [
     { en: "sell your child's information;", es: 'vendemos la información de su hijo;' },
@@ -103,14 +103,14 @@ export const NOTICE = {
   rightsHow: { en: "To do any of these, open your parent dashboard, choose your child's card and then **Login & data** — you can download a copy of everything we hold and delete the profile from there — use **Account → Withdraw permission for all your children** to delete every child's information and keep the account, or use **Account → Close your account** to delete everything at once. You can also simply email support@radlor.com. We will verify that the request comes from you before we act on it, and we will complete the request within 10 days.",
                es: 'Para hacer cualquiera de estas cosas, abra su panel de padres, elija la tarjeta de su hijo y luego **Inicio de sesión y datos** — desde ahí puede descargar una copia de todo lo que tenemos y eliminar el perfil — use **Cuenta → Retirar el permiso para todos sus hijos** para eliminar la información de todos los niños y conservar la cuenta, o use **Cuenta → Cerrar su cuenta** para eliminarlo todo a la vez. También puede simplemente escribir a support@radlor.com. Verificaremos que la solicitud proviene de usted antes de actuar, y completaremos la solicitud en un plazo de 10 días.' },
   keepHeading: { en: 'How long we keep it', es: 'Cuánto tiempo la conservamos' },
-  keep: { en: "We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at https://radlic.com/legal/retention.",
-          es: 'Conservamos la información de su hijo solo mientras la necesitamos para prestar el servicio y después la eliminamos. El calendario completo está en nuestra Política de conservación de datos en https://radlic.com/legal/retention (en inglés).' },
+  keep: { en: "We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at https://app.radlor.com/legal/retention.",
+          es: 'Conservamos la información de su hijo solo mientras la necesitamos para prestar el servicio y después la eliminamos. El calendario completo está en nuestra Política de conservación de datos en https://app.radlor.com/legal/retention (en inglés).' },
   protectHeading: { en: 'How we protect it', es: 'Cómo la protegemos' },
-  protect: { en: "Every connection to Radlic is encrypted, the database enforces rules so that one family's records cannot be read by another, and the keys that would allow broad access are never sent to a browser.",
-             es: 'Todas las conexiones con Radlic están cifradas, la base de datos aplica reglas para que los registros de una familia no puedan ser leídos por otra, y las claves que permitirían un acceso amplio nunca se envían a un navegador.' },
+  protect: { en: "Every connection to Radlor is encrypted, the database enforces rules so that one family's records cannot be read by another, and the keys that would allow broad access are never sent to a browser.",
+             es: 'Todas las conexiones con Radlor están cifradas, la base de datos aplica reglas para que los registros de una familia no puedan ser leídos por otra, y las claves que permitirían un acceso amplio nunca se envían a un navegador.' },
   detailsHeading: { en: 'Full details', es: 'Todos los detalles' },
-  details: { en: 'Our Privacy Policy at https://radlic.com/legal/privacy has the complete picture, including how to reach us.',
-             es: 'Nuestra Política de privacidad en https://radlic.com/legal/privacy (en inglés) ofrece la información completa, incluida la forma de contactarnos.' },
+  details: { en: 'Our Privacy Policy at https://app.radlor.com/legal/privacy has the complete picture, including how to reach us.',
+             es: 'Nuestra Política de privacidad en https://app.radlor.com/legal/privacy (en inglés) ofrece la información completa, incluida la forma de contactarnos.' },
   contactHeading: { en: 'Contact us', es: 'Contáctenos' },
   contact: ['Radlor Inc.', '254 Chapman Rd, Ste 208 #28608, Newark, DE 19702', 'support@radlor.com', '1-888-812-9373'],
   primary:   { en: "I'm the parent or legal guardian — continue", es: 'Soy el padre, la madre o el tutor legal — continuar' },
@@ -120,10 +120,10 @@ export const NOTICE = {
 
 // ─────────────────────── Document 03 · B1 — the consent request email ───────────────────────
 export const B1 = {
-  subject: { en: 'Please confirm: permission for your children to use Radlic', es: 'Confirme, por favor: permiso para que sus hijos usen Radlic' },
+  subject: { en: 'Please confirm: permission for your children to use Radlor', es: 'Confirme, por favor: permiso para que sus hijos usen Radlor' },
   /** "{name}" is the parent's first name (typed at signup, or from Google); with none, the line is "Hi,". */
   hi: { en: 'Hi {name},', es: 'Hola, {name}:' },
-  thanks: { en: 'Thanks for signing up with Radlic.', es: 'Gracias por registrarse en Radlic.' },
+  thanks: { en: 'Thanks for signing up with Radlor.', es: 'Gracias por registrarse en Radlor.' },
   before: { en: 'Before your children can use it, US law requires your permission.', es: 'Antes de que sus hijos puedan usarla, la ley de los EE. UU. exige su permiso.' },
   /** Sits directly on top of `list`, with no gap. */
   store: { en: 'For each child you add, we store:', es: 'Por cada niño que añada, guardamos:' },
@@ -135,7 +135,7 @@ export const B1 = {
   ] as L[],
   doNot: { en: "We never sell your child's information or use it for advertising.", es: 'Nunca vendemos la información de su hijo ni la usamos para publicidad.' },
   ignore: { en: "Didn't sign up? Ignore this email.", es: '¿No se registró? Ignore este correo.' },
-  details: { en: "Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)", es: 'Aquí está nuestra Política de privacidad detallada: [Política de privacidad](https://radlic.com/legal/privacy) (en inglés)' },
+  details: { en: "Here's our detailed Privacy Policy: [Privacy Policy](https://app.radlor.com/legal/privacy)", es: 'Aquí está nuestra Política de privacidad detallada: [Política de privacidad](https://app.radlor.com/legal/privacy) (en inglés)' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
   // ── the tick is the email's checkbox-link AND the page's box (/consent/respond); ticking the page's box IS the grant ──
   covers: { en: "This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.", es: 'Este único permiso cubre a todos los niños que añada a esta cuenta, ahora o más adelante. Cada vez que añada un niño, le pediremos que confirme en la aplicación que es su padre, madre o tutor legal.' },
@@ -151,8 +151,8 @@ export const SIGNUP = {
 }
 /** B0t: a teacher's sign-up email — confirms the address, asks nothing. `ignore` and the address are B1's. */
 export const CONFIRM_EMAIL = {
-  subject: { en: 'Confirm your email for Radlic', es: 'Confirme su correo para Radlic' },
-  thanks: { en: 'Thanks for signing up with Radlic.', es: 'Gracias por registrarse en Radlic.' },
+  subject: { en: 'Confirm your email for Radlor', es: 'Confirme su correo para Radlor' },
+  thanks: { en: 'Thanks for signing up with Radlor.', es: 'Gracias por registrarse en Radlor.' },
   please: { en: 'Please confirm your email address.', es: 'Confirme su dirección de correo electrónico, por favor.' },
   button: { en: 'Confirm my email', es: 'Confirmar mi correo' },
 }
@@ -173,13 +173,13 @@ export const B3 = {
   hi: { en: 'Hi,', es: 'Hola:' },
   /** ⚠️ "Yesterday" is only true if B3 goes out a day later. `config.ts` refuses, in production, a
    *  delay that would make it false — the wording and the timer are bound, not merely adjacent. */
-  yesterday: { en: "Yesterday you gave permission for your children to use Radlic, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.",
-               es: 'Ayer usted dio permiso para que sus hijos usen Radlic y para que recopilemos el nombre de pila, la franja de grados y el progreso en matemáticas de cada niño. Cubre a todos los niños que añada a esta cuenta.' },
+  yesterday: { en: "Yesterday you gave permission for your children to use Radlor, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.",
+               es: 'Ayer usted dio permiso para que sus hijos usen Radlor y para que recopilemos el nombre de pila, la franja de grados y el progreso en matemáticas de cada niño. Cubre a todos los niños que añada a esta cuenta.' },
   ifYou: { en: "**If that was you, you don't need to do anything.**", es: '**Si fue usted, no tiene que hacer nada.**' },
   ifNot: { en: "**If it wasn't you, [click here](%WITHDRAW%) to withdraw permission.** We will immediately stop collecting and delete everything we hold about every child on the account. Your account stays open.",
            es: '**Si no fue usted, [haga clic aquí](%WITHDRAW%) para retirar el permiso.** Dejaremos de recopilar de inmediato y eliminaremos todo lo que tenemos sobre todos los niños de la cuenta. Su cuenta sigue abierta.' },
-  anyTime: { en: 'You can withdraw permission at any time in future, too: https://radlic.com/legal/parent-rights.',
-             es: 'También puede retirar el permiso en cualquier momento en el futuro: https://radlic.com/legal/parent-rights (en inglés).' },
+  anyTime: { en: 'You can withdraw permission at any time in future, too: https://app.radlor.com/legal/parent-rights.',
+             es: 'También puede retirar el permiso en cualquier momento en el futuro: https://app.radlor.com/legal/parent-rights (en inglés).' },
   address: 'Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
 }
 

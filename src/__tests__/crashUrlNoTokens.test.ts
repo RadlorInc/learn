@@ -59,7 +59,7 @@ describe('SEC-06 — no URL credential reaches a crash sink', () => {
     const req = new Request('http://localhost/api/report-error', {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.9' },
-      body: JSON.stringify({ message: 'boom-route', url: `https://radlic.com${DIRTY}` }),
+      body: JSON.stringify({ message: 'boom-route', url: `https://app.radlor.com${DIRTY}` }),
     })
     await POST(req)
     expectClean('/api/report-error', [...logged, ...sent])
@@ -67,7 +67,7 @@ describe('SEC-06 — no URL credential reaches a crash sink', () => {
     expect(row, 'error_events insert must still happen').toBeDefined()
     const stored = JSON.parse(row!.slice(row!.indexOf(' ') + 1))
     expect(stored.message).toBe('boom-route')
-    expect(stored.url).toBe('https://radlic.com/consent/respond?module=g3m1&id=g3m1-t2')
+    expect(stored.url).toBe('https://app.radlor.com/consent/respond?module=g3m1&id=g3m1-t2')
     expect(sent.some(s => s.startsWith('https://sink.example/hook') && s.includes('boom-route'))).toBe(true)
   })
 

@@ -6,15 +6,15 @@ played out (her lines finished, the question answered) and the tester has tapped
 wrong. Every review is saved, so an admin can see whether the testing really happened before anyone is paid.
 
 **Where things live.** The links and reviews are in the **Radlor Ops** app (its "Radlic testers" tab, ops admins
-only) and its database — not in Radlic's, which holds nothing about testers. Radlic has the tester's page
-(`/test`) and `POST /api/tester`, which forwards each call from Radlic's server to Ops `/api/radlic-tester`
+only) and its database — not in Radlor's, which holds nothing about testers. Radlor has the tester's page
+(`/test`) and `POST /api/tester`, which forwards each call from Radlor's server to Ops `/api/radlic-tester`
 (set `TESTER_API` to point elsewhere; unset = `https://ops.radlor.com`). The Ops side is documented in the radlor-ops
 repository (its Radlic testers doc).
 
 ## 1. Make a link (an ops admin)
 
 Radlor Ops → **Radlic testers** → email, module or chapter, an optional note → **Create link**. Copy the
-`https://radlic.com/test#t=…` link and send it to the tester yourself (nothing is emailed). One link = one email +
+`https://app.radlor.com/test#t=…` link and send it to the tester yourself (nothing is emailed). One link = one email +
 one module or chapter. The token after `#t=` is the only key: anyone holding the link can review as that tester, so
 send it to them alone. **Revoke** closes it at once.
 

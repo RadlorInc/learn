@@ -42,7 +42,7 @@
         if (sessionStorage.getItem(FLAG)) return;
         sessionStorage.setItem(FLAG, '1');
       } catch (e) { return; } // no sessionStorage → skip the reload rather than risk a loop
-      console.warn('[Radlic SW] Stale service worker was controlling this page — cleared it, reloading once.');
+      console.warn('[Radlor SW] Stale service worker was controlling this page — cleared it, reloading once.');
       location.reload();
     });
   }
@@ -51,11 +51,11 @@
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/sw.js')
         .then(function (reg) {
-          console.log('[Radlic SW] Registered:', reg.scope);
+          console.log('[Radlor SW] Registered:', reg.scope);
 
           // No CACHE_URLS message: the worker never handled one (N26, 2026-09-26). Chunks are cached as they load.
         })
-        .catch(function (err) { console.warn('[Radlic SW] Failed:', err); });
+        .catch(function (err) { console.warn('[Radlor SW] Failed:', err); });
     });
   }
 })();

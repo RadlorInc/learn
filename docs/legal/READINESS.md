@@ -71,7 +71,7 @@ recorded in a pull request.
 - [ ] 💳 **Subscription consequence of withdrawal** (with the attorney) — built: closing the account or withdrawing for every child cancels the plan at once and refunds the unused part pro rata (founder, 6 Oct 2026; doc 01 §4–5 updated). Attorney to review the wording and calculation; a one-child withdrawal is still open
 - [ ] 💳 **An affirmative auto-renewal consent control at checkout** — BUILT 2026-09-28 (a separate unticked tick; the route refuses without it); **the attorney confirms its words** (packet C1)
 - [x] 💳 Hide checkout for a parent who already subscribes (the plan screen hides it and `/api/checkout` refuses a second subscription, `already_subscribed`)
-- [ ] 💳 Before live keys: watch one Stripe test-mode purchase become a subscription and its seats, then replay the event and see nothing change; decide on point-in-time recovery; rename the Stripe product and card statement descriptor to Radlic; set the webhook on radlic.com; the JSON-LD `offers` price on both sites
+- [ ] 💳 Before live keys: watch one Stripe test-mode purchase become a subscription and its seats, then replay the event and see nothing change; decide on point-in-time recovery; rename the Stripe product and card statement descriptor to Radlor; set the webhook on app.radlor.com; the JSON-LD `offers` price on both sites
 - [ ] 👪 **The live Spanish consent text**: show English until it is reviewed?
 - [ ] 👪 The real content-review process to describe in Terms §8 — and whether §8's sentence that the service uses AI to "generate or select content" is accurate (nothing calls an AI at runtime)
 - [ ] 👪 After a cancelled subscription's period ends, the account stays open (doc 01 already says so) — confirm
@@ -107,7 +107,7 @@ recorded in a pull request.
 - [ ] 👪 Email-plus availability and the 24 h delay (A4)
 - [ ] 👪 An "I'm 18 or older" tick vs a neutral age screen at sign-up (A6)
 - [ ] 👪 One consent per account plus a tick per child; when a notice change must re-ask; the sign-up email as the consent email (A8–A10)
-- [ ] 👪 Whether the rename to Radlic is a material change (A11); a trademark clearance search for "Radlic" before public launch
+- [ ] 👪 Whether the rename to Radlor is a material change (A11); a trademark clearance search for "Radlor" before public launch
 - [ ] 👪 Notice-v7: re-consent only for KG–2 children and new children (A14)
 - [ ] 👪 Curriculum provenance (packet §F)
 - [ ] 💳 ARL / ROSCA: renewal consent control, cancellation email content, refund stance (C1–C5)

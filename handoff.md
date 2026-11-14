@@ -1,4 +1,4 @@
-# Handoff — Radlic
+# Handoff — Radlor
 
 **Current state and open items only. Under 15 KB.** When an item is done, delete it: the pull request and
 [docs/decisions.md](docs/decisions.md) are the record. Map of every doc: [docs/START-HERE.md](docs/START-HERE.md).
@@ -8,7 +8,7 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (16 October 2026)
 
-- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). Radlic is
+- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). Radlor is
   launched (the beta is over, 21 Oct) and free since 13 Nov (no paywall).
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
   and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
@@ -40,7 +40,7 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-- **Ask Radlic** (`ask-maths`; askRadlor's side `kids-maths` in whiteboard-ai): in production from 13 Nov, **OFF** until
+- **Ask Radlor** (`ask-maths`; askRadlor's side `kids-maths` in whiteboard-ai): in production from 13 Nov, **OFF** until
   legal; free (no add-on). Next steps in [product/ask-maths.md](docs/product/ask-maths.md).
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
@@ -83,10 +83,10 @@ Admin data requires the authenticator code since #325 (16 Oct).
 - Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
   still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
 - red-main opens an issue per red run and never closes it: close them on the next green run.
-- Supabase Auth: the SMTP sender name "Radlic"; after 30 days with no traffic on the old domain (late October),
-  remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlic and
+- Supabase Auth: the SMTP sender name "Radlor"; after 30 days with no traffic on the old domain (late October),
+  remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlor and
   who owns its Cloud project.
-- A favicon and PWA icons from the Radlic logo (needs a square mark; the live favicon is still the framework default).
+- A favicon and PWA icons from the Radlor logo (needs a square mark; the live favicon is still the framework default).
 - Wipe the test account used for sign-up tests (the address is in the private notes).
 - The Resend plan: the free plan's daily cap (about 50 sign-ups a day) blocks a launch. Vercel's budget (pause on) and
   Supabase's spend cap are on (founder, 16 Oct).
@@ -118,7 +118,7 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
-- An old consent link on the real old domain should land on radlic.com with its `#t=` token (browser pane).
+- An old consent link on the real old domain should land on app.radlor.com with its `#t=` token (browser pane).
 - `nightly-e2e` (#378: 23 KG–2 chapters + each grade 3–8 module's first topic) has had no scheduled run yet — read the
   first, and its issue if red. `e2e/xbrowser-clicks.spec.ts` is not timer-ready (5 Oct: 11 of 25 passed; end-card
   buttons fail Playwright's "stable" wait because the nudge animates them, 3 chapters "could not look", colors timed out).

@@ -9,7 +9,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 
 const st = vi.hoisted(() => ({ consent: { k: 'none', fresh: true } as Record<string, unknown>, grant: { ok: true, id: 'sc-1' } as Record<string, unknown> }))
-const grantSchoolConsent = vi.fn(async () => { st.consent = { k: 'granted', id: 'sc-1', noticeVersion: 'notice-v8', confirmedAt: '' }; return st.grant })
+const grantSchoolConsent = vi.fn(async () => { st.consent = { k: 'granted', id: 'sc-1', noticeVersion: 'notice-v9', confirmedAt: '' }; return st.grant })
 const createLearner = vi.fn(async () => ({ id: 'kid-1' }))
 vi.mock('@/features/consent/consentState', () => ({
   readAccountConsent: async () => st.consent, attestationVersion: async (v: string) => v, grantSchoolConsent,
@@ -71,7 +71,7 @@ describe('a teacher\'s roster and the school consent', () => {
   })
 
   it('consent granted → the roster form, and each student is created UNDER that consent', async () => {
-    st.consent = { k: 'granted', id: 'sc-1', noticeVersion: 'notice-v8', confirmedAt: '' }
+    st.consent = { k: 'granted', id: 'sc-1', noticeVersion: 'notice-v9', confirmedAt: '' }
     await show()
     expect(host.textContent).toContain(FORM)
     expect(host.textContent).not.toContain(ASK)
@@ -81,7 +81,7 @@ describe('a teacher\'s roster and the school consent', () => {
     await act(async () => { add.click() })
     await settle()
     expect(createLearner).toHaveBeenCalledTimes(1)
-    expect((createLearner.mock.calls[0] as unknown[])[4]).toEqual({ id: 'sc-1', noticeVersion: 'notice-v8' })
+    expect((createLearner.mock.calls[0] as unknown[])[4]).toEqual({ id: 'sc-1', noticeVersion: 'notice-v9' })
   })
 
   it('the consent cannot be read → try again, never the roster form', async () => {

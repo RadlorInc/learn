@@ -3,7 +3,7 @@
  * 6000-unit region, an iPhone made a filter image thousands of pixels wide for every washed shape inside a scaled
  * drawing (an apple, `fruit k=apple`) and closed the tab: "A problem repeatedly occurred" (31 Oct 2026, iPhone 13,
  * staging; found by replaying the lesson piece by piece on the phone). askRadlor fixed its player on 22 Oct (4dbf119);
- * Radlic's copy (public/ask-player, scripts/sync-ask-player.mjs) was older. This fails on a copy from before that fix.
+ * Radlor's copy (public/ask-player, scripts/sync-ask-player.mjs) was older. This fails on a copy from before that fix.
  * Even then, the watercolour's second, fine-grained noise closed the tab after two apple boards in a row; askRadlor
  * f0bfb50 keeps one soft noise. This also fails on a copy from before that.
  */

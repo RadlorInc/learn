@@ -116,7 +116,7 @@ merge or push it to `staging` (and merge `main` into `staging` now and then, so 
   `customer.subscription.created/updated/deleted` and `invoice.upcoming` (the annual renewal reminder; Stripe →
   Settings → Billing → Subscriptions → upcoming renewal events: 30 days). Its signing secret is Preview's `STRIPE_WEBHOOK_SECRET`.
 - A Preview variable reaches a preview only on its next build: after changing one, push to `staging`.
-- There is no checkout since 2026-11-13 (Radlic is free); the webhook stays for plans bought before then.
+- There is no checkout since 2026-11-13 (Radlor is free); the webhook stays for plans bought before then.
 - Rotating the bypass secret breaks the webhook until the Stripe URL carries the new one.
 
 **Before a merge: the `staging` branch runs staging's migrations too** (`.github/workflows/staging.yml`, 2026-10-01).
@@ -152,3 +152,20 @@ To tear staging down, delete the variable first. Otherwise every production migr
 longer exists.
 
 Test against staging or a local stack (`supabase start` in a scratch directory). Never run the app against production.
+
+## Moving the domain to app.radlor.com (14 Nov 2026)
+
+The code is ready on both domains: `SITE_URL` follows `NEXT_PUBLIC_SITE_URL`, and every host in `OLD_HOSTS`
+(`src/app/site.ts`) other than the current one gets a 308 to it (pages only; `/api/*` answers on every host, so
+webhooks and one-click unsubscribes that hold radlic.com keep working). Steps, in this order:
+
+1. Vercel → project `adaptivelearn` → Domains: add `app.radlor.com`; add the CNAME it asks for in radlor.com's DNS;
+   wait for "Valid Configuration". Keep `radlic.com` and `www.radlic.com` on the project for good.
+2. Supabase Auth (production) → URL Configuration: add `https://app.radlor.com/**` to the redirect URLs, then set
+   the Site URL to `https://app.radlor.com`. Keep the radlic.com entries (links in emails already sent).
+3. Vercel → Settings → Environment Variables (Production): set `NEXT_PUBLIC_SITE_URL` to `https://app.radlor.com`,
+   then redeploy production. From that deploy, radlic.com pages 308 to app.radlor.com.
+4. Check: `SMOKE_BASE=https://app.radlor.com node scripts/smoke-live.mjs`; open an old consent link on radlic.com
+   and see it land on app.radlor.com with its `#t=` token; sign in with email and with Google.
+5. Merge the website's rename PR (its links point to app.radlor.com), then Search Console: add app.radlor.com and
+   submit its sitemap.

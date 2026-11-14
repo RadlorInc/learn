@@ -7,7 +7,7 @@
 
 **Company:** Radlor Inc., a Delaware corporation
 
-**Product:** Radlic
+**Product:** Radlor
 
 **Effective date:** 1 October 2026
 
@@ -17,9 +17,9 @@
 
 ## 1. This agreement
 
-These Terms are an agreement between you and Radlor Inc., a Delaware corporation ("Radlor", "we", "us"). They govern your use of Radlic (the "Service").
+These Terms are an agreement between you and Radlor Inc., a Delaware corporation ("Radlor", "we", "us"). They govern your use of the Radlor app (the "Service").
 
-By creating an account or using the Service, you agree to these Terms and to our [Privacy Policy](https://radlic.com/legal/privacy). If you do not agree, do not use the Service.
+By creating an account or using the Service, you agree to these Terms and to our [Privacy Policy](https://app.radlor.com/legal/privacy). If you do not agree, do not use the Service.
 
 ## 2. Who may hold an account
 
@@ -31,7 +31,7 @@ You confirm that the information you give us at sign-up is accurate, and that yo
 
 ## 3. What the Service is
 
-Radlic is an adaptive learning tool. It presents lessons, questions and practice, adapts to how a child answers, and reports progress to you.
+Radlor is an adaptive learning tool. It presents lessons, questions and practice, adapts to how a child answers, and reports progress to you.
 
 **It is an educational support tool and nothing more.** It is not schooling, not tutoring by a licensed professional, and not any form of assessment, diagnosis or treatment — educational, psychological or medical. It does not identify learning disabilities or any other condition. If you have a concern about your child's learning, speak to a teacher or a qualified professional.
 
@@ -43,10 +43,10 @@ Because the Service is used by children, additional rules apply:
 
 - Before we collect anything about your children, we give you a **direct notice** telling you exactly what we collect, and we obtain your **verifiable consent**. You give it once, for your account, and it covers every child you add to it. Each time you add a child, you confirm that you are that child's parent or legal guardian, and we record when you did.
 - **We keep a record of that consent** — the date, how it was given, your email address, and the version of each document you were shown. We keep it so that we can show, later, exactly what you agreed to. If you close your account, that record is kept, marked as withdrawn and no longer linked to your account, so that we can still show that consent was given and when it ended. Everything else is deleted.
-- You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://radlic.com/legal/parent-rights).
+- You can see, correct or delete your child's information, or withdraw your consent, at any time and for free. See our [Parent Rights page](https://app.radlor.com/legal/parent-rights).
 - You can withdraw consent for one child or for every child on the account. For one child, we stop collecting, delete what we hold about that child, and close their profile; this applies only to that child, and the account and any other children are not affected. For every child, we do the same for each of them; your account stays open, and adding a child later needs your consent again. You are never charged for exercising a privacy right.
 
-Our [Privacy Policy](https://radlic.com/legal/privacy) describes all of this in full and forms part of these Terms.
+Our [Privacy Policy](https://app.radlor.com/legal/privacy) describes all of this in full and forms part of these Terms.
 
 ## 5. Subscriptions, renewal and cancellation
 
@@ -55,7 +55,7 @@ Our [Privacy Policy](https://radlic.com/legal/privacy) describes all of this in 
 - **Subscriptions renew automatically** until you cancel. The renewal amount and date are disclosed to you before you subscribe and repeated in the confirmation email we send you.
 - **Adding a child.** If every seat is in use, you can add a seat in the app. We show the new price before you confirm, charge the prorated difference for the current period straight away, and the new total from your next renewal.
 - **You can cancel at any time**, online, in the same number of steps it took to subscribe: in the app, under **Account → Plan & billing**. Cancelling stops all future charges; your access continues until the end of the period you have paid for, and we email you a confirmation with that date.
-- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://radlic.com/legal/refunds), which forms part of these Terms.
+- Refunds, price changes, failed payments and the full cancellation mechanics are set out in our [Refund and Cancellation Policy](https://app.radlor.com/legal/refunds), which forms part of these Terms.
 - Prices are in US dollars and are what you pay: we do not currently charge sales tax. If we ever must in your state, we will tell you by email at least 30 days before it applies.
 
 ## 6. Acceptable use

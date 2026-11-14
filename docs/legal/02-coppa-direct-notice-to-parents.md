@@ -9,7 +9,7 @@
 > This is the notice COPPA requires us to give a parent **directly**, before we collect anything at all from their child. It is separate from, and shorter than, the Privacy Policy. It is delivered on screen during sign-up and again by email.
 
 **Company:** Radlor Inc., a Delaware corporation
-**Product:** Radlic
+**Product:** Radlor
 **Version:** v1 — [PLACEHOLDER — date, set on the day this is first shown to a parent. Every consent record stores the version the parent actually saw, so this number must change whenever the body below changes.]
 
 ---
@@ -20,7 +20,7 @@
 
 ## Body
 
-You are creating a Radlic account for your children. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their children's ages. You give it once, for this account, and it covers every child you add to it. Here it is, in plain language.
+You are creating a Radlor account for your children. United States law — the Children's Online Privacy Protection Act, which protects children under 13 — requires us to tell you exactly what we collect and to get your permission first. We ask every parent for the same permission, whatever their children's ages. You give it once, for this account, and it covers every child you add to it. Here it is, in plain language.
 
 ### What we collect from your child
 
@@ -39,9 +39,9 @@ You are creating a Radlic account for your children. United States law — the C
 
 ### What we do with it
 
-We use this information only to run Radlic for your child: to teach, to track progress, to show you reports, and to keep the service secure and working. 
+We use this information only to run Radlor for your child: to teach, to track progress, to show you reports, and to keep the service secure and working. 
 
-**Nothing about your child is given to any other company for that company's own purposes.** The only outside companies involved at all are the ones that run our systems for us — the database that stores the information and the hosting service that delivers the app — and they act only on our instructions. Every one of them is listed at https://radlic.com/legal/subprocessors. There is no analytics company, no advertising company, and no artificial-intelligence service that receives anything your child types or says.
+**Nothing about your child is given to any other company for that company's own purposes.** The only outside companies involved at all are the ones that run our systems for us — the database that stores the information and the hosting service that delivers the app — and they act only on our instructions. Every one of them is listed at https://app.radlor.com/legal/subprocessors. There is no analytics company, no advertising company, and no artificial-intelligence service that receives anything your child types or says.
 
 **We do not:**
 - sell your child's information;
@@ -70,15 +70,15 @@ To do any of these, open your parent dashboard, choose your child's card and the
 
 ### How long we keep it
 
-We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at https://radlic.com/legal/retention.
+We keep your child's information only as long as we need it to provide the service, and then we delete it. The full schedule is in our Data Retention Policy at https://app.radlor.com/legal/retention.
 
 ### How we protect it
 
-Every connection to Radlic is encrypted, the database enforces rules so that one family's records cannot be read by another, and the keys that would allow broad access are never sent to a browser.
+Every connection to Radlor is encrypted, the database enforces rules so that one family's records cannot be read by another, and the keys that would allow broad access are never sent to a browser.
 
 ### Full details
 
-Our Privacy Policy at https://radlic.com/legal/privacy has the complete picture, including how to reach us.
+Our Privacy Policy at https://app.radlor.com/legal/privacy has the complete picture, including how to reach us.
 
 ### Contact us
 

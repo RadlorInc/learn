@@ -1,6 +1,6 @@
 # The lesson voice
 
-Who speaks in Radlic, how a line is written so it can be spoken, and what happens when a recording is missing.
+Who speaks in Radlor, how a line is written so it can be spoken, and what happens when a recording is missing.
 Rendering and uploading clips is a separate job: [../runbooks/audio-upload.md](../runbooks/audio-upload.md). How
 lessons are built: [building-lessons.md](building-lessons.md).
 

@@ -1,6 +1,6 @@
 'use client'
 /**
- * The whiteboard board for Ask Radlic: the askRadlor player (public/ask-player, copied by scripts/sync-ask-player.mjs)
+ * The whiteboard board for Ask Radlor: the askRadlor player (public/ask-player, copied by scripts/sync-ask-player.mjs)
  * in a sandboxed iframe, fed over postMessage (public/ask-player/bridge.js). Ported from the askRadlor app's
  * src/components/Watch.tsx `Player`, kept to what a child needs: the board, the voice, play/pause, back/next, replay.
  *

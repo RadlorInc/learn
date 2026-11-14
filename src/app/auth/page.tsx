@@ -255,10 +255,10 @@ export default function AuthPage() {
                   background: lang === l ? 'var(--milo-orange-soft)' : C.card, color: C.ink, fontSize: 14, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>{label}</button>
             ))}
           </div>
-          {/* The logo (public/brand/). The alt keeps the heading's name, so "Radlic" is still what a screen reader hears. */}
+          {/* The logo (public/brand/). The alt keeps the heading's name, so "Radlor" is still what a screen reader hears. */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <h1 style={{ margin: 0, lineHeight: 0 }}>
-              <img src="/brand/radlic-logo-640.png" alt={APP_NAME} width={640} height={167}
+              <img src="/brand/radlor-logo-640.png" alt={APP_NAME} width={640} height={219}
                 style={{ height: 56, width: 'auto', maxWidth: '100%' }} />
             </h1>
             <p style={{ fontSize: 14, color: C.ink3, margin: '5px 0 0', fontWeight: 600 }}>

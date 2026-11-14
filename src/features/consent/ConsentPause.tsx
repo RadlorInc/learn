@@ -20,14 +20,14 @@ export const PAUSE_COPY = {
     heading: 'Your work is safe on this device',
     sayYes: 'A grown-up needs to say yes before it goes to your account.',
     sent: 'We have sent them a message.',
-    ask: 'Please ask them to open Radlic.',
+    ask: 'Please ask them to open Radlor.',
     button: 'Keep playing',
   },
   es: {
     heading: 'Tu trabajo está a salvo en este dispositivo',
     sayYes: 'Una persona adulta tiene que decir que sí antes de que se guarde en tu cuenta.',
     sent: 'Ya le enviamos un mensaje.',
-    ask: 'Pídele que abra Radlic.',
+    ask: 'Pídele que abra Radlor.',
     button: 'Seguir jugando',
   },
 } as const

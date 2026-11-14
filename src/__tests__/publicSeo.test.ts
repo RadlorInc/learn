@@ -36,7 +36,7 @@ describe('every public route declares its own search surface', () => {
     ['/help', help],
   ]
 
-  // Since 2026-09-25 the home page is on radlor.com and radlic.com/ only routes there (signed out) or home.
+  // Since 2026-09-25 the home page is on radlor.com and app.radlor.com/ only routes there (signed out) or home.
   it('/ points search engines at the landing page on radlor.com', () => {
     expect(canonicalOf(home)).toBe('https://radlor.com/radlic')
   })
@@ -88,7 +88,7 @@ describe('every public route declares its own search surface', () => {
 
 describe('the product is attached to the brand', () => {
   /**
-   * ⚠️ A product name alone ("AdaptiveLearn" until 2026-09-24, Radlic now) can resolve to its category on
+   * ⚠️ A product name alone ("AdaptiveLearn" until 2026-09-24, Radlor now) can resolve to its category on
    * its own. The distinctive token is "Radlor", so the schema has to name it — and it must name it
    * by REFERENCE to radlor.com's node, not by declaring a second Organization with the same name.
    */
@@ -100,7 +100,7 @@ describe('the product is attached to the brand', () => {
 
     const { COMPANY_ID, APP_ID } = await import('@/app/site')
     expect(COMPANY_ID).toBe('https://radlor.com/#organization')
-    expect(APP_ID).toBe('https://radlic.com/#app')
+    expect(APP_ID).toBe('https://app.radlor.com/#app')
   })
 
   it('links to radlor.com visibly, not only in schema', async () => {

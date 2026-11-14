@@ -8,7 +8,7 @@
  * this topic (never mid-session); more than once per topic per day.
  * ⚠️ A chosen list alone is NOT an assignment (founder, 2026-09-24): a parent who ticks a whole module in the Lessons
  * tab chose which topics the child sees, not the order — and treating the list as "assigned" switched the card off for
- * every topic in the module, live on radlic.com. Only a due date says "do this one".
+ * every topic in the module, live on app.radlor.com. Only a due date says "do this one".
  */
 import type { Lesson } from './script'
 import type { Module } from './modules'

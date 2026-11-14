@@ -11,7 +11,7 @@
 
 ## Plain version
 
-**Radlic sets no cookies at all.** It stores a small amount of information on your own device so the app can work offline, remember your settings, and keep you signed in. That information stays on the device. **We do not use advertising cookies, we run no third-party tracking of any kind, and nobody can follow your child from Radlic to another website or app.**
+**Radlor sets no cookies at all.** It stores a small amount of information on your own device so the app can work offline, remember your settings, and keep you signed in. That information stays on the device. **We do not use advertising cookies, we run no third-party tracking of any kind, and nobody can follow your child from Radlor to another website or app.**
 
 ## What we store on the device
 
@@ -40,7 +40,7 @@
 
 - No cookies.
 - No advertising or marketing storage.
-- No third-party scripts, beacons or tracking pixels — **none, anywhere**. The security policy the site serves to your browser only permits connections to Radlic itself and to our database provider, so the browser is not able to reach an advertising or analytics company even in principle.
+- No third-party scripts, beacons or tracking pixels — **none, anywhere**. The security policy the site serves to your browser only permits connections to Radlor itself and to our database provider, so the browser is not able to reach an advertising or analytics company even in principle.
 - No device fingerprint, no advertising identifier, no cross-site identifier.
 - No session recording.
 
@@ -48,7 +48,7 @@
 
 We log a small number of product events — such as a session starting — so we can see which parts of the app are used. These are stored in our own database, they are tied to a child's internal identifier rather than to a name, and they are **deleted automatically after 90 days**. They are not shared with anyone and they are not used for advertising.
 
-Our database and hosting providers also keep their own request logs, which include the IP address and browser type of every visit. That is described in our [Privacy Policy](https://radlic.com/legal/privacy).
+Our database and hosting providers also keep their own request logs, which include the IP address and browser type of every visit. That is described in our [Privacy Policy](https://app.radlor.com/legal/privacy).
 
 ## Your choices
 

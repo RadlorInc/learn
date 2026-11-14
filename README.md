@@ -1,6 +1,6 @@
-# Radlic
+# Radlor
 
-Adaptive maths from KG to grade 8, made by Radlor Inc., at https://radlic.com.
+Adaptive maths from KG to grade 8, made by Radlor Inc., at https://app.radlor.com.
 
 A Grade 3–8 lesson explains one idea step by step, the way a teacher would at a board; then practice
 adapts — two right in a row bring a harder *kind* of question, a miss brings worked steps. KG, Grade 1
@@ -8,7 +8,7 @@ and Grade 2 learn through short voiced story chapters. Maths without fear: no ti
 no visible level. A parent or teacher chooses what each child sees, and a parent gives verifiable
 consent before a child's data is kept.
 
-The product was called **Milo** until August 2026 and **AdaptiveLearn** until September 2026. Code identifiers keep the old name on purpose; anything a person sees says Radlic.
+The product was called **Milo** until August 2026, **AdaptiveLearn** until September 2026 and **Radlic** (radlic.com) until 14 November 2026. Code identifiers keep the old name on purpose; anything a person sees says Radlor.
 
 ## Run it
 

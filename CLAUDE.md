@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Radlic — how to work in this repo
+# Radlor — how to work in this repo
 
 At the start of every session read @handoff.md (current state and open items). The map of every doc is
 [docs/START-HERE.md](docs/START-HERE.md). Before any lesson work read
@@ -26,7 +26,7 @@ At the start of every session read @handoff.md (current state and open items). T
 
 ## The product
 
-**Radlic** (radlic.com), by Radlor Inc.: adaptive maths from KG to grade 8. Say "Radlic" in anything a person reads.
+**Radlor** (app.radlor.com), by Radlor Inc.: adaptive maths from KG to grade 8. Say "Radlor" in anything a person reads.
 **There is no mascot**: no named character, no "Milo says…", no fox as a brand — a child's own avatar is data.
 Old names stay in identifiers (`useMiloSpeaker`, `--milo-orange`, `milo_active_learner`, the repo and project
 names) because stored data and running devices depend on them. `src/__tests__/renameGate.test.ts` fails on a visible

@@ -90,7 +90,7 @@ describe('public/play-time.js, in every game', () => {
   beforeEach(() => {
     vi.resetModules(); replace.mockReset()
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearInterval', 'performance', 'Date'] })
-    vi.stubGlobal('location', { ...window.location, hostname: 'radlic.com', replace })
+    vi.stubGlobal('location', { ...window.location, hostname: 'app.radlor.com', replace })
     vi.stubGlobal('fetch', vi.fn(() => server()))
     localStorage.setItem('milo-auth', JSON.stringify({ access_token: 'adult-token' }))
   })

@@ -14,7 +14,7 @@ REVIEWED-BY:
 
 **Empresa:** Radlor Inc., una sociedad anónima (corporation) de Delaware
 
-**Producto:** Radlic
+**Producto:** Radlor
 
 **Fecha de entrada en vigor:** 25 de septiembre de 2026
 
@@ -41,7 +41,7 @@ Radlor Inc.
 support@radlor.com
 1-888-812-9373
 
-Somos el operador de Radlic, y el único. Ninguna otra empresa opera ninguna parte del servicio de una manera que recopile información a través de él.
+Somos el operador de Radlor, y el único. Ninguna otra empresa opera ninguna parte del servicio de una manera que recopile información a través de él.
 
 ## 2. A quién se dirige esta política
 
@@ -90,7 +90,7 @@ Ejercer cualquiera de estos derechos es gratuito. Confirmaremos que la solicitud
 
 **Cuánto tardamos:** 10 días.
 
-Todos los detalles están en nuestra página de Derechos de los padres en https://radlic.com/legal/parent-rights.
+Todos los detalles están en nuestra página de Derechos de los padres en https://app.radlor.com/legal/parent-rights.
 
 ## 6. Cómo usamos la información
 
@@ -115,7 +115,7 @@ Usamos lo que recopilamos solo para:
 
 No vendemos información y no revelamos la información de un niño a nadie para sus propios fines.
 
-Sí usamos proveedores de servicios que tratan la información siguiendo nuestras instrucciones y sin ningún fin propio — alojamiento, base de datos y envío de correo electrónico. La lista actual, y exactamente lo que recibe cada uno, está publicada en https://radlic.com/legal/subprocessors.
+Sí usamos proveedores de servicios que tratan la información siguiendo nuestras instrucciones y sin ningún fin propio — alojamiento, base de datos y envío de correo electrónico. La lista actual, y exactamente lo que recibe cada uno, está publicada en https://app.radlor.com/legal/subprocessors.
 
 También podemos revelar información cuando la ley nos obligue a hacerlo — por ejemplo, en respuesta a un proceso legal válido — o para proteger la seguridad de una persona. Si alguna vez estamos obligados a hacerlo en relación con un niño, se lo diremos al padre o la madre, salvo que la ley lo prohíba.
 
@@ -123,7 +123,7 @@ Si la empresa llegara a venderse o fusionarse, la información podría transferi
 
 ## 8. Cookies y almacenamiento similar
 
-Usamos solo lo que la aplicación necesita para funcionar: mantener su sesión iniciada, recordar la configuración y mantener el servicio seguro. No usamos cookies publicitarias y no permitimos el seguimiento entre sitios. La lista detallada está en nuestro Aviso sobre cookies y seguimiento en https://radlic.com/legal/cookies.
+Usamos solo lo que la aplicación necesita para funcionar: mantener su sesión iniciada, recordar la configuración y mantener el servicio seguro. No usamos cookies publicitarias y no permitimos el seguimiento entre sitios. La lista detallada está en nuestro Aviso sobre cookies y seguimiento en https://app.radlor.com/legal/cookies.
 
 ## 9. Cuánto tiempo conservamos la información
 
@@ -139,13 +139,13 @@ Conservamos la información de un niño solo mientras la necesitamos para presta
 | Los registros de solicitudes de nuestros proveedores, que incluyen la dirección IP y el tipo de navegador | Disponibles para nosotros hasta 7 días (proveedor de base de datos) y 1 hora (proveedor de alojamiento) en nuestros planes actuales, según sus paneles el 24 de septiembre de 2026 |
 | Copias de seguridad | Diseñadas para caducar a los 30 días |
 
-Si usted nos pide eliminar la información de su hijo, la eliminamos de nuestros sistemas activos de inmediato; las copias que haya en las copias de seguridad desaparecen cuando esas copias caducan, y nunca restauramos desde una copia de seguridad el registro de un niño que haya sido eliminado. Nuestro calendario completo de conservación está en https://radlic.com/legal/retention.
+Si usted nos pide eliminar la información de su hijo, la eliminamos de nuestros sistemas activos de inmediato; las copias que haya en las copias de seguridad desaparecen cuando esas copias caducan, y nunca restauramos desde una copia de seguridad el registro de un niño que haya sido eliminado. Nuestro calendario completo de conservación está en https://app.radlor.com/legal/retention.
 
 ## 10. Cómo protegemos la información
 
 Mantenemos un programa de seguridad por escrito que abarca la información de los niños y que se revisa al menos una vez al año.
 
-En la práctica: todas las conexiones con Radlic están cifradas; la base de datos aplica reglas para que los registros de una familia no puedan ser leídos por otra; las claves que permitirían un acceso amplio nunca se envían a su navegador; y nuestros registros internos se mantienen en un sistema aparte que no contiene datos de niños; la vista de administración dentro del producto solo muestra totales, nunca a un niño concreto.
+En la práctica: todas las conexiones con Radlor están cifradas; la base de datos aplica reglas para que los registros de una familia no puedan ser leídos por otra; las claves que permitirían un acceso amplio nunca se envían a su navegador; y nuestros registros internos se mantienen en un sistema aparte que no contiene datos de niños; la vista de administración dentro del producto solo muestra totales, nunca a un niño concreto.
 
 Ningún sistema es perfectamente seguro. Si una filtración afecta a la información de su hijo, se lo diremos según lo exija la ley, y le diremos con claridad qué sucedió.
 

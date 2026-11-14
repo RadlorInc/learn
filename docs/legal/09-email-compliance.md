@@ -31,7 +31,7 @@ We do not send marketing email to children. We do not collect a child's email ad
 ## 4. Standard footer — commercial email
 
 ```
-You are receiving this because you have a Radlic account.
+You are receiving this because you have a Radlor account.
 
 Unsubscribe from updates like this: [one-click unsubscribe link]
 Manage your email preferences: [preferences link]
@@ -46,7 +46,7 @@ subscription, such as receipts and renewal reminders.
 ## 5. Standard footer — transactional email
 
 ```
-This is a service message about your Radlic account.
+This is a service message about your Radlor account.
 
 Radlor Inc.
 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
@@ -87,7 +87,7 @@ Measured from the repository on 2026-09-23. The Supabase Auth templates and the 
 
 Not email: the dashboard's "reminders" are shown inside the app only, and every "Contact support" link opens the reader's own mail program. Children's sign-in accounts use addresses that cannot receive mail, and are created already confirmed, so nothing is sent to them. **No commercial email exists.** The suppression list in §7 guards the first one.
 
-⚠️ **The radlor.com waitlist is NOT covered by §7.** Its addresses live in radlor.com's own database, not this app's, and nothing in either repo can send to them. A "Radlic is live, come and try it" email to that list is commercial: send it only from a tool that adds a working unsubscribe link and honours it (e.g. Resend Broadcasts), with **Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702** in the footer, and never as a BCC from a mailbox. (Added 2026-09-28.)
+⚠️ **The radlor.com waitlist is NOT covered by §7.** Its addresses live in radlor.com's own database, not this app's, and nothing in either repo can send to them. A "Radlor is live, come and try it" email to that list is commercial: send it only from a tool that adds a working unsubscribe link and honours it (e.g. Resend Broadcasts), with **Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702** in the footer, and never as a BCC from a mailbox. (Added 2026-09-28.)
 
 ---
 

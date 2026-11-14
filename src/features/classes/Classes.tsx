@@ -359,14 +359,14 @@ export function SchoolConsentForm({ onGranted, onCancel }: { onGranted: () => vo
       if (r.ok) onGranted(); else setError(SCHOOL_ERR[r.error])
     }} style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12, fontSize: 14, color: P.ink, background: P.card, border: `1.5px solid ${P.edge}`, borderRadius: 10, padding: '12px 14px', lineHeight: 1.5 }}>
       <p style={{ margin: 0, fontWeight: 800 }}>First, your school’s permission</p>
-      <p style={{ margin: 0 }}>Students under 13 need a parent’s permission to use Radlic. A school can give it for school use, on behalf of the parents. We ask once, before your first student.</p>
+      <p style={{ margin: 0 }}>Students under 13 need a parent’s permission to use Radlor. A school can give it for school use, on behalf of the parents. We ask once, before your first student.</p>
       <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 700 }}>School name
         <input value={school} onChange={e => setSchool(e.target.value)} maxLength={120} autoComplete="organization" required
           style={{ padding: '10px 12px', minHeight: 44, borderRadius: 10, border: `1.5px solid ${P.edge}`, fontSize: 15, background: '#fff', color: P.ink }} />
       </label>
       <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
         <input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} style={{ width: 22, height: 22, flex: '0 0 auto', marginTop: 2 }} />
-        <span>I teach at this school. My school has authorised me to use Radlic with my students for school learning only, and has the parents’ permission for that. I’ve read the <Link href="/legal/privacy" target="_blank">Privacy Policy</Link> and the <Link href="/legal/terms" target="_blank">Terms</Link>.</span>
+        <span>I teach at this school. My school has authorised me to use Radlor with my students for school learning only, and has the parents’ permission for that. I’ve read the <Link href="/legal/privacy" target="_blank">Privacy Policy</Link> and the <Link href="/legal/terms" target="_blank">Terms</Link>.</span>
       </label>
       {error && <p role="alert" style={{ margin: 0, fontWeight: 800, color: '#B42318' }}>{error}</p>}
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>

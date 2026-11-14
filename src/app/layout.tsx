@@ -65,7 +65,7 @@ export const viewport: Viewport = {
  * The `template` gives every page a suffix without each page repeating it; `/help` and
  * `/legal/[slug]` already export their own titles and now inherit the brand for free.
  *
- * ⚠️ THE PRODUCT IS RADLIC (renamed 2026-09-24 from AdaptiveLearn, which was renamed from Milo) AND THERE IS NO
+ * ⚠️ THE PRODUCT IS RADLOR (renamed 2026-11-14 from Radlic; 2026-09-24 from AdaptiveLearn, which was renamed from Milo) AND THERE IS NO
  * MASCOT. Every naming position — the title, the manifest, the wordmark, the legal definitions — reads `APP_NAME`;
  * nothing speaks or apologises as a character. `renameGate.test.ts` fails if either name, or the fox as a brand,
  * comes back.

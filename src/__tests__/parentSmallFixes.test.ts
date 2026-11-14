@@ -5,7 +5,7 @@
  *
  *  1. The add-a-child window opens with no tour running (its own labels say what each field is).
  *  3. The child's name is marked as the one field that must be filled, for sighted readers and for a screen reader.
- *  (6 and 7, the free-trial card and Stripe's return, went with billing on 13 Nov 2026: Radlic is free.)
+ *  (6 and 7, the free-trial card and Stripe's return, went with billing on 13 Nov 2026: Radlor is free.)
  *
  * 1 and 3 are read off the source because what they assert is the absence of a tour and an attribute on one input,
  * which a render of this page cannot reach without the whole dashboard's world. They assert the SHAPE, not a copy.

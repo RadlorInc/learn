@@ -1,5 +1,5 @@
 /**
- * Signed out, only radlic.com/ leaves for the landing page on radlor.com; every other route stays in the app.
+ * Signed out, only app.radlor.com/ leaves for the landing page on radlor.com; every other route stays in the app.
  * The unit half (signed in, offline, the installed app, what mounts it) is src/__tests__/landingRedirect.test.ts.
  *
  *   npm run dev -- -p 3099        (a fake .env.local is enough: a signed-out session never reaches Supabase)
@@ -20,7 +20,7 @@ async function visit(page: import('@playwright/test').Page, path: string) {
   return hits
 }
 
-test('signed out, radlic.com/ goes to the landing page on radlor.com', async ({ page }) => {
+test('signed out, app.radlor.com/ goes to the landing page on radlor.com', async ({ page }) => {
   expect(await visit(page, '/')).toEqual([LANDING])
   expect(page.url()).toBe(LANDING)
 })

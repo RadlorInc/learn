@@ -15,7 +15,7 @@ import { resolve } from 'node:path'
  * "the parent sees chunk B", and that is the intent, independent of how the worker is written.
  */
 
-const ORIGIN = 'https://radlic.com'
+const ORIGIN = 'https://app.radlor.com'
 const SRC = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8')
 const VERSION = SRC.match(/const VERSION\s*=\s*'([^']+)'/)![1]
 
@@ -188,7 +188,7 @@ describe('service worker: precache list and VERSION bump', () => {
       sel.startsWith('script') ? [{ src: ORIGIN + '/_next/static/chunks/app-AAAA.js' }] : [] }
     const quiet = { log: () => {}, warn: () => {} }
     new Function('window', 'navigator', 'document', 'location', 'console', REG_SRC)(
-      window, navigator, document, { hostname: 'radlic.com' }, quiet)
+      window, navigator, document, { hostname: 'app.radlor.com' }, quiet)
     onLoad.forEach(fn => fn())
     await tick(); await tick()
     // Positive twin: the drive reached the registration, so an empty `posted` is not a harness that saw nothing.

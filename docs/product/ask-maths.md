@@ -1,8 +1,8 @@
-# Ask Radlic
+# Ask Radlor
 
 A child in Grades 3–8 types a maths question and watches a whiteboard lesson drawn and spoken for it: the marker
-draws, parts move, a voice explains step by step. It is the meeting point of Radlic and askRadlor (the Whiteboard AI
-app, RadlorInc/whiteboard-ai): askRadlor makes the lesson, Radlic is where a child asks. askRadlor itself has no maths
+draws, parts move, a voice explains step by step. It is the meeting point of Radlor and askRadlor (the Whiteboard AI
+app, RadlorInc/whiteboard-ai): askRadlor makes the lesson, Radlor is where a child asks. askRadlor itself has no maths
 subject for the public on purpose, because maths for children lives here.
 
 **Status (21 October 2026): built, OFF.** It stays off until every item in [Before it is turned on](#before-it-is-turned-on)
@@ -11,11 +11,11 @@ is done. The live notice (notice-v8, docs/legal/02), the subprocessor list (docs
 
 ## What the child and the parent see
 
-- **Child** (`/ask`): an "✏️ Ask Radlic" pill on the home (`/modules`) appears only when the child's grown-up has switched
+- **Child** (`/ask`): an "✏️ Ask Radlor" pill on the home (`/modules`) appears only when the child's grown-up has switched
   it on. One text box (300 characters), a few example questions for the child's band, the board, and play/pause,
   back/next and "Watch again". Refusals are in plain words with no price, plan or "locked" anywhere
   (`childWords.test.ts` covers the page). A credit line names the voice (CC BY 4.0).
-- **Parent** (a child's page → **Ask Radlic** tab, `src/features/dashboard/AskMathsCard.tsx`): free (no add-on, 13 Nov
+- **Parent** (a child's page → **Ask Radlor** tab, `src/features/dashboard/AskMathsCard.tsx`): free (no add-on, 13 Nov
   2026); per child the
   disclosure to agree to and the switch, the number of questions a day (1–20, default 5), and every question of the
   last 30 days with its outcome. An answered one can be watched again; "Delete all of …'s questions now" deletes them.
@@ -24,7 +24,7 @@ is done. The live notice (notice-v8, docs/legal/02), the subprocessor list (docs
 ## How a question travels
 
 ```
-child's browser ──POST /api/ask-maths (child's or parent's token)──▶ Radlic server
+child's browser ──POST /api/ask-maths (child's or parent's token)──▶ Radlor server
    1. ask_maths_begin (as the caller): access, band 9-11/12-14, switch on, one at a time, daily limit
       → a 'pending' row in ask_maths_questions
    2. ──POST {WHITEBOARD_URL}/api/partner/maths (Bearer WHITEBOARD_PARTNER_SECRET, {question, band})──▶ askRadlor
@@ -36,7 +36,7 @@ child's browser: the board (public/ask-player, sandboxed iframe) + the voice (pu
 ```
 
 - **The board** is askRadlor's player, copied by `node scripts/sync-ask-player.mjs <whiteboard-ai app checkout>` into
-  `public/ask-player` (only the drawing files a maths lesson loads, Radlic's Gaegu font under the player's font names:
+  `public/ask-player` (only the drawing files a maths lesson loads, Radlor's Gaegu font under the player's font names:
   no Google Fonts) and the voice into `public/ask-tts`. Copy again whenever askRadlor's player or maths drawings change.
   Its CSP (`askPlayerCsp` in next.config.ts): our scripts and fonts only, `connect-src 'none'`, framed only by our
   origins. The voice worker's (`ASK_TTS_CSP`): our scripts and WebAssembly, and the model files from Hugging Face.
@@ -62,10 +62,10 @@ the daily limit (default 5).
 
 | where | name | value |
 |---|---|---|
-| Radlic, Vercel (server) | `ASK_MATHS` | `on` to serve the routes (otherwise 404) |
-| Radlic, Vercel (build) | `NEXT_PUBLIC_ASK_MATHS` | `on` to show the button, the page and the parent tab |
-| Radlic, Vercel (server) | `WHITEBOARD_URL` | askRadlor's origin, e.g. `https://<askRadlor domain>` |
-| Radlic, Vercel (server) | `WHITEBOARD_PARTNER_SECRET` | 32 random bytes; the same value as askRadlor's `RADLIC_PARTNER_SECRET` |
+| Radlor, Vercel (server) | `ASK_MATHS` | `on` to serve the routes (otherwise 404) |
+| Radlor, Vercel (build) | `NEXT_PUBLIC_ASK_MATHS` | `on` to show the button, the page and the parent tab |
+| Radlor, Vercel (server) | `WHITEBOARD_URL` | askRadlor's origin, e.g. `https://<askRadlor domain>` |
+| Radlor, Vercel (server) | `WHITEBOARD_PARTNER_SECRET` | 32 random bytes; the same value as askRadlor's `RADLIC_PARTNER_SECRET` |
 | askRadlor, Vercel | `RADLIC_PARTNER_SECRET` | the same 32 bytes |
 
 Turning it off again: set `ASK_MATHS` to anything else (the routes answer 404 at once), then `NEXT_PUBLIC_ASK_MATHS`
@@ -77,10 +77,10 @@ The founder and the attorney, in this order:
 
 1. **The words.** Approve the disclosure (`src/features/askMaths/disclosure.ts`, quoted below), and the changes it needs
    in the notice (docs/legal/02 and `src/features/consent/copy.ts`: "no artificial-intelligence service that receives
-   anything your child types" becomes true only while Ask Radlic is off for that child), the privacy policy (doc 11:
+   anything your child types" becomes true only while Ask Radlor is off for that child), the privacy policy (doc 11:
    the AI and model-training paragraphs), the subprocessors (doc 07: askRadlor / Radlor Inc., Anthropic, Hugging Face
    for the voice files), retention (doc 04: 30 days), terms (doc 12 §8), and the decision line in docs/decisions.md
-   (21 Sep: "no free text" for the "Didn't get it?" reasons — Ask Radlic is a deliberate, parent-switched exception).
+   (21 Sep: "no free text" for the "Didn't get it?" reasons — Ask Radlor is a deliberate, parent-switched exception).
    Whether the notice change needs `reconsent_required` (a new notice version) or the per-child disclosure is enough.
 2. **Anthropic.** Confirm the terms that cover a child's question (no training on API data; retention; a Zero Data
    Retention agreement if the attorney wants it; Anthropic's requirements for products used by minors).
@@ -95,10 +95,10 @@ The founder and the attorney, in this order:
 The same text is in the code, in English and a Spanish machine draft. Changing a word means a new version string in
 `disclosure.ts` AND in `set_ask_maths` (a migration).
 
-> **Before you turn on Ask Radlic for {name}**
+> **Before you turn on Ask Radlor for {name}**
 > - {name} types a maths question, and a whiteboard lesson is drawn and spoken for it.
 > - What {name} types is sent from our server to askRadlor, the whiteboard service of Radlor Inc. (the company behind
->   Radlic). askRadlor uses Anthropic's Claude model to write the lesson. askRadlor keeps none of it. Anthropic handles
+>   Radlor). askRadlor uses Anthropic's Claude model to write the lesson. askRadlor keeps none of it. Anthropic handles
 >   it under its commercial terms, which do not let it train its models on it.
 > - Each question is checked first. If it is not about maths, or it has personal details in it (a full name with a
 >   school, an address, a phone number, an email), no lesson is made, and a question with personal details is not kept.
@@ -106,7 +106,7 @@ The same text is in the code, in English and a Spanish machine draft. Changing a
 >   them yourself at any time.
 > - The voice is made on {name}'s device. The first time, the device downloads the voice files (about 166 MB), part of
 >   them from Hugging Face, which sees only the device's internet address.
-> - {name} can ask up to the number of questions a day you choose. You can turn Ask Radlic off at any time.
+> - {name} can ask up to the number of questions a day you choose. You can turn Ask Radlor off at any time.
 >
 > ☐ I am {name}'s parent or guardian, and I agree to this.
 

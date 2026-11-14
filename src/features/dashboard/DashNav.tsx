@@ -10,7 +10,7 @@ import { useT } from './i18n'
 import { APP_NAME } from '@/app/site'
 
 const Logo = ({ h }: { h: number }) =>
-  <img src="/brand/radlic-logo-640.png" alt={APP_NAME} width={640} height={167} style={{ height: h, width: 'auto', display: 'block' }} />
+  <img src="/brand/radlor-logo-640.png" alt={APP_NAME} width={640} height={219} style={{ height: h, width: 'auto', display: 'block' }} />
 
 export interface NavItem { label: string; href: string; on: boolean; tour?: string }
 
