@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 /**
- * The parent PIN is asked before a game-time setting changes or an invite goes out, not to open the dashboard
- * (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the child's page
- * with its Game time tab, and the invites page. Only the account's
+ * The parent PIN is asked before a game-time or Ask Radlic setting changes or an invite goes out, not to open the dashboard
+ * (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the Ask Radlic card, the child's
+ * page with its Game time tab, and the invites page. Only the account's
  * reads are stubbed. Each change must not reach the database until the right PIN is in.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -10,6 +10,8 @@ import { act, createElement, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { existsSync, readFileSync } from 'node:fs'
 
+const setAskMaths = vi.fn(async () => ({ ok: true }))
+const forgetAskQuestions = vi.fn(async () => 0)
 const sendInvite = vi.fn(async () => ({ ok: true }))
 const verifyPin = vi.fn(async (p: string) => p === '4826' ? { ok: true } : { ok: false, error: 'wrong', tries_left: 4 })
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: () => {}, push: () => {} }) }))
@@ -21,6 +23,12 @@ vi.mock('@/data/repositories', () => ({
   getMyLearners: async () => [{ id: 'kid', display_name: 'Ana', avatar_index: 0, age_group: '9-11' }],
   getReceivedInvites: async () => [], getSentInvites: async () => [],
 }))
+vi.mock('@/data/repositories/askMaths', () => ({
+  setAskMaths, forgetAskQuestions,
+  getAskSettings: async () => ({ enabled: true, daily_limit: 5, consent_version: 'v', consented_at: null }),
+  getAskQuestions: async () => [{ id: 'q', asked_at: '2026-11-01T00:00:00Z', question: 'x', outcome: 'not_maths', script: null }],
+}))
+vi.mock('@/features/askMaths/AskPlayer', () => ({ AskPlayer: () => null }))
 ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
 
 let host: HTMLElement, root: ReturnType<typeof createRoot>
@@ -39,8 +47,49 @@ async function typePin(v: string) {
   })
   await click('Confirm')
 }
+async function askCard() {
+  const { AskMathsCard } = await import('@/features/dashboard/AskMathsCard')
+  await show(createElement(AskMathsCard, { id: 'kid', name: 'Ana', band: '9-11', owner: true }))
+}
 beforeEach(() => { vi.clearAllMocks() })
 afterEach(() => { act(() => root.unmount()); host.remove() })
+
+describe('Ask Radlic settings ask for the PIN first', () => {
+  it('Turn off: nothing is saved on a wrong PIN or a Cancel, and it is saved on the right PIN', async () => {
+    await askCard()
+    expect(host.querySelector('input[aria-label="PIN"]'), 'the card opened behind a PIN').toBeNull()
+    await click('Turn off')
+    expect(setAskMaths).not.toHaveBeenCalled()
+    await typePin('1111')
+    expect(setAskMaths).not.toHaveBeenCalled()
+    await click('Cancel')
+    expect(host.querySelector('input[aria-label="PIN"]')).toBeNull()
+    expect(setAskMaths).not.toHaveBeenCalled()
+
+    await click('Turn off')
+    await typePin('4826')
+    expect(setAskMaths).toHaveBeenCalledTimes(1)
+    expect(setAskMaths).toHaveBeenCalledWith('kid', false, 5, null)
+  })
+
+  it('deleting the questions asks too', async () => {
+    await askCard()
+    await click('Delete all of')
+    expect(forgetAskQuestions).not.toHaveBeenCalled()
+    await typePin('4826')
+    expect(forgetAskQuestions).toHaveBeenCalledTimes(1)
+  })
+
+  it('a second change straight after a right PIN does not ask again', async () => {
+    await askCard()
+    await click('Delete all of')
+    await typePin('4826')
+    expect(verifyPin).toHaveBeenCalledTimes(1)
+    await click('Turn off')
+    expect(host.querySelector('input[aria-label="PIN"]')).toBeNull()
+    expect(setAskMaths).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('Game time asks for the PIN first', () => {
   it('the switch saves only after the right PIN, and the tab opens without one', async () => {

@@ -8,8 +8,8 @@ fixed yet are tracked outside this public repo; ask the founder.
 
 ## Where things stand (16 October 2026)
 
-- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). A
-  private beta with families the founder knows has run since 25 September. Radlic is free since 13 Nov (no paywall).
+- **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). Radlic is
+  launched (the beta is over, 21 Oct) and free since 13 Nov (no paywall).
 - **Live:** Grades 3–8 (36 modules, 282 topics: 9-screen lessons voiced in Josh, adaptive practice); KG, Grade 1
   and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
   the database gate; parent dashboard; points buy game time on `/play` (four games,
@@ -40,11 +40,11 @@ timings before `whisper-word-times.py`, or it keeps them. How a batch goes:
 
 ## Open — Draft PRs waiting for the founder
 
-- Game time "Paused" really pauses (2026-10-17, branch `game-time-real-pause`): migration 20261017120000 is a SECURITY
-  change (two new DEFINER functions). Before/after SQL: `docs/legal/sql/game-pause-before.sql`, `game-pause-proof.sql`.
+- **Ask Radlic** (`ask-maths`; askRadlor's side `kids-maths` in whiteboard-ai): in production from 13 Nov, **OFF** until
+  legal; free (no add-on). Next steps in [product/ask-maths.md](docs/product/ask-maths.md).
 
 The repo's migration chain builds a `get_parent_dashboard()` one comment different from production's (#323, no ⚠️).
-Admin data requires the authenticator code since #325 (16 Oct). None waiting.
+Admin data requires the authenticator code since #325 (16 Oct).
 
 - **Billing leftovers (13 Nov):** once `docs/legal/sql/radlic-free-check.sql` block 2 is 0, delete the webhook, the
   refund drain, `paidSeats`, `infra/stripe.ts` and the billing tables (one PR, a migration), and unpublish the refund page.
@@ -128,6 +128,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
   `diagnostic_*` tables stay (read by /admin's funnel and the export).
 - `noChildDataInAudioUrl.test.ts` fails with assertion errors (not timeouts) when the machine is loaded and passes
   alone — twice on 28 Sep. A timing assumption in the test, not yet found.
+- `eqRows.test.ts` (walks every lesson and 40 seeds per ladder level) times out at 20 s in a loaded full local run and
+  passes alone (8 Nov); a timeout, not an assertion.
 - The local vitest `int` hang: fix the loop itself — a per-test timeout cannot stop a synchronous loop.
 - Gates tied to file text, not values: the `coinShopPay` byte window, the `chapterDirections` grep, the
   `voiceBoundaryVerb` literal. `break-verdict.mjs` passes a `beforeEach` whose own `expect` fails. The walk harness's

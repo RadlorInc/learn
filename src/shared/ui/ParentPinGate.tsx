@@ -1,6 +1,6 @@
 'use client'
 /**
- * The parent PIN, asked before a change that matters: game time, a login, sharing, deleting (founder, 6–8 Nov 2026). The rest of the dashboard
+ * The parent PIN, asked before a change that matters: game time, Ask Radlic, a login, sharing, deleting (founder, 6–8 Nov 2026). The rest of the dashboard
  * opens without it; until then every /parent screen sat behind it (2026-09-17).
  *
  * ⚠️ A SCREEN GATE, NOT A DATA BOUNDARY (see the migration's threat model). It checks nothing itself: the server holds
@@ -111,7 +111,7 @@ export function ParentPinGate({ children, preview, onOpen, onCancel }: { childre
           {stage === 'create' ? `Set a ${teacher ? 'teacher' : 'parent'} PIN` : stage === 'error' ? 'Could not check the PIN' : `Enter your ${teacher ? 'teacher' : 'parent'} PIN`}
         </h1>
         <p style={{ margin: 0, fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.45 }}>
-          {stage === 'create' ? `Choose 4 digits. We ask for it before changes that matter, like game time, a login, sharing a child or deleting a profile, so a ${teacher ? 'student' : 'child'} on this device cannot make them.`
+          {stage === 'create' ? `Choose 4 digits. We ask for it before changes that matter, like game time, Ask Radlic, a login, sharing a child or deleting a profile, so a ${teacher ? 'student' : 'child'} on this device cannot make them.`
             : stage === 'error' ? errorWording(failKind, 'Check your connection and try again.')
             : 'Only a grown-up can change this setting.'}
         </p>

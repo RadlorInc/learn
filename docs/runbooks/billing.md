@@ -205,6 +205,10 @@ metadata — not applied"* and ignores it, for ever. The family pays and gets no
   **founder** sends the parent the hosted invoice link from the failed invoice in Stripe, where they can pay with
   another card. When it is paid, the subscription goes back to `active` and the app follows.
 
+## Ask Radlic
+
+Ask Radlic is free (13 Nov 2026): no add-on, no Stripe subscription.
+
 ## Open questions for the founder
 
 Not decided here. Until each is decided, the founder handles that case one by one.

@@ -52,7 +52,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 
 | Who | Routes |
 |---|---|
-| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) |
+| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) · `/ask` (Ask Radlic, Grades 3–8: a typed maths question answered as a drawn, spoken whiteboard lesson; off unless `NEXT_PUBLIC_ASK_MATHS=on`; [product/ask-maths.md](product/ask-maths.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
@@ -86,6 +86,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `/api/consent/school` | teacher | a teacher's school consent (§3) |
 | `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
 | `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
+| `POST /api/ask-maths` | the child, or the adult whose session they use (own token forwarded) | Ask Radlic ([product/ask-maths.md](product/ask-maths.md)); 404 unless `ASK_MATHS=on`. `ask_maths_begin` as the caller decides (403/409); the question goes from this server only to askRadlor's `/api/partner/maths` (`WHITEBOARD_URL`, Bearer `WHITEBOARD_PARTNER_SECRET`); its lesson is streamed on as server-sent events and `ask_maths_finish` (service role) settles the row, even after the tab closes (`after`) |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -102,11 +103,15 @@ if it imports outside `core/` or imports React.
 `public/sw.js` ignores non-GET, `/api/*` and Supabase requests except audio clips. Navigations are network-first,
 falling back to a cached copy or `/offline.html`; the only offline promise is that answers are kept (§7). Static
 chunks, images and fonts are cache-first. Clips, matched by content-hash name, go to `milo-assets-audio`, which
-survives releases and keeps the newest `AUDIO_CAP` (`swTakeover`, `swAudioCache`, `swPartialResponse`).
+survives releases and keeps the newest `AUDIO_CAP` (`swTakeover`, `swAudioCache`, `swPartialResponse`). Ask Radlic'
+`/ask-player/` and `/ask-tts/` go straight to the network (the voice worker keeps its own files).
 
 `next.config.ts` sends `X-Frame-Options: DENY`, `nosniff`, a strict `Referrer-Policy`, HSTS, a `Permissions-Policy`
 with camera, microphone and geolocation off, and a CSP defaulting to `'self'` that refuses framing and plugins and
-limits `connect-src`/`media-src` to the Supabase project and the audio origin. Fonts are self-hosted.
+limits `connect-src`/`media-src` to the Supabase project and the audio origin. Fonts are self-hosted. Ask Radlic overrides
+two paths, and `media-src` allows `blob:` everywhere (the lines are played from blob URLs; a /ask-only header never reached a client-side navigation): `/ask-player/*` (the sandboxed whiteboard player) may be framed by our own
+origins and connects nowhere (`askPlayerCsp`); `/ask-tts/*` (the voice worker) may run WebAssembly and fetch the model
+from Hugging Face (`ASK_TTS_CSP`). `/fonts/*` sends `Access-Control-Allow-Origin: *` for the sandboxed player.
 
 ## 3. Accounts and roles
 
@@ -145,7 +150,8 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   account without an authenticator signs in as before and is shown nothing about it. The database requires it:
   `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261016150000, applied only once every admin
   has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
-- **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time setting changes, and
+- **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time or Ask Radlic setting
+  changes, and
   before a child's login or details change, access is shared, a child or class is deleted, permission is withdrawn from
   the dashboard or the account is closed. The rest of `/parent` opens without it (founder, 6–8 Nov 2026). `parent_pins`
   has no client access, and DEFINER RPCs apply lockouts and a delayed reset. It guards screens, not data. *Forgot PIN*
@@ -167,7 +173,7 @@ and adds a table, or adds a view a client can read that runs as its owner.
 |---|---|
 | Accounts | `profiles`, `auth_events`, `admin_users`, `parent_pins` |
 | Children | `learners` (name, avatar, age band, class, chosen lessons, consent, attestation), `learner_access` (owner, viewer, self), `learner_invites` |
-| Learning | `lesson_progress` (per topic, or `c:<chapter>`: done, level, streak, mastered, practice position), `point_events`, `game_settings`, `game_saves` (the game's world, one row per child) |
+| Learning | `lesson_progress` (per topic, or `c:<chapter>`: done, level, streak, mastered, practice position), `point_events`, `game_settings`, `game_saves` (the game's world, one row per child), `ask_maths_settings` (the parent's switch and agreement), `ask_maths_questions` (30 days) |
 | Classes | `grades` (a class), `grade_chapters`, `teacher_plans`, `exercise_results`, `lesson_feedback` |
 | Consent, email | `parental_consents`, `consent_notice_versions`, `consent_b3_cancellations`, `email_suppressions`, `email_undeliverable` |
 | Telemetry, audit | `learner_events` (story chapters), `error_events`, `deletion_log` (ids and counts only) |
@@ -196,12 +202,12 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 
 - **Signed-in users:** `record_lesson_progress`, `record_module_practice`, `save_practice_run` (and `sync_batch`, INVOKER,
   which runs those three in order as the caller — the upload queue's one request, §7), `game_wallet`,
-  `set_game_settings`, `start_game_time` (resumes a paused game), `end_game_time` (stop early, unused time back), `pause_game_time` / `resume_game_time` (the game's Pause screen stops the paid clock); `delete_learner`, `delete_my_account`,
+  `set_game_settings`, `set_ask_maths` (owner), `ask_maths_begin`, `ask_maths_forget` (owner), `start_game_time` (resumes a paused game), `end_game_time` (stop early, unused time back), `pause_game_time` / `resume_game_time` (the game's Pause screen stops the paid clock); `delete_learner`, `delete_my_account`,
   `withdraw_my_consent`, `export_child_records`; the four parent-PIN RPCs; `reassign_learner_seat`,
   `is_chapter_entitled`, `entitled_chapters`; `admin_overview/learning/funnel/activation` (behind `admin_assert`: listed in `admin_users` and an `aal2` token).
 - **Service role only:** `consent_request`, `consent_request_at_signup`, `consent_record_request_sent`,
   `consent_lookup`, `consent_grant`, `consent_decline`, `consent_withdraw`, `consent_ok`, `consent_expire_stale`,
-  `materialize_seats`, `ops_digest`, `billing_cancellations_due`, `billing_cancellation_record`, `billing_seat_removals_due` and `billing_seat_removal_record` (INVOKER). **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
+  `materialize_seats`, `ops_digest`, `ask_maths_finish`, `billing_cancellations_due`, `billing_cancellation_record`, `billing_seat_removals_due` and `billing_seat_removal_record` (INVOKER). **No role:** `delete_child_data`, `consent_withdraw_account` (called by other
   functions).
 - **Policy helpers and triggers:** `is_learner_creator`, `can_self_grant_access`, and the triggers for new users, new
   learners, caps, the consent gate (§5), B3 cancellation and the plan-cancel queue (`billing_queue_cancel_on_delete`, §8).
@@ -212,7 +218,7 @@ These run as their owner, so RLS does not apply inside. Each pins `search_path`,
 `purge-old-learner-events` 03:17 (90 days, counted into `deletion_log`) · `prune-diagnostic-items` 03:22 (90 days) ·
 `prune-error-events` 03:27 (90 days) · `prune-diagnostic-leads` 03:32 (24 months) · `prune-unconfirmed-users` 03:37
 (unconfirmed after 3 days, with no children and no consent on record) · `expire-parental-consents`
-03:41 (unanswered requests after 7 days). The promises are in
+03:41 (unanswered requests after 7 days) · `prune-ask-maths-questions` 03:52 (30 days, counted into `deletion_log`). The promises are in
 [legal/04-data-retention-policy.md](legal/04-data-retention-policy.md); `legalDocs.test.ts` checks the policy's
 period against its job.
 
@@ -306,6 +312,7 @@ deletion, and the daily cron drain it.
 | Child login | `auth.users`, `learner_access`, `profiles` | `/api/child-login` | `childLogin`, `rosterRollbackDelete` |
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |
+| Ask Radlic | `ask_maths_settings`, `ask_maths_questions` (30 days) | `set_ask_maths`; `/api/ask-maths` → `ask_maths_begin` / `ask_maths_finish`; `ask_maths_forget` ([product/ask-maths.md](product/ask-maths.md)) | `askMathsDb`, `askMathsRoute` |
 | Export | every child table, crash records, access list | `export_child_records` + reads | `exportCompleteness`, `withdrawExportE2e` |
 | Delete a child | `learners` cascade, child login, `deletion_log`; on a paid plan the freed seat removed and refunded, or the plan for the last child (§8) | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel`, `closeRefund` |
 | Close account | all children, the account; consent kept; the plan cancelled and refunded (§8) | `delete_my_account` | `accountDeletion`, `keepConsentRecord`, `closeRefund` |
@@ -341,6 +348,8 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 | `error_events` | `errorSink` (service role): crashes; caught 5xx in sign-up, consent, unsubscribe and child-login routes (`sinkHandled`: route, status and code only, no message, no learner id); Resend bounces and complaints (type only) | `export_child_records`, `ops_digest` counts |
 | `parental_consents` | consent RPCs (service role) | the parent, consent routes |
 | `auth.users`, `profiles` (child) | `/api/child-login` | Supabase Auth |
+| `ask_maths_questions` | `ask_maths_begin` (the child's family), `ask_maths_finish` (service role) | the child's family; deleted after 30 days or by `ask_maths_forget` |
+| `ask_maths_settings` | `set_ask_maths` (the owner) | the child's family (the home's button) |
 | `deletion_log` | deletion functions, retention jobs | service role |
 | Device storage | progress copies, queues, preferences | that device ([legal/08-cookie-and-tracking-notice.md](legal/08-cookie-and-tracking-notice.md)) |
 
@@ -363,6 +372,9 @@ one PR with the billing tables:
   happens to it.
 - `src/infra/stripe.ts` pins the key's mode to the deployment: Vercel Production accepts only `sk_live_`, everywhere
   else only `sk_test_`.
+- **Ask Radlic is free too** (13 Nov; [product/ask-maths.md](product/ask-maths.md)): no add-on, checkout or
+  `addon_subscriptions`. `ask_maths_begin` lets a child ask while the owner's switch is on, up to the daily limit
+  (default 5, 1–20).
 
 ## 9. External services
 
@@ -374,9 +386,12 @@ one PR with the billing tables:
 | Stripe | checkout | account id, the parent's email or customer id, seat count, renewal-consent time; nothing about a child |
 | Google | adult sign-in via Supabase Auth | the adult's Google sign-in |
 | GitHub | code, CI, deploys, backups | the source; an encrypted nightly production dump (30-day artifact) |
+| askRadlor (Radlor Inc.'s whiteboard service), and through it Anthropic | Ask Radlic, **only once it is switched on** ([product/ask-maths.md](product/ask-maths.md)) | a child's typed maths question and the grade band (3–5 or 6–8), server to server; nothing else about the child or the family |
+| Hugging Face | Ask Radlic's voice model files, **only once it is switched on** | the file requests from the child's device (IP, user agent); no text |
 
 Supabase Auth's own emails (password reset, invites) go through its dashboard SMTP setting, outside this repo. The
-published list is [legal/07-subprocessors.md](legal/07-subprocessors.md).
+published list is [legal/07-subprocessors.md](legal/07-subprocessors.md) — which does not yet name the two Ask Radlic rows: they
+are added there, after legal review, before Ask Radlic is switched on.
 
 ## 10. Checks that hold the architecture
 
