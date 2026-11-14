@@ -49,7 +49,7 @@ describe('the child\'s screen when their answers wait on the device', () => {
   it('when nobody could be emailed it says to ask a grown-up — and never claims a message went', async () => {
     const { host } = await render('none', '/game')
     const text = host.querySelector('[role="dialog"]')?.textContent ?? ''
-    expect(text).toContain('Please ask them to open Radlic.')
+    expect(text).toContain('Please ask them to open Radlor.')
     expect(text).not.toContain('We have sent them a message')
     expect(text).not.toMatch(FORBIDDEN)
   })

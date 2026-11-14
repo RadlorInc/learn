@@ -177,7 +177,7 @@ export const ES: Record<string, string> = {
   'Open': 'Abrir',
   'One thing to try this week': 'Algo para probar esta semana',
   'Shown on your first visit each week. Turn it off in Account → Reminders.': 'Aparece en su primera visita de cada semana. Puede desactivarlo en Cuenta → Recordatorios.',
-  'Welcome to Radlic!': '¡Bienvenido a Radlic!',
+  'Welcome to Radlor!': '¡Bienvenido a Radlor!',
   'Add your first learner and we’ll find where to start.': 'Agregue a su primer estudiante y encontraremos por dónde empezar.',
   '+ Add your first learner': '+ Agregar a su primer estudiante',
   'Please enter a name (at least 2 characters)': 'Escriba un nombre (al menos 2 caracteres)',
@@ -487,7 +487,7 @@ export const ES: Record<string, string> = {
 
   // ── A child's data (shared/ui/DataRights.tsx) ──
   '{name}’s data': 'Datos de {name}',
-  'You can take a copy of everything Radlic has stored, or delete it for good. Deleting cannot be undone.': 'Puede descargar una copia de todo lo que Radlic ha guardado, o eliminarlo para siempre. Eliminar no se puede deshacer.',
+  'You can take a copy of everything Radlor has stored, or delete it for good. Deleting cannot be undone.': 'Puede descargar una copia de todo lo que Radlor ha guardado, o eliminarlo para siempre. Eliminar no se puede deshacer.',
   'Gathering': 'Reuniendo',
   'Downloaded': 'Descargado',
   'Download a copy': 'Descargar una copia',
@@ -560,15 +560,15 @@ export const ES: Record<string, string> = {
   '{n} or more characters': '{n} caracteres o más',
   'Both passwords match': 'Las dos contraseñas coinciden',
   'Set password and continue': 'Crear contraseña y continuar',
-  // Ask Radlic (2026-10-21, docs/product/ask-maths.md)
-  'Ask Radlic': 'Ask Radlic',
-  'Ask Radlic is for Grades 3–8.': 'Ask Radlic es para los grados 3 a 8.',
+  // Ask Radlor (2026-10-21, docs/product/ask-maths.md)
+  'Ask Radlor': 'Ask Radlor',
+  'Ask Radlor is for Grades 3–8.': 'Ask Radlor es para los grados 3 a 8.',
   'Could not change it. Try again.': 'No se pudo cambiar. Inténtelo de nuevo.',
   'Could not delete them. Try again.': 'No se pudieron eliminar. Inténtelo de nuevo.',
   'Deleted {n} questions.': 'Se eliminaron {n} preguntas.',
   '{name} types a maths question and watches a whiteboard lesson drawn and spoken for it.': '{name} escribe una pregunta de matemáticas y ve una lección dibujada y narrada en una pizarra.',
-  'Ask Radlic is on for {name}.': 'Ask Radlic está activado para {name}.',
-  'Ask Radlic is off for {name}.': 'Ask Radlic está desactivado para {name}.',
+  'Ask Radlor is on for {name}.': 'Ask Radlor está activado para {name}.',
+  'Ask Radlor is off for {name}.': 'Ask Radlor está desactivado para {name}.',
   'Questions a day': 'Preguntas al día',
   'Turn off': 'Desactivar',
   'What {name} asked': 'Lo que preguntó {name}',

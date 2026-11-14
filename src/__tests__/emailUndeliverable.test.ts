@@ -82,7 +82,7 @@ async function deliver(type: string, to: string[], bounceType?: string) {
   const body = JSON.stringify({
     type, created_at: '2026-10-06T10:00:00.000Z',
     data: {
-      email_id: '56761188-7520-42d8-8898-ff6fc54ce618', from: 'Radlic <hello@radlic.com>', to, subject: 'Please confirm',
+      email_id: '56761188-7520-42d8-8898-ff6fc54ce618', from: 'Radlor <hello@radlic.com>', to, subject: 'Please confirm',
       ...(bounceType ? { bounce: { message: 'mailbox does not exist', subType: 'General', type: bounceType } } : {}),
     },
   })

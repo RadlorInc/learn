@@ -41,7 +41,7 @@ sign-ups and consent emails (rows tagged `[auth/signup] failed`, `[consent/reque
 
    | Line | Healthy | Bad value means |
    |---|---|---|
-   | `app` | equals live `VERSION` (`curl -s https://radlic.com/sw.js \| grep -m1 VERSION`) | Lower means a stale shell: the family should fully close and reopen the app. `none` means no service worker |
+   | `app` | equals live `VERSION` (`curl -s https://app.radlor.com/sw.js \| grep -m1 VERSION`) | Lower means a stale shell: the family should fully close and reopen the app. `none` means no service worker |
    | `storage` | `idb`, then quota and `persistent` | `local` means IndexedDB was blocked (private browsing, strict settings, full disk). This is the usual cause of "progress vanished". `not persistent` with used near the quota: the browser may clear the site's data under pressure |
    | `unsynced` | `0 session(s)` | Above 0, the work is **on the device** and not yet uploaded. Never tell them it is lost. With `online`, sync is failing, so read `sync err`. The app retries on its own every 30 s, backing off to every 10 min, while the page is open |
    | `last sent` | a recent time | When an upload last went through from this device. `never on this device` with work done means nothing has ever left it |
@@ -85,7 +85,7 @@ A password **really** too short never reaches the server: the form checks `MIN_P
 or `[resend] email.complained`): the type only, never the address. Which address bounced is in Resend → Emails.
 
 To switch it on (**founder**, once):
-1. Resend → Webhooks → Add endpoint: `https://radlic.com/api/email/resend-webhook`, events `email.bounced` and
+1. Resend → Webhooks → Add endpoint: `https://app.radlor.com/api/email/resend-webhook`, events `email.bounced` and
    `email.complained`.
 2. Copy its signing secret (`whsec_…`) into Vercel Production as `RESEND_WEBHOOK_SECRET`, then redeploy.
 3. In Resend, send the endpoint a test event: it should answer 200. Until the secret is set the route answers 503

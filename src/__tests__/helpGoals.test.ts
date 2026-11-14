@@ -45,7 +45,7 @@ describe('Help walkthroughs', () => {
     expect(titles(false)).toEqual([
       'Set up a new child', 'Let my child start learning here', 'See how my child is doing', 'Change what my child learns',
       'Give homework with a due date', 'Give my child a login, or a new password', 'Set game time', 'Share with my partner',
-      'Download or delete my child’s data', 'Choose which reminders I get', 'Close my account'])   // no plan step: Radlic is free (13 Nov 2026)
+      'Download or delete my child’s data', 'Choose which reminders I get', 'Close my account'])   // no plan step: Radlor is free (13 Nov 2026)
     expect(titles(true)).toEqual([
       'Set up a new class', 'Add more students', 'Help a student who can’t sign in', 'Look at one student',
       'Choose what my class learns', 'Give my class a test', 'Find who is stuck', 'Rename or delete a class',

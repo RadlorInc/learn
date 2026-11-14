@@ -8,7 +8,7 @@ below matter. Never promise a time we do not control.
 
 ## First five minutes (founder; the agent can do the `curl` checks)
 
-1. `curl -s https://radlic.com/api/health` — `{"status":"ok"…}` means Vercel is serving the app. It does **not**
+1. `curl -s https://app.radlor.com/api/health` — `{"status":"ok"…}` means Vercel is serving the app. It does **not**
    touch the database, so "ok" says nothing about Supabase. No answer or a 5xx → Vercel (below).
 2. The status pages: status.supabase.com, vercel-status.com, resend-status.com, status.stripe.com. Note what they say
    and when — the incident log below needs it.
@@ -31,14 +31,14 @@ down, nothing on our side shows anything.
 2. Vercel → Deployments → the current Production deployment → ⋯ → **Redeploy**. A variable reaches only a new
    deployment ([deploy.md](deploy.md): variables bind at deploy time), so this step is what turns it on. It builds the
    same commit again; the build does not need Supabase (`nightly-e2e` builds production against a placeholder one).
-3. When that deployment is READY: `curl -s https://radlic.com/api/notice` → `{"notice":{"preset":true}}` for `on`, or
+3. When that deployment is READY: `curl -s https://app.radlor.com/api/notice` → `{"notice":{"preset":true}}` for `on`, or
    `{"notice":{"text":"…"}}`.
 
 **Turn it off.** Delete the variable (or empty it), Redeploy the same way, then the same `curl` → `{"notice":null}`.
 
 **How long, and who sees it.** As long as the redeploy's build takes (not measured for a dashboard redeploy), then
 every page load. The page asks `/api/notice` once per full load, and `sw.js` never caches `/api/*`, so an installed app
-or a device on a cached shell sees it too, as long as it reaches radlic.com. A page already open shows it on its next
+or a device on a cached shell sees it too, as long as it reaches app.radlor.com. A page already open shows it on its next
 full load, not on an in-app move between pages. A device that is offline asks nothing and shows nothing (the offline
 bar shows instead). The × hides it until the next load. It sits in the page's flow at the top, so a full-screen KG–2
 chapter or the game draws over it: a child sees it on `/modules` and between chapters, never over a stage or an
@@ -67,7 +67,7 @@ reports, logs). `/api/health` stays "ok" — that is expected.
 
 ## Vercel down (the site does not load)
 
-**What parents see.** radlic.com does not load, or every page and API errors. Nothing works, including sign-in, the
+**What parents see.** app.radlor.com does not load, or every page and API errors. Nothing works, including sign-in, the
 consent links in emails and the Stripe webhook (Stripe retries; see below). Whether an installed app opens its cached
 shell offline during a Vercel outage was not measured.
 
@@ -127,11 +127,11 @@ shows what the database holds.
 Reply to each parent who writes in (the founder sends; [support.md](support.md) reply shape). No status page exists,
 so do not link one. Templates — fill the brackets, keep it short:
 
-> **Something is down now.** Thanks for letting us know. Radlic is having a problem right now because a service we
+> **Something is down now.** Thanks for letting us know. Radlor is having a problem right now because a service we
 > rely on is down [for sign-in / for email]. Nothing your child has done is lost: work done on the device is saved
 > there and uploads by itself when we are back. We will write again when it is fixed.
 
-> **It is fixed.** Radlic is working again since [time, time zone]. [If sign-up: Please sign up again with the same
+> **It is fixed.** Radlor is working again since [time, time zone]. [If sign-up: Please sign up again with the same
 > email address; the confirmation email will arrive this time.] [If a payment: Your payment went through on [date];
 > your plan now shows it.] Thank you for your patience.
 

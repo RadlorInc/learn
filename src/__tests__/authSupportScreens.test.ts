@@ -130,7 +130,7 @@ describe('/help', () => {
     await act(async () => { open!.click() }); await settle()
     const mail = [...m.host.querySelectorAll('a')].find(a => a.textContent === 'Email support')?.getAttribute('href') ?? ''
     expect(mail.startsWith('mailto:support@radlor.com?')).toBe(true)
-    expect(decodeURIComponent(mail)).toContain('--- Radlic diagnostics (please keep this in your email) ---')
+    expect(decodeURIComponent(mail)).toContain('--- Radlor diagnostics (please keep this in your email) ---')
     await m.done()
   })
 })

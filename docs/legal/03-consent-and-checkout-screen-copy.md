@@ -66,15 +66,15 @@ Parent creates account
 **Auto-renewal disclosure block — must appear on the same screen, above the pay button, in the same size and colour as the surrounding text, not behind a link or a tooltip:**
 
 > **Your subscription renews automatically.**
-> - Plan: Radlic Family
+> - Plan: Radlor Family
 > - You will be charged **[PLACEHOLDER — amount] today**.
 > - After that, you will be charged **[PLACEHOLDER — amount] every [PLACEHOLDER — month / 12 months]** until you cancel.
 > - You can cancel any time at **Account → Plan & billing** by emailing support@radlor.com or by calling 1-888-812-9373. Cancelling stops all future charges.
-> - Full terms: [Refund and Cancellation Policy](https://radlic.com/legal/refunds)
+> - Full terms: [Refund and Cancellation Policy](https://app.radlor.com/legal/refunds)
 
 **Checkbox — unticked by default, and the button must stay disabled until it is ticked:**
 
-> ☐ I am the parent or legal guardian of the child I am setting up. I have read the [Privacy Policy](https://radlic.com/legal/privacy) and [Terms of Service](https://radlic.com/legal/terms), I give permission for the information described to be collected from my child, and I agree to the automatic renewal terms shown above.
+> ☐ I am the parent or legal guardian of the child I am setting up. I have read the [Privacy Policy](https://app.radlor.com/legal/privacy) and [Terms of Service](https://app.radlor.com/legal/terms), I give permission for the information described to be collected from my child, and I agree to the automatic renewal terms shown above.
 
 **Button:** `Subscribe — [PLACEHOLDER — amount] today`
 
@@ -86,7 +86,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### A3. Acknowledgement email — sent immediately
 
-**Subject:** `Your Radlic subscription — confirmation and how to cancel`
+**Subject:** `Your Radlor subscription — confirmation and how to cancel`
 
 **Body:**
 
@@ -94,14 +94,14 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > Your subscription is active. Here are the details, for your records.
 >
-> **Plan:** Radlic Family
+> **Plan:** Radlor Family
 > **Charged today:** [PLACEHOLDER — amount]
 > **Renews:** automatically, [PLACEHOLDER — every month / every 12 months], on [PLACEHOLDER — date]
 > **Renewal amount:** [PLACEHOLDER — amount]
 >
 > **How to cancel:** sign in and go to **Account → Plan & billing → See plans → Cancel subscription**, or reply to this email. Cancelling stops all future charges. Your access continues until the end of the period you have paid for.
 >
-> **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: https://radlic.com/legal/parent-rights. You can see everything we hold, delete it, or withdraw permission at any time.
+> **You also gave permission for us to collect information from your child.** Here is what that covers and how to change it: https://app.radlor.com/legal/parent-rights. You can see everything we hold, delete it, or withdraw permission at any time.
 >
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 
@@ -113,13 +113,13 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B1. Consent request email — sent when the parent asks to start
 
-**Subject:** `Please confirm: permission for your children to use Radlic`
+**Subject:** `Please confirm: permission for your children to use Radlor`
 
 **Body:**
 
 > Hi {name},
 >
-> Thanks for signing up with Radlic.
+> Thanks for signing up with Radlor.
 >
 > Before your children can use it, US law requires your permission.
 >
@@ -131,7 +131,7 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 >
 > We never sell your child's information or use it for advertising.
 >
-> Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
+> Here's our detailed Privacy Policy: [Privacy Policy](https://app.radlor.com/legal/privacy)
 >
 > **[ I’ve Read and I Agree to the Privacy Policy. ]** (a button; it opens the page below, where the box is)
 >
@@ -151,11 +151,11 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B0t. Sign-up email for a teacher — confirms the address only
 
-**Subject:** `Confirm your email for Radlic`
+**Subject:** `Confirm your email for Radlor`
 
 **Body:**
 
-> Thanks for signing up with Radlic.
+> Thanks for signing up with Radlor.
 >
 > Please confirm your email address.
 >
@@ -167,11 +167,11 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 ### B1b. The page the tick link opens — ticking the box there gives the permission
 
-**Heading:** `Please confirm: permission for your children to use Radlic`
+**Heading:** `Please confirm: permission for your children to use Radlor`
 
 > This one permission covers every child you add to this account, now or later. Each time you add a child, we ask you to confirm in the app that you are that child's parent or legal guardian.
 >
-> Here's our detailed Privacy Policy: [Privacy Policy](https://radlic.com/legal/privacy)
+> Here's our detailed Privacy Policy: [Privacy Policy](https://app.radlor.com/legal/privacy)
 
 **Checkbox (unticked):** `I’ve Read and I Agree to the Privacy Policy.` (ticking it records the permission; there is no separate button)
 
@@ -197,13 +197,13 @@ Record: the consent, its timestamp, the method (`payment_card`), the plan, the a
 
 > Hi,
 >
-> Yesterday you gave permission for your children to use Radlic, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.
+> Yesterday you gave permission for your children to use Radlor, and for us to collect each child's first name, grade band, and maths progress. It covers every child you add to this account.
 >
 > **If that was you, you don't need to do anything.**
 >
 > **If it wasn't you, click here to withdraw permission.** We will immediately stop collecting and delete everything we hold about every child on the account. Your account stays open.
 >
-> You can withdraw permission at any time in future, too: https://radlic.com/legal/parent-rights.
+> You can withdraw permission at any time in future, too: https://app.radlor.com/legal/parent-rights.
 >
 > Radlor Inc., 254 Chapman Rd, Ste 208 #28608, Newark, DE 19702
 

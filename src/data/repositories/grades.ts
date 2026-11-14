@@ -82,7 +82,7 @@ export async function deleteClass(id: string): Promise<boolean> {
   return true
 }
 
-/** A child in a class sees the class's lessons and its exercises. Every teacher gets both since Radlic went free
+/** A child in a class sees the class's lessons and its exercises. Every teacher gets both since Radlor went free
  *  (13 Nov 2026); until then a free teacher's students got the exercises only (`teacher_plans`, no longer read). */
 export type ClassMode = { mode: 'lessons'; classId?: string; className?: string; exercises?: Exercise[] }
 

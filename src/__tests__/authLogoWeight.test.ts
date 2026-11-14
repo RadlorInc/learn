@@ -1,5 +1,5 @@
 /**
- * PERF-05 (fbf193280:docs/review/PERFORMANCE.md). The sign-in page's LCP element is the Radlic logo, drawn
+ * PERF-05 (fbf193280:docs/review/PERFORMANCE.md). The sign-in page's LCP element is the Radlor logo, drawn
  * 56 px tall (`/auth`; the dashboard draws it 30 and 24 px). It shipped as a 105,620-byte truecolor
  * PNG — ~77 KB more than it needs on the critical path of a 1.44 Mbit/s phone.
  *
@@ -11,10 +11,10 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
-const FILE = join(__dirname, '../../public/brand/radlic-logo-640.png')
+const FILE = join(__dirname, '../../public/brand/radlor-logo-640.png')
 const MAX_BYTES = 40 * 1024
 const SHOWN_H = 56                              // /auth: style height 56, width auto
-const SHOWN_W = Math.ceil(SHOWN_H * 640 / 167)  // 215 px at the logo's 640:167 ratio
+const SHOWN_W = Math.ceil(SHOWN_H * 640 / 219)  // 164 px at the Radlor logo's 640:219 ratio (14 Nov)
 
 describe('the sign-in logo', () => {
   it(`weighs at most ${MAX_BYTES} bytes`, () => {

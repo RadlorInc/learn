@@ -7,7 +7,7 @@ request description, or in git history (every older doc was deleted on 28 Septem
 
 | doc | what it is | read it when |
 |---|---|---|
-| [README](../README.md) | what Radlic is, how to run it and its tests | you are new here |
+| [README](../README.md) | what Radlor is, how to run it and its tests | you are new here |
 | [handoff](../handoff.md) | where the work stands today and what is still open | at the start of every session |
 | [CLAUDE.md](../CLAUDE.md) | the rules for anyone changing the repo, person or agent | before you change anything |
 | [decisions](decisions.md) | one line per big decision: date, what, why, pull request | you wonder "why is it like this?" |
@@ -40,13 +40,13 @@ Step-by-step, and each step says whether the founder or the agent does it.
 | [building lessons](product/building-lessons.md) | how a Grade 3–8 module or a KG–2 chapter is written, approved, built and checked |
 | [voice](product/voice.md) | the recorded lesson voice: how lines are written and rendered |
 | [points](product/points.md) | how a child earns points and game time |
-| [ask maths](product/ask-maths.md) | Ask Radlic: a child's typed question answered as a drawn, spoken whiteboard lesson (built, off until legal sign-off) |
+| [ask maths](product/ask-maths.md) | Ask Radlor: a child's typed question answered as a drawn, spoken whiteboard lesson (built, off until legal sign-off) |
 | [content backlog](product/content-backlog.md) | lessons and clips still to write, fix or check |
 
 ## Legal — `docs/legal/`
 
 Drafted for a US attorney to review; none of it is legal advice. The six pages marked *live* are shown at
-`radlic.com/legal/…` as beta versions, rendered straight from these files, so editing one edits the site.
+`app.radlor.com/legal/…` as beta versions, rendered straight from these files, so editing one edits the site.
 Start with the [legal README](legal/README.md).
 
 | doc | what it is |

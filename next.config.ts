@@ -167,7 +167,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['@supabase/supabase-js'],
   },
 
-  // The old domain (adaptivelearn.radlor.com) → radlic.com, once SITE_URL has moved. See `oldDomainRedirects`.
+  // The old domains (adaptivelearn.radlor.com, radlic.com) → SITE_URL, once it has moved. See `oldDomainRedirects`.
   async redirects() {
     return [
       ...oldDomainRedirects(),

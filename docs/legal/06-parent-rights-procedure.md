@@ -9,7 +9,7 @@
 
 **Effective:** 25 September 2026
 
-If your child uses Radlic, you are in control of their information. You have four rights, and you can use any of them at any time, for free.
+If your child uses Radlor, you are in control of their information. You have four rights, and you can use any of them at any time, for free.
 
 ### 1. See what we hold
 

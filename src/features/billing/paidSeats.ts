@@ -1,6 +1,6 @@
 'use client'
 /**
- * Radlic is free since 13 Nov 2026. A family that subscribed before then keeps its Stripe subscription until the
+ * Radlor is free since 13 Nov 2026. A family that subscribed before then keeps its Stripe subscription until the
  * founder cancels it in Stripe; until then, deleting a child or withdrawing says what happens to that plan (refund).
  * Delete this, the webhook, the cancel route and closeRefund once Stripe shows no subscription left.
  */

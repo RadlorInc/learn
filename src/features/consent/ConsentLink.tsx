@@ -75,7 +75,7 @@ export function ConsentLink({ mode }: { mode: 'respond' | 'withdraw' }) {
       </div>
     )
   } else if (mode === 'withdraw' && status === 'granted' && scope === 'account') {
-    // Signed out, so whether this family still has a plan from before Radlic went free (13 Nov 2026) is unknown: the
+    // Signed out, so whether this family still has a plan from before Radlor went free (13 Nov 2026) is unknown: the
     // line worded "if you have a paid plan" shows. Drop it once no subscription is left in Stripe.
     content = <WithdrawAll lang={lang} busy={busy} paid={undefined} onConfirm={() => act('withdraw')} onKeep={() => setStatus('kept')} />
   } else if (mode === 'withdraw' && status === 'granted') {

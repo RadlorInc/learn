@@ -1,6 +1,6 @@
 # Runbook: billing support
 
-> **Radlic is free since 13 Nov 2026** (architecture §8): nobody can buy a plan any more. This runbook is for the plans
+> **Radlor is free since 13 Nov 2026** (architecture §8): nobody can buy a plan any more. This runbook is for the plans
 > bought before then, until every one is cancelled in Stripe (`docs/legal/sql/radlic-free-check.sql`).
 
 **Use this when:** a parent writes about money: a double charge, a refund, a dispute, a cancellation by email or post,
@@ -117,7 +117,7 @@ business days.
 1. SQL editor, read-only: `select stripe_subscription_id, queued_because, queued_at, result from public.billing_cancellations where result is null or result like 'error:%';`
    Paste nothing from it into the repo or an issue (Stripe ids). `result` says what failed.
 2. A passing Stripe outage: nothing to do; it settles on the next drain (or run one now:
-   `curl -s -X POST https://radlic.com/api/consent/cancel-second-notice`).
+   `curl -s -X POST https://app.radlor.com/api/consent/cancel-second-notice`).
 3. Otherwise do it by hand in Stripe: the subscription → **Cancel** → **immediately**; then each payment of the current
    period → **Refund** the amount the rule above gives, counted from `queued_at` (the agent works it out from the
    dates and amounts you paste). Then email the parent the amount (the Stripe customer's address).
@@ -146,7 +146,7 @@ that child's use, so both are handled the same (migration 20261008010000).
 - **At Stripe:** the quantity goes down by one with `proration_behavior: 'none'` (we refund; Stripe does not also
   credit), key `seat-remove-<sub>-<row id>`, and a metadata marker `rs_<row id>` so a retry never lowers it twice; the
   refund is keyed `seat-refund-<sub>-<row id>-<invoice>` and tagged `why: seat_removed`, `seat_paid`. The parent gets
-  "A seat was removed from your Radlic plan" with the amount. A later close refunds only what the seat refunds left.
+  "A seat was removed from your Radlor plan" with the amount. A later close refunds only what the seat refunds left.
 - **Failures** are as for a close: the withdrawal is never blocked; `result` is `error: …`, retried by every drain, and
   counted in the digest's `billing_cancellations_owed`. A close or withdraw-all queued before the seat was settled
   supersedes it (`done: the whole plan was cancelled and refunded instead`).
@@ -177,7 +177,7 @@ that already carries a refund is refunded nothing more, so the parent would get 
      app ([support.md](support.md) diagnostic block). If seats show a `kid` of null in block 2, a seat is unused:
      the parent assigns it from the dashboard.
    - No row in block 1, and a row in block 4 for their subscription → the webhook received it and did not finish.
-     **Founder**: in the Stripe dashboard, the radlic.com webhook endpoint → the event → **Resend**. Run block 1 again.
+     **Founder**: in the Stripe dashboard, the app.radlor.com webhook endpoint → the event → **Resend**. Run block 1 again.
    - No row anywhere, and block 5 says *"signature did not verify"* or *"not configured"* → the webhook is refusing
      every delivery. Fix the named Vercel setting (`STRIPE_WEBHOOK_SECRET` must equal the endpoint's signing secret),
      then resend the failed events from the endpoint's page. Every family that paid in that window is affected.
@@ -205,9 +205,9 @@ metadata — not applied"* and ignores it, for ever. The family pays and gets no
   **founder** sends the parent the hosted invoice link from the failed invoice in Stripe, where they can pay with
   another card. When it is paid, the subscription goes back to `active` and the app follows.
 
-## Ask Radlic
+## Ask Radlor
 
-Ask Radlic is free (13 Nov 2026): no add-on, no Stripe subscription.
+Ask Radlor is free (13 Nov 2026): no add-on, no Stripe subscription.
 
 ## Open questions for the founder
 

@@ -1,9 +1,9 @@
 /**
- * radlic.com/ sends a signed-out visitor to the landing page on radlor.com, and nobody else anywhere (founder's
+ * app.radlor.com/ sends a signed-out visitor to the landing page on radlor.com, and nobody else anywhere (founder's
  * decision, 2026-09-25). Two halves, and both are needed:
  *   · `/` itself: signed out → radlor.com/radlic; signed in → home; could not tell → stays; the installed app → /auth.
  *   · every OTHER route: nothing sends anyone to radlor.com — no other page mounts the redirect, and no
- *     next.config rule touches radlic.com at all.
+ *     next.config rule touches app.radlor.com at all.
  * The browser half (a real page load on each route) is e2e/landing-redirect.spec.ts.
  *
  * ⚠️ The landing address is written out here by hand, never imported from site.ts.
@@ -40,7 +40,7 @@ async function visitRoot() {
   root.unmount()
 }
 
-describe('radlic.com/', () => {
+describe('app.radlor.com/', () => {
   it('signed out → the landing page on radlor.com, and nowhere in the app', async () => {
     await visitRoot()
     expect(w.left).toEqual([LANDING])
@@ -90,12 +90,12 @@ describe('every other route is untouched', () => {
     expect(leaves).toEqual(['ResumeSignedIn.tsx'])
   })
 
-  it("no next.config rule applies to radlic.com's / (only the pre-rename host, and the two retired routes)", async () => {
+  it("no next.config rule applies to app.radlor.com's / (only the old hosts, and the two retired routes)", async () => {
     const { default: config } = await import('../../next.config')
     const rules = (await config.redirects?.()) ?? []
     const bare = rules.filter(r => !r.has)
     // N17 (2026-09-26): /menu and /demo were deleted and redirect on every host. Nothing else may.
-    expect(bare.map(r => r.source).sort(), 'a redirect with no host condition applies to radlic.com').toEqual(['/demo', '/menu'])
-    for (const r of rules.filter(r => r.has)) expect(r.has).toEqual([{ type: 'host', value: 'adaptivelearn.radlor.com' }])
+    expect(bare.map(r => r.source).sort(), 'a redirect with no host condition applies to app.radlor.com').toEqual(['/demo', '/menu'])
+    for (const r of rules.filter(r => r.has)) expect(['adaptivelearn.radlor.com', 'radlic.com', 'www.radlic.com']).toContain((r.has as { type: string; value: string }[])[0].value)
   })
 })

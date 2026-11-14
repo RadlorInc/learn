@@ -95,9 +95,9 @@ The public trace is only: the fix's PR (once live), a line in 05 §8, and the co
 
 ## Draft notice to parents — DRAFT, NOT FOR SENDING WITHOUT ATTORNEY REVIEW
 
-> **Subject: About your Radlic account — a security problem we found on [date]**
+> **Subject: About your Radlor account — a security problem we found on [date]**
 >
-> We are writing to tell you about a problem that affected your Radlic account [and your child's profile].
+> We are writing to tell you about a problem that affected your Radlor account [and your child's profile].
 >
 > **What happened.** On [date], we found that [plain description: e.g. "a setting allowed some account information
 > to be read by people who should not have seen it"]. It lasted from [date] to [date]. We fixed it on [date].
@@ -107,7 +107,7 @@ The public trace is only: the fix's PR (once live), a line in 05 §8, and the co
 >
 > **What we have done.** [Fixed the cause; changed keys and passwords; told [authority], if required.]
 >
-> **What you can do.** [Only real, specific steps: e.g. "change your Radlic password", "watch for emails pretending to
+> **What you can do.** [Only real, specific steps: e.g. "change your Radlor password", "watch for emails pretending to
 > be from us — we will never ask for your password".] You can also delete your child's information at any time:
 > [steps from the parent-rights page].
 >

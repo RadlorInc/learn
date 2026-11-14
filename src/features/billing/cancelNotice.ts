@@ -20,7 +20,7 @@ export const endsLine = (iso: string | null): string => {
 
 /** docs/legal/09-email-compliance.md §5 — the standard transactional footer, verbatim. */
 export const TRANSACTIONAL_FOOTER = [
-  'This is a service message about your Radlic account.',
+  'This is a service message about your Radlor account.',
   '',
   'Radlor Inc.',
   '254 Chapman Rd, Ste 208 #28608, Newark, DE 19702',
@@ -29,12 +29,12 @@ export const TRANSACTIONAL_FOOTER = [
 
 export function renderCancelled(endsIso: string | null): { subject: string; html: string; text: string } {
   const lines = [
-    'Your Radlic subscription is cancelled.',
+    'Your Radlor subscription is cancelled.',
     endsLine(endsIso),
     'Your account and your children’s profiles stay open. Cancelling does not delete anything; to delete your data, use Close your account in the app or write to support@radlor.com.',
-    'Cancelling does not issue a refund by itself. Our Refund and Cancellation Policy explains when one is available: https://radlic.com/legal/refunds',
+    'Cancelling does not issue a refund by itself. Our Refund and Cancellation Policy explains when one is available: https://app.radlor.com/legal/refunds',
   ]
-  return transactionalEmail('Your Radlic subscription is cancelled', lines)
+  return transactionalEmail('Your Radlor subscription is cancelled', lines)
 }
 
 /** A plain service message: one paragraph per line, then the §5 footer. Also the PIN-reset notice (/api/parent/pin-reset). */

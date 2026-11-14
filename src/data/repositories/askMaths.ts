@@ -1,6 +1,6 @@
 'use client'
 /**
- * Ask Radlic (docs/product/ask-maths.md), the browser side: the child's question (POST /api/ask-maths, streamed), the
+ * Ask Radlor (docs/product/ask-maths.md), the browser side: the child's question (POST /api/ask-maths, streamed), the
  * parent's switch (set_ask_maths), the questions of the last 30 days (RLS read) and forgetting them (ask_maths_forget).
  * It is free: no add-on (13 Nov 2026).
  */

@@ -86,8 +86,8 @@ describe('Forgot PIN → one email per reset', () => {
     expect((await asUser(A, `select public.parent_pin_status()`) as { reset_at: string | null }).reset_at).toBeTruthy()
     expect(sent).toHaveLength(1)
     expect(sent[0].to).toEqual(['a@x.test'])
-    expect(sent[0].subject).toBe('Your Radlic parent PIN is being reset')
-    expect(sent[0].text).toContain('If it was not you, open your Radlic dashboard and enter your PIN before then')
+    expect(sent[0].subject).toBe('Your Radlor parent PIN is being reset')
+    expect(sent[0].text).toContain('If it was not you, open your Radlor dashboard and enter your PIN before then')
     expect(sent[0].text).not.toContain('4826')                       // never the PIN
     expect(sent[0].key).toBe(`pin-reset-${A}-${first.body.reset_at}`)
 

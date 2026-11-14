@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The child's Ask Radlic card ("Ask any math homework", founder 13 Nov 2026; was "Help with homework") is its own
- * card under Practice, not a second button inside Learn (founder, 8 Nov 2026), and it shows only when a grown-up switched Ask Radlic on for that child (no offer on a child's screen).
+ * The child's Ask Radlor card ("Ask any math homework", founder 13 Nov 2026; was "Help with homework") is its own
+ * card under Practice, not a second button inside Learn (founder, 8 Nov 2026), and it shows only when a grown-up switched Ask Radlor on for that child (no offer on a child's screen).
  * The real ModuleHome is rendered; only the network reads are stubbed.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest'
@@ -30,7 +30,7 @@ const links = () => [...host.querySelectorAll('a')]
 afterEach(() => { act(() => root.unmount()); host.remove() })
 
 describe('the homework card on the child\'s module page', () => {
-  it('Ask Radlic on: a card of its own, after Practice, going to /ask, and not inside the Learn card', async () => {
+  it('Ask Radlor on: a card of its own, after Practice, going to /ask, and not inside the Learn card', async () => {
     ask.enabled = true
     await home()
     const hw = links().find(a => a.textContent === 'Ask any math homework')
@@ -44,7 +44,7 @@ describe('the homework card on the child\'s module page', () => {
     expect(host.textContent).not.toContain('Help me with homework')
   })
 
-  it('Ask Radlic off: no homework card, and Practice still shows (positive control)', async () => {
+  it('Ask Radlor off: no homework card, and Practice still shows (positive control)', async () => {
     ask.enabled = false
     await home()
     expect(links().some(a => a.textContent === 'Practice')).toBe(true)

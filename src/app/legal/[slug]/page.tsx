@@ -37,12 +37,12 @@ function publishedBody(page: LegalPage): string | null {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const page = pageBySlug(slug)
-  if (!page) return { title: 'Radlic' }
+  if (!page) return { title: 'Radlor' }
   return {
     title: page.title,
     // ⚠️ A dark page must not be indexed; gated on the switch so it lifts itself when a human flips it.
     robots: page.published ? undefined : { index: false, follow: true },
-    description: `${page.title} for Radlic by Radlor.`,
+    description: `${page.title} for the Radlor app, by Radlor Inc.`,
     alternates: { canonical: `/legal/${page.slug}` },
   }
 }
@@ -59,7 +59,7 @@ export default async function LegalPageView({ params }: { params: Promise<{ slug
       padding: '28px 20px 60px',
     }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#0B4FA8', textDecoration: 'none' }}>← Radlic</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 700, color: '#0B4FA8', textDecoration: 'none' }}>← Radlor</Link>
 
         <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 30, color: '#083d85', margin: '14px 0 20px' }}>
           {page.title}
@@ -138,7 +138,7 @@ function code(text: string, key: string): React.ReactNode {
 function inline(text: string, key: string) {
   return segments(text).map((x, i) => {
     let n: React.ReactNode = x.href
-      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/radlic\.com(?=\/|$)/, '')} style={{ color: '#0B4FA8' }}>{code(x.text, `${key}-${i}`)}</a>
+      ? <a key={`${key}-${i}`} href={x.href.replace(/^https:\/\/(app\.radlor|radlic)\.com(?=\/|$)/, '')} style={{ color: '#0B4FA8' }}>{code(x.text, `${key}-${i}`)}</a>
       : code(x.text, `${key}-${i}`)
     if (x.em) n = <em key={`${key}-${i}`}>{n}</em>
     if (x.bold) n = <strong key={`${key}-${i}`}>{n}</strong>

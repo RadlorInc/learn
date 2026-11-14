@@ -110,13 +110,13 @@ begin
   insert into public.learner_invites (id, learner_id, invited_by, invited_email, status, expires_at)
     values (v_invite, v_alearner, v_attacker, 'attacker.rlstest@milo.invalid', 'pending', now() + interval '7 days');
 
-  -- ── Radlic is free (20261113120000) ───────────────────────────────────────
+  -- ── Radlor is free (20261113120000) ───────────────────────────────────────
   -- R0: after every migration the paywall is OFF. R1: so a topic opens for a child whose family chose no free topics
   -- and holds no seat. The suite turns the paywall ON just below, to keep testing that code while it still exists.
   select enforced into v_blocked from public.billing_config;
   v_asserts := v_asserts + 1;
   if coalesce(v_blocked, false) then
-    raise exception 'RLS FAIL R0: the paywall is ON after the migrations, but Radlic is free (20261113120000)';
+    raise exception 'RLS FAIL R0: the paywall is ON after the migrations, but Radlor is free (20261113120000)';
   end if;
   v_asserts := v_asserts + 1;
   if not public.claim_topic(v_alearner, 'c:counting') then
@@ -340,7 +340,7 @@ begin
   exception when insufficient_privilege then v_blocked := true; end;
   v_asserts := v_asserts + 1;
   if not v_blocked then raise exception 'RLS FAIL AM5: a client can settle an Ask maths question (service role only)'; end if;
-  -- AM6: Ask Radlic is free (13 Nov 2026): the owner's own Grade 3-8 child, switched on (AM1b), can ask with no add-on
+  -- AM6: Ask Radlor is free (13 Nov 2026): the owner's own Grade 3-8 child, switched on (AM1b), can ask with no add-on
   -- or payment of any kind. Run in a sub-block that always rolls back (the band and the question are not kept).
   declare v_msg text;
   begin

@@ -25,7 +25,7 @@ const post = async (body: unknown) => {
   const { POST } = await import('@/app/api/consent/school/route')
   return POST(new Request('http://x/api/consent/school', { method: 'POST', body: JSON.stringify(body), headers: { authorization: 'Bearer t', 'x-forwarded-for': `10.7.0.${Math.random() * 250 | 0}` } }))
 }
-const GOOD = { school: '  Lincoln Elementary ', agree: true, noticeVersion: 'notice-v8' }
+const GOOD = { school: '  Lincoln Elementary ', agree: true, noticeVersion: 'notice-v9' }
 
 beforeEach(() => { calls.length = 0; who = TEACHER; rpcErr = null })
 
@@ -36,7 +36,7 @@ describe('POST /api/consent/school', () => {
     expect(await r.json()).toEqual({ ok: true, id: 'consent-1' })
     expect(calls).toHaveLength(1)
     expect(calls[0].fn).toBe('consent_grant_school')
-    expect(calls[0].args).toMatchObject({ p_teacher: TEACHER, p_school_name: 'Lincoln Elementary', p_notice_version: 'notice-v8' })
+    expect(calls[0].args).toMatchObject({ p_teacher: TEACHER, p_school_name: 'Lincoln Elementary', p_notice_version: 'notice-v9' })
   })
 
   it('signed out → 401, nothing written', async () => {

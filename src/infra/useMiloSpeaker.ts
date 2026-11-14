@@ -336,14 +336,14 @@ function _actuallySpeak(text: string, rate: number, pitch: number, tries = 0) {
       return
     }
     if (e.error !== 'canceled' && e.error !== 'interrupted') {
-      console.warn('[Radlic] Speech error:', e.error)
+      console.warn('[Radlor] Speech error:', e.error)
     }
   }
 
   try {
     window.speechSynthesis.speak(u)
   } catch (err) {
-    console.warn('[Radlic] speak() threw:', err)
+    console.warn('[Radlor] speak() threw:', err)
     _setSpeaking(false)
     _lineDone()
   }

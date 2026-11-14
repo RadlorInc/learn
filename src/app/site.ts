@@ -6,9 +6,9 @@
  * the per-deploy preview URL), so preview builds do not advertise themselves as canonical.
  *
  * ⚠️ ORDER MATTERS AND IT IS DELIBERATE: `NEXT_PUBLIC_SITE_URL` first. It is set in Vercel Production, and it is THE
- * SWITCH for the move to radlic.com (2026-09-24): while it names the old domain, the old domain serves the app exactly
- * as before and nothing redirects; set it to https://radlic.com and redeploy, and canonical URLs, email links and the
- * old-domain 308 all move together. See fbf193280:docs/RENAME-MANUAL.md §A.5.
+ * SWITCH for a domain move (radlic.com on 2026-09-24, app.radlor.com from 2026-11-14): while it names an old domain,
+ * that domain serves the app exactly as before and nothing redirects; set it to https://app.radlor.com and redeploy,
+ * and canonical URLs, email links and the old-domain 308s all move together. See fbf193280:docs/RENAME-MANUAL.md §A.5.
  *
  * ⚠️ A PREVIEW BUILD USES ITS OWN BRANCH URL (2026-09-30). Previews run against the staging database, so an email link
  * or a Stripe return URL that named production would carry a staging token to the production app, which cannot
@@ -18,7 +18,7 @@
 export function siteUrlFrom(env: Record<string, string | undefined>): string {
   if (env.NEXT_PUBLIC_SITE_URL) return env.NEXT_PUBLIC_SITE_URL
   if (env.VERCEL_ENV === 'preview' && env.VERCEL_BRANCH_URL) return `https://${env.VERCEL_BRANCH_URL}`
-  return env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://radlic.com'
+  return env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${env.VERCEL_PROJECT_PRODUCTION_URL}` : 'https://app.radlor.com'
 }
 
 // Each read spelled out: Next inlines `process.env.NEXT_PUBLIC_*` only as a literal member access, never through the object.
@@ -29,8 +29,9 @@ export const SITE_URL = siteUrlFrom({
   VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
 })
 
-/** The product's domain until 2026-09-24. It keeps working, as a permanent redirect to `SITE_URL`. */
-export const OLD_HOST = 'adaptivelearn.radlor.com'
+/** The product's earlier domains (until 2026-09-24, then until 2026-11-14). They keep working, as permanent redirects
+ *  to `SITE_URL`. Never remove one: consent and unsubscribe links in old emails name it. */
+export const OLD_HOSTS = ['adaptivelearn.radlor.com', 'radlic.com', 'www.radlic.com']
 
 /**
  * The old domain's redirect, for `next.config.ts`. A 308 keeps the method, Next keeps the path and the query, and the
@@ -43,13 +44,13 @@ export const OLD_HOST = 'adaptivelearn.radlor.com'
  * deployment answers the API on both hosts.
  */
 export function oldDomainRedirects(siteUrl: string = SITE_URL) {
-  if (new URL(siteUrl).host === OLD_HOST) return []
-  return [{
+  const here = new URL(siteUrl).host
+  return OLD_HOSTS.filter(h => h !== here).map(host => ({
     source: '/:path((?!api(?:/|$)).*)',
-    has: [{ type: 'host' as const, value: OLD_HOST }],
+    has: [{ type: 'host' as const, value: host }],
     destination: `${siteUrl.replace(/\/$/, '')}/:path`,
     permanent: true,
-  }]
+  }))
 }
 
 /**
@@ -91,10 +92,10 @@ export const SUPPORT_TEL = '+18888129373'
 export const COMPANY = 'Radlor'
 export const COMPANY_URL = 'https://radlor.com'
 export const COMPANY_ID = `${COMPANY_URL}/#organization`
-export const APP_NAME = 'Radlic'
+export const APP_NAME = 'Radlor'
 /** The app's own entity id. radlor.com's product page references this exact string — change both together
  *  (fbf193280:docs/RENAME-MANUAL.md §D: radlor.com still names the pre-rename id until it is updated). */
-export const APP_ID = 'https://radlic.com/#app'
+export const APP_ID = 'https://app.radlor.com/#app'
 
 /**
  * The only routes that may be crawled. Everything else is a signed-in surface: it renders nothing
@@ -104,10 +105,10 @@ export const APP_ID = 'https://radlic.com/#app'
  * and stops those URLs appearing in results; it protects nothing on its own.
  */
 export const PUBLIC_ROUTES = ['/help'] as const
-// ⚠️ '/' LEFT THIS LIST 2026-09-25: the home page is `LANDING_URL` on radlor.com, and radlic.com/ only sends a visitor
+// ⚠️ '/' LEFT THIS LIST 2026-09-25: the home page is `LANDING_URL` on radlor.com, and app.radlor.com/ only sends a visitor
 // there (signed out) or home (signed in) — a sitemap must not list a page whose canonical is another site.
 
-/** The Radlic home page — on radlor.com, not this origin (founder's decision, 2026-09-25). radlic.com/ sends a
+/** The Radlor app's home page — on radlor.com, not this origin (founder's decision, 2026-09-25). app.radlor.com/ sends a
  *  signed-out visitor here: `ResumeSignedIn.tsx`. */
 export const LANDING_URL = 'https://radlor.com/radlic'
 // ⚠️ The legal pages join these only once PUBLISHED (`PUBLISHED_LEGAL_ROUTES` in app/legal/registry.ts):

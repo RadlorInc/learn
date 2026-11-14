@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * Ask Radlic in the database (migration 20261113140000; free since 13 Nov 2026, no add-on), driven in the repo's real schema as the roles a browser and
+ * Ask Radlor in the database (migration 20261113140000; free since 13 Nov 2026, no add-on), driven in the repo's real schema as the roles a browser and
  * the server have. Every refusal is paired with the same call working for the right caller.
  */
 import { describe, it, expect, beforeAll } from 'vitest'

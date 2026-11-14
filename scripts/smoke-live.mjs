@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Live smoke for radlic.com — run after every production deploy that touches the app.
+// Live smoke for app.radlor.com — run after every production deploy that touches the app.
 //
-//   node scripts/smoke-live.mjs                      # all checks against https://radlic.com
+//   node scripts/smoke-live.mjs                      # all checks against https://app.radlor.com
 //   SMOKE_SW=v239 node scripts/smoke-live.mjs        # only if the live sw is not this checkout's public/sw.js
 //   SMOKE_BASE=http://localhost:3000 SMOKE_ONLY=email-login node scripts/smoke-live.mjs
 //
@@ -13,12 +13,12 @@
 // deliberately `type="text"` in login mode (one field takes a parent's email OR a child's username,
 // since 712e71a5), so it is found by its role — autocomplete="username" + the email placeholder —
 // never by `type=email`, which was the wrong instrument once already (2026-09-26).
-// ⚠️ The signed-out redirect `radlic.com/` → radlor.com/radlic is CLIENT-side too (HTTP says 200),
+// ⚠️ The signed-out redirect `app.radlor.com/` → radlor.com/radlic is CLIENT-side too (HTTP says 200),
 // so it is also checked in the browser, in a fresh (signed-out) context.
 import { chromium } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
-const BASE = (process.env.SMOKE_BASE ?? 'https://radlic.com').replace(/\/$/, '')
+const BASE = (process.env.SMOKE_BASE ?? 'https://app.radlor.com').replace(/\/$/, '')
 // The expected version is the one in this checkout's public/sw.js, so a bump there needs no edit here
 // (a hard-coded default went stale at v242 while v245 was live).
 const SW = process.env.SMOKE_SW ?? readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8').match(/const VERSION\s*=\s*'([^']+)'/)?.[1]

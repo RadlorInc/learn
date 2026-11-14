@@ -1,6 +1,6 @@
-# How Radlic works
+# How Radlor works
 
-Radlic is adaptive maths for Kindergarten to Grade 8, by Radlor Inc. This is the system as the code builds it today:
+Radlor is adaptive maths for Kindergarten to Grade 8, by Radlor Inc. This is the system as the code builds it today:
 what runs where, who can reach what, and which check holds it. Start at [START-HERE.md](START-HERE.md); reasons are in
 [decisions.md](decisions.md).
 
@@ -52,7 +52,7 @@ A green CI run on `main` lets `deploy.yml` push the commit to `release`, the bra
 
 | Who | Routes |
 |---|---|
-| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) · `/ask` (Ask Radlic, Grades 3–8: a typed maths question answered as a drawn, spoken whiteboard lesson; off unless `NEXT_PUBLIC_ASK_MATHS=on`; [product/ask-maths.md](product/ask-maths.md)) |
+| Child | `/modules` (home: grade tabs; KG–2 list story chapters, 3–8 list lesson modules) · `/lesson?id=` (a lesson, then adaptive practice; [product/building-lessons.md](product/building-lessons.md)) · `/lesson?module=` · `/practice?module=` · `/game?c=` (a KG–2 story chapter) · `/play` (points buy game time, then the child's pick opens full page: BlockCraft at `/blockcraft/`, BeatHop at `/beathop/`, Peak Rider at `/peak/` or Rescue Rush at `/rush/`; [product/points.md](product/points.md)) · `/ask` (Ask Radlor, Grades 3–8: a typed maths question answered as a drawn, spoken whiteboard lesson; off unless `NEXT_PUBLIC_ASK_MATHS=on`; [product/ask-maths.md](product/ask-maths.md)) |
 | Adult | `/parent` (parents and teachers; `?child=`, `?class=`, `&tab=`, `?view=`) · `/parent/account` · `/parent/invites` |
 | Admin | `/admin`, `/admin/learning`, `/admin/funnel`, `/admin/login`, `/admin/mfa` (two-step verification) |
 | Paid testers | `/test#t=<token>` — one module or KG–2 chapter in review mode; links and reviews live in the Radlor Ops app ([testers](runbooks/testers.md)) |
@@ -86,7 +86,7 @@ routes are rate-limited per IP (`_rateLimit.ts`).
 | `/api/consent/school` | teacher | a teacher's school consent (§3) |
 | `GET /api/game-time` | the child's adult (own token forwarded) | Seconds of paid game time left, by the server's clock, and whether it is paused: `game_wallet` as the caller (it refuses anyone else, 403). The games ask it on open, when shown again, every 3 min on screen and once at 0 (`public/play-time.js`; [product/points.md](product/points.md)) |
 | `POST /api/game-time` `{action: pause\|resume}` | the child's adult (own token forwarded) | The game's Pause screen stops the paid clock and leaving it starts it again: `pause_game_time` / `resume_game_time` as the caller (403 for anyone else); same answer as GET |
-| `POST /api/ask-maths` | the child, or the adult whose session they use (own token forwarded) | Ask Radlic ([product/ask-maths.md](product/ask-maths.md)); 404 unless `ASK_MATHS=on`. `ask_maths_begin` as the caller decides (403/409); the question goes from this server only to askRadlor's `/api/partner/maths` (`WHITEBOARD_URL`, Bearer `WHITEBOARD_PARTNER_SECRET`); its lesson is streamed on as server-sent events and `ask_maths_finish` (service role) settles the row, even after the tab closes (`after`) |
+| `POST /api/ask-maths` | the child, or the adult whose session they use (own token forwarded) | Ask Radlor ([product/ask-maths.md](product/ask-maths.md)); 404 unless `ASK_MATHS=on`. `ask_maths_begin` as the caller decides (403/409); the question goes from this server only to askRadlor's `/api/partner/maths` (`WHITEBOARD_URL`, Bearer `WHITEBOARD_PARTNER_SECRET`); its lesson is streamed on as server-sent events and `ask_maths_finish` (service role) settles the row, even after the tab closes (`after`) |
 | `GET /api/health` | anyone | Liveness, no database call |
 | `GET /api/notice` | anyone; never cached | The outage notice from the server variable `OUTAGE_NOTICE` (`core/outageNotice.ts`): `null`, `{ preset: true }` or `{ text }` capped at 160; no database call. The root layout's `OutageNotice` asks once per page load and shows it in the page's flow, as text, under any full-screen chapter ([runbooks/outages.md](runbooks/outages.md) → the notice switch) |
 | `GET /api/health/db` | anyone; answer held 30 s | `{ db: true }` 200 or `{ db: false }` 503: one `HEAD … limit=0` as the service role, nothing else returned |
@@ -103,12 +103,12 @@ if it imports outside `core/` or imports React.
 `public/sw.js` ignores non-GET, `/api/*` and Supabase requests except audio clips. Navigations are network-first,
 falling back to a cached copy or `/offline.html`; the only offline promise is that answers are kept (§7). Static
 chunks, images and fonts are cache-first. Clips, matched by content-hash name, go to `milo-assets-audio`, which
-survives releases and keeps the newest `AUDIO_CAP` (`swTakeover`, `swAudioCache`, `swPartialResponse`). Ask Radlic'
+survives releases and keeps the newest `AUDIO_CAP` (`swTakeover`, `swAudioCache`, `swPartialResponse`). Ask Radlor'
 `/ask-player/` and `/ask-tts/` go straight to the network (the voice worker keeps its own files).
 
 `next.config.ts` sends `X-Frame-Options: DENY`, `nosniff`, a strict `Referrer-Policy`, HSTS, a `Permissions-Policy`
 with camera, microphone and geolocation off, and a CSP defaulting to `'self'` that refuses framing and plugins and
-limits `connect-src`/`media-src` to the Supabase project and the audio origin. Fonts are self-hosted. Ask Radlic overrides
+limits `connect-src`/`media-src` to the Supabase project and the audio origin. Fonts are self-hosted. Ask Radlor overrides
 two paths, and `media-src` allows `blob:` everywhere (the lines are played from blob URLs; a /ask-only header never reached a client-side navigation): `/ask-player/*` (the sandboxed whiteboard player) may be framed by our own
 origins and connects nowhere (`askPlayerCsp`); `/ask-tts/*` (the voice worker) may run WebAssembly and fetch the model
 from Hugging Face (`ASK_TTS_CSP`). `/fonts/*` sends `Access-Control-Allow-Origin: *` for the sandboxed player.
@@ -150,7 +150,7 @@ Everyone is a Supabase Auth user. Screen guards (`RoleGate`) choose what to show
   account without an authenticator signs in as before and is shown nothing about it. The database requires it:
   `admin_assert()` also refuses a token whose `aal` claim is not `aal2` (20261016150000, applied only once every admin
   has a verified authenticator), so a password alone reads nothing ([runbooks/admin-access.md](runbooks/admin-access.md)).
-- **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time or Ask Radlic setting
+- **Parent PIN.** A 4-digit PIN (`usePinConfirm`, `ParentPinGate`) is asked before a game-time or Ask Radlor setting
   changes, and
   before a child's login or details change, access is shared, a child or class is deleted, permission is withdrawn from
   the dashboard or the account is closed. The rest of `/parent` opens without it (founder, 6–8 Nov 2026). `parent_pins`
@@ -312,7 +312,7 @@ deletion, and the daily cron drain it.
 | Child login | `auth.users`, `learner_access`, `profiles` | `/api/child-login` | `childLogin`, `rosterRollbackDelete` |
 | Lesson, practice, chapter | device, then `lesson_progress`, `point_events` | queue → the progress RPCs (§4) | `lessonSync`, `lessonSyncOwner`, `practiceRun`, `staleDeviceProgress` |
 | Dashboard | `get_parent_dashboard` (INVOKER), `lesson_progress`, `point_events`, `game_wallet`; teachers `grades`, `exercise_results` | client reads, `GET /api/child-login` | `parentDashboardReads` |
-| Ask Radlic | `ask_maths_settings`, `ask_maths_questions` (30 days) | `set_ask_maths`; `/api/ask-maths` → `ask_maths_begin` / `ask_maths_finish`; `ask_maths_forget` ([product/ask-maths.md](product/ask-maths.md)) | `askMathsDb`, `askMathsRoute` |
+| Ask Radlor | `ask_maths_settings`, `ask_maths_questions` (30 days) | `set_ask_maths`; `/api/ask-maths` → `ask_maths_begin` / `ask_maths_finish`; `ask_maths_forget` ([product/ask-maths.md](product/ask-maths.md)) | `askMathsDb`, `askMathsRoute` |
 | Export | every child table, crash records, access list | `export_child_records` + reads | `exportCompleteness`, `withdrawExportE2e` |
 | Delete a child | `learners` cascade, child login, `deletion_log`; on a paid plan the freed seat removed and refunded, or the plan for the last child (§8) | `delete_learner` | `consentDeletion`, `deletionAuditTrail`, `b3Cancel`, `closeRefund` |
 | Close account | all children, the account; consent kept; the plan cancelled and refunded (§8) | `delete_my_account` | `accountDeletion`, `keepConsentRecord`, `closeRefund` |
@@ -355,7 +355,7 @@ exercises); the queues themselves, signed-out `…-device-…` keys and the adul
 
 ## 8. Billing
 
-**Radlic is free since 2026-11-13** (founder): no paywall, plans, checkout, seats or free-trial topics; every lesson,
+**Radlor is free since 2026-11-13** (founder): no paywall, plans, checkout, seats or free-trial topics; every lesson,
 practice and story chapter opens for every child, and every teacher's class gets its modules. The client never asks the
 paywall; migration 20261113120000 sets `billing_config.enforced = false`, so every entitlement function answers
 "allowed" and records nothing (the RLS suite asserts it, R0–R1, before turning it on to test that code).
@@ -372,7 +372,7 @@ one PR with the billing tables:
   happens to it.
 - `src/infra/stripe.ts` pins the key's mode to the deployment: Vercel Production accepts only `sk_live_`, everywhere
   else only `sk_test_`.
-- **Ask Radlic is free too** (13 Nov; [product/ask-maths.md](product/ask-maths.md)): no add-on, checkout or
+- **Ask Radlor is free too** (13 Nov; [product/ask-maths.md](product/ask-maths.md)): no add-on, checkout or
   `addon_subscriptions`. `ask_maths_begin` lets a child ask while the owner's switch is on, up to the daily limit
   (default 5, 1–20).
 
@@ -386,12 +386,12 @@ one PR with the billing tables:
 | Stripe | checkout | account id, the parent's email or customer id, seat count, renewal-consent time; nothing about a child |
 | Google | adult sign-in via Supabase Auth | the adult's Google sign-in |
 | GitHub | code, CI, deploys, backups | the source; an encrypted nightly production dump (30-day artifact) |
-| askRadlor (Radlor Inc.'s whiteboard service), and through it Anthropic | Ask Radlic, **only once it is switched on** ([product/ask-maths.md](product/ask-maths.md)) | a child's typed maths question and the grade band (3–5 or 6–8), server to server; nothing else about the child or the family |
-| Hugging Face | Ask Radlic's voice model files, **only once it is switched on** | the file requests from the child's device (IP, user agent); no text |
+| askRadlor (Radlor Inc.'s whiteboard service), and through it Anthropic | Ask Radlor, **only once it is switched on** ([product/ask-maths.md](product/ask-maths.md)) | a child's typed maths question and the grade band (3–5 or 6–8), server to server; nothing else about the child or the family |
+| Hugging Face | Ask Radlor's voice model files, **only once it is switched on** | the file requests from the child's device (IP, user agent); no text |
 
 Supabase Auth's own emails (password reset, invites) go through its dashboard SMTP setting, outside this repo. The
-published list is [legal/07-subprocessors.md](legal/07-subprocessors.md) — which does not yet name the two Ask Radlic rows: they
-are added there, after legal review, before Ask Radlic is switched on.
+published list is [legal/07-subprocessors.md](legal/07-subprocessors.md) — which does not yet name the two Ask Radlor rows: they
+are added there, after legal review, before Ask Radlor is switched on.
 
 ## 10. Checks that hold the architecture
 

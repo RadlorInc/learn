@@ -1,6 +1,6 @@
 'use client'
 /**
- * Billing reads. Radlic is free since 13 Nov 2026: what is left is the read of a plan bought before then, so deleting
+ * Billing reads. Radlor is free since 13 Nov 2026: what is left is the read of a plan bought before then, so deleting
  * a child or withdrawing can say what happens to it (features/billing/paidSeats). Delete with the webhook once Stripe
  * has no subscription left.
  */

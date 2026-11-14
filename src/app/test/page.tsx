@@ -81,7 +81,7 @@ export default function TesterPage() {
   const onTour = (n: TourName) => setTour(n)
 
   if (!mounted) return null
-  if (!token || open === 'bad') return <Note>This tester link is not active. Ask Radlic for a new one.</Note>
+  if (!token || open === 'bad') return <Note>This tester link is not active. Ask Radlor for a new one.</Note>
   if (!open || !token || (!chapter && !whole)) return <Note>Loading…</Note>
 
   const reviewed = new Set(open.reviewed)

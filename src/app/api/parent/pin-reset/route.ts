@@ -46,11 +46,11 @@ export async function POST(req: Request) {
   // `before` unreadable counts as "not pending": the idempotency key still stops a duplicate.
   if (!before?.reset_at && adult.email) {
     try {
-      await sendEmail('transactional', adult.email, transactionalEmail('Your Radlic parent PIN is being reset', [
-        'Someone asked to reset the parent PIN on your Radlic account, with “Forgot PIN?” on the PIN screen.',
+      await sendEmail('transactional', adult.email, transactionalEmail('Your Radlor parent PIN is being reset', [
+        'Someone asked to reset the parent PIN on your Radlor account, with “Forgot PIN?” on the PIN screen.',
         'For your child’s safety the PIN is removed 24 hours after the request. After that, a new PIN can be set.',
         'If this was you, there is nothing to do.',
-        'If it was not you, open your Radlic dashboard and enter your PIN before then: that cancels the reset. Then tell us at support@radlor.com.',
+        'If it was not you, open your Radlor dashboard and enter your PIN before then: that cancels the reset. Then tell us at support@radlor.com.',
       ]), `pin-reset-${adult.id}-${resetAt}`)
       emailed = true
     } catch (e) {

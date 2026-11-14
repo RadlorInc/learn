@@ -48,7 +48,7 @@ if (!stripe) {
 console.log(LIVE ? '⚠️  LIVE MODE — real product and prices\n' : 'test mode\n')
 
 const PRODUCT_ID = 'milo_family'
-const PRODUCT_NAME = 'Radlic — family plan'
+const PRODUCT_NAME = 'Radlor — family plan'
 const LOOKUP: Record<Cadence, string> = { monthly: 'milo_family_monthly_v1', annual: 'milo_family_annual_v2' }
 
 const usd = (c: number) => `$${(c / 100).toFixed(2)}`

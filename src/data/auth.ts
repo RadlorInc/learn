@@ -125,7 +125,7 @@ export async function verifiedTotpFactor(): Promise<string | null> {
 
 /** Starts a new authenticator. Its QR code and secret come back; it counts only once `verifyTotp` accepts a code. */
 export function enrolTotp() {
-  return createClient().auth.mfa.enroll({ factorType: 'totp', issuer: 'Radlic admin' })
+  return createClient().auth.mfa.enroll({ factorType: 'totp', issuer: 'Radlor admin' })
 }
 
 /** One code from the authenticator: a challenge, then the code against it. On success the session is aal2. */

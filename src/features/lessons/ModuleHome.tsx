@@ -66,7 +66,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
       .then(ok => { if (live && ok) redraw(n => n + 1); if (waiting) void showWallet() })
     return () => { live = false }
   }, [learnerId])
-  // Ask Radlic (docs/product/ask-maths.md): the button shows only when the child's grown-up has switched it on —
+  // Ask Radlor (docs/product/ask-maths.md): the button shows only when the child's grown-up has switched it on —
   // never an offer, a price or a "locked" button on a child's screen.
   const [askOn, setAskOn] = useState(false)
   useEffect(() => {
@@ -107,7 +107,7 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
             : back ? <button type="button" onClick={back.onClick} style={pill}>{back.label}</button> : <span />}
           <span style={{ fontSize: 'clamp(16px, 3.6vw, 20px)' }}>{gradeLabel(storyGrade ?? grade)}</span>
           <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>
-            {askOn && <Link href="/ask" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>✏️ Ask Radlic</Link>}
+            {askOn && <Link href="/ask" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>✏️ Ask Radlor</Link>}
             {points !== null && <Link href="/play" style={{ ...pill, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>🎮 {points} points</Link>}
             <TextSizeMenu />
           </span>
@@ -171,8 +171,8 @@ export function ModuleHome({ learnerId, back, grade: startGrade = 3, lessonIds: 
 
             {askOn && <div style={{ ...card, background: '#cfe3ff' }}>
               <div style={{ flex: 1 }}>
-                <strong style={cardTitle}>Ask Radlic</strong>
-                Homework or anything else: Radlic shows you how, step by step.
+                <strong style={cardTitle}>Ask Radlor</strong>
+                Homework or anything else: Radlor shows you how, step by step.
               </div>
               <Link href="/ask" style={{ ...primary, background: '#fff', color: INK }}>Ask any math homework</Link>
             </div>}

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
- * The parent PIN is asked before a game-time or Ask Radlic setting changes or an invite goes out, not to open the dashboard
- * (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the Ask Radlic card, the child's
+ * The parent PIN is asked before a game-time or Ask Radlor setting changes or an invite goes out, not to open the dashboard
+ * (founder, 6 Nov 2026; the other changes that ask are in pinDestructive.test.ts). Rendered for real: the Ask Radlor card, the child's
  * page with its Game time tab, and the invites page. Only the account's
  * reads are stubbed. Each change must not reach the database until the right PIN is in.
  */
@@ -54,7 +54,7 @@ async function askCard() {
 beforeEach(() => { vi.clearAllMocks() })
 afterEach(() => { act(() => root.unmount()); host.remove() })
 
-describe('Ask Radlic settings ask for the PIN first', () => {
+describe('Ask Radlor settings ask for the PIN first', () => {
   it('Turn off: nothing is saved on a wrong PIN or a Cancel, and it is saved on the right PIN', async () => {
     await askCard()
     expect(host.querySelector('input[aria-label="PIN"]'), 'the card opened behind a PIN').toBeNull()

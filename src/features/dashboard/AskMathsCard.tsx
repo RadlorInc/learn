@@ -1,6 +1,6 @@
 'use client'
 /**
- * Ask Radlic on a child's page (docs/product/ask-maths.md), free since 13 Nov 2026: the switch for this child (after
+ * Ask Radlor on a child's page (docs/product/ask-maths.md), free since 13 Nov 2026: the switch for this child (after
  * the disclosure, features/askMaths/disclosure.ts), the daily limit, and the questions of the last 30 days, each
  * answered one with its lesson to watch again. Only the adult who added the child changes anything — the database
  * checks (set_ask_maths, ask_maths_forget); anyone with access sees the questions.
@@ -42,8 +42,8 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
     return () => { live = false }
   }, [id, tick])
 
-  if (band !== '9-11' && band !== '12-14') return <div style={{ ...dcard, maxWidth: 720 }}><h2 style={h2}>✏️ {t('Ask Radlic')}</h2>
-    <p style={{ ...soft, marginTop: 8 }}>{t('Ask Radlic is for Grades 3–8.')}</p></div>
+  if (band !== '9-11' && band !== '12-14') return <div style={{ ...dcard, maxWidth: 720 }}><h2 style={h2}>✏️ {t('Ask Radlor')}</h2>
+    <p style={{ ...soft, marginTop: 8 }}>{t('Ask Radlor is for Grades 3–8.')}</p></div>
 
   const on = !!settings?.enabled, limit = settings?.daily_limit ?? 5
   const d = DISCLOSURE[lang]
@@ -67,16 +67,16 @@ export function AskMathsCard({ id, name, band, owner }: { id: string; name: stri
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 720 }}>
       {pin.dialog}
       <section style={dcard} data-tour="ask-card">
-        <h2 style={{ ...h2, marginBottom: 8 }}>✏️ {t('Ask Radlic')}</h2>
+        <h2 style={{ ...h2, marginBottom: 8 }}>✏️ {t('Ask Radlor')}</h2>
         <p style={soft}>{t('{name} types a maths question and watches a whiteboard lesson drawn and spoken for it.', { name })}</p>
 
         {settings === undefined ? <p style={{ ...soft, marginTop: 10 }}>{t('Loading…')}</p>
           : (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {!owner ? <p style={soft}>{on ? t('Ask Radlic is on for {name}.', { name }) : t('Ask Radlic is off for {name}.', { name })} {t('Only the adult who added {name} can change it.', { name })}</p>
+              {!owner ? <p style={soft}>{on ? t('Ask Radlor is on for {name}.', { name }) : t('Ask Radlor is off for {name}.', { name })} {t('Only the adult who added {name} can change it.', { name })}</p>
                 : on ? (
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <span style={{ fontWeight: 800, color: 'var(--ink)' }}>{t('Ask Radlic is on for {name}.', { name })}</span>
+                    <span style={{ fontWeight: 800, color: 'var(--ink)' }}>{t('Ask Radlor is on for {name}.', { name })}</span>
                     <label style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: 8 }}>
                       {t('Questions a day')}
                       <select disabled={busy} value={limit} onChange={e => { const n = Number(e.target.value); pin.confirm(() => save(true, n)) }}

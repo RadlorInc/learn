@@ -10,7 +10,7 @@ import { describe, it, expect, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-const ORIGIN = 'https://radlic.com'
+const ORIGIN = 'https://app.radlor.com'
 const SRC = readFileSync(resolve(process.cwd(), 'public/sw.js'), 'utf8')
 
 type Req = { url: string; method: string; mode: string; destination: string; headers: Headers }

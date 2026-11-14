@@ -1,5 +1,5 @@
 /**
- * `/` on radlic.com — no longer the landing page. Since 2026-09-25 (founder's decision) the landing page is on
+ * `/` on app.radlor.com — no longer the landing page. Since 2026-09-25 (founder's decision) the landing page is on
  * radlor.com (`LANDING_URL`, built in the radlor-site repo), and the app stays here. This page only routes:
  * signed in → home, signed out → the landing page (`ResumeSignedIn.tsx`); the markup below is the fallback.
  *

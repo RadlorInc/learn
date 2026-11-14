@@ -14,9 +14,9 @@ REVIEWED-BY:
 
 ## 1. Este acuerdo
 
-Estos Términos son un acuerdo entre usted y Radlor Inc., una sociedad anónima (corporation) de Delaware ("Radlor", "nosotros"). Regulan su uso de Radlic (el "Servicio").
+Estos Términos son un acuerdo entre usted y Radlor Inc., una sociedad anónima (corporation) de Delaware ("Radlor", "nosotros"). Regulan su uso de la aplicación Radlor (el "Servicio").
 
-Al crear una cuenta o usar el Servicio, usted acepta estos Términos y nuestra [Política de privacidad](https://radlic.com/legal/privacy). Si no está de acuerdo, no use el Servicio.
+Al crear una cuenta o usar el Servicio, usted acepta estos Términos y nuestra [Política de privacidad](https://app.radlor.com/legal/privacy). Si no está de acuerdo, no use el Servicio.
 
 ## 2. Quién puede tener una cuenta
 
@@ -28,7 +28,7 @@ Usted confirma que la información que nos da al registrarse es exacta y que tie
 
 ## 3. Qué es el Servicio
 
-Radlic es una herramienta de aprendizaje adaptativo. Presenta lecciones, preguntas y práctica, se adapta a la forma en que responde un niño y le informa a usted del progreso.
+Radlor es una herramienta de aprendizaje adaptativo. Presenta lecciones, preguntas y práctica, se adapta a la forma en que responde un niño y le informa a usted del progreso.
 
 **Es una herramienta de apoyo educativo y nada más.** No es escolarización, no es tutoría a cargo de un profesional con licencia y no es ninguna forma de evaluación, diagnóstico o tratamiento — educativo, psicológico o médico. No identifica dificultades de aprendizaje ni ninguna otra condición. Si le preocupa el aprendizaje de su hijo, hable con un maestro o con un profesional cualificado.
 
@@ -40,10 +40,10 @@ Como el Servicio lo usan niños, se aplican normas adicionales:
 
 - Antes de recopilar cualquier dato sobre sus hijos, le damos un **aviso directo** que le dice exactamente qué recopilamos, y obtenemos su **consentimiento verificable**. Lo da una sola vez, para su cuenta, y cubre a todos los niños que añada a ella. Cada vez que añade un niño, usted confirma que es su padre, madre o tutor legal, y registramos cuándo lo hizo.
 - **Guardamos un registro de ese consentimiento** — la fecha, cómo se dio, su dirección de correo electrónico y la versión de cada documento que se le mostró. Lo guardamos para poder demostrar, más adelante, exactamente qué aceptó usted. Si usted cierra su cuenta, ese registro se conserva, marcado como retirado y sin vínculo con su cuenta, para que podamos seguir demostrando que se dio el consentimiento y cuándo terminó. Todo lo demás se elimina.
-- Usted puede ver, corregir o eliminar la información de su hijo, o retirar su consentimiento, en cualquier momento y sin costo. Consulte nuestra [página de Derechos de los padres](https://radlic.com/legal/parent-rights).
+- Usted puede ver, corregir o eliminar la información de su hijo, o retirar su consentimiento, en cualquier momento y sin costo. Consulte nuestra [página de Derechos de los padres](https://app.radlor.com/legal/parent-rights).
 - Puede retirar su consentimiento para un niño o para todos los niños de la cuenta. Para un niño, dejamos de recopilar, eliminamos lo que tenemos sobre ese niño y cerramos su perfil; esto se aplica solo a ese niño, y la cuenta y los demás niños no se ven afectados. Para todos, hacemos lo mismo con cada uno; su cuenta sigue abierta, y añadir un niño más adelante requiere de nuevo su consentimiento. Nunca se le cobra por ejercer un derecho de privacidad.
 
-Nuestra [Política de privacidad](https://radlic.com/legal/privacy) describe todo esto en detalle y forma parte de estos Términos.
+Nuestra [Política de privacidad](https://app.radlor.com/legal/privacy) describe todo esto en detalle y forma parte de estos Términos.
 
 ## 5. La beta es gratuita
 

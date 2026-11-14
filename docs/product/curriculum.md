@@ -1,6 +1,6 @@
 # Curriculum, KG to Grade 8
 
-What a child can learn in Radlic, grade by grade. **KG, Grade 1 and Grade 2** are story chapters, one skill each.
+What a child can learn in Radlor, grade by grade. **KG, Grade 1 and Grade 2** are story chapters, one skill each.
 **Grades 3 to 8** are modules of short lessons, one skill per lesson (a "topic"), each followed by adaptive practice.
 How either kind is built: [building-lessons.md](building-lessons.md). What is still to write or fix:
 [content-backlog.md](content-backlog.md).

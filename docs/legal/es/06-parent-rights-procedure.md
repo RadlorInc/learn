@@ -14,7 +14,7 @@ REVIEWED-BY:
 
 **En vigor desde:** 25 de septiembre de 2026
 
-Si su hijo usa Radlic, usted tiene el control de su información. Tiene cuatro derechos y puede ejercer cualquiera de ellos en cualquier momento, sin costo.
+Si su hijo usa Radlor, usted tiene el control de su información. Tiene cuatro derechos y puede ejercer cualquiera de ellos en cualquier momento, sin costo.
 
 ### 1. Ver lo que tenemos
 

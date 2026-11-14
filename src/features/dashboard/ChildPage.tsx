@@ -25,8 +25,8 @@ export type Band = '3-5' | '6-8' | '9-11' | '12-14'
  *  agreed only to an older notice (notice-v7), and the consent email for the newer one was — or could not be — sent. */
 export type CorrectResult = 'ok' | ErrorKind | 'notice_sent' | 'notice_unsent'
 
-export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['ask', 'Ask Radlic'], ['login', 'Login & data']] as const
-/** Ask Radlic's tab shows only when the feature is switched on for this build (docs/product/ask-maths.md). */
+export const CHILD_TABS = [['progress', 'Progress'], ['lessons', 'Lessons'], ['game', 'Game time'], ['ask', 'Ask Radlor'], ['login', 'Login & data']] as const
+/** Ask Radlor's tab shows only when the feature is switched on for this build (docs/product/ask-maths.md). */
 const SHOWN_TABS = CHILD_TABS.filter(([k]) => k !== 'ask' || ASK_MATHS_PUBLIC)
 export type ChildTab = typeof CHILD_TABS[number][0]
 

@@ -1,5 +1,6 @@
 /**
- * THE RADLIC RENAME (2026-09-24) — the old names, the old domain and the mascot stay gone from everything a person sees.
+ * THE RENAMES (Milo/AdaptiveLearn → Radlic 2026-09-24; Radlic → Radlor and radlic.com → app.radlor.com 2026-11-14) — the
+ * old names, the old domains and the mascot stay gone from everything a person sees.
  *
  * Three greps over the VISIBLE surfaces (the app's source — the KG–2 story chapters included since 2026-09-25 —, `public/` text, the
  * legal documents, the docs people read). Each hit must be ZERO except a line matched by a named exception below,
@@ -17,8 +18,8 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
 const GREPS = {
-  name: /\bMilo\b|\bMILO\b|AdaptiveLearn|ADAPTIVELEARN|\bAdaptive Learn\b/,
-  domain: /adaptivelearn\.radlor\.com/i,
+  name: /\bMilo\b|\bMILO\b|AdaptiveLearn|ADAPTIVELEARN|\bAdaptive Learn\b|\bRadlic\b|\bRADLIC\b/,
+  domain: /adaptivelearn\.radlor\.com|(?<![\w.-])radlic\.com/i,
   mascot: /🦊|assets\/characters\/milo|\bmilo[-_](happy|idle|thinking|side)\.png/i,
 } as const
 type Kind = keyof typeof GREPS
@@ -39,17 +40,23 @@ const EXCEPTIONS: { file: string; line: RegExp; kinds: Kind[]; why: string }[] =
     why: "a child's own avatar choices — the notice lists the avatar as collected data, so the fox stays as an avatar" },
   { file: 'src/app/llms.txt/route.ts', line: /It was called Milo until August 2026 and AdaptiveLearn until$|^September 2026, at adaptivelearn\.radlor\.com, which now redirects here/, kinds: ['name', 'domain'],
     why: 'the earlier names, said once, so an answer engine links the old name to this product' },
-  { file: 'src/app/layout.tsx', line: /renamed 2026-09-24 from AdaptiveLearn, which was renamed from Milo/, kinds: ['name'],
-    why: 'a dated historical note in a comment' },
   { file: 'src/app/site.ts', line: /"AdaptiveLearn", the product's name until 2026-09-24/, kinds: ['name'],
     why: 'a dated historical note in a comment' },
-  { file: 'src/app/site.ts', line: /^export const OLD_HOST = 'adaptivelearn\.radlor\.com'$/, kinds: ['domain'],
-    why: 'the redirect code: the old host it answers for' },
-  { file: 'next.config.ts', line: /^\/\/ The old domain \(adaptivelearn\.radlor\.com\) → radlic\.com, once SITE_URL has moved/, kinds: ['domain'],
+  { file: 'src/app/site.ts', line: /^export const OLD_HOSTS = \['adaptivelearn\.radlor\.com', 'radlic\.com', 'www\.radlic\.com'\]$|SWITCH for a domain move \(radlic\.com on 2026-09-24/, kinds: ['domain'],
+    why: 'the redirect code: the old hosts it answers for, and the dated history of the switch' },
+  { file: 'src/app/globals.css', line: /from the Radlic logo \(founder, 2026-09-25\)/, kinds: ['name'],
+    why: 'a dated historical note in a comment: where the colours came from' },
+  { file: 'src/app/llms.txt/route.ts', line: /2026-09-24 for the Radlic rename/, kinds: ['name'],
+    why: 'a dated historical note in a comment' },
+  { file: 'next.config.ts', line: /measured on radlic\.com's live bundle, 2026-09-26/, kinds: ['domain'],
+    why: 'a dated measurement, true of the day it was taken' },
+  { file: 'src/app/layout.tsx', line: /renamed 2026-11-14 from Radlic; 2026-09-24 from AdaptiveLearn/, kinds: ['name'],
+    why: 'a dated historical note in a comment' },
+  { file: 'next.config.ts', line: /^\/\/ The old domains \(adaptivelearn\.radlor\.com, radlic\.com\) → SITE_URL, once it has moved/, kinds: ['domain'],
     why: 'the redirect code' },
-  { file: 'docs/legal/ATTORNEY-PACKET.md', line: /^\*\*Product renamed to Radlic and moved to radlic\.com on \[date\]|^- \*\*Today \(once the rename ships\):\*\* the notice a parent agrees to changed only in the product's name/, kinds: ['name', 'domain'],
+  { file: 'docs/legal/ATTORNEY-PACKET.md', line: /^\*\*Product renamed again on 14 November 2026: Radlic → Radlor|^\*\*Product renamed to Radlic and moved to radlic\.com on \[date\]|^- \*\*Today \(once the rename ships\):\*\* the notice a parent agrees to changed only in the product's name/, kinds: ['name', 'domain'],
     why: 'the rename itself, told to the attorney (brief N4)' },
-  { file: 'README.md', line: /^The product was called \*\*Milo\*\* until August 2026 and \*\*AdaptiveLearn\*\* until September 2026|^\*\*Live:\*\* https:\/\/radlic\.com \(until the domain switch, https:\/\/adaptivelearn\.radlor\.com/, kinds: ['name', 'domain'],
+  { file: 'README.md', line: /^The product was called \*\*Milo\*\* until August 2026, \*\*AdaptiveLearn\*\* until September 2026 and \*\*Radlic\*\*|^\*\*Live:\*\* https:\/\/radlic\.com \(until the domain switch, https:\/\/adaptivelearn\.radlor\.com/, kinds: ['name', 'domain'],
     why: 'the earlier names and the switch — history a reader of the repo needs' },
   { file: 'CLAUDE.md', line: /^called Milo, then AdaptiveLearn at adaptivelearn\.radlor\.com, which becomes a 308 to radlic\.com|^\*\*There is no mascot\*\*: no named character, no "Milo says…"/, kinds: ['name', 'domain'],
     why: 'the rename, told to future sessions' },
@@ -71,19 +78,21 @@ function scan(sources: [file: string, text: string][]) {
   return { hits, used }
 }
 
-describe('the Radlic rename — nothing visible still says Milo, AdaptiveLearn, the old domain, or shows the mascot', () => {
+describe('the renames — nothing visible still says Milo, AdaptiveLearn, the old domain, or shows the mascot', () => {
   it('control: the scanner catches a planted line of each kind, and an exception silences only its own line', () => {
     const planted = scan([
       ['src/app/x.tsx', '<h1>Welcome to Milo</h1>'],
       ['src/app/y.tsx', "title: 'AdaptiveLearn'"],
+      ['src/app/v.tsx', '<h1>Welcome to Radlic</h1>'],
+      ['public/u.html', '<a href="https://radlic.com/legal/privacy">'],
       ['public/z.html', '<a href="https://adaptivelearn.radlor.com/legal/privacy">'],
       ['src/app/w.tsx', '<div>🦊</div>'],
       ['src/app/parent/page.tsx', "const AVATARS     = ['🦊', '🐰', '🐻', '🐱']"],
       ['src/app/parent/page.tsx', '<span>🦊 Brand</span>'],
     ])
-    expect(planted.hits.map(h => h.split('  ')[0])).toEqual(['name', 'name', 'domain', 'mascot', 'mascot'])
+    expect(planted.hits.map(h => h.split('  ')[0])).toEqual(['name', 'name', 'name', 'domain', 'domain', 'mascot', 'mascot'])
     // …and none of the identifiers that stay (CSS tokens, module names, storage keys, the child-login domain).
-    expect(scan([['src/a.ts', "var(--milo-orange); useMiloSpeaker(); 'milo_active_learner'; 'x@learner.adaptivelearn.invalid'; adaptive learning"]]).hits).toEqual([])
+    expect(scan([['src/a.ts', "var(--milo-orange); useMiloSpeaker(); 'milo_active_learner'; 'x@learner.adaptivelearn.invalid'; 'k@learner.radlic.invalid'; 'radlic-tester-tour:'; app.radlor.com; radlor.com/radlic; adaptive learning"]]).hits).toEqual([])
   })
 
   it('control: the scope is real — it holds the files that carried the most visible hits before the rename', () => {
@@ -107,7 +116,7 @@ describe('the Radlic rename — nothing visible still says Milo, AdaptiveLearn, 
 
   it('N6: the one identifier a person sees — the export download — is named for the product', async () => {
     const { exportFilename } = await import('@/shared/ui/DataRights')
-    expect(exportFilename('Ava Rose', new Date('2026-09-24T12:00:00Z'))).toBe('radlic-ava-rose-2026-09-24.json')
+    expect(exportFilename('Ava Rose', new Date('2026-09-24T12:00:00Z'))).toBe('radlor-ava-rose-2026-09-24.json')
   })
 
 })

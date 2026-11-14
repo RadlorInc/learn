@@ -167,7 +167,7 @@ describe('the daily cron emails the digest', () => {
     expect(sent).toHaveLength(1)
     const m = sent[0]
     expect(m.to).toEqual(['ops@example.test'])
-    expect(m.subject).toMatch(/^Radlic ops \d{4}-\d{2}-\d{2}: \d+ to look at$/)
+    expect(m.subject).toMatch(/^Radlor ops \d{4}-\d{2}-\d{2}: \d+ to look at$/)
     for (const line of [
       '!! error_events_24h: 2', '!! cron_runs_failed_24h: 1', '!! cron_jobs_failing: prune-error-events, prune-unconfirmed-users',
       '!! b3_cancel_failing: 2', '!! b3_cancel_missed_7d: 1', '!! consent_pending_overdue: 1', '!! consent_request_unsent: 1',

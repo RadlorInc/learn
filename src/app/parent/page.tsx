@@ -99,7 +99,7 @@ function Dashboard() {
   // ?add=1 opens the add-a-child flow — where B2 ("permission recorded") sends the parent, so the consent they just
   // gave is used straight away instead of waiting behind a second press of "Add a child".
   const [showAddModal, setShowAddModal] = useState(sp.get('add') === '1')
-  // A family still on a plan from before Radlic went free (13 Nov 2026): deleting a child or withdrawing says what
+  // A family still on a plan from before Radlor went free (13 Nov 2026): deleting a child or withdrawing says what
   // happens to it. Gone once no subscription is left in Stripe.
   const [paidSeats] = usePaidSeats()
   const [invites,      setInvites]      = useState<InviteWithLearner[]>([])
@@ -723,7 +723,7 @@ export function EmptyDashboard({ onAdd }: { onAdd: () => void }) {
         padding:'44px 24px', margin:'8px auto 0', maxWidth:520,
         textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14,
       }}>
-        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>{t('Welcome to Radlic!')}</h2>
+        <h2 style={{ fontSize:23, fontWeight:900, color:P.ink, margin:0, fontFamily:'var(--font-display)' }}>{t('Welcome to Radlor!')}</h2>
         <p style={{ fontSize:15, color:P.ink2, margin:0, maxWidth:340, lineHeight:1.5 }}>
           {t('Add your first learner and we’ll find where to start.')}
         </p>
@@ -760,7 +760,7 @@ export function RolePicker({ name, onPick }: { name: string; onPick: (r: UserRol
     <div style={{ minHeight:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:20, padding:'32px 20px', background:P.page, fontFamily:'var(--font-body)' }}>
       <div style={{ textAlign:'center' }}>
         <h1 style={{ fontSize:28, fontWeight:900, color:P.ink, margin:'0 0 6px', fontFamily:'var(--font-display)' }}>Welcome{name && name !== 'there' ? `, ${name}` : ''}!</h1>
-        <p style={{ fontSize:15, color:P.ink2, margin:0 }}>How will you be using Radlic?</p>
+        <p style={{ fontSize:15, color:P.ink2, margin:0 }}>How will you be using Radlor?</p>
       </div>
 
       {/* `.role-cards` stacks under 720px and sits the two side by side above it. */}

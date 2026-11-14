@@ -28,7 +28,7 @@ export default function GlobalError({
   return (
     <html lang="en">
       <body style={{ margin: 0 }}>
-        <title>Radlic — something went wrong</title>
+        <title>Radlor — something went wrong</title>
         <CrashScreen
           title="Oops! Something needs a moment"
           body="Something went wrong while starting up. What you finished before this should still be saved."

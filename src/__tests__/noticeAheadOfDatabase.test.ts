@@ -83,7 +83,7 @@ describe('sign-up while the database does not know the app\'s notice version', (
     const r = await signUp()
     expect(rpcs, 'the fake never reached the consent request — this saw nothing').toContain('consent_request_at_signup')
     expect(r).toEqual({ status: 200, body: { ok: true } })
-    expect(emails.map(e => e.subject)).toEqual(['Confirm your email for Radlic'])
+    expect(emails.map(e => e.subject)).toEqual(['Confirm your email for Radlor'])
   })
   it('any other database error is still a failure, not a silent fallback', async () => {
     dbAnswer = 'P0001'
@@ -97,7 +97,7 @@ describe('asking from the dashboard while the database does not know the app\'s 
   it('control: when the database knows it, B1 goes out', async () => {
     const r = await ask()
     expect(r.status).toBe(200)
-    expect(emails.map(e => e.subject)).toEqual(['Please confirm: permission for your children to use Radlic'])
+    expect(emails.map(e => e.subject)).toEqual(['Please confirm: permission for your children to use Radlor'])
   })
   it('P0C04: 503 not_ready, nothing sent', async () => {
     dbAnswer = 'P0C04'

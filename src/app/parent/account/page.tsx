@@ -101,7 +101,7 @@ export default function AccountPage() {
           Everything is gone — {done.learners ?? 0} child {(done.learners ?? 0) === 1 ? 'profile' : 'profiles'} and
           all of their work. There is nothing to restore and nothing left for us to look up.
         </p>
-        <p style={p}>Thank you for trying Radlic.</p>
+        <p style={p}>Thank you for trying Radlor.</p>
         <button style={{ ...btn, background: 'var(--accent-fill)', color: 'var(--on-accent-fill)', border: 'none' }}
           onClick={async () => { await signOut({ unsentOk: true }); router.replace('/') }}>Close</button>
       </Shell>

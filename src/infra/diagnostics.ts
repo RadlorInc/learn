@@ -109,7 +109,7 @@ export async function collectDiagnostics(learnerIdOverride?: string): Promise<Di
 /** Render the snapshot as the plain-text block that goes in the support email. */
 export function formatDiagnostics(d: Diagnostics): string {
   const lines = [
-    `--- Radlic diagnostics (please keep this in your email) ---`,
+    `--- Radlor diagnostics (please keep this in your email) ---`,
     `time      ${d.at}`,
     `app       ${d.swVersion}${d.swControlling ? '' : ' (no service worker)'}`,
     `account   ${d.accountEmail}  ${d.accountId}`,
@@ -146,5 +146,5 @@ export function supportMailto(block: string, note: string): string {
     '',
     block,
   ].join('\n')
-  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Radlic — problem report')}&body=${encodeURIComponent(body)}`
+  return `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Radlor — problem report')}&body=${encodeURIComponent(body)}`
 }
