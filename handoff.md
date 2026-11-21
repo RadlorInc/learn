@@ -6,7 +6,7 @@ Legal and launch items live in [docs/legal/READINESS.md](docs/legal/READINESS.md
 [docs/product/content-backlog.md](docs/product/content-backlog.md) — not repeated here. Security items that are not
 fixed yet are tracked outside this public repo; ask the founder.
 
-## Where things stand (16 October 2026)
+## Where things stand (15 November 2026)
 
 - **Production** is on `61035edc1` (#446 after #445, 16 Oct; #445's migration applied, `smoke:live` passes). The repo `learn` is public again (see the Vercel item below). Radlor is
   launched (the beta is over, 21 Oct) and free since 13 Nov (no paywall).
@@ -14,6 +14,8 @@ fixed yet are tracked outside this public repo; ask the founder.
   and Grade 2 (23 voiced story chapters); audio from the `lesson-audio` bucket; email-plus consent on notice-v8 with
   the database gate; parent dashboard; points buy game time on `/play` (four games,
   #424); six legal pages as beta versions; nightly backups green.
+- **Renamed (14 Nov):** Radlic → Radlor at app.radlor.com (#485, notice-v9 migrated); old domains 308 pages there,
+  `/api` answers on all. Auth URLs and Google branding switched and tested; Search Console change of address started.
 - Branches: `wip/game-in-play` is superseded except three never-ported tests (`adaptiveEngine`, `adaptiveWiring`,
   `lessonFlowAllModules`); `classroom-parked` = the first classroom build (never ship); local `learner-grade` has
   its own "notice-v7" (clashes).
@@ -68,7 +70,7 @@ Admin data requires the authenticator code since #325 (16 Oct).
 - Points: the 8-points-a-minute rate is a guess to measure (points never reset — settled 19 September).
 - A scheduled `npm audit`; `migrate-prod`'s pre-apply diff and post-apply fingerprint checks (build or drop); the one
   clause of its `if` that cannot change the outcome; delete the finished `migrate-region.yml`.
-- After the beta: Search Console, then one public page per grade.
+- One public page per grade.
 
 ## Open — the founder sets (dashboards and accounts)
 
@@ -77,17 +79,15 @@ Admin data requires the authenticator code since #325 (16 Oct).
   pushed, and `release` is pushed by GitHub Actions. Unmeasured: whether the block checks the commit's author (→ link
   the founder's GitHub to Vercel) or the pusher (→ a Vercel deploy hook called by `promote`; the agent builds it).
   After switching, watch the first production deploy reach READY.
-- **If `learn` goes private, Actions minutes cost money**: ~5,400 min in 30 days (28 Sep) vs 2,000 free — about US$20
-  a month over; with no budget Actions (and deploys) stop at 2,000. Set a budget first, or have the agent cut minutes
-  (Deploy re-runs the whole CI on every merge).
-- Turn off the old daily Claude health-check routine (claude.ai → routines, "Milo — daily production health check"): it
-  still targets the pre-move URL and project, so each morning it reports it could not check. `daily-smoke.yml` replaces it.
+- **If `learn` goes private, Actions cost money** (~5,400 min/30 days on 28 Sep vs 2,000 free; no budget = deploys
+  stop): set a budget first, or have the agent cut minutes.
+- Turn off the old Claude routine "Milo — daily production health check" (claude.ai → routines): it checks the pre-move
+  URL and fails daily; `daily-smoke.yml` replaces it.
 - red-main opens an issue per red run and never closes it: close them on the next green run.
-- Supabase Auth: the SMTP sender name "Radlor"; after 30 days with no traffic on the old domain (late October),
-  remove its redirect URLs from Supabase Auth and Google sign-in; confirm the Google consent screen says Radlor and
-  who owns its Cloud project.
+- **Rename leftovers:** renew radlic.com for a year or more; tell the lawyer; mid December, drop radlic.com's
+  redirect URLs from Supabase Auth and Google sign-in; SMTP sender name "Radlor"; who owns the Google Cloud project.
 - A favicon and PWA icons from the Radlor logo (needs a square mark; the live favicon is still the framework default).
-- Wipe the test account used for sign-up tests (the address is in the private notes).
+- Wipe the sign-up test account (address: private notes).
 - The Resend plan: the free plan's daily cap (about 50 sign-ups a day) blocks a launch. Vercel's budget (pause on) and
   Supabase's spend cap are on (founder, 16 Oct).
 - Local copies outside the repo that can go when the founder chooses: the audio copies (the bucket was proven
@@ -118,7 +118,8 @@ Consent and sign-up checks are in READINESS. The step lists below are in git his
 - ADA sweep (28 Sep) not covered: axe on the signed-in dashboards, a screen reader driven by a person, an iPhone with
   zoom now allowed. The jsx-a11y lint still lists harmless shapes (`<img onError>`, backdrop taps with a close
   button) — not a gate.
-- An old consent link on the real old domain should land on app.radlor.com with its `#t=` token (browser pane).
+- Search Console: app.radlor.com sitemap should read Success.
+- An old consent link on radlic.com should land on app.radlor.com with its `#t=` token (browser pane).
 - `nightly-e2e` (#378: 23 KG–2 chapters + each grade 3–8 module's first topic) has had no scheduled run yet — read the
   first, and its issue if red. `e2e/xbrowser-clicks.spec.ts` is not timer-ready (5 Oct: 11 of 25 passed; end-card
   buttons fail Playwright's "stable" wait because the nudge animates them, 3 chapters "could not look", colors timed out).
